@@ -28,6 +28,8 @@
 *.so.*
 *.dylib
 
+image
+
 # Executables
 *.exe
 *.out
