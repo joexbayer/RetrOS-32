@@ -10,6 +10,6 @@ void _main() {
 		terminal_writestring("PCI Device 0x100E Found!\n");
 	}
 
-    terminal_writestring("Hello world!");
-    while(1){};
+	terminal_writestring("Hello world\n");
+
 }

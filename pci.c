@@ -16,10 +16,10 @@ uint16_t pci_read_word(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset)
                 (lfunc << 8) | (offset & 0xfc) | ((uint32_t)0x80000000));
 
     /* write out the address */
-    outportl(0xCF8, address);
+    outl(0xCF8, address);
     /* read in the data */
     /* (offset & 2) * 8) = 0 will choose the first word of the 32 bits register */
-    tmp = (uint16_t)((inportl(0xCFC) >> ((offset & 2) * 8)) & 0xffff);
+    tmp = (uint16_t)((inl(0xCFC) >> ((offset & 2) * 8)) & 0xffff);
     return (tmp);
 }
 

@@ -29,7 +29,7 @@ typedef __UINT64_TYPE__ uint64_t;
 
 size_t strlen(const char* str);
 
-void outportl(uint16_t portid, uint32_t value);
-uint32_t inportl(uint16_t portid);
+void outl(uint16_t portid, uint32_t value);
+uint32_t inl(uint16_t portid);
 
 #endif
