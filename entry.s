@@ -5,6 +5,7 @@
 _start:
     movl $stack, %esp
     andl $-16, %esp
+    /* Use the number 0xDEADBEEF to check we can use that high addresses. */
     movl $0xDEADBEEF, %eax
     pushl %esp
     pushl %eax

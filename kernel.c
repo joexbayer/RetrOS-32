@@ -1,7 +1,7 @@
 #include "util.h"
 #include "terminal.h"
 
-void _main() {
+void _main(uint32_t debug) {
     /* Initialize terminal interface */
 	terminal_initialize();
 
@@ -10,6 +10,11 @@ void _main() {
 		terminal_writestring("PCI Device 0x100E Found!\n");
 	}
 
-	terminal_writestring("Hello world\n");
+	if(debug == 0xDEADBEEF)
+	{
+		terminal_writestring("Hello world\n");
+	}
+
+	while(1){};
 
 }

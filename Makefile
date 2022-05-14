@@ -18,17 +18,21 @@ else
 	LD=i386-elf-ld
 endif
 
+KERNELOBJ = entry.o kernel.o terminal.o pci.o util.o
+BOOTOBJ = bootloader.o
+
+.PHONY: all new image clean
 all: new
 
 new: clean image
 
-bootsect: bootloader.o
+bootblock: $(BOOTOBJ)
 	$(LD) $(LDFLAGS) -o bootblock $^ -Ttext 0x7C00 --oformat=binary
 
-kernel: entry.o kernel.o terminal.o pci.o util.o
+kernel: $(KERNELOBJ)
 	$(LD) -o kernel $^ $(LDFLAGS) -T linker.ld
 
-image: bootsect kernel
+image: bootblock kernel
 	dd if=/dev/zero of=boot.iso bs=512 count=2880
 	dd if=bootblock of=image.iso conv=notrunc bs=512 seek=0 count=1
 	dd if=kernel of=image.iso conv=notrunc bs=512 seek=1 count=2048
