@@ -27,8 +27,11 @@
 *.so
 *.so.*
 *.dylib
+*.iso
 
 image
+bootblock
+kernel
 
 # Executables
 *.exe
