@@ -1,4 +1,5 @@
 #include "util.h"
+#include "pci.h"
 #include "terminal.h"
 
 void _main(uint32_t debug) {
