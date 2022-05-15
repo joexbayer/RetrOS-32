@@ -30,8 +30,8 @@ void _main(uint32_t debug) {
 	}
 
 	/* Test interrupt */
-	asm volatile ("int $0x0");
-	asm volatile ("int $0x3");
+	asm volatile ("int $32");
+	//asm volatile ("int $31");
 
 	while(1){};
 

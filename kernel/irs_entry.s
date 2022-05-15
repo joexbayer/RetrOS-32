@@ -82,20 +82,8 @@ isr_entry:
 	mov %ds, %ax
 
 	push %eax
-
-    mov $0x10, %ax
-    mov %ax, %ds
-    mov %ax, %es
-    mov %ax, %fs
-    mov %ax, %gs
-
     call isr_handler
-
 	pop %eax
-	mov %ax, %ds
-    mov %ax, %es
-    mov %ax, %fs
-    mov %ax, %gs
 
     popa
     add $8, %esp

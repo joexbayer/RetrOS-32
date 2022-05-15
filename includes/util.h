@@ -40,6 +40,9 @@ size_t strlen(const char* str);
 
 void* memset (void *dest, int val, size_t len);
 
+#define CLI() asm ("cli")
+#define STI() asm ("sti")
+
 int atoi(char s[]);
 void itoa(int n, char s[]);
 void itohex(uint32_t n, char s[]);
