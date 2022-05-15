@@ -40,7 +40,7 @@ size_t strlen(const char* str);
 
 int atoi(char s[]);
 void itoa(int n, char s[]);
-void itohex(int n, char s[]);
+void itohex(uint32_t n, char s[]);
 
 uint32_t ntohl(uint32_t data);
 uint32_t htonl(uint32_t data);

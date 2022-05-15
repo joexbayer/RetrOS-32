@@ -16,6 +16,14 @@ void _main(uint32_t debug) {
 		terminal_writestring("Hello world\n");
 	}
 
+	terminal_write_position(1, 1, "Running... !");
+
+	char test[1000];
+	itohex(3735928559, test);
+	terminal_writestring(test);
+	itoa(3735928559, test);
+	terminal_writestring(test);
+
 	while(1){};
 
 }

@@ -70,9 +70,9 @@ void itoa(int n, char s[])
 	reverse(i);
 }
 
-void itohex(int n, char s[])
+void itohex(uint32_t n, char s[])
 {
-  int i, d;
+  uint32_t i, d;
 
   i = 0;
   do {
