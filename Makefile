@@ -33,9 +33,9 @@ kernel: $(KERNELOBJ)
 	$(LD) -o kernel $^ $(LDFLAGS) -T linker.ld
 
 image: bootblock kernel
-	dd if=/dev/zero of=image.iso bs=512 count=2880
+	dd if=/dev/zero of=image.iso bs=512 count=961
 	dd if=bootblock of=image.iso conv=notrunc bs=512 seek=0 count=1
-	dd if=kernel of=image.iso conv=notrunc bs=512 seek=1 count=2048
+	dd if=kernel of=image.iso conv=notrunc bs=512 seek=1 count=960
 
 clean:
 	rm -f *.o
