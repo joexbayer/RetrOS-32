@@ -1,6 +1,14 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+/*
+    Type Name	32–bit Size	    64–bit Size
+    short	    2 bytes	        2 bytes
+    int	        4 bytes	        4 bytes
+    long	    4 bytes	        8 bytes
+    long long	8 bytes	        8 bytes
+*/
+
 #ifdef __INT8_TYPE__
 typedef __INT8_TYPE__ int8_t;
 #endif
@@ -27,9 +35,24 @@ typedef __UINT32_TYPE__ size_t;
 typedef __UINT64_TYPE__ uint64_t;
 #endif
 
+
 size_t strlen(const char* str);
 
-void outl(uint16_t portid, uint32_t value);
+int atoi(char s[]);
+void itoa(int n, char s[]);
+void itohex(int n, char s[]);
+
+uint32_t ntohl(uint32_t data);
+uint32_t htonl(uint32_t data);
+uint16_t ntohs(uint16_t data);
+uint16_t htons(uint16_t data);
+
+uint8_t inb(uint16_t p);
+uint16_t inw(uint16_t p);
 uint32_t inl(uint16_t portid);
+
+void outb(uint16_t portid, uint8_t value);
+void outw(uint16_t portid, uint16_t value);
+void outl(uint16_t portid, uint32_t value);
 
 #endif

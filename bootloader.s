@@ -20,13 +20,14 @@ _start:
 
     /*
         Using int 13h with 42 Extended Reac Sectors from Drive, to read inn sectors.
-        The loop will run 20 times, each time reading 0x0040 (64) * 512 bytes = 0x8000 (32768) bytes
+        The loop will run 15 times, each time reading 0x0040 (64) * 512 bytes = 0x8000 (32768) bytes
+        Loading in a total of around 500Kb staying inside of the ram we have.
         Making sure to increase to the next segment if needed.
      */
-    movw $20, %cx /* Set cx 20 as loop variable meaning it will loop 20 times. */
+    movw $15, %cx /* Set cx 20 as loop variable meaning it will loop 20 times. */
 
     movw $disk_address_packet, %si
-    movw $0x1000, segment
+    movw $0x1000, segment /* Load the kernel at 0x100000 -> segment 0x10000 */
     movw $1, sector
 
 read_loop:
