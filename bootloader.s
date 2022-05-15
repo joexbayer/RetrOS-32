@@ -33,7 +33,7 @@ _start:
 read_loop:
     movb $0x42, %ah /* 0x42 Extended Read Sectors From Drive */
     int $0x13
-    # jc error /* Error???*/
+    jc error
 
     /* Check if still in same segment. */
     addw $64, sector /* Adding the 64 sectors read*/
@@ -150,16 +150,15 @@ gdtp:
     .word gdt_end - gdt_start - 1
     .long gdt_start
 
-.align 16
-gdt_start:
-gdt_null:
-    .quad 0
-
 /*
     Setup descriptor for the flat memory layout
     Giving us access to all the memory.
     https://en.wikipedia.org/wiki/Global_Descriptor_Table
 */
+.align 16
+gdt_start:
+gdt_null:
+    .quad 0
 code_descriptor:
     .word 0xffff
     .word 0x0000
