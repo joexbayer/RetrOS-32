@@ -11,6 +11,7 @@ _start:
     pushl %eax
     cli
     call _main
+    
 
 .section .text
 .align 4

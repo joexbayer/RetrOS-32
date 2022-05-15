@@ -15,6 +15,14 @@ size_t strlen(const char* str)
 	
 */
 
+void* memset(void *dest, int val, size_t len)
+{
+  unsigned char *ptr = dest;
+  while (len-- > 0)
+    *ptr++ = val;
+  return dest;
+}
+
 int isdigit(char c)
 {
     if ((c>='0') && (c<='9')) return 1;
@@ -67,7 +75,7 @@ void itoa(int n, char s[])
 		s[i++] = '-';
 	
 	s[i] = '\0';
-	reverse(i);
+	reverse(s);
 }
 
 void itohex(uint32_t n, char s[])

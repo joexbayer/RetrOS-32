@@ -38,6 +38,8 @@ typedef __UINT64_TYPE__ uint64_t;
 
 size_t strlen(const char* str);
 
+void* memset (void *dest, int val, size_t len);
+
 int atoi(char s[]);
 void itoa(int n, char s[]);
 void itohex(uint32_t n, char s[]);

@@ -1,6 +1,9 @@
 # Prerequisites
 *.d
 
+.DS_Store
+.vscode/
+
 # Object files
 *.o
 *.ko
@@ -30,8 +33,8 @@
 *.iso
 
 image
-bootblock
-kernel
+bin/bootblock
+bin/kernel
 
 # Executables
 *.exe
