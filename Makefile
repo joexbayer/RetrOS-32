@@ -33,15 +33,25 @@ kernel: $(KERNELOBJ)
 	$(LD) -o ./bin/kernel $(addprefix ./bin/,$^) $(LDFLAGS) -T ./kernel/linker.ld
 
 image: bootblock kernel
-	dd if=/dev/zero of=image.iso bs=512 count=961
-	dd if=./bin/bootblock of=image.iso conv=notrunc bs=512 seek=0 count=1
-	dd if=./bin/kernel of=image.iso conv=notrunc bs=512 seek=1 count=960
+	dd if=/dev/zero of=boot.iso bs=512 count=961
+	dd if=./bin/bootblock of=boot.iso conv=notrunc bs=512 seek=0 count=1
+	dd if=./bin/kernel of=boot.iso conv=notrunc bs=512 seek=1 count=960
 
 clean:
 	rm -f ./bin/*.o
 	rm -f ./bin/bootblock
 	rm -f ./bin/kernel
 	rm -f *.iso
+
+cleanvid:
+	rm *.vdi
+
+vdi:
+	qemu-img convert -f raw -O vdi boot.iso boot.vdi
+
+run:
+	qemu-system-i386 boot.iso
+
 # For assembling and compiling all .c and .s files.
 %.o: */%.c
 	$(CC) -o bin/$@ -c $< $(CCFLAGS)

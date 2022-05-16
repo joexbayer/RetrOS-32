@@ -87,5 +87,4 @@ isr_entry:
 
     popa
     add $8, %esp
-	sti
     iret

@@ -1,7 +1,7 @@
 #include "terminal.h"
 
 /*
-	Main code for terminal output mainly used for debuggin and displaying information.
+	Main code for terminal output mainportly used for debuggin and displaying information.
 
 	Terminal code from:
 	https://wiki.osdev.org/Meaty_Skeleton
@@ -65,13 +65,19 @@ static uint16_t* terminal_buffer;
 void terminal_set_cursor(int x, int y)
 {
 	uint16_t pos = y * VGA_WIDTH + x + 1;
-	outb(0x3D4, 0x0F);
-	outb(0x3D5, (uint8_t) (pos & 0xFF));
-	outb(0x3D4, 0x0E);
-	outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
+	outportb(0x3D4, 0x0F);
+	outportb(0x3D5, (uint8_t) (pos & 0xFF));
+	outportb(0x3D4, 0x0E);
+	outportb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
 }
-
-void terminal_write_position(int x, int y, char* str)
+/**
+ * Writes given string to terminal at specified position.
+ * @param int x coordinate of screen.
+ * @param int y coordinate of screen.
+ * @param char* str string to print.
+ * @return void
+ */
+void scrwrite(int x, int y, char* str)
 {
 	for (size_t i = 0; i < strlen(str); i++)
 	{
@@ -105,31 +111,32 @@ void terminal_initialize(void)
 	const char* term_str = "# TERMINAL ";
 	for (size_t i = 0; i < strlen(term_str); i++)
 	{
+		if(i > 1)
+		{
+			terminal_setcolor(VGA_COLOR_LIGHT_BLUE);
+		}
 		size_t index = TERMINA_START * VGA_WIDTH + i;
 		terminal_buffer[index] = vga_entry(term_str[i], terminal_color);
 	}
+	terminal_setcolor(VGA_COLOR_WHITE);
 
 	terminal_set_cursor(0, 0); 
 }
 
-void terminal_scroll()
-{
+static void terminal_scroll()
+{	
+	/* Move all lines up, overwriting the oldest message. */
 	for (size_t y = TERMINA_START+1; y < VGA_HEIGHT; y++)
 	{
 		for (size_t x = 0; x < VGA_WIDTH; x++)
 		{
-
-			if(y == TERMINA_START-1)
-			{
-				continue;
-			}
-
 			const size_t index = y * VGA_WIDTH + x;
 			const size_t index_b = (y+1) * VGA_WIDTH + x;
 			terminal_buffer[index] = terminal_buffer[index_b];
 		}
 	}
 
+	/* clear last line of terminal */
 	for (size_t x = 0; x < VGA_WIDTH; x++)
 	{
 		const size_t index = VGA_HEIGHT * VGA_WIDTH + x;
@@ -139,7 +146,7 @@ void terminal_scroll()
 
 void terminal_clear()
 {	
-	terminal_row = 0;
+	/* Clears the terminal window */
 	for (size_t y = TERMINA_START+1; y < VGA_HEIGHT; y++)
 	{
 		for (size_t x = 0; x < VGA_WIDTH; x++)
@@ -155,13 +162,13 @@ void terminal_setcolor(uint8_t color)
 	terminal_color = color;
 }
  
-void terminal_putentryat(unsigned char c, uint8_t color, size_t x, size_t y)
+static void terminal_putentryat(unsigned char c, uint8_t color, size_t x, size_t y)
 {
 	const size_t index = y * VGA_WIDTH + x;
 	terminal_buffer[index] = vga_entry(c, color);
 }
  
-void terminal_putchar(char c)
+static void terminal_putchar(char c)
 {
 	unsigned char uc = c;
 
@@ -176,7 +183,7 @@ void terminal_putchar(char c)
 		terminal_scroll();
 		return;
 	}
- 
+	
 	terminal_putentryat(uc, terminal_color, terminal_column, terminal_row);
 	if (++terminal_column == VGA_WIDTH)
 	{
@@ -192,7 +199,7 @@ void terminal_write(const char* data, size_t size)
 		terminal_putchar(data[i]);
 }
  
-void terminal_writestring(const char* data)
+void twrite(const char* data)
 {
 	terminal_write(data, strlen(data));
 }

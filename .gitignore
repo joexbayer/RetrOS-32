@@ -35,6 +35,7 @@
 image
 bin/bootblock
 bin/kernel
+*.vdi
 
 # Executables
 *.exe

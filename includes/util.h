@@ -52,12 +52,12 @@ uint32_t htonl(uint32_t data);
 uint16_t ntohs(uint16_t data);
 uint16_t htons(uint16_t data);
 
-uint8_t inb(uint16_t p);
-uint16_t inw(uint16_t p);
-uint32_t inl(uint16_t portid);
+uint8_t inportb(uint16_t p);
+uint16_t inportw(uint16_t p);
+uint32_t inportl(uint16_t portid);
 
-void outb(uint16_t portid, uint8_t value);
-void outw(uint16_t portid, uint16_t value);
-void outl(uint16_t portid, uint32_t value);
+void outportb(uint16_t portid, uint8_t value);
+void outportw(uint16_t portid, uint16_t value);
+void outportl(uint16_t portid, uint32_t value);
 
 #endif
