@@ -2,11 +2,13 @@
 #include "pci.h"
 #include "terminal.h"
 #include "interrupts.h"
+#include "timer.h"
 
 void _main(uint32_t debug) {
     /* Initialize terminal interface */
 	terminal_initialize();
 	init_interrupts();
+	init_timer(1);
 
 	if(debug == 0xDEADBEEF)
 	{
