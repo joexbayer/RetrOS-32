@@ -11,6 +11,30 @@
 
 .global _start
 _start:
+    jmp main
+    .space 3 - (.-_start)
+
+    /* Configuration for a 2.88MB floppy using FAT 12 */
+    OEMname:            .ascii      "MYBOOT  "
+    bytesPerSector:     .word       512
+    sectPerCluster:     .byte       1
+    reservedSectors:    .word       1
+    numFAT:             .byte       2
+    numRootDirEntries:  .word       240
+    numSectors:         .word       5760
+    mediaType:          .byte       0xf0
+    numFATsectors:      .word       9
+    sectorsPerTrack:    .word       36
+    numHeads:           .word       2
+    numHiddenSectors:   .long       0
+    numSectorsHuge:     .long       0
+    driveNum:           .byte       0
+    reserved:           .byte       0x00
+    signature:          .byte       0x29
+    volumeID:           .long       0x54428E71
+    volumeLabel:        .ascii      "NO NAME    "
+    fileSysType:        .ascii      "FAT12   "
+main:
     /* Setup a temporary stack */
     movw $0x3000, %sp
 
@@ -176,5 +200,7 @@ data_descriptor:
 gdt_end:
 
 /* BOOT SIGNATURE */
-.fill 510-(.-_start), 1, 0
-.word 0xAA55 /* Do you believe in magic? */
+padding:
+    . = _start + 510
+    .byte 0x55
+    .byte 0xaa

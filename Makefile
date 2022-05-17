@@ -51,6 +51,12 @@ boot:
 	sudo dd if=boot.iso of=/dev/disk2 bs=512 count=961 seek=0
 	sync
 
+check:
+	diskutil list
+	read eas
+	sudo diskutil unmountDisk /dev/disk2
+
+
 cleanvid:
 	rm *.vdi
 
