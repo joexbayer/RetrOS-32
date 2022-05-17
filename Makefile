@@ -25,7 +25,7 @@ endif
 KERNELOBJ = entry.o kernel.o terminal.o pci.o util.o interrupts.o irs_entry.o timer.o
 BOOTOBJ = bootloader.o
 
-.PHONY: all new image clean
+.PHONY: all new image clean boot
 all: new
 
 new: clean image
@@ -46,6 +46,10 @@ clean:
 	rm -f ./bin/bootblock
 	rm -f ./bin/kernel
 	rm -f *.iso
+
+boot: 
+	sudo dd if=boot.iso of=/dev/disk2 bs=512 count=961 seek=0
+	sync
 
 cleanvid:
 	rm *.vdi
