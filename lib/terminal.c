@@ -38,9 +38,9 @@ static const size_t VGA_WIDTH = 80;
 static const size_t VGA_HEIGHT = 25;
 
 static const size_t TERMINAL_START = (VGA_HEIGHT/2 + VGA_HEIGHT/5);
-static const size_t TERMINAL_WIDTH = (VGA_WIDTH/4);
+static const size_t TERMINAL_WIDTH = (VGA_WIDTH/3);
 
-static const size_t MEMORY_WIDTH = (VGA_WIDTH/3)+2;
+static const size_t MEMORY_WIDTH = (VGA_WIDTH/3)+(VGA_WIDTH/6);
 
 static uint16_t* const VGA_MEMORY = (uint16_t*) 0xB8000;
 
@@ -111,7 +111,7 @@ void __terminal_ui_text()
 	const char* exm_str = " EXAMPLE ";
 	for (size_t i = 0; i < strlen(exm_str); i++)
 	{
-		size_t index = TERMINAL_START * VGA_WIDTH + i+(MEMORY_WIDTH+MEMORY_WIDTH);
+		size_t index = TERMINAL_START * VGA_WIDTH + i+(MEMORY_WIDTH+(VGA_WIDTH/6));
 		terminal_buffer[index] = vga_entry(exm_str[i], terminal_color);
 	}
 
@@ -125,15 +125,15 @@ void __terminal_ui_text()
  */
 void draw_mem_usage(int used)
 {	
-	int _used 		= used % MEMORY_WIDTH;	
+	int _used 		= used % (VGA_WIDTH/6);	
 	size_t mem_size 	= (VGA_HEIGHT-TERMINAL_START);
-	size_t mem_used 	= 1+(MEMORY_WIDTH-_used);
-	size_t mem_free 	= MEMORY_WIDTH-_used;
+	size_t mem_used 	= 1+((VGA_WIDTH/6)-_used);
+	size_t mem_free 	= (VGA_WIDTH/6)-_used;
 
 	/* Fill red with the used memory */
 	terminal_setcolor(VGA_COLOR_LIGHT_RED);
 	for (size_t x = 1; x < mem_size; x++) {
-		for (size_t y = mem_used; y < MEMORY_WIDTH; y++) {
+		for (size_t y = mem_used; y < (VGA_WIDTH/6); y++) {
 			const size_t index = ((MEMORY_WIDTH)-2+y)+(TERMINAL_START+x) * VGA_WIDTH;
 			terminal_buffer[index] = vga_entry(176, terminal_color);
 		}
@@ -175,10 +175,10 @@ void __terminal_draw_lines()
 
 	/* Vertical lines for example */
 	for (size_t x = 0; x < VGA_HEIGHT; x++) {
-		const size_t index = ((MEMORY_WIDTH+MEMORY_WIDTH)-2)+(TERMINAL_START+x) * VGA_WIDTH;
+		const size_t index = ((MEMORY_WIDTH+(VGA_WIDTH/6))-2)+(TERMINAL_START+x) * VGA_WIDTH;
 		terminal_buffer[index] = vga_entry(ASCII_VERTICAL_LINE, terminal_color);
 	}
-	index_v = ((MEMORY_WIDTH+MEMORY_WIDTH)-2)+(TERMINAL_START) * VGA_WIDTH;
+	index_v = ((MEMORY_WIDTH+(VGA_WIDTH/6))-2)+(TERMINAL_START) * VGA_WIDTH;
 	terminal_buffer[index_v] = vga_entry(ASCII_DOWN_INTERSECT, terminal_color);
 }
 

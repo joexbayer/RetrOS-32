@@ -36,8 +36,8 @@ void _main(uint32_t debug) {
 
 	int mem = 0;
 	while(1){
-		test_int = (test_int+1) % 10000000;
-		if(test_int % 10000000 == 0)
+		test_int = (test_int+1) % 100000000;
+		if(test_int % 100000000 == 0)
 		{
 			draw_mem_usage(mem++);
 		}
