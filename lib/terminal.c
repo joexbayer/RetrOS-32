@@ -1,4 +1,4 @@
-#include "terminal.h"
+#include <terminal.h>
 
 /*
 	Main code for terminal output mainportly used for debuggin and displaying information.
@@ -307,11 +307,12 @@ static void __terminal_putchar(char c)
 		return;
 	}
 	
-	__terminal_putentryat(uc, terminal_color, terminal_column, terminal_row);
-	if (++terminal_column == TERMINAL_WIDTH)
+	if (terminal_column == TERMINAL_WIDTH+6)
 	{
-		terminal_column = 0;
+		return;
 	}
+	__terminal_putentryat(uc, terminal_color, terminal_column, terminal_row);
+	terminal_column++;
 }
  
 /**

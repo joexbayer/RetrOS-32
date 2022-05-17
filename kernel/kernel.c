@@ -1,13 +1,14 @@
-#include "util.h"
-#include "pci.h"
-#include "terminal.h"
-#include "interrupts.h"
-#include "timer.h"
+#include <util.h>
+#include <pci.h>
+#include <terminal.h>
+#include <interrupts.h>
+#include <timer.h>
 
 void _main(uint32_t debug) {
     /* Initialize terminal interface */
 	terminal_initialize();
 	init_interrupts();
+	init_keyboard();
 	init_timer(1);
 
 	if(debug == 0xDEADBEEF)
@@ -30,18 +31,13 @@ void _main(uint32_t debug) {
 	}
 
 	/* Test interrupt */
-	asm volatile ("int $32");
+	asm volatile ("int $33");
 	//asm volatile ("int $31");
 
 	int mem = 0;
 	while(1){
-		char test[1000];
-		itoa(test_int, test);
-		twrite(test);
-		twrite("\n");
-		test_int = (test_int+1) % 10000;
-
-		if(test_int % 10000 == 0)
+		test_int = (test_int+1) % 10000000;
+		if(test_int % 10000000 == 0)
 		{
 			draw_mem_usage(mem++);
 		}

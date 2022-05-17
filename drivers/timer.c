@@ -1,14 +1,15 @@
-#include "timer.h"
-#include "terminal.h"
-#include "interrupts.h"
+#include <timer.h>
+#include <terminal.h>
+#include <interrupts.h>
 
 #define PIT_IRQ		32
 
 static int tick = 0;
+static int tick2 = 0;
 static void timer_callback()
 {
-	tick++;
-	char test[1000];
+	tick = (tick+1) % 1000;
+	char test[100];
 	itoa(tick % 1000, test);
 	scrwrite(10, 10, test);
 }
@@ -33,6 +34,6 @@ void init_timer(uint32_t frequency)
 	outportb(0x40, l);
 	outportb(0x40, h);
 
-	twrite("Timer Started.\n");
+	twrite("PIT initialized.\n");
     STI();
 }

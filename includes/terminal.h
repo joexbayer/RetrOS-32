@@ -1,7 +1,7 @@
 #ifndef TERMINAL_H
 #define TERMINAL_H
 
-#include "util.h"
+#include <util.h>
 
 void scrwrite(int x, int y, char* str);
 void terminal_initialize(void);

@@ -1,6 +1,5 @@
-#include "terminal.h"
-#include "util.h"
-#include "pci.h"
+#include <terminal.h>
+#include <pci.h>
 
 
 uint16_t pci_read_word(uint8_t bus, uint8_t slot, uint8_t func, uint8_t offset)

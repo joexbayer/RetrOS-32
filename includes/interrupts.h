@@ -1,7 +1,7 @@
 #ifndef INTERRUPTS_H
 #define INTERRUPTS_H
 
-#include "util.h"
+#include <util.h>
 
 /* Code inspiried from http://www.jamesmolloy.co.uk/tutorial_html/4.-The%20GDT%20and%20IDT.html */
 
@@ -40,6 +40,7 @@ typedef struct idt_ptr_struct idt_ptr_t;
 
 extern void isr0(registers_t*);
 extern void isr32(registers_t*);
+extern void isr33(registers_t*);
 
 void isr_handler(registers_t regs);
 void isr_install(size_t i, void (*handler)());

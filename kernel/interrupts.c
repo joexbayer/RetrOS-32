@@ -1,5 +1,5 @@
-#include "interrupts.h"
-#include "terminal.h"
+#include <interrupts.h>
+#include <terminal.h>
 
 #define ISR_LINES	48
 #define PIC1		0x20		/* IO base address for master PIC */
@@ -63,6 +63,7 @@ static void init_idt()
 
 	/* Override to use correct entry point*/
 	idt_set_gate(32, (uint32_t) isr32 , 0x08, 0x8E); // PIT timer
+	idt_set_gate(33, (uint32_t) isr33 , 0x08, 0x8E); // Keyboard
 
 	idt_flush((uint32_t)&idt);
 }
@@ -82,5 +83,7 @@ void init_interrupts()
 	outportb(PIC2_DATA, 0x0);
 
 	init_idt();
+
+	twrite("Interrupts initialized.\n");
 }
 

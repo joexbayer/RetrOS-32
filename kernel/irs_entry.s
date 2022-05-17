@@ -29,6 +29,7 @@ idt_flush:
 
 ISR_NO_ERR 0
 ISR_NO_ERR 32
+ISR_NO_ERR 33
 
 isr_entry:
 	pusha

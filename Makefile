@@ -22,7 +22,7 @@ else
 	LD=i386-elf-ld
 endif
 
-KERNELOBJ = entry.o kernel.o terminal.o pci.o util.o interrupts.o irs_entry.o timer.o
+KERNELOBJ = entry.o kernel.o terminal.o pci.o util.o interrupts.o irs_entry.o timer.o keyboard.o
 BOOTOBJ = bootloader.o
 
 .PHONY: all new image clean boot
@@ -36,12 +36,12 @@ bootblock: $(BOOTOBJ)
 kernel: $(KERNELOBJ)
 	$(LD) -o ./bin/kernel $(addprefix ./bin/,$^) $(LDFLAGS) -T ./kernel/linker.ld
 
-image: bootblock kernel
+image: bindir bootblock kernel
 	dd if=/dev/zero of=boot.iso bs=512 count=961
 	dd if=./bin/bootblock of=boot.iso conv=notrunc bs=512 seek=0 count=1
 	dd if=./bin/kernel of=boot.iso conv=notrunc bs=512 seek=1 count=960
 
-clean:
+clean: bindir
 	rm -f ./bin/*.o
 	rm -f ./bin/bootblock
 	rm -f ./bin/kernel
@@ -56,6 +56,8 @@ check:
 	read eas
 	sudo diskutil unmountDisk /dev/disk2
 
+bindir:
+	mkdir -p bin
 
 cleanvid:
 	rm *.vdi
