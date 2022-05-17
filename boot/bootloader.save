@@ -127,11 +127,20 @@ set_a20.2:
     outb    %al,$0x60
     retw
 
+.code32
+enter32:
+    /* jump to kernel loaded at 0x10000 */
+    movl $0x10000, %eax
+    jmpl *%eax
+
+inf:
+    jmp inf
+
+.code16
 error:
     /*
         If an error occurs, then mostly likely the hardware does not support int 13h 0x42.
-        Therefor try to read 63 sectors (a little more than 32kb) as a last resort with 0x02.
-        TODO: Doenst work if kernel is bigger than 32kb.
+        Therefor try to read 63 sectors (a little more than 32bytes) as a last resort with 0x02.
     */
     movw $error_str, %si
     call print
@@ -154,21 +163,10 @@ error:
     jmp continue
 
 kill:
-    movw $total_error_str, %si
+    movw $error_str, %si
     call print
     call inf 
 
-
-.code32
-enter32:
-    /* jump to kernel loaded at 0x10000 */
-    movl $0x10000, %eax
-    jmpl *%eax
-
-inf:
-    jmp inf
-
-.code16
 /* 	AL = Character, BH = Page Number, BL = Color (only in graphic mode)*/
 print:
     xor %bh, %bh
@@ -188,9 +186,7 @@ return:
 welcome_str:
     .asciz "Starting...\n"
 error_str:
-    .asciz "Error while reading, trying again...\n"
-total_error_str:
-    .asciz "Unable to boot.\n"
+    .asciz "Error while reading..\n"
 drive_num:
     .word 0x0000
 
