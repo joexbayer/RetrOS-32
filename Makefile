@@ -28,7 +28,7 @@ BOOTOBJ = bootloader.o
 .PHONY: all new image clean boot
 all: new
 
-new: clean image
+new: clean iso
 
 bootblock: $(BOOTOBJ)
 	$(LD) $(LDFLAGS) -o ./bin/bootblock ./bin/$^ -Ttext 0x7C00 --oformat=binary
@@ -36,10 +36,13 @@ bootblock: $(BOOTOBJ)
 kernel: $(KERNELOBJ)
 	$(LD) -o ./bin/kernel $(addprefix ./bin/,$^) $(LDFLAGS) -T ./kernel/linker.ld
 
-image: bindir bootblock kernel
+iso: bindir bootblock kernel
 	dd if=/dev/zero of=boot.iso bs=512 count=961
 	dd if=./bin/bootblock of=boot.iso conv=notrunc bs=512 seek=0 count=1
 	dd if=./bin/kernel of=boot.iso conv=notrunc bs=512 seek=1 count=960
+
+img: iso
+	mv boot.iso boot.img
 
 clean: bindir
 	rm -f ./bin/*.o

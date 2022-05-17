@@ -31,6 +31,7 @@
 *.so.*
 *.dylib
 *.iso
+*.img
 
 image
 bin/bootblock
