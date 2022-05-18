@@ -7,8 +7,8 @@
 
 void _main(uint32_t debug) {
     /* Initialize terminal interface */
-	terminal_initialize();
-	shell_init();
+	init_terminal();
+	init_shell();
 	init_interrupts();
 	init_keyboard();
 	init_timer(1);

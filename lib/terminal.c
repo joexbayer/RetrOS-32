@@ -70,7 +70,7 @@ void shell_clear()
 }
 
 
-void shell_init(void)
+void init_shell(void)
 {
 	memset(&shell_buffer, 0, 25);
 	shell_column = 1;
@@ -212,7 +212,7 @@ void terminal_clear()
  * Defines the terminal area and clears screen.
  * @return void
  */
-void terminal_initialize(void)
+void init_terminal(void)
 {
 	terminal_row = TERMINAL_START+1;
 	terminal_column = 0;

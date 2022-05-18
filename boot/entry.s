@@ -16,7 +16,7 @@ _start:
 .section .text
 .align 4
 
-.section .data
+.section .bss /* .bss or .data */
 .align 32
 stack_begin:
     .fill 0x4000
