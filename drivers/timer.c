@@ -6,7 +6,7 @@
 #define PIT_IRQ		32
 
 static int tick = 0;
-static int tick2 = 0;
+
 static void timer_callback()
 {
 	tick = (tick+1) % 1000;

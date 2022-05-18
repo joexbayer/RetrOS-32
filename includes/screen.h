@@ -31,6 +31,6 @@ void scrput(size_t x, size_t y, unsigned char c, uint8_t color);
 void scrwrite(int x, int y, char* str, uint8_t color);
 void screen_set_cursor(int x, int y);
 void scr_clear();
-void scr_scroll(int width, int height);
+void scr_scroll(size_t width, size_t height);
 
 #endif

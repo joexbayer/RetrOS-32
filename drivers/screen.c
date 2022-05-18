@@ -69,7 +69,7 @@ void scr_clear()
 	}
 }
 
-void scr_scroll(int width, int height)
+void scr_scroll(size_t width, size_t height)
 {
     /* Move all lines up, overwriting the oldest message. */
 	for (size_t y = height+1; y < SCREEN_HEIGHT; y++)

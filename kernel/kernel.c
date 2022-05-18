@@ -1,6 +1,7 @@
 #include <util.h>
 #include <pci.h>
 #include <terminal.h>
+#include <keyboard.h>
 #include <interrupts.h>
 #include <timer.h>
 #include <screen.h>

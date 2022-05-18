@@ -3,7 +3,7 @@
 
 #include <util.h>
 
-void terminal_initialize(void);
+void init_terminal(void);
 void terminal_setcolor(uint8_t color);
 void twrite(const char* data);
 void terminal_write(const char* data, size_t size);

@@ -36,7 +36,6 @@ void terminal_clear();
 void terminal_initialize(void);
 static void __terminal_scroll();
 void terminal_setcolor(uint8_t color);
-static void __screen_put(unsigned char c, uint8_t color, size_t x, size_t y);
 void __terminal_putchar(char c);
 void terminal_write(const char* data, size_t size);
 void twrite(const char* data);
