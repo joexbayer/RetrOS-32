@@ -1,30 +1,11 @@
 #include <terminal.h>
-
+#include <stdarg.h>
+#include <screen.h>
 /*
 	Main code for terminal output mainportly used for debuggin and displaying information.
 	Terminal code from:
 	https://wiki.osdev.org/Meaty_Skeleton
 */
-
-/* Hardware text mode color constants. */
-enum vga_color {
-	VGA_COLOR_BLACK = 0,
-	VGA_COLOR_BLUE = 1,
-	VGA_COLOR_GREEN = 2,
-	VGA_COLOR_CYAN = 3,
-	VGA_COLOR_RED = 4,
-	VGA_COLOR_MAGENTA = 5,
-	VGA_COLOR_BROWN = 6,
-	VGA_COLOR_LIGHT_GREY = 7,
-	VGA_COLOR_DARK_GREY = 8,
-	VGA_COLOR_LIGHT_BLUE = 9,
-	VGA_COLOR_LIGHT_GREEN = 10,
-	VGA_COLOR_LIGHT_CYAN = 11,
-	VGA_COLOR_LIGHT_RED = 12,
-	VGA_COLOR_LIGHT_MAGENTA = 13,
-	VGA_COLOR_LIGHT_BROWN = 14,
-	VGA_COLOR_WHITE = 15,
-};
 
 enum ASCII {
 	ASCII_BLOCK = 219,
@@ -34,26 +15,11 @@ enum ASCII {
 };
 
 static const char newline = '\n';
-static const size_t VGA_WIDTH = 80;
-static const size_t VGA_HEIGHT = 25;
+static const char backspace = '\b';
 
-static const size_t TERMINAL_START = (VGA_HEIGHT/2 + VGA_HEIGHT/5);
-static const size_t TERMINAL_WIDTH = (VGA_WIDTH/3);
-
-static const size_t MEMORY_WIDTH = (VGA_WIDTH/3)+(VGA_WIDTH/6);
-
-static uint16_t* const VGA_MEMORY = (uint16_t*) 0xB8000;
-
-
-static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg) 
-{
-	return fg | bg << 4;
-}
- 
-static inline uint16_t vga_entry(unsigned char uc, uint8_t color) 
-{
-	return (uint16_t) uc | (uint16_t) color << 8;
-}
+static const size_t TERMINAL_START = (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5);
+static const size_t TERMINAL_WIDTH = (SCREEN_WIDTH/3);
+static const size_t MEMORY_WIDTH = (SCREEN_WIDTH/3)+(SCREEN_WIDTH/6);
 
  /*
 	TERMINAL
@@ -63,28 +29,85 @@ static size_t terminal_column;
 static uint8_t terminal_color;
 static uint16_t* terminal_buffer;
 
-void terminal_set_cursor(int x, int y)
+/* TERMINAL PROTOTYPES */
+void __terminal_ui_text();
+void __terminal_draw_lines();
+void terminal_clear();
+void terminal_initialize(void);
+static void __terminal_scroll();
+void terminal_setcolor(uint8_t color);
+static void __screen_put(unsigned char c, uint8_t color, size_t x, size_t y);
+void __terminal_putchar(char c);
+void terminal_write(const char* data, size_t size);
+void twrite(const char* data);
+
+ /*
+	SHELL
+*/
+static uint8_t SHELL_POSITION = TERMINAL_START-1;
+static const uint8_t SHELL_MAX_SIZE = 25;
+static uint8_t shell_column = 0;
+char shell_buffer[25];
+
+/* SHELL PROTOTYPES */
+void shell_init(void);
+void shell_put(char c);
+void shell_clear();
+
+
+
+/*
+	IMPLEMENTATIONS
+*/
+
+
+void shell_clear()
 {
-	uint16_t pos = y * VGA_WIDTH + x + 1;
-	outportb(0x3D4, 0x0F);
-	outportb(0x3D5, (uint8_t) (pos & 0xFF));
-	outportb(0x3D4, 0x0E);
-	outportb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
-}
-/**
- * Writes given string to terminal at specified position.
- * @param int x coordinate of screen.
- * @param int y coordinate of screen.
- * @param char* str string to print.
- * @return void
- */
-void scrwrite(int x, int y, char* str)
-{
-	for (size_t i = 0; i < strlen(str); i++)
+	for (size_t i = shell_column; i < SHELL_MAX_SIZE; i++)
 	{
-		size_t index = x * VGA_WIDTH + (i + y);
-		terminal_buffer[index] = vga_entry(str[i], terminal_color);
+		scrput(i, SHELL_POSITION, ' ', terminal_color);
+	}	
+}
+
+
+void shell_init(void)
+{
+	memset(&shell_buffer, 0, 25);
+	shell_column = 1;
+	shell_clear();
+	terminal_setcolor(VGA_COLOR_LIGHT_BLUE);
+	scrwrite(SHELL_POSITION, 0, ">", VGA_COLOR_LIGHT_CYAN);
+	screen_set_cursor(shell_column, SHELL_POSITION);
+	terminal_setcolor(VGA_COLOR_WHITE);
+}
+
+void shell_put(char c)
+{
+	unsigned char uc = c;
+	if(uc == newline)
+	{
+		shell_init();
+		// call execute command to kernel
+		return;
 	}
+
+	if(uc == backspace)
+	{
+		shell_column -= 1;
+		scrput(shell_column, SHELL_POSITION, ' ', terminal_color);
+		shell_buffer[shell_column] = 0;
+		screen_set_cursor(shell_column-1, SHELL_POSITION);
+		return;
+	}
+
+	if(shell_column == SHELL_MAX_SIZE)
+	{
+		return;
+	}
+	scrput(shell_column, SHELL_POSITION, uc, VGA_COLOR_WHITE);
+	shell_buffer[shell_column] = uc;
+	screen_set_cursor(shell_column, SHELL_POSITION);
+	shell_column++;
 }
 
 /**
@@ -97,22 +120,19 @@ void __terminal_ui_text()
 	const char* term_str = " TERMINAL ";
 	for (size_t i = 0; i < strlen(term_str); i++)
 	{
-		size_t index = TERMINAL_START * VGA_WIDTH + i+1;
-		terminal_buffer[index] = vga_entry(term_str[i], terminal_color);
+		scrput(i+1, TERMINAL_START, term_str[i], terminal_color);
 	}
 
 	const char* mem_str = " MEMORY ";
 	for (size_t i = 0; i < strlen(mem_str); i++)
 	{
-		size_t index = TERMINAL_START * VGA_WIDTH + i+MEMORY_WIDTH;
-		terminal_buffer[index] = vga_entry(mem_str[i], terminal_color);
+		scrput(i+MEMORY_WIDTH, TERMINAL_START, mem_str[i], terminal_color);
 	}
 
 	const char* exm_str = " EXAMPLE ";
 	for (size_t i = 0; i < strlen(exm_str); i++)
 	{
-		size_t index = TERMINAL_START * VGA_WIDTH + i+(MEMORY_WIDTH+(VGA_WIDTH/6));
-		terminal_buffer[index] = vga_entry(exm_str[i], terminal_color);
+		scrput(i+(MEMORY_WIDTH+(SCREEN_WIDTH/6)), TERMINAL_START, exm_str[i], terminal_color);
 	}
 
 }
@@ -125,27 +145,22 @@ void __terminal_ui_text()
  */
 void draw_mem_usage(int used)
 {	
-	int _used 		= used % (VGA_WIDTH/6);	
-	size_t mem_size 	= (VGA_HEIGHT-TERMINAL_START);
-	size_t mem_used 	= 1+((VGA_WIDTH/6)-_used);
-	size_t mem_free 	= (VGA_WIDTH/6)-_used;
+	int _used 		= used % (SCREEN_WIDTH/6);	
+	size_t mem_size 	= (SCREEN_HEIGHT-TERMINAL_START);
+	size_t mem_used 	= 1+((SCREEN_WIDTH/6)-_used);
+	size_t mem_free 	= (SCREEN_WIDTH/6)-_used;
 
 	/* Fill red with the used memory */
-	terminal_setcolor(VGA_COLOR_LIGHT_RED);
 	for (size_t x = 1; x < mem_size; x++) {
-		for (size_t y = mem_used; y < (VGA_WIDTH/6); y++) {
-			const size_t index = ((MEMORY_WIDTH)-2+y)+(TERMINAL_START+x) * VGA_WIDTH;
-			terminal_buffer[index] = vga_entry(176, terminal_color);
+		for (size_t y = mem_used; y < (SCREEN_WIDTH/6); y++) {
+			scrput(((MEMORY_WIDTH)-2+y), TERMINAL_START+x, 176, VGA_COLOR_LIGHT_RED);
 		}
 	}
 
 	/* Fill green with the free memory. */
-	terminal_setcolor(VGA_COLOR_LIGHT_GREEN);
 	for (size_t x = 1; x < mem_size; x++) {
 		for (size_t y = 1; y < mem_free; y++) {
-
-			const size_t index = ((MEMORY_WIDTH)-2+y)+(TERMINAL_START+x) * VGA_WIDTH;
-			terminal_buffer[index] = vga_entry(176, terminal_color);
+			scrput(((MEMORY_WIDTH)-2+y), TERMINAL_START+x, 176, VGA_COLOR_LIGHT_GREEN);
 		}
 	}
 
@@ -159,27 +174,38 @@ void draw_mem_usage(int used)
  */
 void __terminal_draw_lines()
 {
-	for (size_t x = 0; x < VGA_WIDTH; x++) {
-		const size_t index = TERMINAL_START * VGA_WIDTH + x;
-		terminal_buffer[index] = vga_entry(ASCII_HORIZONTAL_LINE, terminal_color);
+	for (size_t x = 0; x < SCREEN_WIDTH; x++) {
+		scrput(x,TERMINAL_START, ASCII_HORIZONTAL_LINE, terminal_color);
 	}
 
 	/* Vertical lines for memory */
 	terminal_setcolor(VGA_COLOR_LIGHT_GREY);
-	for (size_t x = 0; x < VGA_HEIGHT; x++) {
-		const size_t index = (MEMORY_WIDTH-2)+(TERMINAL_START+x) * VGA_WIDTH;
-		terminal_buffer[index] = vga_entry(ASCII_VERTICAL_LINE, terminal_color);
+	for (size_t x = 0; x < SCREEN_HEIGHT; x++) {
+		scrput(MEMORY_WIDTH-2, TERMINAL_START+x, ASCII_VERTICAL_LINE, terminal_color);
 	}
-	size_t index_v = (MEMORY_WIDTH-2)+(TERMINAL_START) * VGA_WIDTH;
-	terminal_buffer[index_v] = vga_entry(ASCII_DOWN_INTERSECT, terminal_color);
+	scrput(MEMORY_WIDTH-2, TERMINAL_START, ASCII_DOWN_INTERSECT, terminal_color);
 
 	/* Vertical lines for example */
-	for (size_t x = 0; x < VGA_HEIGHT; x++) {
-		const size_t index = ((MEMORY_WIDTH+(VGA_WIDTH/6))-2)+(TERMINAL_START+x) * VGA_WIDTH;
-		terminal_buffer[index] = vga_entry(ASCII_VERTICAL_LINE, terminal_color);
+	for (size_t x = 0; x < SCREEN_HEIGHT; x++) {
+		scrput(((MEMORY_WIDTH+(SCREEN_WIDTH/6))-2), TERMINAL_START+x, ASCII_VERTICAL_LINE, terminal_color);
 	}
-	index_v = ((MEMORY_WIDTH+(VGA_WIDTH/6))-2)+(TERMINAL_START) * VGA_WIDTH;
-	terminal_buffer[index_v] = vga_entry(ASCII_DOWN_INTERSECT, terminal_color);
+	scrput(((MEMORY_WIDTH+(SCREEN_WIDTH/6))-2), TERMINAL_START, ASCII_DOWN_INTERSECT, terminal_color);
+}
+
+/**
+ * Clears the terminal window.
+ * @return void
+ */
+void terminal_clear()
+{	
+	/* Clears the terminal window */
+	for (size_t y = TERMINAL_START+1; y < SCREEN_HEIGHT; y++)
+	{
+		for (size_t x = 0; x < TERMINAL_WIDTH; x++)
+		{
+			scrput(x, y, ' ', terminal_color);
+		}
+	}
 }
 
 /**
@@ -190,33 +216,26 @@ void terminal_initialize(void)
 {
 	terminal_row = TERMINAL_START+1;
 	terminal_column = 0;
-	terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
+	terminal_color = VGA_COLOR_LIGHT_GREY;
 	terminal_buffer = VGA_MEMORY;
 
 	/* Clears screen */
-	for (size_t y = 0; y < VGA_HEIGHT; y++)
-	{
-		for (size_t x = 0; x < VGA_WIDTH; x++)
-		{
-			const size_t index = y * VGA_WIDTH + x;
-			terminal_buffer[index] = vga_entry(' ', terminal_color);
-		}
-	}
+	scr_clear();
 
-	scrwrite(0, 20, "   ___             ______                       ");
-	scrwrite(1, 20, "  |_  |            | ___ \\                      ");
-	scrwrite(2, 20, "    | | ___   ___  | |_/ / __ _ _   _  ___ _ __ ");
-	scrwrite(3, 20, "    | |/ _ \\ / _ \\ | ___ \\/ _` | | | |/ _ | '__|");
-	scrwrite(4, 20, "/\\__/ | (_) |  __/ | |_/ | (_| | |_| |  __| |   ");
-	scrwrite(5, 20, "\\____/ \\___/ \\___| \\____/ \\__,_|\\__, |\\___|_|   ");
-	scrwrite(6, 20, "                                 __/ |          ");
-	scrwrite(7, 20, "                                |___/           ");
+	scrwrite(0, 20, "   ___             ______                       ", VGA_COLOR_MAGENTA);
+	scrwrite(1, 20, "  |_  |            | ___ \\                      ", VGA_COLOR_MAGENTA);
+	scrwrite(2, 20, "    | | ___   ___  | |_/ / __ _ _   _  ___ _ __ ", VGA_COLOR_MAGENTA);
+	scrwrite(3, 20, "    | |/ _ \\ / _ \\ | ___ \\/ _` | | | |/ _ | '__|", VGA_COLOR_MAGENTA);
+	scrwrite(4, 20, "/\\__/ | (_) |  __/ | |_/ | (_| | |_| |  __| |   ", VGA_COLOR_MAGENTA);
+	scrwrite(5, 20, "\\____/ \\___/ \\___| \\____/ \\__,_|\\__, |\\___|_|   ", VGA_COLOR_MAGENTA);
+	scrwrite(6, 20, "                                 __/ |          ", VGA_COLOR_MAGENTA);
+	scrwrite(7, 20, "                                |___/           ", VGA_COLOR_MAGENTA);
 
 	__terminal_draw_lines();
 	__terminal_ui_text();
 
 	terminal_setcolor(VGA_COLOR_WHITE);
-	terminal_set_cursor(0, 0); 
+	screen_set_cursor(0, 0); 
 }
 
 /**
@@ -226,41 +245,9 @@ void terminal_initialize(void)
  */
 static void __terminal_scroll()
 {	
-	/* Move all lines up, overwriting the oldest message. */
-	for (size_t y = TERMINAL_START+1; y < VGA_HEIGHT; y++)
-	{
-		for (size_t x = 0; x < TERMINAL_WIDTH; x++)
-		{
-			const size_t index = y * VGA_WIDTH + x;
-			const size_t index_b = (y+1) * VGA_WIDTH + x;
-			terminal_buffer[index] = terminal_buffer[index_b];
-		}
-	}
-
-	/* clear last line of terminal */
-	for (size_t x = 0; x < TERMINAL_WIDTH; x++)
-	{
-		const size_t index = VGA_HEIGHT * VGA_WIDTH + x;
-		terminal_buffer[index] = vga_entry(' ', terminal_color);
-	}
+	scr_scroll(TERMINAL_WIDTH, TERMINAL_START);
 }
 
-/**
- * Clears the terminal window.
- * @return void
- */
-void terminal_clear()
-{	
-	/* Clears the terminal window */
-	for (size_t y = TERMINAL_START+1; y < VGA_HEIGHT; y++)
-	{
-		for (size_t x = 0; x < TERMINAL_WIDTH; x++)
-		{
-			const size_t index = y * VGA_WIDTH + x;
-			terminal_buffer[index] = vga_entry(' ', terminal_color);
-		}
-	}
-}
  
 /**
  * Defines color to use for printing.
@@ -273,32 +260,18 @@ void terminal_setcolor(uint8_t color)
 }
 
 /**
- * Puts a given character to the specified screen location.
- * @param char c character to put on screen.
- * @param uint8_t color of character
- * @param size_t x coordinate
- * @param size_t y coordinate
- * @return void
- */
-static void __terminal_putentryat(unsigned char c, uint8_t color, size_t x, size_t y)
-{
-	const size_t index = y * VGA_WIDTH + x;
-	terminal_buffer[index] = vga_entry(c, color);
-}
-
-/**
  * Puts a given character to the terminal.
  * @param char c character to put on screen.
  * @return void
  */
-static void __terminal_putchar(char c)
+void __terminal_putchar(char c)
 {
 	unsigned char uc = c;
 
 	if(c == newline)
 	{
 		terminal_column = 0;
-		if(terminal_row < VGA_HEIGHT)
+		if(terminal_row < SCREEN_HEIGHT-1)
 		{
 			terminal_row += 1;
 			return;
@@ -311,7 +284,7 @@ static void __terminal_putchar(char c)
 	{
 		return;
 	}
-	__terminal_putentryat(uc, terminal_color, terminal_column, terminal_row);
+	scrput(terminal_column, terminal_row, uc, terminal_color);
 	terminal_column++;
 }
  
@@ -323,10 +296,24 @@ static void __terminal_putchar(char c)
  */
 void terminal_write(const char* data, size_t size)
 {
-	__terminal_putchar('>');
+	__terminal_putchar('<');
 	__terminal_putchar(' ');
 	for (size_t i = 0; i < size; i++)
 		__terminal_putchar(data[i]);
+}
+
+
+/**
+ * Terminal write with formatting using stdarg.
+ * Usage: twritef("10 + 10 = %d\\n", 10+10);
+ * @param char* string to format and write.
+ * @param ... variable arguments
+ * @see twrite
+ * @return void
+ */
+void twritef(char* str, ...)
+{
+	
 }
 
 /**

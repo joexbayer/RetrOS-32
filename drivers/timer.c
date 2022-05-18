@@ -1,4 +1,5 @@
 #include <timer.h>
+#include <screen.h>
 #include <terminal.h>
 #include <interrupts.h>
 
@@ -11,7 +12,7 @@ static void timer_callback()
 	tick = (tick+1) % 1000;
 	char test[100];
 	itoa(tick % 1000, test);
-	scrwrite(10, 10, test);
+	scrwrite(10, 10, test, VGA_COLOR_DARK_GREY);
 }
 
 void init_timer(uint32_t frequency)

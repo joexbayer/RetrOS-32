@@ -3,10 +3,12 @@
 #include <terminal.h>
 #include <interrupts.h>
 #include <timer.h>
+#include <screen.h>
 
 void _main(uint32_t debug) {
     /* Initialize terminal interface */
 	terminal_initialize();
+	shell_init();
 	init_interrupts();
 	init_keyboard();
 	init_timer(1);
@@ -15,7 +17,7 @@ void _main(uint32_t debug) {
 	{
 		twrite("Hello world\n");
 	}
-	scrwrite(1, 1, "Running... !");
+	scrwrite(1, 1, "Running... !", VGA_COLOR_WHITE);
 
 	int test_int = 0;
 	/* Testing printing ints and hex */
