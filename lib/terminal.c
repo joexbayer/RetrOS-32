@@ -50,7 +50,7 @@ static uint8_t shell_column = 0;
 char shell_buffer[25];
 
 /* SHELL PROTOTYPES */
-void shell_init(void);
+void init_shell(void);
 void shell_put(char c);
 void shell_clear();
 
@@ -86,7 +86,7 @@ void shell_put(char c)
 	unsigned char uc = c;
 	if(uc == newline)
 	{
-		shell_init();
+		init_shell();
 		// call execute command to kernel
 		return;
 	}

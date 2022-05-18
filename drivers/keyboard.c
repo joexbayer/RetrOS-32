@@ -50,20 +50,34 @@ unsigned char kbdus[128] =
     0,	/* F12 Key */
     0,	/* All other keys are undefined */
 };
-
+ 
 static int __keyboard_presses = 0;
+static uint8_t __shift_pressed = 0;
 
 static void kb_callback()
 {
 	uint8_t scancode = inportb(0x60); /* Recieve scancode, also ACK's interrupt? */
-	if(scancode & 0x80) /* Shift, alt or ctrl*/
-	{
-		
+	switch (scancode) {
+		case 0x2a: /* shift down */
+			__shift_pressed = 1;
+			return;
+			break;
+		case 0xaa: /* shift up */
+			__shift_pressed = 0;
+			return;
+			break;
+
+		default:
+			break;
 	}
-	else
+
+	if(scancode & 0x80)
 	{
-		shell_put(kbdus[scancode]);
+		return;
 	}
+
+	char c = kbdus[scancode];
+	shell_put( __shift_pressed ? c+('A'-'a') : c);
 	__keyboard_presses++;
 
 	/* Keep track of how many keyboard presses. */
