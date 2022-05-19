@@ -81,9 +81,7 @@ static void kb_callback()
 	__keyboard_presses++;
 
 	/* Keep track of how many keyboard presses. */
-	char test[10];
-	itoa(__keyboard_presses, test);
-	scrwrite(10, 20, test, VGA_COLOR_WHITE);
+	scrprintf(30, 10, "PS/2 KB: %d", __keyboard_presses);
 }
 void init_keyboard()
 {

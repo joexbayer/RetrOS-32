@@ -22,7 +22,7 @@ else
 	LD=i386-elf-ld
 endif
 
-KERNELOBJ = entry.o kernel.o terminal.o pci.o util.o interrupts.o irs_entry.o timer.o keyboard.o screen.o
+KERNELOBJ = entry.o kernel.o terminal.o pci.o util.o interrupts.o irs_entry.o timer.o keyboard.o screen.o pcb.o
 BOOTOBJ = bootloader.o
 
 .PHONY: all new image clean boot

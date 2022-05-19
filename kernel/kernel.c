@@ -5,6 +5,7 @@
 #include <interrupts.h>
 #include <timer.h>
 #include <screen.h>
+#include <pcb.h>
 
 void _main(uint32_t debug) {
     /* Initialize terminal interface */
@@ -18,9 +19,9 @@ void _main(uint32_t debug) {
 	{
 		twrite("Hello world\n");
 	}
-	scrwrite(1, 1, "Running... !", VGA_COLOR_WHITE);
+	char* hello = "Hello!";
+	scrprintf(1, 1, "Format Text Test:\nStrings: %s\nInt: %d\nHex: 0x%x", hello, 10, 2412345);
 
-	int test_int = 0;
 	/* Testing printing ints and hex */
 	char test[1000];
 	itohex(3735928559, test);
@@ -37,13 +38,10 @@ void _main(uint32_t debug) {
 	asm volatile ("int $33");
 	//asm volatile ("int $31");
 
-	int mem = 0;
-	while(1){
-		test_int = (test_int+1) % 100000000;
-		if(test_int % 100000000 == 0)
-		{
-			draw_mem_usage(mem++);
-		}
-	};
+	draw_mem_usage(10);
+
+	init_pcbs();
+
+	while(1){};
 
 }

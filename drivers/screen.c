@@ -1,4 +1,7 @@
 #include <screen.h>
+#include <stdarg.h>
+
+#define MAX_FMT_STR_SIZE 25
 
 uint16_t* const VGA_MEMORY = (uint16_t*) 0xB8000;
 
@@ -33,7 +36,7 @@ void scrwrite(int x, int y, char* str, uint8_t color)
 {
 	for (size_t i = 0; i < strlen(str); i++)
 	{
-		size_t index = x * SCREEN_WIDTH + (i + y);
+		const size_t index = y * SCREEN_WIDTH + (x+i);
 		VGA_MEMORY[index] = vga_entry(str[i], color);
 	}
 }
@@ -88,4 +91,76 @@ void scr_scroll(size_t width, size_t height)
 		const size_t index = SCREEN_HEIGHT * SCREEN_WIDTH + x;
 		VGA_MEMORY[index] = vga_entry(' ', 0);
 	}
+}
+
+/**
+ * Writes the given string with formats to screen on give location.
+ * @param int x coordinate
+ * @param int y coordinate
+ * @param char* format string
+ * @param ... variable parameters
+ * @return number of bytes written
+ */
+int32_t scrprintf(int32_t x, int32_t y, char* fmt, ...)
+{
+	va_list args;
+
+	int x_offset = 0;
+	int newlines = 0;
+	int written = 0;
+	char str[MAX_FMT_STR_SIZE];
+	int num = 0;
+
+	va_start(args, fmt);
+
+	while (*fmt != '\0') {
+		switch (*fmt)
+		{
+			case '%':
+				memset(str, 0, MAX_FMT_STR_SIZE);
+				switch (*(fmt+1))
+				{
+					case 'd':
+					case 'i': ;
+						num = va_arg(args, int);
+						itoa(num, str);
+						scrwrite(x+x_offset, y, str, VGA_COLOR_WHITE);
+						x_offset += strlen(str);
+						break;
+					case 'x':
+					case 'X': ;
+						num = va_arg(args, int);
+						itohex(num, str);
+						scrwrite(x+x_offset, y, str, VGA_COLOR_WHITE);
+						x_offset += strlen(str);
+						break;
+					case 's': ;
+						char* str_arg = va_arg(args, char *);
+						scrwrite(x+x_offset, y, str_arg, VGA_COLOR_WHITE);
+						x_offset += strlen(str_arg);
+						break;
+					case 'c': ;
+						char char_arg = (char)va_arg(args, int);
+						scrput(x+x_offset, y, char_arg, VGA_COLOR_WHITE);
+						x_offset++;
+						break;
+					
+					default:
+						break;
+				}
+				fmt++;
+				break;
+			case '\n':
+				y++;
+				written += x_offset;
+				x_offset = 0;
+				break;
+			default:  
+				scrput(x+x_offset, y, *fmt, VGA_COLOR_WHITE);
+				x_offset++;
+			}
+        fmt++;
+    }
+	written += x_offset;
+	return written;
 }

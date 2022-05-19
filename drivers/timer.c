@@ -2,6 +2,7 @@
 #include <screen.h>
 #include <terminal.h>
 #include <interrupts.h>
+#include <pcb.h>
 
 #define PIT_IRQ		32
 
@@ -10,9 +11,11 @@ static int tick = 0;
 static void timer_callback()
 {
 	tick = (tick+1) % 1000;
-	char test[100];
-	itoa(tick % 1000, test);
-	scrwrite(10, 10, test, VGA_COLOR_DARK_GREY);
+	scrprintf(10, 10, "PIT: %d", tick);
+	if(current_running != NULL)
+	{
+		yield();
+	}
 }
 
 void init_timer(uint32_t frequency)

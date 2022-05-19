@@ -17,9 +17,9 @@ enum ASCII {
 static const char newline = '\n';
 static const char backspace = '\b';
 
-static const size_t TERMINAL_START = (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5);
-static const size_t TERMINAL_WIDTH = (SCREEN_WIDTH/3);
-static const size_t MEMORY_WIDTH = (SCREEN_WIDTH/3)+(SCREEN_WIDTH/6);
+#define TERMINAL_START (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)
+#define TERMINAL_WIDTH (SCREEN_WIDTH/3)
+#define MEMORY_WIDTH (SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)
 
  /*
 	TERMINAL
@@ -75,7 +75,7 @@ void init_shell(void)
 	shell_column = 1;
 	shell_clear();
 	terminal_setcolor(VGA_COLOR_LIGHT_BLUE);
-	scrwrite(SHELL_POSITION, 0, ">", VGA_COLOR_LIGHT_CYAN);
+	scrwrite(0, SHELL_POSITION, ">", VGA_COLOR_LIGHT_CYAN);
 	screen_set_cursor(shell_column, SHELL_POSITION);
 	terminal_setcolor(VGA_COLOR_WHITE);
 }
@@ -221,14 +221,14 @@ void init_terminal(void)
 	/* Clears screen */
 	scr_clear();
 
-	scrwrite(0, 20, "   ___             ______                       ", VGA_COLOR_MAGENTA);
-	scrwrite(1, 20, "  |_  |            | ___ \\                      ", VGA_COLOR_MAGENTA);
-	scrwrite(2, 20, "    | | ___   ___  | |_/ / __ _ _   _  ___ _ __ ", VGA_COLOR_MAGENTA);
-	scrwrite(3, 20, "    | |/ _ \\ / _ \\ | ___ \\/ _` | | | |/ _ | '__|", VGA_COLOR_MAGENTA);
-	scrwrite(4, 20, "/\\__/ | (_) |  __/ | |_/ | (_| | |_| |  __| |   ", VGA_COLOR_MAGENTA);
-	scrwrite(5, 20, "\\____/ \\___/ \\___| \\____/ \\__,_|\\__, |\\___|_|   ", VGA_COLOR_MAGENTA);
-	scrwrite(6, 20, "                                 __/ |          ", VGA_COLOR_MAGENTA);
-	scrwrite(7, 20, "                                |___/           ", VGA_COLOR_MAGENTA);
+	scrwrite(20, 0, "   ___             ______                       ", VGA_COLOR_MAGENTA);
+	scrwrite(20, 1, "  |_  |            | ___ \\                      ", VGA_COLOR_MAGENTA);
+	scrwrite(20, 2, "    | | ___   ___  | |_/ / __ _ _   _  ___ _ __ ", VGA_COLOR_MAGENTA);
+	scrwrite(20, 3, "    | |/ _ \\ / _ \\ | ___ \\/ _` | | | |/ _ | '__|", VGA_COLOR_MAGENTA);
+	scrwrite(20, 4, "/\\__/ | (_) |  __/ | |_/ | (_| | |_| |  __| |   ", VGA_COLOR_MAGENTA);
+	scrwrite(20, 5, "\\____/ \\___/ \\___| \\____/ \\__,_|\\__, |\\___|_|   ", VGA_COLOR_MAGENTA);
+	scrwrite(20, 6, "                                 __/ |          ", VGA_COLOR_MAGENTA);
+	scrwrite(20, 7, "                                |___/           ", VGA_COLOR_MAGENTA);
 
 	__terminal_draw_lines();
 	__terminal_ui_text();
@@ -299,20 +299,6 @@ void terminal_write(const char* data, size_t size)
 	__terminal_putchar(' ');
 	for (size_t i = 0; i < size; i++)
 		__terminal_putchar(data[i]);
-}
-
-
-/**
- * Terminal write with formatting using stdarg.
- * Usage: twritef("10 + 10 = %d\\n", 10+10);
- * @param char* string to format and write.
- * @param ... variable arguments
- * @see twrite
- * @return void
- */
-void twritef(char* str, ...)
-{
-	
 }
 
 /**
