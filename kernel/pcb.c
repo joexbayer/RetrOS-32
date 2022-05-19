@@ -40,7 +40,7 @@ void pcb_function2()
 
 uint32_t function_ptrs[] = {(uint32_t) &pcb_function, (uint32_t) &pcb_function2};
 
-int init_pcb(pcb_t* pcb, uint32_t entry)
+int init_pcb(int pid, pcb_t* pcb, uint32_t entry)
 {
     uint32_t stack = mem_start+stack_size+stack_used;
     stack_used += stack_size;
@@ -48,6 +48,7 @@ int init_pcb(pcb_t* pcb, uint32_t entry)
     pcb->esp = stack;
     pcb->eip = entry;
     pcb->running = 0;
+    pcb->pid = pid;
 
     return 1;
 }
@@ -77,8 +78,8 @@ void init_pcbs()
     current_running = &pcbs[0];
     for (size_t i = 0; i < NUM_OF_PCBS; i++)
     {   
-        init_pcb(&pcbs[i], function_ptrs[i]);
-        scrprintf(51, 18+i, "PCB %d: 0x%x, 0x%x\n", i, pcbs[i].esp, pcbs[i].eip);
+        init_pcb(i, &pcbs[i], function_ptrs[i]);
+        scrprintf(51, 18+i, "PCB %d: 0x%x, 0x%x\n", pcbs[i].pid, pcbs[i].esp, pcbs[i].eip);
         
         if(i == NUM_OF_PCBS-1)
         {

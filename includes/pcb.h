@@ -12,7 +12,9 @@ struct pcb_t {
       uint32_t esp;
       uint32_t eip;
       uint32_t fpu[32];
+      /* DO NOT NOT CHANGE ABOVE.*/
       uint8_t running;
+      uint16_t pid;
 
       struct pcb_t *next;
 }__attribute__((__packed__));
