@@ -110,7 +110,8 @@ setup_gdt:
     ljmp $0x8, $enter32
 
 /* Set a20 line from: http://www.brokenthorn.com/Resources/OSDev9.html*/
-set_a20: 
+set_a20:
+
     inb     $0x64,%al               # Wait for not busy
     testb   $0x2,%al
     jnz     set_a20
@@ -125,6 +126,11 @@ set_a20.2:
 
     movb    $0xdf,%al               # 0xdf -> port 0x60
     outb    %al,$0x60
+
+    # Fast gate a20
+    in $0x92, %al
+    or $2, %al
+    out %al, $0x92
     retw
 
 error:

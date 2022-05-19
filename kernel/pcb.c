@@ -4,6 +4,7 @@
 #define NUM_OF_PCBS 2
 #define stack_size 0x2000
 #define mem_start 0x100000
+#define mem_end 0xEFFFFF
 
 int stack_used = 0; // temp while no memory management
 

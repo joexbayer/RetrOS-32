@@ -7,6 +7,9 @@
 #include <screen.h>
 #include <pcb.h>
 
+#define mem_start 0x100000
+#define mem_end 0xEFFFFF
+
 void _main(uint32_t debug) {
     /* Initialize terminal interface */
 	init_terminal();
@@ -39,6 +42,8 @@ void _main(uint32_t debug) {
 	//asm volatile ("int $31");
 
 	draw_mem_usage(10);
+
+    scrprintf(0,0, "Memory: %d free (0x%x)", (mem_end-mem_start), mem_end-mem_start);
 
 	init_pcbs();
 
