@@ -46,8 +46,8 @@ uint32_t function_ptrs[] = {(uint32_t) &pcb_function, (uint32_t) &pcb_function2}
 
 int init_pcb(int pid, pcb_t* pcb, uint32_t entry)
 {
-    uint32_t stack = alloc(stack_size);
-    if(stack == NULL)
+    uint32_t stack = (uint32_t) alloc(stack_size);
+    if((void*)stack == NULL)
     {
         scrprintf(10, 14, "STACK == NULL");
         return -1;

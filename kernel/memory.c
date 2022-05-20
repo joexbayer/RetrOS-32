@@ -20,7 +20,7 @@ void free(void* ptr);
 /* Helper functions */
 int _alloc_chunks(int i, int chunks_needed)
 {
-	for (size_t j = 0; j < chunks_needed; j++)
+	for (int j = 0; j < chunks_needed; j++)
 	{
 		if(chunks[i+j].status != FREE)
 		{
@@ -49,11 +49,11 @@ void* alloc(uint16_t size)
 {
 	CLI();
 
-	if(size == 0) NULL;
+	if(size == 0) return NULL;
 	int chunks_needed = size / MEM_CHUNK;
 
 	if(!chunks_needed) chunks_needed = 1;
-	for (size_t i = 0; i < CHUNKS_SIZE; i++)
+	for (int i = 0; i < CHUNKS_SIZE; i++)
 	{
 		if(chunks[i].status == FREE)
 		{	
@@ -61,7 +61,7 @@ void* alloc(uint16_t size)
 			if(!ret) break;
 			
 			/* Found enough continious chunks for size. */
-			for (size_t j = 0; j < chunks_needed; j++)
+			for (int j = 0; j < chunks_needed; j++)
 			{
 				chunks[i+j].status = USED;
 			}
@@ -86,15 +86,15 @@ void* alloc(uint16_t size)
 void free(void* ptr)
 {
 	CLI();
-	if(ptr == NULL) return -1;
-	for (size_t i = 0; i < CHUNKS_SIZE; i++)
+	if(ptr == NULL) return;
+	for (int i = 0; i < CHUNKS_SIZE; i++)
 	{
 		if(chunks[i].from == ptr)
 		{
 			if(chunks[i].status != USED) return; /* Tried to free memory not used. */
 
 			int used = chunks[i].chunks_used;
-			for (size_t j = 0; j < used; j++)
+			for (int j = 0; j < used; j++)
 			{
 				chunks[i+j].status = FREE;
 				chunks[i+j].chunks_used = 0;
@@ -116,7 +116,7 @@ void free(void* ptr)
 void init_memory()
 {
 	uint32_t mem_position = MEM_START;
-	for (size_t i = 0; i < CHUNKS_SIZE; i++)
+	for (int i = 0; i < CHUNKS_SIZE; i++)
 	{
 		chunks[i].size = MEM_CHUNK;
 		chunks[i].from = mem_position;

@@ -106,7 +106,6 @@ int32_t scrprintf(int32_t x, int32_t y, char* fmt, ...)
 	va_list args;
 
 	int x_offset = 0;
-	int newlines = 0;
 	int written = 0;
 	char str[MAX_FMT_STR_SIZE];
 	int num = 0;
