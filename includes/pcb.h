@@ -23,5 +23,7 @@ typedef struct pcb_t pcb_t;
 extern pcb_t* current_running;
 void context_switch();
 void init_pcbs();
+void start_tasks();
+int add_pcb(uint32_t entry);
 
 #endif

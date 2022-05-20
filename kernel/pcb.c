@@ -1,15 +1,14 @@
 #include <pcb.h>
 #include <screen.h>
+#include <memory.h>
 
-#define NUM_OF_PCBS 2
+#define MAX_NUM_OF_PCBS 10
 #define stack_size 0x2000
-#define mem_start 0x100000
-#define mem_end 0xEFFFFF
 
-int stack_used = 0; // temp while no memory management
-
-pcb_t pcbs[NUM_OF_PCBS];
-pcb_t *current_running = NULL;
+pcb_t pcbs[MAX_NUM_OF_PCBS];
+pcb_t* current_running = NULL;
+pcb_t* last_added = &pcbs[0];
+int pcb_count = 0;
 
 void pcb_function()
 {
@@ -19,8 +18,10 @@ void pcb_function()
 		num = (num+1) % 100000000;
 		if(num % 100000000 == 0)
 		{  
+            void* ptr = alloc(0x1000*(rand()%5+1));
             progress++;
 			scrprintf(10, 11, "Process 1: %d", progress);
+            //free(ptr);
 		}
 	};
 }
@@ -33,8 +34,10 @@ void pcb_function2()
 		num = (num+1) % 100000000;
 		if(num % 100000000 == 0)
 		{  
+            void* ptr = alloc(0x1000*(rand()%5+1));
             progress++;
 			scrprintf(30, 11, "Process 2: %d", progress);
+            free(ptr);
 		}
 	};
 }
@@ -43,10 +46,16 @@ uint32_t function_ptrs[] = {(uint32_t) &pcb_function, (uint32_t) &pcb_function2}
 
 int init_pcb(int pid, pcb_t* pcb, uint32_t entry)
 {
-    uint32_t stack = mem_start+stack_size+stack_used;
-    stack_used += stack_size;
-    pcb->ebp = stack;
-    pcb->esp = stack;
+    uint32_t stack = alloc(stack_size);
+    if(stack == NULL)
+    {
+        scrprintf(10, 14, "STACK == NULL");
+        return -1;
+    }
+
+    /* Stack grows down so we want the upper part of allocated memory.*/ 
+    pcb->ebp = stack+stack_size-1;
+    pcb->esp = stack+stack_size-1;
     pcb->eip = entry;
     pcb->running = 0;
     pcb->pid = pid;
@@ -54,10 +63,31 @@ int init_pcb(int pid, pcb_t* pcb, uint32_t entry)
     return 1;
 }
 
-void start_multitasks()
-{
+int add_pcb(uint32_t entry)
+{   
+    CLI();
+    if(MAX_NUM_OF_PCBS == pcb_count)
+    {
+        return -1;
+    }
+
+    int ret = init_pcb(pcb_count, &pcbs[pcb_count], entry);
+    if(!ret) return ret;
+
+    /* Change the linked list so that the last (new) element points to start. */
+    last_added->next = &pcbs[pcb_count];
+    pcbs[pcb_count].next = &pcbs[0];
+    last_added = &pcbs[pcb_count];
+
+    pcb_count++;
+    STI();
+    return pcb_count;
+}   
+
+void start_pcb()
+{   
     current_running->running = RUNNING;
-    _start_pcb();
+    _start_pcb(); /* asm function */
 }
 
 void yield()
@@ -70,24 +100,25 @@ void context_switch()
     current_running = current_running->next;
     if(!current_running->running)
     {
-        start_multitasks();
+        start_pcb();
     }
 }
 
 void init_pcbs()
 {   
-    current_running = &pcbs[0];
-    for (size_t i = 0; i < NUM_OF_PCBS; i++)
+    for (size_t i = 0; i < 2; i++)
     {   
-        init_pcb(i, &pcbs[i], function_ptrs[i]);
+        int ret = add_pcb(function_ptrs[i]);
+        if(!ret) return; // error
+
         scrprintf(51, 18+i, "PCB %d: 0x%x, 0x%x\n", pcbs[i].pid, pcbs[i].esp, pcbs[i].eip);
-        
-        if(i == NUM_OF_PCBS-1)
-        {
-            pcbs[i].next = &pcbs[0];
-            continue;
-        }
-        pcbs[i].next = &pcbs[i+1];
     }
-    start_multitasks();
+}
+
+void start_tasks()
+{
+    current_running = &pcbs[0];
+    start_pcb();
+
+    /* We will never reach this.*/
 }

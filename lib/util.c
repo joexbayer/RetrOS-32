@@ -14,6 +14,11 @@ size_t strlen(const char* str)
   from: https://forum.osdev.org/viewtopic.php?t=18119
 */
 
+/**
+ * void *dest, const void *src, size_t n
+ *
+ * @return void*
+ */
 void* memcpy(void *dest, const void *src, size_t n)
 {
 	uint32_t num_dwords	= n / 4;
@@ -36,7 +41,11 @@ void* memcpy(void *dest, const void *src, size_t n)
 
 	return dest;
 }
-
+/**
+ * void *dest, int val, size_t n
+ *
+ * @return void*
+ */
 void* memset(void *dest, int val, size_t n)
 {
 	uint32_t num_dwords = n / 4;
@@ -190,4 +199,12 @@ void outportw(uint16_t portid, uint16_t value)
 void outportl(uint16_t portid, uint32_t value)
 {
     asm volatile("outl %%eax, %%dx":: "d"(portid), "a"(value));
+}
+
+/* https://wiki.osdev.org/Random_Number_Generator */
+static unsigned long int next = 1;  // NB: "unsigned long int" is assumed to be 32 bits wide
+int rand(void)  // RAND_MAX assumed to be 32767
+{
+    next = next * 1103515245 + 12345;
+    return (unsigned int) (next / 65536) % 32768;
 }

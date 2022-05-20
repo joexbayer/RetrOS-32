@@ -6,17 +6,20 @@
 #include <timer.h>
 #include <screen.h>
 #include <pcb.h>
+#include <memory.h>
 
-#define mem_start 0x100000
-#define mem_end 0xEFFFFF
 
+/* This functions always needs to be on top? */
 void _main(uint32_t debug) {
     /* Initialize terminal interface */
+	CLI();
 	init_terminal();
 	init_shell();
 	init_interrupts();
 	init_keyboard();
 	init_timer(1);
+	init_memory();
+	init_pcbs();
 
 	if(debug == 0xDEADBEEF)
 	{
@@ -43,9 +46,7 @@ void _main(uint32_t debug) {
 
 	draw_mem_usage(10);
 
-    scrprintf(0,0, "Memory: %d free (0x%x)", (mem_end-mem_start), mem_end-mem_start);
-
-	init_pcbs();
+	start_tasks();
 
 	while(1){};
 

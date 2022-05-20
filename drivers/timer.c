@@ -39,5 +39,4 @@ void init_timer(uint32_t frequency)
 	outportb(0x40, h);
 
 	twrite("PIT initialized.\n");
-    STI();
 }
