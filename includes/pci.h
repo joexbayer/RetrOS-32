@@ -32,6 +32,8 @@ typedef struct pci_device {
     uint16_t device;
     uint16_t vendor;
 
+	uint8_t irq;
+
     uint16_t class;
     struct pci_driver *driver;
 

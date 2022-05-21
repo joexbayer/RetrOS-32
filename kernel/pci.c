@@ -35,7 +35,12 @@ inline uint16_t pci_get_device_class(bus, slot, function)
     return (pci_read_word(bus,slot,function,0xA) & 0xFF00) >> 8;
 }
 
-void pci_register_device(uint32_t bus, uint32_t slot, uint32_t function, uint16_t vendor, uint16_t device, uint16_t class)
+inline uint8_t pci_get_device_irq(uint16_t bus, uint16_t slot, uint16_t func)
+{
+    return (uint8_t) (pci_read_word(bus, slot, func, 0x3C) & 0x00ff);
+}
+
+void pci_register_device(uint32_t bus, uint32_t slot, uint32_t function, uint16_t vendor, uint16_t device, uint16_t class, uint8_t irq)
 {
 
 	pci_device_t pci_dev;
@@ -46,6 +51,7 @@ void pci_register_device(uint32_t bus, uint32_t slot, uint32_t function, uint16_
     pci_dev.slot = slot;
     pci_dev.function = function;
 	pci_dev.class = class;
+	pci_dev.irq = irq;
 
 	_pci_devices[_pci_devices_size] = pci_dev;
 	_pci_devices_size++;
@@ -70,9 +76,11 @@ void init_pci()
 
                     uint16_t device = pci_read_word(bus, slot, function, 2);
 					uint16_t class = pci_get_device_class(bus, slot, function);
+					uint8_t irq = pci_get_device_irq(bus, slot ,function);
 
-					pci_register_device(bus, slot, function, vendor, device, class);
-					scrprintf(pcb_x, pcb_y+devices_found, "V: 0x%x, D: 0x%x, %s", vendor, device, pci_classes[class]);
+					pci_register_device(bus, slot, function, vendor, device, class, irq);
+
+					scrprintf(pcb_x, pcb_y+devices_found, "V: 0x%x, D: 0x%x, %s, IRQ: %d", vendor, device, pci_classes[class], irq);
                     devices_found++;
             }
         }
