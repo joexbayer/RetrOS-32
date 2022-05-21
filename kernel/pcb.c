@@ -21,7 +21,7 @@ void pcb_function()
             void* ptr = alloc(0x1000*(rand()%5+1));
             progress++;
 			scrprintf(10, 11, "Process 1: %d", progress);
-            //free(ptr);
+            free(ptr);
 		}
 	};
 }

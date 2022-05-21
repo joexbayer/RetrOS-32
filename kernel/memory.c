@@ -6,7 +6,7 @@
 
 #define MEM_CHUNK 0x1000
 
-#define CHUNKS_SIZE 300
+#define CHUNKS_SIZE 3200
 
 mem_chunk_t chunks[CHUNKS_SIZE];
 uint16_t chunks_used = 0;
@@ -18,7 +18,7 @@ void free(void* ptr);
 
 
 /* Helper functions */
-int _alloc_chunks(int i, int chunks_needed)
+int _check_chunks(int i, int chunks_needed)
 {
 	for (int j = 0; j < chunks_needed; j++)
 	{
@@ -57,7 +57,7 @@ void* alloc(uint16_t size)
 	{
 		if(chunks[i].status == FREE)
 		{	
-			int ret = _alloc_chunks(i, chunks_needed);
+			int ret = _check_chunks(i, chunks_needed);
 			if(!ret) break;
 			
 			/* Found enough continious chunks for size. */

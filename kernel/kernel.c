@@ -17,9 +17,10 @@ void _main(uint32_t debug) {
 	init_shell();
 	init_interrupts();
 	init_keyboard();
-	init_timer(1);
 	init_memory();
 	init_pcbs();
+	init_pci();
+	init_timer(1);
 
 	if(debug == 0xDEADBEEF)
 	{
