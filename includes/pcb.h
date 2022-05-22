@@ -17,7 +17,7 @@ struct pcb_t {
       uint16_t pid;
 
       struct pcb_t *next;
-}__attribute__((__packed__));
+}__attribute__((packed));
 typedef struct pcb_t pcb_t;
 
 extern pcb_t* current_running;

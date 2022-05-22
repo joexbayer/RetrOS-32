@@ -1,5 +1,6 @@
 #include <interrupts.h>
 #include <terminal.h>
+#include <screen.h>
 
 #define ISR_LINES	48
 #define PIC1		0x20		/* IO base address for master PIC */
@@ -31,6 +32,9 @@ void isr_handler(registers_t regs)
 		outportb(PIC2, 0x20); /* Slave */	
 	}
 	outportb(PIC1, 0x20); /* Master */
+
+	if(regs.int_no != 0)
+		scrprintf(12, 12, "IRQ: %d", regs.int_no);
 
 	if (handlers[regs.int_no] != 0)
 	{
@@ -64,6 +68,7 @@ static void init_idt()
 	/* Override to use correct entry point*/
 	idt_set_gate(32, (uint32_t) isr32 , 0x08, 0x8E); // PIT timer
 	idt_set_gate(33, (uint32_t) isr33 , 0x08, 0x8E); // Keyboard
+	idt_set_gate(43, (uint32_t) isr43 , 0x08, 0x8E); // e1000
 
 	idt_flush((uint32_t)&idt);
 }

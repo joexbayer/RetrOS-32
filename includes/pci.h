@@ -35,21 +35,22 @@ typedef struct pci_device {
 	uint8_t irq;
 
     uint16_t class;
+
+	uint32_t base;
     struct pci_driver *driver;
 
 } pci_device_t;
 
 /* Struct used to register a driver with its init function and vendor / device. */
 typedef struct pci_driver {
-    char *name;
-
 	uint16_t vendor, device;
-    void (*init)(void);
+    void (*attach)(pci_device_t* dev);
 } pci_driver_t;
 
 
 uint16_t pci_read_word(uint16_t bus, uint16_t slot, uint16_t func, uint16_t offset);
 uint8_t pci_find_device(uint16_t find_vendor, uint16_t find_device);
+void pci_enable_device_busmaster(uint16_t bus, uint16_t slot, uint16_t function);
 void init_pci();
 
 

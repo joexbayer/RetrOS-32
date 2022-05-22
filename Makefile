@@ -22,7 +22,7 @@ else
 	LD=i386-elf-ld
 endif
 
-KERNELOBJ = entry.o kernel.o terminal.o pci.o util.o interrupts.o irs_entry.o timer.o keyboard.o screen.o pcb.o memory.o
+KERNELOBJ = entry.o kernel.o terminal.o pci.o util.o interrupts.o irs_entry.o timer.o keyboard.o screen.o pcb.o memory.o e1000.o
 BOOTOBJ = bootloader.o
 
 .PHONY: all new image clean boot
@@ -69,7 +69,7 @@ vdi:
 	qemu-img convert -f raw -O vdi boot.iso boot.vdi
 
 run:
-	qemu-system-i386 boot.iso
+	qemu-system-i386 -net user -net nic,model=e1000 boot.iso
 
 # For assembling and compiling all .c and .s files.
 %.o: */%.c

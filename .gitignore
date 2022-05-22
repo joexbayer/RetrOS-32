@@ -32,6 +32,7 @@
 *.dylib
 *.iso
 *.img
+*.dat
 
 image
 bin/bootblock
