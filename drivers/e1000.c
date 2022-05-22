@@ -22,13 +22,13 @@ char rx_buf[128][2048];
 
 static void _e1000_reset_tx_desc()
 {
-    memset(tx_desc_list, 0, TX_BUFF_SIZE);
+	memset(tx_desc_list, 0, TX_BUFF_SIZE);
     for (size_t i = 0; i < 32; i++)
     {
-        /* Initialize transmit buffers  */
-        tx_desc_list[i].buffer_addr = tx_buf[i];
-		tx_desc_list[i].status = E1000_TXD_STAT_DD;
-		tx_desc_list[i].cmd = E1000_TXD_CMD_RS | E1000_TXD_CMD_EOP;
+	/* Initialize transmit buffers  */
+	tx_desc_list[i].buffer_addr = tx_buf[i];
+	tx_desc_list[i].status = E1000_TXD_STAT_DD;
+	tx_desc_list[i].cmd = E1000_TXD_CMD_RS | E1000_TXD_CMD_EOP;
     }
 }
 
@@ -37,8 +37,8 @@ static void _e1000_reset_rx_desc()
     memset(rx_desc_list, 0, RX_BUFF_SIZE);
     for (size_t i = 0; i < 128; i++)
     {
-        /* Initialize recv buffers  */
-        rx_desc_list[i].buffer_addr = rx_buf[i];
+	/* Initialize recv buffers  */
+	rx_desc_list[i].buffer_addr = rx_buf[i];
     }
 }
 
@@ -73,7 +73,7 @@ void e1000_tx_init()
     E1000_DEVICE_SET(E1000_TDT) = 0;
 
     /* Enable TX, for more options check e1000.h */
-                                   /* enable tx */  /* pad short packets */ /* collision threshold */       /* collision distance */
+				   /* enable tx */  /* pad short packets */ /* collision threshold */       /* collision distance */
     E1000_DEVICE_SET(E1000_TCTL) = E1000_TCTL_EN   | E1000_TCTL_PSP         | (E1000_TCTL_CT & (0x10 << 4)) | (E1000_TCTL_COLD & (0x40 << 12));
 
 	/* 13.4.34 Transmit IPG Register
