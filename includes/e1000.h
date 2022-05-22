@@ -71,6 +71,9 @@
 #define E1000_RDTR     0x02820  /* RX Delay Timer - RW */
 #define E1000_RADV     0x0282C  /* RX Interrupt Absolute Delay Timer - RW */
 
+#define E1000_RXD_STAT_DD       0x01    /* Descriptor Done */
+#define E1000_ICR      0x000C0	/* Interrupt Cause Read - R/clr */
+
 
 
 /* transmit descriptor */

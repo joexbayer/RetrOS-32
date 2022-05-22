@@ -14,6 +14,7 @@ static void timer_callback()
 	scrprintf(10, 10, "PIT: %d", tick);
 	if(current_running != NULL)
 	{
+		EOI(32);
 		yield();
 	}
 }

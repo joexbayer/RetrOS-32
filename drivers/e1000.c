@@ -102,13 +102,37 @@ void e1000_rx_init()
 	E1000_DEVICE_SET(E1000_RCTL) = E1000_RCTL_EN | E1000_RCTL_SECRC     |    E1000_RCTL_BAM    |     E1000_RCTL_SZ_2048;;	
 }
 
+static int next = 0;
+static int errors = 0;
+int e1000_receive()
+{
+	int tail = E1000_DEVICE_SET(E1000_RDT);
+	if(!(rx_desc_list[next].status & E1000_RXD_STAT_DD))
+	{
+		scrprintf(12, 13, "E1000 INTERRUPT ERROR 0x%x, %x, %d, %d", rx_desc_list[next].status, errors++, tail, next);
+		return -1;
+	}
+
+	int length = rx_desc_list[next].length;
+	char msg[2048];
+
+	memcpy(msg, rx_buf[next], length);
+
+	rx_desc_list[next].status = 0;
+
+	next = (next + 1) % 128;
+
+	E1000_DEVICE_SET(E1000_RDT) = (tail + 1 ) % 128;
+	scrprintf(12, 14, "E1000 READ PACKET 0x%x, size %d", next, length);
+	return 0;
+}
+
 static void e1000_callback()
 {
     scrwrite(12, 12, "E1000 INTERRUPT", VGA_COLOR_LIGHT_BROWN);
-	CLI();
-	while(1){};
+	e1000_receive();
 
-	//e1000[E1000_ICR];
+	E1000_DEVICE_SET(E1000_ICR);
 }
 
 void e1000_attach(pci_device_t* dev)
@@ -127,8 +151,8 @@ void e1000_attach(pci_device_t* dev)
     /* For now.. hard code irq to 11 */
     isr_install(32+11, &e1000_callback);
 
-	E1000_DEVICE_SET(E1000_RDTR) = 0;
-	E1000_DEVICE_SET(E1000_RADV) = 0;
+	E1000_DEVICE_SET(E1000_RDTR) = 100;
+	E1000_DEVICE_SET(E1000_RADV) = 100;
 	E1000_DEVICE_SET(E1000_IMS) = (1 << 7);
 
 }

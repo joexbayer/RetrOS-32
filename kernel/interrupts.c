@@ -24,15 +24,18 @@ void isr_install(size_t i, void (*handler)()) {
 	handlers[i] = handler;
 }
 
-/* Main interrupt handler, calls interrupt specific hanlder if installed. */
-void isr_handler(registers_t regs)
-{	
-	if (regs.int_no >= 40)
+void EOI(int irq)
+{
+	if (irq >= 0x28)
 	{
 		outportb(PIC2, 0x20); /* Slave */	
 	}
 	outportb(PIC1, 0x20); /* Master */
+}
 
+/* Main interrupt handler, calls interrupt specific hanlder if installed. */
+void isr_handler(registers_t regs)
+{	
 	if(regs.int_no != 0)
 		scrprintf(12, 12, "IRQ: %d", regs.int_no);
 
@@ -41,6 +44,7 @@ void isr_handler(registers_t regs)
 		isr_t handler = handlers[regs.int_no];
 		handler();
 	}
+	EOI(regs.int_no);
 }
 
 static void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags)

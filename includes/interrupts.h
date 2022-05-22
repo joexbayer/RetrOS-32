@@ -45,6 +45,7 @@ extern void isr43(registers_t*);
 
 void isr_handler(registers_t regs);
 void isr_install(size_t i, void (*handler)());
+void EOI(int irq);
 
 
 #endif // !INTERRUPTS_H
