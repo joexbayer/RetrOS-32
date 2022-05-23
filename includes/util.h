@@ -25,6 +25,7 @@ typedef unsigned int size_t;
 size_t strlen(const char* str);
 
 void* memset (void *dest, int val, size_t len);
+void* memcpy(void *dest, const void *src, size_t n);
 
 #define CLI() asm ("cli")
 #define STI() asm ("sti")

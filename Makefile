@@ -65,11 +65,14 @@ bindir:
 cleanvid:
 	rm *.vdi
 
+net:
+	sudo tcpdump -qns 0 -X -r dump.dat
+
 vdi:
 	qemu-img convert -f raw -O vdi boot.iso boot.vdi
 
 run:
-	qemu-system-i386 -net user -net nic,model=e1000 boot.iso
+	qemu-system-i386 -device e1000,netdev=net0 -netdev user,id=net0,hostfwd=tcp::5555-:22 -object filter-dump,id=net0,netdev=net0,file=dump.dat boot.iso
 
 # For assembling and compiling all .c and .s files.
 %.o: */%.c
