@@ -11,6 +11,17 @@ static const char* pci_classes[] =
 	[0x4] = "Multimedia device",
 	[0x5] = "Memory controller",
 	[0x6] = "Bridge device",
+    [0x7] = "Simple Communication Controller",
+    [0x8] = "Base System Peripheral",
+    [0x9] = "Input Device Controller",
+    [0xA] = "Docking Station",
+    [0xB] = "Processor",
+    [0xC] = "Serial Bus Controller",
+    [0xD] = "Wireless Controller",
+    [0xE] = "Intelligent Controller",
+    [0xF] = "Satellite Communication Controller",
+    [0x10] = "Encryption Controller",
+    [0x11] = "Signal Processing Controller"
 };
 
 pci_driver_t registered_drivers[] = {
@@ -118,7 +129,12 @@ void init_pci()
 
 					int driver_index = pci_register_device(bus, slot, function, vendor, device, class, irq, base);
 
-					scrprintf(pcb_x, pcb_y+devices_found, "V: 0x%x, D: 0x%x, %s, IRQ: %d", vendor, device, pci_classes[class], irq);
+					scrprintf(pcb_x, pcb_y+devices_found, 
+                                "V: 0x%x, D: 0x%x, %s, IRQ: %d", 
+                                vendor,
+                                device,
+                                class < 0x11 ? pci_classes[class] : pci_classes[0],
+                                irq);
                     devices_found++;
 
                     int i = 0;
