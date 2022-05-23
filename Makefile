@@ -36,13 +36,25 @@ bootblock: $(BOOTOBJ)
 kernel: $(KERNELOBJ)
 	$(LD) -o ./bin/kernel $(addprefix ./bin/,$^) $(LDFLAGS) -T ./kernel/linker.ld
 
+# For assembling and compiling all .c and .s files.
+%.o: */%.c
+	$(CC) -o bin/$@ -c $< $(CCFLAGS)
+
+%.o: */%.s
+	$(AS) -o bin/$@ -c $< $(ASFLAGS)
+
 iso: bindir bootblock kernel
 	dd if=/dev/zero of=boot.iso bs=512 count=961
 	dd if=./bin/bootblock of=boot.iso conv=notrunc bs=512 seek=0 count=1
 	dd if=./bin/kernel of=boot.iso conv=notrunc bs=512 seek=1 count=960
 
+compile: bootblock kernel
+	
 img: iso
 	mv boot.iso boot.img
+
+bindir:
+	mkdir -p bin
 
 clean: bindir
 	rm -f ./bin/*.o
@@ -50,7 +62,7 @@ clean: bindir
 	rm -f ./bin/kernel
 	rm -f *.iso
 
-boot: 
+boot: check
 	sudo dd if=boot.iso of=/dev/disk2 bs=512 count=961 seek=0
 	sync
 
@@ -59,8 +71,9 @@ check:
 	read eas
 	sudo diskutil unmountDisk /dev/disk2
 
-bindir:
-	mkdir -p bin
+
+vdi: cleanvid
+	qemu-img convert -f raw -O vdi boot.iso boot.vdi
 
 cleanvid:
 	rm *.vdi
@@ -68,15 +81,5 @@ cleanvid:
 net:
 	sudo tcpdump -qns 0 -X -r dump.dat
 
-vdi:
-	qemu-img convert -f raw -O vdi boot.iso boot.vdi
-
 run:
 	qemu-system-i386 -device e1000,netdev=net0 -netdev user,id=net0,hostfwd=tcp::5555-:22 -object filter-dump,id=net0,netdev=net0,file=dump.dat boot.iso
-
-# For assembling and compiling all .c and .s files.
-%.o: */%.c
-	$(CC) -o bin/$@ -c $< $(CCFLAGS)
-
-%.o: */%.s
-	$(AS) -o bin/$@ -c $< $(ASFLAGS)
