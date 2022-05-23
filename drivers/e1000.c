@@ -5,8 +5,8 @@
 #define PACKET_SIZE   2048
 #define TX_SIZE 32
 #define RX_SIZE 128
-#define TX_BUFF_SIZE sizeof(e1000_tx_desc_t) * TX_SIZE
-#define RX_BUFF_SIZE sizeof(e1000_rx_desc_t) * RX_SIZE
+#define TX_BUFF_SIZE (sizeof(e1000_tx_desc_t) * TX_SIZE)
+#define RX_BUFF_SIZE (sizeof(e1000_rx_desc_t) * RX_SIZE)
 
 volatile uint32_t *e1000;
 #define E1000_DEVICE_SET(offset) (e1000[offset >> 2])
