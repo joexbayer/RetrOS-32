@@ -21,18 +21,23 @@ char tx_buf[TX_SIZE][PACKET_SIZE];
 e1000_rx_desc_t rx_desc_list[RX_SIZE];
 char rx_buf[RX_SIZE][PACKET_SIZE];
 
+/**
+ * @brief Clears the transmit buffers for the e1000
+ */
 static void _e1000_reset_tx_desc()
 {
 	memset(tx_desc_list, 0, TX_BUFF_SIZE);
     for (size_t i = 0; i < TX_SIZE; i++)
     {
-	/* Initialize transmit buffers  */
-	tx_desc_list[i].buffer_addr = tx_buf[i];
-	tx_desc_list[i].status = E1000_TXD_STAT_DD;
-	tx_desc_list[i].cmd = E1000_TXD_CMD_RS | E1000_TXD_CMD_EOP;
+		/* Initialize transmit buffers  */
+		tx_desc_list[i].buffer_addr = tx_buf[i];
+		tx_desc_list[i].status = E1000_TXD_STAT_DD;
+		tx_desc_list[i].cmd = E1000_TXD_CMD_RS | E1000_TXD_CMD_EOP;
     }
 }
-
+/**
+ * @brief Clears the recieve buffers for the e1000
+ */
 static void _e1000_reset_rx_desc()
 {
     memset(rx_desc_list, 0, RX_BUFF_SIZE);
@@ -42,7 +47,9 @@ static void _e1000_reset_rx_desc()
 	rx_desc_list[i].buffer_addr = rx_buf[i];
     }
 }
-
+/**
+ * @brief Reads in the debug_mac into correct registers.
+ */
 static void _e1000_mac()
 {
 	uint32_t low = 0, high = 0;
@@ -60,6 +67,10 @@ static void _e1000_mac()
 	e1000[(E1000_RAH_AV >> 2)+1] = high | E1000_RAH_AV;
 }
 
+/**
+ * @brief Initializes the e1000 transmit registers
+ * setting control options and giving pointers to transmit buffers.
+ */
 void _e1000_tx_init()
 {
     _e1000_reset_tx_desc();
@@ -83,6 +94,10 @@ void _e1000_tx_init()
     E1000_DEVICE_SET(E1000_TIPG) = 10 | (8 << 10) | (12 << 20);
 }
 
+/**
+ * @brief Initializes the e1000 receive registers
+ * setting control options and giving pointers to receive buffers.
+ */
 void _e1000_rx_init()
 {
 	_e1000_reset_rx_desc();
@@ -129,6 +144,14 @@ drop:
 	return 0;
 }
 
+/**
+ * @brief Put data into correct transmit buffer for e1000
+ * card to transmit. Updates tail pointer.
+ * 
+ * @param buffer data to transmit
+ * @param size of data to transmit
+ * @return int size of data, returns -1 on error.
+ */
 int e1000_transmit(void* buffer, uint16_t size)
 {
 	if(size >= PACKET_SIZE)
@@ -146,7 +169,7 @@ int e1000_transmit(void* buffer, uint16_t size)
 	txdesc->status &= ~E1000_TXD_STAT_DD;
 	E1000_DEVICE_SET(E1000_TDT) = (tail+1) % TX_SIZE;
 
-	return 0;
+	return size;
 }
 
 static void e1000_callback()
