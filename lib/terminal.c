@@ -15,7 +15,6 @@ enum ASCII {
 };
 
 static const char newline = '\n';
-static const char backspace = '\b';
 
 #define TERMINAL_START (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)
 #define TERMINAL_WIDTH (SCREEN_WIDTH/3)

@@ -5,9 +5,9 @@
 #define MAX_NUM_OF_PCBS 10
 #define stack_size 0x2000
 
-pcb_t pcbs[MAX_NUM_OF_PCBS];
-pcb_t* current_running = NULL;
-pcb_t* last_added = &pcbs[0];
+struct pcb pcbs[MAX_NUM_OF_PCBS];
+struct pcb* current_running = NULL;
+struct pcb* last_added = &pcbs[0];
 int pcb_count = 0;
 
 void pcb_function()
@@ -44,7 +44,7 @@ void pcb_function2()
 
 uint32_t function_ptrs[] = {(uint32_t) &pcb_function, (uint32_t) &pcb_function2};
 
-int init_pcb(int pid, pcb_t* pcb, uint32_t entry)
+int init_pcb(int pid, struct pcb* pcb, uint32_t entry)
 {
     uint32_t stack = (uint32_t) alloc(stack_size);
     if((void*)stack == NULL)

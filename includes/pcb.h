@@ -7,7 +7,7 @@ enum {
     RUNNING = 1
 };
 
-struct pcb_t {
+struct pcb {
       uint32_t ebp;
       uint32_t esp;
       uint32_t eip;
@@ -16,14 +16,19 @@ struct pcb_t {
       uint8_t running;
       uint16_t pid;
 
-      struct pcb_t *next;
+      struct pcb *next;
 }__attribute__((packed));
-typedef struct pcb_t pcb_t;
 
-extern pcb_t* current_running;
+
+extern struct pcb* current_running;
 void context_switch();
 void init_pcbs();
 void start_tasks();
 int add_pcb(uint32_t entry);
+void yield();
+
+/* functions in entry.s */
+void _start_pcb();
+void _context_switch();
 
 #endif

@@ -66,8 +66,6 @@
 #define E1000_RA       0x05400  /* Receive Address - RW Array */
 #define E1000_RAH_AV  0x80000000        /* Receive descriptor valid */ 
 
-#define E1000_ICR      0x000C0  /* Interrupt Cause Read - R/clr */¨
-
 #define E1000_RDTR     0x02820  /* RX Delay Timer - RW */
 #define E1000_RADV     0x0282C  /* RX Interrupt Absolute Delay Timer - RW */
 
@@ -76,7 +74,7 @@
 
 
 /* transmit descriptor */
-struct _e1000_tx_desc
+struct e1000_tx_desc
 {
     uint64_t buffer_addr;       /* Address of the descriptor's data buffer */
 
@@ -92,10 +90,9 @@ struct _e1000_tx_desc
  * @brief Used by the NIC to store important information about 
  * the current state of the transmit buffers.
  */
-typedef struct _e1000_tx_desc e1000_tx_desc_t;
 
 /* receive descriptor */
-struct _e1000_rx_desc
+struct e1000_rx_desc
 {
 	uint64_t buffer_addr;
 
@@ -110,9 +107,8 @@ struct _e1000_rx_desc
  * @brief Used by the NIC to store important information
  * about the current state of the recieve buffers.
  */
-typedef struct _e1000_rx_desc e1000_rx_desc_t;
 
-void e1000_attach(pci_device_t* dev);
+void e1000_attach(struct pci_device* dev);
 int e1000_transmit(void* buffer, uint16_t size);
 
 #endif

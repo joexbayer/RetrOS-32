@@ -24,12 +24,12 @@ static const char* pci_classes[] =
     [0x11] = "Signal Processing Controller"
 };
 
-pci_driver_t registered_drivers[] = {
+struct pci_driver registered_drivers[] = {
     {(uint16_t)E1000_VENDOR_ID, (uint16_t)E1000_DEVICE_ID, &e1000_attach},
-    {NULL, NULL, NULL}
+    {0, 0, 0}
 };
 
-pci_device_t _pci_devices[8];
+struct pci_device _pci_devices[8];
 int _pci_devices_size = 0;
 
 /* https://wiki.osdev.org/PCI */
@@ -62,7 +62,7 @@ void pci_write_dword(uint16_t bus, uint16_t slot, uint16_t func, uint16_t offset
 }
 
 /* Inline functions for reading pci device registers */
-inline uint16_t pci_get_device_class(bus, slot, function)
+inline uint16_t pci_get_device_class(uint16_t bus, uint16_t slot, uint16_t function)
 {
     return (pci_read_word(bus,slot,function,0xA) & 0xFF00) >> 8;
 }
@@ -88,7 +88,7 @@ void pci_enable_device_busmaster(uint16_t bus, uint16_t slot, uint16_t function)
 int pci_register_device(uint32_t bus, uint32_t slot, uint32_t function, uint16_t vendor, uint16_t device, uint16_t class, uint8_t irq, uint32_t base)
 {
 
-	pci_device_t pci_dev;
+	struct pci_device pci_dev;
 
     pci_dev.device = device;
     pci_dev.vendor = vendor;
@@ -138,7 +138,7 @@ void init_pci()
                     devices_found++;
 
                     int i = 0;
-                    for (pci_driver_t driver = registered_drivers[i]; driver.vendor != NULL; driver = registered_drivers[i])
+                    for (struct pci_driver driver = registered_drivers[i]; driver.vendor != 0; driver = registered_drivers[i])
                     {
                         if(driver.vendor == vendor && driver.device == device)
                         {

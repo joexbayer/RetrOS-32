@@ -24,7 +24,7 @@ register	offset	bits 31-24		bits 23-16		bits 15-8		bits 7-0
 	  0F		3C	Max latency		Min Grant		Interrupt PIN	Interrupt Line
 */
 
-typedef struct pci_device {
+struct pci_device {
     
     uint32_t bus;
     uint32_t slot;
@@ -39,13 +39,13 @@ typedef struct pci_device {
 	uint32_t base;
     struct pci_driver *driver;
 
-} pci_device_t;
+};
 
 /* Struct used to register a driver with its init function and vendor / device. */
-typedef struct pci_driver {
+struct pci_driver {
 	uint16_t vendor, device;
-    void (*attach)(pci_device_t* dev);
-} pci_driver_t;
+    void (*attach)(struct pci_device* dev);
+};
 
 
 uint16_t pci_read_word(uint16_t bus, uint16_t slot, uint16_t func, uint16_t offset);

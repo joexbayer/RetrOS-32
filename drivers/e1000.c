@@ -1,12 +1,13 @@
 #include <e1000.h>
 #include <screen.h>
+#include <interrupts.h>
 #include <pci.h>
 
 #define PACKET_SIZE   2048
 #define TX_SIZE 32
 #define RX_SIZE 128
-#define TX_BUFF_SIZE (sizeof(e1000_tx_desc_t) * TX_SIZE)
-#define RX_BUFF_SIZE (sizeof(e1000_rx_desc_t) * RX_SIZE)
+#define TX_BUFF_SIZE (sizeof(struct e1000_tx_desc) * TX_SIZE)
+#define RX_BUFF_SIZE (sizeof(struct e1000_rx_desc) * RX_SIZE)
 
 volatile uint32_t *e1000;
 #define E1000_DEVICE_SET(offset) (e1000[offset >> 2])
@@ -15,10 +16,10 @@ volatile uint32_t *e1000;
 uint32_t debug_mac[6] = {0x52, 0x54, 0x00, 0x12, 0x34, 0x56};
 
 /* Allocate space for transmit and recieve buffers. */
-e1000_tx_desc_t tx_desc_list[TX_SIZE];
+struct e1000_tx_desc tx_desc_list[TX_SIZE];
 char tx_buf[TX_SIZE][PACKET_SIZE];
 
-e1000_rx_desc_t rx_desc_list[RX_SIZE];
+struct e1000_rx_desc rx_desc_list[RX_SIZE];
 char rx_buf[RX_SIZE][PACKET_SIZE];
 
 /**
@@ -30,7 +31,7 @@ static void _e1000_reset_tx_desc()
     for (size_t i = 0; i < TX_SIZE; i++)
     {
 		/* Initialize transmit buffers  */
-		tx_desc_list[i].buffer_addr = tx_buf[i];
+		tx_desc_list[i].buffer_addr = (uint32_t)tx_buf[i];
 		tx_desc_list[i].status = E1000_TXD_STAT_DD;
 		tx_desc_list[i].cmd = E1000_TXD_CMD_RS | E1000_TXD_CMD_EOP;
     }
@@ -43,8 +44,8 @@ static void _e1000_reset_rx_desc()
     memset(rx_desc_list, 0, RX_BUFF_SIZE);
     for (size_t i = 0; i < RX_SIZE; i++)
     {
-	/* Initialize recv buffers  */
-	rx_desc_list[i].buffer_addr = rx_buf[i];
+		/* Initialize recv buffers  */
+		rx_desc_list[i].buffer_addr = (uint32_t)rx_buf[i];
     }
 }
 /**
@@ -76,7 +77,7 @@ void _e1000_tx_init()
     _e1000_reset_tx_desc();
 
     /* Set TX buffers for E1000 */
-    E1000_DEVICE_SET(E1000_TDBAL) = tx_desc_list;
+    E1000_DEVICE_SET(E1000_TDBAL) = (uint32_t)tx_desc_list;
     E1000_DEVICE_SET(E1000_TDBAH) = 0;
     E1000_DEVICE_SET(E1000_TDLEN) = TX_BUFF_SIZE;
 
@@ -106,7 +107,7 @@ void _e1000_rx_init()
 	E1000_DEVICE_SET(E1000_ICS) = 0;
 
 	/* Set RX buffers for E1000 */
-	E1000_DEVICE_SET(E1000_RDBAL) = rx_desc_list;
+	E1000_DEVICE_SET(E1000_RDBAL) = (uint32_t)rx_desc_list;
 	E1000_DEVICE_SET(E1000_RDBAH) = 0;
 
 	E1000_DEVICE_SET(E1000_RDLEN) = RX_BUFF_SIZE;
@@ -160,7 +161,7 @@ int e1000_transmit(void* buffer, uint16_t size)
 	char* ptr = (char*) buffer;
 	uint16_t tail = E1000_DEVICE_GET(E1000_TDT);
 
-	e1000_tx_desc_t* txdesc = &tx_desc_list[tail];
+	struct e1000_tx_desc* txdesc = &tx_desc_list[tail];
 	if(!(txdesc->status & E1000_TXD_STAT_DD)) /* Check if status is DD (Descriptor Done) */
 		return -1;
 
@@ -180,7 +181,7 @@ static void e1000_callback()
 	E1000_DEVICE_GET(E1000_ICR);
 }
 
-void e1000_attach(pci_device_t* dev)
+void e1000_attach(struct pci_device* dev)
 {
     scrwrite(50, 13, "Intel E1000:", VGA_COLOR_LIGHT_GREEN);
     scrprintf(50, 14, "Base: 0x%x", dev->base);

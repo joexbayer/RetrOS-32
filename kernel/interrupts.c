@@ -8,8 +8,8 @@
 #define PIC1_DATA	(PIC1+1)
 #define PIC2_DATA	(PIC2+1)
 
-idt_entry_t idt_entries[256];
-idt_ptr_t   idt;
+struct idt_entry idt_entries[256];
+struct idt_ptr   idt;
 
 /*
 	Interrupts , followed tutorial:
@@ -34,7 +34,7 @@ void EOI(int irq)
 }
 
 /* Main interrupt handler, calls interrupt specific hanlder if installed. */
-void isr_handler(registers_t regs)
+void isr_handler(struct registers regs)
 {	
 	if(regs.int_no != 0)
 		scrprintf(12, 12, "IRQ: %d", regs.int_no);
@@ -58,10 +58,10 @@ static void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags
 
 static void init_idt()
 {
-	idt.limit = sizeof(idt_entry_t) * 256 -1;
+	idt.limit = sizeof(struct idt_entry) * 256 -1;
 	idt.base  = (uint32_t)&idt_entries;
 
-	memset(&idt_entries, 0, sizeof(idt_entry_t)*256);
+	memset(&idt_entries, 0, sizeof(struct idt_entry)*256);
 
 	/* Set all ISR_LINES to go to ISR0 */
 	for (size_t i = 0; i < ISR_LINES; i++)

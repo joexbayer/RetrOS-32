@@ -8,13 +8,13 @@ enum {
 	FREE
 };
 
-typedef struct mem_chunk
+struct mem_chunk
 {
 	uint16_t size;
-	void* from;
+	uint32_t* from;
 	uint16_t chunks_used; /* Used when freeing */
 	uint8_t status;
-} mem_chunk_t;
+};
 
 void init_memory();
 void* alloc(uint16_t size);

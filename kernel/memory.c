@@ -8,7 +8,7 @@
 
 #define CHUNKS_SIZE 3200
 
-mem_chunk_t chunks[CHUNKS_SIZE];
+struct mem_chunk chunks[CHUNKS_SIZE];
 uint16_t chunks_used = 0;
 
 /* prototypes */
@@ -119,7 +119,7 @@ void init_memory()
 	for (int i = 0; i < CHUNKS_SIZE; i++)
 	{
 		chunks[i].size = MEM_CHUNK;
-		chunks[i].from = mem_position;
+		chunks[i].from = (uint32_t) mem_position;
 		chunks[i].chunks_used = 0;
 		chunks[i].status = FREE;
 
