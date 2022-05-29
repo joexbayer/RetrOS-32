@@ -18,7 +18,7 @@ static const char newline = '\n';
 
 #define TERMINAL_START (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)
 #define TERMINAL_WIDTH (SCREEN_WIDTH/3)
-#define MEMORY_WIDTH (SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)
+#define PROCESS_WIDTH (SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)
 
  /*
 	TERMINAL
@@ -52,16 +52,16 @@ void __terminal_ui_text()
 		scrput(i+1, TERMINAL_START, term_str[i], terminal_color);
 	}
 
-	const char* mem_str = " MEMORY ";
+	const char* mem_str = " PCI ";
 	for (size_t i = 0; i < strlen(mem_str); i++)
 	{
-		scrput(i+MEMORY_WIDTH, TERMINAL_START, mem_str[i], terminal_color);
+		scrput(i+PROCESS_WIDTH, TERMINAL_START, mem_str[i], terminal_color);
 	}
 
-	const char* exm_str = " EXAMPLE ";
+	const char* exm_str = " PROCESSES ";
 	for (size_t i = 0; i < strlen(exm_str); i++)
 	{
-		scrput(i+(MEMORY_WIDTH+(SCREEN_WIDTH/6)), TERMINAL_START, exm_str[i], terminal_color);
+		scrput(i+(PROCESS_WIDTH+(SCREEN_WIDTH/6)), TERMINAL_START, exm_str[i], terminal_color);
 	}
 
 }
@@ -82,14 +82,14 @@ void draw_mem_usage(int used)
 	/* Fill red with the used memory */
 	for (size_t x = 1; x < mem_size; x++) {
 		for (size_t y = mem_used; y < (SCREEN_WIDTH/6); y++) {
-			scrput(((MEMORY_WIDTH)-2+y), TERMINAL_START+x, 176, VGA_COLOR_LIGHT_RED);
+			scrput(((PROCESS_WIDTH)-2+y), TERMINAL_START+x, 176, VGA_COLOR_LIGHT_RED);
 		}
 	}
 
 	/* Fill green with the free memory. */
 	for (size_t x = 1; x < mem_size; x++) {
 		for (size_t y = 1; y < mem_free; y++) {
-			scrput(((MEMORY_WIDTH)-2+y), TERMINAL_START+x, 176, VGA_COLOR_LIGHT_GREEN);
+			scrput(((PROCESS_WIDTH)-2+y), TERMINAL_START+x, 176, VGA_COLOR_LIGHT_GREEN);
 		}
 	}
 
@@ -110,15 +110,15 @@ void __terminal_draw_lines()
 	/* Vertical lines for memory */
 	terminal_setcolor(VGA_COLOR_LIGHT_GREY);
 	for (size_t x = 0; x < SCREEN_HEIGHT; x++) {
-		scrput(MEMORY_WIDTH-2, TERMINAL_START+x, ASCII_VERTICAL_LINE, terminal_color);
+		scrput(PROCESS_WIDTH-2, TERMINAL_START+x, ASCII_VERTICAL_LINE, terminal_color);
 	}
-	scrput(MEMORY_WIDTH-2, TERMINAL_START, ASCII_DOWN_INTERSECT, terminal_color);
+	scrput(PROCESS_WIDTH-2, TERMINAL_START, ASCII_DOWN_INTERSECT, terminal_color);
 
 	/* Vertical lines for example */
 	for (size_t x = 0; x < SCREEN_HEIGHT; x++) {
-		scrput(((MEMORY_WIDTH+(SCREEN_WIDTH/6))-2), TERMINAL_START+x, ASCII_VERTICAL_LINE, terminal_color);
+		scrput(((PROCESS_WIDTH+(SCREEN_WIDTH/6))-2), TERMINAL_START+x, ASCII_VERTICAL_LINE, terminal_color);
 	}
-	scrput(((MEMORY_WIDTH+(SCREEN_WIDTH/6))-2), TERMINAL_START, ASCII_DOWN_INTERSECT, terminal_color);
+	scrput(((PROCESS_WIDTH+(SCREEN_WIDTH/6))-2), TERMINAL_START, ASCII_DOWN_INTERSECT, terminal_color);
 }
 
 /**

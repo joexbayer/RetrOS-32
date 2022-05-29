@@ -1,7 +1,7 @@
 #include <screen.h>
 #include <stdarg.h>
 
-#define MAX_FMT_STR_SIZE 25
+#define MAX_FMT_STR_SIZE 50
 
 uint16_t* const VGA_MEMORY = (uint16_t*) 0xB8000;
 

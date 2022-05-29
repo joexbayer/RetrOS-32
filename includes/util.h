@@ -23,6 +23,7 @@ typedef unsigned int size_t;
 
 
 size_t strlen(const char* str);
+uint32_t strncmp(const char* str, const char* str2, uint32_t len);
 
 void* memset (void *dest, int val, size_t len);
 void* memcpy(void *dest, const void *src, size_t n);

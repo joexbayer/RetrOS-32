@@ -54,7 +54,7 @@ void _main(uint32_t debug) {
 	//asm volatile ("int $31");
 
 	draw_mem_usage(10);
-	add_pcb(&shell_process);
+	add_pcb(&shell_process, "Shell");
 	STI();
 
 	start_tasks();
