@@ -27,6 +27,7 @@ enum vga_color {
 
 extern uint16_t* const VGA_MEMORY;
 
+void scrcolor_set(enum vga_color fg, enum vga_color bg);
 void scrput(size_t x, size_t y, unsigned char c, uint8_t color);
 void scrwrite(int x, int y, char* str, uint8_t color);
 void screen_set_cursor(int x, int y);

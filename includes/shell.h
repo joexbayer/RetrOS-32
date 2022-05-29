@@ -8,3 +8,4 @@
 void init_shell(void);
 void shell_put(char c);
 void shell_clear();
+void shell_process();

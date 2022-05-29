@@ -9,6 +9,7 @@ static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg)
 {
 	return fg | bg << 4;
 }
+static uint8_t scrcolor = VGA_COLOR_WHITE | VGA_COLOR_BLACK << 4;
  
 static inline uint16_t vga_entry(unsigned char uc, uint8_t color) 
 {
@@ -22,6 +23,11 @@ void screen_set_cursor(int x, int y)
 	outportb(0x3D5, (uint8_t) (pos & 0xFF));
 	outportb(0x3D4, 0x0E);
 	outportb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
+}
+
+void scrcolor_set(enum vga_color fg, enum vga_color bg)
+{
+	scrcolor = vga_entry_color(fg, bg);
 }
 
 /**
@@ -123,24 +129,24 @@ int32_t scrprintf(int32_t x, int32_t y, char* fmt, ...)
 					case 'i': ;
 						num = va_arg(args, int);
 						itoa(num, str);
-						scrwrite(x+x_offset, y, str, VGA_COLOR_WHITE);
+						scrwrite(x+x_offset, y, str, scrcolor);
 						x_offset += strlen(str);
 						break;
 					case 'x':
 					case 'X': ;
 						num = va_arg(args, int);
 						itohex(num, str);
-						scrwrite(x+x_offset, y, str, VGA_COLOR_WHITE);
+						scrwrite(x+x_offset, y, str, scrcolor);
 						x_offset += strlen(str);
 						break;
 					case 's': ;
 						char* str_arg = va_arg(args, char *);
-						scrwrite(x+x_offset, y, str_arg, VGA_COLOR_WHITE);
+						scrwrite(x+x_offset, y, str_arg, scrcolor);
 						x_offset += strlen(str_arg);
 						break;
 					case 'c': ;
 						char char_arg = (char)va_arg(args, int);
-						scrput(x+x_offset, y, char_arg, VGA_COLOR_WHITE);
+						scrput(x+x_offset, y, char_arg, scrcolor);
 						x_offset++;
 						break;
 					
@@ -155,7 +161,7 @@ int32_t scrprintf(int32_t x, int32_t y, char* fmt, ...)
 				x_offset = 0;
 				break;
 			default:  
-				scrput(x+x_offset, y, *fmt, VGA_COLOR_WHITE);
+				scrput(x+x_offset, y, *fmt, scrcolor);
 				x_offset++;
 			}
         fmt++;

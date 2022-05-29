@@ -7,6 +7,7 @@
 #include <screen.h>
 #include <pcb.h>
 #include <memory.h>
+#include <shell.h>
 
 
 /* This functions always needs to be on top? */
@@ -29,6 +30,13 @@ void _main(uint32_t debug) {
 	char* hello = "Hello!";
 	scrprintf(1, 1, "Format Text Test:\nStrings: %s\nInt: %d\nHex: 0x%x", hello, 10, 2412345);
 
+
+	for (size_t i = 0; i < SCREEN_WIDTH; i++)
+	{
+		scrput(i, 0, ' ', VGA_COLOR_BLACK | VGA_COLOR_LIGHT_GREY << 4);
+	}
+	
+
 	/* Testing printing ints and hex */
 	char test[1000];
 	itohex(3735928559, test);
@@ -46,6 +54,7 @@ void _main(uint32_t debug) {
 	//asm volatile ("int $31");
 
 	draw_mem_usage(10);
+	add_pcb(&shell_process);
 	STI();
 
 	start_tasks();

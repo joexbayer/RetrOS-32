@@ -1,6 +1,7 @@
 #include <pcb.h>
 #include <screen.h>
 #include <memory.h>
+#include <keyboard.h>
 
 #define MAX_NUM_OF_PCBS 10
 #define stack_size 0x2000
@@ -16,6 +17,7 @@ void pcb_function()
     int progress = 0;
 	while(1){
 		num = (num+1) % 100000000;
+        //char c = kb_get_char();
 		if(num % 100000000 == 0)
 		{  
             void* ptr = alloc(0x1000*(rand()%5+1));

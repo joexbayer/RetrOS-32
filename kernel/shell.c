@@ -1,10 +1,13 @@
 #include <shell.h>
+#include <sync.h>
 #include <screen.h>
 
 static uint8_t SHELL_POSITION = (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)-1;
 static const uint8_t SHELL_MAX_SIZE = 25;
 static uint8_t shell_column = 0;
-char shell_buffer[25];
+static char shell_buffer[25];
+
+static int shell_lock = 0; 
 
 /* SHELL PROTOTYPES */
 void init_shell(void);
@@ -36,6 +39,18 @@ void init_shell(void)
 	shell_clear();
 	scrwrite(0, SHELL_POSITION, ">", VGA_COLOR_LIGHT_CYAN);
 	screen_set_cursor(shell_column, SHELL_POSITION);
+}
+
+void shell_process()
+{
+	shell_put('j');
+	while(1)
+	{
+		char c = kb_get_char();
+		if(c == -1)
+			continue;
+		shell_put(c);
+	}
 }
 
 /**

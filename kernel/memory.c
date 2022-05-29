@@ -1,13 +1,13 @@
 #include <memory.h>
 #include <screen.h>
+#include <sync.h>
 
 #define MEM_START 0x100000
 #define MEM_END 0xEFFFFF
-
 #define MEM_CHUNK 0x1000
-
 #define CHUNKS_SIZE 3200
 
+static int mem_lock = 0;
 struct mem_chunk chunks[CHUNKS_SIZE];
 uint16_t chunks_used = 0;
 
@@ -32,8 +32,10 @@ int _check_chunks(int i, int chunks_needed)
 }
 
 void __print_memory_status()
-{
-	scrprintf(0,0, "Memory: %d/%d used. %d/%d chunks", (chunks_used*MEM_CHUNK), (CHUNKS_SIZE-chunks_used)*MEM_CHUNK, chunks_used, CHUNKS_SIZE);
+{	
+	scrcolor_set(VGA_COLOR_BLACK, VGA_COLOR_LIGHT_GREY);
+	scrprintf(0,0, "Memory: %d/%d used. %d/%d chunks    ", (chunks_used*MEM_CHUNK), CHUNKS_SIZE*MEM_CHUNK, chunks_used, CHUNKS_SIZE);
+	scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
 }
 
 /* implementation */
@@ -47,7 +49,7 @@ void __print_memory_status()
  */
 void* alloc(uint16_t size)
 {
-	CLI();
+	spin_lock(&mem_lock);
 
 	if(size == 0) return NULL;
 	int chunks_needed = size / MEM_CHUNK;
@@ -70,11 +72,12 @@ void* alloc(uint16_t size)
 			chunks_used += chunks_needed;
 			__print_memory_status();
 
-			STI();
+			spin_unlock(&mem_lock);
 			return chunks[i].from;
 		}	
 	}
-	STI();
+
+	spin_unlock(&mem_lock);
 	return NULL;
 }
 /**
@@ -85,7 +88,7 @@ void* alloc(uint16_t size)
  */
 void free(void* ptr)
 {
-	CLI();
+	spin_lock(&mem_lock);
 	if(ptr == NULL) return;
 	for (int i = 0; i < CHUNKS_SIZE; i++)
 	{
@@ -101,11 +104,11 @@ void free(void* ptr)
 			}
 			chunks_used -= used;
 			__print_memory_status();
-			STI();
+			spin_unlock(&mem_lock);
 			return;
 		}
 	}
-	STI();	
+	spin_unlock(&mem_lock);	
 }
 
 /**

@@ -3,6 +3,7 @@
 #include <terminal.h>
 #include <interrupts.h>
 #include <util.h>
+#include <sync.h>
 
 /*
     Basic PS/2 Keyboard driver. 
@@ -10,8 +11,14 @@
 */
 
 #define KB_IRQ		33 /* Default is 1, 33 after mapped. */
+#define KB_BUFFER_SIZE 255
 
-unsigned char kbdus[128] =
+static int kb_lock = 0;
+static char kb_buffer[KB_BUFFER_SIZE];
+static int kb_buffer_head = 0;
+static int kb_buffer_tail = 0;
+
+static unsigned char kbdus[128] =
 {
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8',	/* 9 */
   '9', '0', '-', '=', '\b',	/* Backspace */
@@ -50,9 +57,28 @@ unsigned char kbdus[128] =
     0,	/* F12 Key */
     0,	/* All other keys are undefined */
 };
- 
 static int __keyboard_presses = 0;
 static uint8_t __shift_pressed = 0;
+
+char kb_get_char()
+{
+	spin_lock(&kb_lock);
+	if(kb_buffer_tail == kb_buffer_head){
+		spin_unlock(&kb_lock);
+		return -1;
+	}
+	
+	char c = kb_buffer[kb_buffer_tail];
+	kb_buffer_tail = (kb_buffer_tail + 1) % KB_BUFFER_SIZE;
+	spin_unlock(&kb_lock);
+	return c;
+}
+
+void kb_add_char(char c)
+{
+	kb_buffer[kb_buffer_head] = c;
+	kb_buffer_head = (kb_buffer_head + 1) % KB_BUFFER_SIZE;
+}
 
 static void kb_callback()
 {
@@ -77,7 +103,7 @@ static void kb_callback()
 	}
 
 	char c = kbdus[scancode];
-	shell_put( __shift_pressed ? c+('A'-'a') : c);
+	kb_add_char( __shift_pressed ? c+('A'-'a') : c);
 	__keyboard_presses++;
 
 	/* Keep track of how many keyboard presses. */
