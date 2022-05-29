@@ -52,7 +52,7 @@ void __terminal_ui_text()
 		scrput(i+1, TERMINAL_START, term_str[i], terminal_color);
 	}
 
-	const char* mem_str = " PCI ";
+	const char* mem_str = " IRQs ";
 	for (size_t i = 0; i < strlen(mem_str); i++)
 	{
 		scrput(i+PROCESS_WIDTH, TERMINAL_START, mem_str[i], terminal_color);

@@ -107,7 +107,7 @@ static void kb_callback()
 	__keyboard_presses++;
 
 	/* Keep track of how many keyboard presses. */
-	scrprintf(30, 10, "PS/2 KB: %d", __keyboard_presses);
+	scrprintf((SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)-1, (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)+2, "PS/2 KB: %d", __keyboard_presses);
 }
 void init_keyboard()
 {

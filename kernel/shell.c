@@ -3,7 +3,7 @@
 #include <screen.h>
 #include <terminal.h>
 
-static uint8_t SHELL_POSITION = (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)-1;
+static uint8_t SHELL_POSITION = (SCREEN_HEIGHT)-1;
 static const uint8_t SHELL_MAX_SIZE = 25;
 static uint8_t shell_column = 0;
 static char shell_buffer[25];
@@ -52,20 +52,24 @@ void shell_process()
 		if(c == -1)
 			continue;
 		shell_put(c);
-		print_pcb_status();
 	}
 }
 
 void exec_cmd()
 {
 
-	if(strncmp("lspci", shell_buffer, strlen("lspci")))
+	if(strncmp("lspci", shell_buffer, strlen("lspci"))){
+		shell_buffer[shell_column-1] = '\n';
 		list_pci_devices();
+	}
 	
 	if(strncmp("clear", shell_buffer, strlen("clear"))){
+		shell_buffer[shell_column-1] = '\n';
 		scr_clear();
 		init_terminal();
 	}
+
+	twrite(shell_buffer);
 }
 
 /**

@@ -36,7 +36,13 @@ void print_pcb_status()
 {
     int width = (SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)-1 + (SCREEN_WIDTH/6);
     int height = (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)+1;
-    scrprintf(width, height+current_running->pid, "PID %d: %s, SP: 0x%x",current_running->pid, current_running->name, current_running->esp);
+
+    for (size_t i = 0; i < pcb_count; i++)
+    {
+        scrprintf(width, height+i, "PID %d: %s, SP: 0x%x",pcbs[i].pid, pcbs[i].name, pcbs[i].esp);
+        /* code */
+    }
+    
 }
 
 void pcb_function2()
@@ -50,7 +56,6 @@ void pcb_function2()
             void* ptr = alloc(0x1000*(rand()%5+1));
             progress++;
 			scrprintf(30, 11, "Process 2: %d", progress);
-            print_pcb_status();
             free(ptr);
 		}
 	};
@@ -123,7 +128,7 @@ void init_pcbs()
 {   
     for (size_t i = 0; i < 2; i++)
     {   
-        int ret = add_pcb(function_ptrs[i], "Test");
+        int ret = add_pcb(function_ptrs[i], "PCBd");
         if(!ret) return; // error
 
         //scrprintf(51, 18+i, "PCB %d: 0x%x, 0x%x\n", pcbs[i].pid, pcbs[i].esp, pcbs[i].eip);
