@@ -116,9 +116,9 @@ void __terminal_draw_lines()
 
 	/* Vertical lines for example */
 	for (size_t x = 0; x < SCREEN_HEIGHT; x++) {
-		scrput(((MEMORY_WIDTH+(SCREEN_WIDTH/6))-2), TERMINAL_START+x, ASCII_VERTICAL_LINE, terminal_color);
+		scrput(((MEMORY_WIDTH+(SCREEN_WIDTH/6))-2), 0, ASCII_VERTICAL_LINE, terminal_color);
 	}
-	scrput(((MEMORY_WIDTH+(SCREEN_WIDTH/6))-2), TERMINAL_START, ASCII_DOWN_INTERSECT, terminal_color);
+	scrput(((MEMORY_WIDTH+(SCREEN_WIDTH/6))-2), TERMINAL_START, 206, terminal_color);
 }
 
 /**
