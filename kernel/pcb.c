@@ -39,8 +39,14 @@ void print_pcb_status()
 
     for (size_t i = 0; i < pcb_count; i++)
     {
+        if(pcbs[i].running == RUNNING)
+            scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_GREEN);
+        else
+            scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_RED);
+
         scrprintf(width, height+i, "PID %d: %s, SP: 0x%x",pcbs[i].pid, pcbs[i].name, pcbs[i].esp);
         /* code */
+        scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
     }
     
 }
@@ -55,10 +61,21 @@ void pcb_function2()
 		{  
             void* ptr = alloc(0x1000*(rand()%5+1));
             progress++;
-			scrprintf(10, 13, "Process 2: %d", progress);
+			scrprintf(10, 13, "Process 2: %d Allocated: 0x%x", progress, 0x1000*(rand()%5+1));
             free(ptr);
 		}
 	};
+}
+
+int stop_task(int pid)
+{
+    for (size_t i = 0; i < pcb_count; i++)
+    {
+        if(pcbs[i].pid == pid){
+            pcbs[i].running = STOPPED;
+            return i;
+        }
+    }
 }
 
 uint32_t function_ptrs[] = {(uint32_t) &pcb_function, (uint32_t) &pcb_function2};
@@ -76,7 +93,7 @@ int init_pcb(int pid, struct pcb* pcb, uint32_t entry, char* name)
     pcb->ebp = stack+stack_size-1;
     pcb->esp = stack+stack_size-1;
     pcb->eip = entry;
-    pcb->running = 0;
+    pcb->running = NEW;
     pcb->pid = pid;
     memcpy(pcb->name, name, strlen(name)+1);
 
@@ -118,7 +135,10 @@ void yield()
 void context_switch()
 {   
     current_running = current_running->next;
-    if(!current_running->running)
+    while(current_running->running == STOPPED)
+        current_running = current_running->next;
+
+    if(current_running->running == NEW)
     {
         start_pcb();
     }

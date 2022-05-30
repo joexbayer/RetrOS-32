@@ -45,7 +45,6 @@ void _main(uint32_t debug) {
 	if(dev){
 		twrite("PCI Device 0x100E Found!\n");
 	}
-	twritef("Test %s %d %x", "joe\n", 10, 10);
 
 	/* Test interrupt */
 	//asm volatile ("int $43");

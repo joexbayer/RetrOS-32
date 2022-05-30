@@ -67,6 +67,12 @@ void exec_cmd()
 		init_terminal();
 	}
 
+	if(strncmp("stop", shell_buffer, strlen("stop"))){
+		int id = atoi(shell_buffer+strlen("stop")+1);
+		stop_task(id);
+	}
+
+
 	twrite(shell_buffer);
 }
 

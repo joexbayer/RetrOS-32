@@ -6,7 +6,9 @@
 #define pcb_max_name_length 25
 
 enum {
-    RUNNING = 1
+    STOPPED,
+    RUNNING,
+    NEW
 };
 
 struct pcb {
@@ -28,6 +30,7 @@ extern struct pcb* current_running;
 void context_switch();
 void init_pcbs();
 void start_tasks();
+int stop_task(int pid);
 int add_pcb(uint32_t entry, char* name);
 void yield();
 void print_pcb_status();
