@@ -27,11 +27,6 @@ void _main(uint32_t debug) {
 	{
 		twrite("Hello world\n");
 	}
-
-	for (size_t i = 0; i < SCREEN_WIDTH; i++)
-	{
-		scrput(i, 0, ' ', VGA_COLOR_BLACK | VGA_COLOR_LIGHT_GREY << 4);
-	}
 	
 
 	/* Testing printing ints and hex */

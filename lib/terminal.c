@@ -178,6 +178,12 @@ void init_terminal(void)
 	scrwrite(logo_x, logo_y+10, "                        /mmm/     ", VGA_COLOR_MAGENTA);
 
 
+	for (size_t i = 0; i < SCREEN_WIDTH; i++)
+	{
+		scrput(i, 0, ' ', VGA_COLOR_BLACK | VGA_COLOR_LIGHT_GREY << 4);
+	}
+
+
 	__terminal_draw_lines();
 	__terminal_ui_text();
 
