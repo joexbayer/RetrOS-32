@@ -146,15 +146,13 @@ void list_pci_devices()
 {
     int pcb_x = 30;
     int pcb_y = 2;
-    scrwrite(pcb_x, pcb_y, "PCI Devices: ", VGA_COLOR_LIGHT_GREEN);
+    twritef("PCI Devices: \n");
     for (size_t i = 0; i < _pci_devices_size; i++)
     {
-        scrprintf(pcb_x, pcb_y+i, 
-                                "V: 0x%x, D: 0x%x, %s, IRQ: %d", 
-                                _pci_devices[i].vendor,
-                                _pci_devices[i].device,
-                                _pci_devices[i].class < 0x11 ? pci_classes[ _pci_devices[i].class] : pci_classes[0],
-                                _pci_devices[i].irq);
+        twritef("ID: 0x%x, %s\n", 
+                _pci_devices[i].device,
+                _pci_devices[i].class < 0x11 ? pci_classes[ _pci_devices[i].class] : pci_classes[0]
+        );
     }   
 }
 

@@ -34,7 +34,7 @@ int _check_chunks(int i, int chunks_needed)
 void __print_memory_status()
 {	
 	scrcolor_set(VGA_COLOR_BLACK, VGA_COLOR_LIGHT_GREY);
-	scrprintf(0,0, "Memory: %d/%d used. %d/%d chunks    ", (chunks_used*MEM_CHUNK), CHUNKS_SIZE*MEM_CHUNK, chunks_used, CHUNKS_SIZE);
+	scrprintf(0,0, "    Memory: %d/%d used. %d/%d chunks    ", (chunks_used*MEM_CHUNK), CHUNKS_SIZE*MEM_CHUNK, chunks_used, CHUNKS_SIZE);
 	scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
 }
 

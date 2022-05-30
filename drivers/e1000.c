@@ -186,16 +186,16 @@ static void e1000_callback()
 
 void e1000_attach(struct pci_device* dev)
 {
-    scrwrite(50, 13, "Intel E1000:", VGA_COLOR_LIGHT_GREEN);
-    scrprintf(50, 14, "Base: 0x%x", dev->base);
+    scrwrite(51, 13, "Intel E1000:", VGA_COLOR_LIGHT_GREEN);
+    scrprintf(51, 14, "Base: 0x%x", dev->base);
 
     e1000 = dev->base;
     pci_enable_device_busmaster(dev->bus, dev->slot, dev->function);
 
 	_e1000_tx_init();
-	scrprintf(50, 15, "Transmit Queue: 0x%x", tx_desc_list);
+	scrprintf(51, 15, "Transmit Queue: 0x%x", tx_desc_list);
 	_e1000_rx_init();
-	scrprintf(50, 16, "Recieve Queue: 0x%x", rx_desc_list);
+	scrprintf(51, 16, "Recieve Queue: 0x%x", rx_desc_list);
 
 	_e1000_mac();
 

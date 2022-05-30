@@ -17,7 +17,7 @@ enum ASCII {
 static const char newline = '\n';
 
 #define TERMINAL_START (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)
-#define TERMINAL_WIDTH (SCREEN_WIDTH/3)
+#define TERMINAL_WIDTH (SCREEN_WIDTH/3)+6
 #define PROCESS_WIDTH (SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)
 
  /*
@@ -52,16 +52,22 @@ void __terminal_ui_text()
 		scrput(i+1, TERMINAL_START, term_str[i], terminal_color);
 	}
 
-	const char* mem_str = " IRQs ";
-	for (size_t i = 0; i < strlen(mem_str); i++)
+	const char* irq_str = " IRQs ";
+	for (size_t i = 0; i < strlen(irq_str); i++)
 	{
-		scrput(i+PROCESS_WIDTH, TERMINAL_START, mem_str[i], terminal_color);
+		scrput(i+PROCESS_WIDTH, TERMINAL_START, irq_str[i], terminal_color);
 	}
 
 	const char* exm_str = " PROCESSES ";
 	for (size_t i = 0; i < strlen(exm_str); i++)
 	{
 		scrput(i+(PROCESS_WIDTH+(SCREEN_WIDTH/6)), TERMINAL_START, exm_str[i], terminal_color);
+	}
+
+	const char* nic_str = " NETDEV ";
+	for (size_t i = 0; i < strlen(nic_str); i++)
+	{
+		scrput(i+52, 12, nic_str[i], terminal_color);
 	}
 
 }
@@ -116,9 +122,15 @@ void __terminal_draw_lines()
 
 	/* Vertical lines for example */
 	for (size_t x = 0; x < SCREEN_HEIGHT; x++) {
-		scrput(((PROCESS_WIDTH+(SCREEN_WIDTH/6))-2), 0, ASCII_VERTICAL_LINE, terminal_color);
+		scrput(((PROCESS_WIDTH+(SCREEN_WIDTH/6))-2), 0+x, ASCII_VERTICAL_LINE, terminal_color);
 	}
 	scrput(((PROCESS_WIDTH+(SCREEN_WIDTH/6))-2), TERMINAL_START, 206, terminal_color);
+
+	for (size_t x = 50; x < SCREEN_WIDTH; x++) {
+		scrput(x, 12, ASCII_HORIZONTAL_LINE, terminal_color);
+	}
+	scrput(50, 12, 204, terminal_color);
+
 }
 
 /**
@@ -151,14 +163,14 @@ void init_terminal(void)
 	/* Clears screen */
 	scr_clear();
 
-	scrwrite(20, 0, "   ___             ______                       ", VGA_COLOR_MAGENTA);
-	scrwrite(20, 1, "  |_  |            | ___ \\                      ", VGA_COLOR_MAGENTA);
-	scrwrite(20, 2, "    | | ___   ___  | |_/ / __ _ _   _  ___ _ __ ", VGA_COLOR_MAGENTA);
-	scrwrite(20, 3, "    | |/ _ \\ / _ \\ | ___ \\/ _` | | | |/ _ | '__|", VGA_COLOR_MAGENTA);
-	scrwrite(20, 4, "/\\__/ | (_) |  __/ | |_/ | (_| | |_| |  __| |   ", VGA_COLOR_MAGENTA);
-	scrwrite(20, 5, "\\____/ \\___/ \\___| \\____/ \\__,_|\\__, |\\___|_|   ", VGA_COLOR_MAGENTA);
-	scrwrite(20, 6, "                                 __/ |          ", VGA_COLOR_MAGENTA);
-	scrwrite(20, 7, "                                |___/           ", VGA_COLOR_MAGENTA);
+	scrwrite(2, 2, "   ___             ______                       ", VGA_COLOR_MAGENTA);
+	scrwrite(2, 3, "  |_  |            | ___ \\                      ", VGA_COLOR_MAGENTA);
+	scrwrite(2, 4, "    | | ___   ___  | |_/ / __ _ _   _  ___ _ __ ", VGA_COLOR_MAGENTA);
+	scrwrite(2, 5, "    | |/ _ \\ / _ \\ | ___ \\/ _` | | | |/ _ | '__|", VGA_COLOR_MAGENTA);
+	scrwrite(2, 6, "/\\__/ | (_) |  __/ | |_/ | (_| | |_| |  __| |   ", VGA_COLOR_MAGENTA);
+	scrwrite(2, 7, "\\____/ \\___/ \\___| \\____/ \\__,_|\\__, |\\___|_|   ", VGA_COLOR_MAGENTA);
+	scrwrite(2, 8, "                                 __/ |          ", VGA_COLOR_MAGENTA);
+	scrwrite(2, 9, "                                |___/           ", VGA_COLOR_MAGENTA);
 
 	__terminal_draw_lines();
 	__terminal_ui_text();
@@ -209,7 +221,7 @@ void __terminal_putchar(char c)
 		return;
 	}
 	
-	if (terminal_column == TERMINAL_WIDTH+6)
+	if (terminal_column == TERMINAL_WIDTH)
 	{
 		return;
 	}
@@ -225,8 +237,8 @@ void __terminal_putchar(char c)
  */
 void terminal_write(const char* data, size_t size)
 {
-	__terminal_putchar('<');
-	__terminal_putchar(' ');
+	//__terminal_putchar('<');
+	//__terminal_putchar(' ');
 	for (size_t i = 0; i < size; i++)
 		__terminal_putchar(data[i]);
 }
@@ -240,4 +252,73 @@ void terminal_write(const char* data, size_t size)
 void twrite(const char* data)
 {
 	terminal_write(data, strlen(data));
+}
+
+#define MAX_FMT_STR_SIZE 50
+
+int32_t twritef(char* fmt, ...)
+{
+	va_list args;
+
+	int x_offset = 0;
+	int written = 0;
+	char str[MAX_FMT_STR_SIZE];
+	int num = 0;
+
+	va_start(args, fmt);
+
+	while (*fmt != '\0') {
+		switch (*fmt)
+		{
+			case '%':
+				memset(str, 0, MAX_FMT_STR_SIZE);
+				switch (*(fmt+1))
+				{
+					case 'd':
+					case 'i': ;
+						num = va_arg(args, int);
+						itoa(num, str);
+						twrite(str);
+						x_offset += strlen(str);
+						break;
+					case 'x':
+					case 'X': ;
+						num = va_arg(args, int);
+						itohex(num, str);
+						twrite(str);
+						x_offset += strlen(str);
+						break;
+					case 's': ;
+						char* str_arg = va_arg(args, char *);
+						twrite(str_arg);
+						x_offset += strlen(str_arg);
+						break;
+					case 'c': ;
+						char char_arg = (char)va_arg(args, int);
+						__terminal_putchar(char_arg);
+						x_offset++;
+						break;
+					
+					default:
+						break;
+				}
+				fmt++;
+				break;
+			case '\n':
+				terminal_column = 0;
+				if(terminal_row < SCREEN_HEIGHT-1)
+				{
+					terminal_row += 1;
+					return;
+				}
+				__terminal_scroll();
+				break;
+			default:  
+				__terminal_putchar(*fmt);
+				x_offset++;
+			}
+        fmt++;
+    }
+	written += x_offset;
+	return written;
 }

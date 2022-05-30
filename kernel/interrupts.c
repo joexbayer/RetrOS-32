@@ -35,10 +35,7 @@ void EOI(int irq)
 
 /* Main interrupt handler, calls interrupt specific hanlder if installed. */
 void isr_handler(struct registers regs)
-{	
-	if(regs.int_no != 0)
-		scrprintf(12, 12, "IRQ: %d", regs.int_no);
-
+{
 	if (handlers[regs.int_no] != 0)
 	{
 		isr_t handler = handlers[regs.int_no];

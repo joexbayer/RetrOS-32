@@ -1,5 +1,6 @@
 #include <shell.h>
 #include <pci.h>
+#include <keyboard.h>
 #include <screen.h>
 #include <terminal.h>
 
@@ -43,9 +44,6 @@ void init_shell(void)
 
 void shell_process()
 {
-	int width = (SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)-1;
-    int height = (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)+1;
-	print_pcb_status();
 	while(1)
 	{
 		char c = kb_get_char();
@@ -90,6 +88,8 @@ void shell_put(char c)
 
 	if(uc == backspace)
 	{
+		if(shell_column < 1)
+			return;
 		shell_column -= 1;
 		scrput(shell_column, SHELL_POSITION, ' ', VGA_COLOR_WHITE);
 		shell_buffer[shell_column-1] = 0;
