@@ -3,6 +3,7 @@
 #include <keyboard.h>
 #include <screen.h>
 #include <terminal.h>
+#include <pcb.h>
 
 static uint8_t SHELL_POSITION = (SCREEN_HEIGHT)-1;
 static const uint8_t SHELL_MAX_SIZE = 25;

@@ -6,19 +6,20 @@
 #define MAX_NUM_OF_PCBS 10
 #define stack_size 0x2000
 
-char* status[] = {"STOPPED", "RUNNING"};
+ char* status[] = {"STOPPED", "RUNNING"};
 
-struct pcb pcbs[MAX_NUM_OF_PCBS];
+static struct pcb pcbs[MAX_NUM_OF_PCBS];
 struct pcb* current_running = NULL;
-struct pcb* last_added = &pcbs[0];
-int pcb_count = 0;
+static struct pcb* last_added = &pcbs[0];
+static int pcb_count = 0;
 
 void pcb_function()
 {
     int num = 0;
     int progress = 0;
 
-	while(1){
+	while(1)
+    {
 		num = (num+1) % 100000000;
         //char c = kb_get_char();
 		if(num % 100000000 == 0)
@@ -32,6 +33,10 @@ void pcb_function()
 	};
 }
 
+/**
+ * @brief Main function of the PCB background process.
+ * Printing out information about the currently running processes.
+ */
 void print_pcb_status()
 {
     int width = (SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)-1 + (SCREEN_WIDTH/6);
@@ -39,9 +44,8 @@ void print_pcb_status()
 
     for (size_t i = 0; i < pcb_count; i++)
     {
-        if(pcbs[i].running == RUNNING)
-            scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_GREEN);
-        else
+        scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_GREEN);
+        if(pcbs[i].running != RUNNING)
             scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_RED);
 
         scrprintf(width, height+i, "PID %d: %s, SP: 0x%x",pcbs[i].pid, pcbs[i].name, pcbs[i].esp);
@@ -55,7 +59,8 @@ void pcb_function2()
 {
     int num = 0;
     int progress = 0;
-	while(1){
+	while(1)
+    {
 		num = (num+1) % 100000000;
 		if(num % 100000000 == 0)
 		{  
@@ -67,19 +72,37 @@ void pcb_function2()
 	};
 }
 
+static uint32_t function_ptrs[] = {(uint32_t) &pcb_function, (uint32_t) &pcb_function2};
+/**
+ * @brief Sets the process with given pid to stopped. Also frees the process's stack.
+ * 
+ * @param pid id of the process.
+ * @return int index of pcb, -1 on error.
+ */
 int stop_task(int pid)
 {
     for (size_t i = 0; i < pcb_count; i++)
     {
-        if(pcbs[i].pid == pid){
+        if(pcbs[i].pid == pid)
+        {
             pcbs[i].running = STOPPED;
+            free(pcbs[i].ebp-stack_size+1);
+            pcb_count--;
             return i;
         }
     }
+    return -1;
 }
 
-uint32_t function_ptrs[] = {(uint32_t) &pcb_function, (uint32_t) &pcb_function2};
-
+/**
+ * @brief Initializes the PCBs struct members and importantly allocates the stack.
+ * 
+ * @param pid id of process
+ * @param pcb pointer to pcb
+ * @param entry pointer to entry function
+ * @param name name of process.
+ * @return int 1 on success -1 on error.
+ */
 int init_pcb(int pid, struct pcb* pcb, uint32_t entry, char* name)
 {
     uint32_t stack = (uint32_t) alloc(stack_size);
@@ -100,21 +123,33 @@ int init_pcb(int pid, struct pcb* pcb, uint32_t entry, char* name)
     return 1;
 }
 
+/**
+ * @brief Add a pcb to the list of running proceses.
+ * Also instantiates the PCB itself.
+ * 
+ * @param entry pointer to entry function.
+ * @param name name of process
+ * @return int amount of running processes, -1 on error.
+ */
 int add_pcb(uint32_t entry, char* name)
 {   
     CLI();
     if(MAX_NUM_OF_PCBS == pcb_count)
-    {
         return -1;
-    }
 
-    int ret = init_pcb(pcb_count, &pcbs[pcb_count], entry, name);
+    int i; /* Find a pcb is that is "free" */
+    for(i = 0; i < MAX_NUM_OF_PCBS; i++)
+        if(pcbs[i].running == STOPPED)
+            break;
+    
+    int ret = init_pcb(i, &pcbs[i], entry, name);
     if(!ret) return ret;
 
+
     /* Change the linked list so that the last (new) element points to start. */
-    last_added->next = &pcbs[pcb_count];
-    pcbs[pcb_count].next = &pcbs[0];
-    last_added = &pcbs[pcb_count];
+    last_added->next = &pcbs[i];
+    pcbs[i].next = &pcbs[0];
+    last_added = &pcbs[i];
 
     pcb_count++;
     STI();
@@ -144,8 +179,18 @@ void context_switch()
     }
 }
 
+/**
+ * @brief Sets all PCBs state to stopped. Meaning they can be started.
+ * Also starts the PCB background process.
+ */
 void init_pcbs()
 {   
+    /* Stopped processes are eligible to be "replaced." */
+    for (size_t i = 0; i < MAX_NUM_OF_PCBS; i++)
+    {
+        pcbs[i].running = STOPPED;
+    }
+
     for (size_t i = 0; i < 2; i++)
     {   
         int ret = add_pcb(function_ptrs[i], "PCBd");
