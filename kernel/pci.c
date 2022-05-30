@@ -1,6 +1,7 @@
 #include <pci.h>
 #include <e1000.h>
 #include <screen.h>
+#include <terminal.h>
 
 static const char* pci_classes[] =
 {
@@ -109,10 +110,6 @@ int pci_register_device(uint32_t bus, uint32_t slot, uint32_t function, uint16_t
 void init_pci()
 {
     int devices_found = 0;
-    int pcb_x = 30;
-    int pcb_y = 2;
-    scrwrite(pcb_x, pcb_y-1, "PCI Devices: ", VGA_COLOR_LIGHT_GREEN);
-
     for(uint32_t bus = 0; bus < 256; bus++)
     {
         for(uint32_t slot = 0; slot < 32; slot++)
@@ -128,13 +125,6 @@ void init_pci()
                     uint32_t base = pci_get_device_base32(bus, slot, function);
 
 					int driver_index = pci_register_device(bus, slot, function, vendor, device, class, irq, base);
-
-					scrprintf(pcb_x, pcb_y+devices_found, 
-                                "V: 0x%x, D: 0x%x, %s, IRQ: %d", 
-                                vendor,
-                                device,
-                                class < 0x11 ? pci_classes[class] : pci_classes[0],
-                                irq);
                     devices_found++;
 
                     int i = 0;
@@ -152,6 +142,21 @@ void init_pci()
     }
 }
 
+void list_pci_devices()
+{
+    int pcb_x = 30;
+    int pcb_y = 2;
+    scrwrite(pcb_x, pcb_y, "PCI Devices: ", VGA_COLOR_LIGHT_GREEN);
+    for (size_t i = 0; i < _pci_devices_size; i++)
+    {
+        scrprintf(pcb_x, pcb_y+i, 
+                                "V: 0x%x, D: 0x%x, %s, IRQ: %d", 
+                                _pci_devices[i].vendor,
+                                _pci_devices[i].device,
+                                _pci_devices[i].class < 0x11 ? pci_classes[ _pci_devices[i].class] : pci_classes[0],
+                                _pci_devices[i].irq);
+    }   
+}
 
 uint8_t pci_find_device(uint16_t find_vendor, uint16_t find_device)
 {

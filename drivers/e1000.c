@@ -22,6 +22,8 @@ char tx_buf[TX_SIZE][PACKET_SIZE];
 struct e1000_rx_desc rx_desc_list[RX_SIZE];
 char rx_buf[RX_SIZE][PACKET_SIZE];
 
+static int interrupts = 0;
+
 /**
  * @brief Clears the transmit buffers for the e1000
  */
@@ -175,7 +177,8 @@ int e1000_transmit(void* buffer, uint16_t size)
 
 static void e1000_callback()
 {
-    scrwrite(12, 12, "E1000 INTERRUPT", VGA_COLOR_LIGHT_BROWN);
+	interrupts++;
+    scrprintf((SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)-1, (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)+3, "E1000: %d", interrupts);
 	e1000_receive();
 
 	E1000_DEVICE_GET(E1000_ICR);

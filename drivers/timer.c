@@ -11,7 +11,7 @@ static int tick = 0;
 static void timer_callback()
 {
 	tick = (tick+1) % 1000;
-	scrprintf(10, 10, "PIT: %d", tick);
+	scrprintf((SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)-1, (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)+1, "PIT: %d", tick);
 	if(current_running != NULL)
 	{
 		EOI(32);
