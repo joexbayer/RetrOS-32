@@ -38,7 +38,7 @@ void scrcolor_set(enum vga_color fg, enum vga_color bg)
  * @param uint8_t color of string
  * @return void
  */
-void scrwrite(int x, int y, char* str, uint8_t color)
+void scrwrite(int x, int y, uint8_t* str, uint8_t color)
 {
 	for (size_t i = 0; i < strlen(str); i++)
 	{
@@ -107,7 +107,7 @@ void scr_scroll(size_t width, size_t height)
  * @param ... variable parameters
  * @return number of bytes written
  */
-int32_t scrprintf(int32_t x, int32_t y, char* fmt, ...)
+int32_t scrprintf(int32_t x, int32_t y, uint8_t* fmt, ...)
 {
 	va_list args;
 

@@ -27,9 +27,6 @@ void _main(uint32_t debug) {
 	{
 		twrite("Hello world\n");
 	}
-	char* hello = "Hello!";
-	scrprintf(1, 1, "Format Text Test:\nStrings: %s\nInt: %d\nHex: 0x%x", hello, 10, 2412345);
-
 
 	for (size_t i = 0; i < SCREEN_WIDTH; i++)
 	{
@@ -48,7 +45,7 @@ void _main(uint32_t debug) {
 	if(dev){
 		twrite("PCI Device 0x100E Found!\n");
 	}
-	twritef("Test %s %d %x", "joe", 10, 10);
+	twritef("Test %s %d %x", "joe\n", 10, 10);
 
 	/* Test interrupt */
 	//asm volatile ("int $43");

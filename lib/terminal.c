@@ -163,14 +163,20 @@ void init_terminal(void)
 	/* Clears screen */
 	scr_clear();
 
-	scrwrite(2, 2, "   ___             ______                       ", VGA_COLOR_MAGENTA);
-	scrwrite(2, 3, "  |_  |            | ___ \\                      ", VGA_COLOR_MAGENTA);
-	scrwrite(2, 4, "    | | ___   ___  | |_/ / __ _ _   _  ___ _ __ ", VGA_COLOR_MAGENTA);
-	scrwrite(2, 5, "    | |/ _ \\ / _ \\ | ___ \\/ _` | | | |/ _ | '__|", VGA_COLOR_MAGENTA);
-	scrwrite(2, 6, "/\\__/ | (_) |  __/ | |_/ | (_| | |_| |  __| |   ", VGA_COLOR_MAGENTA);
-	scrwrite(2, 7, "\\____/ \\___/ \\___| \\____/ \\__,_|\\__, |\\___|_|   ", VGA_COLOR_MAGENTA);
-	scrwrite(2, 8, "                                 __/ |          ", VGA_COLOR_MAGENTA);
-	scrwrite(2, 9, "                                |___/           ", VGA_COLOR_MAGENTA);
+	int logo_x = 6;
+	int logo_y = 4;
+	scrwrite(logo_x, logo_y, "            NETOS 0.0.1 ", VGA_COLOR_MAGENTA);
+	scrwrite(logo_x, logo_y+1, "  ___   _      ___   _      ___   _ ", VGA_COLOR_MAGENTA);
+	scrwrite(logo_x, logo_y+2, " [(_)] |=|    [(_)] |=|    [(_)] |=|", VGA_COLOR_MAGENTA);
+	scrwrite(logo_x, logo_y+3, "  '-`  |_|     '-`  |_|     '-`  |_|", VGA_COLOR_MAGENTA);
+	scrwrite(logo_x, logo_y+4, " /mmm/  /     /mmm/  /     /mmm/  /", VGA_COLOR_MAGENTA);
+	scrwrite(logo_x, logo_y+5, "       |____________|____________|", VGA_COLOR_MAGENTA);
+	scrwrite(logo_x, logo_y+6, "                             |    ", VGA_COLOR_MAGENTA);
+	scrwrite(logo_x, logo_y+7, "                         ___  \\_ ", VGA_COLOR_MAGENTA);
+	scrwrite(logo_x, logo_y+8, "                        [(_)] |=| ", VGA_COLOR_MAGENTA);
+	scrwrite(logo_x, logo_y+9, "                         '-`  |_| ", VGA_COLOR_MAGENTA);
+	scrwrite(logo_x, logo_y+10, "                        /mmm/     ", VGA_COLOR_MAGENTA);
+
 
 	__terminal_draw_lines();
 	__terminal_ui_text();
