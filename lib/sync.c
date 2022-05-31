@@ -29,6 +29,11 @@ void spin_unlock(int volatile *l)
     *l = 0;
 }
 
+/**
+ * @brief Initializes the given lock. Most importantly it sets the blocked list.
+ * 
+ * @param l Lock to initialize.
+ */
 void lock_init(lock_t* l)
 {
     for (size_t i = 0; i < MAX_BLOCKED; i++)
@@ -39,7 +44,7 @@ void lock_init(lock_t* l)
     l->state = UNLOCKED;
 }
 
-inline void _lock_block(lock_t* l)
+inline void __lock_block(lock_t* l)
 {
     for (size_t i = 0; i < MAX_BLOCKED; i++)
     {
@@ -51,7 +56,7 @@ inline void _lock_block(lock_t* l)
     }
 }
 
-inline int _lock_check_block(lock_t* l)
+inline int __lock_unlock(lock_t* l)
 {
     for (size_t i = 0; i < MAX_BLOCKED; i++)
     {
@@ -63,14 +68,18 @@ inline int _lock_check_block(lock_t* l)
 }
 
 
-
+/**
+ * @brief Locks the given l and blocks in case its already locked.
+ * 
+ * @param l lock_t object.
+ */
 void lock(lock_t* l)
 {
     CLI();
     switch (l->state)
     {
     case LOCKED:
-        _lock_block(l);
+        __lock_block(l);
         break;
     
     case UNLOCKED:
@@ -84,9 +93,14 @@ void lock(lock_t* l)
     STI();
 }
 
+/**
+ * @brief Unlocks the given lock, if a process is blocked, unblock it.
+ * 
+ * @param l Lock to unlock.
+ */
 void unlock(lock_t* l)
 {
-    int pid = _lock_check_block(l);
+    int pid = __lock_unlock(l);
     if(pid != -1){
         unblock(pid);
         return;

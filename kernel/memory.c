@@ -1,5 +1,6 @@
 #include <memory.h>
 #include <screen.h>
+#include <timer.h>
 #include <sync.h>
 
 #define MEM_START 0x100000
@@ -34,7 +35,7 @@ int _check_chunks(int i, int chunks_needed)
 void print_memory_status()
 {	
 	scrcolor_set(VGA_COLOR_BLACK, VGA_COLOR_LIGHT_GREY);
-	scrprintf(0,0, "    Memory: %d/%d used. %d/%d chunks    ", (chunks_used*MEM_CHUNK), CHUNKS_SIZE*MEM_CHUNK, chunks_used, CHUNKS_SIZE);
+	scrprintf(0,0, "Time: %d   Memory: %d/%d used. %d/%d chunks    ", get_time(), (chunks_used*MEM_CHUNK), CHUNKS_SIZE*MEM_CHUNK, chunks_used, CHUNKS_SIZE);
 	scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
 }
 

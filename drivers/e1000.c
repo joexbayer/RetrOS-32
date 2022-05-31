@@ -200,7 +200,7 @@ void e1000_attach(struct pci_device* dev)
 	_e1000_mac();
 
     /* For now.. hard code irq to 11 */
-    isr_install(32+11, &e1000_callback);
+    isr_install(32+dev->irq, &e1000_callback);
 
 	E1000_DEVICE_SET(E1000_RDTR) = 0;
 	E1000_DEVICE_SET(E1000_RADV) = 0;

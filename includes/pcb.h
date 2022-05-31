@@ -5,11 +5,13 @@
 
 #define pcb_max_name_length 25
 
+/* TODO: Move to new file */
 enum {
     STOPPED,
     RUNNING,
     NEW,
-    BLOCKED
+    BLOCKED,
+    SLEEPING
 };
 
 struct pcb {
@@ -20,6 +22,7 @@ struct pcb {
       /* DO NOT NOT CHANGE ABOVE.*/
       uint8_t running;
       int16_t pid;
+      uint16_t sleep_time;
       uint32_t org_stack;
 
       char name[pcb_max_name_length];
@@ -35,9 +38,10 @@ void init_pcbs();
 void start_tasks();
 int stop_task(int pid);
 int add_pcb(uint32_t entry, char* name);
-void yield();
 void print_pcb_status();
 
+void yield();
+void sleep(int time);
 void block();
 void unblock(int pid);
 

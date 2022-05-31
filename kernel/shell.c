@@ -45,6 +45,7 @@ void init_shell(void)
 
 void shell_process()
 {
+	sleep(10);
 	while(1)
 	{
 		char c = kb_get_char();

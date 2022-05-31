@@ -2,14 +2,8 @@
 #include <terminal.h>
 #include <screen.h>
 
-#define ISR_LINES	48
-#define PIC1		0x20		/* IO base address for master PIC */
-#define PIC2		0xA0		/* IO base address for slave PIC */
-#define PIC1_DATA	(PIC1+1)
-#define PIC2_DATA	(PIC2+1)
-
-struct idt_entry idt_entries[256];
-struct idt_ptr   idt;
+static struct idt_entry idt_entries[IDT_ENTRIES];
+static struct idt_ptr   idt;
 
 /*
 	Interrupts , followed tutorial:
@@ -20,6 +14,16 @@ struct idt_ptr   idt;
 /* Handlers, default 0, will be installed when needed. */
 static void (*handlers[ISR_LINES])() = { 0 };
 
+static void (*irqs[ISR_LINES])(struct registers*) = {
+	isr32, isr33, isr34, isr35, isr36, isr37, isr38, isr39,
+	isr40, isr41, isr42, isr43, isr44, isr45, isr46, isr47
+};
+/**
+ * @brief Given a IRQ line, it assigns a handler to it. 
+ * 
+ * @param i IRQ line
+ * @param handler function pointer to handler.
+ */
 void isr_install(size_t i, void (*handler)()) {
 	handlers[i] = handler;
 }
@@ -53,6 +57,8 @@ static void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags
 	idt_entries[num].flags   = flags;
 }
 
+/* TODO: Setup exceptions. */
+
 static void init_idt()
 {
 	idt.limit = sizeof(struct idt_entry) * 256 -1;
@@ -61,15 +67,16 @@ static void init_idt()
 	memset(&idt_entries, 0, sizeof(struct idt_entry)*256);
 
 	/* Set all ISR_LINES to go to ISR0 */
-	for (size_t i = 0; i < ISR_LINES; i++)
+	for (size_t i = 0; i < 32; i++)
 	{ 
 		idt_set_gate(i, (uint32_t) isr0 , 0x08, 0x8E);
 	}
 
-	/* Override to use correct entry point*/
-	idt_set_gate(32, (uint32_t) isr32 , 0x08, 0x8E); // PIT timer
-	idt_set_gate(33, (uint32_t) isr33 , 0x08, 0x8E); // Keyboard
-	idt_set_gate(43, (uint32_t) isr43 , 0x08, 0x8E); // e1000
+	for (size_t i = 32; i < 48; i++)
+	{
+		idt_set_gate(i, (uint32_t) irqs[i-32] , 0x08, 0x8E); // PIT timer
+	}
+
 
 	idt_flush((uint32_t)&idt);
 }

@@ -24,7 +24,6 @@ void pcb_function()
 		{  
             print_pcb_status();
             print_memory_status();
-            scrprintf(50, 0, "Time: %d", get_time());
 		}
 	};
 }
@@ -54,7 +53,9 @@ void print_pcb_status()
         case STOPPED:
             scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_RED);
             break;
-        
+        case SLEEPING:
+            scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_DARK_GREY);
+            break;
         default:
             continue;
         }
@@ -78,7 +79,7 @@ void counter()
             void* ptr = alloc(0x1000*(rand()%5+1));
             free(ptr);
             progress++;
-			scrprintf(10, 13+current_running->pid, "Counter: %d", progress);
+			scrprintf(10, 10+current_running->pid, "Counter: %d", progress);
 		}
 	};
 }
@@ -186,6 +187,14 @@ void start_pcb()
     _start_pcb(); /* asm function */
 }
 
+
+void sleep(int time)
+{
+    current_running->sleep_time = get_time() + time;
+    current_running->running = SLEEPING;
+    yield();
+}
+
 void yield()
 {
     CLI();
@@ -209,12 +218,26 @@ void unblock(int pid)
 void context_switch()
 {   
     current_running = current_running->next;
-    while(current_running->running != RUNNING && current_running->running != NEW)
-        current_running = current_running->next;
-
-    if(current_running->running == NEW)
+    while(current_running->running != RUNNING)
     {
-        start_pcb();
+        switch (current_running->running)
+        {
+        case STOPPED:
+            current_running = current_running->next;
+            break;
+        case NEW:
+            start_pcb();
+            break; /* Never reached. */
+        case SLEEPING:
+            if(get_time() >= current_running->sleep_time)
+                current_running->running = RUNNING;
+            else
+                current_running = current_running->next;
+            break;
+        default:
+            current_running = current_running->next;
+            break;
+        }
     }
 }
 
