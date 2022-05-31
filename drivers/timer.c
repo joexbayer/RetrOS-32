@@ -7,10 +7,21 @@
 #define PIT_IRQ		32
 
 static int tick = 0;
+static int time = 0;
+
+int get_time()
+{
+	return time;
+}
 
 static void timer_callback()
 {
-	tick = (tick+1) % 1000;
+	if(tick > 100){
+		tick = 0;
+		time++;
+	}
+
+	tick++;
 	scrprintf((SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)-1, (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)+1, "PIT: %d", tick);
 	if(current_running != NULL)
 	{

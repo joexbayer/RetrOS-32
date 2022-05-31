@@ -20,10 +20,12 @@ struct pcb {
       /* DO NOT NOT CHANGE ABOVE.*/
       uint8_t running;
       int16_t pid;
+      uint32_t org_stack;
 
       char name[pcb_max_name_length];
 
       struct pcb *next;
+      struct pcb *prev;
 }__attribute__((packed));
 
 

@@ -31,7 +31,7 @@ int _check_chunks(int i, int chunks_needed)
 	return 1;
 }
 
-void __print_memory_status()
+void print_memory_status()
 {	
 	scrcolor_set(VGA_COLOR_BLACK, VGA_COLOR_LIGHT_GREY);
 	scrprintf(0,0, "    Memory: %d/%d used. %d/%d chunks    ", (chunks_used*MEM_CHUNK), CHUNKS_SIZE*MEM_CHUNK, chunks_used, CHUNKS_SIZE);
@@ -49,9 +49,8 @@ void __print_memory_status()
  */
 void* alloc(uint16_t size)
 {
-	lock(&mem_lock);
-
 	if(size == 0) return NULL;
+	lock(&mem_lock);
 	int chunks_needed = size / MEM_CHUNK;
 
 	if(!chunks_needed) chunks_needed = 1;
@@ -70,7 +69,6 @@ void* alloc(uint16_t size)
 			
 			chunks[i].chunks_used = chunks_needed;
 			chunks_used += chunks_needed;
-			__print_memory_status();
 
 			unlock(&mem_lock);
 			return chunks[i].from;
@@ -88,8 +86,9 @@ void* alloc(uint16_t size)
  */
 void free(void* ptr)
 {
-	lock(&mem_lock);
 	if(ptr == NULL) return;
+
+	lock(&mem_lock);
 	for (int i = 0; i < CHUNKS_SIZE; i++)
 	{
 		if(chunks[i].from == ptr)
@@ -103,7 +102,6 @@ void free(void* ptr)
 				chunks[i+j].chunks_used = 0;
 			}
 			chunks_used -= used;
-			__print_memory_status();
 			unlock(&mem_lock);
 			return;
 		}
@@ -130,5 +128,4 @@ void init_memory()
 
 		mem_position += MEM_CHUNK;
 	}
-	__print_memory_status();
 }

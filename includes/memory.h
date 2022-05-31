@@ -18,6 +18,7 @@ struct mem_chunk
 
 void init_memory();
 void* alloc(uint16_t size);
+void print_memory_status();
 void free(void* ptr);
 
 #endif

@@ -2,6 +2,7 @@
 #include <screen.h>
 #include <memory.h>
 #include <sync.h>
+#include <timer.h>
 
 #define MAX_NUM_OF_PCBS 10
 #define stack_size 0x2000
@@ -10,29 +11,20 @@
 
 static struct pcb pcbs[MAX_NUM_OF_PCBS];
 struct pcb* current_running = NULL;
-static struct pcb* last_added = &pcbs[0];
 static int pcb_count = 0;
-
-static lock_t pcb_lock;
 
 void pcb_function()
 {
     int num = 0;
-    int progress = 0;
-
-    lock(&pcb_lock);
-
 	while(1)
     {
 		num = (num+1) % 100000000;
         //char c = kb_get_char();
 		if(num % 100000000 == 0)
 		{  
-            void* ptr = alloc(0x1000*(rand()%5+1));
-            progress++;
-			scrprintf(10, 12, "Process 1: %d", progress);
             print_pcb_status();
-            free(ptr);
+            print_memory_status();
+            scrprintf(50, 0, "Time: %d", get_time());
 		}
 	};
 }
@@ -74,25 +66,23 @@ void print_pcb_status()
     
 }
 
-void pcb_function2()
+void counter()
 {
     int num = 0;
     int progress = 0;
-    lock(&pcb_lock);
 	while(1)
     {
 		num = (num+1) % 100000000;
 		if(num % 100000000 == 0)
 		{  
             void* ptr = alloc(0x1000*(rand()%5+1));
-            progress++;
-			scrprintf(10, 13, "Process 2: %d", progress);
             free(ptr);
+            progress++;
+			scrprintf(10, 13+current_running->pid, "Counter: %d", progress);
 		}
 	};
 }
 
-static uint32_t function_ptrs[] = {(uint32_t) &pcb_function, (uint32_t) &pcb_function2};
 /**
  * @brief Sets the process with given pid to stopped. Also frees the process's stack.
  * 
@@ -101,13 +91,21 @@ static uint32_t function_ptrs[] = {(uint32_t) &pcb_function, (uint32_t) &pcb_fun
  */
 int stop_task(int pid)
 {
+    /* 
+        FIXME: BUG, after a task is stopped, the next started task will fill its place.
+        BUT, the next task after that will have the same stack as a other PCB.
+     */
     for (size_t i = 0; i < pcb_count; i++)
     {
         if(pcbs[i].pid == pid)
         {
+            CLI();
             pcbs[i].running = STOPPED;
-            free(pcbs[i].ebp-stack_size+1);
+            free(pcbs[i].org_stack);
             pcb_count--;
+            pcbs[i].prev->next = pcbs[i].next;
+            pcbs[i].next->prev = pcbs[i].prev;
+            STI();
             return i;
         }
     }
@@ -138,9 +136,15 @@ int init_pcb(int pid, struct pcb* pcb, uint32_t entry, char* name)
     pcb->eip = entry;
     pcb->running = NEW;
     pcb->pid = pid;
+    pcb->org_stack = stack;
     memcpy(pcb->name, name, strlen(name)+1);
 
     return 1;
+}
+
+void test_add()
+{
+    add_pcb(&counter, "Counter");
 }
 
 /**
@@ -165,12 +169,12 @@ int add_pcb(uint32_t entry, char* name)
     int ret = init_pcb(i, &pcbs[i], entry, name);
     if(!ret) return ret;
 
-
-    /* Change the linked list so that the last (new) element points to start. */
-    last_added->next = &pcbs[i];
-    pcbs[i].next = &pcbs[0];
-    last_added = &pcbs[i];
-
+    struct pcb* next = current_running->next;
+    current_running->next = &pcbs[i];
+    next->prev = &pcbs[i];
+    pcbs[i].next = next;
+    pcbs[i].prev = current_running;
+    
     pcb_count++;
     STI();
     return pcb_count;
@@ -184,13 +188,13 @@ void start_pcb()
 
 void yield()
 {
+    CLI();
     _context_switch();
 }
 
 void block()
 {
     current_running->running = BLOCKED;
-    STI();
     _context_switch();
 }
 
@@ -220,8 +224,6 @@ void context_switch()
  */
 void init_pcbs()
 {   
-    lock_init(&pcb_lock);
-
     /* Stopped processes are eligible to be "replaced." */
     for (size_t i = 0; i < MAX_NUM_OF_PCBS; i++)
     {
@@ -229,13 +231,11 @@ void init_pcbs()
         pcbs[i].pid = -1;
     }
 
-    for (size_t i = 0; i < 2; i++)
-    {   
-        int ret = add_pcb(function_ptrs[i], "PCBd");
-        if(!ret) return; // error
+    pcbs[0].next = &pcbs[0];
+    pcbs[0].prev = &pcbs[0];
 
-        //scrprintf(51, 18+i, "PCB %d: 0x%x, 0x%x\n", pcbs[i].pid, pcbs[i].esp, pcbs[i].eip);
-    }
+    int ret = add_pcb(&pcb_function, "PCBd");
+    if(!ret) return; // error
 }
 
 void start_tasks()

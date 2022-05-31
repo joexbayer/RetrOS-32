@@ -30,6 +30,7 @@ _context_switch:
     popal
     popfl
 
+    sti
     ret
 
 .global _start_pcb

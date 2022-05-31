@@ -73,6 +73,11 @@ void exec_cmd()
 		stop_task(id);
 	}
 
+	if(strncmp("start", shell_buffer, strlen("start"))){
+		int id = atoi(shell_buffer+strlen("stop")+1);
+		test_add();
+	}
+
 
 	twrite(shell_buffer);
 }
