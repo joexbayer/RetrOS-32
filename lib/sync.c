@@ -73,8 +73,12 @@ void lock(lock_t* l)
         _lock_block(l);
         break;
     
-    default:
+    case UNLOCKED:
         l->state = LOCKED;
+        break;
+    
+    default:
+        /* TODO: Throw error. */
         break;
     }
     STI();

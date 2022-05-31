@@ -24,7 +24,7 @@ else
 	LD=i386-elf-ld
 endif
 
-KERNELOBJ = entry.o kernel.o terminal.o pci.o \
+KERNELOBJ = kernel_entry.o kernel.o terminal.o pci.o \
 			util.o interrupts.o irs_entry.o timer.o \
 			keyboard.o screen.o pcb.o memory.o e1000.o \
 			shell.o sync.o

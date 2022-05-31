@@ -19,6 +19,8 @@ uint32_t strncmp(const char* str, const char* str2, uint32_t len)
 	return 1;	
 }
 
+/* TODO: Move some functions into own files. */
+
 
 /*
   Highly optimized memcpy and memset functions.
