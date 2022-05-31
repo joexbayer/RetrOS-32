@@ -1,7 +1,7 @@
 #include <pcb.h>
 #include <screen.h>
 #include <memory.h>
-#include <keyboard.h>
+#include <sync.h>
 
 #define MAX_NUM_OF_PCBS 10
 #define stack_size 0x2000
@@ -13,10 +13,14 @@ struct pcb* current_running = NULL;
 static struct pcb* last_added = &pcbs[0];
 static int pcb_count = 0;
 
+static lock_t pcb_lock;
+
 void pcb_function()
 {
     int num = 0;
     int progress = 0;
+
+    lock(&pcb_lock);
 
 	while(1)
     {
@@ -42,11 +46,26 @@ void print_pcb_status()
     int width = (SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)-1 + (SCREEN_WIDTH/6);
     int height = (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)+1;
 
-    for (size_t i = 0; i < pcb_count; i++)
+    for (size_t i = 0; i < MAX_NUM_OF_PCBS; i++)
     {
-        scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_GREEN);
-        if(pcbs[i].running != RUNNING)
+        if(pcbs[i].pid == -1)
+            continue;
+
+        switch (pcbs[i].running)
+        {
+        case RUNNING:
+            scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_GREEN);
+            break;
+        case BLOCKED:
+            scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_BROWN);
+            break;
+        case STOPPED:
             scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_RED);
+            break;
+        
+        default:
+            continue;
+        }
 
         scrprintf(width, height+i, "PID %d: %s, SP: 0x%x",pcbs[i].pid, pcbs[i].name, pcbs[i].esp);
         /* code */
@@ -59,6 +78,7 @@ void pcb_function2()
 {
     int num = 0;
     int progress = 0;
+    lock(&pcb_lock);
 	while(1)
     {
 		num = (num+1) % 100000000;
@@ -167,10 +187,25 @@ void yield()
     _context_switch();
 }
 
+void block()
+{
+    current_running->running = BLOCKED;
+    STI();
+    _context_switch();
+}
+
+void unblock(int pid)
+{
+    int i;
+    for(i = 0; i < MAX_NUM_OF_PCBS; i++)
+        if(pcbs[i].pid == pid && pcbs[i].running == BLOCKED)
+            pcbs[i].running = RUNNING;
+}
+
 void context_switch()
 {   
     current_running = current_running->next;
-    while(current_running->running == STOPPED)
+    while(current_running->running != RUNNING && current_running->running != NEW)
         current_running = current_running->next;
 
     if(current_running->running == NEW)
@@ -185,10 +220,13 @@ void context_switch()
  */
 void init_pcbs()
 {   
+    lock_init(&pcb_lock);
+
     /* Stopped processes are eligible to be "replaced." */
     for (size_t i = 0; i < MAX_NUM_OF_PCBS; i++)
     {
         pcbs[i].running = STOPPED;
+        pcbs[i].pid = -1;
     }
 
     for (size_t i = 0; i < 2; i++)

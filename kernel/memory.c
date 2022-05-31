@@ -7,7 +7,7 @@
 #define MEM_CHUNK 0x1000
 #define CHUNKS_SIZE 3200
 
-static int mem_lock = 0;
+static lock_t mem_lock;
 struct mem_chunk chunks[CHUNKS_SIZE];
 uint16_t chunks_used = 0;
 
@@ -49,7 +49,7 @@ void __print_memory_status()
  */
 void* alloc(uint16_t size)
 {
-	spin_lock(&mem_lock);
+	lock(&mem_lock);
 
 	if(size == 0) return NULL;
 	int chunks_needed = size / MEM_CHUNK;
@@ -72,12 +72,12 @@ void* alloc(uint16_t size)
 			chunks_used += chunks_needed;
 			__print_memory_status();
 
-			spin_unlock(&mem_lock);
+			unlock(&mem_lock);
 			return chunks[i].from;
 		}	
 	}
 
-	spin_unlock(&mem_lock);
+	unlock(&mem_lock);
 	return NULL;
 }
 /**
@@ -88,7 +88,7 @@ void* alloc(uint16_t size)
  */
 void free(void* ptr)
 {
-	spin_lock(&mem_lock);
+	lock(&mem_lock);
 	if(ptr == NULL) return;
 	for (int i = 0; i < CHUNKS_SIZE; i++)
 	{
@@ -104,11 +104,11 @@ void free(void* ptr)
 			}
 			chunks_used -= used;
 			__print_memory_status();
-			spin_unlock(&mem_lock);
+			unlock(&mem_lock);
 			return;
 		}
 	}
-	spin_unlock(&mem_lock);	
+	unlock(&mem_lock);	
 }
 
 /**
@@ -118,6 +118,8 @@ void free(void* ptr)
  */
 void init_memory()
 {
+	lock_init(&mem_lock);
+
 	uint32_t mem_position = MEM_START;
 	for (int i = 0; i < CHUNKS_SIZE; i++)
 	{

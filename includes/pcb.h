@@ -8,7 +8,8 @@
 enum {
     STOPPED,
     RUNNING,
-    NEW
+    NEW,
+    BLOCKED
 };
 
 struct pcb {
@@ -18,7 +19,7 @@ struct pcb {
       uint32_t fpu[32];
       /* DO NOT NOT CHANGE ABOVE.*/
       uint8_t running;
-      uint16_t pid;
+      int16_t pid;
 
       char name[pcb_max_name_length];
 
@@ -34,6 +35,9 @@ int stop_task(int pid);
 int add_pcb(uint32_t entry, char* name);
 void yield();
 void print_pcb_status();
+
+void block();
+void unblock(int pid);
 
 /* functions in entry.s */
 void _start_pcb();

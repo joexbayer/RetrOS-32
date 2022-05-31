@@ -28,3 +28,65 @@ void spin_unlock(int volatile *l)
     asm volatile ("":::"memory");
     *l = 0;
 }
+
+void lock_init(lock_t* l)
+{
+    for (size_t i = 0; i < MAX_BLOCKED; i++)
+    {
+        l->blocked[i] = -1;
+    }
+
+    l->state = UNLOCKED;
+}
+
+inline void _lock_block(lock_t* l)
+{
+    for (size_t i = 0; i < MAX_BLOCKED; i++)
+    {
+        if(l->blocked[i] == -1){
+            l->blocked[i] = current_running->pid;
+            block();
+            break;
+        }
+    }
+}
+
+inline int _lock_check_block(lock_t* l)
+{
+    for (size_t i = 0; i < MAX_BLOCKED; i++)
+    {
+        if(l->blocked[i] != -1){
+            return l->blocked[i];
+        }
+    }
+    return -1;
+}
+
+
+
+void lock(lock_t* l)
+{
+    CLI();
+    switch (l->state)
+    {
+    case LOCKED:
+        _lock_block(l);
+        break;
+    
+    default:
+        l->state = LOCKED;
+        break;
+    }
+    STI();
+}
+
+void unlock(lock_t* l)
+{
+    int pid = _lock_check_block(l);
+    if(pid != -1){
+        unblock(pid);
+        return;
+    }
+
+    l->state = UNLOCKED;
+}
