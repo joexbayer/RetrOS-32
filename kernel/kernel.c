@@ -8,20 +8,24 @@
 #include <pcb.h>
 #include <memory.h>
 #include <shell.h>
-
+#include <process.h>
+#include <programs.h>
 
 /* This functions always needs to be on top? */
 void _main(uint32_t debug) {
     /* Initialize terminal interface */
 	CLI();
 	init_terminal();
+	init_timer(1);
 	init_shell();
 	init_interrupts();
 	init_keyboard();
 	init_memory();
 	init_pcbs();
 	init_pci();
-	init_timer(1);
+
+	/* Programs defined in programs.h */
+	init_counter();
 
 	if(debug == 0xDEADBEEF)
 	{

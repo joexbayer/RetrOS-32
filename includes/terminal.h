@@ -10,4 +10,8 @@ void terminal_write(const char* data, size_t size);
 void draw_mem_usage(int used);
 void __terminal_putchar(char c);
 int32_t twritef(char* fmt, ...);
+
+
+void twriteln(const char* data);
+
 #endif

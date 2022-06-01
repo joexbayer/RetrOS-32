@@ -24,10 +24,12 @@ else
 	LD=i386-elf-ld
 endif
 
+PROGRAMOBJ = counter.o
+
 KERNELOBJ = kernel_entry.o kernel.o terminal.o pci.o \
 			util.o interrupts.o irs_entry.o timer.o \
 			keyboard.o screen.o pcb.o memory.o e1000.o \
-			shell.o sync.o
+			shell.o sync.o process.o ${PROGRAMOBJ}
 BOOTOBJ = bootloader.o
 
 .PHONY: all new image clean boot
@@ -61,10 +63,13 @@ kernel: $(KERNELOBJ)
 	echo kernel-v${version}${tag} >> versions.txt
 
 # For assembling and compiling all .c and .s files.
-%.o: */%.c
+%.o: **/%.c
 	$(CC) -o bin/$@ -c $< $(CCFLAGS)
 
-%.o: */%.s
+%.o: */programs/%.c
+	$(CC) -o bin/$@ -c $< $(CCFLAGS)
+
+%.o: **/%.s
 	$(AS) -o bin/$@ -c $< $(ASFLAGS)
 
 iso: bindir bootblock kernel

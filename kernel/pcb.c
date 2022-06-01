@@ -18,14 +18,15 @@ void pcb_function()
     int num = 0;
 	while(1)
     {
-		num = (num+1) % 100000000;
-        //char c = kb_get_char();
-		if(num % 100000000 == 0)
-		{  
-            print_pcb_status();
-            print_memory_status();
-		}
-	};
+        print_pcb_status();
+        print_memory_status();
+		sleep(1);
+	}
+}
+
+void gensis()
+{
+    while(1);
 }
 
 /**
@@ -65,23 +66,6 @@ void print_pcb_status()
         scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
     }
     
-}
-
-void counter()
-{
-    int num = 0;
-    int progress = 0;
-	while(1)
-    {
-		num = (num+1) % 100000000;
-		if(num % 100000000 == 0)
-		{  
-            void* ptr = alloc(0x1000*(rand()%5+1));
-            free(ptr);
-            progress++;
-			scrprintf(10, 10+current_running->pid, "Counter: %d", progress);
-		}
-	};
 }
 
 /**
@@ -143,11 +127,6 @@ int init_pcb(int pid, struct pcb* pcb, uint32_t entry, char* name)
     return 1;
 }
 
-void test_add()
-{
-    add_pcb(&counter, "Counter");
-}
-
 /**
  * @brief Add a pcb to the list of running proceses.
  * Also instantiates the PCB itself.
@@ -178,7 +157,7 @@ int add_pcb(uint32_t entry, char* name)
     
     pcb_count++;
     STI();
-    return pcb_count;
+    return i;
 }   
 
 void start_pcb()
@@ -257,8 +236,11 @@ void init_pcbs()
     pcbs[0].next = &pcbs[0];
     pcbs[0].prev = &pcbs[0];
 
-    int ret = add_pcb(&pcb_function, "PCBd");
-    if(!ret) return; // error
+    int ret = add_pcb(&gensis, "Gensis");
+    if(ret < 0) return; // error
+
+    ret = add_pcb(&pcb_function, "PCBd");
+    if(ret < 0) return; // error
 }
 
 void start_tasks()

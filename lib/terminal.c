@@ -266,6 +266,12 @@ void twrite(const char* data)
 	terminal_write(data, strlen(data));
 }
 
+void twriteln(const char* data)
+{
+	twrite(data);
+	__terminal_putchar('\n');
+}
+
 #define MAX_FMT_STR_SIZE 50
 
 int32_t twritef(char* fmt, ...)

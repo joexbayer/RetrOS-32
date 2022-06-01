@@ -4,11 +4,13 @@
 #include <screen.h>
 #include <terminal.h>
 #include <pcb.h>
+#include <process.h>
 
 static uint8_t SHELL_POSITION = (SCREEN_HEIGHT)-1;
 static const uint8_t SHELL_MAX_SIZE = 25;
 static uint8_t shell_column = 0;
 static char shell_buffer[25];
+static char shell_buffer_length = 0;
 
 
 /* SHELL PROTOTYPES */
@@ -37,15 +39,25 @@ void shell_clear()
 void init_shell(void)
 {
 	memset(&shell_buffer, 0, 25);
-	shell_column = 1;
-	shell_clear();
-	scrwrite(0, SHELL_POSITION, ">", VGA_COLOR_LIGHT_CYAN);
+	if(current_process != NULL)
+	{
+		shell_column = strlen(current_process->name);
+		shell_buffer_length = 0;
+		scrwrite(0, SHELL_POSITION, current_process->name, VGA_COLOR_LIGHT_CYAN);
+		scrwrite(shell_column, SHELL_POSITION, "> ", VGA_COLOR_LIGHT_CYAN);
+		shell_column += 1;
+	} else {
+		shell_column = strlen("Shell>");
+		shell_buffer_length = 0;
+		scrwrite(0, SHELL_POSITION, "Shell>", VGA_COLOR_LIGHT_CYAN);
+	}
 	screen_set_cursor(shell_column, SHELL_POSITION);
+	shell_clear();
 }
 
 void shell_process()
 {
-	sleep(10);
+	sleep(2);
 	while(1)
 	{
 		char c = kb_get_char();
@@ -57,14 +69,42 @@ void shell_process()
 
 void exec_cmd()
 {
-
-	if(strncmp("lspci", shell_buffer, strlen("lspci"))){
-		shell_buffer[shell_column-1] = '\n';
-		list_pci_devices();
+	for (size_t i = 0; i < current_process->total_functions; i++)
+	{
+		if(strncmp(current_process->functions[i].name, shell_buffer, strlen(current_process->functions[i].name))){
+			current_process->functions[i].f();
+			return;
+		}
 	}
 	
+
+	if(strncmp("lsi", shell_buffer, strlen("lsi"))){
+		list_instances();
+		return;
+	}
+
+	if(strncmp("lsf", shell_buffer, strlen("lsf"))){
+		list_functions();
+		return;
+	}
+
+	if(strncmp("switch", shell_buffer, strlen("switch"))){
+		int id = atoi(shell_buffer+strlen("switch")+1);
+		switch_process(id);
+		return;
+	}
+
+	if(strncmp("lspci", shell_buffer, strlen("lspci"))){
+		list_pci_devices();
+		return;
+	}
+
+	if(strncmp("ls", shell_buffer, strlen("ls"))){
+		list_processes();
+		return;
+	}
+
 	if(strncmp("clear", shell_buffer, strlen("clear"))){
-		shell_buffer[shell_column-1] = '\n';
 		scr_clear();
 		init_terminal();
 	}
@@ -76,11 +116,10 @@ void exec_cmd()
 
 	if(strncmp("start", shell_buffer, strlen("start"))){
 		int id = atoi(shell_buffer+strlen("stop")+1);
-		test_add();
+		start_process(id);
 	}
 
-
-	twrite(shell_buffer);
+	//twrite(shell_buffer);
 }
 
 /**
@@ -94,6 +133,8 @@ void shell_put(char c)
 	unsigned char uc = c;
 	if(uc == newline)
 	{
+		shell_buffer[shell_buffer_length] = newline;
+		shell_buffer_length++;
 		exec_cmd();
 		init_shell();
 		return;
@@ -105,7 +146,8 @@ void shell_put(char c)
 			return;
 		shell_column -= 1;
 		scrput(shell_column, SHELL_POSITION, ' ', VGA_COLOR_WHITE);
-		shell_buffer[shell_column-1] = 0;
+		shell_buffer[shell_buffer_length] = 0;
+		shell_buffer_length--;
 		screen_set_cursor(shell_column-1, SHELL_POSITION);
 		return;
 	}
@@ -115,7 +157,8 @@ void shell_put(char c)
 		return;
 	}
 	scrput(shell_column, SHELL_POSITION, uc, VGA_COLOR_WHITE);
-	shell_buffer[shell_column-1] = uc;
+	shell_buffer[shell_buffer_length] = uc;
+	shell_buffer_length++;
 	screen_set_cursor(shell_column, SHELL_POSITION);
 	shell_column++;
 }
