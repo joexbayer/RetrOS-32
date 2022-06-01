@@ -63,13 +63,13 @@ kernel: $(KERNELOBJ)
 	echo kernel-v${version}${tag} >> versions.txt
 
 # For assembling and compiling all .c and .s files.
-%.o: **/%.c
+%.o: */%.c
 	$(CC) -o bin/$@ -c $< $(CCFLAGS)
 
-%.o: */programs/%.c
+%.o: */*/%.c
 	$(CC) -o bin/$@ -c $< $(CCFLAGS)
 
-%.o: **/%.s
+%.o: */%.s
 	$(AS) -o bin/$@ -c $< $(ASFLAGS)
 
 iso: bindir bootblock kernel

@@ -35,7 +35,7 @@ int _check_chunks(int i, int chunks_needed)
 void print_memory_status()
 {	
 	scrcolor_set(VGA_COLOR_BLACK, VGA_COLOR_LIGHT_GREY);
-	scrprintf(0,0, "Time: %d   Memory: %d/%d used. %d/%d chunks    ", get_time(), (chunks_used*MEM_CHUNK), CHUNKS_SIZE*MEM_CHUNK, chunks_used, CHUNKS_SIZE);
+	scrprintf(0,0, " Time: %d   Memory: %d/%d used. %d/%d chunks    ", get_time(), (chunks_used*MEM_CHUNK), CHUNKS_SIZE*MEM_CHUNK, chunks_used, CHUNKS_SIZE);
 	scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
 }
 
@@ -123,7 +123,7 @@ void init_memory()
 	for (int i = 0; i < CHUNKS_SIZE; i++)
 	{
 		chunks[i].size = MEM_CHUNK;
-		chunks[i].from = (uint32_t) mem_position;
+		chunks[i].from = (uint32_t*) mem_position;
 		chunks[i].chunks_used = 0;
 		chunks[i].status = FREE;
 

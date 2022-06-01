@@ -26,7 +26,6 @@ static int pcb_count = 0;
 
 void pcb_function()
 {
-    int num = 0;
 	while(1)
     {
         print_pcb_status();
@@ -91,13 +90,13 @@ int stop_task(int pid)
         FIXME: BUG, after a task is stopped, the next started task will fill its place.
         BUT, the next task after that will have the same stack as a other PCB.
      */
-    for (size_t i = 0; i < pcb_count; i++)
+    for (int i = 0; i < pcb_count; i++)
     {
         if(pcbs[i].pid == pid)
         {
             CLI();
             pcbs[i].running = STOPPED;
-            free(pcbs[i].org_stack);
+            free((void*)pcbs[i].org_stack);
             pcb_count--;
             pcbs[i].prev->next = pcbs[i].next;
             pcbs[i].next->prev = pcbs[i].prev;
@@ -117,7 +116,7 @@ int stop_task(int pid)
  * @param name name of process.
  * @return int 1 on success -1 on error.
  */
-int init_pcb(int pid, struct pcb* pcb, uint32_t entry, char* name)
+int init_pcb(int pid, struct pcb* pcb, void (*entry)(), char* name)
 {
     uint32_t stack = (uint32_t) alloc(stack_size);
     if((void*)stack == NULL)
@@ -146,7 +145,7 @@ int init_pcb(int pid, struct pcb* pcb, uint32_t entry, char* name)
  * @param name name of process
  * @return int amount of running processes, -1 on error.
  */
-int add_pcb(uint32_t entry, char* name)
+int add_pcb(void (*entry)(), char* name)
 {   
     CLI();
     if(MAX_NUM_OF_PCBS == pcb_count)

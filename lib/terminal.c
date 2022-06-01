@@ -308,7 +308,7 @@ int32_t twritef(char* fmt, ...)
 				if(terminal_row < SCREEN_HEIGHT-1)
 				{
 					terminal_row += 1;
-					return;
+					return written;
 				}
 				__terminal_scroll();
 				break;

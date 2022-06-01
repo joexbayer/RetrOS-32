@@ -155,10 +155,8 @@ void init_pci()
 
 void list_pci_devices()
 {
-    int pcb_x = 30;
-    int pcb_y = 2;
     twritef("PCI Devices: \n");
-    for (size_t i = 0; i < _pci_devices_size; i++)
+    for (int i = 0; i < _pci_devices_size; i++)
     {
         twritef("ID: 0x%x, %s\n", 
                 _pci_devices[i].device,

@@ -7,7 +7,6 @@
 #include <screen.h>
 #include <pcb.h>
 #include <memory.h>
-#include <shell.h>
 #include <process.h>
 #include <programs.h>
 

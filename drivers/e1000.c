@@ -199,7 +199,7 @@ void e1000_attach(struct pci_device* dev)
     scrwrite(51, 13, "Intel E1000:", VGA_COLOR_LIGHT_GREEN);
     scrprintf(51, 14, "Base: 0x%x", dev->base);
 
-    e1000 = dev->base;
+    e1000 = (volatile uint32_t *)dev->base;
     pci_enable_device_busmaster(dev->bus, dev->slot, dev->function);
 
 	_e1000_tx_init();

@@ -50,6 +50,6 @@ void counter()
 void init_counter()
 {   
     lock_init(&c_lock);
-    int pid = ATTACH_PROCESS("Counter", &counter);
-    ATTACH_FUNCTION(pid, "reset", &reset_value);
+    int pid = ATTACH_PROCESS("Counter", (void (*)())&counter);
+    ATTACH_FUNCTION(pid, "reset", (void (*)())&reset_value);
 }

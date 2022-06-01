@@ -27,7 +27,7 @@ struct process* current_process = &processes[0];
  * @param fn pointer to the function
  * @return int 1 on success, -1 on error.
  */
-int ATTACH_FUNCTION(int id, char* name, uint32_t* fn)
+int ATTACH_FUNCTION(int id, char* name, void (*fn)())
 {
     struct process* proc = &processes[id];
     if(proc->total_functions == MAX_PROCESS_FUNCTIONS)
@@ -49,7 +49,7 @@ int ATTACH_FUNCTION(int id, char* name, uint32_t* fn)
  * @param entry pointer to the processes main function.
  * @return int process id, -1 on error.
  */
-int ATTACH_PROCESS(char* name, uint32_t* entry)
+int ATTACH_PROCESS(char* name, void (*entry)())
 {
     if(process_count == MAX_PROCESSES)
         return -1;
@@ -64,7 +64,7 @@ int ATTACH_PROCESS(char* name, uint32_t* entry)
     proc->focus = NOFOCUS;
     proc->total_functions = 0;
 
-    for (size_t i = 0; i < MAX_PROCESS_INSTANCES; i++)
+    for (int i = 0; i < MAX_PROCESS_INSTANCES; i++)
     {
         proc->instances[i] = -1;
     }
@@ -101,7 +101,7 @@ void stop_process(char* name)
 void list_functions()
 {
     twritef("Functions for %s:\n", current_process->name);
-    for (size_t i = 0; i < current_process->total_functions; i++)
+    for (int i = 0; i < current_process->total_functions; i++)
     {
         twritef("   %s\n", current_process->functions[i].name);
     }
@@ -131,7 +131,7 @@ void switch_process(int id)
 
 void list_processes()
 {
-    for (size_t i = 0; i < process_count; i++)
+    for (int i = 0; i < process_count; i++)
     {
         twritef("%d: %s\n", i, processes[i].name);
     }

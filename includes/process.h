@@ -25,7 +25,7 @@ struct process {
     char name[MAX_PROCESS_NAME];
     struct process_function functions[MAX_PROCESS_FUNCTIONS];
     int total_functions;
-    void* entry;
+    void (*entry)();
 
     int16_t pid;
     uint16_t focus;
@@ -33,8 +33,8 @@ struct process {
     int16_t instances[MAX_PROCESS_INSTANCES];
 };
 
-int ATTACH_FUNCTION(int pid, char* name, uint32_t* fn);
-int ATTACH_PROCESS(char* name, uint32_t* entry);
+int ATTACH_FUNCTION(int pid, char* name, void (*fn)());
+int ATTACH_PROCESS(char* name, void (*entry)());
 
 void list_processes();
 void start_process(int id);

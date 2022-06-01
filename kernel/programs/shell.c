@@ -8,8 +8,6 @@
  * @copyright Copyright (c) 2022
  * 
  */
-
-#include <shell.h>
 #include <pci.h>
 #include <keyboard.h>
 #include <screen.h>
@@ -21,7 +19,7 @@ static uint8_t SHELL_POSITION = (SCREEN_HEIGHT)-1;
 static const uint8_t SHELL_MAX_SIZE = 25;
 static uint8_t shell_column = 0;
 static char shell_buffer[25];
-static char shell_buffer_length = 0;
+static uint8_t shell_buffer_length = 0;
 
 static const char newline = '\n';
 static const char backspace = '\b';
@@ -42,7 +40,7 @@ void reset_shell()
 	memset(&shell_buffer, 0, 25);
 	shell_column = strlen(current_process->name);
 	shell_buffer_length = 0;
-	
+
 	scrwrite(0, SHELL_POSITION, current_process->name, VGA_COLOR_LIGHT_CYAN);
 	scrwrite(shell_column, SHELL_POSITION, "> ", VGA_COLOR_LIGHT_CYAN);
 	shell_column += 1;
@@ -53,7 +51,7 @@ void reset_shell()
 
 void exec_cmd()
 {
-	for (size_t i = 0; i < current_process->total_functions; i++)
+	for (int i = 0; i < current_process->total_functions; i++)
 	{
 		if(strncmp(current_process->functions[i].name, shell_buffer, strlen(current_process->functions[i].name))){
 			current_process->functions[i].f();

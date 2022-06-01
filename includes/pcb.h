@@ -17,7 +17,7 @@ enum {
 struct pcb {
       uint32_t ebp;
       uint32_t esp;
-      uint32_t eip;
+      void (*eip)();
       uint32_t fpu[32];
       /* DO NOT NOT CHANGE ABOVE.*/
       uint8_t running;
@@ -37,7 +37,7 @@ void context_switch();
 void init_pcbs();
 void start_tasks();
 int stop_task(int pid);
-int add_pcb(uint32_t entry, char* name);
+int add_pcb( void (*entry)(), char* name);
 void print_pcb_status();
 
 void yield();
