@@ -1,3 +1,14 @@
+/**
+ * @file screen.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Handles drawing to the screen, mainly in VGA_MEMORY
+ * @version 0.1
+ * @date 2022-06-01
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+
 #include <screen.h>
 #include <stdarg.h>
 

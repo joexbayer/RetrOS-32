@@ -1,3 +1,13 @@
+/**
+ * @file e1000.c
+ * @author Joe Bayer (joexbayer)
+ * @brief E1000 Intel Network Cards driver code. 
+ * @version 0.1
+ * @date 2022-06-01
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 #include <e1000.h>
 #include <screen.h>
 #include <interrupts.h>

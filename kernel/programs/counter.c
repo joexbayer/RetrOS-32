@@ -1,3 +1,14 @@
+/**
+ * @file counter.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Simple counter program, mainly used for testing processes.
+ * @version 0.1
+ * @date 2022-06-01
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+
 #include <process.h>
 #include <sync.h>
 #include <util.h>
@@ -6,7 +17,6 @@
 static int counters = 0;
 static int value = 0;
 static lock_t c_lock;
-
 
 void reset_value()
 {

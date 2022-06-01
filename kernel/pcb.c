@@ -1,3 +1,14 @@
+/**
+ * @file pcb.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Manages PCBs creation, destruction and their status.
+ * @version 0.1
+ * @date 2022-06-01
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+
 #include <pcb.h>
 #include <screen.h>
 #include <memory.h>

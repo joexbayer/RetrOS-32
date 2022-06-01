@@ -1,3 +1,13 @@
+/**
+ * @file process.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Simple abstraction to easily add programs and their functions to the terminal.
+ * @version 0.1
+ * @date 2022-06-01
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 #include <process.h>
 #include <terminal.h>
 #include <pcb.h>
@@ -8,9 +18,18 @@ static struct process processes[MAX_PROCESSES];
 static int process_count = 0;
 struct process* current_process = &processes[0];
 
-int ATTACH_FUNCTION(int pid, char* name, uint32_t* fn)
+
+/**
+ * @brief Attaches a function to the given process ID. Making it visable to the shell.
+ * 
+ * @param id of the process, given by ATTACH_PROCESS
+ * @param name name of the function.
+ * @param fn pointer to the function
+ * @return int 1 on success, -1 on error.
+ */
+int ATTACH_FUNCTION(int id, char* name, uint32_t* fn)
 {
-    struct process* proc = &processes[pid];
+    struct process* proc = &processes[id];
     if(proc->total_functions == MAX_PROCESS_FUNCTIONS)
         return -1;
 
@@ -23,6 +42,13 @@ int ATTACH_FUNCTION(int pid, char* name, uint32_t* fn)
     return 1;
 }
 
+/**
+ * @brief Attaches process to the global process list. Making it accessible by the shell.
+ * 
+ * @param name name of the process.
+ * @param entry pointer to the processes main function.
+ * @return int process id, -1 on error.
+ */
 int ATTACH_PROCESS(char* name, uint32_t* entry)
 {
     if(process_count == MAX_PROCESSES)

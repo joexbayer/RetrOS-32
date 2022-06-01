@@ -1,3 +1,14 @@
+/**
+ * @file keyboard.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Really simple PS/2 Keyboard driver with US keyboard layout.
+ * @version 0.1
+ * @date 2022-06-01
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+
 #include <keyboard.h>
 #include <screen.h>
 #include <terminal.h>

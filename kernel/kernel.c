@@ -17,7 +17,6 @@ void _main(uint32_t debug) {
 	CLI();
 	init_terminal();
 	init_timer(1);
-	init_shell();
 	init_interrupts();
 	init_keyboard();
 	init_memory();
@@ -25,6 +24,7 @@ void _main(uint32_t debug) {
 	init_pci();
 
 	/* Programs defined in programs.h */
+	init_shell();
 	init_counter();
 
 	if(debug == 0xDEADBEEF)
@@ -49,8 +49,7 @@ void _main(uint32_t debug) {
 	//asm volatile ("int $43");
 	//asm volatile ("int $31");
 
-	//draw_mem_usage(10);
-	add_pcb(&shell_process, "Shell");
+	start_process(0); // SHELL
 	STI();
 
 	start_tasks();

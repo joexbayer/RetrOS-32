@@ -1,3 +1,14 @@
+/**
+ * @file terminal.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Handles terminal input and currently.. UI drawing.
+ * @version 0.1
+ * @date 2022-06-01
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+
 #include <terminal.h>
 #include <stdarg.h>
 #include <screen.h>
@@ -70,36 +81,6 @@ void __terminal_ui_text()
 		scrput(i+52, 12, nic_str[i], terminal_color);
 	}
 
-}
-
-/**
- * Draws a visual of how much memory is used.
- * 
- * @param int used, how much memory is used.
- * @return void
- */
-void draw_mem_usage(int used)
-{	
-	int _used 		= used % (SCREEN_WIDTH/6);	
-	size_t mem_size 	= (SCREEN_HEIGHT-TERMINAL_START);
-	size_t mem_used 	= 1+((SCREEN_WIDTH/6)-_used);
-	size_t mem_free 	= (SCREEN_WIDTH/6)-_used;
-
-	/* Fill red with the used memory */
-	for (size_t x = 1; x < mem_size; x++) {
-		for (size_t y = mem_used; y < (SCREEN_WIDTH/6); y++) {
-			scrput(((PROCESS_WIDTH)-2+y), TERMINAL_START+x, 176, VGA_COLOR_LIGHT_RED);
-		}
-	}
-
-	/* Fill green with the free memory. */
-	for (size_t x = 1; x < mem_size; x++) {
-		for (size_t y = 1; y < mem_free; y++) {
-			scrput(((PROCESS_WIDTH)-2+y), TERMINAL_START+x, 176, VGA_COLOR_LIGHT_GREEN);
-		}
-	}
-
-	terminal_setcolor(VGA_COLOR_LIGHT_GREY);
 }
 
 /**

@@ -1,3 +1,14 @@
+/**
+ * @file pci.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Reads and enumerates the PCI devices, registering them and attaching drivers.
+ * @version 0.1
+ * @date 2022-06-01
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+
 #include <pci.h>
 #include <e1000.h>
 #include <screen.h>

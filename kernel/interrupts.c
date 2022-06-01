@@ -1,3 +1,13 @@
+/**
+ * @file interrupts.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Handles installing, calling and handling of interrupts 
+ * @version 0.1
+ * @date 2022-06-01
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 #include <interrupts.h>
 #include <terminal.h>
 #include <screen.h>

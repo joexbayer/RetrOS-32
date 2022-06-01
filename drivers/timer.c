@@ -1,3 +1,14 @@
+/**
+ * @file timer.c
+ * @author Joe Bayer (joexbayer)
+ * @brief PIT driver, used for preemptive scheduling and timing.
+ * @version 0.1
+ * @date 2022-06-01
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+
 #include <timer.h>
 #include <screen.h>
 #include <terminal.h>
@@ -30,6 +41,7 @@ static void timer_callback()
 	}
 }
 
+/* http://www.jamesmolloy.co.uk/tutorial_html/5.-IRQs%20and%20the%20PIT.html */
 void init_timer(uint32_t frequency)
 {
 	// Firstly, register our timer callback.

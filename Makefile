@@ -24,12 +24,12 @@ else
 	LD=i386-elf-ld
 endif
 
-PROGRAMOBJ = counter.o
+PROGRAMOBJ = counter.o shell.o 
 
 KERNELOBJ = kernel_entry.o kernel.o terminal.o pci.o \
 			util.o interrupts.o irs_entry.o timer.o \
 			keyboard.o screen.o pcb.o memory.o e1000.o \
-			shell.o sync.o process.o ${PROGRAMOBJ}
+			sync.o process.o ${PROGRAMOBJ}
 BOOTOBJ = bootloader.o
 
 .PHONY: all new image clean boot
