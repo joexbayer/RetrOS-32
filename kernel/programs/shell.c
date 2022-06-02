@@ -163,5 +163,7 @@ void shell_main()
 void init_shell(void)
 {
 	int pid = ATTACH_PROCESS("Shell", &shell_main);
+	if(pid < 0)return;
+
 	reset_shell();
 }

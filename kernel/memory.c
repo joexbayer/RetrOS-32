@@ -1,3 +1,14 @@
+/**
+ * @file memory.c
+ * @author Joe Bayer (joexbayer)
+ * @brief A primitiv memory allocation program, using chunks with size of 4096
+ * @version 0.1
+ * @date 2022-06-02
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+
 #include <memory.h>
 #include <screen.h>
 #include <timer.h>
@@ -16,7 +27,6 @@ uint16_t chunks_used = 0;
 void init_memory();
 void* alloc(uint16_t size);
 void free(void* ptr);
-
 
 /* Helper functions */
 int _check_chunks(int i, int chunks_needed)

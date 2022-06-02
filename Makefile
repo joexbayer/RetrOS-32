@@ -5,9 +5,7 @@ CCFLAGS=-m32 -std=gnu99 -O2 \
 		-fno-builtin-function -fno-builtin -I ./includes/
 ASFLAGS=
 LDFLAGS=
-
-version := $(shell date +%s )
-versions := $(shell cat versions.txt)
+MAKEFLAGS += --no-print-directory
 
 UNAME := $(shell uname)
 ifeq ($(UNAME),Linux)
@@ -24,18 +22,20 @@ else
 	LD=i386-elf-ld
 endif
 
-PROGRAMOBJ = counter.o shell.o 
+PROGRAMOBJ = bin/counter.o bin/shell.o 
 
-KERNELOBJ = kernel_entry.o kernel.o terminal.o pci.o \
-			util.o interrupts.o irs_entry.o timer.o \
-			keyboard.o screen.o pcb.o memory.o e1000.o \
-			sync.o process.o ${PROGRAMOBJ}
-BOOTOBJ = bootloader.o
+KERNELOBJ = bin/kernel_entry.o bin/kernel.o bin/terminal.o bin/pci.o \
+			bin/util.o bin/interrupts.o bin/irs_entry.o bin/timer.o \
+			bin/keyboard.o bin/screen.o bin/pcb.o bin/memory.o bin/e1000.o \
+			bin/sync.o bin/process.o bin/net.o ${PROGRAMOBJ}
+BOOTOBJ = bin/bootloader.o
 
-.PHONY: all new image clean boot
-all: new
+.PHONY: all new image clean boot net kernel
+all: compile
 
 new: clean iso
+
+cleaniso: iso clean 
 
 help:
 	@echo ~~~~~~~ Makefile commands ~~~~~~~ 
@@ -49,62 +49,55 @@ help:
 	@echo 
 	@echo ~~~~~~~ Clean commands ~~~~~~~ 
 	@echo make clean - Deletes all .o and .iso files.
-	@echo make deepclean - Deletes all .o, .iso and kernel versions.
-	@echo 
-	@echo ~~~~~~~  Version commands ~~~~~~~ 
-	@echo make versions - Lists all kernel versions since last deepclean.
-	@echo make custom v={kernel} - Creates a .iso file with specified kernel.
+	@echo make deepclean - Deletes all .o, .iso and kernel.
 
 bootblock: $(BOOTOBJ)
-	$(LD) $(LDFLAGS) -o ./bin/bootblock ./bin/$^ -Ttext 0x7C00 --oformat=binary
+	@$(LD) $(LDFLAGS) -o bin/bootblock $^ -Ttext 0x7C00 --oformat=binary
+	@echo Bootblock created.
 
 kernel: $(KERNELOBJ)
-	$(LD) -o ./bin/kernel-v${version} $(addprefix ./bin/,$^) $(LDFLAGS) -T ./kernel/linker.ld
-	echo kernel-v${version}${tag} >> versions.txt
+	@$(LD) -o bin/kernelout $^ $(LDFLAGS) -T ./kernel/linker.ld
+	@echo Kernel created.
+
+.depend: **/*.[cSh]
+	$(CC) $(CCFLAGS) -MM -MG **/*.[cS] > $@
+	
+-include .depend
 
 # For assembling and compiling all .c and .s files.
-%.o: */%.c
-	$(CC) -o bin/$@ -c $< $(CCFLAGS)
+bin/%.o: */%.c
+	@$(CC) -o $@ -c $< $(CCFLAGS)
+	@echo Compiling $@
 
-%.o: */*/%.c
-	$(CC) -o bin/$@ -c $< $(CCFLAGS)
+bin/%.o: */*/%.c
+	@$(CC) -o $@ -c $< $(CCFLAGS)
+	@echo Compiling $@
 
-%.o: */%.s
-	$(AS) -o bin/$@ -c $< $(ASFLAGS)
+bin/%.o: */%.s
+	@$(AS) -o $@ -c $< $(ASFLAGS)
+	@echo Compiling $@
 
-iso: bindir bootblock kernel
-	dd if=/dev/zero of=boot.iso bs=512 count=961
-	dd if=./bin/bootblock of=boot.iso conv=notrunc bs=512 seek=0 count=1
-	dd if=./bin/kernel-v${version} of=boot.iso conv=notrunc bs=512 seek=1 count=960
+bin/net.o: ./kernel/net/*.c
+	@make -C ./kernel/net/
 
-versions:
-	@echo "Kernel versions since last deepclean: (Only local)"
-	@echo ${versions}
-
-# use this as make custom v={kernel-v*}
-custom: bindir bootblock
-	dd if=/dev/zero of=boot.iso bs=512 count=961
-	dd if=./bin/bootblock of=boot.iso conv=notrunc bs=512 seek=0 count=1
-	dd if=./bin/${v} of=boot.iso conv=notrunc bs=512 seek=1 count=960
+iso: bootblock kernel
+	@dd if=/dev/zero of=boot.iso bs=512 count=961
+	@dd if=./bin/bootblock of=boot.iso conv=notrunc bs=512 seek=0 count=1
+	@dd if=./bin/kernelout of=boot.iso conv=notrunc bs=512 seek=1 count=960
+	@echo Created boot.iso.
 
 compile: bootblock kernel
 
 img: iso
 	mv boot.iso boot.img
 
-bindir:
-	mkdir -p bin
-
-clean: bindir
+clean:
+	make -C kernel/net clean
 	rm -f ./bin/*.o
 	rm -f ./bin/bootblock
-	rm -f *.iso
+	rm -f ./bin/kernelout
+	rm -f .depend
 
-deepclean: bindir
-	rm -f ./bin/*
-	rm -f *.iso
-	rm -f versions.txt
-	echo >versions.txt
 
 boot: check
 	sudo dd if=boot.iso of=/dev/disk2 bs=512 count=961 seek=0

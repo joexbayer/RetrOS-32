@@ -34,6 +34,8 @@
 *.img
 *.dat
 
+bootblock
+kernelout
 versions.txt
 image
 bin/bootblock
