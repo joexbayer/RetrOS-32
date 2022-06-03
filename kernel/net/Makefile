@@ -22,7 +22,7 @@ else
 	LD=i386-elf-ld
 endif
 
-NETOBJS = netdev.o
+NETOBJS = networking.o netdev.o
 
 .PHONY: all new network clean bindir
 all: new

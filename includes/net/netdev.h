@@ -6,7 +6,7 @@
 
 #define MAX_NETDEV_NAME_SIZE 10
 
-struct netdev current_netdev;
+extern struct netdev current_netdev;  
 
 /**
  * @brief Main struct that keeps track of the network, especially its stats and read / write functions.
