@@ -22,6 +22,8 @@ else
 	LD=i386-elf-ld
 endif
 
+OUTPUTDIR = ../../bin/
+
 NETOBJS = networking.o netdev.o
 
 .PHONY: all new network clean bindir
@@ -30,7 +32,7 @@ all: new
 new: bindir network
 
 network: ${NETOBJS}
-	@$(LD) -o ../../bin/net.o $(addprefix ./bin/,$^) $(LDFLAGS) -r
+	@$(LD) -o ${OUTPUTDIR}net.o $(addprefix ./bin/,$^) $(LDFLAGS) -r
 	@echo Network Object Created
 
 .depend: *.[csh]
