@@ -60,7 +60,8 @@ kernel: $(KERNELOBJ)
 	@echo Kernel created.
 
 .depend: **/*.[cSh]
-	$(CC) $(CCFLAGS) -MM -MG **/*.[cS] > $@
+	@$(CC) $(CCFLAGS) -MM -MG **/*.[cS] > $@
+	@echo Creating dependencies
 	
 -include .depend
 
@@ -80,13 +81,13 @@ bin/%.o: */%.s
 bin/net.o: ./kernel/net/*.c
 	@make -C ./kernel/net/
 
-iso: bootblock kernel
+iso: compile
 	@dd if=/dev/zero of=boot.iso bs=512 count=961
 	@dd if=./bin/bootblock of=boot.iso conv=notrunc bs=512 seek=0 count=1
 	@dd if=./bin/kernelout of=boot.iso conv=notrunc bs=512 seek=1 count=960
 	@echo Created boot.iso.
 
-compile: bootblock kernel
+compile: bindir bootblock kernel
 
 img: iso
 	mv boot.iso boot.img
@@ -98,6 +99,8 @@ clean:
 	rm -f ./bin/kernelout
 	rm -f .depend
 
+bindir:
+	@mkdir -p bin
 
 boot: check
 	sudo dd if=boot.iso of=/dev/disk2 bs=512 count=961 seek=0

@@ -15,6 +15,10 @@
     https://stackoverflow.com/questions/6935442/x86-spinlock-using-cmpxchg
 */
 
+void fn(){
+
+}
+
 /**
  * @brief Locks the given spinlock variable l.
  * 
@@ -22,10 +26,10 @@
  */
 void spin_lock(int volatile *l)
 {
-    while(!__sync_bool_compare_and_swap(l, 0, 1))
-    {
-        do{}while(*l);
-    }
+    //while(!__sync_bool_compare_and_swap(l, 0, 1))
+    //{
+        //do{}while(*l);
+    //}
 }
 
 /**

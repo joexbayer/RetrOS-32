@@ -24,10 +24,10 @@ endif
 
 NETOBJS = netdev.o
 
-.PHONY: all new network clean
+.PHONY: all new network clean bindir
 all: new
 
-new: network
+new: bindir network
 
 network: ${NETOBJS}
 	@$(LD) -o ../../bin/net.o $(addprefix ./bin/,$^) $(LDFLAGS)
@@ -35,6 +35,9 @@ network: ${NETOBJS}
 
 .depend: *.[csh]
 	@$(CC) $(CCOPTS) -MM -MG *.[cs] > $@
+
+bindir:
+	@mkdir -p bin
 
 # For assembling and compiling all .c and .s files.
 %.o: %.c
