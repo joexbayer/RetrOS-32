@@ -1,2 +1,0 @@
-netdev.o: netdev.c
-networking.o: networking.c

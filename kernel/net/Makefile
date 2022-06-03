@@ -35,8 +35,10 @@ network: ${NETOBJS}
 	@$(LD) -o ${OUTPUTDIR}net.o $(addprefix ./bin/,$^) $(LDFLAGS) -r
 	@echo Network Object Created
 
-.depend: *.[csh]
-	@$(CC) $(CCOPTS) -MM -MG *.[cs] > $@
+.depend: **/*.[cSh]
+	@$(CC) $(CCFLAGS) -MM -MG **/*.[cS] > $@
+
+-include .depend
 
 bindir:
 	@mkdir -p bin
@@ -49,5 +51,3 @@ bindir:
 clean:
 	rm -f ./bin/*.o
 	rm -f .depend
-
--include .depend
