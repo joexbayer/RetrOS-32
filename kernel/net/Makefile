@@ -30,7 +30,7 @@ all: new
 new: bindir network
 
 network: ${NETOBJS}
-	@$(LD) -o ../../bin/net.o $(addprefix ./bin/,$^) $(LDFLAGS)
+	@$(LD) -o ../../bin/net.o $(addprefix ./bin/,$^) $(LDFLAGS) -r
 	@echo Network Object Created
 
 .depend: *.[csh]

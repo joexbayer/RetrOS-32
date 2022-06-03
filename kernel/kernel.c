@@ -25,6 +25,7 @@ void _main(uint32_t debug) {
 	/* Programs defined in programs.h */
 	init_shell();
 	init_counter();
+	init_networking();
 
 	if(debug == 0xDEADBEEF)
 	{
