@@ -3,8 +3,8 @@
 
 #include <util.h>
 
-#define MAX_FUNCTION_NAME 10
-#define MAX_PROCESS_NAME 10
+#define MAX_FUNCTION_NAME 20
+#define MAX_PROCESS_NAME 20
 #define MAX_PROCESS_FUNCTIONS 5
 
 #define MAX_PROCESS_INSTANCES 5
@@ -32,6 +32,18 @@ struct process {
 
     int16_t instances[MAX_PROCESS_INSTANCES];
 };
+
+#define PROGRAM(name, fn)           \
+int pid;                            \
+extern void init_##name()          \
+{                                   \
+    pid = ATTACH_PROCESS(#name, fn); \
+
+#define ATTACH(name, fn) ATTACH_FUNCTION(pid, name, fn);
+
+#define PROGRAM_END }
+
+
 
 int ATTACH_FUNCTION(int pid, char* name, void (*fn)());
 int ATTACH_PROCESS(char* name, void (*entry)());

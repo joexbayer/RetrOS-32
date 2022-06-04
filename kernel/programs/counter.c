@@ -47,9 +47,7 @@ void counter()
 	};
 }
 
-void init_counter()
-{   
-    lock_init(&c_lock);
-    int pid = ATTACH_PROCESS("Counter", (void (*)())&counter);
-    ATTACH_FUNCTION(pid, "reset", (void (*)())&reset_value);
-}
+PROGRAM(counter, &counter)
+lock_init(&c_lock);
+ATTACH("reset", &reset_value)
+PROGRAM_END

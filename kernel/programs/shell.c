@@ -156,14 +156,6 @@ void shell_main()
 	}
 }
 
-/**
- * @brief Clears the shells buffer, screen and updates
- * cursor position.
- */
-void init_shell(void)
-{
-	int pid = ATTACH_PROCESS("Shell", &shell_main);
-	if(pid < 0)return;
-
-	reset_shell();
-}
+PROGRAM(shell, &shell_main)
+reset_shell();
+PROGRAM_END

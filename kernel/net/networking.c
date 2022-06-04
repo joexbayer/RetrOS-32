@@ -11,8 +11,6 @@ void main()
 
 }
 
-void init_networking()
-{
-    int id = ATTACH_PROCESS("Network", &main);
-    ATTACH_FUNCTION(id, "lsnet", &list_net_devices);
-}
+PROGRAM(networking, &main)
+ATTACH("lsnet", &list_net_devices)
+PROGRAM_END

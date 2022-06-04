@@ -13,7 +13,7 @@ interrupts.o: kernel/interrupts.c includes/interrupts.h includes/util.h \
 kernel.o: kernel/kernel.c includes/util.h includes/pci.h \
  includes/terminal.h includes/keyboard.h includes/interrupts.h \
  includes/timer.h includes/screen.h includes/pcb.h includes/memory.h \
- includes/process.h includes/programs.h
+ includes/process.h
 memory.o: kernel/memory.c includes/memory.h includes/util.h \
  includes/screen.h includes/timer.h includes/sync.h includes/pcb.h
 pcb.o: kernel/pcb.c includes/pcb.h includes/util.h includes/screen.h \

@@ -8,7 +8,6 @@
 #include <pcb.h>
 #include <memory.h>
 #include <process.h>
-#include <programs.h>
 
 /* This functions always needs to be on top? */
 void _main(uint32_t debug) {
