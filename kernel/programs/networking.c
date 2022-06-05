@@ -37,7 +37,7 @@ void list_net_devices()
  */
 void main()
 {
-
+    
 }
 
 PROGRAM(networking, &main)

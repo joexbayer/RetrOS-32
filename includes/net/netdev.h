@@ -21,7 +21,7 @@ struct netdev {
 
     uint16_t mac_address[6];
 
-    struct pci_driver driver;
+    struct pci_device driver;
 
     int32_t (*read)(char* buffer, uint32_t size);
     int32_t (*write)(char* buffer, uint32_t size);
@@ -37,7 +37,7 @@ struct netdev {
  * @param name Name of the current network card.
  */
 void netdev_attach_driver(
-    struct pci_driver* driver, 
+    struct pci_device* driver, 
     int (*read)(char* buffer, uint32_t size), 
     int (*write)(char* buffer, uint32_t size),
     char* name
@@ -45,6 +45,9 @@ void netdev_attach_driver(
 
 void netdev_set_macaddr(uint16_t* mac);
 void netdev_status();
+
+int netdev_recieve(void* buffer, uint32_t size);
+int netdev_transmit(void* buffer, uint32_t size);
 
 
 #endif /* NETDEV_H */

@@ -12,6 +12,7 @@
 #include <screen.h>
 #include <interrupts.h>
 #include <pci.h>
+#include <net/netdev.h>
 
 #define PACKET_SIZE   2048
 #define TX_SIZE 32
@@ -45,7 +46,7 @@ static void _e1000_reset_tx_desc()
 		/* Initialize transmit buffers  */
 		tx_desc_list[i].buffer_addr = (uint32_t)tx_buf[i];
 		tx_desc_list[i].status = E1000_TXD_STAT_DD;
-		tx_desc_list[i].cmd = E1000_TXD_CMD_RS | E1000_TXD_CMD_EOP;
+		tx_desc_list[i].cmd = (uint8_t) (E1000_TXD_CMD_RS | E1000_TXD_CMD_EOP);
     }
 }
 /**
@@ -133,7 +134,7 @@ void _e1000_rx_init()
 
 static int next = 0;
 static int errors = 0;
-int e1000_receive()
+int e1000_receive(char* buffer, uint32_t size)
 {
 	int tail = E1000_DEVICE_SET(E1000_RDT);
 	if(!(rx_desc_list[next].status & E1000_RXD_STAT_DD)) /* Descriptor Done */
@@ -142,9 +143,12 @@ int e1000_receive()
 		return -1;
 	}
 
-	int length = rx_desc_list[next].length;
-	if(length >= PACKET_SIZE)
+	uint32_t length = rx_desc_list[next].length;
+	if(length >= PACKET_SIZE || length > size)
+	{
+		length = -1;
 		goto drop;
+	}
 
 	char msg[PACKET_SIZE];
 	memcpy(msg, rx_buf[next], length);
@@ -154,7 +158,7 @@ drop:
 	rx_desc_list[next].status = 0;
 	next = (next + 1) % RX_SIZE;
 	E1000_DEVICE_SET(E1000_RDT) = (tail + 1 ) % RX_SIZE;
-	return 0;
+	return length;
 }
 
 /**
@@ -165,7 +169,7 @@ drop:
  * @param size of data to transmit
  * @return int size of data, returns -1 on error.
  */
-int e1000_transmit(void* buffer, uint16_t size)
+int e1000_transmit(char* buffer, uint32_t size)
 {
 	if(size >= PACKET_SIZE)
 		return -1;
@@ -189,7 +193,9 @@ static void e1000_callback()
 {
 	interrupts++;
     scrprintf((SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)-1, (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)+3, "E1000: %d", interrupts);
-	e1000_receive();
+
+	char buff[256];
+	e1000_receive(buff, 30);
 
 	E1000_DEVICE_GET(E1000_ICR);
 }
@@ -215,5 +221,8 @@ void e1000_attach(struct pci_device* dev)
 	E1000_DEVICE_SET(E1000_RDTR) = 0;
 	E1000_DEVICE_SET(E1000_RADV) = 0;
 	E1000_DEVICE_SET(E1000_IMS) = (1 << 7);
+
+	/* Attach as current Netdevice. */
+	netdev_attach_driver(dev, &e1000_receive, &e1000_transmit, "Intel E1000");
 
 }

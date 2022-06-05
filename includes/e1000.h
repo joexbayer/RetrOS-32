@@ -108,7 +108,4 @@ struct e1000_rx_desc
  * about the current state of the recieve buffers.
  */
 
-void e1000_attach(struct pci_device* dev);
-int e1000_transmit(void* buffer, uint16_t size);
-
 #endif

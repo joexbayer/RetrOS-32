@@ -1,5 +1,5 @@
 e1000.o: drivers/e1000.c includes/e1000.h includes/util.h includes/pci.h \
- includes/screen.h includes/interrupts.h
+ includes/screen.h includes/interrupts.h includes/net/netdev.h
 keyboard.o: drivers/keyboard.c includes/keyboard.h includes/util.h \
  includes/screen.h includes/terminal.h includes/interrupts.h \
  includes/sync.h includes/pcb.h
@@ -13,7 +13,7 @@ interrupts.o: kernel/interrupts.c includes/interrupts.h includes/util.h \
 kernel.o: kernel/kernel.c includes/util.h includes/pci.h \
  includes/terminal.h includes/keyboard.h includes/interrupts.h \
  includes/timer.h includes/screen.h includes/pcb.h includes/memory.h \
- includes/process.h
+ includes/process.h includes/programs.h
 memory.o: kernel/memory.c includes/memory.h includes/util.h \
  includes/screen.h includes/timer.h includes/sync.h includes/pcb.h
 pcb.o: kernel/pcb.c includes/pcb.h includes/util.h includes/screen.h \

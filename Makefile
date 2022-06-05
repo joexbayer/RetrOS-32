@@ -22,7 +22,7 @@ else
 	LD=i386-elf-ld
 endif
 
-PROGRAMOBJ = bin/counter.o bin/shell.o 
+PROGRAMOBJ = bin/counter.o bin/shell.o bin/networking.o 
 
 KERNELOBJ = bin/kernel_entry.o bin/kernel.o bin/terminal.o bin/pci.o \
 			bin/util.o bin/interrupts.o bin/irs_entry.o bin/timer.o \
@@ -53,30 +53,30 @@ help:
 
 bootblock: $(BOOTOBJ)
 	@$(LD) $(LDFLAGS) -o bin/bootblock $^ -Ttext 0x7C00 --oformat=binary
-	@echo Bootblock created.
+	@echo [BOOT] Bootblock created.
 
 kernel: $(KERNELOBJ)
 	@$(LD) -o bin/kernelout $^ $(LDFLAGS) -T ./kernel/linker.ld
-	@echo Kernel created.
+	@echo [KERNEL] Kernel created.
 
 .depend: **/*.[cSh]
 	@$(CC) $(CCFLAGS) -MM -MG **/*.[cS] > $@
-	@echo Creating dependencies
+	@echo [KERNEL] Creating dependencies
 	
 -include .depend
 
 # For assembling and compiling all .c and .s files.
 bin/%.o: */%.c
 	@$(CC) -o $@ -c $< $(CCFLAGS)
-	@echo Compiling $@
+	@echo [KERNEL] Compiling $@
 
 bin/%.o: */*/%.c
 	@$(CC) -o $@ -c $< $(CCFLAGS)
-	@echo Compiling $@
+	@echo [PROGRAM] Compiling $@
 
 bin/%.o: */%.s
 	@$(AS) -o $@ -c $< $(ASFLAGS)
-	@echo Compiling $@
+	@echo [KERNEL] Compiling $@
 
 bin/net.o: ./kernel/net/*.c
 	@make -C ./kernel/net/

@@ -24,7 +24,7 @@ endif
 
 OUTPUTDIR = ../../bin/
 
-NETOBJS = networking.o netdev.o
+NETOBJS = netdev.o
 
 .PHONY: all new network clean bindir
 all: new
@@ -33,7 +33,7 @@ new: bindir network
 
 network: ${NETOBJS}
 	@$(LD) -o ${OUTPUTDIR}net.o $(addprefix ./bin/,$^) $(LDFLAGS) -r
-	@echo Network Object Created
+	@echo [NET] Network Object Created
 
 .depend: **/*.[cSh]
 	@$(CC) $(CCFLAGS) -MM -MG **/*.[cS] > $@
@@ -46,7 +46,7 @@ bindir:
 # For assembling and compiling all .c and .s files.
 %.o: %.c
 	@$(CC) -o bin/$@ -c $< $(CCFLAGS)
-	@echo Compiling $@
+	@echo [NET] Compiling $@
 
 clean:
 	rm -f ./bin/*.o
