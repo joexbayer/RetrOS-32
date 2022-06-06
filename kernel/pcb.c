@@ -14,6 +14,7 @@
 #include <memory.h>
 #include <sync.h>
 #include <timer.h>
+#include <net/netdev.h>
 
 #define MAX_NUM_OF_PCBS 10
 #define stack_size 0x2000
@@ -30,6 +31,7 @@ void pcb_function()
     {
         print_pcb_status();
         print_memory_status();
+        netdev_print_status();
 		sleep(1);
 	}
 }
@@ -71,7 +73,7 @@ void print_pcb_status()
             continue;
         }
 
-        scrprintf(width, height+i, "PID %d: %s, SP: 0x%x",pcbs[i].pid, pcbs[i].name, pcbs[i].esp);
+        scrprintf(width, height+i, "PID %d: %s. 0x%x",pcbs[i].pid, pcbs[i].name, pcbs[i].esp);
         /* code */
         scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
     }
@@ -187,6 +189,18 @@ void sleep(int time)
 void yield()
 {
     CLI();
+    _context_switch();
+}
+
+void exit()
+{
+    CLI();
+    current_running->running = STOPPED;
+    free((void*)current_running->org_stack);
+    pcb_count--;
+    current_running->prev->next = current_running->next;
+    current_running->next->prev = current_running->prev;
+
     _context_switch();
 }
 

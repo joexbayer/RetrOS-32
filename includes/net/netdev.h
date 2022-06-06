@@ -44,7 +44,7 @@ void netdev_attach_driver(
 );
 
 void netdev_set_macaddr(uint16_t* mac);
-void netdev_status();
+void netdev_print_status();
 
 int netdev_recieve(void* buffer, uint32_t size);
 int netdev_transmit(void* buffer, uint32_t size);

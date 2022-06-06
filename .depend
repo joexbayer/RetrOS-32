@@ -17,7 +17,8 @@ kernel.o: kernel/kernel.c includes/util.h includes/pci.h \
 memory.o: kernel/memory.c includes/memory.h includes/util.h \
  includes/screen.h includes/timer.h includes/sync.h includes/pcb.h
 pcb.o: kernel/pcb.c includes/pcb.h includes/util.h includes/screen.h \
- includes/memory.h includes/sync.h includes/timer.h
+ includes/memory.h includes/sync.h includes/timer.h includes/net/netdev.h \
+ includes/pci.h
 pci.o: kernel/pci.c includes/pci.h includes/util.h includes/e1000.h \
  includes/screen.h includes/terminal.h
 process.o: kernel/process.c includes/process.h includes/util.h \

@@ -10,6 +10,7 @@
  */
 
 #include <net/netdev.h>
+#include <screen.h>
 
 struct netdev current_netdev;
 
@@ -26,6 +27,16 @@ void netdev_attach_driver(
     current_netdev.received = 0;
     current_netdev.sent = 0;
     memcpy(current_netdev.name, name, strlen(name)+1);
+}
+
+void netdev_print_status()
+{
+    scrwrite(51, 13, "Card: ", VGA_COLOR_GREEN);
+    scrprintf(51+strlen("Card: "), 13, "%s", current_netdev.name);
+    scrprintf(51, 14, "PCI BAR0: 0x%x", current_netdev.driver.base);
+    scrprintf(51, 15, "Transmit: %d", current_netdev.sent);
+    scrprintf(51, 16, "Recieved: %d (%d dropped)", current_netdev.received, current_netdev.dropped);
+
 }
 
 int netdev_transmit(void* buffer, uint32_t size)

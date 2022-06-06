@@ -4,7 +4,7 @@
 #include <util.h>
 
 #define MAX_FUNCTION_NAME 20
-#define MAX_PROCESS_NAME 20
+#define MAX_PROCESS_NAME 30
 #define MAX_PROCESS_FUNCTIONS 5
 
 #define MAX_PROCESS_INSTANCES 5
@@ -34,9 +34,9 @@ struct process {
 };
 
 #define PROGRAM(name, fn)           \
-int pid;                            \
 extern void init_##name()          \
 {                                   \
+    int pid;                         \
     pid = ATTACH_PROCESS(#name, fn); \
 
 #define ATTACH(name, fn) ATTACH_FUNCTION(pid, name, fn);
