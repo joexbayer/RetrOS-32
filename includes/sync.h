@@ -15,13 +15,13 @@ void spin_lock(int volatile *p);
 void spin_unlock(int volatile *p);
 typedef int volatile spinlock_t;
 
-typedef struct _lock {
+typedef struct _mutex {
     int blocked[MAX_BLOCKED]; /* List of PIDs blocked.*/
     int state;
-} lock_t;
+} mutex_t;
 
-void lock_init(lock_t* l);
-void lock(lock_t* l);
-void unlock(lock_t* l);
+void mutex_init(mutex_t* l);
+void acquire(mutex_t* l);
+void release(mutex_t* l);
 
 #endif

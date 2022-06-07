@@ -39,7 +39,7 @@ void spin_unlock(int volatile *l)
  * 
  * @param l Lock to initialize.
  */
-void lock_init(lock_t* l)
+void mutex_init(mutex_t* l)
 {
     for (size_t i = 0; i < MAX_BLOCKED; i++)
     {
@@ -49,7 +49,7 @@ void lock_init(lock_t* l)
     l->state = UNLOCKED;
 }
 
-inline void __lock_block(lock_t* l)
+inline void __lock_block(mutex_t* l)
 {
     for (size_t i = 0; i < MAX_BLOCKED; i++)
     {
@@ -61,7 +61,7 @@ inline void __lock_block(lock_t* l)
     }
 }
 
-inline int __lock_unlock(lock_t* l)
+inline int __lock_unlock(mutex_t* l)
 {
     for (size_t i = 0; i < MAX_BLOCKED; i++)
     {
@@ -76,9 +76,9 @@ inline int __lock_unlock(lock_t* l)
 /**
  * @brief Locks the given l and blocks in case its already locked.
  * 
- * @param l lock_t object.
+ * @param l mutex_t object.
  */
-void lock(lock_t* l)
+void acquire(mutex_t* l)
 {
     CLI();
     switch (l->state)
@@ -103,7 +103,7 @@ void lock(lock_t* l)
  * 
  * @param l Lock to unlock.
  */
-void unlock(lock_t* l)
+void release(mutex_t* l)
 {
     int pid = __lock_unlock(l);
     if(pid != -1){

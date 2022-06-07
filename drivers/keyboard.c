@@ -24,7 +24,7 @@
 #define KB_IRQ		33 /* Default is 1, 33 after mapped. */
 #define KB_BUFFER_SIZE 255
 
-static lock_t kb_lock;
+static mutex_t kb_lock;
 static char kb_buffer[KB_BUFFER_SIZE];
 static int kb_buffer_head = 0;
 static int kb_buffer_tail = 0;
@@ -73,15 +73,15 @@ static uint8_t __shift_pressed = 0;
 
 char kb_get_char()
 {
-	lock(&kb_lock);
+	acquire(&kb_lock);
 	if(kb_buffer_tail == kb_buffer_head){
-		unlock(&kb_lock);
+		release(&kb_lock);
 		return -1;
 	}
 	
 	char c = kb_buffer[kb_buffer_tail];
 	kb_buffer_tail = (kb_buffer_tail + 1) % KB_BUFFER_SIZE;
-	unlock(&kb_lock);
+	release(&kb_lock);
 	return c;
 }
 
@@ -122,7 +122,7 @@ static void kb_callback()
 }
 void init_keyboard()
 {
-  lock_init(&kb_lock);
+  mutex_init(&kb_lock);
 	// Firstly, register our timer callback.
 	isr_install(KB_IRQ, &kb_callback);
 	twrite("PS/2 Keyboard initialized.\n");

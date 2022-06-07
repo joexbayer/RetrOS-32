@@ -16,7 +16,7 @@
 
 static int counters = 0;
 static int value = 0;
-static lock_t c_lock;
+static mutex_t c_lock;
 
 void reset_value()
 {
@@ -25,9 +25,9 @@ void reset_value()
 
 void add()
 {
-    lock(&c_lock);
+    acquire(&c_lock);
     value++;
-    unlock(&c_lock);
+    release(&c_lock);
 }
 
 
@@ -48,6 +48,6 @@ void counter()
 }
 
 PROGRAM(counter, &counter)
-lock_init(&c_lock);
+mutex_init(&c_lock);
 ATTACH("reset", &reset_value)
 PROGRAM_END
