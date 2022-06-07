@@ -32,6 +32,7 @@ void pcb_function()
         print_pcb_status();
         print_memory_status();
         netdev_print_status();
+        networking_print_status();
 		sleep(1);
 	}
 }

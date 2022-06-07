@@ -10,14 +10,9 @@
  */
 #include <sync.h>
 
-/*
-    Spinlocks using assembly functions, code from:
-    https://stackoverflow.com/questions/6935442/x86-spinlock-using-cmpxchg
-*/
-
-void fn(){
-
-}
+/* Fucntions defined in kernel_entry.s */
+void spin_lock_asm(int volatile *l);
+void spin_unlock_asm(int volatile *l);
 
 /**
  * @brief Locks the given spinlock variable l.
@@ -26,10 +21,7 @@ void fn(){
  */
 void spin_lock(int volatile *l)
 {
-    //while(!__sync_bool_compare_and_swap(l, 0, 1))
-    //{
-        //do{}while(*l);
-    //}
+    spin_lock_asm(l);
 }
 
 /**
@@ -39,8 +31,7 @@ void spin_lock(int volatile *l)
  */
 void spin_unlock(int volatile *l)
 {
-    asm volatile ("":::"memory");
-    *l = 0;
+    spin_unlock_asm(l);
 }
 
 /**

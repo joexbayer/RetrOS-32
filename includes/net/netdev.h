@@ -46,6 +46,10 @@ void netdev_attach_driver(
 void netdev_set_macaddr(uint16_t* mac);
 void netdev_print_status();
 
+/* TODO: add to own headerfile. */
+void networking_print_status();
+void net_new_packet();
+
 int netdev_recieve(void* buffer, uint32_t size);
 int netdev_transmit(void* buffer, uint32_t size);
 

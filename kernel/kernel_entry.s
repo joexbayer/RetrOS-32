@@ -40,6 +40,28 @@ _start_pcb:
     sti
     jmp 8(%eax)
 
+.global spin_lock_asm
+spin_lock_asm:
+again:
+    movl %esp, %eax
+    addl $4, %eax
+    movl (%eax), %eax
+    lock bts $0, (%eax)
+    jc again
+    ret
+wait_lock:
+    testl $1, (%eax)
+    jnz wait_lock
+    jmp again
+ 
+.global spin_unlock_asm
+spin_unlock_asm:
+    movl %esp, %eax
+    addl $4, %eax
+    movl (%eax), %eax
+    lock btr $0, (%eax)
+    ret
+
 .section .text
 .align 4
 
