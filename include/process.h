@@ -33,17 +33,26 @@ struct process {
     int16_t instances[MAX_PROCESS_INSTANCES];
 };
 
-#define PROGRAM(name, fn)           \
-extern void init_##name()          \
-{                                   \
+/**
+ * @brief Program macro to create the init function for a program
+ * Calls ATTACH_PROCESS with name and function pointer provided.
+ * 
+ */
+#define PROGRAM(name, fn)            \
+extern void init_##name()            \
+{                                    \
     int pid;                         \
     pid = ATTACH_PROCESS(#name, fn); \
+    if(pid <= 0)                     \
+        return;
 
+/**
+ * @brief Attaches a function to the program defined with PROGRAM.
+ * 
+ */
 #define ATTACH(name, fn) ATTACH_FUNCTION(pid, name, fn);
 
 #define PROGRAM_END }
-
-
 
 int ATTACH_FUNCTION(int pid, char* name, void (*fn)());
 int ATTACH_PROCESS(char* name, void (*entry)());

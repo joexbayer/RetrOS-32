@@ -38,7 +38,7 @@ _start_pcb:
     movl current_running, %eax
     movl 4(%eax), %esp
     sti
-    jmp 8(%eax)
+    jmp *8(%eax)
 
 .global spin_lock_asm
 spin_lock_asm:
@@ -46,7 +46,7 @@ again:
     movl %esp, %eax
     addl $4, %eax
     movl (%eax), %eax
-    lock bts $0, (%eax)
+    lock btsl $0, (%eax)
     jc again
     ret
 wait_lock:
@@ -59,7 +59,7 @@ spin_unlock_asm:
     movl %esp, %eax
     addl $4, %eax
     movl (%eax), %eax
-    lock btr $0, (%eax)
+    lock btrl $0, (%eax)
     ret
 
 .section .text
