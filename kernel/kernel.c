@@ -9,6 +9,7 @@
 #include <memory.h>
 #include <process.h>
 #include <programs.h>
+#include <net/skb.h>
 
 /* This functions always needs to be on top? */
 void _main(uint32_t debug) {
@@ -21,6 +22,7 @@ void _main(uint32_t debug) {
 	init_memory();
 	init_pcbs();
 	init_pci();
+	init_sk_buffers();
 
 	/* Programs defined in programs.h */
 	init_shell();

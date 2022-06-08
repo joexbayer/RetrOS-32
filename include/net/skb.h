@@ -5,6 +5,7 @@
 #include <net/ethernet.h>
 #include <net/netdev.h>
 #include <memory.h>
+#include <util.h>
 
 struct sk_buff {
 
@@ -21,8 +22,12 @@ struct sk_buff {
     uint8_t* tail;
     uint8_t* data;
     uint8_t* end;
-
 };
+
+#define MAX_SKBUFFERS 255
+
+
+void init_sk_buffers();
 
 #define ALLOCATE_SKB(buffer, skb)   \
     skb->data = alloc(0x1000);      \
