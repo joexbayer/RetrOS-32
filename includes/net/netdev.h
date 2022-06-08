@@ -1,7 +1,7 @@
 #ifndef NETDEV_H
 #define NETDEV_H
 
-#include <util.h>
+#include <stdint.h>
 #include <pci.h>
 
 #define MAX_NETDEV_NAME_SIZE 10

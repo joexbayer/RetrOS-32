@@ -2,7 +2,7 @@
 #define SYNC_H
 
 #include <pcb.h>
-#include <util.h>
+#include <stdint.h>
 
 #define MAX_BLOCKED 10
 

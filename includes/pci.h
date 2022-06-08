@@ -1,8 +1,7 @@
 #ifndef PCI_H
 #define PCI_H
 
-#include <util.h>
-
+#include <stdint.h>
 /*
     
 register	offset	bits 31-24		bits 23-16		bits 15-8		bits 7-0

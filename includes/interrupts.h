@@ -1,7 +1,7 @@
 #ifndef INTERRUPTS_H
 #define INTERRUPTS_H
 
-#include <util.h>
+#include <stdint.h>
 
 #define ISR_LINES	48
 #define PIC1		0x20		/* IO base address for master PIC */

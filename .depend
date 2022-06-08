@@ -1,29 +1,32 @@
-e1000.o: drivers/e1000.c includes/e1000.h includes/util.h includes/pci.h \
- includes/screen.h includes/interrupts.h includes/net/netdev.h
-keyboard.o: drivers/keyboard.c includes/keyboard.h includes/util.h \
- includes/screen.h includes/terminal.h includes/interrupts.h \
- includes/sync.h includes/pcb.h
+e1000.o: drivers/e1000.c includes/e1000.h includes/stdint.h \
+ includes/pci.h includes/screen.h includes/util.h includes/interrupts.h \
+ includes/net/netdev.h
+keyboard.o: drivers/keyboard.c includes/keyboard.h includes/stdint.h \
+ includes/screen.h includes/util.h includes/terminal.h \
+ includes/interrupts.h includes/sync.h includes/pcb.h
 screen.o: drivers/screen.c includes/screen.h includes/util.h \
- includes/stdarg.h
-timer.o: drivers/timer.c includes/timer.h includes/util.h \
- includes/screen.h includes/terminal.h includes/interrupts.h \
+ includes/stdint.h includes/stdarg.h
+timer.o: drivers/timer.c includes/timer.h includes/stdint.h \
+ includes/screen.h includes/util.h includes/terminal.h \
+ includes/interrupts.h includes/pcb.h
+interrupts.o: kernel/interrupts.c includes/interrupts.h includes/stdint.h \
+ includes/terminal.h includes/util.h includes/screen.h
+kernel.o: kernel/kernel.c includes/util.h includes/stdint.h \
+ includes/pci.h includes/terminal.h includes/keyboard.h \
+ includes/interrupts.h includes/timer.h includes/screen.h includes/pcb.h \
+ includes/memory.h includes/process.h includes/programs.h
+memory.o: kernel/memory.c includes/memory.h includes/stdint.h \
+ includes/screen.h includes/util.h includes/timer.h includes/sync.h \
  includes/pcb.h
-interrupts.o: kernel/interrupts.c includes/interrupts.h includes/util.h \
- includes/terminal.h includes/screen.h
-kernel.o: kernel/kernel.c includes/util.h includes/pci.h \
- includes/terminal.h includes/keyboard.h includes/interrupts.h \
- includes/timer.h includes/screen.h includes/pcb.h includes/memory.h \
- includes/process.h includes/programs.h
-memory.o: kernel/memory.c includes/memory.h includes/util.h \
- includes/screen.h includes/timer.h includes/sync.h includes/pcb.h
-pcb.o: kernel/pcb.c includes/pcb.h includes/util.h includes/screen.h \
- includes/memory.h includes/sync.h includes/timer.h includes/net/netdev.h \
- includes/pci.h
-pci.o: kernel/pci.c includes/pci.h includes/util.h includes/e1000.h \
- includes/screen.h includes/terminal.h
-process.o: kernel/process.c includes/process.h includes/util.h \
- includes/terminal.h includes/pcb.h
-sync.o: lib/sync.c includes/sync.h includes/pcb.h includes/util.h
+pcb.o: kernel/pcb.c includes/pcb.h includes/util.h includes/stdint.h \
+ includes/screen.h includes/memory.h includes/sync.h includes/timer.h \
+ includes/net/netdev.h includes/pci.h
+pci.o: kernel/pci.c includes/pci.h includes/stdint.h includes/e1000.h \
+ includes/screen.h includes/util.h includes/terminal.h
+process.o: kernel/process.c includes/process.h includes/stdint.h \
+ includes/terminal.h includes/util.h includes/pcb.h
+sync.o: lib/sync.c includes/sync.h includes/pcb.h includes/util.h \
+ includes/stdint.h
 terminal.o: lib/terminal.c includes/terminal.h includes/util.h \
- includes/stdarg.h includes/screen.h
-util.o: lib/util.c includes/util.h
+ includes/stdint.h includes/stdarg.h includes/screen.h
+util.o: lib/util.c includes/util.h includes/stdint.h

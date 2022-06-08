@@ -1,7 +1,7 @@
 #ifndef PROCESS_H
 #define PROCESS_H
 
-#include <util.h>
+#include <stdint.h>
 
 #define MAX_FUNCTION_NAME 20
 #define MAX_PROCESS_NAME 30

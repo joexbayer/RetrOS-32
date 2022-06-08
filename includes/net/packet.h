@@ -1,7 +1,7 @@
 #ifndef PACKET_H
 #define PACKET_H
 
-#include <util.h>
+#include <stdint.h>
 
 #define PACKET_SIZE 2048
 

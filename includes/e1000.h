@@ -1,7 +1,7 @@
 #ifndef E1000_H
 #define E1000_H
 
-#include <util.h>
+#include <stdint.h>
 #include <pci.h>
 
 #define E1000_VENDOR_ID 0x8086

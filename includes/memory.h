@@ -1,7 +1,7 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#include <util.h>
+#include <stdint.h>
 
 enum {
 	USED,

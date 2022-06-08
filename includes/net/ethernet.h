@@ -1,7 +1,7 @@
 #ifndef ETHERNET_H
 #define ETHERNET_H
 
-#include <util.h>
+#include <stdint.h>
 
 #define ETHER_HDR_LENGTH 14
 #define MAC_SIZE 6
