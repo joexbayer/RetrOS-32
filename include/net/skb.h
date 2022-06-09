@@ -12,6 +12,7 @@ struct sk_buff {
 
     union {
         struct ethernet_header* eth;
+        struct arp_header* arp;
     } hdr;
 
     int16_t len;
@@ -41,6 +42,7 @@ struct sk_buff* get_skb();
     (skb)->data = NULL;   
 
 #include <net/ethernet.h>
+#include <net/arp.h>
 
 #endif // !SKB_H
 

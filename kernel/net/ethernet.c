@@ -1,3 +1,13 @@
+/**
+ * @file ethernet.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Handles ethernet parsing, routing.
+ * @version 0.1
+ * @date 2022-06-09
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 #include <net/ethernet.h>
 #include <screen.h>
 #include <terminal.h>
