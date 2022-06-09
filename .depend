@@ -17,8 +17,8 @@ kernel.o: kernel/kernel.c include/util.h include/stdint.h include/pci.h \
  include/process.h include/programs.h include/net/skb.h \
  include/net/netdev.h include/net/ethernet.h include/net/arp.h
 memory.o: kernel/memory.c include/memory.h include/stdint.h \
- include/screen.h include/util.h include/timer.h include/sync.h \
- include/pcb.h
+ include/screen.h include/util.h include/terminal.h include/timer.h \
+ include/sync.h include/pcb.h
 pcb.o: kernel/pcb.c include/pcb.h include/util.h include/stdint.h \
  include/screen.h include/memory.h include/sync.h include/timer.h \
  include/net/netdev.h include/pci.h

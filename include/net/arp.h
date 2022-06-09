@@ -2,6 +2,7 @@
 #define ARP_H
 
 #include <stdint.h>
+#include <util.h>
 #include <net/skb.h>
 
 #define ARP_ETHERNET    0x0001

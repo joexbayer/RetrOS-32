@@ -11,13 +11,14 @@
 
 #include <memory.h>
 #include <screen.h>
+#include <terminal.h>
 #include <timer.h>
 #include <sync.h>
 
 #define MEM_START 0x100000
 #define MEM_END 0xEFFFFF
-#define MEM_CHUNK 0x1000
-#define CHUNKS_SIZE 3200
+#define MEM_CHUNK 0x400
+#define CHUNKS_SIZE (MEM_END-MEM_START)/MEM_CHUNK
 
 static mutex_t mem_lock;
 struct mem_chunk chunks[CHUNKS_SIZE];
@@ -52,7 +53,7 @@ void print_memory_status()
 /* implementation */
 
 /**
- * Allocates sequential chunks with fixed size 4Kb each.
+ * @brief Allocates sequential chunks with fixed size 4Kb each.
  * Will allocate multiple chunks if needed.
  * 
  * @param uint16_t size, how much memory is needed (Best if 4Kb aligned.).
@@ -62,8 +63,13 @@ void* alloc(uint16_t size)
 {
 	if(size == 0) return NULL;
 	acquire(&mem_lock);
-	int chunks_needed = size / MEM_CHUNK;
 
+	int chunks_needed = 0;
+	while(chunks_needed*MEM_CHUNK < size)
+		chunks_needed++;
+
+	twritef("Needed %d, %x, %x\n", chunks_needed, size, MEM_CHUNK);
+	
 	if(!chunks_needed) chunks_needed = 1;
 	for (int i = 0; i < CHUNKS_SIZE; i++)
 	{
@@ -90,7 +96,7 @@ void* alloc(uint16_t size)
 	return NULL;
 }
 /**
- * Will free all chunks associated with chunk pointed to by ptr. 
+ * @brief Will free all chunks associated with chunk pointed to by ptr. 
  * 
  * @param void* ptr, pointer to memory to free.
  * @return void
@@ -121,7 +127,7 @@ void free(void* ptr)
 }
 
 /**
- * Initializes all memory chunks and sets them to be free.
+ * @brief Initializes all memory chunks and sets them to be free.
  * 
  * @return void
  */
