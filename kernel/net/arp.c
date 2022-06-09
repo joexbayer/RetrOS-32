@@ -10,6 +10,40 @@
  */
 
 #include <net/arp.h>
+#include <terminal.h>
+
+#define MAX_ARP_ENTRIES 25
+
+struct arp_entry arp_entries[MAX_ARP_ENTRIES];
+
+void init_arp()
+{
+	for (size_t i = 0; i < MAX_ARP_ENTRIES; i++)
+	{
+		arp_entries[i].sip = 0;
+	}
+}
+
+int arp_add_entry(struct arp_content* arp)
+{
+	/* Check if ARP entry already exists. */
+	for (size_t i = 0; i < MAX_ARP_ENTRIES; i++)
+		if(arp_entries[i].sip == arp->sip)
+			return 1;
+
+	for (size_t i = 0; i < MAX_ARP_ENTRIES; i++)
+	{
+		if(arp_entries[i].sip == 0)
+		{
+			memcpy((uint8_t*)&arp_entries[i].smac, (uint8_t*)&arp->smac, 6);
+			arp_entries[i].sip = arp->sip;
+			twriteln("Added APR entry.");
+			return 1;
+		}
+	}
+
+	return 0;
+}
 
 void __arp_ntohs(struct arp_header* a_hdr){
 
@@ -44,7 +78,7 @@ void __arp_htons(struct arp_header* a_hdr)
  * 
  * @param skb socket buffer to parse
  */
-void arp_parse(struct sk_buff* skb)
+uint8_t arp_parse(struct sk_buff* skb)
 {
 	struct arp_header* a_hdr = (struct arp_header*) skb->data;
 	skb->hdr.arp = a_hdr;
@@ -53,9 +87,16 @@ void arp_parse(struct sk_buff* skb)
 	__arp_ntohs(a_hdr);
 
 	if(a_hdr->opcode != ARP_REQUEST || a_hdr->hwtype != ARP_ETHERNET || a_hdr->protype != ARP_IPV4){	
-		return;
+		return 0;
 	}
 
 	struct arp_content* arp_content = (struct arp_content*) skb->data;
 	__arp_content_ntohs(arp_content);
+
+	int ret = arp_add_entry(arp_content);
+	if(!ret)
+		return ret;
+	
+
+	return 0;
 }

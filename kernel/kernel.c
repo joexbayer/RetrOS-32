@@ -10,6 +10,7 @@
 #include <process.h>
 #include <programs.h>
 #include <net/skb.h>
+#include <net/arp.h>
 
 /* This functions always needs to be on top? */
 void _main(uint32_t debug) {
@@ -23,6 +24,7 @@ void _main(uint32_t debug) {
 	init_pcbs();
 	init_pci();
 	init_sk_buffers();
+	init_arp();
 
 	/* Programs defined in programs.h */
 	init_shell();

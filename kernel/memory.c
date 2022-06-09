@@ -67,8 +67,6 @@ void* alloc(uint16_t size)
 	int chunks_needed = 0;
 	while(chunks_needed*MEM_CHUNK < size)
 		chunks_needed++;
-
-	twritef("Needed %d, %x, %x\n", chunks_needed, size, MEM_CHUNK);
 	
 	if(!chunks_needed) chunks_needed = 1;
 	for (int i = 0; i < CHUNKS_SIZE; i++)
@@ -86,7 +84,7 @@ void* alloc(uint16_t size)
 			
 			chunks[i].chunks_used = chunks_needed;
 			chunks_used += chunks_needed;
-
+			
 			release(&mem_lock);
 			return chunks[i].from;
 		}	
@@ -119,6 +117,7 @@ void free(void* ptr)
 				chunks[i+j].chunks_used = 0;
 			}
 			chunks_used -= used;
+
 			release(&mem_lock);
 			return;
 		}

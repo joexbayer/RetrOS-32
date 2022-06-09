@@ -18,7 +18,7 @@ void print_ethernet(struct ethernet_header* hdr){
     scrprintf(1, 3, "type: %x", hdr->ethertype);
 }
 
-void parse_ethernet(struct sk_buff* skb)
+uint8_t parse_ethernet(struct sk_buff* skb)
 {
     struct ethernet_header* header = (struct ethernet_header*) skb->data;
     header->ethertype = ntohs(header->ethertype);
@@ -30,20 +30,8 @@ void parse_ethernet(struct sk_buff* skb)
     uint8_t broadcastmac[] = {255, 255, 255, 255, 255, 255};
 	if(memcmp(skb->hdr.eth->dmac, skb->netdevice->mac, 6) || memcmp(skb->hdr.eth->dmac, (uint8_t*)&broadcastmac, 6)){
 
-		switch(skb->hdr.eth->ethertype){
-			case IP:
-				//ip_parse(skb);
-				break;
-
-			case ARP:
-				//arp_parse(skb);
-                twriteln("Recieved ARP packet.");
-				return;
-
-			default:
-				twriteln("Unknown layer 3 protocol. Dropped.\n");
-				free(skb->head);
-				return;
-		}
+		return 1;
 	}
+
+	return 0;
 }

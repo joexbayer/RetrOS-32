@@ -16,15 +16,25 @@ void init_sk_buffers()
 {
 	for (uint8_t i = 0; i < MAX_SKBUFFERS; i++)
 	{
-		FREE_SKB(&sk_buffers[i]);
+		sk_buffers[i].stage = UNUSED;
 	}
+}
+
+struct sk_buff* next_skb()
+{
+	int16_t i;
+	for (i = 0; i < MAX_SKBUFFERS; i++)
+		if(sk_buffers[i].stage == NEW_SKB)
+			return &sk_buffers[i];
+	
+	return NULL;
 }
 
 struct sk_buff* get_skb()
 {
 	int16_t i;
 	for (i = 0; i < MAX_SKBUFFERS; i++)
-		if(sk_buffers[i].len == -1)
+		if(sk_buffers[i].stage == UNUSED)
 			return &sk_buffers[i];
 
 	return NULL;

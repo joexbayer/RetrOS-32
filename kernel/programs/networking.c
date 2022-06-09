@@ -11,6 +11,7 @@
 
 #include <process.h>
 #include <screen.h>
+#include <terminal.h>
 
 #include <net/netdev.h>
 #include <net/packet.h>
@@ -57,8 +58,6 @@ void net_packet_handler()
         return;
     }
     packets++;
-
-    parse_ethernet(skb);
 }
 
 /**
@@ -67,7 +66,39 @@ void net_packet_handler()
  */
 void main()
 {
+    while(1)
+    {
+        struct sk_buff* skb = next_skb();
+        if(skb == NULL)
+            continue;        
+        skb->stage = IN_PROGRESS;
 
+        int ret = parse_ethernet(skb);
+        if(ret <= 0)
+            goto drop;
+
+        switch(skb->hdr.eth->ethertype){
+			case IP:
+				//ip_parse(skb);
+                twriteln("Recieved ARP packet.");
+				break;
+
+			case ARP:
+                ;
+				int ret = arp_parse(skb);
+                if(!ret)
+                    goto drop;
+
+                // send arp response.
+                twriteln("Recieved ARP packet.");
+				return;
+
+			default:
+                goto drop;
+		}
+    drop:
+        FREE_SKB(skb);
+    }
 }
 
 PROGRAM(networking, &main)
