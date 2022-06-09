@@ -29,11 +29,12 @@ struct sk_buff {
 
 void init_sk_buffers();
 
-#define ALLOCATE_SKB(buffer, skb)   \
-    skb->data = alloc(0x1000);      \
-    skb->head = skb->data;          \
-    skb->tail = skb->head;          \
-    skb->end = skb->head+0xFFF;     \
+#define ALLOCATE_SKB(buffer, size, skb)   \
+    skb->data = alloc(0x1000);       \
+    memcpy(skb->data, buffer, size); \
+    skb->head = skb->data;           \
+    skb->tail = skb->head;           \
+    skb->end = skb->head+0xFFF;      \
 
 
 #endif // !SKB_H
