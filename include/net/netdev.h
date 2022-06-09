@@ -40,7 +40,8 @@ void netdev_attach_driver(
     struct pci_device* driver, 
     int (*read)(char* buffer, uint32_t size), 
     int (*write)(char* buffer, uint32_t size),
-    char* name
+    char* name,
+    uint8_t* mac
 );
 
 void netdev_set_macaddr(uint16_t* mac);

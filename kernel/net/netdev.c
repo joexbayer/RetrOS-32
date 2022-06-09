@@ -18,7 +18,8 @@ void netdev_attach_driver(
     struct pci_device* driver, 
     int (*read)(char* buffer, uint32_t size), 
     int (*write)(char* buffer, uint32_t size),
-    char* name)
+    char* name,
+    uint8_t* mac)
 {
     current_netdev.driver = *driver;
     current_netdev.write = write;
@@ -26,6 +27,8 @@ void netdev_attach_driver(
     current_netdev.dropped = 0;
     current_netdev.received = 0;
     current_netdev.sent = 0;
+
+    memcpy(current_netdev.mac, mac, 6);
     memcpy(current_netdev.name, name, strlen(name)+1);
 }
 

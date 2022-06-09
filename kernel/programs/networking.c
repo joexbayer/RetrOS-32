@@ -37,7 +37,7 @@ void networking_print_status()
     scrwrite(51, 1, "Networking:", VGA_COLOR_CYAN);
     scrprintf(51, 2, "Open Ports: %d", open_ports);
     scrprintf(51, 3, "IPv4: 127.0.0.1");
-    scrprintf(51, 4, "MAC: 55:f4:7f:33:h6:l1");
+    scrprintf(51, 4, "MAC: %x:%x:%x:%x:%x:%x", current_netdev.mac[0], current_netdev.mac[1], current_netdev.mac[2], current_netdev.mac[3], current_netdev.mac[4], current_netdev.mac[5]);
     scrprintf(51, 5, "Packets: %d", packets);
 }
 

@@ -24,7 +24,7 @@ volatile uint32_t *e1000;
 #define E1000_DEVICE_SET(offset) (e1000[offset >> 2])
 #define E1000_DEVICE_GET(offset) E1000_DEVICE_SET(offset)
 
-uint32_t debug_mac[6] = {0x52, 0x54, 0x00, 0x12, 0x34, 0x56};
+uint8_t mac[6] = {0x52, 0x54, 0x00, 0x12, 0x34, 0x56};
 
 /* Allocate space for transmit and recieve buffers. */
 struct e1000_tx_desc tx_desc_list[TX_SIZE];
@@ -70,11 +70,11 @@ static void _e1000_mac()
 	int i;
 
 	for (i = 0; i < 4; i++) {
-		low |= debug_mac[i] << (8 * i);
+		low |= mac[i] << (8 * i);
 	}
 
 	for (i = 4; i < 6; i++) {
-		high |= debug_mac[i] << (8 * i);
+		high |= mac[i] << (8 * i);
 	}
 
 	E1000_DEVICE_SET(E1000_RA) = low;
@@ -216,6 +216,6 @@ void e1000_attach(struct pci_device* dev)
 	E1000_DEVICE_SET(E1000_IMS) = (1 << 7);
 
 	/* Attach as current Netdevice. */
-	netdev_attach_driver(dev, &e1000_receive, &e1000_transmit, "Intel E1000");
+	netdev_attach_driver(dev, &e1000_receive, &e1000_transmit, "Intel E1000", (uint8_t*)&mac);
 
 }
