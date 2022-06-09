@@ -19,7 +19,7 @@ struct netdev {
     uint32_t received;
     uint32_t dropped;
 
-    uint16_t mac_address[6];
+    uint8_t mac[6];
 
     struct pci_device driver;
 
@@ -48,7 +48,7 @@ void netdev_print_status();
 
 /* TODO: add to own headerfile. */
 void networking_print_status();
-void net_new_packet();
+void net_packet_handler();
 
 int netdev_recieve(void* buffer, uint32_t size);
 int netdev_transmit(void* buffer, uint32_t size);

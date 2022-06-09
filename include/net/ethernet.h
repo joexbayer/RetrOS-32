@@ -2,6 +2,7 @@
 #define ETHERNET_H
 
 #include <stdint.h>
+#include <net/skb.h>
 
 #define ETHER_HDR_LENGTH 14
 #define MAC_SIZE 6
@@ -18,6 +19,6 @@ struct ethernet_header
 } __attribute__((packed));
 
 void print_ethernet(struct ethernet_header* hdr);
-
+void parse_ethernet(struct sk_buff* skb);
 
 #endif /* ETHERNET_H */

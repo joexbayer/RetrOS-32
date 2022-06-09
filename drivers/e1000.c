@@ -193,7 +193,7 @@ void e1000_callback()
 	interrupts++;
     scrprintf((SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)-1, (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)+3, "E1000: %d", interrupts);
 
-	net_new_packet();
+	net_packet_handler();
 
 	E1000_DEVICE_GET(E1000_ICR);
 }

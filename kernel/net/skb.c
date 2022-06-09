@@ -4,30 +4,19 @@ struct sk_buff sk_buffers[MAX_SKBUFFERS];
 
 void init_sk_buffers()
 {
-    for (uint8_t i = 0; i < MAX_SKBUFFERS; i++)
-    {
-        sk_buffers[i].len = -1;
-        sk_buffers[i].data = NULL;
-    }
+	for (uint8_t i = 0; i < MAX_SKBUFFERS; i++)
+	{
+		FREE_SKB(&sk_buffers[i]);
+	}
 }
 
-int get_skb(char* buffer, uint16_t size, struct sk_buff* skb)
+struct sk_buff* get_skb()
 {
-    skb = NULL;
+	int16_t i;
+	for (i = 0; i < MAX_SKBUFFERS; i++)
+		if(sk_buffers[i].len == -1)
+			return &sk_buffers[i];
 
-    for (uint8_t i = 0; i < MAX_SKBUFFERS; i++)
-    {
-        if(sk_buffers[i].len == -1)
-        {
-            skb = &sk_buffers[i];
-            break;
-        }
-    }
-
-    if(skb == NULL)
-        return -1;
-
-    ALLOCATE_SKB(buffer, size, skb);
-    
+	return NULL;
 }
 

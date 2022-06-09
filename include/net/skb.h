@@ -2,7 +2,6 @@
 #define SKB_H
 
 #include <stdint.h>
-#include <net/ethernet.h>
 #include <net/netdev.h>
 #include <memory.h>
 #include <util.h>
@@ -13,9 +12,9 @@ struct sk_buff {
 
     union {
         struct ethernet_header* eth;
-    } header;
+    } hdr;
 
-    uint16_t len;
+    int16_t len;
     uint16_t data_len;
 
     uint8_t* head;
@@ -28,13 +27,20 @@ struct sk_buff {
 
 
 void init_sk_buffers();
+struct sk_buff* get_skb();
 
-#define ALLOCATE_SKB(buffer, size, skb)   \
-    skb->data = alloc(0x1000);       \
-    memcpy(skb->data, buffer, size); \
-    skb->head = skb->data;           \
-    skb->tail = skb->head;           \
-    skb->end = skb->head+0xFFF;      \
+#define ALLOCATE_SKB(skb)            \
+    (skb)->data = alloc(0x1000);       \
+    (skb)->head = skb->data;           \
+    (skb)->tail = skb->head;           \
+    (skb)->end = skb->head+0xFFF;      
 
+#define FREE_SKB(skb)   \
+    free((skb)->data);    \
+    (skb)->len = -1;      \
+    (skb)->data = NULL;   
+
+#include <net/ethernet.h>
 
 #endif // !SKB_H
+

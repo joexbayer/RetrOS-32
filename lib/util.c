@@ -10,13 +10,18 @@ size_t strlen(const char* str)
 
 uint32_t strncmp(const char* str, const char* str2, uint32_t len)
 {
+	return memcmp((uint8_t*)str, (uint8_t*)str2, len);
+}
+
+uint32_t memcmp(const uint8_t* ptr, const uint8_t* ptr2, uint32_t len)
+{
 	for (size_t i = 0; i < len; i++)
 	{
-		if(str[i] != str2[i])
+		if(ptr[i] != ptr2[i])
 			return 0;
 	}
 
-	return 1;	
+	return 1;
 }
 
 /* TODO: Move some functions into own files. */

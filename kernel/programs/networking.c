@@ -14,6 +14,7 @@
 
 #include <net/netdev.h>
 #include <net/packet.h>
+#include <net/skb.h>
 #include <net/ethernet.h>
 
 #define MAX_OPEN_PORTS 45
@@ -45,18 +46,19 @@ void list_net_devices()
 
 }
 
-void net_new_packet()
+void net_packet_handler()
 {
-    char buffer[MAX_PACKET_SIZE];
-    int read = netdev_recieve(&buffer, MAX_PACKET_SIZE);
-    if(read <= 0)
-        return;
-    packets++;
-    
-    struct ethernet_header* header = (struct ethernet_header*) buffer;
-    header->ethertype = ntohs(header->ethertype);
+    struct sk_buff* skb = get_skb();
+    ALLOCATE_SKB(skb);
 
-    print_ethernet(header);
+    int read = netdev_recieve(skb->data, MAX_PACKET_SIZE);
+    if(read <= 0) {
+        FREE_SKB(skb);
+        return;
+    }
+    packets++;
+
+    parse_ethernet(skb);
 }
 
 /**
