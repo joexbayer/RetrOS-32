@@ -34,6 +34,7 @@ struct arp_entry
 }__attribute__((packed));
 
 uint8_t parse_arp(struct sk_buff* skb);
+int arp_find_entry(uint32_t ip, uint8_t* mac);
 void init_arp();
 
 #endif // !ARP_H

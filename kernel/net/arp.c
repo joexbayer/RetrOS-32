@@ -45,6 +45,17 @@ int arp_add_entry(struct arp_content* arp)
 	return 0;
 }
 
+int arp_find_entry(uint32_t ip, uint8_t* mac)
+{
+	for (size_t i = 0; i < MAX_ARP_ENTRIES; i++)
+		if(arp_entries[i].sip == ip){
+			memcpy(mac, arp_entries[i].smac, 6);
+			return 1;
+		}
+	
+	return 0;
+}
+
 void __arp_ntohs(struct arp_header* a_hdr){
 
 	a_hdr->hwtype = ntohs(a_hdr->hwtype);

@@ -80,14 +80,14 @@ void main()
 
         switch(skb->hdr.eth->ethertype){
 			case IP:
-				parse_ip(skb);
+                if(!parse_ip(skb))
+                    goto drop;
+                
                 twriteln("Recieved IP packet.");
 				break;
 
 			case ARP:
-                ;
-				int ret = parse_arp(skb);
-                if(!ret)
+                if(!parse_arp(skb))
                     goto drop;
 
                 // send arp response.
