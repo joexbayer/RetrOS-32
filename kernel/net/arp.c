@@ -78,7 +78,7 @@ void __arp_htons(struct arp_header* a_hdr)
  * 
  * @param skb socket buffer to parse
  */
-uint8_t arp_parse(struct sk_buff* skb)
+uint8_t parse_arp(struct sk_buff* skb)
 {
 	struct arp_header* a_hdr = (struct arp_header*) skb->data;
 	skb->hdr.arp = a_hdr;

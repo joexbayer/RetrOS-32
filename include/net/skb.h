@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <net/netdev.h>
 #include <memory.h>
+#include <net/utils.h>
 #include <util.h>
 
 enum sk_stage {
@@ -20,6 +21,7 @@ struct sk_buff {
     union {
         struct ethernet_header* eth;
         struct arp_header* arp;
+        struct ip_header* ip;
     } hdr;
 
     int16_t len;
@@ -55,6 +57,7 @@ struct sk_buff* next_skb();
 
 #include <net/ethernet.h>
 #include <net/arp.h>
+#include <net/ipv4.h>
 
 #endif // !SKB_H
 

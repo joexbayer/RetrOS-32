@@ -2,7 +2,7 @@
 #define ARP_H
 
 #include <stdint.h>
-#include <util.h>
+#include <net/utils.h>
 #include <net/skb.h>
 
 #define ARP_ETHERNET    0x0001
@@ -33,7 +33,7 @@ struct arp_entry
 	uint32_t sip;
 }__attribute__((packed));
 
-uint8_t arp_parse(struct sk_buff* skb);
+uint8_t parse_arp(struct sk_buff* skb);
 void init_arp();
 
 #endif // !ARP_H

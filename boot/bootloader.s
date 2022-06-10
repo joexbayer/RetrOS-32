@@ -82,6 +82,9 @@ reading_same_segment:
     loop read_loop
 
 continue:
+  
+    # call set_video_mode
+
     /* enable A20 line */
     call set_a20
     /* enable the PE flag */
@@ -132,6 +135,12 @@ set_a20.2:
     or $2, %al
     out %al, $0x92
     retw
+
+set_video_mode:
+    movb $0x00, %ah
+    movb $0x12, %al
+    int $0x10   
+    ret
 
 error:
     /*

@@ -15,6 +15,7 @@
 #define MAX_FMT_STR_SIZE 50
 
 uint16_t* const VGA_MEMORY = (uint16_t*) 0xB8000;
+//uint16_t* const VGA_MEMORY = (uint16_t*) 0xa0000;
 
 static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg) 
 {

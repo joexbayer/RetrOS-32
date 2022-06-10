@@ -28,11 +28,6 @@ int atoi(char s[]);
 void itoa(int n, char s[]);
 void itohex(uint32_t n, char s[]);
 
-uint32_t ntohl(uint32_t data);
-uint32_t htonl(uint32_t data);
-uint16_t ntohs(uint16_t data);
-uint16_t htons(uint16_t data);
-
 uint8_t inportb(uint16_t p);
 uint16_t inportw(uint16_t p);
 uint32_t inportl(uint16_t portid);

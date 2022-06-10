@@ -17,6 +17,7 @@
 #include <net/packet.h>
 #include <net/skb.h>
 #include <net/ethernet.h>
+#include <net/ipv4.h>
 
 #define MAX_OPEN_PORTS 45
 #define MAX_QUEUE_SIZE 20
@@ -70,7 +71,7 @@ void main()
     {
         struct sk_buff* skb = next_skb();
         if(skb == NULL)
-            continue;        
+            continue;
         skb->stage = IN_PROGRESS;
 
         int ret = parse_ethernet(skb);
@@ -79,13 +80,13 @@ void main()
 
         switch(skb->hdr.eth->ethertype){
 			case IP:
-				//ip_parse(skb);
-                twriteln("Recieved ARP packet.");
+				parse_ip(skb);
+                twriteln("Recieved IP packet.");
 				break;
 
 			case ARP:
                 ;
-				int ret = arp_parse(skb);
+				int ret = parse_arp(skb);
                 if(!ret)
                     goto drop;
 
