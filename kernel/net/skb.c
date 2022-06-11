@@ -9,12 +9,15 @@
  * 
  */
 #include <net/skb.h>
+#include <sync.h>
 
-struct sk_buff sk_buffers[MAX_SKBUFFERS];
+static struct sk_buff sk_buffers[MAX_SKBUFFERS];
+static mutex_t skb_mutex;
 
 void init_sk_buffers()
 {
-	for (uint8_t i = 0; i < MAX_SKBUFFERS; i++)
+	mutex_init(&skb_mutex);
+	for (uint16_t i = 0; i < MAX_SKBUFFERS; i++)
 	{
 		sk_buffers[i].stage = UNUSED;
 	}
@@ -22,21 +25,29 @@ void init_sk_buffers()
 
 struct sk_buff* next_skb()
 {
+	acquire(&skb_mutex);
 	int16_t i;
 	for (i = 0; i < MAX_SKBUFFERS; i++)
-		if(sk_buffers[i].stage == NEW_SKB)
+		if(sk_buffers[i].stage == NEW_SKB){
+			release(&skb_mutex);
 			return &sk_buffers[i];
+		}
 	
+	release(&skb_mutex);
 	return NULL;
 }
 
 struct sk_buff* get_skb()
 {
+	acquire(&skb_mutex);
 	int16_t i;
 	for (i = 0; i < MAX_SKBUFFERS; i++)
-		if(sk_buffers[i].stage == UNUSED)
+		if(sk_buffers[i].stage == UNUSED){
+			release(&skb_mutex);
 			return &sk_buffers[i];
+		}
 
+	release(&skb_mutex);
 	return NULL;
 }
 

@@ -111,11 +111,11 @@ check:
 	read eas
 	sudo diskutil unmountDisk /dev/disk2
 
-vdi: cleanvid
+vdi: cleanvid iso
 	qemu-img convert -f raw -O vdi boot.iso boot.vdi
 
 cleanvid:
-	rm *.vdi
+	rm -f *.vdi
 
 net:
 	sudo tcpdump -qns 0 -X -r dump.dat -vvv -e 

@@ -48,10 +48,19 @@ void list_net_devices()
 
 }
 
+int net_drop_packet(struct sk_buff* skb)
+{
+    current_netdev.dropped++;
+    FREE_SKB(skb);
+
+    return 0;
+}
+
 void net_packet_handler()
 {
     struct sk_buff* skb = get_skb();
     ALLOCATE_SKB(skb);
+    skb->action = RECIEVE;
 
     int read = netdev_recieve(skb->data, MAX_PACKET_SIZE);
     if(read <= 0) {
@@ -61,6 +70,39 @@ void net_packet_handler()
     packets++;
 }
 
+int net_handle_recieve(struct sk_buff* skb)
+{
+    int ret = parse_ethernet(skb);
+    if(ret <= 0)
+        return net_drop_packet(skb);
+
+    switch(skb->hdr.eth->ethertype){
+        case IP:
+            if(!parse_ip(skb))
+                return net_drop_packet(skb);
+            
+            twriteln("Recieved IP packet.");
+            break;
+
+        case ARP:
+            if(!parse_arp(skb))
+                return net_drop_packet(skb);
+
+            // send arp response.
+            twriteln("Recieved ARP packet.");
+
+        default:
+            return net_drop_packet(skb);
+    }
+
+    return 1;
+}
+
+
+void net_handle_send(struct sk_buff* skb)
+{
+    
+}
 /**
  * @brief Main networking event loop.
  * 
@@ -74,30 +116,18 @@ void main()
             continue;
         skb->stage = IN_PROGRESS;
 
-        int ret = parse_ethernet(skb);
-        if(ret <= 0)
-            goto drop;
+        switch (skb->action)
+        {
+        case RECIEVE:
+            /* code */
+            break;
+        case SEND:
+            /* code */
+            break;
+        default:
+            break;
+        }
 
-        switch(skb->hdr.eth->ethertype){
-			case IP:
-                if(!parse_ip(skb))
-                    goto drop;
-                
-                twriteln("Recieved IP packet.");
-				break;
-
-			case ARP:
-                if(!parse_arp(skb))
-                    goto drop;
-
-                // send arp response.
-                twriteln("Recieved ARP packet.");
-				return;
-
-			default:
-                goto drop;
-		}
-    drop:
         FREE_SKB(skb);
     }
 }

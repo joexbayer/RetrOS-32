@@ -14,6 +14,11 @@ enum sk_stage {
 	DONE
 };
 
+enum sk_action {
+    SEND,
+    RECIEVE
+};
+
 struct sk_buff {
 
     struct netdev* netdevice;
@@ -33,9 +38,10 @@ struct sk_buff {
     uint8_t* end;
 
     uint8_t stage;
+    uint8_t action;
 };
 
-#define MAX_SKBUFFERS 255
+#define MAX_SKBUFFERS 0x200
 
 
 void init_sk_buffers();
@@ -53,7 +59,8 @@ struct sk_buff* next_skb();
     if((skb)->head != NULL)     \
         free((skb)->head);      \
     (skb)->len = -1;            \
-    (skb)->stage = UNUSED;   
+    (skb)->stage = UNUSED;      \
+    (skb)->head = NULL;
 
 #include <net/ethernet.h>
 #include <net/arp.h>
