@@ -13,15 +13,17 @@
 #include <net/arp.h>
 
 /* This functions always needs to be on top? */
-void _main(uint32_t debug) {
+void _main(uint32_t debug) 
+{
     /* Initialize terminal interface */
 	CLI();
 	init_terminal();
-	init_timer(1);
 	init_interrupts();
+	init_timer(1);
 	init_keyboard();
 	init_memory();
 	init_pcbs();
+
 	init_pci();
 	init_sk_buffers();
 	init_arp();
@@ -30,12 +32,6 @@ void _main(uint32_t debug) {
 	init_shell();
 	init_counter();
 	init_networking();
-
-	if(debug == 0xDEADBEEF)
-	{
-		twrite("Hello world\n");
-	}
-	
 
 	/* Testing printing ints and hex */
 	char test[1000];
@@ -51,7 +47,7 @@ void _main(uint32_t debug) {
 
 	/* Test interrupt */
 	//asm volatile ("int $43");
-	//asm volatile ("int $31");
+	asm volatile ("int $31");
 
 	start_process(0); // SHELL
 	STI();

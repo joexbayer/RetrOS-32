@@ -33,7 +33,14 @@ BOOTOBJ = bin/bootloader.o
 .PHONY: all new image clean boot net kernel
 all: compile
 
-new: clean iso
+new: clean compile createbin grubiso
+
+createbin:
+	rm -f multiboot/boot/myos.bin
+	mv ./bin/kernelout multiboot/boot/myos.bin
+
+grubiso:
+	grub-mkrescue -o myos.iso multiboot/
 
 cleaniso: iso clean 
 

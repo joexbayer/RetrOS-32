@@ -128,6 +128,7 @@ int init_pcb(int pid, struct pcb* pcb, void (*entry)(), char* name)
         return -1;
     }
 
+
     /* Stack grows down so we want the upper part of allocated memory.*/ 
     pcb->ebp = stack+stack_size-1;
     pcb->esp = stack+stack_size-1;
@@ -167,7 +168,7 @@ int add_pcb(void (*entry)(), char* name)
     next->prev = &pcbs[i];
     pcbs[i].next = next;
     pcbs[i].prev = current_running;
-    
+
     pcb_count++;
     STI();
     return i;
