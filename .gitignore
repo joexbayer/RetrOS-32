@@ -30,7 +30,7 @@
 *.so
 *.so.*
 *.dylib
-*.iso
+boot.iso
 *.img
 *.dat
 
