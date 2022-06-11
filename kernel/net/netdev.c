@@ -13,6 +13,7 @@
 #include <screen.h>
 
 struct netdev current_netdev;
+static uint8_t netdev_attached = 0;
 
 void netdev_attach_driver(
     struct pci_device* driver, 
@@ -28,12 +29,17 @@ void netdev_attach_driver(
     current_netdev.received = 0;
     current_netdev.sent = 0;
 
+    netdev_attached = 1;
+
     memcpy(current_netdev.mac, mac, 6);
     memcpy(current_netdev.name, name, strlen(name)+1);
 }
 
 void netdev_print_status()
 {
+    if(!netdev_attached)
+        return;
+        
     scrwrite(51, 13, "Card: ", VGA_COLOR_GREEN);
     scrprintf(51+strlen("Card: "), 13, "%s", current_netdev.name);
     scrprintf(51, 14, "PCI BAR0: 0x%x", current_netdev.driver.base);
