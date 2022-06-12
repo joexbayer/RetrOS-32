@@ -55,8 +55,6 @@ void net_handle_send(struct sk_buff* skb)
         twriteln("Error sending packet.");
     }
     packets++;
-    //skb->data = skb->head;
-    //net_handle_recieve(skb);
 }
 
 int net_drop_packet(struct sk_buff* skb)
@@ -145,5 +143,6 @@ void main()
 
 PROGRAM(networking, &main)
 ATTACH("lsnet", &list_net_devices)
-ATTACH("arp", &arp_send)
+ATTACH("arp -a", &arp_print_cache);
+ATTACH("arp", &arp_request)
 PROGRAM_END

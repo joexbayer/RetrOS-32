@@ -25,6 +25,6 @@ struct ip_header {
 #define BROADCAST_IP 4294967295
 
 int ip_parse(struct sk_buff* skb);
-uint32_t ip_to_int(const char* ip);
+uint32_t ip_to_int(const char * ip);
 
 #endif

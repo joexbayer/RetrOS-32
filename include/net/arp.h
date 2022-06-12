@@ -38,6 +38,14 @@ int arp_find_entry(uint32_t ip, uint8_t* mac);
 void init_arp();
 
 /* For testing. */
-void arp_send();
+void arp_request();
+void arp_print_cache();
+
+#define ARP_FILL_HEADER(header, type) \
+    header.opcode = type; \
+	header.prosize = 4; \
+	header.protype = htons(IPV4); \
+	header.hwsize = 6; \
+	header.hwtype = ARP_ETHERNET;
 
 #endif // !ARP_H

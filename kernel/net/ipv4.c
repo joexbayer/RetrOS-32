@@ -20,6 +20,11 @@ void __ip_htonl(struct ip_header* ihdr){
     ihdr->frag_offset = htons(ihdr->frag_offset);
 }
 
+void __ip_send()
+{
+
+}
+
 int ip_parse(struct sk_buff* skb)
 {
     struct ip_header* hdr = (struct ip_header* ) skb->data;
@@ -39,27 +44,44 @@ int ip_parse(struct sk_buff* skb)
     return 1;
 }
 
-uint32_t ip_to_int(const char* ip)
+void print_ip(uint32_t ip)
 {
-    uint8_t ipbytes[4];
+    unsigned char bytes[4];
+    bytes[0] = (ip >> 24) & 0xFF;
+    bytes[1] = (ip >> 16) & 0xFF;
+    bytes[2] = (ip >> 8) & 0xFF;
+    bytes[3] = ip & 0xFF;   
+    twritef("%d.%d.%d.%d\n", bytes[3], bytes[2], bytes[1], bytes[0]); 
+}
 
-    int i = 0;
-    int8_t j = 3;
-    while (ip+i && i<strlen(ip))
-    {
-       char digit = ip[i];
-       if (isdigit(digit) == 0 && digit != '.'){
-           return 0;
-       }
-        j= digit == '.' ? j - 1 : j;
-       ipbytes[j]= ipbytes[j]*10 + atoi(&digit);
+/*  Function from: https://www.lemoda.net/c/ip-to-integer/ */
+uint32_t ip_to_int (const char * ip)
+{
+    unsigned v = 0;
+    int i;
+    const char * start;
 
-        i++;
+    start = ip;
+    for (i = 0; i < 4; i++) {
+        char c;
+        int n = 0;
+        while (1) {
+            c = * start;
+            start++;
+            if (c >= '0' && c <= '9') {
+                n *= 10;
+                n += c - '0';
+            } else if ((i < 3 && c == '.') || i == 3) {
+                break;
+            } else {
+                return 0;
+            }
+        }
+        if (n >= 256) {
+            return 0;
+        }
+        v *= 256;
+        v += n;
     }
-
-    uint32_t a = ipbytes[0];
-    uint32_t b =  ( uint32_t)ipbytes[1] << 8;
-    uint32_t c =  ( uint32_t)ipbytes[2] << 16;
-    uint32_t d =  ( uint32_t)ipbytes[3] << 24;
-    return a+b+c+d;
+    return v;
 }

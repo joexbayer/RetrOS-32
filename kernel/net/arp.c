@@ -94,7 +94,68 @@ void print_arp()
 	
 }
 
-void arp_send()
+void arp_print_cache()
+{
+	twriteln("ARP cache:");
+	for (size_t i = 0; i < MAX_ARP_ENTRIES; i++)
+		if(arp_entries[i].sip != 0){
+
+			uint32_t ip = ntohsl(arp_entries[i].sip);
+			uint8_t bytes[4];
+			bytes[0] = (ip >> 24) & 0xFF;
+			bytes[1] = (ip >> 16) & 0xFF;
+			bytes[2] = (ip >> 8) & 0xFF;
+			bytes[3] = ip & 0xFF; 
+			twritef("(%d.%d.%d.%d) at %x:%x:%x:%x:%x:%x\n",
+					bytes[3], bytes[2], bytes[1], bytes[0],
+					arp_entries[i].smac[0], arp_entries[i].smac[1], arp_entries[i].smac[2], arp_entries[i].smac[3], arp_entries[i].smac[4], arp_entries[i].smac[5]);
+		}
+}
+
+void __arp_send(struct arp_content* content, struct arp_header* hdr, struct sk_buff* skb)
+{
+	__arp_htons(hdr);
+	__arp_content_htons(content);
+
+	memcpy(skb->data, hdr, sizeof(struct arp_header));
+	skb->data += sizeof(struct arp_header);
+	skb->len += sizeof(struct arp_header);
+
+	memcpy(skb->data, content, sizeof(struct arp_content));
+	skb->data += sizeof(struct arp_content);
+	skb->len += sizeof(struct arp_content);
+
+	twritef("Creating ARP Response. size: %d \n", skb->len);
+	skb->stage = NEW_SKB;
+	skb->action = SEND;
+}
+
+void arp_respond(struct arp_content* content)
+{
+	struct sk_buff* skb = get_skb();
+    ALLOCATE_SKB(skb);
+    skb->stage = IN_PROGRESS;
+	skb->proto = ARP;
+
+	struct arp_header a_hdr;
+	ARP_FILL_HEADER(a_hdr, ARP_REPLY);
+
+	memcpy(&content->dmac, &content->smac, 6);
+	memcpy(&content->smac, &current_netdev.mac, 6);
+	content->dip = content->sip;
+	content->sip = 167772687;
+
+	twriteln("Creating Ethernet header.");
+	int ret = ethernet_add_header(skb, content->dip);
+	if(ret <= 0){
+		twriteln("Error adding ethernet header");
+		return;
+	}
+
+	__arp_send(content, &a_hdr, skb);
+}
+
+void arp_request()
 {
 	twriteln("Creating ARP packet.");
 	struct sk_buff* skb = get_skb();
@@ -106,11 +167,7 @@ void arp_send()
 	struct arp_header a_hdr;
 	struct arp_content a_content;
 
-	a_hdr.opcode = ARP_REQUEST;
-	a_hdr.prosize = 4;
-	a_hdr.protype = IPV4;
-	a_hdr.hwsize = 6;
-	a_hdr.hwtype = ARP_ETHERNET;
+	ARP_FILL_HEADER(a_hdr, ARP_REQUEST);
 
 	uint8_t broadcast_mac[6] = {255, 255, 255, 255, 255, 255};
 
@@ -126,20 +183,7 @@ void arp_send()
 		return;
 	}
 
-	__arp_htons(&a_hdr);
-	__arp_content_htons(&a_content);
-
-	memcpy(skb->data, &a_hdr, sizeof(struct arp_header));
-	skb->data += sizeof(struct arp_header);
-	skb->len += sizeof(struct arp_header);
-
-	memcpy(skb->data, &a_content, sizeof(struct arp_content));
-	skb->data += sizeof(struct arp_content);
-	skb->len += sizeof(struct arp_content);
-
-	twritef("Creating ARP sent.. size: %d \n", skb->len);
-	skb->stage = NEW_SKB;
-	skb->action = SEND;
+	__arp_send(&a_content, &a_hdr, skb);
 }
 
 /**
@@ -168,6 +212,7 @@ uint8_t arp_parse(struct sk_buff* skb)
 	if(!ret)
 		return ret;
 	
+	arp_respond(arp_content);
 
 	return 1;
 }
