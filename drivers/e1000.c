@@ -42,11 +42,11 @@ static void _e1000_reset_tx_desc()
 {
 	memset(tx_desc_list, 0, TX_BUFF_SIZE);
     for (size_t i = 0; i < TX_SIZE; i++)
-    {
+    { 
 		/* Initialize transmit buffers  */
 		tx_desc_list[i].buffer_addr = (uint32_t)tx_buf[i];
-		tx_desc_list[i].status = E1000_TXD_STAT_DD;
-		tx_desc_list[i].cmd = (uint8_t) (E1000_TXD_CMD_RS | E1000_TXD_CMD_EOP);
+		tx_desc_list[i].status  = E1000_TXD_STAT_DD;
+		tx_desc_list[i].cmd = (E1000_TXD_CMD_RS >> 24) | (E1000_TXD_CMD_EOP >> 24);
     }
 }
 /**
@@ -100,12 +100,14 @@ void _e1000_tx_init()
 
     /* Enable TX, for more options check e1000.h */
 				   /* enable tx */  /* pad short packets */ /* collision threshold */       /* collision distance */
-    E1000_DEVICE_SET(E1000_TCTL) = E1000_TCTL_EN   | E1000_TCTL_PSP         | (E1000_TCTL_CT & (0x10 << 4)) | (E1000_TCTL_COLD & (0x40 << 12));
+    E1000_DEVICE_SET(E1000_TCTL) |= (E1000_TCTL_EN | E1000_TCTL_PSP |
+		(E1000_TCTL_CT & (0x10 << 4)) |
+		(E1000_TCTL_COLD & (0x40 << 12)));
 
 	/* 13.4.34 Transmit IPG Register
 	   This register controls the IPG (Inter Packet Gap) timer for the Ethernet controller.
 	*/
-    E1000_DEVICE_SET(E1000_TIPG) = 10 | (8 << 10) | (12 << 20);
+    E1000_DEVICE_SET(E1000_TIPG) |= (10) | (4 << 10) | (6 << 20);
 }
 
 /**
@@ -183,7 +185,11 @@ int e1000_transmit(char* buffer, uint32_t size)
 	memcpy(tx_buf[tail], ptr, size);
 	txdesc->length = size;
 	txdesc->status &= ~E1000_TXD_STAT_DD;
+	txdesc->cmd |= E1000_TXD_CMD_EOP;
+
 	E1000_DEVICE_SET(E1000_TDT) = (tail+1) % TX_SIZE;
+
+	scrprintf(12, 14, "E1000 SENT PACKET 0x%d, size %d", tail, size);
 
 	return size;
 }

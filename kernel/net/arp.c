@@ -22,6 +22,11 @@ void init_arp()
 	{
 		arp_entries[i].sip = 0;
 	}
+
+	uint8_t broadcast_mac[6] = {255, 255, 255, 255, 255, 255};
+	
+	memcpy(&arp_entries[0].smac, &broadcast_mac, 6);
+	arp_entries[0].sip = BROADCAST_IP;
 }
 
 int arp_add_entry(struct arp_content* arp)
@@ -84,12 +89,65 @@ void __arp_htons(struct arp_header* a_hdr)
 	a_hdr->protype = htons(a_hdr->protype);
 }
 
+void print_arp()
+{
+	
+}
+
+void arp_send()
+{
+	twriteln("Creating ARP packet.");
+	struct sk_buff* skb = get_skb();
+    ALLOCATE_SKB(skb);
+    skb->stage = IN_PROGRESS;
+	skb->proto = ARP;
+
+
+	struct arp_header a_hdr;
+	struct arp_content a_content;
+
+	a_hdr.opcode = ARP_REQUEST;
+	a_hdr.prosize = 4;
+	a_hdr.protype = IPV4;
+	a_hdr.hwsize = 6;
+	a_hdr.hwtype = ARP_ETHERNET;
+
+	uint8_t broadcast_mac[6] = {255, 255, 255, 255, 255, 255};
+
+	a_content.dip = BROADCAST_IP;
+	memcpy(a_content.smac, current_netdev.mac, 6);
+	a_content.sip = ip_to_int("192.168.2.3");
+	memcpy(a_content.dmac, broadcast_mac, 6);
+
+	twriteln("Creating Ethernet header.");
+	int ret = ethernet_add_header(skb, BROADCAST_IP);
+	if(ret <= 0){
+		twriteln("Error adding ethernet header");
+		return;
+	}
+
+	__arp_htons(&a_hdr);
+	__arp_content_htons(&a_content);
+
+	memcpy(skb->data, &a_hdr, sizeof(struct arp_header));
+	skb->data += sizeof(struct arp_header);
+	skb->len += sizeof(struct arp_header);
+
+	memcpy(skb->data, &a_content, sizeof(struct arp_content));
+	skb->data += sizeof(struct arp_content);
+	skb->len += sizeof(struct arp_content);
+
+	twritef("Creating ARP sent.. size: %d \n", skb->len);
+	skb->stage = NEW_SKB;
+	skb->action = SEND;
+}
+
 /**
  * @brief Handles ARP packets
  * 
  * @param skb socket buffer to parse
  */
-uint8_t parse_arp(struct sk_buff* skb)
+uint8_t arp_parse(struct sk_buff* skb)
 {
 	struct arp_header* a_hdr = (struct arp_header*) skb->data;
 	skb->hdr.arp = a_hdr;
@@ -104,10 +162,12 @@ uint8_t parse_arp(struct sk_buff* skb)
 	struct arp_content* arp_content = (struct arp_content*) skb->data;
 	__arp_content_ntohs(arp_content);
 
+	twriteln("Received ARP!");
+
 	int ret = arp_add_entry(arp_content);
 	if(!ret)
 		return ret;
 	
 
-	return 0;
+	return 1;
 }

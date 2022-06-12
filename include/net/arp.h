@@ -33,8 +33,11 @@ struct arp_entry
 	uint32_t sip;
 }__attribute__((packed));
 
-uint8_t parse_arp(struct sk_buff* skb);
+uint8_t arp_parse(struct sk_buff* skb);
 int arp_find_entry(uint32_t ip, uint8_t* mac);
 void init_arp();
+
+/* For testing. */
+void arp_send();
 
 #endif // !ARP_H

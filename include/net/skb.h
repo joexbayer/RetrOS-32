@@ -31,6 +31,7 @@ struct sk_buff {
 
     int16_t len;
     uint16_t data_len;
+    uint16_t proto;
 
     uint8_t* head;
     uint8_t* tail;
@@ -53,6 +54,7 @@ struct sk_buff* next_skb();
     (skb)->head = skb->data;            \
     (skb)->tail = skb->head;            \
     (skb)->end = skb->head+0xFFF;       \
+    (skb)->len = 0;                     \
     (skb)->stage = NEW_SKB;
 
 #define FREE_SKB(skb)           \

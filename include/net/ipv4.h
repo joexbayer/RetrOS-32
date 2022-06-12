@@ -22,6 +22,9 @@ struct ip_header {
 #define ICMPV4 0x01
 #define UDP 0x11
 
-int parse_ip(struct sk_buff* skb);
+#define BROADCAST_IP 4294967295
+
+int ip_parse(struct sk_buff* skb);
+uint32_t ip_to_int(const char* ip);
 
 #endif

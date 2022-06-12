@@ -19,6 +19,7 @@ struct ethernet_header
 } __attribute__((packed));
 
 void print_ethernet(struct ethernet_header* hdr);
-uint8_t parse_ethernet(struct sk_buff* skb);
+int ethernet_add_header(struct sk_buff* skb, uint32_t ip);
+uint8_t ethernet_parse(struct sk_buff* skb);
 
 #endif /* ETHERNET_H */

@@ -18,7 +18,29 @@ void print_ethernet(struct ethernet_header* hdr){
     scrprintf(1, 3, "type: %x", hdr->ethertype);
 }
 
-uint8_t parse_ethernet(struct sk_buff* skb)
+int ethernet_add_header(struct sk_buff* skb, uint32_t ip)
+{
+    skb->len += ETHER_HDR_LENGTH;
+    struct ethernet_header e_hdr;
+
+    e_hdr.ethertype = skb->proto;
+    e_hdr.ethertype = htons(e_hdr.ethertype);
+
+    int ret = arp_find_entry(ip, (uint8_t*)&e_hdr.dmac);
+    if(ret <= 0)
+        return ret;
+
+    memcpy(&e_hdr.smac, current_netdev.mac, 6);
+
+    memcpy(skb->data, &e_hdr, ETHER_HDR_LENGTH);
+    skb->data += ETHER_HDR_LENGTH;
+
+    print_ethernet(&e_hdr);
+    
+    return 1;
+}
+
+uint8_t ethernet_parse(struct sk_buff* skb)
 {
     struct ethernet_header* header = (struct ethernet_header*) skb->data;
     header->ethertype = ntohs(header->ethertype);

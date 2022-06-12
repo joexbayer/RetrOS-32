@@ -48,6 +48,17 @@ void list_net_devices()
 
 }
 
+void net_handle_send(struct sk_buff* skb)
+{
+    int read = netdev_transmit(skb->head, skb->len);
+    if(read <= 0){
+        twriteln("Error sending packet.");
+    }
+    packets++;
+    //skb->data = skb->head;
+    //net_handle_recieve(skb);
+}
+
 int net_drop_packet(struct sk_buff* skb)
 {
     current_netdev.dropped++;
@@ -67,42 +78,41 @@ void net_packet_handler()
         FREE_SKB(skb);
         return;
     }
+    skb->len = read;
     packets++;
 }
 
 int net_handle_recieve(struct sk_buff* skb)
 {
-    int ret = parse_ethernet(skb);
+    int ret = ethernet_parse(skb);
     if(ret <= 0)
         return net_drop_packet(skb);
 
     switch(skb->hdr.eth->ethertype){
         case IP:
-            if(!parse_ip(skb))
+            if(!ip_parse(skb))
                 return net_drop_packet(skb);
             
             twriteln("Recieved IP packet.");
             break;
 
         case ARP:
-            if(!parse_arp(skb))
+            if(!arp_parse(skb))
                 return net_drop_packet(skb);
 
             // send arp response.
             twriteln("Recieved ARP packet.");
+            break;
 
         default:
             return net_drop_packet(skb);
     }
 
+    FREE_SKB(skb);
+
     return 1;
 }
 
-
-void net_handle_send(struct sk_buff* skb)
-{
-    
-}
 /**
  * @brief Main networking event loop.
  * 
@@ -119,10 +129,11 @@ void main()
         switch (skb->action)
         {
         case RECIEVE:
-            /* code */
+            net_handle_recieve(skb);
             break;
         case SEND:
-            /* code */
+            net_handle_send(skb);
+            twriteln("Sending Packet!");
             break;
         default:
             break;
@@ -134,4 +145,5 @@ void main()
 
 PROGRAM(networking, &main)
 ATTACH("lsnet", &list_net_devices)
+ATTACH("arp", &arp_send)
 PROGRAM_END

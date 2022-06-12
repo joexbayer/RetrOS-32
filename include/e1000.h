@@ -77,13 +77,11 @@
 struct e1000_tx_desc
 {
     uint64_t buffer_addr;       /* Address of the descriptor's data buffer */
-
-	uint16_t length;    /* Data buffer length */
-    uint8_t cso;        /* Checksum offset */
-    uint8_t cmd;        /* Descriptor control */
-
-    uint8_t status;     /* Descriptor status */
-    uint8_t css;        /* Checksum start */
+    uint16_t length;
+    uint8_t cso;
+    uint8_t cmd;
+    uint8_t status;
+    uint8_t css;
     uint16_t special;
 }__attribute__((packed));
 /**
