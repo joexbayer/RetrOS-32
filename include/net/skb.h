@@ -27,6 +27,7 @@ struct sk_buff {
         struct ethernet_header* eth;
         struct arp_header* arp;
         struct ip_header* ip;
+        struct icmp* icmp;
     } hdr;
 
     int16_t len;
@@ -67,6 +68,7 @@ struct sk_buff* next_skb();
 #include <net/ethernet.h>
 #include <net/arp.h>
 #include <net/ipv4.h>
+#include <net/icmp.h>
 
 #endif // !SKB_H
 
