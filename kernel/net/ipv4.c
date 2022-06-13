@@ -20,9 +20,23 @@ void __ip_htonl(struct ip_header* ihdr){
     ihdr->frag_offset = htons(ihdr->frag_offset);
 }
 
-void __ip_send()
+void __ip_send(struct ip_header* ihdr, struct sk_buff* skb, uint32_t dip)
 {
+    skb->len += ihdr->ihl * 4;
+    skb->proto = IP;
+	twriteln("Creating Ethernet header.");
+	int ret = ethernet_add_header(skb, dip);
+	if(ret <= 0){
+		twriteln("Error adding ethernet header");
+		return;
+	}
 
+    memcpy(skb->data, ihdr, sizeof(struct ip_header));
+    skb->len += sizeof(struct ip_header);
+
+    twritef("Creating IP Packet. size: %d \n", skb->len);
+	skb->stage = NEW_SKB;
+	skb->action = SEND;
 }
 
 int ip_parse(struct sk_buff* skb)

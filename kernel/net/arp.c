@@ -114,6 +114,14 @@ void arp_print_cache()
 
 void __arp_send(struct arp_content* content, struct arp_header* hdr, struct sk_buff* skb)
 {
+	skb->proto = ARP;
+	twriteln("Creating Ethernet header.");
+	int ret = ethernet_add_header(skb, content->dip);
+	if(ret <= 0){
+		twriteln("Error adding ethernet header");
+		return;
+	}
+
 	__arp_htons(hdr);
 	__arp_content_htons(content);
 
@@ -135,7 +143,6 @@ void arp_respond(struct arp_content* content)
 	struct sk_buff* skb = get_skb();
     ALLOCATE_SKB(skb);
     skb->stage = IN_PROGRESS;
-	skb->proto = ARP;
 
 	struct arp_header a_hdr;
 	ARP_FILL_HEADER(a_hdr, ARP_REPLY);
@@ -144,13 +151,6 @@ void arp_respond(struct arp_content* content)
 	memcpy(&content->smac, &current_netdev.mac, 6);
 	content->dip = content->sip;
 	content->sip = 167772687;
-
-	twriteln("Creating Ethernet header.");
-	int ret = ethernet_add_header(skb, content->dip);
-	if(ret <= 0){
-		twriteln("Error adding ethernet header");
-		return;
-	}
 
 	__arp_send(content, &a_hdr, skb);
 }
@@ -161,7 +161,6 @@ void arp_request()
 	struct sk_buff* skb = get_skb();
     ALLOCATE_SKB(skb);
     skb->stage = IN_PROGRESS;
-	skb->proto = ARP;
 
 
 	struct arp_header a_hdr;
@@ -175,13 +174,6 @@ void arp_request()
 	memcpy(a_content.smac, current_netdev.mac, 6);
 	a_content.sip = ip_to_int("192.168.2.3");
 	memcpy(a_content.dmac, broadcast_mac, 6);
-
-	twriteln("Creating Ethernet header.");
-	int ret = ethernet_add_header(skb, BROADCAST_IP);
-	if(ret <= 0){
-		twriteln("Error adding ethernet header");
-		return;
-	}
 
 	__arp_send(&a_content, &a_hdr, skb);
 }
