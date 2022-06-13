@@ -100,9 +100,7 @@ void _e1000_tx_init()
 
     /* Enable TX, for more options check e1000.h */
 				   /* enable tx */  /* pad short packets */ /* collision threshold */       /* collision distance */
-    E1000_DEVICE_SET(E1000_TCTL) |= (E1000_TCTL_EN | E1000_TCTL_PSP |
-		(E1000_TCTL_CT & (0x10 << 4)) |
-		(E1000_TCTL_COLD & (0x40 << 12)));
+    E1000_DEVICE_SET(E1000_TCTL) |= (E1000_TCTL_EN | E1000_TCTL_PSP |	(E1000_TCTL_CT & (0x10 << 4)) | (E1000_TCTL_COLD & (0x40 << 12))); 
 
 	/* 13.4.34 Transmit IPG Register
 	   This register controls the IPG (Inter Packet Gap) timer for the Ethernet controller.

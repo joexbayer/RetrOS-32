@@ -100,7 +100,7 @@ void arp_print_cache()
 	for (size_t i = 0; i < MAX_ARP_ENTRIES; i++)
 		if(arp_entries[i].sip != 0){
 
-			uint32_t ip = ntohsl(arp_entries[i].sip);
+			uint32_t ip = ntohl(arp_entries[i].sip);
 			uint8_t bytes[4];
 			bytes[0] = (ip >> 24) & 0xFF;
 			bytes[1] = (ip >> 16) & 0xFF;
