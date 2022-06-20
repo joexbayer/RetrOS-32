@@ -31,7 +31,7 @@ KERNELOBJ = bin/kernel_entry.o bin/kernel.o bin/terminal.o bin/pci.o \
 BOOTOBJ = bin/bootloader.o
 
 .PHONY: all new image clean boot net kernel
-all: compile
+all: iso
 
 new: clean compile createbin grubiso
 
@@ -108,6 +108,9 @@ clean:
 
 bindir:
 	@mkdir -p bin
+
+docker-rebuild:
+	docker-compose build --no-cache
 
 boot: check
 	sudo dd if=boot.iso of=/dev/disk2 bs=512 count=961 seek=0
