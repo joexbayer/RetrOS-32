@@ -52,6 +52,7 @@ struct sk_buff* next_skb();
 
 #define ALLOCATE_SKB(skb)               \
     (skb)->data = alloc(0x600);         \
+    memset((skb)->data, 0, 0x600);       \
     (skb)->head = skb->data;            \
     (skb)->tail = skb->head;            \
     (skb)->end = skb->head+0xFFF;       \

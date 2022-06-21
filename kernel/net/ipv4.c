@@ -3,57 +3,69 @@
 #include <terminal.h>
 #include <util.h>
 
-void __ip_ntohl(struct ip_header *hdr)
+/**
+ * @brief Helper function to send IP packet, attaching ethernet header
+ * and setting skb to be sent.
+ * 
+ * @param ihdr ip header for packet, needs to be configured before this function.
+ * @param skb socket buffer to modify.
+ * @param dip Destination IP address.
+ * 
+ * @returns int
+ */
+int __ip_send(struct ip_header* ihdr, struct sk_buff* skb, uint32_t dip)
 {
-    hdr->saddr = ntohl(hdr->saddr);
-    hdr->daddr = ntohl(hdr->daddr);
-    hdr->len = ntohs(hdr->len);
-    hdr->id = ntohs(hdr->id);
-}
+    if(ihdr->version == 0)
+        return 0;
 
-void __ip_htonl(struct ip_header* ihdr){
-    ihdr->len = htons(ihdr->len);
-    ihdr->id = htons(ihdr->id);
-    ihdr->daddr = htonl(ihdr->daddr);
-    ihdr->saddr = ihdr->saddr;
-    ihdr->csum = htons(ihdr->csum);
-    ihdr->frag_offset = htons(ihdr->frag_offset);
-}
-
-void __ip_send(struct ip_header* ihdr, struct sk_buff* skb, uint32_t dip)
-{
-    skb->len += ihdr->ihl * 4;
     skb->proto = IP;
+
 	twriteln("Creating Ethernet header.");
 	int ret = ethernet_add_header(skb, dip);
 	if(ret <= 0){
 		twriteln("Error adding ethernet header");
-		return;
+		return 0;
 	}
 
+    /* Add IP header to packet */
     memcpy(skb->data, ihdr, sizeof(struct ip_header));
-    skb->len += sizeof(struct ip_header);
+    skb->len += ihdr->ihl * 4;
 
     twritef("Creating IP Packet. size: %d \n", skb->len);
 	skb->stage = NEW_SKB;
 	skb->action = SEND;
+
+    return 1;
 }
 
+/**
+ * @brief parses a packets IP header.
+ * 
+ * @param skb skb packet to parse
+ * @return int 
+ */
 int ip_parse(struct sk_buff* skb)
 {
     struct ip_header* hdr = (struct ip_header* ) skb->data;
     skb->hdr.ip = hdr;
 
+    /**
+     * @brief Calculate checksum of IP packet
+     * and validate that it is correct.
+     */
     uint16_t csum = checksum(hdr, hdr->ihl * 4, 0);
     if(0 != csum){
         twriteln("Checksum failed (IPv4)");
         return 0;
     }
 
-    __ip_ntohl(hdr);
+    IP_NTOHL(hdr);
     skb->data = skb->data+(skb->hdr.ip->ihl*4);
 
-    /* TODO: Check ip for destination or broadcast */
+    if(BROADCAST_IP != ntohl(skb->hdr.ip->daddr)){
+        // check if its current IP
+        return 0; /* Currently only accept broadcast packets. */
+    }
 
     return 1;
 }

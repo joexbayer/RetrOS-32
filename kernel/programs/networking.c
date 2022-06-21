@@ -92,6 +92,18 @@ int net_handle_recieve(struct sk_buff* skb)
                 return net_drop_packet(skb);
             
             twriteln("Recieved IP packet.");
+            switch (skb->hdr.ip->proto)
+            {
+            case UDP:
+                /* code */
+                break;
+            
+            case ICMPV4:
+
+                break;
+            default:
+                return net_drop_packet(skb);
+            }
             break;
 
         case ARP:

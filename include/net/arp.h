@@ -10,6 +10,24 @@
 #define ARP_REQUEST     0x0001
 #define ARP_REPLY       0x0002
 
+#define ARP_NTOHS(hdr) \
+    (hdr)->hwtype = ntohs((hdr)->hwtype); \
+	(hdr)->opcode = ntohs((hdr)->opcode); \
+	(hdr)->protype = ntohs((hdr)->protype);
+
+#define ARPC_NTOHL(content) \
+    (content)->sip = ntohl((content)->sip); \
+	(content)->dip = ntohl((content)->dip);
+
+#define ARP_HTONS(hdr) \
+    (hdr)->hwtype = htons((hdr)->hwtype); \
+	(hdr)->opcode = htons((hdr)->opcode); \
+	(hdr)->protype = htons((hdr)->protype);
+
+#define ARPC_HTONL(content) \
+    (content)->sip = htonl((content)->sip); \
+	(content)->dip = htonl((content)->dip);  
+
 struct arp_header
 {
     uint16_t hwtype;

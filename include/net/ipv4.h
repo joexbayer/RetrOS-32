@@ -24,7 +24,23 @@ struct ip_header {
 
 #define BROADCAST_IP 4294967295
 
+#define IP_HTONL(ihdr)              \
+    (ihdr)->len = htons(ihdr->len);   \
+    (ihdr)->id = htons(ihdr->id);     \
+    (ihdr)->daddr = htonl(ihdr->daddr);   \
+    (ihdr)->saddr = ihdr->saddr;  \
+    (ihdr)->csum = htons(ihdr->csum); \
+    (ihdr)->frag_offset = htons(ihdr->frag_offset);
+
+#define IP_NTOHL(ihdr) \
+    (ihdr)->saddr = ntohl(hdr->saddr); \
+    (ihdr)->daddr = ntohl(hdr->daddr); \
+    (ihdr)->len = ntohs(hdr->len); \
+    (ihdr)->id = ntohs(hdr->id);
+
 int ip_parse(struct sk_buff* skb);
 uint32_t ip_to_int(const char * ip);
+
+
 
 #endif

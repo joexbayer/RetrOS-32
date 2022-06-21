@@ -61,34 +61,6 @@ int arp_find_entry(uint32_t ip, uint8_t* mac)
 	return 0;
 }
 
-void __arp_ntohs(struct arp_header* a_hdr){
-
-	a_hdr->hwtype = ntohs(a_hdr->hwtype);
-	a_hdr->opcode = ntohs(a_hdr->opcode);
-	a_hdr->protype = ntohs(a_hdr->protype);
-}
-
-void __arp_content_ntohs(struct arp_content* content)
-{
-
-	content->sip = ntohl(content->sip);
-	content->dip = ntohl(content->dip);
-}
-
-void __arp_content_htons(struct arp_content* content)
-{
-
-	content->sip = htonl(content->sip);
-	content->dip = htonl(content->dip);
-}
-
-void __arp_htons(struct arp_header* a_hdr)
-{
-	a_hdr->hwtype = htons(a_hdr->hwtype);
-	a_hdr->opcode = htons(a_hdr->opcode);
-	a_hdr->protype = htons(a_hdr->protype);
-}
-
 void print_arp()
 {
 	
@@ -122,8 +94,8 @@ void __arp_send(struct arp_content* content, struct arp_header* hdr, struct sk_b
 		return;
 	}
 
-	__arp_htons(hdr);
-	__arp_content_htons(content);
+	ARP_HTONS(hdr);
+	ARPC_HTONL(content);
 
 	memcpy(skb->data, hdr, sizeof(struct arp_header));
 	skb->data += sizeof(struct arp_header);
@@ -189,14 +161,14 @@ uint8_t arp_parse(struct sk_buff* skb)
 	skb->hdr.arp = a_hdr;
 	skb->data = skb->data + sizeof(struct arp_header);
 
-	__arp_ntohs(a_hdr);
+	ARP_NTOHS(a_hdr);
 
 	if(a_hdr->opcode != ARP_REQUEST || a_hdr->hwtype != ARP_ETHERNET || a_hdr->protype != ARP_IPV4){	
 		return 0;
 	}
 
 	struct arp_content* arp_content = (struct arp_content*) skb->data;
-	__arp_content_ntohs(arp_content);
+	ARPC_NTOHL(arp_content);
 
 	twriteln("Received ARP!");
 
