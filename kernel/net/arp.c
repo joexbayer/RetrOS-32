@@ -29,6 +29,12 @@ void init_arp()
 	arp_entries[0].sip = BROADCAST_IP;
 }
 
+/**
+ * @brief Adds a arp request / response to the arp cache.
+ * 
+ * @param arp ARP content packet.
+ * @return int 
+ */
 int arp_add_entry(struct arp_content* arp)
 {
 	/* Check if ARP entry already exists. */
@@ -50,6 +56,14 @@ int arp_add_entry(struct arp_content* arp)
 	return 0;
 }
 
+/**
+ * @brief Finds a APR entry in the cache based on the IP
+ * Result is copied to given MAC pointer.
+ * 
+ * @param ip IP to search for
+ * @param mac buffer to copy MAC into.
+ * @return int 
+ */
 int arp_find_entry(uint32_t ip, uint8_t* mac)
 {
 	for (size_t i = 0; i < MAX_ARP_ENTRIES; i++)
@@ -59,11 +73,6 @@ int arp_find_entry(uint32_t ip, uint8_t* mac)
 		}
 	
 	return 0;
-}
-
-void print_arp()
-{
-	
 }
 
 void arp_print_cache()
@@ -84,6 +93,13 @@ void arp_print_cache()
 		}
 }
 
+/**
+ * @brief Helper method that adds ethernet header and send ARP packet.
+ * 
+ * @param content ARP content struct
+ * @param hdr ARP header
+ * @param skb buffer to send.
+ */
 void __arp_send(struct arp_content* content, struct arp_header* hdr, struct sk_buff* skb)
 {
 	skb->proto = ARP;
@@ -110,6 +126,11 @@ void __arp_send(struct arp_content* content, struct arp_header* hdr, struct sk_b
 	skb->action = SEND;
 }
 
+/**
+ * @brief Create a ARP response packet based on request content.
+ * 
+ * @param content APR request content.
+ */
 void arp_respond(struct arp_content* content)
 {
 	struct sk_buff* skb = get_skb();
@@ -127,6 +148,10 @@ void arp_respond(struct arp_content* content)
 	__arp_send(content, &a_hdr, skb);
 }
 
+/**
+ * @brief Create a ARP request packet and send it.
+ * 
+ */
 void arp_request()
 {
 	twriteln("Creating ARP packet.");

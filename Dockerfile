@@ -1,6 +1,6 @@
 #
-# Because compilation isnt consitent, even across different linux distribution.
-# I was forced to compile in a consitent docker environment.
+# Because GCC / LD compilation isnt consistent, even across different linux distributions.
+# I was forced to compile in a consistent docker environment.
 # Ubunut with build-essentials works.
 #
 
