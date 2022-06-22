@@ -26,8 +26,17 @@ void icmp_handle(struct sk_buff* skb)
     icmp_print(skb);
 
     skb->proto = ICMPV4;
-
 }  
+
+int icmp_response()
+{
+
+}
+
+int icmp_request()
+{
+
+}
 
 int icmp_parse(struct sk_buff* skb)
 {

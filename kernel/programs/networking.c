@@ -18,6 +18,7 @@
 #include <net/skb.h>
 #include <net/ethernet.h>
 #include <net/ipv4.h>
+#include <net/icmp.h>
 
 #define MAX_OPEN_PORTS 45
 #define MAX_QUEUE_SIZE 20
@@ -99,7 +100,7 @@ int net_handle_recieve(struct sk_buff* skb)
                 break;
             
             case ICMPV4:
-
+                ret = icmp_parse(skb);
                 break;
             default:
                 return net_drop_packet(skb);
