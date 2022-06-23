@@ -30,12 +30,12 @@ void icmp_handle(struct sk_buff* skb)
 
 int icmp_response()
 {
-
+    return 1;
 }
 
 int icmp_request()
 {
-
+    return 1;
 }
 
 int icmp_parse(struct sk_buff* skb)

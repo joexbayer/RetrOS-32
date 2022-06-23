@@ -1,3 +1,14 @@
+/**
+ * @file udp.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Basic UDP implementation.
+ * @version 0.1
+ * @date 2022-06-23
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+
 #include <net/udp.h>
 #include <terminal.h>
 
@@ -8,7 +19,7 @@ int upd_parse(struct sk_buff* skb){
 
 	uint16_t udp_checksum = transport_checksum(skb->hdr.ip->saddr, skb->hdr.ip->daddr, UDP, skb->data, skb->hdr.udp->udp_length);
 	if( udp_checksum != 0){
-		twrintln("UDP checksum failed.\n");
+		twriteln("UDP checksum failed.\n");
 		return 0;
 	}
 	skb->data = skb->data + sizeof(struct udp_header);
