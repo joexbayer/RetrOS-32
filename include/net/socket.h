@@ -9,10 +9,12 @@
  * https://pubs.opengroup.org/onlinepubs/7908799/xns/syssocket.h.html
  */
 
+/* Domain */
 #define AF_UNIX		1	/* Unix domain sockets 		*/
 #define AF_LOCAL	1	/* POSIX name for AF_UNIX	*/
 #define AF_INET		2	/* Internet IP Protocol 	*/
 
+/* Protocol */
 #define SOCK_DGRAM 1
 #define SOCK_STREAM 2
 
@@ -34,6 +36,10 @@ struct sockaddr_in {
 struct sockaddr {
 	sa_family_t	sa_family;	/* address family, AF_xxx	*/
 	char		sa_data[14];	/* 14 bytes of protocol address	*/
+};
+
+struct sock {
+
 };
 
 

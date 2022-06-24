@@ -56,7 +56,7 @@ void test()
      uint32_t* target = alloc(512);
 
      twritef("Starting ATA...\r\n");
-    read_sectors_ATA_PIO(target, 100, 1);
+    read_sectors_ATA_PIO(target, 0, 1);
     
     int i;
     i = 0;
@@ -74,11 +74,11 @@ void test()
     {
         bwrite[i] = 0x1;
     }
-    write_sectors_ATA_PIO(100, 2, bwrite);
+    write_sectors_ATA_PIO(0, 2, bwrite);
 
 
     twritef("reading...\r\n");
-    read_sectors_ATA_PIO(target, 100, 1);
+    read_sectors_ATA_PIO(target, 0, 1);
     
     i = 0;
     while(i < 128)
