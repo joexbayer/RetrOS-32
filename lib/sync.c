@@ -66,7 +66,9 @@ inline int __lock_unlock(mutex_t* l)
     for (size_t i = 0; i < MAX_BLOCKED; i++)
     {
         if(l->blocked[i] != -1){
-            return l->blocked[i];
+            int ret = l->blocked[i];
+            l->blocked[i] = -1;
+            return ret;
         }
     }
     return -1;
@@ -105,11 +107,14 @@ void acquire(mutex_t* l)
  */
 void release(mutex_t* l)
 {
+    CLI();
     int pid = __lock_unlock(l);
     if(pid != -1){
+        twritef("Unblocking %d\n", pid);
         unblock(pid);
         return;
     }
 
     l->state = UNLOCKED;
+    STI();
 }

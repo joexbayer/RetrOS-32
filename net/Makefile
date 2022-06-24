@@ -2,7 +2,7 @@ CCFLAGS=-m32 -std=gnu99 -O2 \
 		-g -Wall -Wextra -Wpedantic -Wstrict-aliasing \
 		-Wno-pointer-arith -Wno-unused-parameter -nostdlib \
 		-nostdinc -ffreestanding -fno-pie -fno-stack-protector \
-		-fno-builtin-function -fno-builtin -I ./../../include/
+		-fno-builtin-function -fno-builtin -I ./../include/
 ASFLAGS=
 LDFLAGS=
 MAKEFLAGS += --no-print-directory
@@ -22,7 +22,7 @@ else
 	LD=i386-elf-ld
 endif
 
-OUTPUTDIR = ../../bin/
+OUTPUTDIR = ../bin/
 
 NETOBJS = netdev.o ethernet.o skb.o arp.o ipv4.o utils.o icmp.o udp.o socket.o
 

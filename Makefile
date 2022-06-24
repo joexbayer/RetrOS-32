@@ -85,8 +85,8 @@ bin/%.o: */%.s
 	@$(AS) -o $@ -c $< $(ASFLAGS)
 	@echo [KERNEL] Compiling $@
 
-bin/net.o: ./kernel/net/*.c
-	@make -C ./kernel/net/
+bin/net.o: ./net/*.c
+	@make -C ./net/
 
 iso: compile
 	@dd if=/dev/zero of=boot.iso bs=512 count=961
@@ -100,7 +100,7 @@ img: iso
 	mv boot.iso boot.img
 
 clean:
-	make -C kernel/net clean
+	make -C ./net clean
 	rm -f ./bin/*.o
 	rm -f ./bin/bootblock
 	rm -f ./bin/kernelout

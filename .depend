@@ -35,3 +35,32 @@ sync.o: lib/sync.c include/sync.h include/pcb.h include/util.h \
 terminal.o: lib/terminal.c include/terminal.h include/util.h \
  include/stdint.h include/stdarg.h include/screen.h
 util.o: lib/util.c include/util.h include/stdint.h
+arp.o: net/arp.c include/net/arp.h include/stdint.h include/net/utils.h \
+ include/net/skb.h include/net/netdev.h include/pci.h include/memory.h \
+ include/util.h include/net/ethernet.h include/net/ipv4.h \
+ include/net/icmp.h include/net/udp.h include/terminal.h
+ethernet.o: net/ethernet.c include/net/ethernet.h include/stdint.h \
+ include/net/skb.h include/net/netdev.h include/pci.h include/memory.h \
+ include/net/utils.h include/util.h include/net/arp.h include/net/ipv4.h \
+ include/net/icmp.h include/net/udp.h include/screen.h include/terminal.h
+icmp.o: net/icmp.c include/net/icmp.h include/stdint.h include/net/skb.h \
+ include/net/netdev.h include/pci.h include/memory.h include/net/utils.h \
+ include/util.h include/net/ethernet.h include/net/arp.h \
+ include/net/ipv4.h include/net/udp.h include/screen.h include/terminal.h
+ipv4.o: net/ipv4.c include/net/ipv4.h include/stdint.h include/net/skb.h \
+ include/net/netdev.h include/pci.h include/memory.h include/net/utils.h \
+ include/util.h include/net/ethernet.h include/net/arp.h \
+ include/net/icmp.h include/net/udp.h include/terminal.h
+netdev.o: net/netdev.c include/net/netdev.h include/stdint.h \
+ include/pci.h include/screen.h include/util.h
+skb.o: net/skb.c include/net/skb.h include/stdint.h include/net/netdev.h \
+ include/pci.h include/memory.h include/net/utils.h include/util.h \
+ include/net/ethernet.h include/net/arp.h include/net/ipv4.h \
+ include/net/icmp.h include/net/udp.h include/sync.h include/pcb.h
+socket.o: net/socket.c include/net/socket.h include/util.h \
+ include/stdint.h
+udp.o: net/udp.c include/net/udp.h include/net/utils.h include/stdint.h \
+ include/net/skb.h include/net/netdev.h include/pci.h include/memory.h \
+ include/util.h include/net/ethernet.h include/net/arp.h \
+ include/net/ipv4.h include/net/icmp.h include/terminal.h
+utils.o: net/utils.c include/net/utils.h include/stdint.h

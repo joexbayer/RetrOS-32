@@ -22,10 +22,15 @@
 static void __ATA_wait_BSY()   //Wait for bsy to be 0
 {
 	while(inportb(0x1F7) & STATUS_BSY);
+	{
+	}
 }
 static void __ATA_wait_DRQ()  //Wait fot drq to be 1
 {
-	while(!(inportb(0x1F7) & STATUS_RDY));
+	while(!(inportw(0x1F7) & STATUS_RDY))
+	{
+	
+	}
 }
 
 /**
@@ -35,47 +40,45 @@ static void __ATA_wait_DRQ()  //Wait fot drq to be 1
  * @param offset sector offset
  * @param sector_count sectors to read.
  */
-void read_sectors_ATA_PIO(void* target_address, uint32_t offset, uint8_t sector_count)
+void read_sectors_ATA_PIO(uint32_t target_address, uint32_t LBA, uint8_t sector_count)
 {
-
 	__ATA_wait_BSY();
-	outportb(0x1F6,0xE0 | ((offset >>24) & 0xF));
-	outportb(0x1F2, sector_count);
-	outportb(0x1F3, (uint8_t) offset);
-	outportb(0x1F4, (uint8_t)(offset >> 8));
-	outportb(0x1F5, (uint8_t)(offset >> 16)); 
+	outportb(0x1F6,0xE0 | ((LBA >>24) & 0xF));
+	outportb(0x1F2,sector_count);
+	outportb(0x1F3, (uint8_t) LBA);
+	outportb(0x1F4, (uint8_t)(LBA >> 8));
+	outportb(0x1F5, (uint8_t)(LBA >> 16)); 
 	outportb(0x1F7,0x20); //Send the read command
 
 	uint16_t *target = (uint16_t*) target_address;
 
-	for (int j = 0; j < sector_count; j++)
+	for (int j =0;j<sector_count;j++)
 	{
 		__ATA_wait_BSY();
 		__ATA_wait_DRQ();
-		for(int i = 0; i < 512; i++)
+		for(int i=0;i<256;i++)
 			target[i] = inportw(0x1F0);
-		target += 512;
+		target+=256;
 	}
 }
 
-
-void write_sectors_ATA_PIO(uint32_t* buffer, uint32_t offset, uint8_t sector_count)
+void write_sectors_ATA_PIO(uint32_t LBA, uint8_t sector_count, uint32_t* bytes)
 {
 	__ATA_wait_BSY();
-	outportb(0x1F6,0xE0 | ((offset >>24) & 0xF));
+	outportb(0x1F6,0xE0 | ((LBA >>24) & 0xF));
 	outportb(0x1F2,sector_count);
-	outportb(0x1F3, (uint8_t) offset);
-	outportb(0x1F4, (uint8_t)(offset >> 8));
-	outportb(0x1F5, (uint8_t)(offset >> 16)); 
+	outportb(0x1F3, (uint8_t) LBA);
+	outportb(0x1F4, (uint8_t)(LBA >> 8));
+	outportb(0x1F5, (uint8_t)(LBA >> 16)); 
 	outportb(0x1F7,0x30); //Send the write command
 
-	for (int j = 0; j < sector_count; j++)
+	for (int j =0;j<sector_count;j++)
 	{
 		__ATA_wait_BSY();
 		__ATA_wait_DRQ();
-		for(int i = 0; i < 512; i++)
+		for(int i=0;i<256;i++)
 		{
-			outportl(0x1F0, buffer[i]);
+			outportl(0x1F0, bytes[i]);
 		}
 	}
 }

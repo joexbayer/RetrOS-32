@@ -39,7 +39,12 @@ void pcb_function()
 
 void gensis()
 {
-    while(1);
+    while(1)
+    {
+        int random = rand();
+        void* ptr = alloc(random * 5120 % 10000);
+        free(ptr);
+    }
 }
 
 /**
@@ -203,7 +208,7 @@ void exit()
     current_running->prev->next = current_running->next;
     current_running->next->prev = current_running->prev;
 
-    _context_switch();
+    yield();
 }
 
 void block()

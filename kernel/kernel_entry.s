@@ -18,7 +18,7 @@ _context_switch:
 
     pushfl
     pushal
-    # fsave 12(%eax)
+    fsave 12(%eax)
     movl %esp, 4(%eax)
 
     call context_switch
@@ -26,7 +26,7 @@ _context_switch:
     movl current_running, %eax
 
     movl 4(%eax), %esp
-    # frstor 12(%eax)
+    frstor 12(%eax)
     popal
     popfl
 

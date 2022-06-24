@@ -68,6 +68,7 @@ void* alloc(uint16_t size)
 	while(chunks_needed*MEM_CHUNK < size)
 		chunks_needed++;
 	
+
 	if(!chunks_needed) chunks_needed = 1;
 	for (int i = 0; i < CHUNKS_SIZE; i++)
 	{
