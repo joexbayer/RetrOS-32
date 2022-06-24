@@ -11,6 +11,8 @@
 #include <programs.h>
 #include <net/skb.h>
 #include <net/arp.h>
+#include <ata.h>
+#include <bitmap.h>
 
 /* This functions always needs to be on top? */
 void _main(uint32_t debug) 
@@ -48,6 +50,39 @@ void _main(uint32_t debug)
 	/* Test interrupt */
 	//asm volatile ("int $43");
 	asm volatile ("int $31");
+
+	bitmap_t b_test = create_bitmap(512);
+
+	char* target = alloc(512);
+
+    read_sectors_ATA_PIO(target, 100, 1);
+	int i;
+    i = 0;
+    while(i < 512)
+    {
+        twritef("%x", target[i]);
+        i++;
+    }
+	twritef("\n");
+
+	char bwrite[512];
+    for(i = 0; i < 512; i++)
+    {
+        bwrite[i] = get_free_bitmap(b_test, 512);
+    }
+    write_sectors_ATA_PIO(bwrite, 100, 1);
+
+	twritef("reading...\r\n");
+    read_sectors_ATA_PIO(target, 100, 1);
+    
+    i = 0;
+    while(i < 512)
+    {
+        twritef("%x", target[i]);
+        i++;
+    }
+	twritef("\n");
+
 
 	start_process(0); // SHELL
 	STI();

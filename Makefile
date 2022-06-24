@@ -27,7 +27,7 @@ PROGRAMOBJ = bin/counter.o bin/shell.o bin/networking.o
 KERNELOBJ = bin/kernel_entry.o bin/kernel.o bin/terminal.o bin/pci.o \
 			bin/util.o bin/interrupts.o bin/irs_entry.o bin/timer.o \
 			bin/keyboard.o bin/screen.o bin/pcb.o bin/memory.o bin/e1000.o \
-			bin/sync.o bin/process.o bin/net.o ${PROGRAMOBJ}
+			bin/sync.o bin/process.o bin/net.o bin/ata.o bin/bitmap.o ${PROGRAMOBJ}
 BOOTOBJ = bin/bootloader.o
 
 .PHONY: all new image clean boot net kernel
