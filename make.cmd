@@ -12,7 +12,7 @@ set /p id="Press any key to start compiling."
 set args=%1
 
 if "%1" == "run" (
-	wsl make iso
+	docker-compose up
 	qemu-system-i386 -device e1000,netdev=net0 -netdev user,id=net0,hostfwd=tcp::5555-:22 -object filter-dump,id=net0,netdev=net0,file=dump.dat boot.iso
 ) else if "%1" == "compile" (
 	wsl make compile

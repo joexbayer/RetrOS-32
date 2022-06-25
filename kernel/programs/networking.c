@@ -43,7 +43,7 @@ void networking_print_status()
     scrprintf(51, 3, "IPv4: 127.0.0.1");
     scrprintf(51, 4, "MAC: %x:%x:%x:%x:%x:%x", current_netdev.mac[0], current_netdev.mac[1], current_netdev.mac[2], current_netdev.mac[3], current_netdev.mac[4], current_netdev.mac[5]);
     scrprintf(51, 5, "Packets: %d", packets);
-    scrprintf(51, 5, "Sockets: %d", get_total_sockets());
+    scrprintf(51, 6, "Sockets: %d", get_total_sockets());
 
 }
 

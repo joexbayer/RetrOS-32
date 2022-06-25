@@ -2,6 +2,7 @@
 #define SOCKET_H
 
 #include <util.h>
+#include <sync.h>
 
 /**
  * @brief Following the Linux and UNIX implementation for learning purposes:
@@ -43,9 +44,14 @@ struct sock {
     int protocol;
     int domain;
 
+    mutex_t sock_lock;
+
     socket_t socket;
 
-    char* buffers[1][2048];
+    struct sockaddr_in recv_addr;
+
+    char* buffer[2048];
+    int buffer_len;
 };
 
 int accept(int socket, struct sockaddr *address, socklen_t *address_len);
@@ -56,7 +62,7 @@ size_t recv(int socket, void *buffer, size_t length, int flags);
 size_t recvfrom(int socket, void *buffer, size_t length, int flags, struct sockaddr *address, socklen_t *address_len);
 size_t send(int socket, const void *message, size_t length, int flags);
 size_t sendto(int socket, const void *message, size_t length, int flags, const struct sockaddr *dest_addr, socklen_t dest_len);
-int socket(int domain, int type, int protocol);
+socket_t socket(int domain, int type, int protocol);
 
 void init_sockets();
 int get_total_sockets();

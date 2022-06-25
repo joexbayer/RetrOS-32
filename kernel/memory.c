@@ -109,7 +109,11 @@ void free(void* ptr)
 	{
 		if(chunks[i].from == ptr)
 		{
-			if(chunks[i].status != USED) return; /* Tried to free memory not used. */
+			if(chunks[i].status != USED) 
+			{
+				release(&mem_lock);
+				return; /* Tried to free memory not used. */
+			}
 
 			int used = chunks[i].chunks_used;
 			for (int j = 0; j < used; j++)
