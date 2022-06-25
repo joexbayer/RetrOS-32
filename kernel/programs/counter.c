@@ -53,40 +53,7 @@ void counter()
 
 void test()
 {
-     uint32_t* target = alloc(512);
-
-     twritef("Starting ATA...\r\n");
-    read_sectors_ATA_PIO(target, 0, 1);
-    
-    int i;
-    i = 0;
-    while(i < 128)
-    {
-        twritef("%x ", target[i] & 0xFF);
-        twritef("%x ", (target[i] >> 8) & 0xFF);
-        i++;
-    }
-
-    twritef("\r\n");
-    twritef("writing 0...\r\n");
-    char bwrite[512];
-    for(i = 0; i < 512; i++)
-    {
-        bwrite[i] = 0x1;
-    }
-    write_sectors_ATA_PIO(0, 2, bwrite);
-
-
-    twritef("reading...\r\n");
-    read_sectors_ATA_PIO(target, 0, 1);
-    
-    i = 0;
-    while(i < 128)
-    {
-        twritef("%x ", target[i] & 0xFF);
-        twritef("%x ", (target[i] >> 8) & 0xFF);
-        i++;
-    }
+    twriteln("Test");
 }
 
 PROGRAM(counter, &counter)

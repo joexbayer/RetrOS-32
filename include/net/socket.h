@@ -39,9 +39,14 @@ struct sockaddr {
 };
 
 struct sock {
+    int type;
+    int protocol;
+    int domain;
 
+    socket_t socket;
+
+    char* buffers[1][2048];
 };
-
 
 int accept(int socket, struct sockaddr *address, socklen_t *address_len);
 int bind(int socket, const struct sockaddr *address, socklen_t address_len);
@@ -52,6 +57,9 @@ size_t recvfrom(int socket, void *buffer, size_t length, int flags, struct socka
 size_t send(int socket, const void *message, size_t length, int flags);
 size_t sendto(int socket, const void *message, size_t length, int flags, const struct sockaddr *dest_addr, socklen_t dest_len);
 int socket(int domain, int type, int protocol);
+
+void init_sockets();
+int get_total_sockets();
 
 
 

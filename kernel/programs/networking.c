@@ -19,6 +19,7 @@
 #include <net/ethernet.h>
 #include <net/ipv4.h>
 #include <net/icmp.h>
+#include <net/socket.h>
 
 #define MAX_OPEN_PORTS 45
 #define MAX_QUEUE_SIZE 20
@@ -42,6 +43,8 @@ void networking_print_status()
     scrprintf(51, 3, "IPv4: 127.0.0.1");
     scrprintf(51, 4, "MAC: %x:%x:%x:%x:%x:%x", current_netdev.mac[0], current_netdev.mac[1], current_netdev.mac[2], current_netdev.mac[3], current_netdev.mac[4], current_netdev.mac[5]);
     scrprintf(51, 5, "Packets: %d", packets);
+    scrprintf(51, 5, "Sockets: %d", get_total_sockets());
+
 }
 
 void list_net_devices()

@@ -10,6 +10,10 @@
  */
 
 #include <net/socket.h>
+#include <memory.h>
+
+static struct sock** sockets;
+static int total_sockets;
 
 /**
  * Example:
@@ -25,3 +29,14 @@
  * bind(s, (struct sockaddr*)myaddr, sizeof(myaddr));
  * 
  */
+
+int get_total_sockets()
+{
+    return total_sockets;
+}
+
+void init_sockets()
+{
+    sockets = (struct sock**) NULL;
+    total_sockets = 0;
+}
