@@ -4,7 +4,7 @@
 #include <pcb.h>
 #include <stdint.h>
 
-#define MAX_BLOCKED 10
+#define MAX_BLOCKED 20
 
 enum {
     LOCKED,

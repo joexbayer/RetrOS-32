@@ -11,6 +11,8 @@
 
 #include <net/socket.h>
 #include <memory.h>
+#include <util.h>
+#include <net/utils.h>
 
 #define MAX_NUMBER_OF_SOCKETS 128
 
@@ -69,18 +71,53 @@ size_t sendto(int socket, const void *message, size_t length, int flags, const s
 
 }
 
-int udp_deliver_packet(uint32_t ip, uint16_t port, char* buffer, uint16_t len)
+/**
+ * @brief Adds a packets buffer to the sockets buffer, also confirms its lenght.
+ * 
+ * @param buffer Buffer to copy into sock.
+ * @param len Length of buffer.
+ * @param socket_index Index of socket to add buffer too.
+ * @return int 
+ */
+int __socket_add_packet(char* buffer, uint16_t len, int socket_index)
+{
+    if(len > 2048) /* TODO: set as constant. or not? */
+        return -1;
+
+    for (size_t i = 0; i < BUFFERS_PER_SOCKET; i++)
+    {
+        if(sockets[socket_index]->buffer_lens[i] == 0)
+        {
+            memcpy(sockets[socket_index]->buffers[i], buffer, len);
+            sockets[socket_index]->buffer_lens[i] = len;
+            return 1;
+        }
+    }
+
+    return -1;
+}
+
+
+/**
+ * @brief Interface for UDP to add packet to socket if it exists.
+ * @todo: Instead of passing IP and Port, pass socketaddr
+ * @param ip Destination ip
+ * @param port Desination port
+ * @param buffer buffer to copy over to socket.
+ * @param len lenght of buffer.
+ * @return int 
+ */
+int udp_deliver_packet(uint32_t ip, uint16_t port, char* buffer, uint16_t len) 
 {
     for (int i = 0; i < total_sockets; i++)
     {
         if(sockets[i]->recv_addr.sin_port == htons(port) && sockets[i]->recv_addr.sin_addr.s_addr == ip)
         {
-            
+            return __socket_add_packet(buffer, len, i);
         }
     }
 
-
-    
+    return -1;
 }
 
 
@@ -101,7 +138,11 @@ socket_t socket(int domain, int type, int protocol)
     sockets[current]->protocol = protocol;
     sockets[current]->type = type;
     sockets[current]->socket = current;
-    sockets[current]->buffer_len = 0;
+    for (int i = 0; i < BUFFERS_PER_SOCKET; i++)
+    {
+        sockets[current]->buffer_lens[i] = 0;
+    }
+    
 
     mutex_init(&(sockets[current]->sock_lock));
 

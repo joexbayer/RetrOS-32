@@ -39,6 +39,10 @@ void pcb_function()
 
 void gensis()
 {
+}
+
+void gensis2()
+{
     while(1)
     {
         int random = rand();
@@ -214,14 +218,14 @@ void exit()
 void block()
 {
     current_running->running = BLOCKED;
-    _context_switch();
+    yield();
 }
 
 void unblock(int pid)
 {
     int i;
     for(i = 0; i < MAX_NUM_OF_PCBS; i++)
-        if(pcbs[i].pid == pid && pcbs[i].running == BLOCKED)
+        if(pcbs[i].pid == pid)
             pcbs[i].running = RUNNING;
 }
 
@@ -268,6 +272,9 @@ void init_pcbs()
     pcbs[0].prev = &pcbs[0];
 
     int ret = add_pcb(&gensis, "Gensis");
+    if(ret < 0) return; // error
+
+    ret = add_pcb(&gensis2, "Adam");
     if(ret < 0) return; // error
 
     ret = add_pcb(&pcb_function, "PCBd");

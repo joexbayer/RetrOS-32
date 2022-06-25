@@ -19,6 +19,8 @@
 #define SOCK_DGRAM 1
 #define SOCK_STREAM 2
 
+#define BUFFERS_PER_SOCKET 5
+
 typedef uint8_t socket_t;
 typedef uint32_t socklen_t;
 typedef uint16_t sa_family_t;
@@ -50,8 +52,8 @@ struct sock {
 
     struct sockaddr_in recv_addr;
 
-    char* buffer[2048];
-    int buffer_len;
+    char* buffers[BUFFERS_PER_SOCKET][2048];
+    int buffer_lens[BUFFERS_PER_SOCKET];
 };
 
 int accept(int socket, struct sockaddr *address, socklen_t *address_len);

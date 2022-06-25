@@ -9,6 +9,7 @@
  * 
  */
 #include <sync.h>
+#include <terminal.h>
 
 /* Fucntions defined in kernel_entry.s */
 void spin_lock_asm(int volatile *l);
@@ -55,10 +56,13 @@ inline void __lock_block(mutex_t* l)
     {
         if(l->blocked[i] == -1){
             l->blocked[i] = current_running->pid;
+            twritef("Blocking %d\n", current_running->pid);
             block();
-            break;
+            return;
         }
     }
+
+    twriteln("PANIC 1");
 }
 
 inline int __lock_unlock(mutex_t* l)
@@ -94,7 +98,7 @@ void acquire(mutex_t* l)
         break;
     
     default:
-        /* TODO: Throw error. */
+        twriteln("PANIC 2");
         break;
     }
     STI();
@@ -107,7 +111,6 @@ void acquire(mutex_t* l)
  */
 void release(mutex_t* l)
 {
-    CLI();
     int pid = __lock_unlock(l);
     if(pid != -1){
         twritef("Unblocking %d\n", pid);
@@ -116,5 +119,4 @@ void release(mutex_t* l)
     }
 
     l->state = UNLOCKED;
-    STI();
 }

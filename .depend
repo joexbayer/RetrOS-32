@@ -32,7 +32,7 @@ process.o: kernel/process.c include/process.h include/stdint.h \
  include/terminal.h include/util.h include/pcb.h
 bitmap.o: lib/bitmap.c include/bitmap.h include/stdint.h include/memory.h
 sync.o: lib/sync.c include/sync.h include/pcb.h include/util.h \
- include/stdint.h
+ include/stdint.h include/terminal.h
 terminal.o: lib/terminal.c include/terminal.h include/util.h \
  include/stdint.h include/stdarg.h include/screen.h
 util.o: lib/util.c include/util.h include/stdint.h
