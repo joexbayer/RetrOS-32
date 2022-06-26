@@ -41,9 +41,8 @@ void isr_install(size_t i, void (*handler)()) {
 void EOI(int irq)
 {
 	if (irq >= 0x28)
-	{
 		outportb(PIC2, 0x20); /* Slave */	
-	}
+	
 	outportb(PIC1, 0x20); /* Master */
 }
 

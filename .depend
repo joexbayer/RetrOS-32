@@ -5,31 +5,32 @@ e1000.o: drivers/e1000.c include/e1000.h include/stdint.h include/pci.h \
 keyboard.o: drivers/keyboard.c include/keyboard.h include/stdint.h \
  include/screen.h include/util.h include/terminal.h include/interrupts.h \
  include/sync.h include/pcb.h
+rtc.o: drivers/rtc.c include/rtc.h include/stdint.h include/util.h
 screen.o: drivers/screen.c include/screen.h include/util.h \
  include/stdint.h include/stdarg.h
-timer.o: drivers/timer.c include/timer.h include/stdint.h \
+timer.o: drivers/timer.c include/timer.h include/stdint.h include/rtc.h \
  include/screen.h include/util.h include/terminal.h include/interrupts.h \
  include/pcb.h
 interrupts.o: kernel/interrupts.c include/interrupts.h include/stdint.h \
  include/terminal.h include/util.h include/screen.h
 kernel.o: kernel/kernel.c include/util.h include/stdint.h include/pci.h \
  include/terminal.h include/keyboard.h include/interrupts.h \
- include/timer.h include/screen.h include/pcb.h include/memory.h \
- include/process.h include/programs.h include/net/skb.h \
+ include/timer.h include/rtc.h include/screen.h include/pcb.h \
+ include/memory.h include/process.h include/programs.h include/net/skb.h \
  include/net/netdev.h include/net/utils.h include/net/ethernet.h \
  include/net/arp.h include/net/ipv4.h include/net/icmp.h \
  include/net/udp.h include/ata.h include/bitmap.h include/net/socket.h \
  include/sync.h
 memory.o: kernel/memory.c include/memory.h include/stdint.h \
  include/screen.h include/util.h include/terminal.h include/timer.h \
- include/sync.h include/pcb.h
+ include/rtc.h include/sync.h include/pcb.h
 pcb.o: kernel/pcb.c include/pcb.h include/util.h include/stdint.h \
  include/screen.h include/memory.h include/sync.h include/timer.h \
- include/net/netdev.h include/pci.h
+ include/rtc.h include/net/netdev.h include/pci.h
 pci.o: kernel/pci.c include/pci.h include/stdint.h include/e1000.h \
  include/screen.h include/util.h include/terminal.h
 process.o: kernel/process.c include/process.h include/stdint.h \
- include/terminal.h include/util.h include/pcb.h
+ include/terminal.h include/util.h include/screen.h include/pcb.h
 bitmap.o: lib/bitmap.c include/bitmap.h include/stdint.h include/memory.h
 sync.o: lib/sync.c include/sync.h include/pcb.h include/util.h \
  include/stdint.h include/terminal.h
@@ -59,7 +60,8 @@ skb.o: net/skb.c include/net/skb.h include/stdint.h include/net/netdev.h \
  include/net/ethernet.h include/net/arp.h include/net/ipv4.h \
  include/net/icmp.h include/net/udp.h include/sync.h include/pcb.h
 socket.o: net/socket.c include/net/socket.h include/util.h \
- include/stdint.h include/sync.h include/pcb.h include/memory.h
+ include/stdint.h include/sync.h include/pcb.h include/memory.h \
+ include/net/utils.h
 udp.o: net/udp.c include/net/udp.h include/net/utils.h include/stdint.h \
  include/net/skb.h include/net/netdev.h include/pci.h include/memory.h \
  include/util.h include/net/ethernet.h include/net/arp.h \

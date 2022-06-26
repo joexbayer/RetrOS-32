@@ -37,7 +37,6 @@ static const char newline = '\n';
 static size_t terminal_row;
 static size_t terminal_column;
 static uint8_t terminal_color;
-static uint16_t* terminal_buffer;
 
 /* TERMINAL PROTOTYPES */
 void __terminal_ui_text();
@@ -59,27 +58,19 @@ void __terminal_ui_text()
 	terminal_setcolor(VGA_COLOR_LIGHT_BLUE);
 	const char* term_str = " TERMINAL ";
 	for (size_t i = 0; i < strlen(term_str); i++)
-	{
 		scrput(i+1, TERMINAL_START, term_str[i], terminal_color);
-	}
 
 	const char* irq_str = " IRQs ";
 	for (size_t i = 0; i < strlen(irq_str); i++)
-	{
 		scrput(i+PROCESS_WIDTH, TERMINAL_START, irq_str[i], terminal_color);
-	}
 
 	const char* exm_str = " PROCESSES ";
 	for (size_t i = 0; i < strlen(exm_str); i++)
-	{
 		scrput(i+(PROCESS_WIDTH+(SCREEN_WIDTH/6)), TERMINAL_START, exm_str[i], terminal_color);
-	}
 
 	const char* nic_str = " NETDEV ";
 	for (size_t i = 0; i < strlen(nic_str); i++)
-	{
 		scrput(i+52, 12, nic_str[i], terminal_color);
-	}
 
 }
 
@@ -90,26 +81,26 @@ void __terminal_ui_text()
  */
 void __terminal_draw_lines()
 {
-	for (size_t x = 0; x < SCREEN_WIDTH; x++) {
+	
+	for (size_t x = 0; x < SCREEN_WIDTH; x++)
 		scrput(x,TERMINAL_START, ASCII_HORIZONTAL_LINE, terminal_color);
-	}
 
 	/* Vertical lines for memory */
 	terminal_setcolor(VGA_COLOR_LIGHT_GREY);
-	for (size_t x = 0; x < SCREEN_HEIGHT; x++) {
+	for (size_t x = 0; x < SCREEN_HEIGHT; x++)
 		scrput(PROCESS_WIDTH-2, TERMINAL_START+x, ASCII_VERTICAL_LINE, terminal_color);
-	}
+
 	scrput(PROCESS_WIDTH-2, TERMINAL_START, ASCII_DOWN_INTERSECT, terminal_color);
 
 	/* Vertical lines for example */
-	for (size_t x = 0; x < SCREEN_HEIGHT; x++) {
+	for (size_t x = 0; x < SCREEN_HEIGHT; x++)
 		scrput(((PROCESS_WIDTH+(SCREEN_WIDTH/6))-2), 0+x, ASCII_VERTICAL_LINE, terminal_color);
-	}
+
 	scrput(((PROCESS_WIDTH+(SCREEN_WIDTH/6))-2), TERMINAL_START, 206, terminal_color);
 
-	for (size_t x = 50; x < SCREEN_WIDTH; x++) {
+	for (size_t x = 50; x < SCREEN_WIDTH; x++)
 		scrput(x, 12, ASCII_HORIZONTAL_LINE, terminal_color);
-	}
+	
 	scrput(50, 12, 204, terminal_color);
 
 }
@@ -122,12 +113,36 @@ void terminal_clear()
 {	
 	/* Clears the terminal window */
 	for (size_t y = TERMINAL_START+1; y < SCREEN_HEIGHT; y++)
-	{
 		for (size_t x = 0; x < TERMINAL_WIDTH; x++)
-		{
 			scrput(x, y, ' ', terminal_color);
-		}
-	}
+}
+
+void draw_logo()
+{
+
+	uint8_t logo_color = VGA_COLOR_WHITE | VGA_COLOR_BLACK << 4;
+
+	for (size_t i = 0; i < 50; i++)
+		for (size_t j = 1; j < TERMINAL_START; j++)
+			scrput(i, j, ' ', logo_color);
+
+
+	int logo_x = 6;
+	int logo_y = 4;
+	scrwrite(logo_x, logo_y, "            NETOS 0.0.1 ", logo_color);
+	scrwrite(logo_x, logo_y+1, "  ___   _      ___   _      ___   _ ", logo_color);
+	scrwrite(logo_x, logo_y+2, " [(_)] |=|    [(_)] |=|    [(_)] |=|", logo_color);
+	scrwrite(logo_x, logo_y+3, "  '-`  |_|     '-`  |_|     '-`  |_|", logo_color);
+	scrwrite(logo_x, logo_y+4, " /mmm/  /     /mmm/  /     /mmm/  /", logo_color);
+	scrwrite(logo_x, logo_y+5, "       |____________|____________|", logo_color);
+	scrwrite(logo_x, logo_y+6, "                             |    ", logo_color);
+	scrwrite(logo_x, logo_y+7, "                         ___  \\_ ", logo_color);
+	scrwrite(logo_x, logo_y+8, "                        [(_)] |=| ", logo_color);
+	scrwrite(logo_x, logo_y+9, "                         '-`  |_| ", logo_color);
+	scrwrite(logo_x, logo_y+10, "                        /mmm/     ", logo_color);
+
+	scrwrite(0, TERMINAL_START-2, "Start by typing `ls`.", logo_color);
+
 }
 
 /**
@@ -139,34 +154,17 @@ void init_terminal(void)
 	terminal_row = TERMINAL_START+1;
 	terminal_column = 0;
 	terminal_color = VGA_COLOR_LIGHT_GREY;
-	terminal_buffer = VGA_MEMORY;
 
 	/* Clears screen */
 	scr_clear();
 
-	int logo_x = 6;
-	int logo_y = 4;
-	scrwrite(logo_x, logo_y, "            NETOS 0.0.1 ", VGA_COLOR_MAGENTA);
-	scrwrite(logo_x, logo_y+1, "  ___   _      ___   _      ___   _ ", VGA_COLOR_MAGENTA);
-	scrwrite(logo_x, logo_y+2, " [(_)] |=|    [(_)] |=|    [(_)] |=|", VGA_COLOR_MAGENTA);
-	scrwrite(logo_x, logo_y+3, "  '-`  |_|     '-`  |_|     '-`  |_|", VGA_COLOR_MAGENTA);
-	scrwrite(logo_x, logo_y+4, " /mmm/  /     /mmm/  /     /mmm/  /", VGA_COLOR_MAGENTA);
-	scrwrite(logo_x, logo_y+5, "       |____________|____________|", VGA_COLOR_MAGENTA);
-	scrwrite(logo_x, logo_y+6, "                             |    ", VGA_COLOR_MAGENTA);
-	scrwrite(logo_x, logo_y+7, "                         ___  \\_ ", VGA_COLOR_MAGENTA);
-	scrwrite(logo_x, logo_y+8, "                        [(_)] |=| ", VGA_COLOR_MAGENTA);
-	scrwrite(logo_x, logo_y+9, "                         '-`  |_| ", VGA_COLOR_MAGENTA);
-	scrwrite(logo_x, logo_y+10, "                        /mmm/     ", VGA_COLOR_MAGENTA);
-
-
-	for (size_t i = 0; i < SCREEN_WIDTH; i++)
-	{
-		scrput(i, 0, ' ', VGA_COLOR_BLACK | VGA_COLOR_LIGHT_GREY << 4);
-	}
-
+	draw_logo();
 
 	__terminal_draw_lines();
 	__terminal_ui_text();
+
+	for (size_t i = 0; i < SCREEN_WIDTH; i++)
+		scrput(i, 0, ' ', VGA_COLOR_BLACK | VGA_COLOR_LIGHT_GREY << 4);
 
 	terminal_setcolor(VGA_COLOR_WHITE);
 	screen_set_cursor(0, 0); 

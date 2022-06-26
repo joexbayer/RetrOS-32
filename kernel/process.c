@@ -10,6 +10,7 @@
  */
 #include <process.h>
 #include <terminal.h>
+#include <screen.h>
 #include <pcb.h>
 
 #define MAX_PROCESSES 10
@@ -131,8 +132,39 @@ void switch_process(int id)
 
 void list_processes()
 {
+    for (size_t i = 0; i < 50; i++)
+	{
+		for (size_t j = 1; j < (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5); j++)
+		{
+			scrput(i, j, ' ', VGA_COLOR_BLACK | VGA_COLOR_BLACK << 4);
+		}
+	}
+
+    int function_offset = 0;
+    scrprintf(0, 2, "Processes / ..");
     for (int i = 0; i < process_count; i++)
     {
-        twritef("%d: %s\n", i, processes[i].name);
+        scrprintf(0, i+3+function_offset, "     - ID %d: %s\n", i, processes[i].name);
+        for (int j = 0; j < processes[i].total_functions ; j++)
+        {
+            scrprintf(0, i+3+function_offset+j+1, "          - FN %d: %s\n", j, processes[i].functions[j].name);
+        }
+        function_offset += processes[i].total_functions;
     }
+
+    int art_y = 2;
+    int art_x = 24;
+
+    scrwrite(art_x, 0+art_y, "                  .----.", VGA_COLOR_WHITE);
+    scrwrite(art_x, 1+art_y, "      .---------. | == |", VGA_COLOR_WHITE);
+    scrwrite(art_x, 2+art_y, "      |.-\"\"\"\"\"-.| |----|", VGA_COLOR_WHITE);
+    scrwrite(art_x, 3+art_y, "      ||       || | == |", VGA_COLOR_WHITE);
+    scrwrite(art_x, 4+art_y, "      ||       || |----|", VGA_COLOR_WHITE);
+    scrwrite(art_x, 5+art_y, "      |'-.....-'| |::::|", VGA_COLOR_WHITE);
+    scrwrite(art_x, 6+art_y, "      `\"\")---(\"\"` |___.|", VGA_COLOR_WHITE);
+    scrwrite(art_x, 7+art_y, "     /:::::::::::\\\" _  \"", VGA_COLOR_WHITE);
+    scrwrite(art_x, 8+art_y, "    /:::=======:::\\`\\`\\", VGA_COLOR_WHITE);
+    scrwrite(art_x, 9+art_y, "   `\"\"\"\"\"\"\"\"\"\"\"\"\"`  '-'", VGA_COLOR_WHITE);
+
+    scrprintf(0, (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)-2, "Start a process by typing `start $id`.");
 }

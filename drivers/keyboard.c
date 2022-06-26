@@ -2,6 +2,7 @@
  * @file keyboard.c
  * @author Joe Bayer (joexbayer)
  * @brief Really simple PS/2 Keyboard driver with US keyboard layout.
+ * @see http://www.osdever.net/bkerndev/Docs/keyboard.htm
  * @version 0.1
  * @date 2022-06-01
  * 
@@ -15,11 +16,6 @@
 #include <interrupts.h>
 #include <util.h>
 #include <sync.h>
-
-/*
-    Basic PS/2 Keyboard driver. 
-    With the help of: http://www.osdever.net/bkerndev/Docs/keyboard.htm
-*/
 
 #define KB_IRQ		33 /* Default is 1, 33 after mapped. */
 #define KB_BUFFER_SIZE 255
@@ -109,9 +105,7 @@ static void kb_callback()
 	}
 
 	if(scancode & 0x80)
-	{
 		return;
-	}
 
 	char c = kbdus[scancode];
 	kb_add_char( __shift_pressed ? c+('A'-'a') : c);

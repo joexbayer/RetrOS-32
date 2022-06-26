@@ -14,7 +14,6 @@
 #include <util.h>
 #include <screen.h>
 
-#include <ata.h>
 #include <terminal.h>
 
 static int counters = 0;
@@ -37,7 +36,6 @@ void add()
 void counter()
 {
     int id = counters++;
-
     int num = 0;
 	while(1)
     {
@@ -53,7 +51,7 @@ void counter()
 
 void test()
 {
-    twriteln("Test");
+    
 }
 
 PROGRAM(counter, &counter)

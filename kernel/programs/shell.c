@@ -58,6 +58,16 @@ void exec_cmd()
 			return;
 		}
 	}
+
+	if(strncmp("help", shell_buffer, strlen("help"))){
+		twriteln("HELP: ");
+		twriteln("ls: see processes.");
+		twriteln("lsf: see functions for process.");
+		twriteln("switch $id: use process functions.");
+		twriteln("start $id: start a process.");
+		twriteln("stop $id: stop a process.");
+		return;
+	}
 	
 	if(strncmp("lsi", shell_buffer, strlen("lsi"))){
 		list_instances();

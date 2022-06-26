@@ -20,15 +20,23 @@
 static int tick = 0;
 static int time = 0;
 
+static struct time current_time;
+
 int get_time()
 {
 	return time;
+}
+
+struct time* get_datetime()
+{
+	return &current_time;
 }
 
 static void timer_callback()
 {
 	if(tick > 100){
 		tick = 0;
+		get_current_time(&current_time);
 		time++;
 	}
 

@@ -22,15 +22,10 @@
 static void __ATA_wait_BSY()   //Wait for bsy to be 0
 {
 	while(inportb(0x1F7) & STATUS_BSY);
-	{
-	}
 }
 static void __ATA_wait_DRQ()  //Wait fot drq to be 1
 {
-	while(!(inportw(0x1F7) & STATUS_RDY))
-	{
-	
-	}
+	while(!(inportw(0x1F7) & STATUS_RDY));
 }
 
 /**
