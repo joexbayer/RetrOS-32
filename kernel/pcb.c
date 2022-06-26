@@ -45,9 +45,14 @@ void gensis2()
 {
     while(1)
     {
-        int random = rand();
-        void* ptr = alloc(random * 5120 % 10000);
-        free(ptr);
+        for (size_t i = 0; i < 10000000; i++)
+        { 
+            int random = rand();
+            void* ptr = alloc(random * 5120 % 10000);
+            free(ptr);
+        }
+
+        sleep(2);
     }
 }
 
@@ -68,16 +73,16 @@ void print_pcb_status()
         switch (pcbs[i].running)
         {
         case RUNNING:
-            scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_GREEN);
+            scrcolor_set(VGA_COLOR_GREEN, VGA_COLOR_BLACK);
             break;
         case BLOCKED:
-            scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_BROWN);
+            scrcolor_set(VGA_COLOR_BROWN, VGA_COLOR_BLACK);
             break;
         case STOPPED:
-            scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_RED);
+            scrcolor_set(VGA_COLOR_RED, VGA_COLOR_BLACK);
             break;
         case SLEEPING:
-            scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_DARK_GREY);
+            scrcolor_set(VGA_COLOR_DARK_GREY, VGA_COLOR_BLACK);
             break;
         default:
             continue;
