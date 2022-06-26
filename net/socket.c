@@ -10,14 +10,19 @@
  */
 
 #include <net/socket.h>
-#include <memory.h>
-#include <util.h>
 #include <net/utils.h>
+#include <net/skb.h>
+#include <memory.h>
+#include <bitmap.h>
+#include <util.h>
 
 #define MAX_NUMBER_OF_SOCKETS 128
+#define DYNAMIC_PORT_START 49152
+#define NUMBER_OF_DYMANIC_PORTS 16383
 
 static struct sock** sockets;
 static int total_sockets;
+static bitmap_t port_map;
 
 /**
  * Example:
@@ -34,10 +39,70 @@ static int total_sockets;
  * 
  */
 
+inline static void __socket_bind(int socket, uint16_t port, uint32_t ip)
+{
+    sockets[socket]->bound_ip = ip;
+    sockets[socket]->bound_port = port;
+}
+
+inline static uint16_t __get_free_port()
+{
+    return get_free_bitmap(port_map, NUMBER_OF_DYMANIC_PORTS) + DYNAMIC_PORT_START;
+}
+
+/**
+ * @brief Adds a packets buffer to the sockets buffer, also confirms its lenght.
+ * 
+ * @param buffer Buffer to copy into sock.
+ * @param len Length of buffer.
+ * @param socket_index Index of socket to add buffer too.
+ * @return int 
+ */
+static int __socket_add_packet(char* buffer, uint16_t len, int socket_index)
+{
+    if(len > 2048) /* TODO: set as constant. or not? */
+        return -1;
+
+    for (size_t i = 0; i < BUFFERS_PER_SOCKET; i++)
+    {
+        if(sockets[socket_index]->buffer_lens[i] == 0)
+        {
+            memcpy(sockets[socket_index]->buffers[i], buffer, len);
+            sockets[socket_index]->buffer_lens[i] = len;
+            return 1;
+        }
+    }
+
+    return -1;
+}
+
+
 int get_total_sockets()
 {
     return total_sockets;
 }
+
+/**
+ * @brief Binds a IP and Port to a socket, mainly used for the server side.
+ * 
+ * @param socket socket to bind
+ * @param address Address to bind
+ * @param address_len lenght of bind.
+ * @return int 
+ */
+int bind(int socket, const struct sockaddr *address, socklen_t address_len)
+{
+    if(socket < 0 || socket > total_sockets)
+        return -1;
+    
+    /*Cast sockaddr back to sockaddr_in. Cast originally to comply with linux implementation.*/
+    struct sockaddr_in* addr = (struct sockaddr_in*) address;
+
+    __socket_bind(socket, addr->sin_port, addr->sin_addr.s_addr);
+
+    return 1;
+}
+
 
 /**
  * @brief Reads data from socket and creates a sockaddr of sender. 
@@ -68,33 +133,37 @@ size_t recvfrom(int socket, void *buffer, size_t length, int flags, struct socka
  */
 size_t sendto(int socket, const void *message, size_t length, int flags, const struct sockaddr *dest_addr, socklen_t dest_len)
 {
-
-}
-
-/**
- * @brief Adds a packets buffer to the sockets buffer, also confirms its lenght.
- * 
- * @param buffer Buffer to copy into sock.
- * @param len Length of buffer.
- * @param socket_index Index of socket to add buffer too.
- * @return int 
- */
-int __socket_add_packet(char* buffer, uint16_t len, int socket_index)
-{
-    if(len > 2048) /* TODO: set as constant. or not? */
+    /* Flags are ignored... for now. */
+    if(socket < 0 || socket > total_sockets)
         return -1;
 
-    for (size_t i = 0; i < BUFFERS_PER_SOCKET; i++)
+    /* Cast sockaddr back to sockaddr_in. Cast originally to comply with linux implementation.*/
+    struct sockaddr_in* addr = (struct sockaddr_in*) dest_addr;
+    if(sockets[socket]->bound_port == 0)
+        __socket_bind(socket, __get_free_port(), INADDR_ANY);
+
+    /* Get new SKB for packet. */
+	struct sk_buff* skb = get_skb();
+    ALLOCATE_SKB(skb);
+    skb->stage = IN_PROGRESS;
+
+    /* Forward packet to specified protocol. */
+    switch (sockets[socket]->type)
     {
-        if(sockets[socket_index]->buffer_lens[i] == 0)
-        {
-            memcpy(sockets[socket_index]->buffers[i], buffer, len);
-            sockets[socket_index]->buffer_lens[i] = len;
-            return 1;
-        }
+    case SOCK_DGRAM:
+        if(udp_send(skb, (char*) message, BROADCAST_IP, addr->sin_addr.s_addr, sockets[socket]->bound_port, ntohs(addr->sin_port), length) <= 0)
+            return 0;
+        break;
+
+    case SOCK_STREAM:
+        /* TODO */
+        break;
+
+    default:
+        return -1;
     }
 
-    return -1;
+    return length;
 }
 
 
@@ -138,6 +207,8 @@ socket_t socket(int domain, int type, int protocol)
     sockets[current]->protocol = protocol;
     sockets[current]->type = type;
     sockets[current]->socket = current;
+    sockets[current]->bound_port = 0;
+
     for (int i = 0; i < BUFFERS_PER_SOCKET; i++)
     {
         sockets[current]->buffer_lens[i] = 0;
@@ -153,5 +224,6 @@ socket_t socket(int domain, int type, int protocol)
 void init_sockets()
 {
     sockets = (struct sock**) alloc(MAX_NUMBER_OF_SOCKETS * sizeof(void*));
+    port_map = create_bitmap(NUMBER_OF_DYMANIC_PORTS);
     total_sockets = 0;
 }

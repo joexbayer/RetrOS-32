@@ -41,12 +41,35 @@ int __ip_send(struct ip_header* ihdr, struct sk_buff* skb, uint32_t dip)
     /* Add IP header to packet */
     memcpy(skb->data, ihdr, sizeof(struct ip_header));
     skb->len += ihdr->ihl * 4;
-
-    twritef("Creating IP Packet. size: %d \n", skb->len);
-	skb->stage = NEW_SKB;
-	skb->action = SEND;
+    skb->data += ihdr->ihl * 4;
 
     return 1;
+}
+
+/**
+ * @brief Creates and attaches IP header to SKB
+ * 
+ * @param skb skb to modify
+ * @param ip destination IP
+ * @param proto TCP / UDP
+ * @param length length of message.
+ * @return int 
+ */
+int ip_add_header(struct sk_buff* skb, uint32_t ip, uint8_t proto, uint32_t length)
+{
+    struct ip_header hdr;
+    IP_HEADER_CREATE(hdr, proto, length);
+
+    /* Set IPs */
+    hdr.saddr = BROADCAST_IP; /* TODO */
+    hdr.daddr = ip;
+
+    IP_HTONL(&hdr);
+
+    hdr.csum = 0;
+    hdr.csum = checksum(&hdr, hdr.ihl * 4, 0);
+
+    return __ip_send(&hdr, skb, ip);
 }
 
 /**

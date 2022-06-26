@@ -24,6 +24,7 @@ struct udp_header
 	uint16_t checksum;
 };
 
+int udp_send(struct sk_buff* skb, char* data, uint32_t sip, uint32_t dip, uint16_t sport, uint16_t dport, uint32_t length);
 int udp_parse(struct sk_buff* skb);
 
 #endif /* UDP_H */

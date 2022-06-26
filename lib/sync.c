@@ -56,7 +56,7 @@ inline void __lock_block(mutex_t* l)
     {
         if(l->blocked[i] == -1){
             l->blocked[i] = current_running->pid;
-            twritef("Blocking %d\n", current_running->pid);
+            //twritef("Blocking %d\n", current_running->pid);
             block();
             return;
         }
@@ -113,7 +113,7 @@ void release(mutex_t* l)
 {
     int pid = __lock_unlock(l);
     if(pid != -1){
-        twritef("Unblocking %d\n", pid);
+        //twritef("Unblocking %d\n", pid);
         unblock(pid);
         return;
     }

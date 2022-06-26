@@ -19,6 +19,8 @@
 #define SOCK_DGRAM 1
 #define SOCK_STREAM 2
 
+#define INADDR_ANY 1
+
 #define BUFFERS_PER_SOCKET 5
 
 typedef uint8_t socket_t;
@@ -49,6 +51,9 @@ struct sock {
     mutex_t sock_lock;
 
     socket_t socket;
+
+    uint16_t bound_port;
+    uint16_t bound_ip;
 
     struct sockaddr_in recv_addr;
 
