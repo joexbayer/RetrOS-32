@@ -7,7 +7,7 @@
 
 socket_t dhcp_socket;
 
-void dhpcd()
+void dhcpd()
 {
     dhcp_socket = socket(AF_INET, SOCK_DGRAM, 0);
 
@@ -25,5 +25,5 @@ void dhpcd()
     while(1){};
 }
 
-PROGRAM(dhcpd, &dhpcd)
+PROGRAM(dhcpd, &dhcpd)
 PROGRAM_END
