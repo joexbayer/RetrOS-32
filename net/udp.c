@@ -12,6 +12,7 @@
 #include <net/udp.h>
 #include <net/ipv4.h>
 #include <terminal.h>
+#include <net/socket.h>
 
 
 int udp_send(struct sk_buff* skb, char* data, uint32_t sip, uint32_t dip, uint16_t sport, uint16_t dport, uint32_t length)
@@ -57,7 +58,11 @@ int upd_parse(struct sk_buff* skb){
 
 	UDP_NTOHS(hdr);
 
-	//udp_handle(skb);
+	int payload_size = skb->hdr.udp->udp_length-sizeof(struct udp_header);
+
+	int ret = udp_deliver_packet(skb->hdr.ip->daddr, skb->hdr.udp->destport, (char*)skb->data, payload_size);
+	if(ret <= 0)
+		twriteln("[Warning] socket buffer full!!");
 
     return 1;
 }

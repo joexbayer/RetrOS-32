@@ -58,7 +58,8 @@ struct sock {
     struct sockaddr_in recv_addr;
 
     char* buffers[BUFFERS_PER_SOCKET][2048];
-    int buffer_lens[BUFFERS_PER_SOCKET];
+    uint8_t buffer_lens[BUFFERS_PER_SOCKET];
+    uint8_t last_read_buffer;
 };
 
 int accept(int socket, struct sockaddr *address, socklen_t *address_len);
@@ -72,6 +73,7 @@ size_t sendto(int socket, const void *message, size_t length, int flags, const s
 socket_t socket(int domain, int type, int protocol);
 
 void init_sockets();
+int udp_deliver_packet(uint32_t ip, uint16_t port, char* buffer, uint16_t len);
 int get_total_sockets();
 
 

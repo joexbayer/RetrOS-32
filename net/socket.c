@@ -58,7 +58,7 @@ inline static uint16_t __get_free_port()
  * @param socket_index Index of socket to add buffer too.
  * @return int 
  */
-static int __socket_add_packet(char* buffer, uint16_t len, int socket_index)
+static int __sock_add_packet(char* buffer, uint16_t len, int socket_index)
 {
     if(len > 2048) /* TODO: set as constant. or not? */
         return -1;
@@ -74,6 +74,21 @@ static int __socket_add_packet(char* buffer, uint16_t len, int socket_index)
     }
 
     return -1;
+}
+
+inline static int __sock_read_packet(int index, char* buffer)
+{
+
+    int next = sockets[index]->last_read_buffer;
+    if(sockets[index]->buffer_lens[next] <= 0)
+        return 0;
+    
+    int read = sockets[index]->buffer_lens[next];
+    memcpy(buffer, sockets[index]->buffers[next], read);
+    sockets[index]->buffer_lens[next] = 0;
+    sockets[index]->last_read_buffer = (sockets[index]->last_read_buffer + 1) % BUFFERS_PER_SOCKET;
+
+    return read;
 }
 
 
@@ -109,15 +124,34 @@ int bind(int socket, const struct sockaddr *address, socklen_t address_len)
  * Mainly used for UDP.
  * @param socket Socket to read from
  * @param buffer Buffer to store message.
- * @param length Length of buffer.
+ * @param length length of buffer.
  * @param flags Flags..
  * @param address sockaddr of sender.
- * @param address_len lenght of address.
+ * @param address_len length of address.
  * @return size_t 
  */ 
 size_t recvfrom(int socket, void *buffer, size_t length, int flags, struct sockaddr *address, socklen_t *address_len)
 {
+    /* */
+    return 0;
+}
 
+/**
+ * @brief Simple recieve on socket without sockaddr.
+ * 
+ * @param socket Socket to read from
+ * @param buffer Buffer to copy data into
+ * @param length Max length to copy.
+ * @param flags flags..
+ * @return size_t 
+ */
+size_t recv(int socket, void *buffer, size_t length, int flags)
+{
+    int read = 0;
+    while(read == 0) /* TODO: Block, instead of spinning. */
+        read = __sock_read_packet(socket, buffer);
+
+    return read;
 }
 
 /**
@@ -179,12 +213,8 @@ size_t sendto(int socket, const void *message, size_t length, int flags, const s
 int udp_deliver_packet(uint32_t ip, uint16_t port, char* buffer, uint16_t len) 
 {
     for (int i = 0; i < total_sockets; i++)
-    {
-        if(sockets[i]->recv_addr.sin_port == htons(port) && sockets[i]->recv_addr.sin_addr.s_addr == ip)
-        {
-            return __socket_add_packet(buffer, len, i);
-        }
-    }
+        if(sockets[i]->recv_addr.sin_port == htons(port) && (sockets[i]->recv_addr.sin_addr.s_addr == ip || sockets[i]->recv_addr.sin_addr.s_addr == INADDR_ANY))
+            return __sock_add_packet(buffer, len, i);
 
     return -1;
 }
@@ -208,6 +238,7 @@ socket_t socket(int domain, int type, int protocol)
     sockets[current]->type = type;
     sockets[current]->socket = current;
     sockets[current]->bound_port = 0;
+    sockets[current]->last_read_buffer = 0;
 
     for (int i = 0; i < BUFFERS_PER_SOCKET; i++)
     {
