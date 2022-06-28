@@ -42,7 +42,11 @@ createbin:
 grubiso:
 	grub-mkrescue -o myos.iso multiboot/
 
-cleaniso: iso clean 
+cleaniso: iso clean
+
+ls:
+	find . -name '*.c' | xargs wc -l
+	find . -name '*.h' | xargs wc -l
 
 help:
 	@echo ~~~~~~~ Makefile commands ~~~~~~~ 

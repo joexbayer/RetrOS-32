@@ -8,6 +8,16 @@
 static socket_t dhcp_socket;
 static struct dhcp_state dhcp_state;
 
+
+static int dhcp_add_option(struct dhcp* dhcp, int offset, uint8_t opcode, uint8_t opsz, uint32_t val)
+{
+    if(offset >= 128)
+        return 0;
+
+    uint8_t* ptr = (&dhcp->dhcp_options)+offset;
+
+}
+
 void dhcpd()
 {
     dhcp_socket = socket(AF_INET, SOCK_DGRAM, 0);
@@ -19,12 +29,9 @@ void dhcpd()
     addr.sin_addr.s_addr = BROADCAST_IP;
 
     char* message = "Hello world!";
-
-
-
     int ret = sendto(dhcp_socket, message, strlen(message), 0, (struct sockaddr*) &addr, 0);
 
-    twritef("%d\n", ret);
+    
 
     while(1){};
 }

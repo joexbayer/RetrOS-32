@@ -41,6 +41,7 @@ struct dhcp {
     char       dhcp_servername[64];
     char       dhcp_bootfilename[128];
     uint32_t   dhcp_cookie;
+    uint8_t    dhcp_options[128];
 } __attribute__((packed));
 
 #define DHCP_DISCOVERY(dhcp) \
