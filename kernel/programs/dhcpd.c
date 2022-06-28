@@ -14,7 +14,7 @@ static int dhcp_add_option(struct dhcp* dhcp, int offset, uint8_t opcode, uint8_
     if(offset >= 128)
         return 0;
 
-    uint8_t* ptr = (&dhcp->dhcp_options)+offset;
+    uint8_t* ptr = (uint8_t*) (&dhcp->dhcp_options)+offset;
 
 }
 
@@ -31,7 +31,7 @@ void dhcpd()
     char* message = "Hello world!";
     int ret = sendto(dhcp_socket, message, strlen(message), 0, (struct sockaddr*) &addr, 0);
 
-    
+
 
     while(1){};
 }
