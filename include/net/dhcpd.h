@@ -23,6 +23,7 @@ enum {
     DHCP_PENDING,
     DHCP_STOPPED
 };
+extern char* dhcp_state_names[4];
 
 struct dhcp {
     uint8_t    dhcp_op;
@@ -57,13 +58,14 @@ struct dhcp {
     memcpy(dhcp->dhcp_chaddr, current_netdev.mac, 6); \
     dhcp->dhcp_cookie = (uint32_t) DHCP_MAGIC_COOKIE;
 
-
-
 struct dhcp_state 
 {
     uint8_t state;
     uint32_t ip;
     uint8_t tries;
 };
+
+int dhcp_get_state();
+int dhcp_get_ip();
 
 #endif /* DHCPD_H */

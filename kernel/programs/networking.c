@@ -20,6 +20,7 @@
 #include <net/ipv4.h>
 #include <net/icmp.h>
 #include <net/socket.h>
+#include <net/dhcpd.h>
 
 #define MAX_OPEN_PORTS 45
 #define MAX_QUEUE_SIZE 20
@@ -38,9 +39,23 @@ int get_next_queue();
 
 void networking_print_status()
 {
+
     scrwrite(51, 1, "Networking:", VGA_COLOR_CYAN);
     scrprintf(51, 2, "Open Ports: %d", open_ports);
-    scrprintf(51, 3, "IPv4: 127.0.0.1");
+
+    int state = dhcp_get_state();
+    if(state != DHCP_SUCCESS)
+         scrprintf(51, 3, "DHCP (IPv4): %s", dhcp_state_names[state]);
+    else {
+        int ip = dhcp_get_ip();
+        unsigned char bytes[4];
+        bytes[0] = (ip >> 24) & 0xFF;
+        bytes[1] = (ip >> 16) & 0xFF;
+        bytes[2] = (ip >> 8) & 0xFF;
+        bytes[3] = ip & 0xFF;
+         scrprintf(51, 3, "DHCP (IPv4): %d.%d.%d.%d     \n", bytes[3], bytes[2], bytes[1], bytes[0]);
+    }
+
     scrprintf(51, 4, "MAC: %x:%x:%x:%x:%x:%x", current_netdev.mac[0], current_netdev.mac[1], current_netdev.mac[2], current_netdev.mac[3], current_netdev.mac[4], current_netdev.mac[5]);
     scrprintf(51, 5, "Packets: %d", packets);
     scrprintf(51, 6, "Sockets: %d", get_total_sockets());

@@ -1,3 +1,14 @@
+/**
+ * @file dhcpd.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Simple implementation of the DHCP protocol to get a IP, Gateway and DNS server.
+ * @version 0.1
+ * @date 2022-07-07
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+
 #include <net/dhcpd.h>
 #include <process.h>
 #include <net/socket.h>
@@ -6,16 +17,25 @@
 #include <memory.h>
 #include <util.h>
 
-static socket_t dhcp_socket;
 static struct dhcp_state dhcp_state;
+char* dhcp_state_names[4] = {"FAILED", "SUCCESS", "PENDING", "NOT RUNNING"};
 
-
+/**
+ * @brief 
+ * 
+ * @param dhcp 
+ * @param offset 
+ * @param opcode 
+ * @param opsz 
+ * @param val 
+ * @return int 
+ */
 static int dhcp_add_option(struct dhcp* dhcp, int offset, uint8_t opcode, uint8_t opsz, uint8_t* val)
 {
     if(offset >= 128)
         return 0;
 
-    uint8_t* ptr = (uint8_t*) (&dhcp->dhcp_options)+offset;
+    uint8_t* ptr = (uint8_t*) &(dhcp->dhcp_options[offset]);
     ptr += sizeof(struct dhcp);
     
     if(255 == opcode){
@@ -35,16 +55,13 @@ static int dhcp_add_option(struct dhcp* dhcp, int offset, uint8_t opcode, uint8_
     return opsz + 2;
 }
 
-void dhcpd()
+static int __dhcp_send_discovery(socket_t socket)
 {
-    dhcp_socket = socket(AF_INET, SOCK_DGRAM, 0);
-    dhcp_state.state = DHCP_PENDING;
-
     int optoff = 0;
     int opt1 = 1;
     int opt0 = 0;
     struct dhcp* dhcp_disc = alloc(sizeof(struct dhcp));
-    DHCP_DISCOVERY(dhcp_disc);
+    DHCP_DISCOVERY((dhcp_disc));
 
     optoff += dhcp_add_option(dhcp_disc, optoff,  53, 1, (uint8_t *) &opt1);
     optoff += dhcp_add_option(dhcp_disc, optoff, 255, 0, (uint8_t *) &opt0);
@@ -55,10 +72,44 @@ void dhcpd()
     addr.sin_port = htons(DHCP_DEST_PORT);
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = BROADCAST_IP;
-    int ret = sendto(dhcp_socket, dhcp_disc, sizeof(*dhcp_disc)+optoff, 0, (struct sockaddr*) &addr, 0);
+    int ret = sendto(socket, dhcp_disc, sizeof(dhcp_disc)+optoff, 0, (struct sockaddr*) &addr, 0);
+
+    return ret;
+}
+
+static int __dhcp_handle_offer(struct dhcp* offer)
+{
+    return -1;
+}
+
+int dhcp_get_state()
+{
+    return dhcp_state.state;
+}
+
+int dhcp_get_ip()
+{
+    if(dhcp_state.state != DHCP_SUCCESS)
+        return -1;
+
+    return dhcp_state.ip;
+}
+
+void dhcpd()
+{
+    int ret;
+    socket_t dhcp_socket = socket(AF_INET, SOCK_DGRAM, 0);
+    dhcp_state.state = DHCP_PENDING;
+
+    ret = __dhcp_send_discovery(dhcp_socket);
+    if(ret <= 0)
+        goto dhcp_error;
 
 
 
+
+dhcp_error:
+    dhcp_state.state = DHCP_FAILED;
     while(1){};
 }
 
