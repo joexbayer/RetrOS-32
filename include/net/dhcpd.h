@@ -56,7 +56,22 @@ struct dhcp {
     (dhcp)->dhcp_ciaddr = dhcp->dhcp_yiaddr = dhcp->dhcp_siaddr = 0; \
     (dhcp)->dhcp_giaddr = 0; \
     memcpy(dhcp->dhcp_chaddr, current_netdev.mac, 6); \
-    dhcp->dhcp_cookie = (uint32_t) DHCP_MAGIC_COOKIE;
+    (dhcp)->dhcp_cookie = (uint32_t) DHCP_MAGIC_COOKIE;
+
+
+#define DHCP_REQUEST(dhcp, server_ip, client_ip) \
+    (dhcp)->dhcp_op = DHCP_OP_REQUEST; \
+    (dhcp)->dhcp_htype = DHCP_HTYPE_ETH; \
+    (dhcp)->dhcp_hlen = DHCP_HLEN_ETH; \
+    (dhcp)->dhcp_hops = 0; \
+    (dhcp)->dhcp_xid = 0x84237428; \
+    (dhcp)->dhcp_secs = 0x0000; \
+    (dhcp)->dhcp_flags = (uint16_t) 0x8000; \
+    (dhcp)->dhcp_ciaddr = dhcp->dhcp_giaddr = 0; \
+    (dhcp)->dhcp_siaddr = server_ip; \
+    (dhcp)->dhcp_yiaddr = client_ip; \
+    memcpy((dhcp)->dhcp_chaddr, current_netdev.mac , 6); \
+    (dhcp)->dhcp_cookie = (uint32_t) DHCP_MAGIC_COOKIE; \
 
 struct dhcp_state 
 {
