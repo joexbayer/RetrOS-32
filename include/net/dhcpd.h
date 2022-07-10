@@ -63,9 +63,11 @@ struct dhcp_state
     uint8_t state;
     uint32_t ip;
     uint8_t tries;
+    uint32_t gateway;
 };
 
 int dhcp_get_state();
 int dhcp_get_ip();
+int dhcp_get_gw();
 
 #endif /* DHCPD_H */

@@ -13,6 +13,8 @@
 #include <net/utils.h>
 #include <terminal.h>
 #include <util.h>
+#include <net/arp.h>
+#include <net/ethernet.h>
 
 /**
  * @brief Helper function to send IP packet, attaching ethernet header
@@ -100,6 +102,20 @@ int ip_parse(struct sk_buff* skb)
         // check if its current IP
         return 0; /* Currently only accept broadcast packets. */
     }
+
+    char mac[6];
+    int arp = arp_find_entry(hdr->saddr, (uint8_t*)&mac);
+    if(arp == 0)
+    {
+        struct arp_content content;
+        content.sip = hdr->saddr;
+
+        struct ethernet_header* ehdr= (struct ethernet_header*) skb->head;
+        memcpy(&content.smac, ehdr->smac, 6);
+
+        arp_add_entry(&content);
+    }
+
 
     return 1;
 }

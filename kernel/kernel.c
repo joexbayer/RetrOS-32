@@ -58,6 +58,7 @@ void _main(uint32_t debug)
 	// asm volatile ("int $31");
 
 	start_process(0); // SHELL
+	start_process(2); // SHELL
 	STI();
 
 	start_tasks();

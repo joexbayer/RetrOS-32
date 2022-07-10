@@ -95,6 +95,14 @@ int dhcp_get_ip()
     return dhcp_state.ip;
 }
 
+int dhcp_get_gw()
+{
+    if(dhcp_state.state != DHCP_SUCCESS)
+        return -1;
+
+    return dhcp_state.gateway;
+}
+
 void dhcpd()
 {
     int ret;
@@ -125,7 +133,9 @@ void dhcpd()
 
     uint32_t my_ip = offer->dhcp_yiaddr;
     uint32_t server_ip = offer->dhcp_siaddr;
+
     dhcp_state.ip = my_ip;
+    dhcp_state.gateway = server_ip;
     dhcp_state.state = DHCP_SUCCESS;
 
     twriteln("Recieved IP.");

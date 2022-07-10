@@ -58,6 +58,7 @@ void init_arp();
 /* For testing. */
 void arp_request();
 void arp_print_cache();
+int arp_add_entry(struct arp_content* arp);
 
 #define ARP_FILL_HEADER(header, type) \
     header.opcode = type; \
