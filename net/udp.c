@@ -44,15 +44,15 @@ int udp_send(struct sk_buff* skb, char* data, uint32_t sip, uint32_t dip, uint16
 	return 1;
 }
 
-int upd_parse(struct sk_buff* skb){
+int udp_parse(struct sk_buff* skb){
 
 	struct udp_header* hdr = (struct udp_header* ) skb->data;
 	skb->hdr.udp = hdr;
 
-	uint16_t udp_checksum = transport_checksum(skb->hdr.ip->saddr, skb->hdr.ip->daddr, UDP, (char*)skb->data, skb->hdr.udp->udp_length);
+	uint16_t udp_checksum = transport_checksum(skb->hdr.ip->saddr, skb->hdr.ip->daddr, UDP, (uint8_t*)skb->data, skb->hdr.udp->udp_length);
 	if( udp_checksum != 0){
-		twriteln("UDP checksum failed.\n");
-		return 0;
+		twritef("UDP checksum failed %d %x.\n", udp_checksum, udp_checksum);
+		/* TODO  UDP CHECKSUM IS BROKEN. */
 	}
 	skb->data = skb->data + sizeof(struct udp_header);
 
@@ -60,9 +60,12 @@ int upd_parse(struct sk_buff* skb){
 
 	int payload_size = skb->hdr.udp->udp_length-sizeof(struct udp_header);
 
+	twriteln("Recieved UDP packet.");
+
 	int ret = udp_deliver_packet(skb->hdr.ip->daddr, skb->hdr.udp->destport, (char*)skb->data, payload_size);
 	if(ret <= 0)
 		twriteln("[Warning] socket buffer full!!");
+
 
     return 1;
 }

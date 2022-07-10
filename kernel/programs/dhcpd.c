@@ -72,7 +72,7 @@ static int __dhcp_send_discovery(socket_t socket)
     addr.sin_port = htons(DHCP_DEST_PORT);
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = BROADCAST_IP;
-    int ret = sendto(socket, dhcp_disc, sizeof(dhcp_disc)+optoff, 0, (struct sockaddr*) &addr, 0);
+    int ret = sendto(socket, dhcp_disc, sizeof(*dhcp_disc)+optoff, 0, (struct sockaddr*) &addr, 0);
 
     return ret;
 }
@@ -98,12 +98,42 @@ int dhcp_get_ip()
 void dhcpd()
 {
     int ret;
-    socket_t dhcp_socket = socket(AF_INET, SOCK_DGRAM, 0);
+    socket_t dhcp_socket_send = socket(AF_INET, SOCK_DGRAM, 0);
     dhcp_state.state = DHCP_PENDING;
 
-    ret = __dhcp_send_discovery(dhcp_socket);
+        /* Setup recieving of UDP packets on port 67 */
+    socket_t dhcp_socket_recieve = socket(AF_INET, SOCK_DGRAM, 0);
+
+    struct sockaddr_in dest_addr;
+    dest_addr.sin_addr.s_addr = INADDR_ANY;
+    dest_addr.sin_port = htons(DHCP_SOURCE_PORT);
+    dest_addr.sin_family = AF_INET;
+
+    if(bind(dhcp_socket_recieve, (struct sockaddr*) &dest_addr, sizeof(dest_addr)) < 0)
+        goto dhcp_error;
+
+
+    ret = __dhcp_send_discovery(dhcp_socket_send);
     if(ret <= 0)
         goto dhcp_error;
+
+    
+    char buffer[2048];
+    int read = recv(dhcp_socket_recieve, &buffer, 2048, 0);
+
+    struct dhcp* offer = (struct dhcp*) &buffer;
+
+    uint32_t my_ip = offer->dhcp_yiaddr;
+    uint32_t server_ip = offer->dhcp_siaddr;
+    dhcp_state.ip = my_ip;
+    dhcp_state.state = DHCP_SUCCESS;
+
+    twriteln("Recieved IP.");
+    
+
+    
+
+
 
 
 

@@ -38,17 +38,18 @@ static bitmap_t port_map;
  * bind(s, (struct sockaddr*)myaddr, sizeof(myaddr));
  * 
  */
+inline static uint16_t __get_free_port()
+{
+    return (get_free_bitmap(port_map, NUMBER_OF_DYMANIC_PORTS) + DYNAMIC_PORT_START);
+}
 
 inline static void __socket_bind(int socket, uint16_t port, uint32_t ip)
 {
     sockets[socket]->bound_ip = ip;
-    sockets[socket]->bound_port = port;
+    /* if given port is 0 chose a random one. */
+    sockets[socket]->bound_port = port == 0 ? __get_free_port() : port;
 }
 
-inline static uint16_t __get_free_port()
-{
-    return get_free_bitmap(port_map, NUMBER_OF_DYMANIC_PORTS) + DYNAMIC_PORT_START;
-}
 
 /**
  * @brief Adds a packets buffer to the sockets buffer, also confirms its lenght.
@@ -60,6 +61,9 @@ inline static uint16_t __get_free_port()
  */
 static int __sock_add_packet(char* buffer, uint16_t len, int socket_index)
 {
+
+    acquire(&sockets[socket_index]->sock_lock);
+
     if(len > 2048) /* TODO: set as constant. or not? */
         return -1;
 
@@ -69,24 +73,31 @@ static int __sock_add_packet(char* buffer, uint16_t len, int socket_index)
         {
             memcpy(sockets[socket_index]->buffers[i], buffer, len);
             sockets[socket_index]->buffer_lens[i] = len;
+            release(&sockets[socket_index]->sock_lock);
             return 1;
         }
     }
 
+    release(&sockets[socket_index]->sock_lock);
     return -1;
 }
 
 inline static int __sock_read_packet(int index, char* buffer)
 {
+    acquire(&sockets[index]->sock_lock);
 
     int next = sockets[index]->last_read_buffer;
-    if(sockets[index]->buffer_lens[next] <= 0)
-        return 0;
+    if(sockets[index]->buffer_lens[next] <= 0){
+        release(&sockets[index]->sock_lock);
+        return -1;
+    }
     
     int read = sockets[index]->buffer_lens[next];
     memcpy(buffer, sockets[index]->buffers[next], read);
     sockets[index]->buffer_lens[next] = 0;
     sockets[index]->last_read_buffer = (sockets[index]->last_read_buffer + 1) % BUFFERS_PER_SOCKET;
+
+    release(&sockets[index]->sock_lock);
 
     return read;
 }
@@ -147,9 +158,11 @@ size_t recvfrom(int socket, void *buffer, size_t length, int flags, struct socka
  */
 size_t recv(int socket, void *buffer, size_t length, int flags)
 {
-    int read = 0;
-    while(read == 0) /* TODO: Block, instead of spinning. */
+    int read = -1;
+    while(read == -1) /* TODO: Block, instead of spinning. */
+    {
         read = __sock_read_packet(socket, buffer);
+    }
 
     return read;
 }
@@ -212,9 +225,11 @@ size_t sendto(int socket, const void *message, size_t length, int flags, const s
  */
 int udp_deliver_packet(uint32_t ip, uint16_t port, char* buffer, uint16_t len) 
 {
-    for (int i = 0; i < total_sockets; i++)
-        if(sockets[i]->recv_addr.sin_port == htons(port) && (sockets[i]->recv_addr.sin_addr.s_addr == ip || sockets[i]->recv_addr.sin_addr.s_addr == INADDR_ANY))
+    for (int i = 0; i < total_sockets; i++){
+        twritef("Compare %d -> %d (%d -> %d) \n", sockets[i]->bound_port, htons(port), ntohs(sockets[i]->bound_port), port);
+        if(sockets[i]->bound_port == htons(port) && (sockets[i]->bound_ip == ip || sockets[i]->bound_ip == INADDR_ANY))
             return __sock_add_packet(buffer, len, i);
+    }
 
     return -1;
 }

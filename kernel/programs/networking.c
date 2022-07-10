@@ -114,7 +114,7 @@ int net_handle_recieve(struct sk_buff* skb)
             switch (skb->hdr.ip->proto)
             {
             case UDP:
-                /* code */
+                ret = udp_parse(skb);
                 break;
             
             case ICMPV4:
