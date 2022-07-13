@@ -49,7 +49,7 @@ static int dhcp_add_option(struct dhcp* dhcp, int offset, uint8_t opcode, uint8_
     ptr++;  
 
     for (int i = 0; i < opsz; i ++)
-        ptr[i] = val[i];
+        *(ptr+i) = *(val+i);
 
     return opsz + 2;
 }
@@ -59,7 +59,7 @@ static int __dhcp_send_discovery(socket_t socket)
     int optoff = 0;
     int opt1 = 1;
     int opt0 = 0;
-    struct dhcp* dhcp_disc = alloc(sizeof(struct dhcp) + 128);
+    struct dhcp* dhcp_disc = alloc(sizeof(struct dhcp));
     DHCP_DISCOVERY((dhcp_disc));
 
     optoff += dhcp_add_option(dhcp_disc, optoff,  53, 1, (uint8_t *) &opt1);
@@ -71,7 +71,7 @@ static int __dhcp_send_discovery(socket_t socket)
     addr.sin_port = htons(DHCP_DEST_PORT);
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = BROADCAST_IP;
-    int ret = sendto(socket, dhcp_disc, sizeof(*dhcp_disc)+optoff, 0, (struct sockaddr*) &addr, 0);
+    int ret = sendto(socket, dhcp_disc, sizeof(*dhcp_disc), 0, (struct sockaddr*) &addr, 0);
 
     free(dhcp_disc);
 
@@ -83,7 +83,7 @@ static int __dhcp_send_request(socket_t socket)
     int optoff = 0;
     int opt3 = 3;
     int opt0 = 0;
-    struct dhcp* dhcp_req = alloc(sizeof(struct dhcp) + 128);
+    struct dhcp* dhcp_req = alloc(sizeof(struct dhcp));
     DHCP_REQUEST(dhcp_req, dhcp_state.gateway, dhcp_state.ip);
 
     optoff  += dhcp_add_option(dhcp_req, optoff, 53,  1, (uint8_t *) &opt3);
@@ -95,7 +95,7 @@ static int __dhcp_send_request(socket_t socket)
     addr.sin_port = htons(DHCP_DEST_PORT);
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = BROADCAST_IP;
-    int ret = sendto(socket, dhcp_req, sizeof(*dhcp_req)+optoff, 0, (struct sockaddr*) &addr, 0);
+    int ret = sendto(socket, dhcp_req, sizeof(*dhcp_req), 0, (struct sockaddr*) &addr, 0);
 
     free(dhcp_req);
 }

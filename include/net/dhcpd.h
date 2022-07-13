@@ -12,7 +12,7 @@
 #define DHCP_SOURCE_PORT 68
 #define DHCP_DEST_PORT 67
 
-#define DHCP_MAGIC_COOKIE 0x63825363
+#define DHCP_MAGIC_COOKIE 0x63538263
 
 #define DHCP_HTYPE_ETH   0x01
 #define DHCP_HLEN_ETH    0x06
@@ -46,6 +46,7 @@ struct dhcp {
 } __attribute__((packed));
 
 #define DHCP_DISCOVERY(dhcp) \
+    memset((dhcp), 0, sizeof(*(dhcp))); \
     (dhcp)->dhcp_op = DHCP_OP_DISCOVER; \
     (dhcp)->dhcp_htype = DHCP_HTYPE_ETH;  \
     (dhcp)->dhcp_hlen = DHCP_HLEN_ETH; \
@@ -56,10 +57,12 @@ struct dhcp {
     (dhcp)->dhcp_ciaddr = dhcp->dhcp_yiaddr = dhcp->dhcp_siaddr = 0; \
     (dhcp)->dhcp_giaddr = 0; \
     memcpy(dhcp->dhcp_chaddr, current_netdev.mac, 6); \
-    (dhcp)->dhcp_cookie = (uint32_t) DHCP_MAGIC_COOKIE;
+    (dhcp)->dhcp_cookie = (uint32_t) DHCP_MAGIC_COOKIE; \
+    memset(&(dhcp)->dhcp_options, 0, 128);
 
 
 #define DHCP_REQUEST(dhcp, server_ip, client_ip) \
+    memset((dhcp), 0, sizeof(*(dhcp))); \
     (dhcp)->dhcp_op = DHCP_OP_REQUEST; \
     (dhcp)->dhcp_htype = DHCP_HTYPE_ETH; \
     (dhcp)->dhcp_hlen = DHCP_HLEN_ETH; \
@@ -72,6 +75,7 @@ struct dhcp {
     (dhcp)->dhcp_yiaddr = client_ip; \
     memcpy((dhcp)->dhcp_chaddr, current_netdev.mac , 6); \
     (dhcp)->dhcp_cookie = (uint32_t) DHCP_MAGIC_COOKIE; \
+    memset(&(dhcp)->dhcp_options, 0, 128);
 
 struct dhcp_state 
 {

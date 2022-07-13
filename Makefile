@@ -132,7 +132,9 @@ cleanvid:
 	rm -f *.vdi
 
 net:
-	sudo tcpdump -qns 0 -X -r dump.dat -vvv -e 
+	sudo tcpdump -qns 0 -X -r dump.dat -vvv -e
 
-run: iso
-	qemu-system-i386 -device e1000,netdev=net0 -netdev user,id=net0,hostfwd=tcp::5555-:22 -object filter-dump,id=net0,netdev=net0,file=dump.dat boot.iso
+qemu:
+	sudo qemu-system-i386 -device e1000,netdev=net0 -netdev user,id=net0,hostfwd=tcp::5555-:22 -object filter-dump,id=net0,netdev=net0,file=dump.dat boot.iso
+
+run: iso qemu

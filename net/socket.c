@@ -198,7 +198,7 @@ size_t sendto(int socket, const void *message, size_t length, int flags, const s
     switch (sockets[socket]->type)
     {
     case SOCK_DGRAM:
-        if(udp_send(skb, (char*) message, BROADCAST_IP, addr->sin_addr.s_addr, sockets[socket]->bound_port, ntohs(addr->sin_port), length) <= 0)
+        if(udp_send(skb, (char*) message, BROADCAST_IP, addr->sin_addr.s_addr, ntohs(sockets[socket]->bound_port), ntohs(addr->sin_port), length) <= 0)
             return 0;
         break;
 
