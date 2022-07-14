@@ -70,7 +70,7 @@ static int __sock_add_packet(char* buffer, uint16_t len, int socket_index)
     if(len > 2048) /* TODO: set as constant. or not? */
         return -1;
 
-    for (size_t i = 0; i < BUFFERS_PER_SOCKET; i++)
+    for (size_t i = sockets[socket_index]->last_read_buffer; i < BUFFERS_PER_SOCKET; i++)
     {
         if(sockets[socket_index]->buffer_lens[i] == 0)
         {

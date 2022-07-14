@@ -30,7 +30,7 @@ char* dhcp_state_names[4] = {"FAILED", "SUCCESS", "PENDING", "NOT RUNNING"};
  * @param val option value
  * @return int 
  */
-static int dhcp_add_option(struct dhcp* dhcp, int offset, uint8_t opcode, uint8_t opsz, uint8_t* val)
+static int __dhcp_add_option(struct dhcp* dhcp, int offset, uint8_t opcode, uint8_t opsz, uint8_t* val)
 {
     if(offset >= 128)
         return 0;
@@ -54,6 +54,32 @@ static int dhcp_add_option(struct dhcp* dhcp, int offset, uint8_t opcode, uint8_
     return opsz + 2;
 }
 
+static int __dhcp_get_option(struct dhcp* dhcp, uint8_t opcode)
+{
+    int offset = 0;
+    uint8_t* ptr = (uint8_t*) &(dhcp->dhcp_options[0]);
+
+    while(*ptr != 255){
+        
+        if(offset >= 128)
+            return 0;
+
+        uint8_t opc = *ptr++;
+        uint8_t opsz = *ptr++;
+
+        if(opc != 0)
+            twritef("Option code: %d %d\n", opc, opsz);
+
+        if(opc == opcode)
+            return (uint32_t) *ptr;
+        
+        ptr += opsz;
+        offset += opsz + 2;
+    }
+
+    return 0;
+}
+
 /**
  * @brief Creates a DHCP discovery packet sent on broadcast.
  * 
@@ -68,8 +94,8 @@ static int __dhcp_send_discovery(socket_t socket)
     struct dhcp* dhcp_disc = alloc(sizeof(struct dhcp));
     DHCP_DISCOVERY((dhcp_disc));
 
-    optoff += dhcp_add_option(dhcp_disc, optoff,  53, 1, (uint8_t *) &opt1);
-    optoff += dhcp_add_option(dhcp_disc, optoff, 255, 0, (uint8_t *) &opt0);
+    optoff += __dhcp_add_option(dhcp_disc, optoff,  53, 1, (uint8_t *) &opt1);
+    optoff += __dhcp_add_option(dhcp_disc, optoff, 255, 0, (uint8_t *) &opt0);
 
     twritef("%d %d\n", optoff, sizeof(*dhcp_disc));
 
@@ -98,10 +124,10 @@ static int __dhcp_send_request(socket_t socket)
     struct dhcp* dhcp_req = alloc(sizeof(struct dhcp));
     DHCP_REQUEST(dhcp_req, dhcp_state.gateway, dhcp_state.ip);
 
-    optoff  += dhcp_add_option(dhcp_req, optoff, 53,  1, (uint8_t *) &opt3);
-    optoff  += dhcp_add_option(dhcp_req, optoff, 50,  4, (uint8_t *) &dhcp_state.ip);
-    optoff  += dhcp_add_option(dhcp_req, optoff, 54,  4, (uint8_t *) &dhcp_state.gateway);
-    optoff  += dhcp_add_option(dhcp_req, optoff, 255, 0, (uint8_t *) &opt0);
+    optoff  += __dhcp_add_option(dhcp_req, optoff, 53,  1, (uint8_t *) &opt3);
+    optoff  += __dhcp_add_option(dhcp_req, optoff, 50,  4, (uint8_t *) &dhcp_state.ip);
+    optoff  += __dhcp_add_option(dhcp_req, optoff, 54,  4, (uint8_t *) &dhcp_state.gateway);
+    optoff  += __dhcp_add_option(dhcp_req, optoff, 255, 0, (uint8_t *) &opt0);
 
     struct sockaddr_in addr;
     addr.sin_port = htons(DHCP_DEST_PORT);
@@ -124,6 +150,8 @@ static void __dhcp_handle_offer(struct dhcp* offer)
 {
     uint32_t my_ip = offer->dhcp_yiaddr;
     uint32_t server_ip = offer->dhcp_siaddr;
+
+    int dns = __dhcp_get_option(offer, 6);
 
     dhcp_state.ip = my_ip;
     dhcp_state.gateway = server_ip;
@@ -184,10 +212,16 @@ void dhcpd()
     struct dhcp* offer = (struct dhcp*) &buffer;
     __dhcp_handle_offer(offer);
 
-    /* Send request after offer was recieved. */
+    /* Send request after offer was recieved.
     ret = __dhcp_send_request(dhcp_socket);
     if(ret <= 0)
         goto dhcp_error;
+
+    read = recv(dhcp_socket, &buffer, 2048, 0);
+    if(read <= 0)
+        goto dhcp_error; */
+
+    twriteln("DHCP done!");
         
 
 dhcp_error:
