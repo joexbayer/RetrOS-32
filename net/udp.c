@@ -60,8 +60,6 @@ int udp_parse(struct sk_buff* skb){
 
 	int payload_size = skb->hdr.udp->udp_length-sizeof(struct udp_header);
 
-	twritef("Recieved UDP size %d\n", payload_size);
-
 	int ret = udp_deliver_packet(skb->hdr.ip->daddr, skb->hdr.udp->destport, (char*)skb->data, payload_size);
 	if(ret <= 0)
 		twriteln("[Warning] socket buffer full!!");

@@ -68,9 +68,6 @@ static int __dhcp_get_option(struct dhcp* dhcp, uint8_t opcode)
         uint8_t opc = *ptr++;
         uint8_t opsz = *ptr++;
 
-        if(opc != 0)
-            twritef("Option code: %d %d\n", opc, opsz);
-
         if(opc == opcode){
             switch (opsz)
             {
