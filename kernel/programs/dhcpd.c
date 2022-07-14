@@ -21,13 +21,13 @@ static struct dhcp_state dhcp_state;
 char* dhcp_state_names[4] = {"FAILED", "SUCCESS", "PENDING", "NOT RUNNING"};
 
 /**
- * @brief 
+ * @brief Adds a option the options part of the DHCP struct.
  * 
- * @param dhcp 
- * @param offset 
- * @param opcode 
- * @param opsz 
- * @param val 
+ * @param dhcp Struct to add option too.
+ * @param offset Option offset
+ * @param opcode option code
+ * @param opsz option size
+ * @param val option value
  * @return int 
  */
 static int dhcp_add_option(struct dhcp* dhcp, int offset, uint8_t opcode, uint8_t opsz, uint8_t* val)
@@ -54,6 +54,12 @@ static int dhcp_add_option(struct dhcp* dhcp, int offset, uint8_t opcode, uint8_
     return opsz + 2;
 }
 
+/**
+ * @brief Creates a DHCP discovery packet sent on broadcast.
+ * 
+ * @param socket Socket to send with.
+ * @return int 
+ */
 static int __dhcp_send_discovery(socket_t socket)
 {
     int optoff = 0;
@@ -78,6 +84,12 @@ static int __dhcp_send_discovery(socket_t socket)
     return ret;
 }
 
+/**
+ * @brief creates a DHCP request packet with proper options.
+ * 
+ * @param socket Socker to send with.
+ * @return int 
+ */
 static int __dhcp_send_request(socket_t socket)
 {
     int optoff = 0;
@@ -95,11 +107,19 @@ static int __dhcp_send_request(socket_t socket)
     addr.sin_port = htons(DHCP_DEST_PORT);
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = BROADCAST_IP;
+
     int ret = sendto(socket, dhcp_req, sizeof(*dhcp_req), 0, (struct sockaddr*) &addr, 0);
 
     free(dhcp_req);
+
+    return ret;
 }
 
+/**
+ * @brief DHCP function for handling a offer given by server.
+ * Mostly parsing struct memebers.
+ * @param offer dhcp offer from server.
+ */
 static void __dhcp_handle_offer(struct dhcp* offer)
 {
     uint32_t my_ip = offer->dhcp_yiaddr;
@@ -135,7 +155,9 @@ int dhcp_get_gw()
 
 void dhcpd()
 {
+
     int ret;
+    /* Create and bind DHCP socket to DHCP_SOURCE_PORT and INADDR_ANY. */
     socket_t dhcp_socket = socket(AF_INET, SOCK_DGRAM, 0);
     dhcp_state.state = DHCP_PENDING;
 
@@ -148,6 +170,7 @@ void dhcpd()
         goto dhcp_error;
 
 
+    /* Send first discovery packet */
     ret = __dhcp_send_discovery(dhcp_socket);
     if(ret <= 0)
         goto dhcp_error;
@@ -155,13 +178,17 @@ void dhcpd()
     
     char buffer[2048];
     int read = recv(dhcp_socket, &buffer, 2048, 0);
+    if(read <= 0)
+        goto dhcp_error;
 
     struct dhcp* offer = (struct dhcp*) &buffer;
     __dhcp_handle_offer(offer);
 
+    /* Send request after offer was recieved. */
     ret = __dhcp_send_request(dhcp_socket);
     if(ret <= 0)
         goto dhcp_error;
+        
 
 dhcp_error:
     dhcp_state.state = DHCP_FAILED;

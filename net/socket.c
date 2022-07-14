@@ -38,6 +38,9 @@ static bitmap_t port_map;
  * bind(s, (struct sockaddr*)myaddr, sizeof(myaddr));
  * 
  */
+
+
+
 inline static uint16_t __get_free_port()
 {
     return (get_free_bitmap(port_map, NUMBER_OF_DYMANIC_PORTS) + DYNAMIC_PORT_START);
@@ -71,6 +74,7 @@ static int __sock_add_packet(char* buffer, uint16_t len, int socket_index)
     {
         if(sockets[socket_index]->buffer_lens[i] == 0)
         {
+            /* If a free buffer exist add packet to buffer. */
             memcpy(sockets[socket_index]->buffers[i], buffer, len);
             sockets[socket_index]->buffer_lens[i] = len;
             release(&sockets[socket_index]->sock_lock);
@@ -86,12 +90,14 @@ inline static int __sock_read_packet(int index, char* buffer)
 {
     acquire(&sockets[index]->sock_lock);
 
+    /* If no packet is avaiable return -1 */
     int next = sockets[index]->last_read_buffer;
     if(sockets[index]->buffer_lens[next] <= 0){
         release(&sockets[index]->sock_lock);
         return -1;
     }
     
+    /* Copy packet over to given buffer and move to next. */
     int read = sockets[index]->buffer_lens[next];
     memcpy(buffer, sockets[index]->buffers[next], read);
     sockets[index]->buffer_lens[next] = 0;
@@ -224,12 +230,11 @@ size_t sendto(int socket, const void *message, size_t length, int flags, const s
  * @return int 
  */
 int udp_deliver_packet(uint32_t ip, uint16_t port, char* buffer, uint16_t len) 
-{
-    for (int i = 0; i < total_sockets; i++){
-        twritef("Compare %d -> %d (%d -> %d) \n", sockets[i]->bound_port, htons(port), ntohs(sockets[i]->bound_port), port);
+{   
+    /* Interate over sockets and add packet if socket exists with matching port and IP */
+    for (int i = 0; i < total_sockets; i++)
         if(sockets[i]->bound_port == htons(port) && (sockets[i]->bound_ip == ip || sockets[i]->bound_ip == INADDR_ANY))
             return __sock_add_packet(buffer, len, i);
-    }
 
     return -1;
 }
