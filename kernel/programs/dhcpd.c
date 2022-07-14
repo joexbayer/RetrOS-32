@@ -56,6 +56,7 @@ static int __dhcp_add_option(struct dhcp* dhcp, int offset, uint8_t opcode, uint
 
 static int __dhcp_get_option(struct dhcp* dhcp, uint8_t opcode)
 {
+    twritef("Default: %x\n", dhcp->dhcp_cookie);
     int offset = 0;
     uint8_t* ptr = (uint8_t*) &(dhcp->dhcp_options[0]);
 
@@ -70,8 +71,26 @@ static int __dhcp_get_option(struct dhcp* dhcp, uint8_t opcode)
         if(opc != 0)
             twritef("Option code: %d %d\n", opc, opsz);
 
-        if(opc == opcode)
-            return (uint32_t) *ptr;
+        if(opc == opcode){
+            switch (opsz)
+            {
+            case 1:
+                return *ptr;
+                break;
+            
+            case 2:
+                return *((uint16_t*) ptr);
+                break;
+            
+            case 4:
+                return *((uint32_t*) ptr);;
+                break;
+            
+            default:
+                return -1;
+                break;
+            }
+        }
         
         ptr += opsz;
         offset += opsz + 2;
@@ -153,6 +172,7 @@ static void __dhcp_handle_offer(struct dhcp* offer)
 
     int dns = __dhcp_get_option(offer, 6);
 
+    dhcp_state.dns = dns;
     dhcp_state.ip = my_ip;
     dhcp_state.gateway = server_ip;
     dhcp_state.state = DHCP_SUCCESS;
@@ -164,6 +184,12 @@ int dhcp_get_state()
 {
     return dhcp_state.state;
 }
+
+int dhcp_get_dns()
+{
+    return dhcp_state.dns;
+}
+
 
 int dhcp_get_ip()
 {
@@ -212,14 +238,14 @@ void dhcpd()
     struct dhcp* offer = (struct dhcp*) &buffer;
     __dhcp_handle_offer(offer);
 
-    /* Send request after offer was recieved.
+    /* Send request after offer was recieved.*/
     ret = __dhcp_send_request(dhcp_socket);
     if(ret <= 0)
         goto dhcp_error;
 
     read = recv(dhcp_socket, &buffer, 2048, 0);
     if(read <= 0)
-        goto dhcp_error; */
+        goto dhcp_error; 
 
     twriteln("DHCP done!");
         

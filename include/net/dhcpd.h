@@ -83,10 +83,12 @@ struct dhcp_state
     uint32_t ip;
     uint8_t tries;
     uint32_t gateway;
+    uint32_t dns;
 };
 
 int dhcp_get_state();
 int dhcp_get_ip();
 int dhcp_get_gw();
+int dhcp_get_dns();
 
 #endif /* DHCPD_H */

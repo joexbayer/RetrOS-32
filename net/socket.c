@@ -78,6 +78,7 @@ static int __sock_add_packet(char* buffer, uint16_t len, int socket_index)
             memcpy(sockets[socket_index]->buffers[i], buffer, len);
             sockets[socket_index]->buffer_lens[i] = len;
             release(&sockets[socket_index]->sock_lock);
+            twritef("Packet add: %d\n",sockets[socket_index]->buffer_lens[i]);
             return 1;
         }
     }

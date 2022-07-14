@@ -58,7 +58,7 @@ struct sock {
     struct sockaddr_in recv_addr;
 
     char* buffers[BUFFERS_PER_SOCKET][2048];
-    uint8_t buffer_lens[BUFFERS_PER_SOCKET];
+    uint16_t buffer_lens[BUFFERS_PER_SOCKET];
     uint8_t last_read_buffer;
 };
 
