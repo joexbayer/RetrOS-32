@@ -33,12 +33,8 @@ void free(void* ptr);
 int _check_chunks(int i, int chunks_needed)
 {
 	for (int j = 0; j < chunks_needed; j++)
-	{
 		if(chunks[i+j].status != FREE)
-		{
 			return -1;
-		}
-	}
 
 	return 1;
 }
@@ -47,7 +43,7 @@ void print_memory_status()
 {	
 	struct time* time = get_datetime();
 	scrcolor_set(VGA_COLOR_BLACK, VGA_COLOR_LIGHT_GREY);
-	scrprintf(0,0, "NETOS %d:%d:%d %d/%d/%d | Memory: %d/%d used. %d bytes per chunk.  ", time->hour, time->minute, time->second, time->day, time->month, time->year, (chunks_used*MEM_CHUNK), CHUNKS_SIZE*MEM_CHUNK, MEM_CHUNK);
+	scrprintf(0,0, " NETOS %d:%d:%d %d/%d/%d | Memory: %d/%d used. %d bytes per chunk.  ", time->hour, time->minute, time->second, time->day, time->month, time->year, (chunks_used*MEM_CHUNK), CHUNKS_SIZE*MEM_CHUNK, MEM_CHUNK);
 	scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
 }
 

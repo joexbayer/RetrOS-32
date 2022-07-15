@@ -30,17 +30,22 @@ KERNELOBJ = bin/kernel_entry.o bin/kernel.o bin/terminal.o bin/pci.o \
 			bin/sync.o bin/process.o bin/net.o bin/ata.o bin/bitmap.o bin/dhcpd.o bin/rtc.o ${PROGRAMOBJ}
 BOOTOBJ = bin/bootloader.o
 
-.PHONY: all new image clean boot net kernel
+.PHONY: all new image clean boot net kernel grub
 all: iso
 
 new: clean compile createbin grubiso
 
+grub: createbin grubiso testgrub
+
+testgrub:
+	sudo qemu-system-i386 -cdrom  myos.iso
+
 createbin:
-	rm -f multiboot/boot/myos.bin
-	mv ./bin/kernelout multiboot/boot/myos.bin
+	rm -f legacy/multiboot/boot/myos.bin
+	cp ./bin/kernelout legacy/multiboot/boot/myos.bin
 
 grubiso:
-	grub-mkrescue -o myos.iso multiboot/
+	grub-mkrescue -o myos.iso legacy/multiboot/
 
 cleaniso: iso clean
 

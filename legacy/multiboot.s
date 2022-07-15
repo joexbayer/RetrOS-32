@@ -11,13 +11,6 @@
 .long MAGIC
 .long FLAGS
 .long CHECKSUM
- 
-
-.section .bss
-.align 16
-stack_bottom:
-.skip 16384 # 16 KiB
-stack_top:
 
 .section .text
 .global _start
@@ -38,11 +31,13 @@ _start:
     movw %ax, %ss
 	
 
-    mov $stack_top, %esp
+    movl $stack, %esp
+    andl $-16, %esp
+    /* Use the number 0xDEADBEEF to check we can use that high addresses. */
+    movl $0xDEADBEEF, %eax
+    pushl %esp
+    pushl %eax
 
-    
- 
-	*/
 	call _main
  
 	
@@ -131,8 +126,10 @@ data_descriptor:
     .byte 0x00
 gdt_end:
 
-/*
-Set the size of the _start symbol to the current location '.' minus its start.
-This is useful when debugging or when you implement call tracing.
-*/
 .size _start, . - _start
+
+.section .bss /* .bss or .data */
+.align 32
+stack_begin:
+    .fill 0x4000
+stack:
