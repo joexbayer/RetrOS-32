@@ -3,12 +3,14 @@
 
 #include <stdint.h>
 
-#define DNS_T_A 1 //ipv4 address
-#define DNS_T_NS 2 //nameserver
-#define DNS_T_CNAME 5 // canonical name
-#define DNS_T_SOA 6 /* start of authority zone */
-#define DNS_T_PTR 12 /* domain name pointer */
-#define DNS_T_MX 15 // mail server
+#define DNS_T_A 1           // ipv4 address
+#define DNS_T_NS 2          // nameserver
+#define DNS_T_CNAME 5       // canonical name
+#define DNS_T_SOA 6         // start of authority zone
+#define DNS_T_PTR 12        // domain name pointer
+#define DNS_T_MX 15         // mail server
+
+#define DNS_CACHE_ENTRIES 10
 
 struct dns_header
 {
@@ -30,7 +32,7 @@ struct dns_header
     uint16_t ans_count;     // number of answer entries
     uint16_t auth_count;    // number of authority entries
     uint16_t add_count;     // number of resource entries
-};
+} __attribute__((__packed__));
 
 struct dns_question
 {
@@ -50,8 +52,15 @@ struct dns_data
 struct dns_query
 {
     uint8_t *name;
-    struct dns_question *question;
+    struct dns_question question;
 };
 
+struct dns_cache
+{
+    char name[10];
+    uint32_t ip;
+};
+
+void init_dns();
 
 #endif /* DNS_H */

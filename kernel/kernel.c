@@ -14,6 +14,7 @@
 #include <ata.h>
 #include <bitmap.h>
 #include <net/socket.h>
+#include <net/dns.h>
 
 /* This functions always needs to be on top? */
 void _main(uint32_t debug) 
@@ -36,6 +37,7 @@ void _main(uint32_t debug)
 	init_counter();
 	init_networking();
 	init_dhcpd();
+	init_dns();
 
 	init_timer(1);
 	/* Testing printing ints and hex */
