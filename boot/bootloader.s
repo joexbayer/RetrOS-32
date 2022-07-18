@@ -36,6 +36,7 @@ _start:
     fileSysType:        .ascii      "FAT12   "
     
 main:
+
     mov %cs, %ax
     mov %ax, %ds
     mov %ax, %es
@@ -50,6 +51,9 @@ main:
     /* Greet user with message. */
     movw $welcome_str, %si
     call print
+
+    mov $0x0, %ah
+    int $0x16
 
     /*
         Using int 13h with 42 Extended Reac Sectors from Drive, to read inn sectors.
@@ -201,7 +205,7 @@ return:
 
 /* Strings */
 welcome_str:
-    .asciz "Starting...\n"
+    .asciz "********* Welcome to NETOS bootloader! *********\n"
 error_str:
     .asciz "Error while reading, trying again...\n"
 total_error_str:
