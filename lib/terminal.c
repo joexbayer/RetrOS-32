@@ -55,20 +55,20 @@ void twrite(const char* data);
  */
 void __terminal_ui_text()
 {
-	terminal_setcolor(VGA_COLOR_LIGHT_BLUE);
-	const char* term_str = " TERMINAL ";
+	terminal_setcolor(VGA_COLOR_LIGHT_BROWN);
+	const char* term_str = "TERMINAL";
 	for (size_t i = 0; i < strlen(term_str); i++)
-		scrput(i+1, TERMINAL_START, term_str[i], terminal_color);
+		scrput(i+2, TERMINAL_START, term_str[i], terminal_color);
 
-	const char* irq_str = " IRQs ";
+	const char* irq_str = "IRQs";
 	for (size_t i = 0; i < strlen(irq_str); i++)
 		scrput(i+PROCESS_WIDTH, TERMINAL_START, irq_str[i], terminal_color);
 
-	const char* exm_str = " PROCESSES ";
+	const char* exm_str = "PROCESSES";
 	for (size_t i = 0; i < strlen(exm_str); i++)
 		scrput(i+(PROCESS_WIDTH+(SCREEN_WIDTH/6)), TERMINAL_START, exm_str[i], terminal_color);
 
-	const char* nic_str = " NETDEV ";
+	const char* nic_str = "NETDEV";
 	for (size_t i = 0; i < strlen(nic_str); i++)
 		scrput(i+52, 12, nic_str[i], terminal_color);
 
@@ -163,7 +163,7 @@ void init_terminal(void)
 	__terminal_draw_lines();
 	__terminal_ui_text();
 
-	for (size_t i = 0; i < SCREEN_WIDTH; i++)
+	for (size_t i = 1; i < SCREEN_WIDTH; i++)
 		scrput(i, 0, ' ', VGA_COLOR_BLACK | VGA_COLOR_LIGHT_GREY << 4);
 
 	terminal_setcolor(VGA_COLOR_WHITE);

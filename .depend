@@ -40,7 +40,8 @@ util.o: lib/util.c include/util.h include/stdint.h
 arp.o: net/arp.c include/net/arp.h include/stdint.h include/net/utils.h \
  include/net/skb.h include/net/netdev.h include/pci.h include/memory.h \
  include/util.h include/net/ethernet.h include/net/ipv4.h \
- include/net/icmp.h include/net/udp.h include/terminal.h
+ include/net/icmp.h include/net/udp.h include/net/dhcpd.h \
+ include/terminal.h
 dns.o: net/dns.c include/net/dns.h include/stdint.h include/net/dhcpd.h \
  include/net/netdev.h include/pci.h
 ethernet.o: net/ethernet.c include/net/ethernet.h include/stdint.h \
