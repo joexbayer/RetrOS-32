@@ -25,6 +25,9 @@ void icmp_handle(struct sk_buff* skb)
 
     icmp_print(skb);
 
+    struct icmp response;
+    memcpy(&response, &skb->hdr.icmp, sizeof(struct icmp));
+
     skb->proto = ICMPV4;
 }  
 

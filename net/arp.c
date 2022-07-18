@@ -10,6 +10,7 @@
  */
 
 #include <net/arp.h>
+#include <net/dhcpd.h>
 #include <terminal.h>
 
 #define MAX_ARP_ENTRIES 25
@@ -133,6 +134,9 @@ void __arp_send(struct arp_content* content, struct arp_header* hdr, struct sk_b
  */
 void arp_respond(struct arp_content* content)
 {
+	if(dhcp_get_ip() == -1)
+		return;
+
 	struct sk_buff* skb = get_skb();
     ALLOCATE_SKB(skb);
     skb->stage = IN_PROGRESS;
@@ -143,7 +147,7 @@ void arp_respond(struct arp_content* content)
 	memcpy(&content->dmac, &content->smac, 6);
 	memcpy(&content->smac, &current_netdev.mac, 6);
 	content->dip = content->sip;
-	content->sip = 167772687;
+	content->sip = dhcp_get_ip();
 
 	__arp_send(content, &a_hdr, skb);
 }
@@ -154,11 +158,13 @@ void arp_respond(struct arp_content* content)
  */
 void arp_request()
 {
+	if(dhcp_get_ip() == -1)
+		return;
+
 	twriteln("Creating ARP packet.");
 	struct sk_buff* skb = get_skb();
     ALLOCATE_SKB(skb);
     skb->stage = IN_PROGRESS;
-
 
 	struct arp_header a_hdr;
 	struct arp_content a_content;
@@ -169,7 +175,7 @@ void arp_request()
 
 	a_content.dip = BROADCAST_IP;
 	memcpy(a_content.smac, current_netdev.mac, 6);
-	a_content.sip = ip_to_int("192.168.2.3");
+	a_content.sip = dhcp_get_ip();
 	memcpy(a_content.dmac, broadcast_mac, 6);
 
 	__arp_send(&a_content, &a_hdr, skb);
@@ -188,7 +194,7 @@ uint8_t arp_parse(struct sk_buff* skb)
 
 	ARP_NTOHS(a_hdr);
 
-	if(a_hdr->opcode != ARP_REQUEST || a_hdr->hwtype != ARP_ETHERNET || a_hdr->protype != ARP_IPV4){	
+	if(a_hdr->hwtype != ARP_ETHERNET || a_hdr->protype != ARP_IPV4){	
 		return 0;
 	}
 
@@ -197,11 +203,21 @@ uint8_t arp_parse(struct sk_buff* skb)
 
 	twriteln("Received ARP!");
 
-	int ret = arp_add_entry(arp_content);
-	if(!ret)
-		return ret;
+	switch (a_hdr->opcode)
+	{
+	case ARP_REQUEST:
+
+		arp_add_entry(arp_content);
+		arp_respond(arp_content);
+		break;
+	case ARP_REPLY:
+		arp_add_entry(arp_content);
+		/* Signal ARP reply was recieved, check for waiting SKBs*/
+		break;
 	
-	arp_respond(arp_content);
+	default:
+		break;
+	}
 
 	return 1;
 }
