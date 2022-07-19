@@ -1,6 +1,6 @@
 /**
  * @file dns.c
- * @author your name (you@domain.com)
+ * @author Joe Bayer (joexbayer)
  * @brief Domain Name Server implementation.
  * @version 0.1
  * @date 2022-07-16
