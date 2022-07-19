@@ -127,7 +127,7 @@ void draw_logo()
 			scrput(i, j, ' ', logo_color);
 
 
-	int logo_x = 6;
+	/*int logo_x = 6;
 	int logo_y = 4;
 	scrwrite(logo_x, logo_y, "            NETOS 0.0.1 ", logo_color);
 	scrwrite(logo_x, logo_y+1, "  ___   _      ___   _      ___   _ ", logo_color);
@@ -141,7 +141,7 @@ void draw_logo()
 	scrwrite(logo_x, logo_y+9, "                         '-`  |_| ", logo_color);
 	scrwrite(logo_x, logo_y+10, "                        /mmm/     ", logo_color);
 
-	scrwrite(0, TERMINAL_START-2, "Start by typing `ls`.", logo_color);
+	scrwrite(0, TERMINAL_START-2, "Start by typing `ls`.", logo_color);*/
 
 }
 

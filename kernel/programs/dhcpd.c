@@ -18,7 +18,7 @@
 #include <util.h>
 
 static struct dhcp_state dhcp_state;
-char* dhcp_state_names[4] = {"FAILED", "SUCCESS", "PENDING", "NOT RUNNING"};
+char* dhcp_state_names[4] = {"FAILED", "SUCCESS", "PENDING", "Not Running"};
 
 /**
  * @brief Adds a option the options part of the DHCP struct.

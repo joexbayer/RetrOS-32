@@ -44,14 +44,13 @@ void print_memory_status()
 	struct time* time = get_datetime();
 	scrcolor_set(VGA_COLOR_LIGHT_BROWN, VGA_COLOR_BLACK);
 	for (int i = 0; i < SCREEN_WIDTH; i++)
-	{
 		scrput(i, 0, 205, VGA_COLOR_LIGHT_GREY);
-	}
 	
 	scrprintf(1,0, "NETOS");
 	scrprintf(SCREEN_WIDTH-17, 0, "%d:%d:%d %d/%d/%d", time->hour, time->minute, time->second, time->day, time->month, time->year);
 	scrprintf(30, 0, "MEM: %d/%d", (chunks_used*MEM_CHUNK), CHUNKS_SIZE*MEM_CHUNK, MEM_CHUNK);
 	scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
+	scrput(50, 0, 203, VGA_COLOR_LIGHT_GREY);
 }
 
 /* implementation */

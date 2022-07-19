@@ -47,9 +47,9 @@ void networking_print_status()
     int state = dhcp_get_state();
     if(state != DHCP_SUCCESS){
         scrprintf(55, 3, " (%s)      ", dhcp_state_names[state]);
-        scrprintf(51, 4, "    IP: %s", "NONE");
-        scrprintf(51, 5, "    DNS: %s", "NONE");
-        scrprintf(51, 6, "    GW: %s", "NONE");
+        scrprintf(51, 4, "IP: %s", "N/A");
+        scrprintf(51, 5, "DNS: %s", "N/A");
+        scrprintf(51, 6, "GW: %s", "N/A");
     } else {
         scrprintf(55, 3, "              ");
 
@@ -59,7 +59,7 @@ void networking_print_status()
         bytes[1] = (ip >> 16) & 0xFF;
         bytes[2] = (ip >> 8) & 0xFF;
         bytes[3] = ip & 0xFF;
-        scrprintf(51, 4, "    IP: %d.%d.%d.%d     \n", bytes[3], bytes[2], bytes[1], bytes[0]);
+        scrprintf(51, 4, "IP: %d.%d.%d.%d     \n", bytes[3], bytes[2], bytes[1], bytes[0]);
 
         int dns = dhcp_get_dns();
         unsigned char bytes_dns[4];
@@ -67,7 +67,7 @@ void networking_print_status()
         bytes_dns[1] = (dns >> 16) & 0xFF;
         bytes_dns[2] = (dns >> 8) & 0xFF;
         bytes_dns[3] = dns & 0xFF;
-        scrprintf(51, 5, "    DNS: %d.%d.%d.%d     \n", bytes_dns[3], bytes_dns[2], bytes_dns[1], bytes_dns[0]);
+        scrprintf(51, 5, "DNS: %d.%d.%d.%d     \n", bytes_dns[3], bytes_dns[2], bytes_dns[1], bytes_dns[0]);
         
         int gw = dhcp_get_gw();
         unsigned char bytes_gw[4];
@@ -75,7 +75,7 @@ void networking_print_status()
         bytes_gw[1] = (gw >> 16) & 0xFF;
         bytes_gw[2] = (gw >> 8) & 0xFF;
         bytes_gw[3] = gw & 0xFF;
-        scrprintf(51, 6, "    GW: %d.%d.%d.%d     \n", bytes_gw[3], bytes_gw[2], bytes_gw[1], bytes_gw[0]);
+        scrprintf(51, 6, "GW: %d.%d.%d.%d     \n", bytes_gw[3], bytes_gw[2], bytes_gw[1], bytes_gw[0]);
     }
 
     scrprintf(51, 8, "MAC: %x:%x:%x:%x:%x:%x", current_netdev.mac[0], current_netdev.mac[1], current_netdev.mac[2], current_netdev.mac[3], current_netdev.mac[4], current_netdev.mac[5]);
