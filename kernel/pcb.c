@@ -67,13 +67,11 @@ void print_pcb_status()
 
     for (size_t i = 0; i < MAX_NUM_OF_PCBS; i++)
     {
-        if(pcbs[i].pid == -1)
-            continue;
 
         switch (pcbs[i].running)
         {
         case RUNNING:
-            scrcolor_set(VGA_COLOR_GREEN, VGA_COLOR_BLACK);
+            scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
             break;
         case BLOCKED:
             scrcolor_set(VGA_COLOR_BROWN, VGA_COLOR_BLACK);

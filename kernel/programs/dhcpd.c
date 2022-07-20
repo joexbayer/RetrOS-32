@@ -11,6 +11,7 @@
 
 #include <net/dhcpd.h>
 #include <process.h>
+#include <pcb.h>
 #include <net/socket.h>
 #include <net/ipv4.h>
 #include <terminal.h>
@@ -245,11 +246,13 @@ void dhcpd()
         goto dhcp_error; 
 
     twriteln("DHCP done!");
-        
+    
+    exit();
 
 dhcp_error:
     dhcp_state.state = DHCP_FAILED;
-    while(1){};
+    exit();
+    while(1);
 }
 
 PROGRAM(dhcpd, &dhcpd)

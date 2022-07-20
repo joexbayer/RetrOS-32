@@ -44,6 +44,7 @@ void yield();
 void sleep(int time);
 void block();
 void unblock(int pid);
+void exit();
 
 /* functions in entry.s */
 void _start_pcb();
