@@ -39,6 +39,7 @@ void pcb_function()
 
 void gensis()
 {
+    while(1);
 }
 
 void gensis2()
