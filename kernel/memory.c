@@ -39,18 +39,46 @@ int _check_chunks(int i, int chunks_needed)
 	return 1;
 }
 
+void print_mem()
+{
+	static const char* SIZES[] = { "B", "kB", "MB", "GB" };
+    int div_used = 0;
+	int div_main = 0;
+
+	int used = (chunks_used*MEM_CHUNK);
+	int main = CHUNKS_SIZE*MEM_CHUNK;
+
+    while (used >= 1024 && div_used < (sizeof SIZES / sizeof *SIZES)) {
+        div_used++;   
+        used /= 1024;
+    }
+
+	while (main >= 1024 && div_main < (sizeof SIZES / sizeof *SIZES)) {
+        div_main++;   
+        main /= 1024;
+    }
+	
+	if(div_main > 3 || div_main > 3)
+		return;
+
+	scrprintf(30, 0, "MEM: %d%s / %d%s", used ,SIZES[div_used], main, SIZES[div_main]);
+}
+
 void print_memory_status()
 {	
 	struct time* time = get_datetime();
 	scrcolor_set(VGA_COLOR_LIGHT_BROWN, VGA_COLOR_BLACK);
 	for (int i = 0; i < SCREEN_WIDTH; i++)
 		scrput(i, 0, 205, VGA_COLOR_LIGHT_GREY);
+
+	scrput(50, 0, 203, VGA_COLOR_LIGHT_GREY);
 	
 	scrprintf(1,0, "NETOS");
 	scrprintf(SCREEN_WIDTH-17, 0, "%d:%d:%d %d/%d/%d", time->hour, time->minute, time->second, time->day, time->month, time->year);
-	scrprintf(30, 0, "MEM: %d/%d", (chunks_used*MEM_CHUNK), CHUNKS_SIZE*MEM_CHUNK, MEM_CHUNK);
+
+	print_mem();
+
 	scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
-	scrput(50, 0, 203, VGA_COLOR_LIGHT_GREY);
 }
 
 /* implementation */

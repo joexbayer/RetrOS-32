@@ -22,6 +22,8 @@ enum vga_color {
 	VGA_COLOR_WHITE = 15,
 };
 
+
+
 #define SCREEN_WIDTH 80
 #define SCREEN_HEIGHT 25
 

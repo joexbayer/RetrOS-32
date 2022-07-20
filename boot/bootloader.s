@@ -142,7 +142,7 @@ set_a20.2:
 
 set_video_mode:
     movb $0x00, %ah
-    movb $0x12, %al
+    movb $0x13, %al
     int $0x10   
     ret
 

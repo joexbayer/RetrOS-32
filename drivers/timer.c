@@ -41,7 +41,7 @@ static void timer_callback()
 	}
 
 	tick++;
-	scrprintf((SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)-1, (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)+1, "PIT: %c", tick % 2 == 0 ? 178: ' ');
+	scrprintf((SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)-1, (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)+1, "PIT: %d", time);
 	if(current_running != NULL)
 	{
 		EOI(32);
