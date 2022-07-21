@@ -69,6 +69,9 @@ void print_pcb_status()
     for (size_t i = 0; i < MAX_NUM_OF_PCBS; i++)
     {
 
+        if(pcbs[i].pid == -1)
+            continue;
+
         switch (pcbs[i].running)
         {
         case RUNNING:
