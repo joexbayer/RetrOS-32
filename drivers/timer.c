@@ -19,12 +19,14 @@
 
 static int tick = 0;
 static int time = 0;
+static int time_min = 0;
+static int time_hour = 0;
 
 static struct time current_time;
 
 int get_time()
 {
-	return time;
+	return (time_hour*3600)+(time_min*60)+time;
 }
 
 struct time* get_datetime()
@@ -38,10 +40,19 @@ static void timer_callback()
 		tick = 0;
 		get_current_time(&current_time);
 		time++;
+
+		if(time > 59){
+			time_min++;
+			time = 0;
+			if(time_min > 60){
+				time_hour++;
+				time_min = 0;
+			}
+		}
 	}
 
 	tick++;
-	scrprintf((SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)-1, (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)+1, "PIT: %d", time);
+	scrprintf((SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)-1, (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)+1, "UP: %d:%d:%d ", time_hour, time_min, time);
 	if(current_running != NULL)
 	{
 		EOI(32);
