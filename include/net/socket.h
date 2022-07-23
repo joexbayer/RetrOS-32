@@ -71,6 +71,7 @@ size_t recvfrom(int socket, void *buffer, size_t length, int flags, struct socka
 size_t send(int socket, const void *message, size_t length, int flags);
 size_t sendto(int socket, const void *message, size_t length, int flags, const struct sockaddr *dest_addr, socklen_t dest_len);
 socket_t socket(int domain, int type, int protocol);
+void close(socket_t socket);
 
 void init_sockets();
 int udp_deliver_packet(uint32_t ip, uint16_t port, char* buffer, uint16_t len);

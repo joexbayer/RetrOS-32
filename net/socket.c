@@ -23,6 +23,7 @@
 static struct sock** sockets;
 static int total_sockets;
 static bitmap_t port_map;
+static bitmap_t socket_map;
 
 /**
  * Example:
@@ -239,6 +240,13 @@ int udp_deliver_packet(uint32_t ip, uint16_t port, char* buffer, uint16_t len)
     return -1;
 }
 
+void close(socket_t socket)
+{
+    free((void*) sockets[socket]);
+    unset_bitmap(socket_map, (int) socket);
+    total_sockets--;
+}
+
 
 /**
  * @brief Creates a socket and allocates a struct sock representation.
@@ -250,6 +258,7 @@ int udp_deliver_packet(uint32_t ip, uint16_t port, char* buffer, uint16_t len)
  */
 socket_t socket(int domain, int type, int protocol)
 {
+    //int current = get_free_bitmap(socket_map, MAX_NUMBER_OF_SOCKETS);
     int current = total_sockets;
 
     sockets[current] = alloc(sizeof(struct sock)); /* Allocate space for a socket. Needs to be freed. */
@@ -276,5 +285,6 @@ void init_sockets()
 {
     sockets = (struct sock**) alloc(MAX_NUMBER_OF_SOCKETS * sizeof(void*));
     port_map = create_bitmap(NUMBER_OF_DYMANIC_PORTS);
+    socket_map = create_bitmap(MAX_NUMBER_OF_SOCKETS);
     total_sockets = 0;
 }

@@ -67,12 +67,12 @@ int arp_add_entry(struct arp_content* arp)
  */
 int arp_find_entry(uint32_t ip, uint8_t* mac)
 {
-	for (size_t i = 0; i < MAX_ARP_ENTRIES; i++)
+	for (size_t i = 0; i < MAX_ARP_ENTRIES; i++){
 		if(arp_entries[i].sip == ip){
 			memcpy(mac, arp_entries[i].smac, 6);
 			return 1;
 		}
-	
+	}
 	return 0;
 }
 

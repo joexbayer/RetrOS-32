@@ -18,6 +18,8 @@
 #include <memory.h>
 #include <util.h>
 
+#include <net/dns.h>
+
 static struct dhcp_state dhcp_state;
 char* dhcp_state_names[4] = {"FAILED", "SUCCESS", "PENDING", "Not Running"};
 
@@ -246,6 +248,8 @@ void dhcpd()
         goto dhcp_error; 
 
     twriteln("DHCP done!");
+    
+    gethostname("www.google.com");
     
     exit();
 

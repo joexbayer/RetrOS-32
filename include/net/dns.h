@@ -2,6 +2,7 @@
 #define DNS_H
 
 #include <stdint.h>
+#include <net/utils.h>
 
 #define DNS_T_A 1           // ipv4 address
 #define DNS_T_NS 2          // nameserver
@@ -61,6 +62,25 @@ struct dns_cache
     uint32_t ip;
 };
 
+#define DNS_REQUEST(dns) \
+    (dns)->id = 0; \
+    (dns)->qr = 0; \
+    (dns)->opcode = 0; \
+    (dns)->aa = 0; \
+    (dns)->tc = 0; \
+    (dns)->rd = 1; \
+    (dns)->ra = 0; \
+    (dns)->z = 0; \
+    (dns)->ad = 0; \
+    (dns)->cd = 0; \
+    (dns)->rcode = 0; \
+    (dns)->q_count = htons(1); \
+    (dns)->ans_count = 0; \
+    (dns)->auth_count = 0; \
+    (dns)->add_count = 0; \
+
 void init_dns();
+int gethostname(char* hostname);
+
 
 #endif /* DNS_H */
