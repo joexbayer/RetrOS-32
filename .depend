@@ -56,9 +56,13 @@ icmp.o: net/icmp.c include/net/icmp.h include/stdint.h include/net/skb.h \
 ipv4.o: net/ipv4.c include/net/ipv4.h include/stdint.h include/net/skb.h \
  include/net/netdev.h include/pci.h include/memory.h include/net/utils.h \
  include/util.h include/net/ethernet.h include/net/arp.h \
- include/net/icmp.h include/net/udp.h include/terminal.h
+ include/net/icmp.h include/net/udp.h include/terminal.h \
+ include/net/routing.h
 netdev.o: net/netdev.c include/net/netdev.h include/stdint.h \
  include/pci.h include/screen.h include/util.h
+routing.o: net/routing.c include/net/routing.h include/stdint.h \
+ include/net/dhcpd.h include/net/netdev.h include/pci.h \
+ include/net/utils.h
 skb.o: net/skb.c include/net/skb.h include/stdint.h include/net/netdev.h \
  include/pci.h include/memory.h include/net/utils.h include/util.h \
  include/net/ethernet.h include/net/arp.h include/net/ipv4.h \

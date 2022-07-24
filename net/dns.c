@@ -84,9 +84,9 @@ int gethostname(char* hostname)
     struct sockaddr_in dest;
     dest.sin_family = AF_INET;
     dest.sin_port = htons(53);
-    dest.sin_addr.s_addr = htonl(dhcp_get_gw()); //dns servers
+    dest.sin_addr.s_addr = htonl(dhcp_get_dns()); //dns servers
  
-    sendto(__dns_socket, (char*)buf,sizeof(struct dns_header) + (strlen((const char*)question)+1) + sizeof(struct dns_question), 0, (struct sockaddr*)&dest, sizeof(dest));
+    sendto(__dns_socket, (char*)buf, sizeof(struct dns_header) + (strlen((const char*)question)+1) + sizeof(struct dns_question), 0, (struct sockaddr*)&dest, sizeof(dest));
 
     release(&__dns_mutex);
 

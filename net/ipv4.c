@@ -15,6 +15,7 @@
 #include <util.h>
 #include <net/arp.h>
 #include <net/ethernet.h>
+#include <net/routing.h>
 
 /**
  * @brief Helper function to send IP packet, attaching ethernet header
@@ -34,7 +35,8 @@ int __ip_send(struct ip_header* ihdr, struct sk_buff* skb, uint32_t dip)
     skb->proto = IP;
 
 	twriteln("Creating Ethernet header.");
-	int ret = ethernet_add_header(skb, dip);
+    uint32_t next_hop = route(dip);
+	int ret = ethernet_add_header(skb, next_hop);
 	if(ret <= 0){
 		twriteln("Error adding ethernet header");
 		return 0;
