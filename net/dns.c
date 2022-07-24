@@ -1,7 +1,7 @@
 /**
  * @file dns.c
  * @author Joe Bayer (joexbayer)
- * @brief Domain Name Server implementation.
+ * @brief Domain Name System implementation.
  * @version 0.1
  * @date 2022-07-16
  * 
@@ -38,7 +38,7 @@ void init_dns()
 static void __dns_name_compresion(uint8_t* request, char* host) 
 {
     int lock = 0;
-    host[strlen(host)+1] = '.';
+    host[strlen(host)] = '.';
 
     for(int i = 0 ; i < strlen(host); i++) 
     {
@@ -84,7 +84,7 @@ int gethostname(char* hostname)
     struct sockaddr_in dest;
     dest.sin_family = AF_INET;
     dest.sin_port = htons(53);
-    dest.sin_addr.s_addr = htonl(dhcp_get_dns()); //dns servers
+    dest.sin_addr.s_addr = htonl(dhcp_get_dns());
  
     sendto(__dns_socket, (char*)buf, sizeof(struct dns_header) + (strlen((const char*)question)+1) + sizeof(struct dns_question), 0, (struct sockaddr*)&dest, sizeof(dest));
 

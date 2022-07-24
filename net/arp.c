@@ -40,7 +40,7 @@ int arp_add_entry(struct arp_content* arp)
 {
 	/* Check if ARP entry already exists. */
 	for (size_t i = 0; i < MAX_ARP_ENTRIES; i++)
-		if(arp_entries[i].sip == arp->sip)
+		if(memcmp((uint8_t*)&arp->smac, (uint8_t*)&arp_entries[i].smac, 6))
 			return 1;
 
 	for (size_t i = 0; i < MAX_ARP_ENTRIES; i++)
