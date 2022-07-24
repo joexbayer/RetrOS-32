@@ -44,7 +44,7 @@ static bitmap_t socket_map;
 
 inline static uint16_t __get_free_port()
 {
-    return (get_free_bitmap(port_map, NUMBER_OF_DYMANIC_PORTS) + DYNAMIC_PORT_START);
+    return ntohs(get_free_bitmap(port_map, NUMBER_OF_DYMANIC_PORTS) + DYNAMIC_PORT_START);
 }
 
 inline static void __socket_bind(int socket, uint16_t port, uint32_t ip)
