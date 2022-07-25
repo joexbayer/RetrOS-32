@@ -231,9 +231,11 @@ void dhcpd()
 
     
     char buffer[2048];
-    int read = recv(dhcp_socket, &buffer, 2048, 0);
-    if(read <= 0)
-        goto dhcp_error;
+    int read = recv_timeout(dhcp_socket, &buffer, 2048, 0, 2);
+    while(read <= 0){
+        __dhcp_send_discovery(dhcp_socket);
+        read = recv_timeout(dhcp_socket, &buffer, 2048, 0, 2);
+    }
 
     struct dhcp* offer = (struct dhcp*) &buffer;
     __dhcp_handle_offer(offer);
@@ -243,9 +245,12 @@ void dhcpd()
     if(ret <= 0)
         goto dhcp_error;
 
-    read = recv(dhcp_socket, &buffer, 2048, 0);
-    if(read <= 0)
-        goto dhcp_error; 
+    read = recv_timeout(dhcp_socket, &buffer, 2048, 0, 2);
+    while(read <= 0){
+        __dhcp_send_request(dhcp_socket);
+        read = recv_timeout(dhcp_socket, &buffer, 2048, 0, 2);
+    }
+         
 
     twriteln("DHCP done!");
     

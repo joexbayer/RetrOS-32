@@ -72,7 +72,8 @@ socket.o: net/socket.c include/net/socket.h include/util.h \
  include/stdint.h include/sync.h include/pcb.h include/net/utils.h \
  include/net/skb.h include/net/netdev.h include/pci.h include/memory.h \
  include/net/ethernet.h include/net/arp.h include/net/ipv4.h \
- include/net/icmp.h include/net/udp.h include/bitmap.h
+ include/net/icmp.h include/net/udp.h include/bitmap.h include/timer.h \
+ include/rtc.h
 udp.o: net/udp.c include/net/udp.h include/net/utils.h include/stdint.h \
  include/net/skb.h include/net/netdev.h include/pci.h include/memory.h \
  include/util.h include/net/ethernet.h include/net/arp.h \

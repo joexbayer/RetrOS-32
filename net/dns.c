@@ -65,7 +65,7 @@ int gethostname(char* hostname)
         if(memcmp((uint8_t*) &__dns_cache[i].name,(uint8_t*) hostname, strlen(hostname)))
             return __dns_cache[i].ip;
 
-    acquire(&__dns_mutex);
+    //acquire(&__dns_mutex);
 
     uint8_t buf[65536]; /* Can be replaced with alloc. */
     struct dns_header* request;
@@ -94,7 +94,7 @@ int gethostname(char* hostname)
 
     twriteln("DNS DONE");
 
-    release(&__dns_mutex);
+    //release(&__dns_mutex);
 
     return 0;
 

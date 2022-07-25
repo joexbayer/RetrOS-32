@@ -15,7 +15,7 @@
 #include <timer.h>
 #include <sync.h>
 
-#define MEM_START 0x100000
+#define MEM_START 0x300000
 #define MEM_END 0xEFFFFF
 #define MEM_CHUNK 0x400
 #define CHUNKS_SIZE (MEM_END-MEM_START)/MEM_CHUNK

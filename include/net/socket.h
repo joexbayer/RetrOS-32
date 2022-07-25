@@ -68,6 +68,7 @@ int connect(int socket, const struct sockaddr *address, socklen_t address_len);
 int listen(int socket, int backlog);
 size_t recv(int socket, void *buffer, size_t length, int flags);
 size_t recvfrom(int socket, void *buffer, size_t length, int flags, struct sockaddr *address, socklen_t *address_len);
+size_t recv_timeout(int socket, void *buffer, size_t length, int flags, int timeout);
 size_t send(int socket, const void *message, size_t length, int flags);
 size_t sendto(int socket, const void *message, size_t length, int flags, const struct sockaddr *dest_addr, socklen_t dest_len);
 socket_t socket(int domain, int type, int protocol);

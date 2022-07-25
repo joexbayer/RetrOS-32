@@ -15,6 +15,7 @@
 #include <memory.h>
 #include <bitmap.h>
 #include <util.h>
+#include <timer.h>
 
 #define MAX_NUMBER_OF_SOCKETS 128
 #define DYNAMIC_PORT_START 49152
@@ -68,9 +69,6 @@ static int __sock_add_packet(char* buffer, uint16_t len, int socket_index)
 
     acquire(&sockets[socket_index]->sock_lock);
 
-    if(len > 2048) /* TODO: set as constant. or not? */
-        return -1;
-
     for (size_t i = sockets[socket_index]->last_read_buffer; i < BUFFERS_PER_SOCKET; i++)
     {
         if(sockets[socket_index]->buffer_lens[i] == 0)
@@ -105,7 +103,6 @@ inline static int __sock_read_packet(int index, char* buffer)
     sockets[index]->last_read_buffer = (sockets[index]->last_read_buffer + 1) % BUFFERS_PER_SOCKET;
 
     release(&sockets[index]->sock_lock);
-
     return read;
 }
 
@@ -174,6 +171,24 @@ size_t recv(int socket, void *buffer, size_t length, int flags)
     return read;
 }
 
+size_t recv_timeout(int socket, void *buffer, size_t length, int flags, int timeout)
+{
+    int time_start = get_time();
+
+    int read = -1;
+    while(read == -1) /* TODO: Block, instead of spinning. */
+    {
+        if(get_time() - time_start > timeout+3)
+            return 0;
+
+        read = __sock_read_packet(socket, buffer);
+    }
+
+    return read;
+
+}
+
+
 /**
  * @brief Sends data to reciever defined by sockaddr.
  * 
@@ -237,6 +252,7 @@ int udp_deliver_packet(uint32_t ip, uint16_t port, char* buffer, uint16_t len)
         if(sockets[i]->bound_port == htons(port) && (sockets[i]->bound_ip == ip || sockets[i]->bound_ip == INADDR_ANY))
             return __sock_add_packet(buffer, len, i);
 
+    twriteln("NOT SOCKET FOR PORT");
     return -1;
 }
 

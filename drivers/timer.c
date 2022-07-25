@@ -62,15 +62,10 @@ static void timer_callback()
 
 int time_get_difference(struct time* t1, struct time* t2)
 {
-	/*uint32_t time1 = (t1->hour*3600) + (t1->minute*60) + t1->second;
+	uint32_t time1 = (t1->hour*3600) + (t1->minute*60) + t1->second;
 	uint32_t time2 = (t2->hour*3600) + (t2->minute*60) + t2->second;
 
 	return time1 - time2;
-
-		CRASHES SYSTEM??
-	*/
-	
-	return -1;
 }
 
 /* http://www.jamesmolloy.co.uk/tutorial_html/5.-IRQs%20and%20the%20PIT.html */
