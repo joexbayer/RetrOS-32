@@ -13,6 +13,8 @@
 #include <net/socket.h>
 #include <sync.h>
 
+#include <terminal.h>
+
 #include <util.h>
 
 static struct dns_cache __dns_cache[DNS_CACHE_ENTRIES];
@@ -40,7 +42,7 @@ static void __dns_name_compresion(uint8_t* request, char* host)
     int lock = 0;
     host[strlen(host)] = '.';
 
-    for(int i = 0 ; i < strlen(host); i++) 
+    for(size_t i = 0 ; i < strlen(host); i++) 
     {
         if(host[i]=='.') 
         {
@@ -62,7 +64,7 @@ int gethostname(char* hostname)
     for (int i = 0; i < DNS_CACHE_ENTRIES; i++)
         if(memcmp((uint8_t*) &__dns_cache[i].name,(uint8_t*) hostname, strlen(hostname)))
             return __dns_cache[i].ip;
-    
+
     acquire(&__dns_mutex);
 
     uint8_t buf[65536]; /* Can be replaced with alloc. */
@@ -88,6 +90,12 @@ int gethostname(char* hostname)
  
     sendto(__dns_socket, (char*)buf, sizeof(struct dns_header) + (strlen((const char*)question)+1) + sizeof(struct dns_question), 0, (struct sockaddr*)&dest, sizeof(dest));
 
+    recv(__dns_socket, &buf, 2048, 0);
+
+    twriteln("DNS DONE");
+
     release(&__dns_mutex);
+
+    return 0;
 
 }

@@ -44,7 +44,8 @@ arp.o: net/arp.c include/net/arp.h include/stdint.h include/net/utils.h \
  include/terminal.h
 dns.o: net/dns.c include/net/dns.h include/stdint.h include/net/utils.h \
  include/net/dhcpd.h include/net/netdev.h include/pci.h \
- include/net/socket.h include/util.h include/sync.h include/pcb.h
+ include/net/socket.h include/util.h include/sync.h include/pcb.h \
+ include/terminal.h
 ethernet.o: net/ethernet.c include/net/ethernet.h include/stdint.h \
  include/net/skb.h include/net/netdev.h include/pci.h include/memory.h \
  include/net/utils.h include/util.h include/net/arp.h include/net/ipv4.h \
