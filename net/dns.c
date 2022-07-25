@@ -56,6 +56,28 @@ static void __dns_name_compresion(uint8_t* request, char* host)
     *request++ = '\0';
 }
 
+void __dns_handle_answer(char* buf, int question_size)
+{
+
+    struct dns_header* dns = (struct dns_header*) buf;
+    struct dns_answer* answer = (struct dns_answer*) &buf[question_size];
+    
+    uint32_t result;
+    switch (ntohs(answer->data_len))
+    {
+    case 4:
+        result = *((uint32_t*) &buf[question_size+sizeof(struct dns_answer)]);
+        break;
+    
+    default:
+        result = 0;
+        break;
+    }
+
+    twritef("DNS: result: %d %d %d len\n", ntohl(result), ntohs(answer->data_len), question_size);
+
+}
+
 
 int gethostname(char* hostname)
 {
@@ -78,7 +100,6 @@ int gethostname(char* hostname)
     /* Move pointer past header */
     uint8_t* question =(uint8_t*)&buf[sizeof(struct dns_header)];
     __dns_name_compresion(question, hostname);
-
     request_question =(struct dns_question*) &buf[sizeof(struct dns_header) + (strlen((const char*)question) + 1)];
  
     request_question->qtype = htons(DNS_T_A); //type of the query , A , MX , CNAME , NS etc
@@ -88,12 +109,44 @@ int gethostname(char* hostname)
     dest.sin_family = AF_INET;
     dest.sin_port = htons(53);
     dest.sin_addr.s_addr = htonl(dhcp_get_dns());
+
+    int question_size = sizeof(struct dns_header) + (strlen((const char*)question)+1) + sizeof(struct dns_question);
  
-    sendto(__dns_socket, (char*)buf, sizeof(struct dns_header) + (strlen((const char*)question)+1) + sizeof(struct dns_question), 0, (struct sockaddr*)&dest, sizeof(dest));
+    sendto(__dns_socket, (char*)buf, question_size, 0, (struct sockaddr*)&dest, sizeof(dest));
+    twritef("Sent DNS %d\n", question_size);
+    int ret = recv(__dns_socket, buf, 2048, 0);
+    if(ret <= 0)
+        return 0;
+    
+    struct dns_header* dns = (struct dns_header*) &buf;
+    struct dns_answer* answer = (struct dns_answer*) &buf[question_size];
+    
+    uint32_t result;
+    switch (ntohs(answer->data_len))
+    {
+    case 4:
+        result = *((uint32_t*) &buf[question_size+12]);
+        break;
+    
+    default:
+        result = 0;
+        break;
+    }
 
-    recv(__dns_socket, &buf, 2048, 0);
+    twritef("DNS: %x name\n", ntohs(answer->name));
+    twritef("DNS: %x type\n",  ntohs(answer->type));
+    twritef("DNS: %x _class\n",ntohs(answer->_class));
+    twritef("DNS: %x ttl\n", ntohl(answer->ttl));
+    twritef("DNS: %x len\n", ntohs(answer->data_len));
 
-    twriteln("DNS DONE");
+
+    unsigned char bytes[4];
+    bytes[0] = (result >> 24) & 0xFF;
+    bytes[1] = (result >> 16) & 0xFF;
+    bytes[2] = (result >> 8) & 0xFF;
+    bytes[3] = result & 0xFF;
+
+    twritef("DNS (%d.%d.%d.%d)\n", bytes[3],bytes[2], bytes[1],bytes[0]);
 
     //release(&__dns_mutex);
 

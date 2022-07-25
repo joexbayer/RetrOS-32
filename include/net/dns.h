@@ -41,11 +41,13 @@ struct dns_question
     uint16_t qclass;
 };
 
-struct dns_data
+struct dns_answer
 {
+    uint16_t name;
     uint16_t type;
     uint16_t _class;
-    uint32_t ttl;
+    uint16_t ttl;
+    uint16_t ttl1;
     uint16_t data_len;
 };
 
