@@ -18,7 +18,7 @@
 #include <util.h>
 
 static struct dns_cache __dns_cache[DNS_CACHE_ENTRIES];
-static socket_t __dns_socket;
+//static socket_t __dns_socket;
 static mutex_t __dns_mutex;
 
 void init_dns();
@@ -32,7 +32,6 @@ void init_dns()
         __dns_cache[i].ip = 0;
     }
 
-    __dns_socket = socket(AF_INET, SOCK_DGRAM, 0);
     mutex_init(&__dns_mutex);
 
 }
@@ -66,6 +65,8 @@ int gethostname(char* hostname)
             return __dns_cache[i].ip;
 
     //acquire(&__dns_mutex);
+
+    socket_t __dns_socket = socket(AF_INET, SOCK_DGRAM, 0);
 
     uint8_t buf[65536]; /* Can be replaced with alloc. */
     struct dns_header* request;
