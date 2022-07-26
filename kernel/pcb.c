@@ -39,7 +39,11 @@ void pcb_function()
 
 void gensis()
 {
-    while(1);
+    char buf[256];
+    char buf1[256];
+    while(1){
+        scrprintf(5, 5, "0x%x - 0x%x, %d\n", buf, buf1, buf1-buf);
+    }
 }
 
 void gensis2()
@@ -90,7 +94,7 @@ void print_pcb_status()
             continue;
         }
 
-        scrprintf(width, height+i, "PID %d: %s. 0x%x",pcbs[i].pid, pcbs[i].name, pcbs[i].esp);
+        scrprintf(width, height+i, "PID %d: %s. 0x%x",pcbs[i].pid, pcbs[i].name, pcbs[i].ebp-pcbs[i].esp);
         /* code */
         scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
     }

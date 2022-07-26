@@ -90,7 +90,7 @@ int gethostname(char* hostname)
 
     socket_t __dns_socket = socket(AF_INET, SOCK_DGRAM, 0);
 
-    uint8_t buf[65536]; /* Can be replaced with alloc. */
+    uint8_t buf[2048]; /* Can be replaced with alloc. */
     struct dns_header* request;
     struct dns_question* request_question;
 
