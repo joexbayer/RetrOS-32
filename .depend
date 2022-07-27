@@ -1,4 +1,5 @@
-ata.o: drivers/ata.c include/ata.h include/stdint.h include/util.h
+ata.o: drivers/ata.c include/ata.h include/stdint.h include/terminal.h \
+ include/util.h include/interrupts.h include/memory.h
 e1000.o: drivers/e1000.c include/e1000.h include/stdint.h include/pci.h \
  include/screen.h include/util.h include/interrupts.h \
  include/net/netdev.h

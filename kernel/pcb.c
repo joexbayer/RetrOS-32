@@ -257,7 +257,9 @@ void yield()
 
 void exit()
 {
-    return;
+    while(1);
+
+
     CLI();
     stop_task(current_running->pid);
 
