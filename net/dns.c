@@ -148,6 +148,8 @@ int gethostname(char* hostname)
 
     twritef("DNS (%d.%d.%d.%d)\n", bytes[3],bytes[2], bytes[1],bytes[0]);
 
+    close(__dns_socket);
+
     //release(&__dns_mutex);
 
     return 0;

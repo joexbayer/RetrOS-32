@@ -43,6 +43,7 @@ void gensis()
     char buf1[256];
     while(1){
         scrprintf(5, 5, "0x%x - 0x%x, %d\n", buf, buf1, buf1-buf);
+        yield();
     }
 }
 
@@ -55,6 +56,7 @@ void gensis2()
             int random = rand();
             void* ptr = alloc(random * 5120 % 10000);
             free(ptr);
+            yield();
         }
 
         sleep(2);
@@ -70,13 +72,49 @@ void print_pcb_status()
     int width = (SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)-1 + (SCREEN_WIDTH/6);
     int height = (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)+1;
 
-    for (size_t i = 0; i < MAX_NUM_OF_PCBS; i++)
-    {
+    int done_list[MAX_NUM_OF_PCBS];
+    int done_list_count = 0;
 
+    for (int i = width; i < SCREEN_WIDTH; i++)
+        for (int j = height; j < SCREEN_HEIGHT; j++)
+            scrput(i, j, ' ', VGA_COLOR_BLACK);
+    
+
+    for (int i = 0; i < MAX_NUM_OF_PCBS; i++)
+    {
         if(pcbs[i].pid == -1)
             continue;
 
-        switch (pcbs[i].running)
+        int largest = 0;
+        int largest_amount = 0;
+        for (int j = 0; j < MAX_NUM_OF_PCBS; j++)
+        {
+            if(pcbs[j].pid == -1)
+                continue;
+            
+            int found = 0;
+            for (int k = 0; k < done_list_count; k++)
+            {
+                if(done_list[k] == j){
+                    found = 1;
+                    break;
+                }
+            }
+
+            if(found)
+                continue;;
+            
+
+            if(pcbs[j].ebp-pcbs[j].esp >= largest_amount){
+                largest_amount = pcbs[j].ebp-pcbs[j].esp;
+                largest = j;
+            }
+        }
+
+        done_list[done_list_count] = largest;
+        done_list_count++;
+
+        switch (pcbs[largest].running)
         {
         case RUNNING:
             scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
@@ -94,7 +132,7 @@ void print_pcb_status()
             continue;
         }
 
-        scrprintf(width, height+i, "PID %d: %s. 0x%x",pcbs[i].pid, pcbs[i].name, pcbs[i].ebp-pcbs[i].esp);
+        scrprintf(width, height+done_list_count-1, "PID %d: %s. 0x%x",pcbs[largest].pid, pcbs[largest].name, pcbs[largest].ebp-pcbs[largest].esp);
         /* code */
         scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
     }
@@ -123,6 +161,9 @@ int stop_task(int pid)
             pcb_count--;
             pcbs[i].prev->next = pcbs[i].next;
             pcbs[i].next->prev = pcbs[i].prev;
+
+            pcbs[i].esp = 0;
+            pcbs[i].ebp = 0;
             STI();
             return i;
         }
@@ -216,14 +257,11 @@ void yield()
 
 void exit()
 {
+    return;
     CLI();
-    current_running->running = STOPPED;
-    free((void*)current_running->org_stack);
-    pcb_count--;
-    current_running->prev->next = current_running->next;
-    current_running->next->prev = current_running->prev;
+    stop_task(current_running->pid);
 
-    yield();
+    _context_switch();
 }
 
 void block()

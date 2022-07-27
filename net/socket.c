@@ -275,7 +275,7 @@ void close(socket_t socket)
 socket_t socket(int domain, int type, int protocol)
 {
     //int current = get_free_bitmap(socket_map, MAX_NUMBER_OF_SOCKETS);
-    int current = total_sockets;
+    int current = get_free_bitmap(socket_map, MAX_NUMBER_OF_SOCKETS);
 
     sockets[current] = alloc(sizeof(struct sock)); /* Allocate space for a socket. Needs to be freed. */
     sockets[current]->domain = domain;

@@ -255,11 +255,14 @@ void dhcpd()
     twriteln("DHCP done!");
     
     gethostname("www.google.com");
+
+    close(dhcp_socket);
     
     exit();
 
 dhcp_error:
     dhcp_state.state = DHCP_FAILED;
+    close(dhcp_socket);
     exit();
     while(1);
 }
