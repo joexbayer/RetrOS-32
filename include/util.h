@@ -13,6 +13,8 @@
 
 #define NULL (void *)0
 
+extern long end;
+
 
 size_t strlen(const char* str);
 uint32_t strncmp(const char* str, const char* str2, uint32_t len);
