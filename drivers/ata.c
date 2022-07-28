@@ -171,7 +171,7 @@ int ata_read(uint8_t *buf, int numsects)
 
     for (int i = 0; i < numsects; i++)
     {
-        rc = __ata_read_sector((uint16_t*) buf, pos + i);
+        rc = __ata_read_sector((char*) buf, pos + i);
         if (rc == -1)
             return -1;
         buf += 512;
@@ -238,10 +238,6 @@ void ata_ide_init()
          else
             // Device uses CHS or 28-bit Addressing:
             ata_ide_device.size   = *((unsigned int *)(ata_driver_data + ATA_IDENT_MAX_LBA));
-
-		scrprintf(4, 6, "ATA: %s\n", ata_ide_device.model);
-		scrprintf(4, 7, "ATA: %d bytes\n", ata_ide_device.size*512);
-
 	}
 
 }

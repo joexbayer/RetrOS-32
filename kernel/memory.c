@@ -42,8 +42,8 @@ int _check_chunks(int i, int chunks_needed)
 void print_mem()
 {
 	static const char* SIZES[] = { "B", "kB", "MB", "GB" };
-    int div_used = 0;
-	int div_main = 0;
+    uint32_t div_used = 0;
+	uint32_t div_main = 0;
 
 	int used = (chunks_used*MEM_CHUNK);
 	int main = CHUNKS_SIZE*MEM_CHUNK;

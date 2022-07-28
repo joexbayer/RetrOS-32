@@ -23,16 +23,9 @@
 #include <net/dhcpd.h>
 
 #define MAX_OPEN_PORTS 45
-#define MAX_QUEUE_SIZE 20
-
 #define MAX_PACKET_SIZE 0x1000
 
-static struct packet queue[MAX_QUEUE_SIZE];
-
 static uint16_t packets = 0;
-static uint32_t ip;
-static uint16_t ports[MAX_OPEN_PORTS];
-static uint16_t open_ports = 0;
 
 int add_queue(uint8_t* buffer, uint16_t size);
 int get_next_queue();
@@ -41,7 +34,7 @@ void networking_print_status()
 {
 
     scrwrite(51, 1, "Networking:", VGA_COLOR_CYAN);
-    scrprintf(51, 2, "Open Ports: %d", open_ports);
+    scrprintf(51, 2, "Open Ports: %d", 0);
 
     scrwrite(51, 3, "DHCP", VGA_COLOR_LIGHT_BLUE);
     int state = dhcp_get_state();

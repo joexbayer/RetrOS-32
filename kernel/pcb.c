@@ -86,7 +86,7 @@ void print_pcb_status()
             continue;
 
         int largest = 0;
-        int largest_amount = 0;
+        uint32_t largest_amount = 0;
         for (int j = 0; j < MAX_NUM_OF_PCBS; j++)
         {
             if(pcbs[j].pid == -1)

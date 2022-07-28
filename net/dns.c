@@ -56,28 +56,6 @@ static void __dns_name_compresion(uint8_t* request, char* host)
     *request++ = '\0';
 }
 
-void __dns_handle_answer(char* buf, int question_size)
-{
-
-    struct dns_header* dns = (struct dns_header*) buf;
-    struct dns_answer* answer = (struct dns_answer*) &buf[question_size];
-    
-    uint32_t result;
-    switch (ntohs(answer->data_len))
-    {
-    case 4:
-        result = *((uint32_t*) &buf[question_size+sizeof(struct dns_answer)]);
-        break;
-    
-    default:
-        result = 0;
-        break;
-    }
-
-    twritef("DNS: result: %d %d %d len\n", ntohl(result), ntohs(answer->data_len), question_size);
-
-}
-
 
 int gethostname(char* hostname)
 {
@@ -118,7 +96,6 @@ int gethostname(char* hostname)
     if(ret <= 0)
         return 0;
     
-    struct dns_header* dns = (struct dns_header*) &buf;
     struct dns_answer* answer = (struct dns_answer*) &buf[question_size];
     
     uint32_t result;

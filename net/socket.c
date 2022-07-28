@@ -252,7 +252,6 @@ int udp_deliver_packet(uint32_t ip, uint16_t port, char* buffer, uint16_t len)
         if(sockets[i]->bound_port == htons(port) && (sockets[i]->bound_ip == ip || sockets[i]->bound_ip == INADDR_ANY))
             return __sock_add_packet(buffer, len, i);
 
-    twriteln("NOT SOCKET FOR PORT");
     return -1;
 }
 
