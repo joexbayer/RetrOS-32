@@ -12,7 +12,8 @@ screen.o: drivers/screen.c include/screen.h include/util.h \
 timer.o: drivers/timer.c include/timer.h include/stdint.h include/rtc.h \
  include/screen.h include/util.h include/terminal.h include/interrupts.h \
  include/pcb.h
-fs.o: fs/fs.c include/fs/fs.h
+fs.o: fs/fs.c include/fs/fs.h include/fs/superblock.h include/stdint.h \
+ include/bitmap.h include/ata.h
 interrupts.o: kernel/interrupts.c include/interrupts.h include/stdint.h \
  include/terminal.h include/util.h include/screen.h
 kernel.o: kernel/kernel.c include/util.h include/stdint.h include/pci.h \
