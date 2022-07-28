@@ -52,6 +52,7 @@ void mutex_init(mutex_t* l)
 
 inline void __lock_block(mutex_t* l)
 {
+    /* TODO: Since we start from 0, newly blocked proceses may come before older blocked. */
     for (size_t i = 0; i < MAX_BLOCKED; i++)
     {
         if(l->blocked[i] == -1){
