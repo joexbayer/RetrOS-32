@@ -45,7 +45,7 @@ bindir:
 
 # For assembling and compiling all .c and .s files.
 %.o: %.c
-	@echo [FS] Compiling $@
+	@echo [FS] Compiling bin/$@
 	@$(CC) -o bin/$@ -c $< $(CCFLAGS)
 
 clean:

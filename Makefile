@@ -83,15 +83,15 @@ kernel: $(KERNELOBJ)
 
 # For assembling and compiling all .c and .s files.
 bin/%.o: */%.c
-	@echo [KERNEL] Compiling $@
+	@echo [KERNEL] Compiling bin/$@
 	@$(CC) -o $@ -c $< $(CCFLAGS)
 
 bin/%.o: */*/%.c
-	@echo [PROGRAM] Compiling $@
+	@echo [PROGRAM] Compiling bin/$@
 	@$(CC) -o $@ -c $< $(CCFLAGS)
 
 bin/%.o: */%.s
-	@echo [KERNEL] Compiling $@
+	@echo [KERNEL] Compiling bin/$@
 	@$(AS) -o $@ -c $< $(ASFLAGS)
 
 bin/net.o: ./net/*.c
