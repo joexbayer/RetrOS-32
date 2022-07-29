@@ -15,6 +15,8 @@
 #include <pcb.h>
 #include <process.h>
 
+#include <net/dns.h>
+
 static uint8_t SHELL_POSITION = (SCREEN_HEIGHT)-1;
 static const uint8_t SHELL_MAX_SIZE = 25;
 static uint8_t shell_column = 0;
@@ -108,6 +110,12 @@ void exec_cmd()
 	if(strncmp("start", shell_buffer, strlen("start"))){
 		int id = atoi(shell_buffer+strlen("stop")+1);
 		start_process(id);
+	}
+
+	if(strncmp("dig", shell_buffer, strlen("dig"))){
+		char* hostname = shell_buffer+strlen("dig")+1;
+		hostname[strlen(hostname)-1] = 0;
+		gethostname(hostname);
 	}
 
 	//twrite(shell_buffer);

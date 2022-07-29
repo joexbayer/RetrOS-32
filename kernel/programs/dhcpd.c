@@ -253,8 +253,6 @@ void dhcpd()
          
 
     twriteln("DHCP done!");
-    
-    gethostname("www.google.com");
 
     close(dhcp_socket);
     

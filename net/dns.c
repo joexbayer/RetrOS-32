@@ -124,11 +124,12 @@ int gethostname(char* hostname)
     bytes[3] = result & 0xFF;
 
     twritef("DNS (%d.%d.%d.%d)\n", bytes[3],bytes[2], bytes[1],bytes[0]);
+    twritef("%s\n", hostname);
 
     close(__dns_socket);
 
     //release(&__dns_mutex);
 
-    return 0;
+    return result;
 
 }
