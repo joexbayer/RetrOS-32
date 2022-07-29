@@ -69,6 +69,7 @@ void gensis2()
  */
 void print_pcb_status()
 {
+    const char* SIZES[] = { "Bytes", "kB", "MB", "GB" };
     int width = (SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)-1 + (SCREEN_WIDTH/6);
     int height = (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)+1;
 
@@ -132,7 +133,14 @@ void print_pcb_status()
             continue;
         }
 
-        scrprintf(width, height+done_list_count-1, "PID %d: %s. 0x%x",pcbs[largest].pid, pcbs[largest].name, pcbs[largest].ebp-pcbs[largest].esp);
+        int used = pcbs[largest].ebp-pcbs[largest].esp;
+        uint32_t div_used = 0;
+        while (used >= 1024 && div_used < (sizeof SIZES / sizeof *SIZES)) {
+            div_used++;   
+            used /= 1024;
+        }
+
+        scrprintf(width, height+done_list_count-1, "PID %d: %s. %d %s",pcbs[largest].pid, pcbs[largest].name, used, SIZES[div_used]);
         /* code */
         scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
     }
