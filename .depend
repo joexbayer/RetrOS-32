@@ -1,5 +1,5 @@
 ata.o: drivers/ata.c include/ata.h include/stdint.h include/terminal.h \
- include/util.h include/interrupts.h include/memory.h
+ include/util.h include/interrupts.h include/memory.h include/diskdev.h
 e1000.o: drivers/e1000.c include/e1000.h include/stdint.h include/pci.h \
  include/screen.h include/util.h include/interrupts.h \
  include/net/netdev.h
@@ -13,7 +13,9 @@ timer.o: drivers/timer.c include/timer.h include/stdint.h include/rtc.h \
  include/screen.h include/util.h include/terminal.h include/interrupts.h \
  include/pcb.h
 fs.o: fs/fs.c include/fs/fs.h include/fs/superblock.h include/stdint.h \
- include/bitmap.h include/ata.h
+ include/bitmap.h include/diskdev.h include/ata.h
+diskdev.o: kernel/diskdev.c include/diskdev.h include/ata.h \
+ include/stdint.h
 interrupts.o: kernel/interrupts.c include/interrupts.h include/stdint.h \
  include/terminal.h include/util.h include/screen.h
 kernel.o: kernel/kernel.c include/util.h include/stdint.h include/pci.h \

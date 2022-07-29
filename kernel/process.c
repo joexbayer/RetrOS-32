@@ -90,8 +90,6 @@ void start_process(int id)
     }
     
     processes[id].instances[i] = add_pcb(processes[id].entry, processes[id].name);
-
-    twriteln("Process Started.");
 }
 
 void stop_process(char* name)

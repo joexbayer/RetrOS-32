@@ -52,21 +52,6 @@ void _main(uint32_t debug)
 	if(dev){
 		twrite("PCI Device 0x100E Found!\n");
 	}
-
-	char buf[512];
-	for (size_t i = 0; i < 255; i++)
-		buf[i] = i;
-	ata_write(buf, 1);
-
-
-	char buf2[512];
-	ata_read(buf2, 1);
-	for (size_t i = 0; i < 255; i++)
-	{
-		twritef("%d", buf2[i]);
-	}
-	
-
 	
 	bitmap_t b_test = create_bitmap(512);
 

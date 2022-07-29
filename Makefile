@@ -27,7 +27,7 @@ PROGRAMOBJ = bin/counter.o bin/shell.o bin/networking.o bin/dhcpd.o
 KERNELOBJ = bin/kernel_entry.o bin/kernel.o bin/terminal.o bin/pci.o \
 			bin/util.o bin/interrupts.o bin/irs_entry.o bin/timer.o \
 			bin/keyboard.o bin/screen.o bin/pcb.o bin/memory.o bin/e1000.o \
-			bin/sync.o bin/process.o bin/net.o bin/ata.o bin/bitmap.o bin/rtc.o bin/fs.o ${PROGRAMOBJ}
+			bin/sync.o bin/process.o bin/ata.o bin/bitmap.o bin/rtc.o bin/diskdev.o bin/net.o bin/fs.o ${PROGRAMOBJ}
 BOOTOBJ = bin/bootloader.o
 
 .PHONY: all new image clean boot net kernel grub
@@ -83,15 +83,15 @@ kernel: $(KERNELOBJ)
 
 # For assembling and compiling all .c and .s files.
 bin/%.o: */%.c
-	@echo [KERNEL] Compiling bin/$@
+	@echo [KERNEL] Compiling $@
 	@$(CC) -o $@ -c $< $(CCFLAGS)
 
 bin/%.o: */*/%.c
-	@echo [PROGRAM] Compiling bin/$@
+	@echo [PROGRAM] Compiling $@
 	@$(CC) -o $@ -c $< $(CCFLAGS)
 
 bin/%.o: */%.s
-	@echo [KERNEL] Compiling bin/$@
+	@echo [KERNEL] Compiling $@
 	@$(AS) -o $@ -c $< $(ASFLAGS)
 
 bin/net.o: ./net/*.c

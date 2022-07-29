@@ -15,6 +15,7 @@
 #include <interrupts.h>
 #include <memory.h>
 #include <util.h>
+#include <diskdev.h>
 
 static uint8_t* ata_driver_data;
 static struct ide_device ata_ide_device;
@@ -144,13 +145,13 @@ int __ata_write_sector(uint16_t *buf, int lba)
     return 0;
 }
 
-int ata_write(uint8_t *buf, int count)
+int ata_write(char *buf, uint32_t from, uint32_t count)
 {
-    unsigned long pos = 0;
+    unsigned long pos = from;
 
     CLI();
 
-    for (int i = 0; i < count; i++)
+    for (uint32_t i = 0; i < count; i++)
     {
         __ata_write_sector((uint16_t*) buf, pos + i);
         buf += 512;
@@ -162,14 +163,14 @@ int ata_write(uint8_t *buf, int count)
     return count;
 }
 
-int ata_read(uint8_t *buf, int numsects)
+int ata_read(char *buf, uint32_t from, uint32_t numsects)
 {
-	unsigned long pos = 0;
+	unsigned long pos = from;
     int rc = 0, read = 0;
 
     CLI();
 
-    for (int i = 0; i < numsects; i++)
+    for (uint32_t i = 0; i < numsects; i++)
     {
         rc = __ata_read_sector((char*) buf, pos + i);
         if (rc == -1)
@@ -238,6 +239,9 @@ void ata_ide_init()
          else
             // Device uses CHS or 28-bit Addressing:
             ata_ide_device.size   = *((unsigned int *)(ata_driver_data + ATA_IDENT_MAX_LBA));
+        
+
+        attach_disk_dev(&ata_read, &ata_write);
 	}
 
 }
