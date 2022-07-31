@@ -15,6 +15,7 @@
 #include <bitmap.h>
 #include <net/socket.h>
 #include <net/dns.h>
+#include <fs/fs.h>
 
 /* This functions always needs to be on top? */
 void _main(uint32_t debug) 
@@ -32,13 +33,16 @@ void _main(uint32_t debug)
 	init_sk_buffers();
 	init_arp();
 	init_sockets();
+	init_dns();
 
 	/* Programs defined in programs.h */
 	init_shell();
 	init_counter();
 	init_networking();
 	init_dhcpd();
-	init_dns();
+
+	init_fs();
+
 
 	init_timer(1);
 	/* Testing printing ints and hex */

@@ -18,7 +18,7 @@
 #include <diskdev.h>
 
 static uint8_t* ata_driver_data;
-static struct ide_device ata_ide_device;
+struct ide_device ata_ide_device;
 
 void ata_primary()
 {
@@ -237,7 +237,7 @@ void ata_ide_init()
             ata_ide_device.size   = *((unsigned int *)(ata_driver_data + ATA_IDENT_MAX_LBA));
         
 
-        attach_disk_dev(&ata_read, &ata_write);
+        attach_disk_dev(&ata_read, &ata_write, &ata_ide_device);
 	}
 
 }

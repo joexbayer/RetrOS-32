@@ -14,6 +14,7 @@
 #include <terminal.h>
 #include <timer.h>
 #include <sync.h>
+#include <diskdev.h>
 
 #define MEM_START 0x300000
 #define MEM_END 0xEFFFFF
@@ -45,12 +46,20 @@ void print_mem()
     uint32_t div_used = 0;
 	uint32_t div_main = 0;
 
+	int disk_used = disk_device.dev->size*512;
+	uint32_t div_disk = 0;
+
 	int used = (chunks_used*MEM_CHUNK);
 	int main = CHUNKS_SIZE*MEM_CHUNK;
 
     while (used >= 1024 && div_used < (sizeof SIZES / sizeof *SIZES)) {
         div_used++;   
         used /= 1024;
+    }
+
+	while (disk_used >= 1024 && div_disk < (sizeof SIZES / sizeof *SIZES)) {
+        div_disk++;   
+        disk_used /= 1024;
     }
 
 	while (main >= 1024 && div_main < (sizeof SIZES / sizeof *SIZES)) {
@@ -61,6 +70,8 @@ void print_mem()
 	if(div_main > 3 || div_main > 3)
 		return;
 
+
+	scrprintf(12, 0, "DISK: %d%s", disk_used ,SIZES[div_disk]);
 	scrprintf(30, 0, "MEM: %d%s / %d%s", used ,SIZES[div_used], main, SIZES[div_main]);
 }
 
@@ -74,7 +85,7 @@ void print_memory_status()
 	scrput(50, 0, 203, VGA_COLOR_LIGHT_GREY);
 	
 	scrprintf(1,0, "NETOS");
-	scrprintf(SCREEN_WIDTH-17, 0, "%d:%d:%d %d/%d/%d", time->hour, time->minute, time->second, time->day, time->month, time->year);
+	scrprintf(SCREEN_WIDTH-22, 0, "%d:%d:%d %d/%d/%d", time->hour, time->minute, time->second, time->day, time->month, time->year);
 
 	print_mem();
 
