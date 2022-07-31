@@ -50,7 +50,6 @@ struct ip_header {
 
 int ip_add_header(struct sk_buff* skb, uint32_t ip, uint8_t proto, uint32_t length);
 int ip_parse(struct sk_buff* skb);
-uint32_t ip_to_int(const char * ip);
 
 
 

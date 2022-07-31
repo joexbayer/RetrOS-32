@@ -9,7 +9,7 @@
  * 
  */
 
-#include <net/dhcpd.h>
+#include <net/dhcp.h>
 #include <process.h>
 #include <pcb.h>
 #include <net/socket.h>

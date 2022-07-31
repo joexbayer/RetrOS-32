@@ -9,7 +9,7 @@
  * 
  */
 #include <net/dns.h>
-#include <net/dhcpd.h>
+#include <net/dhcp.h>
 #include <net/socket.h>
 #include <sync.h>
 
@@ -56,6 +56,18 @@ static void __dns_name_compresion(uint8_t* request, char* host)
     *request++ = '\0';
 }
 
+static void __dns_add_cache(char* hostname, uint32_t ip)
+{
+    for (int i = 0; i < DNS_CACHE_ENTRIES; i++)
+    {
+        if(__dns_cache[i].ip == 0){
+            memcpy(__dns_cache[i].name, hostname, strlen(hostname));
+            __dns_cache[i].ip = ip;
+            return;
+        }
+    }
+}
+
 
 int gethostname(char* hostname)
 {
@@ -64,6 +76,9 @@ int gethostname(char* hostname)
         if(memcmp((uint8_t*) &__dns_cache[i].name,(uint8_t*) hostname, strlen(hostname)))
             return __dns_cache[i].ip;
 
+    
+    char hostname_save[40];
+    memcpy(hostname_save, hostname, strlen(hostname)+1);
     //acquire(&__dns_mutex);
 
     socket_t __dns_socket = socket(AF_INET, SOCK_DGRAM, 0);
@@ -91,7 +106,6 @@ int gethostname(char* hostname)
     int question_size = sizeof(struct dns_header) + (strlen((const char*)question)+1) + sizeof(struct dns_question);
  
     sendto(__dns_socket, (char*)buf, question_size, 0, (struct sockaddr*)&dest, sizeof(dest));
-    twritef("Sent DNS %d\n", question_size);
     int ret = recv(__dns_socket, buf, 2048, 0);
     if(ret <= 0)
         return 0;
@@ -110,12 +124,11 @@ int gethostname(char* hostname)
         break;
     }
 
-    twritef("DNS: %x name\n", ntohs(answer->name));
+    /*twritef("DNS: %x name\n", ntohs(answer->name));
     twritef("DNS: %x type\n",  ntohs(answer->type));
     twritef("DNS: %x _class\n",ntohs(answer->_class));
     twritef("DNS: %x ttl\n", ntohl(answer->ttl));
-    twritef("DNS: %x len\n", ntohs(answer->data_len));
-
+    twritef("DNS: %x len\n", ntohs(answer->data_len));*/
 
     unsigned char bytes[4];
     bytes[0] = (result >> 24) & 0xFF;
@@ -125,6 +138,8 @@ int gethostname(char* hostname)
 
     twritef("DNS (%d.%d.%d.%d)\n", bytes[3],bytes[2], bytes[1],bytes[0]);
     twritef("%s\n", hostname);
+
+    __dns_add_cache(hostname_save, result);
 
     close(__dns_socket);
 

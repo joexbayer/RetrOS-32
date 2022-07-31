@@ -38,5 +38,6 @@ void outportb(uint16_t portid, uint8_t value);
 void outportw(uint16_t portid, uint16_t value);
 void outportl(uint16_t portid, uint32_t value);
 
+int isdigit(char c);
 int rand(void);
 #endif

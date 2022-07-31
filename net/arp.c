@@ -10,7 +10,7 @@
  */
 
 #include <net/arp.h>
-#include <net/dhcpd.h>
+#include <net/dhcp.h>
 #include <terminal.h>
 
 #define MAX_ARP_ENTRIES 25

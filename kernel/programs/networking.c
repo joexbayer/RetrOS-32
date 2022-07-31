@@ -20,7 +20,7 @@
 #include <net/ipv4.h>
 #include <net/icmp.h>
 #include <net/socket.h>
-#include <net/dhcpd.h>
+#include <net/dhcp.h>
 
 #define MAX_OPEN_PORTS 45
 #define MAX_PACKET_SIZE 0x1000

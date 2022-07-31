@@ -16,11 +16,12 @@
 #include <process.h>
 
 #include <net/dns.h>
+#include <net/icmp.h>
 
 static uint8_t SHELL_POSITION = (SCREEN_HEIGHT)-1;
-static const uint8_t SHELL_MAX_SIZE = 25;
+static const uint8_t SHELL_MAX_SIZE = 50;
 static uint8_t shell_column = 0;
-static char shell_buffer[25];
+static char shell_buffer[50];
 static uint8_t shell_buffer_length = 0;
 
 static const char newline = '\n';
@@ -116,6 +117,12 @@ void exec_cmd()
 		char* hostname = shell_buffer+strlen("dig")+1;
 		hostname[strlen(hostname)-1] = 0;
 		gethostname(hostname);
+	}
+
+	if(strncmp("ping", shell_buffer, strlen("ping"))){
+		char* hostname = shell_buffer+strlen("ping")+1;
+		hostname[strlen(hostname)-1] = 0;
+		ping(hostname);
 	}
 
 	//twrite(shell_buffer);

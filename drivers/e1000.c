@@ -151,7 +151,6 @@ int e1000_receive(char* buffer, uint32_t size)
 	}
 
 	memcpy(buffer, rx_buf[next], length);
-	scrprintf(12, 14, "E1000 READ PACKET 0x%x, size %d", next, length);
 
 drop:
 	rx_desc_list[next].status = 0;
@@ -187,16 +186,12 @@ int e1000_transmit(char* buffer, uint32_t size)
 
 	E1000_DEVICE_SET(E1000_TDT) = (tail+1) % TX_SIZE;
 
-	scrprintf(12, 14, "E1000 SENT PACKET 0x%d, size %d", tail, size);
-
 	return size;
 }
 
 void e1000_callback()
 {
 	interrupts++;
-    scrprintf((SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)-1, (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)+3, "E1000: %d", interrupts);
-
 	net_packet_handler();
 
 	E1000_DEVICE_GET(E1000_ICR);

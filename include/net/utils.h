@@ -13,4 +13,6 @@ uint32_t htonl(uint32_t data);
 uint16_t ntohs(uint16_t data);
 uint16_t htons(uint16_t data);
 
+uint32_t ip_to_int (const char * ip);
+
 #endif /* UTIL_H */

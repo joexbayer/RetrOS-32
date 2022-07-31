@@ -61,3 +61,36 @@ uint16_t transport_checksum(uint32_t saddr, uint32_t daddr, uint8_t proto, uint8
     
     return checksum(data, ntohs(len), sum);
 }
+
+
+/*  Function from: https://www.lemoda.net/c/ip-to-integer/ */
+uint32_t ip_to_int (const char * ip)
+{
+    unsigned v = 0;
+    int i;
+    const char * start;
+
+    start = ip;
+    for (i = 0; i < 4; i++) {
+        char c;
+        int n = 0;
+        while (1) {
+            c = * start;
+            start++;
+            if (c >= '0' && c <= '9') {
+                n *= 10;
+                n += c - '0';
+            } else if ((i < 3 && c == '.') || i == 3) {
+                break;
+            } else {
+                return 0;
+            }
+        }
+        if (n >= 256) {
+            return 0;
+        }
+        v *= 256;
+        v += n;
+    }
+    return v;
+}

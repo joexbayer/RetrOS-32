@@ -23,7 +23,7 @@ struct sk_buff {
 
     struct netdev* netdevice;
 
-    union {
+    struct {
         struct ethernet_header* eth;
         struct arp_header* arp;
         struct ip_header* ip;

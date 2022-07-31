@@ -28,7 +28,7 @@ enum ASCII {
 static const char newline = '\n';
 
 #define TERMINAL_START (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)
-#define TERMINAL_WIDTH (SCREEN_WIDTH/3)+6
+#define TERMINAL_WIDTH 50
 #define PROCESS_WIDTH (SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)
 
  /*
@@ -60,10 +60,6 @@ void __terminal_ui_text()
 	for (size_t i = 0; i < strlen(term_str); i++)
 		scrput(i+2, TERMINAL_START, term_str[i], terminal_color);
 
-	const char* irq_str = "IRQs";
-	for (size_t i = 0; i < strlen(irq_str); i++)
-		scrput(i+PROCESS_WIDTH, TERMINAL_START, irq_str[i], terminal_color);
-
 	const char* exm_str = "PROCESSES";
 	for (size_t i = 0; i < strlen(exm_str); i++)
 		scrput(i+(PROCESS_WIDTH+(SCREEN_WIDTH/6)), TERMINAL_START, exm_str[i], terminal_color);
@@ -85,12 +81,6 @@ void __terminal_draw_lines()
 	for (size_t x = 0; x < SCREEN_WIDTH; x++)
 		scrput(x,TERMINAL_START, ASCII_HORIZONTAL_LINE, terminal_color);
 
-	/* Vertical lines for memory */
-	terminal_setcolor(VGA_COLOR_LIGHT_GREY);
-	for (size_t x = 0; x < SCREEN_HEIGHT; x++)
-		scrput(PROCESS_WIDTH-2, TERMINAL_START+x, ASCII_VERTICAL_LINE, terminal_color);
-
-	scrput(PROCESS_WIDTH-2, TERMINAL_START, ASCII_DOWN_INTERSECT, terminal_color);
 
 	/* Vertical lines for example */
 	for (size_t x = 0; x < SCREEN_HEIGHT; x++)

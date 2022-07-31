@@ -60,7 +60,8 @@ struct dns_query
 
 struct dns_cache
 {
-    char name[10];
+    char name[40];
+    uint32_t lease;
     uint32_t ip;
 };
 

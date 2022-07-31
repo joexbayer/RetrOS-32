@@ -9,6 +9,7 @@
  * 
  */
 #include <net/skb.h>
+#include <net/netdev.h>
 #include <sync.h>
 
 static struct sk_buff sk_buffers[MAX_SKBUFFERS];
@@ -20,6 +21,7 @@ void init_sk_buffers()
 	for (uint16_t i = 0; i < MAX_SKBUFFERS; i++)
 	{
 		sk_buffers[i].stage = UNUSED;
+		sk_buffers[i].netdevice = &current_netdev;
 	}
 }
 

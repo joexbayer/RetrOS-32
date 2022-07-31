@@ -28,16 +28,13 @@ void ata_secondary()
 {
 }
 
-void ide_select_drive(uint8_t bus, uint8_t i)
+static void __ide_set_drive(uint8_t bus, uint8_t i)
 {
 	if(bus == ATA_PRIMARY)
 		if(i == ATA_MASTER)
 			outportb(ATA_PRIMARY_IO + ATA_REG_HDDEVSEL, 0xA0);
-		else outportb(ATA_PRIMARY_IO + ATA_REG_HDDEVSEL, 0xB0);
-	else
-		if(i == ATA_MASTER)
-			outportb(ATA_SECONDARY_IO + ATA_REG_HDDEVSEL, 0xA0);
-		else outportb(ATA_SECONDARY_IO + ATA_REG_HDDEVSEL, 0xB0);
+
+    /* ELSE UNSUPPORTED. */
 }
 
 int ata_status_wait(int io_base, int timeout) {
@@ -77,14 +74,14 @@ int ata_wait(int io, int adv)
     return 0;
 }
 
-int __ata_read_sector(char *buf, int lba)
+static int __ata_read_sector(char *buf, int lba)
 {
     uint16_t io = ATA_PRIMARY_IO;
 
     uint8_t cmd = 0xE0;
     int errors = 0;
 
-try_a:
+try_again:
     outportb(io + ATA_REG_CONTROL, 0x02);
 
     ata_wait(io, 0);
@@ -102,7 +99,7 @@ try_a:
         if (errors > 4)
             return -1;
 
-        goto try_a;
+        goto try_again;
     }
 
     for (int i = 0; i < 256; i++) {
@@ -114,7 +111,7 @@ try_a:
     return 0;
 }
 
-int __ata_write_sector(uint16_t *buf, int lba)
+static int __ata_write_sector(uint16_t *buf, int lba)
 {
     uint16_t io = ATA_PRIMARY_IO;
 
@@ -166,7 +163,7 @@ int ata_write(char *buf, uint32_t from, uint32_t count)
 int ata_read(char *buf, uint32_t from, uint32_t numsects)
 {
 	unsigned long pos = from;
-    int rc = 0, read = 0;
+    int rc = 0;
 
     CLI();
 
@@ -176,7 +173,6 @@ int ata_read(char *buf, uint32_t from, uint32_t numsects)
         if (rc == -1)
             return -1;
         buf += 512;
-        read += 512;
     }
 
     STI();
@@ -192,7 +188,7 @@ void ata_ide_init()
 	ata_driver_data = alloc(512);
 
 	uint16_t io;
-	ide_select_drive(ATA_PRIMARY, ATA_MASTER);
+	__ide_set_drive(ATA_PRIMARY, ATA_MASTER);
 	io = ATA_PRIMARY_IO;
 
 	outportb(io + ATA_REG_SECCOUNT0, 0);

@@ -44,7 +44,7 @@ static void timer_callback()
 		if(time > 59){
 			time_min++;
 			time = 0;
-			if(time_min > 60){
+			if(time_min > 59){
 				time_hour++;
 				time_min = 0;
 			}
@@ -52,7 +52,6 @@ static void timer_callback()
 	}
 
 	tick++;
-	scrprintf((SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)-1, (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)+1, "UP: %d:%d:%d ", time_hour, time_min, time);
 	if(current_running != NULL)
 	{
 		EOI(32);

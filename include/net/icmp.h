@@ -15,6 +15,18 @@ struct icmp {
     uint16_t sequence;
 } __attribute__((packed));
 
+
+#define ICMP_HTONS(pkt) \
+    (pkt)->csum = htons((pkt)->csum); \
+    (pkt)->id = htons((pkt)->id); \
+    (pkt)->sequence = htons((pkt)->sequence);
+
+#define ICMP_NTOHS(pkt) \
+    (pkt)->csum = ntohs((pkt)->csum); \
+    (pkt)->id = ntohs((pkt)->id); \
+    (pkt)->sequence = ntohs((pkt)->sequence);
+
 int icmp_parse(struct sk_buff* skb);
+void ping(char* hostname);
 
 #endif /* ICMP_H */

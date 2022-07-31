@@ -39,8 +39,6 @@ int udp_send(struct sk_buff* skb, char* data, uint32_t sip, uint32_t dip, uint16
 	
 	skb->stage = NEW_SKB;
 	skb->action = SEND;
-	twritef("Creating UDP. size: %d\n", skb->len);
-
 	return 1;
 }
 
@@ -63,7 +61,6 @@ int udp_parse(struct sk_buff* skb){
 	int ret = udp_deliver_packet(skb->hdr.ip->daddr, skb->hdr.udp->destport, (char*)skb->data, payload_size);
 	if(ret <= 0)
 		twriteln("[Warning] socket buffer full!!");
-
-
+		
     return 1;
 }

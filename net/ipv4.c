@@ -17,6 +17,8 @@
 #include <net/ethernet.h>
 #include <net/routing.h>
 
+#include <net/dhcp.h>
+
 /**
  * @brief Helper function to send IP packet, attaching ethernet header
  * and setting skb to be sent.
@@ -34,7 +36,6 @@ int __ip_send(struct ip_header* ihdr, struct sk_buff* skb, uint32_t dip)
 
     skb->proto = IP;
 
-	twriteln("Creating Ethernet header.");
     uint32_t next_hop = route(dip);
 	int ret = ethernet_add_header(skb, next_hop);
 	if(ret <= 0){
@@ -65,7 +66,7 @@ int ip_add_header(struct sk_buff* skb, uint32_t ip, uint8_t proto, uint32_t leng
     IP_HEADER_CREATE(hdr, proto, length);
 
     /* Set IPs */
-    hdr.saddr = BROADCAST_IP; /* TODO */
+    hdr.saddr = dhcp_get_ip(); /* TODO */
     hdr.daddr = ip;
 
     IP_HTONL(&hdr);
@@ -100,8 +101,8 @@ int ip_parse(struct sk_buff* skb)
     IP_NTOHL(hdr);
     skb->data = skb->data+(skb->hdr.ip->ihl*4);
 
-    if(BROADCAST_IP != ntohl(skb->hdr.ip->daddr)){
-        // check if its current IP
+    if(BROADCAST_IP != ntohl(skb->hdr.ip->daddr) && ntohl(skb->hdr.ip->daddr) != (uint32_t)dhcp_get_ip()){
+        twritef("IP mismatch: %d %d\n", skb->hdr.ip->daddr, dhcp_get_ip());
         return 0; /* Currently only accept broadcast packets. */
     }
 
@@ -130,36 +131,4 @@ void print_ip(uint32_t ip)
     bytes[2] = (ip >> 8) & 0xFF;
     bytes[3] = ip & 0xFF;   
     twritef("%d.%d.%d.%d\n", bytes[3], bytes[2], bytes[1], bytes[0]); 
-}
-
-/*  Function from: https://www.lemoda.net/c/ip-to-integer/ */
-uint32_t ip_to_int (const char * ip)
-{
-    unsigned v = 0;
-    int i;
-    const char * start;
-
-    start = ip;
-    for (i = 0; i < 4; i++) {
-        char c;
-        int n = 0;
-        while (1) {
-            c = * start;
-            start++;
-            if (c >= '0' && c <= '9') {
-                n *= 10;
-                n += c - '0';
-            } else if ((i < 3 && c == '.') || i == 3) {
-                break;
-            } else {
-                return 0;
-            }
-        }
-        if (n >= 256) {
-            return 0;
-        }
-        v *= 256;
-        v += n;
-    }
-    return v;
 }
