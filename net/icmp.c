@@ -13,22 +13,38 @@ void icmp_print(struct sk_buff* skb)
     bytes[1] = (skb->hdr.ip->saddr >> 8) & 0xFF;
     bytes[0] = skb->hdr.ip->saddr & 0xFF;  
 
-    twritef("ICMP: %d from to %d.%d.%d.%d: icmp_seq= %d ttl=64 protocol: IPv4\n", skb->hdr.ip->len - skb->hdr.ip->ihl*4, bytes[3], bytes[2], bytes[1], bytes[0], skb->hdr.icmp->sequence/256);
+    twritef("ICMP: %d from %d.%d.%d.%d: icmp_seq= %d ttl=64 protocol: IPv4\n", skb->hdr.ip->len - skb->hdr.ip->ihl*4, bytes[3], bytes[2], bytes[1], bytes[0], skb->hdr.icmp->sequence/256);
 }
 
 void icmp_handle(struct sk_buff* skb)
 {
     // ICMP reply setup
+    icmp_print(skb);
+
+    if(skb->hdr.icmp->type != ICMP_V4_ECHO)
+        return;
+
     skb->hdr.icmp->type = ICMP_REPLY;
     skb->hdr.icmp->csum = 0;
     skb->hdr.icmp->csum = checksum(skb->hdr.icmp, skb->len, 0);
 
-    icmp_print(skb);
-
     struct icmp response;
     memcpy(&response, &skb->hdr.icmp, sizeof(struct icmp));
 
-    skb->proto = ICMPV4;
+    struct sk_buff* skb_new = get_skb();
+    ALLOCATE_SKB(skb_new);
+    skb_new->stage = IN_PROGRESS;
+
+    if(ip_add_header(skb_new, skb->hdr.ip->saddr, ICMPV4, sizeof(struct icmp)) <= 0)
+	    return -1;
+
+    memcpy(skb->data, &response, sizeof(struct icmp));
+
+	skb->len += sizeof(struct icmp);
+	skb->data += sizeof(struct icmp);
+	
+	skb->stage = NEW_SKB;
+	skb->action = SEND;
 }  
 
 int icmp_response()
