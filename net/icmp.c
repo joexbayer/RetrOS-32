@@ -13,12 +13,14 @@ void icmp_print(struct sk_buff* skb)
     bytes[1] = (skb->hdr.ip->saddr >> 8) & 0xFF;
     bytes[0] = skb->hdr.ip->saddr & 0xFF;  
 
-    twritef("ICMP: %d bytes to %d.%d.%d.%d: icmp_seq= %d ttl=64 protocol: IPv4\n", skb->hdr.ip->len - skb->hdr.ip->ihl*4, bytes[3], bytes[2], bytes[1], bytes[0], skb->hdr.icmp->sequence/256);
+    twritef("ICMP: %d from to %d.%d.%d.%d: icmp_seq= %d ttl=64 protocol: IPv4\n", skb->hdr.ip->len - skb->hdr.ip->ihl*4, bytes[3], bytes[2], bytes[1], bytes[0], skb->hdr.icmp->sequence/256);
 }
 
 void icmp_handle(struct sk_buff* skb)
 {
 
+    if(skb->hdr.icmp->type == ICMP_REPLY)
+        return;
     // ICMP reply setup
     skb->hdr.icmp->type = ICMP_REPLY;
     skb->hdr.icmp->csum = 0;

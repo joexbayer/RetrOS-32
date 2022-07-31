@@ -110,41 +110,54 @@ int gethostname(char* hostname)
     if(ret <= 0)
         return 0;
     
-    struct dns_answer* answer = (struct dns_answer*) &buf[question_size];
-    
-    uint32_t result;
-    switch (ntohs(answer->data_len))
+    struct dns_answer* answer;
+    int last_length = 0;
+
+    struct dns_header* dns = (struct dns_header*) &buf;
+    for (int i = 0; i < dns->ans_count; i++)
     {
-    case 4:
-        result = *((uint32_t*) &buf[question_size+12]);
-        break;
-    
-    default:
-        result = 0;
-        break;
+        int next = (sizeof(struct dns_answer)*i) + last_length;
+        answer = (struct dns_answer*) &buf[question_size+next];
+        last_length = ntohs(answer->data_len);
+        
+        if(answer->type != ntohs(DNS_T_A))
+            continue;
+
+        uint32_t result;
+        switch (ntohs(answer->data_len))
+        {
+        case 4:
+            result = *((uint32_t*) &buf[question_size+12+next]);
+            break;
+        
+        default:
+            result = 0;
+            break;
+        }
+
+        /*twritef("DNS: %x name\n", ntohs(answer->name));
+        twritef("DNS: %x type\n",  ntohs(answer->type));
+        twritef("DNS: %x _class\n",ntohs(answer->_class));
+        twritef("DNS: %x ttl\n", ntohl(answer->ttl));
+        twritef("DNS: %x len\n", ntohs(answer->data_len));*/
+
+        unsigned char bytes[4];
+        bytes[0] = (result >> 24) & 0xFF;
+        bytes[1] = (result >> 16) & 0xFF;
+        bytes[2] = (result >> 8) & 0xFF;
+        bytes[3] = result & 0xFF;
+
+        twritef("DNS (%s at %d.%d.%d.%d)\n", hostname, bytes[3],bytes[2], bytes[1],bytes[0]);
+
+        __dns_add_cache(hostname_save, result);
+
+        close(__dns_socket);
+
+        //release(&__dns_mutex);
+
+        return result;
     }
-
-    /*twritef("DNS: %x name\n", ntohs(answer->name));
-    twritef("DNS: %x type\n",  ntohs(answer->type));
-    twritef("DNS: %x _class\n",ntohs(answer->_class));
-    twritef("DNS: %x ttl\n", ntohl(answer->ttl));
-    twritef("DNS: %x len\n", ntohs(answer->data_len));*/
-
-    unsigned char bytes[4];
-    bytes[0] = (result >> 24) & 0xFF;
-    bytes[1] = (result >> 16) & 0xFF;
-    bytes[2] = (result >> 8) & 0xFF;
-    bytes[3] = result & 0xFF;
-
-    twritef("DNS (%d.%d.%d.%d)\n", bytes[3],bytes[2], bytes[1],bytes[0]);
-    twritef("%s\n", hostname);
-
-    __dns_add_cache(hostname_save, result);
-
-    close(__dns_socket);
-
-    //release(&__dns_mutex);
-
-    return result;
+    return 0;
+    
 
 }
