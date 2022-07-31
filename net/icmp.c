@@ -18,9 +18,6 @@ void icmp_print(struct sk_buff* skb)
 
 void icmp_handle(struct sk_buff* skb)
 {
-
-    if(skb->hdr.icmp->type == ICMP_REPLY)
-        return;
     // ICMP reply setup
     skb->hdr.icmp->type = ICMP_REPLY;
     skb->hdr.icmp->csum = 0;
