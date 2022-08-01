@@ -186,7 +186,7 @@ void terminal_setcolor(uint8_t color)
  * @param char c character to put on screen.
  * @return void
  */
-void __terminal_putchar(char c)
+void terminal_putchar(char c)
 {
 	unsigned char uc = c;
 
@@ -221,7 +221,7 @@ void terminal_write(const char* data, size_t size)
 	//__terminal_putchar('<');
 	//__terminal_putchar(' ');
 	for (size_t i = 0; i < size; i++)
-		__terminal_putchar(data[i]);
+		terminal_putchar(data[i]);
 }
 
 /**
@@ -238,7 +238,7 @@ void twrite(const char* data)
 void twriteln(const char* data)
 {
 	twrite(data);
-	__terminal_putchar('\n');
+	terminal_putchar('\n');
 }
 
 #define MAX_FMT_STR_SIZE 50
@@ -282,7 +282,7 @@ int32_t twritef(char* fmt, ...)
 						break;
 					case 'c': ;
 						char char_arg = (char)va_arg(args, int);
-						__terminal_putchar(char_arg);
+						terminal_putchar(char_arg);
 						x_offset++;
 						break;
 					
@@ -301,7 +301,7 @@ int32_t twritef(char* fmt, ...)
 				__terminal_scroll();
 				break;
 			default:  
-				__terminal_putchar(*fmt);
+				terminal_putchar(*fmt);
 				x_offset++;
 			}
         fmt++;

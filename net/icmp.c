@@ -13,7 +13,7 @@ void icmp_print(struct sk_buff* skb)
     bytes[1] = (skb->hdr.ip->saddr >> 8) & 0xFF;
     bytes[0] = skb->hdr.ip->saddr & 0xFF;  
 
-    twritef("ICMP: %d from %d.%d.%d.%d: icmp_seq= %d ttl=64 protocol: IPv4\n", skb->hdr.ip->len - skb->hdr.ip->ihl*4, bytes[3], bytes[2], bytes[1], bytes[0], skb->hdr.icmp->sequence/256);
+    twritef("Ping reply from %d.%d.%d.%d: icmp_seq= %d ttl=64\n", bytes[3], bytes[2], bytes[1], bytes[0], skb->hdr.icmp->sequence/256);
 }
 
 void icmp_handle(struct sk_buff* skb)

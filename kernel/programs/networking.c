@@ -176,7 +176,6 @@ void main()
             break;
         case SEND:
             net_handle_send(skb);
-            twriteln("Sending Packet!");
             break;
         default:
             break;
