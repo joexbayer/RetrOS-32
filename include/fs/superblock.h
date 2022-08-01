@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <bitmap.h>
+#include <fs/inode.h>
 
 #define BLOCK_SIZE 512
 #define MAGIC 0xfeed
@@ -14,6 +15,8 @@ struct superblock {
     uint32_t ninodes;
     bitmap_t inode_map;
     bitmap_t block_map;
+
+    inode_t root_inode;
 };
 
 /*

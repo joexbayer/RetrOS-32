@@ -16,6 +16,8 @@ struct inode {
     uint8_t blocks[NDIRECT];   // Data block addresses
 };
 
+typedef uint16_t inode_t;
+
 #define INODES_PER_BLOCK (512 / sizeof(struct inode))
 #define INODE_BLOCK(i) ((i) / INODES_PER_BLOCK)
 

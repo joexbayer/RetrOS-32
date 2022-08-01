@@ -24,7 +24,7 @@ endif
 
 OUTPUTDIR = ../bin/
 
-NETOBJS = fs.o
+NETOBJS = fs.o inode.o
 
 .PHONY: all new fs clean bindir
 all: new

@@ -12,7 +12,6 @@
 #define FS_BLOCK_BMAP_LOCATION FS_INODE_BMAP_LOCATION+1
 
 static struct superblock superblock;
-static struct inode __inode_cache[10];
 
 int init_fs()
 {
