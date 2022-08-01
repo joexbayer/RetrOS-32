@@ -5,7 +5,11 @@
 #include <terminal.h>
 #include <bitmap.h>
 
+#include <util.h>
+
 #define FS_START_LOCATION 100
+#define FS_INODE_BMAP_LOCATION FS_START_LOCATION+1
+#define FS_BLOCK_BMAP_LOCATION FS_INODE_BMAP_LOCATION+1
 
 static struct superblock superblock;
 static struct inode __inode_cache[10];
@@ -13,13 +17,19 @@ static struct inode __inode_cache[10];
 int init_fs()
 {
     /* Read superblock and check magic. */
-    char buf[BLOCK_SIZE];
-    disk_device.read(&buf, FS_START_LOCATION, 1);
-    memcpy(&superblock, buf, sizeof(struct superblock));
+    read_block_offset((char*) &superblock, sizeof(struct superblock), 0, FS_START_LOCATION);
     if(superblock.magic != MAGIC){
         twriteln("FS: No superblock found.");
         mkfs();
+        return 1;
     }
+}
+
+void __superblock_writeback()
+{
+    write_block_offset((char*) &superblock, sizeof(struct superblock), 0, FS_START_LOCATION);
+    write_block_offset((char*) superblock.inode_map, get_bitmap_size(superblock.ninodes), 0, FS_INODE_BMAP_LOCATION);
+    write_block_offset((char*) superblock.block_map, get_bitmap_size(superblock.nblocks), 0, FS_BLOCK_BMAP_LOCATION);
 }
 
 void mkfs()
@@ -35,4 +45,6 @@ void mkfs()
     twritef("FS: Creating Filesystem with size: %d\n", superblock.nblocks*512);
     twritef("FS: With a total of %d inodes\n", superblock.ninodes);
     twritef("FS: Max file size: %d bytes\n", NDIRECT*512);
+
+    __superblock_writeback();
 }

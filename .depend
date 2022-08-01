@@ -16,7 +16,7 @@ fs.o: fs/fs.c include/fs/fs.h include/fs/superblock.h include/stdint.h \
  include/bitmap.h include/fs/inode.h include/diskdev.h include/ata.h \
  include/terminal.h include/util.h
 diskdev.o: kernel/diskdev.c include/diskdev.h include/ata.h \
- include/stdint.h
+ include/stdint.h include/util.h
 interrupts.o: kernel/interrupts.c include/interrupts.h include/stdint.h \
  include/terminal.h include/util.h include/screen.h
 kernel.o: kernel/kernel.c include/util.h include/stdint.h include/pci.h \
