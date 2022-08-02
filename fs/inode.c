@@ -37,7 +37,33 @@ static inline int new_block(struct superblock* sb)
     return get_free_bitmap(sb->block_map, sb->nblocks);
 }
 
-int inode_add_directory_entry(struct directory_entry* entry, struct inode* inode);
+struct inode* inode_get(inode_t inode)
+{
+    for (int i = 0; i < INODE_CACHE_SIZE; i++)
+        if(__inode_cache[i].inode == inode)
+            return &__inode_cache[i];
+
+    /* Load inode from disk. */
+    return NULL;
+}
+
+int inode_add_directory_entry(struct directory_entry* entry, struct inode* inode, struct superblock* sb)
+{
+}
+
+int inode_read(char* buf, int size, struct inode* inode)
+{
+    if(size > MAX_FILE_SIZE || size > inode->size || (size + inode->pos) > inode->size)
+        return -1;
+    
+    int block = (size+inode->pos) / BLOCK_SIZE;
+    if(inode->blocks[block] == 0)
+        return -1;
+    
+    read_block_offset(buf, size, inode->pos, block);
+
+    return size;
+}
 
 int inode_write(char* buf, int size, struct inode* inode, struct superblock* sb)
 {
@@ -61,19 +87,22 @@ int inode_write(char* buf, int size, struct inode* inode, struct superblock* sb)
     /* size + pos < 512 bad*/
 
     /**/
+
+    return size;
 }
 
-int alloc_inode(struct superblock* sb)
+inode_t alloc_inode(struct superblock* sb, char TYPE)
 {
+    if(TYPE != FS_FILE && TYPE != FS_DIRECTORY)
+        return -1;
+    
     inode_t inode = new_inode(sb);
 
     struct inode inode_disk = {
         .inode = inode,
         .size = BLOCK_SIZE,
-        .type = FS_DIRECTORY
+        .type = TYPE
     };
 
-
-
-
+    __inode_cache_insert(&inode_disk);
 }

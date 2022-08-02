@@ -13,8 +13,11 @@ timer.o: drivers/timer.c include/timer.h include/stdint.h include/rtc.h \
  include/screen.h include/util.h include/terminal.h include/interrupts.h \
  include/pcb.h
 fs.o: fs/fs.c include/fs/fs.h include/fs/superblock.h include/stdint.h \
- include/bitmap.h include/fs/inode.h include/diskdev.h include/ata.h \
- include/terminal.h include/util.h
+ include/bitmap.h include/fs/inode.h include/fs/directory.h \
+ include/diskdev.h include/ata.h include/terminal.h include/util.h
+inode.o: fs/inode.c include/fs/inode.h include/stdint.h \
+ include/fs/superblock.h include/bitmap.h include/fs/directory.h \
+ include/util.h include/diskdev.h include/ata.h
 diskdev.o: kernel/diskdev.c include/diskdev.h include/ata.h \
  include/stdint.h include/util.h
 interrupts.o: kernel/interrupts.c include/interrupts.h include/stdint.h \

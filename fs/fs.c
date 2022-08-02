@@ -1,6 +1,7 @@
 #include <fs/fs.h>
 #include <fs/superblock.h>
 #include <fs/inode.h>
+#include <fs/directory.h>
 #include <diskdev.h>
 #include <terminal.h>
 #include <bitmap.h>
@@ -12,6 +13,8 @@
 #define FS_BLOCK_BMAP_LOCATION FS_INODE_BMAP_LOCATION+1
 
 static struct superblock superblock;
+static struct inode root;
+static struct inode current;
 
 int init_fs()
 {
@@ -46,4 +49,25 @@ void mkfs()
     twritef("FS: Max file size: %d bytes\n", NDIRECT*512);
 
     __superblock_sync();
+
+    inode_t root_inode = alloc_inode(&superblock, FS_DIRECTORY);
+    struct inode* root = inode_get(root_inode);
+
+    struct directory_entry self = {
+        .inode = root_inode,
+        .name = "."
+    };
+
+    struct directory_entry back = {
+        .inode = root_inode,
+        .name = ".."
+    };
+
+    inode_write(&back, sizeof(struct directory_entry), root, &superblock);
+    inode_write(&self, sizeof(struct directory_entry), root, &superblock);
+}
+
+void ls(char* path)
+{
+
 }

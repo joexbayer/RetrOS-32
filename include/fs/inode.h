@@ -24,4 +24,10 @@ struct inode {
 #define INODES_PER_BLOCK (512 / sizeof(struct inode))
 #define INODE_BLOCK(i) ((i) / INODES_PER_BLOCK)
 
+#include <fs/superblock.h>
+
+int inode_write(char* buf, int size, struct inode* inode, struct superblock* sb);
+inode_t alloc_inode(struct superblock* sb, char TYPE);
+struct inode* inode_get(inode_t inode);
+
 #endif /* __inode_h */
