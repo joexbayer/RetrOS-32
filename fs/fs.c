@@ -24,7 +24,7 @@ int init_fs()
     }
 }
 
-void __superblock_writeback()
+void __superblock_sync()
 {
     write_block_offset((char*) &superblock, sizeof(struct superblock), 0, FS_START_LOCATION);
     write_block_offset((char*) superblock.inode_map, get_bitmap_size(superblock.ninodes), 0, FS_INODE_BMAP_LOCATION);
@@ -45,5 +45,5 @@ void mkfs()
     twritef("FS: With a total of %d inodes\n", superblock.ninodes);
     twritef("FS: Max file size: %d bytes\n", NDIRECT*512);
 
-    __superblock_writeback();
+    __superblock_sync();
 }
