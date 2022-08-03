@@ -12,6 +12,37 @@ _start:
     cli
     call _main
 
+syscall_return_val:
+  .long	0
+.global _syscall_entry
+_syscall_entry:
+    cli
+    push $0
+	push $48
+    pusha
+
+	pushl	%edx	/* Arg 3 */
+    pushl	%ecx	/* Arg 2 */
+    pushl	%ebx	/* Arg 1 */
+    pushl	%eax	/* Syscall number */
+
+    call system_call
+    movl	%eax, (syscall_return_val)
+	
+    popl	%edx	/* Arg 3 */
+    popl	%ecx	/* Arg 2 */
+    popl	%ebx	/* Arg 1 */
+    popl	%eax	/* Syscall number */
+    
+    popa    
+    
+    movl	(syscall_return_val), %eax
+
+    add $8, %esp
+    iret
+
+
+
 .global _context_switch
 _context_switch:
     movl current_running, %eax

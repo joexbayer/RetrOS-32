@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define ISR_LINES	48
+#define ISR_LINES	49
 #define PIC1		0x20		/* IO base address for master PIC */
 #define PIC2		0xA0		/* IO base address for slave PIC */
 #define PIC1_DATA	(PIC1+1)
@@ -22,7 +22,8 @@ struct registers
 };
 
 void init_interrupts();
-
+int invoke_syscall(int i, int arg1, int arg2, int arg3);
+void _syscall_entry(void);
 
 typedef void (*isr_t)();
 
@@ -63,6 +64,8 @@ extern void isr44(struct registers*);
 extern void isr45(struct registers*);
 extern void isr46(struct registers*);
 extern void isr47(struct registers*);
+
+int system_call(int index, int arg1, int arg2, int arg3);
 
 void isr_handler(struct registers regs);
 void isr_install(size_t i, void (*handler)());

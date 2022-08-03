@@ -46,7 +46,6 @@ struct sk_buff {
 
 #define MAX_SKBUFFERS 0x200
 
-
 void init_sk_buffers();
 struct sk_buff* get_skb();
 struct sk_buff* next_skb();

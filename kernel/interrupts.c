@@ -2,6 +2,7 @@
  * @file interrupts.c
  * @author Joe Bayer (joexbayer)
  * @brief Handles installing, calling and handling of interrupts 
+ * @see http://www.jamesmolloy.co.uk/tutorial_html/4.-The%20GDT%20and%20IDT.html
  * @version 0.1
  * @date 2022-06-01
  * 
@@ -15,10 +16,40 @@
 static struct idt_entry idt_entries[IDT_ENTRIES];
 static struct idt_ptr   idt;
 
-/*
-	Interrupts , followed tutorial:
-	http://www.jamesmolloy.co.uk/tutorial_html/4.-The%20GDT%20and%20IDT.html
-*/
+/* TODO: Move to own file? */
+typedef int (*syscall_t) ();
+syscall_t syscall[10];
+
+int invoke_syscall(int i, int arg1, int arg2, int arg3)
+{
+    int ret;
+
+    asm volatile ("int $48" /* 48 = 0x30 */
+                  : "=a" (ret)
+                  : "%0" (i), "b" (arg1), "c" (arg2), "d" (arg3));
+    return ret;
+}
+
+void add_system_call(int index, syscall_t fn)
+{
+	syscall[index] = fn;
+}
+
+int system_call(int index, int arg1, int arg2, int arg3)
+{	
+	twritef("%d %d %d %d\n", index, arg1, arg2,arg3);
+	EOI(48);
+	return 99;
+
+	if(index < 0)
+		return -1;
+
+	/* Call system call function based on index. */
+	syscall_t fn = syscall[index];
+	int ret = fn(arg1, arg2, arg3);
+
+	return ret;
+}
 
 
 /* Handlers, default 0, will be installed when needed. */
@@ -85,6 +116,7 @@ static void init_idt()
 	{
 		idt_set_gate(i, (uint32_t) irqs[i-32] , 0x08, 0x8E); // PIT timer
 	}
+	idt_set_gate(48, &_syscall_entry, 0x08, 0x8E);
 
 
 	idt_flush((uint32_t)&idt);

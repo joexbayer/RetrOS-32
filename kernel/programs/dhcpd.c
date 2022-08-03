@@ -110,21 +110,19 @@ static int __dhcp_send_discovery(socket_t socket)
     int optoff = 0;
     int opt1 = 1;
     int opt0 = 0;
-    struct dhcp* dhcp_disc = alloc(sizeof(struct dhcp));
-    DHCP_DISCOVERY((dhcp_disc));
+    struct dhcp dhcp_disc;
+    DHCP_DISCOVERY((&dhcp_disc));
 
-    optoff += __dhcp_add_option(dhcp_disc, optoff,  53, 1, (uint8_t *) &opt1);
-    optoff += __dhcp_add_option(dhcp_disc, optoff, 255, 0, (uint8_t *) &opt0);
+    optoff += __dhcp_add_option(&dhcp_disc, optoff,  53, 1, (uint8_t *) &opt1);
+    optoff += __dhcp_add_option(&dhcp_disc, optoff, 255, 0, (uint8_t *) &opt0);
 
-    twritef("%d %d\n", optoff, sizeof(*dhcp_disc));
+    twritef("%d %d\n", optoff, sizeof(dhcp_disc));
 
     struct sockaddr_in addr;
     addr.sin_port = htons(DHCP_DEST_PORT);
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = BROADCAST_IP;
-    int ret = sendto(socket, dhcp_disc, sizeof(*dhcp_disc), 0, (struct sockaddr*) &addr, 0);
-
-    free(dhcp_disc);
+    int ret = sendto(socket, &dhcp_disc, sizeof(dhcp_disc), 0, (struct sockaddr*) &addr, 0);
 
     return ret;
 }
@@ -140,22 +138,20 @@ static int __dhcp_send_request(socket_t socket)
     int optoff = 0;
     int opt3 = 3;
     int opt0 = 0;
-    struct dhcp* dhcp_req = alloc(sizeof(struct dhcp));
-    DHCP_REQUEST(dhcp_req, dhcp_state.gateway, dhcp_state.ip);
+    struct dhcp dhcp_req;
+    DHCP_REQUEST((&dhcp_req), dhcp_state.gateway, dhcp_state.ip);
 
-    optoff  += __dhcp_add_option(dhcp_req, optoff, 53,  1, (uint8_t *) &opt3);
-    optoff  += __dhcp_add_option(dhcp_req, optoff, 50,  4, (uint8_t *) &dhcp_state.ip);
-    optoff  += __dhcp_add_option(dhcp_req, optoff, 54,  4, (uint8_t *) &dhcp_state.gateway);
-    optoff  += __dhcp_add_option(dhcp_req, optoff, 255, 0, (uint8_t *) &opt0);
+    optoff  += __dhcp_add_option(&dhcp_req, optoff, 53,  1, (uint8_t *) &opt3);
+    optoff  += __dhcp_add_option(&dhcp_req, optoff, 50,  4, (uint8_t *) &dhcp_state.ip);
+    optoff  += __dhcp_add_option(&dhcp_req, optoff, 54,  4, (uint8_t *) &dhcp_state.gateway);
+    optoff  += __dhcp_add_option(&dhcp_req, optoff, 255, 0, (uint8_t *) &opt0);
 
     struct sockaddr_in addr;
     addr.sin_port = htons(DHCP_DEST_PORT);
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = BROADCAST_IP;
 
-    int ret = sendto(socket, dhcp_req, sizeof(*dhcp_req), 0, (struct sockaddr*) &addr, 0);
-
-    free(dhcp_req);
+    int ret = sendto(socket, &dhcp_req, sizeof(dhcp_req), 0, (struct sockaddr*) &addr, 0);
 
     return ret;
 }
@@ -209,7 +205,6 @@ int dhcp_get_gw()
 
 void dhcpd()
 {
-
     int ret;
     /* Create and bind DHCP socket to DHCP_SOURCE_PORT and INADDR_ANY. */
     socket_t dhcp_socket = socket(AF_INET, SOCK_DGRAM, 0);
@@ -252,7 +247,10 @@ void dhcpd()
     }
          
 
+    int rest = invoke_syscall(0, 1, 2, 3);
     twriteln("DHCP done!");
+    twriteln("LOL");
+    twritef("RET: %d\n", rest);
 
     close(dhcp_socket);
     
