@@ -39,11 +39,8 @@ void pcb_function()
 
 void gensis()
 {
-    char buf[256];
-    char buf1[256];
     while(1){
-        scrprintf(5, 5, "0x%x - 0x%x, %d\n", buf, buf1, buf1-buf);
-        yield();
+        
     }
 }
 
@@ -268,8 +265,8 @@ void init_pcbs()
     pcbs[0].next = &pcbs[0];
     pcbs[0].prev = &pcbs[0];
 
-    //int ret = add_pcb(&gensis, "Gensis");
-    //if(ret < 0) return; // error
+    int ret = add_pcb(&gensis, "Gensis");
+    if(ret < 0) return; // error
 
     //ret = add_pcb(&gensis2, "Adam");
     //if(ret < 0) return; // error

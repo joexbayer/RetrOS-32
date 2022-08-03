@@ -172,6 +172,12 @@ void shell_put(char c)
 
 void shell_main()
 {
+	while (1)
+	{
+		/* code */
+	}
+	
+
 	sleep(2);
 	while(1)
 	{

@@ -26,25 +26,23 @@ void _main()
 	init_paging();
 	init_interrupts();
 	CLI();
-	//init_keyboard();
-	//init_pcbs();
-	//ata_ide_init();
+	init_keyboard();
+	init_pcbs();
+	ata_ide_init();
 
-	//init_pci();
-	//init_sk_buffers();
-	//init_arp();
-	//init_sockets();
-	//init_dns();
+	init_pci();
+	init_sk_buffers();
+	init_arp();
+	init_sockets();
+	init_dns();
 
 	/* Programs defined in programs.h */
-	//init_shell();
-	//init_counter();
-	//init_networking();
-	//init_dhcpd();
+	init_shell();
+	init_counter();
+	init_networking();
+	init_dhcpd();
 
-	//init_fs();
-
-
+	init_fs();
 	init_timer(1);
 	/* Testing printing ints and hex */
 	//char test[1000];
@@ -64,17 +62,11 @@ void _main()
 	//start_process(0); // SHELL
 	//start_process(2); // Networking
 
-	loadPageDirectory(kernel_page_dir);
+	load_page_directory(kernel_page_dir);
     scrprintf(0, 10, "Kernal page: %x", kernel_page_dir);
-	enablePaging();
+	enable_paging();
 
 	STI();
-	while (1)
-	{
-		/* code */
-	}
-	
-	
 	start_tasks();
 
 	while(1){};

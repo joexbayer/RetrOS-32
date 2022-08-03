@@ -51,6 +51,14 @@ int system_call(int index, int arg1, int arg2, int arg3)
 	return ret;
 }
 
+int page_fault_interrupt(unsigned long cr2, unsigned long err)
+{
+	CLI();
+	scrprintf(10, 10, "EXCEPTION 14!!!");
+	while(1);
+	
+}
+
 
 /* Handlers, default 0, will be installed when needed. */
 static void (*handlers[ISR_LINES])() = { 0 };
@@ -98,12 +106,6 @@ static void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags
 	idt_entries[num].flags   = flags;
 }
 
-void test_t(){
-	CLI();
-	scrprintf(10, 10, "EXCEPTION 14!!!");
-	while(1);
-}
-
 /* TODO: Setup exceptions. */
 
 static void init_idt()
@@ -124,7 +126,7 @@ static void init_idt()
 		idt_set_gate(i, (uint32_t) irqs[i-32] , 0x08, 0x8E); // PIT timer
 	}
 	idt_set_gate(48, &_syscall_entry, 0x08, 0x8E);
-	idt_set_gate(14, &test_t, 0x08, 0x8E);
+	idt_set_gate(14, &_page_fault_entry, 0x08, 0x8E);
 
 
 	idt_flush((uint32_t)&idt);

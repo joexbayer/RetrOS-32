@@ -12,13 +12,41 @@ _start:
     cli
     call _main
 
+page_fault_14_scratch:
+  .long	0
+page_fault_14_err:
+  .long	0
 .global _page_fault_entry
 _page_fault_entry:
-    ret
+    cli
+    push $0
+	push $48
+
+    movl	%eax, (page_fault_14_scratch)
+    popl	%eax
+    /* Get error code */
+    movl	%eax, (page_fault_14_err)
+    movl	(page_fault_14_scratch), %eax
+
+    pusha
+
+    movl	(page_fault_14_err), %eax
+    pushl	%eax
+    movl	%cr2, %eax
+    pushl	%eax
+
+    call page_fault_interrupt
+
+    addl $8, %esp
+    
+    popa    
+
+    add $8, %esp
+    iret
 
 .text
-.globl loadPageDirectory
-loadPageDirectory:
+.globl load_page_directory
+load_page_directory:
     push %ebp
     mov %esp, %ebp
     mov 8(%esp), %eax
@@ -28,8 +56,8 @@ loadPageDirectory:
     ret
 
 .text
-.globl enablePaging
-enablePaging:
+.globl enable_paging
+enable_paging:
     push %ebp
     mov %esp, %ebp
     mov %cr0, %eax
