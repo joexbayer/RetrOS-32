@@ -61,4 +61,5 @@ void context_switch()
             break;
         }
     }
+    asm volatile ("movl %%eax, %%cr3 ":: "a" (current_running->page_dir));
 }

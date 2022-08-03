@@ -12,7 +12,7 @@ _start:
     cli
     call _main
 
-syscall_return_val:
+syscall_return_value:
   .long	0
 .global _syscall_entry
 _syscall_entry:
@@ -27,7 +27,7 @@ _syscall_entry:
     pushl	%eax	/* Syscall number */
 
     call system_call
-    movl	%eax, (syscall_return_val)
+    movl	%eax, (syscall_return_value)
 	
     popl	%edx	/* Arg 3 */
     popl	%ecx	/* Arg 2 */
@@ -36,7 +36,7 @@ _syscall_entry:
     
     popa    
     
-    movl	(syscall_return_val), %eax
+    movl	(syscall_return_value), %eax
 
     add $8, %esp
     iret

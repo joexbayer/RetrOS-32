@@ -247,6 +247,7 @@ int add_pcb(void (*entry)(), char* name)
 
 void start_pcb()
 {   
+    asm volatile ("movl %%eax, %%cr3 "::"a" (current_running->page_dir));
     current_running->running = RUNNING;
     _start_pcb(); /* asm function */
 }
@@ -256,6 +257,7 @@ void start_pcb()
  */
 void init_pcbs()
 {   
+
     /* Stopped processes are eligible to be "replaced." */
     for (size_t i = 0; i < MAX_NUM_OF_PCBS; i++)
     {
@@ -274,6 +276,13 @@ void init_pcbs()
 
     ret = add_pcb(&pcb_function, "PCBd");
     if(ret < 0) return; // error
+
+    /* ENABLE PAGIN
+        __asm__ volatile ("movl  %cr0,%eax    \n\t"
+        "orl  $0x80000000,%eax  \n\t"
+        "movl  %eax,%cr0    \n\t");
+    */
+
 }
 
 void start_tasks()
