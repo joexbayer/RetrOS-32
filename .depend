@@ -5,13 +5,13 @@ e1000.o: drivers/e1000.c include/e1000.h include/stdint.h include/pci.h \
  include/net/netdev.h
 keyboard.o: drivers/keyboard.c include/keyboard.h include/stdint.h \
  include/screen.h include/util.h include/terminal.h include/interrupts.h \
- include/sync.h include/pcb.h
+ include/sync.h
 rtc.o: drivers/rtc.c include/rtc.h include/stdint.h include/util.h
 screen.o: drivers/screen.c include/screen.h include/util.h \
  include/stdint.h include/stdarg.h
 timer.o: drivers/timer.c include/timer.h include/stdint.h include/rtc.h \
  include/screen.h include/util.h include/terminal.h include/interrupts.h \
- include/pcb.h
+ include/scheduler.h include/pcb.h
 fs.o: fs/fs.c include/fs/fs.h include/fs/superblock.h include/stdint.h \
  include/bitmap.h include/fs/inode.h include/fs/directory.h \
  include/diskdev.h include/ata.h include/terminal.h include/util.h
@@ -32,18 +32,19 @@ kernel.o: kernel/kernel.c include/util.h include/stdint.h include/pci.h \
  include/sync.h include/net/dns.h include/fs/fs.h
 memory.o: kernel/memory.c include/memory.h include/stdint.h \
  include/screen.h include/util.h include/terminal.h include/timer.h \
- include/rtc.h include/sync.h include/pcb.h include/diskdev.h \
- include/ata.h
+ include/rtc.h include/sync.h include/diskdev.h include/ata.h
 pcb.o: kernel/pcb.c include/pcb.h include/util.h include/stdint.h \
  include/screen.h include/memory.h include/sync.h include/timer.h \
- include/rtc.h include/net/netdev.h include/pci.h
+ include/rtc.h include/net/netdev.h include/pci.h include/scheduler.h
 pci.o: kernel/pci.c include/pci.h include/stdint.h include/e1000.h \
  include/screen.h include/util.h include/terminal.h
 process.o: kernel/process.c include/process.h include/stdint.h \
  include/terminal.h include/util.h include/screen.h include/pcb.h
+scheduler.o: kernel/scheduler.c include/scheduler.h include/pcb.h \
+ include/util.h include/stdint.h include/timer.h include/rtc.h
 bitmap.o: lib/bitmap.c include/bitmap.h include/stdint.h include/memory.h
-sync.o: lib/sync.c include/sync.h include/pcb.h include/util.h \
- include/stdint.h include/terminal.h
+sync.o: lib/sync.c include/sync.h include/stdint.h include/terminal.h \
+ include/util.h include/scheduler.h include/pcb.h
 terminal.o: lib/terminal.c include/terminal.h include/util.h \
  include/stdint.h include/stdarg.h include/screen.h
 util.o: lib/util.c include/util.h include/stdint.h
@@ -54,8 +55,7 @@ arp.o: net/arp.c include/net/arp.h include/stdint.h include/net/utils.h \
  include/terminal.h
 dns.o: net/dns.c include/net/dns.h include/stdint.h include/net/utils.h \
  include/net/dhcp.h include/net/netdev.h include/pci.h \
- include/net/socket.h include/util.h include/sync.h include/pcb.h \
- include/terminal.h
+ include/net/socket.h include/util.h include/sync.h include/terminal.h
 ethernet.o: net/ethernet.c include/net/ethernet.h include/stdint.h \
  include/net/skb.h include/net/netdev.h include/pci.h include/memory.h \
  include/net/utils.h include/util.h include/net/arp.h include/net/ipv4.h \
@@ -78,10 +78,10 @@ routing.o: net/routing.c include/net/routing.h include/stdint.h \
 skb.o: net/skb.c include/net/skb.h include/stdint.h include/net/netdev.h \
  include/pci.h include/memory.h include/net/utils.h include/util.h \
  include/net/ethernet.h include/net/arp.h include/net/ipv4.h \
- include/net/icmp.h include/net/udp.h include/sync.h include/pcb.h
+ include/net/icmp.h include/net/udp.h include/sync.h
 socket.o: net/socket.c include/net/socket.h include/util.h \
- include/stdint.h include/sync.h include/pcb.h include/net/utils.h \
- include/net/skb.h include/net/netdev.h include/pci.h include/memory.h \
+ include/stdint.h include/sync.h include/net/utils.h include/net/skb.h \
+ include/net/netdev.h include/pci.h include/memory.h \
  include/net/ethernet.h include/net/arp.h include/net/ipv4.h \
  include/net/icmp.h include/net/udp.h include/bitmap.h include/timer.h \
  include/rtc.h
@@ -89,5 +89,5 @@ udp.o: net/udp.c include/net/udp.h include/net/utils.h include/stdint.h \
  include/net/skb.h include/net/netdev.h include/pci.h include/memory.h \
  include/util.h include/net/ethernet.h include/net/arp.h \
  include/net/ipv4.h include/net/icmp.h include/terminal.h \
- include/net/socket.h include/sync.h include/pcb.h
+ include/net/socket.h include/sync.h
 utils.o: net/utils.c include/net/utils.h include/stdint.h

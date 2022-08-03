@@ -12,6 +12,7 @@
 #include <keyboard.h>
 #include <screen.h>
 #include <terminal.h>
+#include <scheduler.h>
 #include <pcb.h>
 #include <process.h>
 
@@ -28,8 +29,8 @@ static const char newline = '\n';
 static const char backspace = '\b';
 
 /*
-	IMPLEMENTATIONS
-*/
+ *	IMPLEMENTATIONS
+ */
 void shell_clear()
 {
 	for (size_t i = shell_column; i < SHELL_MAX_SIZE; i++)

@@ -22,7 +22,6 @@
 #include <net/socket.h>
 #include <net/dhcp.h>
 
-#define MAX_OPEN_PORTS 45
 #define MAX_PACKET_SIZE 0x1000
 
 static uint16_t packets = 0;
@@ -34,7 +33,6 @@ void networking_print_status()
 {
 
     scrwrite(51, 1, "Networking:", VGA_COLOR_CYAN);
-    scrprintf(51, 2, "Open Ports: %d", 0);
 
     scrwrite(51, 3, "DHCP", VGA_COLOR_LIGHT_BLUE);
     int state = dhcp_get_state();

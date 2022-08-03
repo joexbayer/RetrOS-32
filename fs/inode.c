@@ -49,6 +49,7 @@ struct inode* inode_get(inode_t inode)
 
 int inode_add_directory_entry(struct directory_entry* entry, struct inode* inode, struct superblock* sb)
 {
+    return -1;
 }
 
 int inode_read(char* buf, int size, struct inode* inode)
@@ -105,4 +106,6 @@ inode_t alloc_inode(struct superblock* sb, char TYPE)
     };
 
     __inode_cache_insert(&inode_disk);
+
+    return inode;
 }

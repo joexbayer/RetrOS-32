@@ -15,8 +15,8 @@
 #include <sync.h>
 #include <timer.h>
 #include <net/netdev.h>
+#include <scheduler.h>
 
-#define MAX_NUM_OF_PCBS 10
 #define stack_size 0x2000
 
  char* status[] = {"STOPPED", "RUNNING"};
@@ -69,7 +69,6 @@ void gensis2()
  */
 void print_pcb_status()
 {
-    const char* SIZES[] = { "Bytes", "kB", "MB", "GB" };
     int width = (SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)-1 + (SCREEN_WIDTH/6);
     int height = (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)+1;
 
@@ -133,18 +132,21 @@ void print_pcb_status()
             continue;
         }
 
-        int used = pcbs[largest].ebp-pcbs[largest].esp;
-        uint32_t div_used = 0;
-        while (used >= 1024 && div_used < (sizeof SIZES / sizeof *SIZES)) {
-            div_used++;   
-            used /= 1024;
-        }
-
-        scrprintf(width, height+done_list_count-1, "PID %d: %s. %d %s",pcbs[largest].pid, pcbs[largest].name, used, SIZES[div_used]);
+        scrprintf(width, height+done_list_count-1, "PID %d: %s. 0x%x",pcbs[largest].pid, pcbs[largest].name, pcbs[largest].esp);
         /* code */
         scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
     }
     
+}
+
+void pcb_set_running(int pid)
+{
+    int i;
+    for(i = 0; i < MAX_NUM_OF_PCBS; i++)
+        if(pcbs[i].pid == pid){
+            pcbs[i].running = RUNNING;
+            return;
+        }
 }
 
 /**
@@ -248,72 +250,6 @@ void start_pcb()
     current_running->running = RUNNING;
     _start_pcb(); /* asm function */
 }
-
-
-void sleep(int time)
-{
-    current_running->sleep_time = get_time() + time;
-    current_running->running = SLEEPING;
-    yield();
-}
-
-void yield()
-{
-    CLI();
-    _context_switch();
-}
-
-void exit()
-{
-    while(1);
-
-
-    CLI();
-    stop_task(current_running->pid);
-
-    _context_switch();
-}
-
-void block()
-{
-    current_running->running = BLOCKED;
-    yield();
-}
-
-void unblock(int pid)
-{
-    int i;
-    for(i = 0; i < MAX_NUM_OF_PCBS; i++)
-        if(pcbs[i].pid == pid)
-            pcbs[i].running = RUNNING;
-}
-
-void context_switch()
-{   
-    current_running = current_running->next;
-    while(current_running->running != RUNNING)
-    {
-        switch (current_running->running)
-        {
-        case STOPPED:
-            current_running = current_running->next;
-            break;
-        case NEW:
-            start_pcb();
-            break; /* Never reached. */
-        case SLEEPING:
-            if(get_time() >= current_running->sleep_time)
-                current_running->running = RUNNING;
-            else
-                current_running = current_running->next;
-            break;
-        default:
-            current_running = current_running->next;
-            break;
-        }
-    }
-}
-
 /**
  * @brief Sets all PCBs state to stopped. Meaning they can be started.
  * Also starts the PCB background process.

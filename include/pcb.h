@@ -3,6 +3,7 @@
 
 #include <util.h>
 
+#define MAX_NUM_OF_PCBS 10
 #define pcb_max_name_length 25
 
 /* TODO: Move to new file */
@@ -33,18 +34,15 @@ struct pcb {
 
 
 extern struct pcb* current_running;
-void context_switch();
+
 void init_pcbs();
 void start_tasks();
+void start_pcb();
 int stop_task(int pid);
 int add_pcb( void (*entry)(), char* name);
 void print_pcb_status();
 
-void yield();
-void sleep(int time);
-void block();
-void unblock(int pid);
-void exit();
+void pcb_set_running(int pid);
 
 /* functions in entry.s */
 void _start_pcb();

@@ -25,6 +25,8 @@ int init_fs()
         mkfs();
         return 1;
     }
+
+    return 0;
 }
 
 void __superblock_sync()
@@ -63,8 +65,8 @@ void mkfs()
         .name = ".."
     };
 
-    inode_write(&back, sizeof(struct directory_entry), root, &superblock);
-    inode_write(&self, sizeof(struct directory_entry), root, &superblock);
+    inode_write((char*) &back, sizeof(struct directory_entry), root, &superblock);
+    inode_write((char*) &self, sizeof(struct directory_entry), root, &superblock);
 }
 
 void ls(char* path)

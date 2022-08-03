@@ -10,6 +10,8 @@
  */
 #include <sync.h>
 #include <terminal.h>
+#include <scheduler.h>
+#include <pcb.h>
 
 /* Fucntions defined in kernel_entry.s */
 void spin_lock_asm(int volatile *l);

@@ -1,7 +1,6 @@
 #ifndef SYNC_H
 #define SYNC_H
 
-#include <pcb.h>
 #include <stdint.h>
 
 #define MAX_BLOCKED 20

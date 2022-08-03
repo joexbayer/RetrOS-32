@@ -11,7 +11,7 @@
 
 #include <net/dhcp.h>
 #include <process.h>
-#include <pcb.h>
+#include <scheduler.h>
 #include <net/socket.h>
 #include <net/ipv4.h>
 #include <terminal.h>

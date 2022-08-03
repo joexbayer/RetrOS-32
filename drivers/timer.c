@@ -13,6 +13,7 @@
 #include <screen.h>
 #include <terminal.h>
 #include <interrupts.h>
+#include <scheduler.h>
 #include <pcb.h>
 
 #define PIT_IRQ		32

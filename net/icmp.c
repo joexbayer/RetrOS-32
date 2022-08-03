@@ -36,15 +36,15 @@ void icmp_handle(struct sk_buff* skb)
     skb_new->stage = IN_PROGRESS;
 
     if(ip_add_header(skb_new, skb->hdr.ip->saddr, ICMPV4, sizeof(struct icmp)) <= 0)
-	    return -1;
+	    return;
 
-    memcpy(skb->data, &response, sizeof(struct icmp));
+    memcpy(skb_new->data, &response, sizeof(struct icmp));
 
-	skb->len += sizeof(struct icmp);
-	skb->data += sizeof(struct icmp);
+	skb_new->len += sizeof(struct icmp);
+	skb_new->data += sizeof(struct icmp);
 	
-	skb->stage = NEW_SKB;
-	skb->action = SEND;
+	skb_new->stage = NEW_SKB;
+	skb_new->action = SEND;
 }  
 
 int icmp_response()
