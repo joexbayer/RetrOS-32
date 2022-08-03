@@ -3,7 +3,7 @@
 
 #define FS_START_OFFSET
 
-int fs_init();
+int init_fs();
 void mkfs();
 
 #endif /* __FS_H */

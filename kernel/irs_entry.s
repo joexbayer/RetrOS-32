@@ -23,6 +23,7 @@ idt_flush:
 	.global isr\index
 	isr\index:
 		cli
+		push $0
 		push $\index
 		jmp isr_entry
 .endm
@@ -61,4 +62,5 @@ isr_entry:
 
     popa
     add $8, %esp
-    iret
+	
+	iret

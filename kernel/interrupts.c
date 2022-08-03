@@ -77,6 +77,7 @@ void EOI(int irq)
 	outportb(PIC1, 0x20); /* Master */
 }
 
+int tsest = 1;
 /* Main interrupt handler, calls interrupt specific hanlder if installed. */
 void isr_handler(struct registers regs)
 {
@@ -95,6 +96,12 @@ static void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags
 	idt_entries[num].sel     = sel;
 	idt_entries[num].always0 = 0;
 	idt_entries[num].flags   = flags;
+}
+
+void test_t(){
+	CLI();
+	scrprintf(10, 10, "EXCEPTION 14!!!");
+	while(1);
 }
 
 /* TODO: Setup exceptions. */
@@ -117,6 +124,7 @@ static void init_idt()
 		idt_set_gate(i, (uint32_t) irqs[i-32] , 0x08, 0x8E); // PIT timer
 	}
 	idt_set_gate(48, &_syscall_entry, 0x08, 0x8E);
+	idt_set_gate(14, &test_t, 0x08, 0x8E);
 
 
 	idt_flush((uint32_t)&idt);
@@ -138,6 +146,6 @@ void init_interrupts()
 
 	init_idt();
 
-	twrite("Interrupts initialized.\n");
+	//twrite("Interrupts initialized.\n");
 }
 

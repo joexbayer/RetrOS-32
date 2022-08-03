@@ -26,7 +26,7 @@ struct pcb {
       uint16_t sleep_time;
       uint32_t org_stack;
 
-      uint32_t page_dir;
+      uint32_t* page_dir;
 
       char name[pcb_max_name_length];
 

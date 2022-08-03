@@ -66,6 +66,7 @@ extern void isr46(struct registers*);
 extern void isr47(struct registers*);
 
 int system_call(int index, int arg1, int arg2, int arg3);
+void _page_fault_entry(void);
 
 void isr_handler(struct registers regs);
 void isr_install(size_t i, void (*handler)());

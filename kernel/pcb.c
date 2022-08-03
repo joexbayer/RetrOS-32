@@ -208,6 +208,7 @@ int init_pcb(int pid, struct pcb* pcb, void (*entry)(), char* name)
     pcb->pid = pid;
     pcb->org_stack = stack;
     memcpy(pcb->name, name, strlen(name)+1);
+    pcb->page_dir = kernel_page_dir;
 
     return 1;
 }
@@ -247,7 +248,6 @@ int add_pcb(void (*entry)(), char* name)
 
 void start_pcb()
 {   
-    asm volatile ("movl %%eax, %%cr3 "::"a" (current_running->page_dir));
     current_running->running = RUNNING;
     _start_pcb(); /* asm function */
 }
@@ -268,20 +268,16 @@ void init_pcbs()
     pcbs[0].next = &pcbs[0];
     pcbs[0].prev = &pcbs[0];
 
-    int ret = add_pcb(&gensis, "Gensis");
-    if(ret < 0) return; // error
+    //int ret = add_pcb(&gensis, "Gensis");
+    //if(ret < 0) return; // error
 
-    ret = add_pcb(&gensis2, "Adam");
-    if(ret < 0) return; // error
+    //ret = add_pcb(&gensis2, "Adam");
+    //if(ret < 0) return; // error
 
-    ret = add_pcb(&pcb_function, "PCBd");
-    if(ret < 0) return; // error
+    //ret = add_pcb(&pcb_function, "PCBd");
+    //if(ret < 0) return; // error
 
-    /* ENABLE PAGIN
-        __asm__ volatile ("movl  %cr0,%eax    \n\t"
-        "orl  $0x80000000,%eax  \n\t"
-        "movl  %eax,%cr0    \n\t");
-    */
+    twriteln("PCB: successfull.");
 
 }
 

@@ -18,53 +18,63 @@
 #include <fs/fs.h>
 
 /* This functions always needs to be on top? */
-void _main(uint32_t debug) 
+void _main() 
 {
     /* Initialize terminal interface */
-	CLI();
 	init_memory();
 	init_terminal();
+	init_paging();
 	init_interrupts();
-	init_keyboard();
-	init_pcbs();
-	ata_ide_init();
+	CLI();
+	//init_keyboard();
+	//init_pcbs();
+	//ata_ide_init();
 
-	init_pci();
-	init_sk_buffers();
-	init_arp();
-	init_sockets();
-	init_dns();
+	//init_pci();
+	//init_sk_buffers();
+	//init_arp();
+	//init_sockets();
+	//init_dns();
 
 	/* Programs defined in programs.h */
-	init_shell();
-	init_counter();
-	init_networking();
-	init_dhcpd();
+	//init_shell();
+	//init_counter();
+	//init_networking();
+	//init_dhcpd();
 
-	init_fs();
+	//init_fs();
 
 
 	init_timer(1);
 	/* Testing printing ints and hex */
-	char test[1000];
-	itohex(3735928559, test);
-	twrite(test);
-	twrite("\n");
+	//char test[1000];
+	//itohex(3735928559, test);
+	//twrite(test);
+	//write("\n");
 
 	/* Testing PCI */
-	int dev = pci_find_device(0x8086, 0x100E);
-	if(dev){
-		twrite("PCI Device 0x100E Found!\n");
-	}
+	//int dev = pci_find_device(0x8086, 0x100E);
+	//if(dev){
+	//	twrite("PCI Device 0x100E Found!\n");
+	//}
 	
-	bitmap_t b_test = create_bitmap(512);
+	//bitmap_t b_test = create_bitmap(512);
 
 	/* Test interrupt */
-	// asm volatile ("int $31");
-	start_process(0); // SHELL
-	start_process(2); // Networking
-	STI();
+	//start_process(0); // SHELL
+	//start_process(2); // Networking
 
+	loadPageDirectory(kernel_page_dir);
+    scrprintf(0, 10, "Kernal page: %x", kernel_page_dir);
+	enablePaging();
+
+	STI();
+	while (1)
+	{
+		/* code */
+	}
+	
+	
 	start_tasks();
 
 	while(1){};

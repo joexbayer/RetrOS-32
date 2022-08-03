@@ -16,6 +16,8 @@
 #include <sync.h>
 #include <diskdev.h>
 
+#include <bitmap.h>
+
 #define MEM_START 0x300000
 #define MEM_END 0xEFFFFF
 #define MEM_CHUNK 0x400
@@ -46,7 +48,7 @@ void print_mem()
     uint32_t div_used = 0;
 	uint32_t div_main = 0;
 
-	int disk_used = disk_device.dev->size*512;
+	//int disk_used = disk_device.dev->size*512;
 	uint32_t div_disk = 0;
 
 	int used = (chunks_used*MEM_CHUNK);
@@ -57,10 +59,10 @@ void print_mem()
         used /= 1024;
     }
 
-	while (disk_used >= 1024 && div_disk < (sizeof SIZES / sizeof *SIZES)) {
+	/*while (disk_used >= 1024 && div_disk < (sizeof SIZES / sizeof *SIZES)) {
         div_disk++;   
         disk_used /= 1024;
-    }
+    }*/
 
 	while (main >= 1024 && div_main < (sizeof SIZES / sizeof *SIZES)) {
         div_main++;   
@@ -71,7 +73,8 @@ void print_mem()
 		return;
 
 
-	scrprintf(12, 0, "DISK: %d%s", disk_used ,SIZES[div_disk]);
+	//scrprintf(12, 0, "DISK: %d%s", disk_used ,SIZES[div_disk]);
+	
 	scrprintf(30, 0, "MEM: %d%s / %d%s", used ,SIZES[div_used], main, SIZES[div_main]);
 }
 
@@ -191,4 +194,71 @@ void init_memory()
 
 		mem_position += MEM_CHUNK;
 	}
+}
+
+
+/*  PAGIN / VIRTUAL MEMORY SECTION  */
+#define TOTAL_PAGES ((0x300000-0x100000)/PAGE_SIZE)
+uint32_t* kernel_page_dir = NULL;
+bitmap_t page_bitmap;
+
+#define TABLE_INDEX(vaddr) ((vaddr >> PAGE_TABLE_BITS) & PAGE_TABLE_MASK)
+#define DIRECTORY_INDEX(vaddr) ((vaddr >> PAGE_DIRECTORY_BITS) & PAGE_TABLE_MASK)
+
+uint32_t* alloc_page()
+{
+	int bit = get_free_bitmap(page_bitmap, TOTAL_PAGES);
+	uint32_t* paddr = (uint32_t*) (0x200000 + (bit * PAGE_SIZE));
+	memset(paddr, 0, PAGE_SIZE);
+
+	scrprintf(0, bit+2,"Page: 0x%d %x\n", bit, paddr);
+	return paddr;
+}
+
+
+static inline void table_set(uint32_t* page_table, uint32_t vaddr, uint32_t paddr, int access)
+{
+  // int access = RW | PRESENT;
+  //if (user)
+  //    access |= USER;
+
+	page_table[TABLE_INDEX(vaddr)] = (paddr & ~PAGE_MASK) | access;
+}
+
+
+static inline void directory_insert_table(uint32_t* directory, uint32_t vaddr, uint32_t* table, int access)
+{
+  //int access = RW | PRESENT;
+  //if (user)
+  //    access |= USER;
+
+  directory[DIRECTORY_INDEX(vaddr)] = (((uint32_t) table) & ~PAGE_MASK) | access;
+}
+
+void init_paging()
+{
+	page_bitmap = create_bitmap(TOTAL_PAGES);
+
+	kernel_page_dir = alloc_page();
+	uint32_t* kernel_page_table = alloc_page();
+
+	int permissions = RW | PRESENT | USER;
+	for (int addr = 0; addr < 640 * 1024; addr += PAGE_SIZE)
+    	table_set(kernel_page_table, addr, addr, permissions);
+	
+	table_set(kernel_page_table, (uint32_t) 0xB8000, (uint32_t) 0xB8000, permissions);
+
+	uint32_t* kernel_page_table_memory = alloc_page();
+	for (int addr = 0x10000; addr < 0x400000; addr += PAGE_SIZE)
+    	table_set(kernel_page_table_memory, addr, addr, permissions);
+	
+	//directory_insert_table(kernel_page_dir, 0x10000, kernel_page_table_memory, permissions);
+	directory_insert_table(kernel_page_dir, 0, kernel_page_table, permissions);
+
+	//uint32_t* kernel_page_table_dev = alloc_page();
+	//table_set(kernel_page_table_dev, (uint32_t) 0xfebc0000, (uint32_t) 0xfebc0000, permissions);
+
+	//directory_insert_table(kernel_page_dir, 0xfebc0000, kernel_page_table_dev, permissions);
+
+
 }
