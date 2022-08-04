@@ -205,7 +205,6 @@ int init_pcb(int pid, struct pcb* pcb, void (*entry)(), char* name)
     pcb->pid = pid;
     pcb->org_stack = stack;
     memcpy(pcb->name, name, strlen(name)+1);
-    pcb->page_dir = kernel_page_dir;
 
     return 1;
 }
@@ -268,11 +267,11 @@ void init_pcbs()
     int ret = add_pcb(&gensis, "Gensis");
     if(ret < 0) return; // error
 
-    //ret = add_pcb(&gensis2, "Adam");
+    //int ret = add_pcb(&gensis2, "Adam");
     //if(ret < 0) return; // error
 
-    //ret = add_pcb(&pcb_function, "PCBd");
-    //if(ret < 0) return; // error
+    ret = add_pcb(&pcb_function, "PCBd");
+    if(ret < 0) return; // error
 
     twriteln("PCB: successfull.");
 
@@ -280,6 +279,7 @@ void init_pcbs()
 
 void start_tasks()
 {
+    scrprintf(5, 5, "%x %x %x", current_running, pcbs, &pcbs[0]);
     current_running = &pcbs[0];
     start_pcb();
 

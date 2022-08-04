@@ -95,7 +95,7 @@ void exec_cmd()
 	}
 
 	if(strncmp("ls", shell_buffer, strlen("ls"))){
-		list_processes();
+		ls();
 		return;
 	}
 
@@ -172,12 +172,6 @@ void shell_put(char c)
 
 void shell_main()
 {
-	while (1)
-	{
-		/* code */
-	}
-	
-
 	sleep(2);
 	while(1)
 	{

@@ -27,6 +27,9 @@ struct inode {
 #include <fs/superblock.h>
 
 int inode_write(char* buf, int size, struct inode* inode, struct superblock* sb);
+int inode_read(char* buf, int size, struct inode* inode, struct superblock* sb);
+void ls(char* path);
+
 inode_t alloc_inode(struct superblock* sb, char TYPE);
 struct inode* inode_get(inode_t inode);
 

@@ -34,14 +34,15 @@ static inline int new_inode(struct superblock* sb)
 
 static inline int new_block(struct superblock* sb)
 {
-    return get_free_bitmap(sb->block_map, sb->nblocks);
+    return get_free_bitmap(sb->block_map, sb->nblocks)+1;
 }
 
 struct inode* inode_get(inode_t inode)
 {
     for (int i = 0; i < INODE_CACHE_SIZE; i++)
-        if(__inode_cache[i].inode == inode)
+        if(__inode_cache[i].inode == inode){
             return &__inode_cache[i];
+        }
 
     /* Load inode from disk. */
     return NULL;
@@ -52,7 +53,7 @@ int inode_add_directory_entry(struct directory_entry* entry, struct inode* inode
     return -1;
 }
 
-int inode_read(char* buf, int size, struct inode* inode)
+int inode_read(char* buf, int size, struct inode* inode, struct superblock* sb)
 {
     if(size > MAX_FILE_SIZE || size > inode->size || (size + inode->pos) > inode->size)
         return -1;
@@ -61,7 +62,8 @@ int inode_read(char* buf, int size, struct inode* inode)
     if(inode->blocks[block] == 0)
         return -1;
     
-    read_block_offset(buf, size, inode->pos, block);
+    read_block_offset(buf, size, inode->pos, 103+sb->ninodes+inode->blocks[block]);
+    inode->pos += size;
 
     return size;
 }
@@ -78,8 +80,9 @@ int inode_write(char* buf, int size, struct inode* inode, struct superblock* sb)
     if(inode->blocks[block] == 0)
         inode->blocks[block] = new_block(sb);
     
-    write_block_offset(buf, size, inode->pos % BLOCK_SIZE, inode->blocks[block]);
+    write_block_offset(buf, size, inode->pos % BLOCK_SIZE, 103+sb->ninodes+inode->blocks[block]);
     inode->pos += size;
+    inode->size += size;
 
     /*size is bigger than 512*/
 
@@ -101,11 +104,13 @@ inode_t alloc_inode(struct superblock* sb, char TYPE)
 
     struct inode inode_disk = {
         .inode = inode,
-        .size = BLOCK_SIZE,
+        .size = 0,
         .type = TYPE
     };
 
     __inode_cache_insert(&inode_disk);
+
+    twritef("%d\n", inode_disk.size);
 
     return inode;
 }

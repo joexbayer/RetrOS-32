@@ -197,7 +197,7 @@ void init_memory()
 }
 
 
-/*  PAGIN / VIRTUAL MEMORY SECTION  */
+/*  PAGIN / VIRTUAL MEMORY SECTION  
 #define TOTAL_PAGES ((0x300000-0x100000)/PAGE_SIZE)
 uint32_t* kernel_page_dir = NULL;
 bitmap_t page_bitmap;
@@ -249,11 +249,4 @@ void init_paging()
 	
 	//directory_insert_table(kernel_page_dir, 0x100000, kernel_page_table_memory, permissions);
 	directory_insert_table(kernel_page_dir, 0, kernel_page_table, permissions);
-
-	//uint32_t* kernel_page_table_dev = alloc_page();
-	//table_set(kernel_page_table_dev, (uint32_t) 0xfebc0000, (uint32_t) 0xfebc0000, permissions);
-
-	//directory_insert_table(kernel_page_dir, 0xfebc0000, kernel_page_table_dev, permissions);
-
-
-}
+}*/

@@ -19,8 +19,6 @@ page_fault_14_err:
 .global _page_fault_entry
 _page_fault_entry:
     cli
-    push $0
-	push $48
 
     movl	%eax, (page_fault_14_scratch)
     popl	%eax

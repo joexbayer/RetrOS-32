@@ -23,7 +23,6 @@ void _main()
     /* Initialize terminal interface */
 	init_memory();
 	init_terminal();
-	init_paging();
 	init_interrupts();
 	CLI();
 	init_keyboard();
@@ -59,12 +58,12 @@ void _main()
 	//bitmap_t b_test = create_bitmap(512);
 
 	/* Test interrupt */
-	//start_process(0); // SHELL
-	//start_process(2); // Networking
+	start_process(0); // SHELL
+	start_process(2); // Networking
 
-	load_page_directory(kernel_page_dir);
-    scrprintf(0, 10, "Kernal page: %x", kernel_page_dir);
-	enable_paging();
+	//load_page_directory(kernel_page_dir);
+    //scrprintf(0, 10, "Kernal page: %x", kernel_page_dir);
+	//enable_paging();
 
 	STI();
 	start_tasks();

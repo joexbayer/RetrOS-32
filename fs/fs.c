@@ -13,8 +13,8 @@
 #define FS_BLOCK_BMAP_LOCATION FS_INODE_BMAP_LOCATION+1
 
 static struct superblock superblock;
-static struct inode root;
-static struct inode current;
+static struct inode* root_dir;
+static struct inode* current_dir;
 
 int init_fs()
 {
@@ -65,11 +65,26 @@ void mkfs()
         .name = ".."
     };
 
-    inode_write((char*) &back, sizeof(struct directory_entry), root, &superblock);
+    root_dir = root;
+
     inode_write((char*) &self, sizeof(struct directory_entry), root, &superblock);
+    inode_write((char*) &back, sizeof(struct directory_entry), root, &superblock);
+
+    root_dir->pos = 0;
+
+    root_dir = root;
+    current_dir = root;
 }
 
 void ls(char* path)
 {
+    struct directory_entry* entry;
 
+    int size = 0;
+    while (size < root_dir->size)
+    {
+        int ret = inode_read((char*) entry, sizeof(struct directory_entry), root_dir, &superblock);
+        twritef("%s\n", entry->name);
+        size += ret;
+    }
 }
