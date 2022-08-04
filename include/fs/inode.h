@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-#define FS_FILE 0
-#define FS_DIRECTORY 1
+#define FS_FILE 1
+#define FS_DIRECTORY 2
 
 #define MAX_FILE_SIZE 1024
 #define NDIRECT MAX_FILE_SIZE / 512

@@ -2,6 +2,7 @@
 #include <fs/superblock.h>
 #include <fs/inode.h>
 #include <fs/directory.h>
+#include <memory.h>
 #include <diskdev.h>
 #include <terminal.h>
 #include <bitmap.h>
@@ -65,26 +66,67 @@ void mkfs()
         .name = ".."
     };
 
-    root_dir = root;
+    inode_t home_inode = alloc_inode(&superblock, FS_FILE);
+    struct inode* home_disk_inode = inode_get(home_inode);
 
-    inode_write((char*) &self, sizeof(struct directory_entry), root, &superblock);
-    inode_write((char*) &back, sizeof(struct directory_entry), root, &superblock);
+    struct directory_entry home = {
+        .inode = home_inode,
+        .name = "home"
+    };
 
-    root_dir->pos = 0;
+    char* home_text = "Home is where the heart is.";
+    inode_write(home_text, strlen(home_text)+1, home_disk_inode, &superblock);
 
     root_dir = root;
     current_dir = root;
+
+    inode_write((char*) &self, sizeof(struct directory_entry), current_dir, &superblock);
+    inode_write((char*) &back, sizeof(struct directory_entry), current_dir, &superblock);
+    inode_write((char*) &home, sizeof(struct directory_entry), current_dir, &superblock);
+
+    current_dir->pos = 0;
+}
+
+void create_file(char* name)
+{
+    inode_t inode = alloc_inode(&superblock, FS_FILE);
+}
+
+void open(char* name)
+{
+    struct directory_entry entry;
+
+    root_dir->pos = 0;
+
+    int size = 0;
+    while (size <= root_dir->size)
+    {
+        int ret = inode_read((char*) &entry, sizeof(struct directory_entry), root_dir, &superblock);
+        if(memcmp((void*)entry.name, (void*)name, strlen(entry.name)))
+            break;
+        size += ret;
+    }
+    struct inode* inode = inode_get(entry.inode);
+    inode->pos = 0;
+
+    char* value = alloc(inode->size);
+    inode_read(value, inode->size, inode, &superblock);
+    twritef("\n");
+    twritef("%s\n", value);
+    free(value);
+    
 }
 
 void ls(char* path)
 {
-    struct directory_entry* entry;
-
+    struct directory_entry entry;
     int size = 0;
+
+    root_dir->pos = 0;
     while (size < root_dir->size)
     {
-        int ret = inode_read((char*) entry, sizeof(struct directory_entry), root_dir, &superblock);
-        twritef("%s\n", entry->name);
+        int ret = inode_read((char*) &entry, sizeof(struct directory_entry), root_dir, &superblock);
+        twritef(" %s\n", entry.name);
         size += ret;
     }
 }

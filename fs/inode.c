@@ -19,7 +19,7 @@ static void __inode_sync(struct inode* inode)
 static void __inode_cache_insert(struct inode* inode)
 {
     for (size_t i = 0; i < 10; i++)
-        if(__inode_cache[i].size == 0){
+        if(__inode_cache[i].type == 0){
             memcpy(&__inode_cache[i], inode, sizeof(struct inode));
             return;
         }
@@ -70,29 +70,46 @@ int inode_read(char* buf, int size, struct inode* inode, struct superblock* sb)
 
 int inode_write(char* buf, int size, struct inode* inode, struct superblock* sb)
 {
+    int original_size = size;
+
     if((size + inode->pos) > MAX_FILE_SIZE)
         return -1; /* TODO: FILE OUT OF SPACE ERROR. */
-
-    if(size > BLOCK_SIZE)
-        return -1; /* NOT IMPLEMENTED.*/
 
     int block = (size+inode->pos) / BLOCK_SIZE;
     if(inode->blocks[block] == 0)
         inode->blocks[block] = new_block(sb);
     
+    int new_pos = inode->pos % BLOCK_SIZE;
+    
+    if(new_pos + size > 512){
+        int to_write = BLOCK_SIZE - new_pos;
+        write_block_offset(buf, to_write, new_pos, 103+sb->ninodes+inode->blocks[block]);
+        inode->pos += to_write;
+        size -= to_write;
+    }
+
+    /* Recalculate block */
+    block = (size+inode->pos) / BLOCK_SIZE;
+    if(inode->blocks[block] == 0)
+        inode->blocks[block] = new_block(sb);
+
+    /* While size is greater than block size keep writing blocks */
+    while (size > BLOCK_SIZE)
+    {
+        write_block(buf, 103+sb->ninodes+inode->blocks[block]);
+        inode->pos += BLOCK_SIZE;
+        size -= BLOCK_SIZE;
+
+        block = (size+inode->pos) / BLOCK_SIZE;
+        if(inode->blocks[block] == 0)
+            inode->blocks[block] = new_block(sb);
+    }
+    
     write_block_offset(buf, size, inode->pos % BLOCK_SIZE, 103+sb->ninodes+inode->blocks[block]);
     inode->pos += size;
-    inode->size += size;
+    inode->size += original_size;
 
-    /*size is bigger than 512*/
-
-    /* size + pos > 512 easy*/
-
-    /* size + pos < 512 bad*/
-
-    /**/
-
-    return size;
+    return original_size;
 }
 
 inode_t alloc_inode(struct superblock* sb, char TYPE)
@@ -109,8 +126,6 @@ inode_t alloc_inode(struct superblock* sb, char TYPE)
     };
 
     __inode_cache_insert(&inode_disk);
-
-    twritef("%d\n", inode_disk.size);
 
     return inode;
 }

@@ -51,7 +51,7 @@ static void timer_callback()
 			}
 		}
 		
-		scrprintf(10, 9, "%d:%d:%d", time_hour, time_min, time);
+		//scrprintf(10, 9, "%d:%d:%d", time_hour, time_min, time);
 	}
 
 	tick++;

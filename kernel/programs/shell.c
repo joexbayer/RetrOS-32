@@ -120,6 +120,11 @@ void exec_cmd()
 		gethostname(hostname);
 	}
 
+	if(strncmp("cat", shell_buffer, strlen("cat"))){
+		char* name = shell_buffer+strlen("cat")+1;
+		open(name);
+	}
+
 	if(strncmp("ping", shell_buffer, strlen("ping"))){
 		char* hostname = shell_buffer+strlen("ping")+1;
 		hostname[strlen(hostname)-1] = 0;

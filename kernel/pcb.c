@@ -279,7 +279,6 @@ void init_pcbs()
 
 void start_tasks()
 {
-    scrprintf(5, 5, "%x %x %x", current_running, pcbs, &pcbs[0]);
     current_running = &pcbs[0];
     start_pcb();
 
