@@ -252,7 +252,6 @@ void dhcpd()
 
     int rest = invoke_syscall(0, 1, 2, 3);
     twriteln("DHCP done!");
-    twriteln("LOL");
     twritef("RET: %d\n", rest);
 
     close(dhcp_socket);

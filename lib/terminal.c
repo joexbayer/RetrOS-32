@@ -21,7 +21,7 @@
 enum ASCII {
 	ASCII_BLOCK = 219,
 	ASCII_HORIZONTAL_LINE = 205,
-	ASCII_VERTICAL_LINE = 186,
+	ASCII_VERTICAL_LINE = 179,
 	ASCII_DOWN_INTERSECT = 203
 };
 
@@ -88,10 +88,11 @@ void __terminal_draw_lines()
 	for (size_t x = 0; x < SCREEN_HEIGHT; x++)
 		scrput(SCREEN_WIDTH-1, 0+x, ASCII_VERTICAL_LINE, VGA_COLOR_LIGHT_GREY);
 
-	/*for (size_t x = 50; x < SCREEN_WIDTH; x++)
-		scrput(x, 12, ASCII_HORIZONTAL_LINE, terminal_color);
-	
-	scrput(50, 12, 204, terminal_color);*/
+	scrput(0, SCREEN_HEIGHT-1, 192, VGA_COLOR_LIGHT_GREY);
+	scrput(SCREEN_WIDTH-1, SCREEN_HEIGHT-1, 217, VGA_COLOR_LIGHT_GREY);
+
+	for (size_t x = 1; x < SCREEN_WIDTH-1; x++)
+		scrput(x, SCREEN_HEIGHT-1, 196, VGA_COLOR_LIGHT_GREY);
 
 }
 
@@ -109,12 +110,6 @@ void terminal_clear()
 
 void draw_logo()
 {
-
-	uint8_t logo_color = VGA_COLOR_WHITE | VGA_COLOR_BLACK << 4;
-
-	for (size_t i = 0; i < 50; i++)
-		for (size_t j = 1; j < TERMINAL_START; j++)
-			scrput(i, j, ' ', logo_color);
 
 
 	/*int logo_x = 6;
@@ -256,12 +251,20 @@ int32_t twritef(char* fmt, ...)
 				memset(str, 0, MAX_FMT_STR_SIZE);
 				switch (*(fmt+1))
 				{
-					case 'd':
-					case 'i': ;
+					case 'd': ;
 						num = va_arg(args, int);
 						itoa(num, str);
 						twrite(str);
 						x_offset += strlen(str);
+						break;
+					case 'i': ;
+						num = va_arg(args, int);
+						unsigned char bytes[4];
+						bytes[0] = (num >> 24) & 0xFF;
+						bytes[1] = (num >> 16) & 0xFF;
+						bytes[2] = (num >> 8) & 0xFF;
+						bytes[3] = num & 0xFF;
+						twritef("%d.%d.%d.%d", bytes[3], bytes[2], bytes[1], bytes[0]);
 						break;
 					case 'x':
 					case 'X': ;

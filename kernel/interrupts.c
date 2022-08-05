@@ -147,6 +147,6 @@ void init_interrupts()
 
 	init_idt();
 
-	//twrite("Interrupts initialized.\n");
+	twriteln("Interrupts initialized.");
 }
 

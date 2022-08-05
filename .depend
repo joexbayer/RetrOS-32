@@ -20,7 +20,7 @@ inode.o: fs/inode.c include/fs/inode.h include/stdint.h \
  include/fs/superblock.h include/bitmap.h include/fs/directory.h \
  include/util.h include/diskdev.h include/ata.h
 diskdev.o: kernel/diskdev.c include/diskdev.h include/ata.h \
- include/stdint.h include/util.h
+ include/stdint.h include/util.h include/terminal.h
 interrupts.o: kernel/interrupts.c include/interrupts.h include/stdint.h \
  include/terminal.h include/util.h include/screen.h
 kernel.o: kernel/kernel.c include/util.h include/stdint.h include/pci.h \

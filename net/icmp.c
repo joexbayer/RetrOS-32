@@ -7,13 +7,7 @@
 
 void icmp_print(struct sk_buff* skb)
 {
-    unsigned char bytes[4];
-    bytes[3] = (skb->hdr.ip->saddr >> 24) & 0xFF;
-    bytes[2] = (skb->hdr.ip->saddr >> 16) & 0xFF;
-    bytes[1] = (skb->hdr.ip->saddr >> 8) & 0xFF;
-    bytes[0] = skb->hdr.ip->saddr & 0xFF;  
-
-    twritef("Ping reply from %d.%d.%d.%d: icmp_seq= %d ttl=64\n", bytes[3], bytes[2], bytes[1], bytes[0], skb->hdr.icmp->sequence/256);
+    twritef("Ping reply from %i: icmp_seq= %d ttl=64\n", skb->hdr.ip->saddr, skb->hdr.icmp->sequence/256);
 }
 
 void icmp_handle(struct sk_buff* skb)

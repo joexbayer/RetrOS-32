@@ -40,28 +40,13 @@ void networking_print_status()
         twritef(" GW: %s\n", "N/A");
     } else {
         int ip = dhcp_get_ip();
-        unsigned char bytes[4];
-        bytes[0] = (ip >> 24) & 0xFF;
-        bytes[1] = (ip >> 16) & 0xFF;
-        bytes[2] = (ip >> 8) & 0xFF;
-        bytes[3] = ip & 0xFF;
-        twritef(" IP: %d.%d.%d.%d     \n", bytes[3], bytes[2], bytes[1], bytes[0]);
+        twritef(" IP: %i     \n", ip);
 
         int dns = dhcp_get_dns();
-        unsigned char bytes_dns[4];
-        bytes_dns[0] = (dns >> 24) & 0xFF;
-        bytes_dns[1] = (dns >> 16) & 0xFF;
-        bytes_dns[2] = (dns >> 8) & 0xFF;
-        bytes_dns[3] = dns & 0xFF;
-        twritef(" DNS: %d.%d.%d.%d     \n", bytes_dns[3], bytes_dns[2], bytes_dns[1], bytes_dns[0]);
+        twritef(" DNS: %i     \n", dns);
         
         int gw = dhcp_get_gw();
-        unsigned char bytes_gw[4];
-        bytes_gw[0] = (gw >> 24) & 0xFF;
-        bytes_gw[1] = (gw >> 16) & 0xFF;
-        bytes_gw[2] = (gw >> 8) & 0xFF;
-        bytes_gw[3] = gw & 0xFF;
-        twritef(" GW: %d.%d.%d.%d     \n", bytes_gw[3], bytes_gw[2], bytes_gw[1], bytes_gw[0]);
+        twritef(" GW: %i     \n", gw);
     }
 
     twritef(" MAC: %x:%x:%x:%x:%x:%x\n", current_netdev.mac[0], current_netdev.mac[1], current_netdev.mac[2], current_netdev.mac[3], current_netdev.mac[4], current_netdev.mac[5]);

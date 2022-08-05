@@ -71,10 +71,18 @@ static void __dns_add_cache(char* hostname, uint32_t ip)
 
 int gethostname(char* hostname)
 {
+
+    if(dhcp_get_state() == DHCP_STOPPED){
+        twriteln("[DNS] Unable to resolve hostname. No IP.");
+        return -1;
+    }
+
     /* Check for cache first. */
     for (int i = 0; i < DNS_CACHE_ENTRIES; i++)
-        if(memcmp((uint8_t*) &__dns_cache[i].name,(uint8_t*) hostname, strlen(hostname)))
+        if(memcmp((uint8_t*) &__dns_cache[i].name,(uint8_t*) hostname, strlen(hostname))){
+            twritef("[DNS] (%s at %i) (cache)\n", hostname, __dns_cache[i].ip);
             return __dns_cache[i].ip;
+        }
 
     
     char hostname_save[40];
@@ -141,13 +149,14 @@ int gethostname(char* hostname)
         twritef("DNS: %x ttl\n", ntohl(answer->ttl));
         twritef("DNS: %x len\n", ntohs(answer->data_len));*/
 
-        unsigned char bytes[4];
-        bytes[0] = (result >> 24) & 0xFF;
-        bytes[1] = (result >> 16) & 0xFF;
-        bytes[2] = (result >> 8) & 0xFF;
-        bytes[3] = result & 0xFF;
+        if(result <= 0)
+        {
+            twriteln("[DNS] Unable to resolve hostname.");
+            close(__dns_socket);
+            return -1;
+        }
 
-        twritef("DNS (%s at %d.%d.%d.%d)\n", hostname, bytes[3],bytes[2], bytes[1],bytes[0]);
+        twritef("[DNS] (%s at %i)\n", hostname, result);
 
         __dns_add_cache(hostname_save, result);
 

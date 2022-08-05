@@ -40,7 +40,7 @@ void __superblock_sync()
 void mkfs()
 {
     superblock.magic = MAGIC;
-    superblock.size = (disk_device.dev->size*512) - (FS_START_LOCATION*512);
+    superblock.size = (disk_size()) - (FS_START_LOCATION*512);
     superblock.ninodes = 200;
     superblock.nblocks = superblock.ninodes*NDIRECT;
 

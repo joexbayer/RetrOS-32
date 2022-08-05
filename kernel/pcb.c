@@ -19,7 +19,7 @@
 
 #define stack_size 0x2000
 
- char* status[] = {"STOPPED", "RUNNING"};
+ char* status[] = {"stopped ", "running ", "new     ", "blocked ", "sleeping"};
 
 static struct pcb pcbs[MAX_NUM_OF_PCBS];
 struct pcb* current_running = NULL;
@@ -69,7 +69,7 @@ void print_pcb_status()
     int done_list[MAX_NUM_OF_PCBS];
     int done_list_count = 0;
     
-    twriteln(" PID   Stack       Size    Name");
+    twriteln(" PID   Stack       Size       Status       Name");
     for (int i = 0; i < MAX_NUM_OF_PCBS; i++)
     {
         if(pcbs[i].pid == -1)
@@ -103,7 +103,7 @@ void print_pcb_status()
 
         done_list[done_list_count] = largest;
         done_list_count++;
-        twritef("  %d    0x%x       %d    %s\n", pcbs[largest].pid, pcbs[largest].esp, 0, pcbs[largest].name);
+        twritef("  %d    0x%x       %d       %s     %s\n", pcbs[largest].pid, pcbs[largest].esp, 0, status[pcbs[largest].running], pcbs[largest].name);
     }
     
 }

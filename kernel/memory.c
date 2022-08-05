@@ -48,7 +48,7 @@ void print_mem()
     uint32_t div_used = 0;
 	uint32_t div_main = 0;
 
-	int disk_used = disk_device.dev->size*512;
+	int disk_used = disk_size();
 	uint32_t div_disk = 0;
 
 	int used = (chunks_used*MEM_CHUNK);
@@ -73,24 +73,24 @@ void print_mem()
 		return;
 
 
-	scrprintf(12, 0, "DISK: %d%s", disk_used ,SIZES[div_disk]);
+	scrprintf(18, 0, "DISK: %d%s", disk_used ,SIZES[div_disk]);
 	
-	scrprintf(30, 0, "MEM: %d%s / %d%s", used ,SIZES[div_used], main, SIZES[div_main]);
+	scrprintf(40, 0, "MEM: %d%s / %d%s", used ,SIZES[div_used], main, SIZES[div_main]);
 }
 
 void print_memory_status()
 {	
 	struct time* time = get_datetime();
 	scrcolor_set(VGA_COLOR_LIGHT_BROWN, VGA_COLOR_BLACK);
-	for (int i = 0; i < SCREEN_WIDTH; i++)
+	for (int i = 0; i < SCREEN_WIDTH-1; i++)
 		scrput(i, 0, 205, VGA_COLOR_LIGHT_GREY);
 
 	//scrput(50, 0, 203, VGA_COLOR_LIGHT_GREY);
-	scrput(0, 0, 201, VGA_COLOR_LIGHT_GREY);
-	scrput(SCREEN_WIDTH-1, 0, 187, VGA_COLOR_LIGHT_GREY);
+	scrput(0, 0, 213, VGA_COLOR_LIGHT_GREY);
+	scrput(SCREEN_WIDTH-1, 0, 184, VGA_COLOR_LIGHT_GREY);
 	
 	scrprintf(2,0, "NETOS");
-	scrprintf(SCREEN_WIDTH-22, 0, "%d:%d:%d %d/%d/%d", time->hour, time->minute, time->second, time->day, time->month, time->year);
+	scrprintf(SCREEN_WIDTH-18, 0, "%d:%d:%d %d/%d/%d", time->hour, time->minute, time->second, time->day, time->month, time->year);
 
 	print_mem();
 
@@ -196,6 +196,8 @@ void init_memory()
 
 		mem_position += MEM_CHUNK;
 	}
+
+	twriteln("Memory initilized.");
 }
 
 

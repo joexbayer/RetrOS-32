@@ -21,8 +21,8 @@
 void _main() 
 {
     /* Initialize terminal interface */
-	init_memory();
 	init_terminal();
+	init_memory();
 	init_interrupts();
 	CLI();
 	init_keyboard();
@@ -64,6 +64,17 @@ void _main()
 	//load_page_directory(kernel_page_dir);
     //scrprintf(0, 10, "Kernal page: %x", kernel_page_dir);
 	//enable_paging();
+
+	twrite("\n");
+	twriteln("~~~ Welcome to NETOS! ~~~");
+	twriteln("                  .           o");
+    twriteln("      .---.");
+    twriteln("=   _/__~0_\\_     .  *            o       '");
+    twriteln("= = (_________)             .");
+    twriteln("               .                        *");
+    twriteln("     *               - ) -       *");
+    twriteln("            .               .");
+	twrite("\n");
 
 	STI();
 	start_tasks();

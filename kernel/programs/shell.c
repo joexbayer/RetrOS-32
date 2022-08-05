@@ -19,6 +19,8 @@
 #include <net/dns.h>
 #include <net/icmp.h>
 
+#include <diskdev.h>
+
 static uint8_t SHELL_POSITION = (SCREEN_HEIGHT)-2;
 static const uint8_t SHELL_MAX_SIZE = 50;
 static uint8_t shell_column = 1;
@@ -133,6 +135,14 @@ void exec_cmd()
 
 	if(strncmp("ps", shell_buffer, strlen("ps"))){
 		print_pcb_status();
+	}
+
+	if(strncmp("fdisk", shell_buffer, strlen("fdisk"))){
+		print_dev_status();
+	}
+
+	if(strncmp("shutdown", shell_buffer, strlen("shutdown"))){
+		outportw(0x604, 0x2000);
 	}
 
 	//twrite(shell_buffer);

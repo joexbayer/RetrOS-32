@@ -217,7 +217,7 @@ void scrput(size_t x, size_t y, unsigned char c, uint8_t color)
 void scr_clear()
 {
     CLI();
-	for (size_t y = 1; y < SCREEN_HEIGHT-1; y++)
+	for (size_t y = 1; y < SCREEN_HEIGHT-2; y++)
 	{
 		for (size_t x = 1; x < SCREEN_WIDTH-1; x++)
 		{
@@ -233,21 +233,20 @@ void scr_scroll(size_t width, size_t height)
 {
     CLI();
     /* Move all lines up, overwriting the oldest message. */
-	for (size_t y = height; y < SCREEN_HEIGHT; y++)
+	for (size_t y = height; y < SCREEN_HEIGHT-1; y++)
 	{
 		for (size_t x = 1; x < width-1; x++)
 		{
 			const size_t index = y * SCREEN_WIDTH + x;
 			const size_t index_b = (y+1) * SCREEN_WIDTH + x;
+
+            if(y+1 == SCREEN_HEIGHT-1){
+                VGA_MEMORY[index] = ' ';
+                continue;
+            }
+
 			VGA_MEMORY[index] = VGA_MEMORY[index_b];
 		}
-	}
-
-	/* clear last line of terminal */
-	for (size_t x = 0; x < width; x++)
-	{
-		const size_t index = SCREEN_HEIGHT * SCREEN_WIDTH + x;
-		VGA_MEMORY[index] = vga_entry(' ', 0);
 	}
     STI();
 }
