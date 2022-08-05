@@ -111,7 +111,6 @@ void open(char* name)
 
     char* value = alloc(inode->size);
     inode_read(value, inode->size, inode, &superblock);
-    twritef("\n");
     twritef("%s\n", value);
     free(value);
     

@@ -85,9 +85,11 @@ void print_memory_status()
 	for (int i = 0; i < SCREEN_WIDTH; i++)
 		scrput(i, 0, 205, VGA_COLOR_LIGHT_GREY);
 
-	scrput(50, 0, 203, VGA_COLOR_LIGHT_GREY);
+	//scrput(50, 0, 203, VGA_COLOR_LIGHT_GREY);
+	scrput(0, 0, 201, VGA_COLOR_LIGHT_GREY);
+	scrput(SCREEN_WIDTH-1, 0, 187, VGA_COLOR_LIGHT_GREY);
 	
-	scrprintf(1,0, "NETOS");
+	scrprintf(2,0, "NETOS");
 	scrprintf(SCREEN_WIDTH-22, 0, "%d:%d:%d %d/%d/%d", time->hour, time->minute, time->second, time->day, time->month, time->year);
 
 	print_mem();

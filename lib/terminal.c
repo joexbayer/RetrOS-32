@@ -27,8 +27,8 @@ enum ASCII {
 
 static const char newline = '\n';
 
-#define TERMINAL_START (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)
-#define TERMINAL_WIDTH 50
+#define TERMINAL_START 1
+#define TERMINAL_WIDTH SCREEN_WIDTH
 #define PROCESS_WIDTH (SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)
 
  /*
@@ -55,7 +55,7 @@ void twrite(const char* data);
  */
 void __terminal_ui_text()
 {
-	terminal_setcolor(VGA_COLOR_LIGHT_BROWN);
+	/*terminal_setcolor(VGA_COLOR_LIGHT_BROWN);
 	const char* term_str = "TERMINAL";
 	for (size_t i = 0; i < strlen(term_str); i++)
 		scrput(i+2, TERMINAL_START, term_str[i], terminal_color);
@@ -66,7 +66,7 @@ void __terminal_ui_text()
 
 	const char* nic_str = "NETDEV";
 	for (size_t i = 0; i < strlen(nic_str); i++)
-		scrput(i+52, 12, nic_str[i], terminal_color);
+		scrput(i+52, 12, nic_str[i], terminal_color);*/
 
 }
 
@@ -78,20 +78,20 @@ void __terminal_ui_text()
 void __terminal_draw_lines()
 {
 	
+	/*
 	for (size_t x = 0; x < SCREEN_WIDTH; x++)
-		scrput(x,TERMINAL_START, ASCII_HORIZONTAL_LINE, terminal_color);
+		scrput(x,TERMINAL_START, ASCII_HORIZONTAL_LINE, terminal_color);*/
 
-
-	/* Vertical lines for example */
 	for (size_t x = 0; x < SCREEN_HEIGHT; x++)
-		scrput(((PROCESS_WIDTH+(SCREEN_WIDTH/6))-2), 0+x, ASCII_VERTICAL_LINE, terminal_color);
+		scrput(0, 0+x, ASCII_VERTICAL_LINE, VGA_COLOR_LIGHT_GREY);
 
-	scrput(((PROCESS_WIDTH+(SCREEN_WIDTH/6))-2), TERMINAL_START, 206, terminal_color);
+	for (size_t x = 0; x < SCREEN_HEIGHT; x++)
+		scrput(SCREEN_WIDTH-1, 0+x, ASCII_VERTICAL_LINE, VGA_COLOR_LIGHT_GREY);
 
-	for (size_t x = 50; x < SCREEN_WIDTH; x++)
+	/*for (size_t x = 50; x < SCREEN_WIDTH; x++)
 		scrput(x, 12, ASCII_HORIZONTAL_LINE, terminal_color);
 	
-	scrput(50, 12, 204, terminal_color);
+	scrput(50, 12, 204, terminal_color);*/
 
 }
 
@@ -141,8 +141,8 @@ void draw_logo()
  */
 void init_terminal(void)
 {
-	terminal_row = TERMINAL_START+1;
-	terminal_column = 0;
+	terminal_row = SCREEN_HEIGHT-2;
+	terminal_column = 1;
 	terminal_color = VGA_COLOR_LIGHT_GREY;
 
 	/* Clears screen */
@@ -153,7 +153,7 @@ void init_terminal(void)
 	__terminal_draw_lines();
 	__terminal_ui_text();
 
-	for (size_t i = 1; i < SCREEN_WIDTH; i++)
+	for (size_t i = 1; i < SCREEN_WIDTH-1; i++)
 		scrput(i, 0, ' ', VGA_COLOR_BLACK | VGA_COLOR_LIGHT_GREY << 4);
 
 	terminal_setcolor(VGA_COLOR_WHITE);
@@ -192,17 +192,12 @@ void terminal_putchar(char c)
 
 	if(c == newline)
 	{
-		terminal_column = 0;
-		if(terminal_row < SCREEN_HEIGHT-1)
-		{
-			terminal_row += 1;
-			return;
-		}
+		terminal_column = 1;
 		__terminal_scroll();
 		return;
 	}
 	
-	if (terminal_column == TERMINAL_WIDTH)
+	if (terminal_column == TERMINAL_WIDTH-1)
 	{
 		return;
 	}
@@ -292,12 +287,7 @@ int32_t twritef(char* fmt, ...)
 				fmt++;
 				break;
 			case '\n':
-				terminal_column = 0;
-				if(terminal_row < SCREEN_HEIGHT-1)
-				{
-					terminal_row += 1;
-					return written;
-				}
+				terminal_column = 1;
 				__terminal_scroll();
 				break;
 			default:  

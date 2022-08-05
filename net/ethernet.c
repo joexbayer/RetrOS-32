@@ -44,7 +44,7 @@ uint8_t ethernet_parse(struct sk_buff* skb)
 {
     struct ethernet_header* header = (struct ethernet_header*) skb->data;
     header->ethertype = ntohs(header->ethertype);
-    print_ethernet(header);
+    //print_ethernet(header);
 
     skb->hdr.eth = header;
     skb->data += ETHER_HDR_LENGTH;

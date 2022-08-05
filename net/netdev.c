@@ -10,7 +10,7 @@
  */
 
 #include <net/netdev.h>
-#include <screen.h>
+#include <terminal.h>
 
 struct netdev current_netdev;
 static uint8_t netdev_attached = 0;
@@ -40,11 +40,10 @@ void netdev_print_status()
     if(!netdev_attached)
         return;
         
-    scrwrite(51, 13, "Card: ", VGA_COLOR_GREEN);
-    scrprintf(51+strlen("Card: "), 13, "%s", current_netdev.name);
-    scrprintf(51, 14, "PCI BAR0: 0x%x", current_netdev.driver.base);
-    scrprintf(51, 15, "Transmit: %d", current_netdev.sent);
-    scrprintf(51, 16, "Recieved: %d (%d dropped)", current_netdev.received, current_netdev.dropped);
+    twritef("Card %s\n", current_netdev.name);
+    twritef("PCI BAR0: 0x%x\n", current_netdev.driver.base);
+    twritef("Transmit: %d\n", current_netdev.sent);
+    twritef("Recieved: %d (%d dropped)\n", current_netdev.received, current_netdev.dropped);
 
 }
 

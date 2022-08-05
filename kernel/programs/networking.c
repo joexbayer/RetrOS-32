@@ -31,26 +31,21 @@ int get_next_queue();
 
 void networking_print_status()
 {
-
-    scrwrite(51, 1, "Networking:", VGA_COLOR_CYAN);
-
-    scrwrite(51, 3, "DHCP", VGA_COLOR_LIGHT_BLUE);
+    twriteln("DHCP");
     int state = dhcp_get_state();
     if(state != DHCP_SUCCESS){
-        scrprintf(55, 3, " (%s)      ", dhcp_state_names[state]);
-        scrprintf(51, 4, "IP: %s", "N/A");
-        scrprintf(51, 5, "DNS: %s", "N/A");
-        scrprintf(51, 6, "GW: %s", "N/A");
+        twritef(" (%s)      \n", dhcp_state_names[state]);
+        twritef(" IP: %s\n", "N/A");
+        twritef(" DNS: %s\n", "N/A");
+        twritef(" GW: %s\n", "N/A");
     } else {
-        scrprintf(55, 3, "              ");
-
         int ip = dhcp_get_ip();
         unsigned char bytes[4];
         bytes[0] = (ip >> 24) & 0xFF;
         bytes[1] = (ip >> 16) & 0xFF;
         bytes[2] = (ip >> 8) & 0xFF;
         bytes[3] = ip & 0xFF;
-        scrprintf(51, 4, "IP: %d.%d.%d.%d     \n", bytes[3], bytes[2], bytes[1], bytes[0]);
+        twritef(" IP: %d.%d.%d.%d     \n", bytes[3], bytes[2], bytes[1], bytes[0]);
 
         int dns = dhcp_get_dns();
         unsigned char bytes_dns[4];
@@ -58,7 +53,7 @@ void networking_print_status()
         bytes_dns[1] = (dns >> 16) & 0xFF;
         bytes_dns[2] = (dns >> 8) & 0xFF;
         bytes_dns[3] = dns & 0xFF;
-        scrprintf(51, 5, "DNS: %d.%d.%d.%d     \n", bytes_dns[3], bytes_dns[2], bytes_dns[1], bytes_dns[0]);
+        twritef(" DNS: %d.%d.%d.%d     \n", bytes_dns[3], bytes_dns[2], bytes_dns[1], bytes_dns[0]);
         
         int gw = dhcp_get_gw();
         unsigned char bytes_gw[4];
@@ -66,12 +61,12 @@ void networking_print_status()
         bytes_gw[1] = (gw >> 16) & 0xFF;
         bytes_gw[2] = (gw >> 8) & 0xFF;
         bytes_gw[3] = gw & 0xFF;
-        scrprintf(51, 6, "GW: %d.%d.%d.%d     \n", bytes_gw[3], bytes_gw[2], bytes_gw[1], bytes_gw[0]);
+        twritef(" GW: %d.%d.%d.%d     \n", bytes_gw[3], bytes_gw[2], bytes_gw[1], bytes_gw[0]);
     }
 
-    scrprintf(51, 8, "MAC: %x:%x:%x:%x:%x:%x", current_netdev.mac[0], current_netdev.mac[1], current_netdev.mac[2], current_netdev.mac[3], current_netdev.mac[4], current_netdev.mac[5]);
-    scrprintf(51, 9, "Packets: %d", packets);
-    scrprintf(51, 10, "Sockets: %d", get_total_sockets());
+    twritef(" MAC: %x:%x:%x:%x:%x:%x\n", current_netdev.mac[0], current_netdev.mac[1], current_netdev.mac[2], current_netdev.mac[3], current_netdev.mac[4], current_netdev.mac[5]);
+    twritef(" Packets: %d\n", packets);
+    twritef(" Sockets: %d\n", get_total_sockets());
 
 }
 
@@ -187,4 +182,6 @@ PROGRAM(networking, &main)
 ATTACH("lsnet", &list_net_devices)
 ATTACH("arp -a", &arp_print_cache);
 ATTACH("arp", &arp_request)
+ATTACH("netdev", &netdev_print_status);
+ATTACH("ip", &networking_print_status);
 PROGRAM_END

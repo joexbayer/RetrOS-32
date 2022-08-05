@@ -205,6 +205,9 @@ int dhcp_get_gw()
 
 void dhcpd()
 {
+    if(dhcp_state.state == DHCP_SUCCESS)
+        return;
+
     int ret;
     /* Create and bind DHCP socket to DHCP_SOURCE_PORT and INADDR_ANY. */
     socket_t dhcp_socket = socket(AF_INET, SOCK_DGRAM, 0);

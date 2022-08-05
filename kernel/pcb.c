@@ -10,7 +10,7 @@
  */
 
 #include <pcb.h>
-#include <screen.h>
+#include <terminal.h>
 #include <memory.h>
 #include <sync.h>
 #include <timer.h>
@@ -29,10 +29,10 @@ void pcb_function()
 {
 	while(1)
     {
-        print_pcb_status();
+        //print_pcb_status();
         print_memory_status();
-        netdev_print_status();
-        networking_print_status();
+        //netdev_print_status();
+        //networking_print_status();
 		sleep(1);
 	}
 }
@@ -66,17 +66,10 @@ void gensis2()
  */
 void print_pcb_status()
 {
-    int width = (SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)-1 + (SCREEN_WIDTH/6);
-    int height = (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5)+1;
-
     int done_list[MAX_NUM_OF_PCBS];
     int done_list_count = 0;
-
-    for (int i = width; i < SCREEN_WIDTH; i++)
-        for (int j = height; j < SCREEN_HEIGHT; j++)
-            scrput(i, j, ' ', VGA_COLOR_BLACK);
     
-
+    twriteln(" PID   Stack       Size    Name");
     for (int i = 0; i < MAX_NUM_OF_PCBS; i++)
     {
         if(pcbs[i].pid == -1)
@@ -110,28 +103,7 @@ void print_pcb_status()
 
         done_list[done_list_count] = largest;
         done_list_count++;
-
-        switch (pcbs[largest].running)
-        {
-        case RUNNING:
-            scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
-            break;
-        case BLOCKED:
-            scrcolor_set(VGA_COLOR_BROWN, VGA_COLOR_BLACK);
-            break;
-        case STOPPED:
-            scrcolor_set(VGA_COLOR_RED, VGA_COLOR_BLACK);
-            break;
-        case SLEEPING:
-            scrcolor_set(VGA_COLOR_DARK_GREY, VGA_COLOR_BLACK);
-            break;
-        default:
-            continue;
-        }
-
-        scrprintf(width, height+done_list_count-1, "PID %d: %s. 0x%x",pcbs[largest].pid, pcbs[largest].name, pcbs[largest].esp);
-        /* code */
-        scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
+        twritef("  %d    0x%x       %d    %s\n", pcbs[largest].pid, pcbs[largest].esp, 0, pcbs[largest].name);
     }
     
 }
@@ -272,8 +244,6 @@ void init_pcbs()
 
     ret = add_pcb(&pcb_function, "PCBd");
     if(ret < 0) return; // error
-
-    twriteln("PCB: successfull.");
 
 }
 

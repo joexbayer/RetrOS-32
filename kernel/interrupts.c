@@ -86,7 +86,6 @@ void EOI(int irq)
 	outportb(PIC1, 0x20); /* Master */
 }
 
-int tsest = 1;
 /* Main interrupt handler, calls interrupt specific hanlder if installed. */
 void isr_handler(struct registers regs)
 {
@@ -126,9 +125,8 @@ static void init_idt()
 	{
 		idt_set_gate(i, (uint32_t) irqs[i-32] , 0x08, 0x8E); // PIT timer
 	}
-	idt_set_gate(48, &_syscall_entry, 0x08, 0x8E);
-	idt_set_gate(14, &_page_fault_entry, 0x08, 0x8E);
-
+	idt_set_gate(48, (uint32_t)&_syscall_entry, 0x08, 0x8E);
+	//idt_set_gate(14, &_page_fault_entry, 0x08, 0x8E);
 
 	idt_flush((uint32_t)&idt);
 }

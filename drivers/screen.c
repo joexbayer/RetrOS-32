@@ -216,62 +216,26 @@ void scrput(size_t x, size_t y, unsigned char c, uint8_t color)
  */
 void scr_clear()
 {
-	/*for (size_t y = 0; y < 320; y++)
+    CLI();
+	for (size_t y = 1; y < SCREEN_HEIGHT-1; y++)
 	{
-		for (size_t x = 0; x < 200; x++)
-		{
-			//const size_t index = y * SCREEN_WIDTH + x;
-			//VGA_MEMORY[index] = vga_entry(' ', 0);
-			putpixel(VGA_MEMORY, y, x, 320, VGA_COLOR_BLUE);
-		}
-	}
-
-	for (size_t y = 0; y < 160; y++)
-	{
-		for (size_t x = 0; x < 100; x++)
-		{
-			//const size_t index = y * SCREEN_WIDTH + x;
-			//VGA_MEMORY[index] = vga_entry(' ', 0);
-			//putpixel(VGA_MEMORY, x, y, 200, VGA_COLOR_LIGHT_BROWN);
-			putpixel(VGA_MEMORY, y, x, 320, VGA_COLOR_LIGHT_BROWN);
-		}
-	}
-
-	char* test = "Hello, a A world!";
-
-	for (int p = 0; p < strlen(test); p++)
-	{
-		for (int l = 0; l < 8; l++) {
-			for (int i = 8; i >= 0; i--) {
-				if ((font8x8_basic[test[p]][l] & (1 << i))) {
-					int c = (font8x8_basic[test[p]][l] & (1 << i));
-					putpixel(VGA_MEMORY, 10+i+p*8, 10+l, 320, c > 0 ? VGA_COLOR_LIGHT_BLUE : 0);
-				}
-			}
-		}
-	}
-	
-
-	while (1);*/
-	for (size_t y = 0; y < SCREEN_HEIGHT; y++)
-	{
-		for (size_t x = 0; x < SCREEN_WIDTH; x++)
+		for (size_t x = 1; x < SCREEN_WIDTH-1; x++)
 		{
 			const size_t index = y * SCREEN_WIDTH + x;
 			VGA_MEMORY[index] = vga_entry(' ', 0);
 		}
 	}
-	
-
+    STI();
 	
 }
 
 void scr_scroll(size_t width, size_t height)
 {
+    CLI();
     /* Move all lines up, overwriting the oldest message. */
-	for (size_t y = height+1; y < SCREEN_HEIGHT; y++)
+	for (size_t y = height; y < SCREEN_HEIGHT; y++)
 	{
-		for (size_t x = 0; x < width; x++)
+		for (size_t x = 1; x < width-1; x++)
 		{
 			const size_t index = y * SCREEN_WIDTH + x;
 			const size_t index_b = (y+1) * SCREEN_WIDTH + x;
@@ -285,6 +249,7 @@ void scr_scroll(size_t width, size_t height)
 		const size_t index = SCREEN_HEIGHT * SCREEN_WIDTH + x;
 		VGA_MEMORY[index] = vga_entry(' ', 0);
 	}
+    STI();
 }
 
 /**
