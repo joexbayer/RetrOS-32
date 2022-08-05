@@ -6,30 +6,57 @@
 #include <diskdev.h>
 
 #define INODE_CACHE_SIZE 10
-#define INODE_TO_BLOCK(inode) (INODE_BLOCK(inode)+103) // TODO: REPLACE 103
-#define INODE_BLOCK_OFFSET(block, inode) ((inode-(block*INODES_PER_BLOCK))*sizeof(struct inode))
+#define INODE_TO_BLOCK(inode) (INODE_BLOCK(inode)) // TODO: REPLACE 103
+#define INODE_BLOCK_OFFSET(block, i) ((i-(block*INODES_PER_BLOCK))*sizeof(struct inode))
 
 static struct inode __inode_cache[INODE_CACHE_SIZE];
 
-static void __inode_sync(struct inode* inode)
+static void __inode_sync(struct inode* inode, struct superblock* sb)
 {
-    
+    int inode_int = inode->inode;
+    int block_inode = INODE_TO_BLOCK(inode->inode);
+    int inode_loc = INODE_BLOCK_OFFSET(block_inode, inode_int);
+
+    write_block_offset((char*) inode, sizeof(*inode), inode_loc, sb->inodes_start+block_inode);
 }
 
-static void __inode_cache_insert(struct inode* inode)
+static int __inode_cache_insert(struct inode* inode)
 {
     for (size_t i = 0; i < 10; i++)
         if(__inode_cache[i].type == 0){
             memcpy(&__inode_cache[i], inode, sizeof(struct inode));
-            return;
+            return i;
         }
+
+    return -1;
 
     /* REPLACE OLD INODE. */
 }
 
+void inodes_sync(struct superblock* sb)
+{
+    for (int i = 0; i < INODE_CACHE_SIZE; i++)
+        if(__inode_cache[i].type != 0)
+            __inode_sync(&__inode_cache[i], sb);
+}
+
+int __inode_load(inode_t inode, struct superblock* sb)
+{   
+    int block_inode = INODE_TO_BLOCK(inode);
+    int inode_loc = INODE_BLOCK_OFFSET(block_inode, inode);
+
+    struct inode disk_inode;
+    read_block_offset((char*) &disk_inode, sizeof(disk_inode), inode_loc, sb->inodes_start+block_inode);
+
+    int ret = __inode_cache_insert(&disk_inode);
+
+    return ret;
+    
+}
+
 static inline int new_inode(struct superblock* sb)
 {
-    return get_free_bitmap(sb->inode_map, sb->ninodes);
+    return get_free_bitmap(sb->inode_map, sb->ninodes)+1;
 }
 
 static inline int new_block(struct superblock* sb)
@@ -37,14 +64,17 @@ static inline int new_block(struct superblock* sb)
     return get_free_bitmap(sb->block_map, sb->nblocks)+1;
 }
 
-struct inode* inode_get(inode_t inode)
+struct inode* inode_get(inode_t inode, struct superblock* sb)
 {
     for (int i = 0; i < INODE_CACHE_SIZE; i++)
         if(__inode_cache[i].inode == inode){
             return &__inode_cache[i];
         }
 
-    /* Load inode from disk. */
+    int ret = __inode_load(inode, sb);
+    if(ret >= 0){
+        return &__inode_cache[ret];
+    }
     return NULL;
 }
 
@@ -83,7 +113,7 @@ int inode_write(char* buf, int size, struct inode* inode, struct superblock* sb)
     
     if(new_pos + size > 512){
         int to_write = BLOCK_SIZE - new_pos;
-        write_block_offset(buf, to_write, new_pos, 103+sb->ninodes+inode->blocks[block]);
+        write_block_offset(buf, to_write, new_pos, sb->blocks_start+inode->blocks[block]);
         inode->pos += to_write;
         size -= to_write;
     }
@@ -105,7 +135,7 @@ int inode_write(char* buf, int size, struct inode* inode, struct superblock* sb)
             inode->blocks[block] = new_block(sb);
     }
     
-    write_block_offset(buf, size, inode->pos % BLOCK_SIZE, 103+sb->ninodes+inode->blocks[block]);
+    write_block_offset(buf, size, inode->pos % BLOCK_SIZE, sb->blocks_start+inode->blocks[block]);
     inode->pos += size;
     inode->size += original_size;
 

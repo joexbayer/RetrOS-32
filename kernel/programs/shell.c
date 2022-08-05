@@ -18,6 +18,7 @@
 
 #include <net/dns.h>
 #include <net/icmp.h>
+#include <fs/fs.h>
 
 #include <diskdev.h>
 
@@ -141,7 +142,12 @@ void exec_cmd()
 		print_dev_status();
 	}
 
+	if(strncmp("sync", shell_buffer, strlen("sync"))){
+		sync();
+	}
+
 	if(strncmp("shutdown", shell_buffer, strlen("shutdown"))){
+		sync();
 		outportw(0x604, 0x2000);
 	}
 

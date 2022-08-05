@@ -27,6 +27,13 @@ int init_fs()
         return 1;
     }
 
+    twritef("FS: Found Filesystem with size: %d\n", superblock.nblocks*512);
+    twritef("FS: With a total of %d inodes\n", superblock.ninodes);
+    twritef("FS: Max file size: %d bytes\n", NDIRECT*512);
+
+    root_dir = inode_get(superblock.root_inode, &superblock);
+    current_dir = root_dir;
+
     return 0;
 }
 
@@ -35,6 +42,17 @@ void __superblock_sync()
     write_block_offset((char*) &superblock, sizeof(struct superblock), 0, FS_START_LOCATION);
     write_block_offset((char*) superblock.inode_map, get_bitmap_size(superblock.ninodes), 0, FS_INODE_BMAP_LOCATION);
     write_block_offset((char*) superblock.block_map, get_bitmap_size(superblock.nblocks), 0, FS_BLOCK_BMAP_LOCATION);
+
+    twriteln("[sync] Superblock... (DONE)");
+}
+
+void sync()
+{
+    twriteln("[sync] Synchronizing filesystem.");
+    __superblock_sync();
+    inodes_sync(&superblock);
+    twritef("[sync] %d inodes... (DONE)\n", superblock.ninodes);
+    twriteln("[sync] Filesystem successfully synchronized to disk!.");
 }
 
 void mkfs()
@@ -44,6 +62,9 @@ void mkfs()
     superblock.ninodes = 200;
     superblock.nblocks = superblock.ninodes*NDIRECT;
 
+    superblock.inodes_start = FS_START_LOCATION + 3;
+    superblock.blocks_start = superblock.inodes_start + superblock.ninodes;
+
     superblock.block_map = create_bitmap(superblock.nblocks);
     superblock.inode_map = create_bitmap(superblock.ninodes);
 
@@ -51,10 +72,10 @@ void mkfs()
     twritef("FS: With a total of %d inodes\n", superblock.ninodes);
     twritef("FS: Max file size: %d bytes\n", NDIRECT*512);
 
-    __superblock_sync();
-
     inode_t root_inode = alloc_inode(&superblock, FS_DIRECTORY);
-    struct inode* root = inode_get(root_inode);
+    struct inode* root = inode_get(root_inode, &superblock);
+
+    superblock.root_inode = root_inode;
 
     struct directory_entry self = {
         .inode = root_inode,
@@ -67,7 +88,7 @@ void mkfs()
     };
 
     inode_t home_inode = alloc_inode(&superblock, FS_FILE);
-    struct inode* home_disk_inode = inode_get(home_inode);
+    struct inode* home_disk_inode = inode_get(home_inode, &superblock);
 
     struct directory_entry home = {
         .inode = home_inode,
@@ -106,7 +127,7 @@ void open(char* name)
             break;
         size += ret;
     }
-    struct inode* inode = inode_get(entry.inode);
+    struct inode* inode = inode_get(entry.inode, &superblock);
     inode->pos = 0;
 
     char* value = alloc(inode->size);

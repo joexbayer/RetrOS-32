@@ -19,6 +19,9 @@ struct superblock {
     bitmap_t inode_map;
     bitmap_t block_map;
 
+    uint16_t blocks_start;
+    uint16_t inodes_start;
+
     inode_t root_inode;
 };
 /*
