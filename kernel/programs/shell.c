@@ -99,7 +99,7 @@ void exec_cmd()
 	}
 
 	if(strncmp("ls", shell_buffer, strlen("ls"))){
-		ls();
+		ls("");
 		return;
 	}
 
@@ -125,7 +125,9 @@ void exec_cmd()
 
 	if(strncmp("cat", shell_buffer, strlen("cat"))){
 		char* name = shell_buffer+strlen("cat")+1;
-		open(name);
+		inode_t inode = open(name);
+		read(inode);
+		file_close(inode);
 	}
 
 	if(strncmp("ping", shell_buffer, strlen("ping"))){

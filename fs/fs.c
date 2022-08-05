@@ -32,6 +32,7 @@ int init_fs()
     twritef("FS: Max file size: %d bytes\n", NDIRECT*512);
 
     root_dir = inode_get(superblock.root_inode, &superblock);
+    root_dir->nlink++;
     current_dir = root_dir;
 
     return 0;
@@ -74,6 +75,7 @@ void mkfs()
 
     inode_t root_inode = alloc_inode(&superblock, FS_DIRECTORY);
     struct inode* root = inode_get(root_inode, &superblock);
+    root->nlink++;
 
     superblock.root_inode = root_inode;
 
@@ -113,28 +115,42 @@ void create_file(char* name)
     inode_t inode = alloc_inode(&superblock, FS_FILE);
 }
 
-void open(char* name)
+void read(inode_t i)
 {
-    struct directory_entry entry;
-
-    root_dir->pos = 0;
-
-    int size = 0;
-    while (size <= root_dir->size)
-    {
-        int ret = inode_read((char*) &entry, sizeof(struct directory_entry), root_dir, &superblock);
-        if(memcmp((void*)entry.name, (void*)name, strlen(entry.name)))
-            break;
-        size += ret;
-    }
-    struct inode* inode = inode_get(entry.inode, &superblock);
+    struct inode* inode = inode_get(i, &superblock);
     inode->pos = 0;
 
     char* value = alloc(inode->size);
     inode_read(value, inode->size, inode, &superblock);
     twritef("%s\n", value);
     free(value);
+}
+
+void file_close(inode_t inode)
+{
+    struct inode* inode_disk = inode_get(inode, &superblock);
+    inode_disk->nlink--;
+}
+
+inode_t open(char* name)
+{
+    struct directory_entry entry;
+    current_dir->pos = 0;
+
+    int size = 0;
+    while (size <= current_dir->size)
+    {
+        int ret = inode_read((char*) &entry, sizeof(struct directory_entry), current_dir, &superblock);
+        if(memcmp((void*)entry.name, (void*)name, strlen(entry.name)))
+            break;
+        size += ret;
+    }
+
+    struct inode* inode = inode_get(entry.inode, &superblock);
+    inode->nlink++;
+    inode->pos = 0;
     
+    return entry.inode;
 }
 
 void ls(char* path)

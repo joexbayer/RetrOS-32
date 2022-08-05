@@ -14,10 +14,9 @@ typedef uint16_t inode_t;
 struct inode {
     inode_t inode;
     uint8_t type;
-    uint8_t nlink;          // Number of links to inode in file system
+    uint8_t nlink;          // Number of processes using this inode
     uint16_t size;            // Size of file (bytes)
     uint8_t blocks[NDIRECT];   // Data block addresses
-
     uint16_t pos;
 };
 
