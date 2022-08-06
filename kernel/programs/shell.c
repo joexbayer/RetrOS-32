@@ -126,7 +126,7 @@ void exec_cmd()
 	if(strncmp("cat", shell_buffer, strlen("cat"))){
 		char* name = shell_buffer+strlen("cat")+1;
 		inode_t inode = open(name);
-		read(inode);
+		file_read(inode);
 		file_close(inode);
 	}
 
@@ -152,6 +152,19 @@ void exec_cmd()
 		sync();
 		outportw(0x604, 0x2000);
 	}
+
+	if(strncmp("cd", shell_buffer, strlen("cd"))){
+		char* name = shell_buffer+strlen("cd")+1;
+		name[strlen(name)-1] = 0;
+		chdir(name);
+	}
+
+	if(strncmp("mkdir", shell_buffer, strlen("mkdir"))){
+		char* name = shell_buffer+strlen("mkdir")+1;
+		name[strlen(name)-1] = 0;
+		mkdir(name);
+	}
+
 
 	//twrite(shell_buffer);
 }

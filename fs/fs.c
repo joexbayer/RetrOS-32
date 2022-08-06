@@ -9,16 +9,17 @@
 
 #include <util.h>
 
-#define FS_START_LOCATION 100
 #define FS_INODE_BMAP_LOCATION FS_START_LOCATION+1
 #define FS_BLOCK_BMAP_LOCATION FS_INODE_BMAP_LOCATION+1
 
 static struct superblock superblock;
 static struct inode* root_dir;
 static struct inode* current_dir;
+static int FS_START_LOCATION = 0;
 
 int init_fs()
 {
+    FS_START_LOCATION = (kernel_size/512)+2;
     /* Read superblock and check magic. */
     read_block_offset((char*) &superblock, sizeof(struct superblock), 0, FS_START_LOCATION);
     if(superblock.magic != MAGIC){
@@ -27,9 +28,10 @@ int init_fs()
         return 1;
     }
 
-    twritef("FS: Found Filesystem with size: %d\n", superblock.nblocks*512);
-    twritef("FS: With a total of %d inodes\n", superblock.ninodes);
-    twritef("FS: Max file size: %d bytes\n", NDIRECT*512);
+    twritef("FS: Found Filesystem with size: %d (%d total)\n", superblock.nblocks*BLOCK_SIZE, superblock.size);
+    twritef("FS: With a total of %d inodes (%d blocks)\n", superblock.ninodes, superblock.ninodes / INODES_PER_BLOCK);
+    twritef("FS: And total of %d block\n", superblock.nblocks);
+    twritef("FS: Max file size: %d bytes\n", NDIRECT*BLOCK_SIZE);
 
     root_dir = inode_get(superblock.root_inode, &superblock);
     root_dir->nlink++;
@@ -56,22 +58,30 @@ void sync()
     twriteln("[sync] Filesystem successfully synchronized to disk!.");
 }
 
+static inline void __inode_add_dir(struct directory_entry* entry, struct inode* inode, struct superblock* sb)
+{
+    inode->pos = inode->size;
+    inode_write((char*) entry, sizeof(struct directory_entry), inode, sb);
+}
+
 void mkfs()
 {
     superblock.magic = MAGIC;
-    superblock.size = (disk_size()) - (FS_START_LOCATION*512);
-    superblock.ninodes = 200;
+    superblock.size = (disk_size()) - (FS_START_LOCATION*BLOCK_SIZE);
+
+    superblock.ninodes = (superblock.size / (sizeof(struct inode)+NDIRECT*BLOCK_SIZE));
     superblock.nblocks = superblock.ninodes*NDIRECT;
 
     superblock.inodes_start = FS_START_LOCATION + 3;
-    superblock.blocks_start = superblock.inodes_start + superblock.ninodes;
+    superblock.blocks_start = superblock.inodes_start + (superblock.ninodes/ INODES_PER_BLOCK);
 
     superblock.block_map = create_bitmap(superblock.nblocks);
     superblock.inode_map = create_bitmap(superblock.ninodes);
 
-    twritef("FS: Creating Filesystem with size: %d\n", superblock.nblocks*512);
-    twritef("FS: With a total of %d inodes\n", superblock.ninodes);
-    twritef("FS: Max file size: %d bytes\n", NDIRECT*512);
+    twritef("FS: Creating Filesystem with size: %d (%d total)\n", superblock.nblocks*BLOCK_SIZE, superblock.size);
+    twritef("FS: With a total of %d inodes (%d blocks)\n", superblock.ninodes, superblock.ninodes / INODES_PER_BLOCK);
+    twritef("FS: And total of %d block\n", superblock.nblocks);
+    twritef("FS: Max file size: %d bytes\n", NDIRECT*BLOCK_SIZE);
 
     inode_t root_inode = alloc_inode(&superblock, FS_DIRECTORY);
     struct inode* root = inode_get(root_inode, &superblock);
@@ -103,9 +113,9 @@ void mkfs()
     root_dir = root;
     current_dir = root;
 
-    inode_write((char*) &self, sizeof(struct directory_entry), current_dir, &superblock);
-    inode_write((char*) &back, sizeof(struct directory_entry), current_dir, &superblock);
-    inode_write((char*) &home, sizeof(struct directory_entry), current_dir, &superblock);
+    __inode_add_dir(&back, current_dir, &superblock);
+    __inode_add_dir(&self, current_dir, &superblock);
+    __inode_add_dir(&home, current_dir, &superblock);
 
     current_dir->pos = 0;
 }
@@ -115,7 +125,7 @@ void create_file(char* name)
     inode_t inode = alloc_inode(&superblock, FS_FILE);
 }
 
-void read(inode_t i)
+void file_read(inode_t i)
 {
     struct inode* inode = inode_get(i, &superblock);
     inode->pos = 0;
@@ -146,6 +156,9 @@ inode_t open(char* name)
         size += ret;
     }
 
+    if(entry.inode == 0)
+        twriteln("Cant find");
+
     struct inode* inode = inode_get(entry.inode, &superblock);
     inode->nlink++;
     inode->pos = 0;
@@ -153,15 +166,52 @@ inode_t open(char* name)
     return entry.inode;
 }
 
+void chdir(char* path)
+{
+    inode_t ret = open(path);
+    struct inode* inode = inode_get(ret, &superblock);
+    if(inode->type != FS_DIRECTORY){
+        twritef("%s is not a directory.\n", path);
+        return;
+    }
+
+    current_dir = inode;
+}
+
+void mkdir(char* name)
+{
+    inode_t inode_index = alloc_inode(&superblock, FS_DIRECTORY);
+    struct inode* inode = inode_get(inode_index, &superblock);
+
+    struct directory_entry self = {
+        .inode = inode->inode,
+        .name = "."
+    };
+
+    struct directory_entry back = {
+        .inode = current_dir->inode,
+        .name = ".."
+    };
+
+    struct directory_entry new = {
+        .inode = inode->inode
+    };
+    memcpy(new.name, name, strlen(name));
+
+    __inode_add_dir(&back, inode, &superblock);
+    __inode_add_dir(&self, inode, &superblock);
+    __inode_add_dir(&new, current_dir, &superblock);
+}
+
 void ls(char* path)
 {
     struct directory_entry entry;
     int size = 0;
 
-    root_dir->pos = 0;
-    while (size < root_dir->size)
+    current_dir->pos = 0;
+    while (size < current_dir->size)
     {
-        int ret = inode_read((char*) &entry, sizeof(struct directory_entry), root_dir, &superblock);
+        int ret = inode_read((char*) &entry, sizeof(struct directory_entry), current_dir, &superblock);
         twritef(" %s\n", entry.name);
         size += ret;
     }

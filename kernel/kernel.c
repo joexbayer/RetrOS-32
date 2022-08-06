@@ -20,6 +20,7 @@
 /* This functions always needs to be on top? */
 void _main() 
 {
+	kernel_size = _end-_code;
     /* Initialize terminal interface */
 	init_terminal();
 	init_memory();
@@ -61,6 +62,15 @@ void _main()
 	start_process(0); // SHELL
 	start_process(2); // Networking
 
+
+
+	twritef("TEXT: %d\n", _code_end-_code);
+	twritef("RODATA: %d\n", _ro_e-_ro_s);
+	twritef("DATA: %d\n", _data_e-_data_s);
+	twritef("BSS: %d\n", _bss_e-_bss_s);
+	twriteln("");
+	twritef("Total: %d (%d sectors)\n", _end-_code, ((_end-_code)/512)+2);
+
 	//load_page_directory(kernel_page_dir);
     //scrprintf(0, 10, "Kernal page: %x", kernel_page_dir);
 	//enable_paging();
@@ -74,7 +84,7 @@ void _main()
     twriteln("               .                        *");
     twriteln("     *               - ) -       *");
     twriteln("            .               .");
-	twrite("\n");
+	twriteln("");
 
 	STI();
 	start_tasks();

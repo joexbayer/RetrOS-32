@@ -2,7 +2,8 @@
 #define UTILS_H
 
 #include <stdint.h>
-
+extern char _code[], _end[], _code_end[], _ro_s[], _ro_e[], _data_s[], _data_e[], _bss_s[], _bss_e[];
+extern int kernel_size;
 /*
     Type Name	32–bit Size	    64–bit Size
     short	    2 bytes	        2 bytes
@@ -12,8 +13,6 @@
 */
 
 #define NULL (void *)0
-
-extern long end;
 
 
 size_t strlen(const char* str);

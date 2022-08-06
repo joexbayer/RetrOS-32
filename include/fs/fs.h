@@ -10,6 +10,8 @@ void mkfs();
 
 inode_t open(char* name);
 void file_close(inode_t inode);
-void read(inode_t i);
+void file_read(inode_t i);
+void chdir(char* path);
+void mkdir(char* name);
 
 #endif /* __FS_H */

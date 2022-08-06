@@ -92,7 +92,7 @@ int inode_read(char* buf, int size, struct inode* inode, struct superblock* sb)
     if(inode->blocks[block] == 0)
         return -1;
     
-    read_block_offset(buf, size, inode->pos, 103+sb->ninodes+inode->blocks[block]);
+    read_block_offset(buf, size, inode->pos, sb->blocks_start+inode->blocks[block]);
     inode->pos += size;
 
     return size;
@@ -126,7 +126,7 @@ int inode_write(char* buf, int size, struct inode* inode, struct superblock* sb)
     /* While size is greater than block size keep writing blocks */
     while (size > BLOCK_SIZE)
     {
-        write_block(buf, 103+sb->ninodes+inode->blocks[block]);
+        write_block(buf, sb->blocks_start+inode->blocks[block]);
         inode->pos += BLOCK_SIZE;
         size -= BLOCK_SIZE;
 
