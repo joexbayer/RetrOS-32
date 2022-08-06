@@ -2,6 +2,7 @@
 #define PCB_H
 
 #include <util.h>
+#include <windowmanager.h>
 
 #define MAX_NUM_OF_PCBS 10
 #define pcb_max_name_length 25
@@ -30,6 +31,8 @@ struct pcb {
 
       char name[pcb_max_name_length];
 
+      struct window window;
+
       struct pcb *next;
       struct pcb *prev;
 }__attribute__((packed));
@@ -45,6 +48,7 @@ int add_pcb( void (*entry)(), char* name);
 void print_pcb_status();
 
 void pcb_set_running(int pid);
+int attach_window(struct window w);
 
 /* functions in entry.s */
 void _start_pcb();

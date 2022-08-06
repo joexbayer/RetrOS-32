@@ -16,15 +16,24 @@
 #include <pcb.h>
 #include <process.h>
 
+#include <windowmanager.h>
 #include <net/dns.h>
 #include <net/icmp.h>
 #include <fs/fs.h>
 
 #include <diskdev.h>
 
-static uint8_t SHELL_POSITION = (SCREEN_HEIGHT)-2;
+
+struct window w = {
+	.anchor = 1,
+	.height = SCREEN_HEIGHT-3,
+	.width = SCREEN_WIDTH-3,
+	.color = VGA_COLOR_LIGHT_BLUE
+};
+
+static uint8_t SHELL_POSITION =SCREEN_HEIGHT-3;
 static const uint8_t SHELL_MAX_SIZE = 50;
-static uint8_t shell_column = 1;
+static uint8_t shell_column = 3;
 static char shell_buffer[50];
 static uint8_t shell_buffer_length = 0;
 
@@ -45,10 +54,10 @@ void shell_clear()
 void reset_shell()
 {
 	memset(&shell_buffer, 0, 25);
-	shell_column = strlen(current_process->name)+1;
+	shell_column = strlen(current_process->name)+2;
 	shell_buffer_length = 0;
 
-	scrwrite(1, SHELL_POSITION, current_process->name, VGA_COLOR_LIGHT_CYAN);
+	scrwrite(w.anchor+1, SHELL_POSITION, current_process->name, VGA_COLOR_LIGHT_CYAN);
 	scrwrite(shell_column, SHELL_POSITION, "> ", VGA_COLOR_LIGHT_CYAN);
 	shell_column += 1;
 
@@ -136,6 +145,12 @@ void exec_cmd()
 		ping(hostname);
 	}
 
+	if(strncmp("touch", shell_buffer, strlen("touch"))){
+		char* hostname = shell_buffer+strlen("touch")+1;
+		hostname[strlen(hostname)-1] = 0;
+		create_file(hostname);
+	}
+
 	if(strncmp("ps", shell_buffer, strlen("ps"))){
 		print_pcb_status();
 	}
@@ -148,7 +163,7 @@ void exec_cmd()
 		sync();
 	}
 
-	if(strncmp("shutdown", shell_buffer, strlen("shutdown"))){
+	if(strncmp("exit", shell_buffer, strlen("exit"))){
 		sync();
 		outportw(0x604, 0x2000);
 	}
@@ -212,6 +227,7 @@ void shell_put(char c)
 
 void shell_main()
 {
+	attach_window(w);
 	reset_shell();
 	sleep(2);
 	while(1)

@@ -122,7 +122,14 @@ void mkfs()
 
 void create_file(char* name)
 {
-    inode_t inode = alloc_inode(&superblock, FS_FILE);
+    inode_t inode_index = alloc_inode(&superblock, FS_FILE);
+    struct inode* inode = inode_get(inode_index, &superblock);
+
+    struct directory_entry new = {
+        .inode = inode->inode
+    };
+    memcpy(new.name, name, strlen(name));
+    __inode_add_dir(&new, current_dir, &superblock);
 }
 
 void file_read(inode_t i)

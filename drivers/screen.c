@@ -229,18 +229,18 @@ void scr_clear()
 	
 }
 
-void scr_scroll(size_t width, size_t height)
+void scr_scroll(size_t from, size_t to, size_t width, size_t height)
 {
     CLI();
     /* Move all lines up, overwriting the oldest message. */
-	for (size_t y = height; y < SCREEN_HEIGHT-1; y++)
+	for (size_t y = from; y < height+1; y++)
 	{
-		for (size_t x = 1; x < width-1; x++)
+		for (size_t x = to; x < width; x++)
 		{
 			const size_t index = y * SCREEN_WIDTH + x;
 			const size_t index_b = (y+1) * SCREEN_WIDTH + x;
 
-            if(y+1 == SCREEN_HEIGHT-1){
+            if(y == height){
                 VGA_MEMORY[index] = ' ';
                 continue;
             }

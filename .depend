@@ -1,17 +1,18 @@
 ata.o: drivers/ata.c include/ata.h include/stdint.h include/terminal.h \
  include/util.h include/interrupts.h include/memory.h include/diskdev.h
 e1000.o: drivers/e1000.c include/e1000.h include/stdint.h include/pci.h \
- include/screen.h include/util.h include/interrupts.h \
+ include/screen.h include/util.h include/colors.h include/interrupts.h \
  include/net/netdev.h
 keyboard.o: drivers/keyboard.c include/keyboard.h include/stdint.h \
- include/screen.h include/util.h include/terminal.h include/interrupts.h \
- include/sync.h
+ include/screen.h include/util.h include/colors.h include/terminal.h \
+ include/interrupts.h include/sync.h
 rtc.o: drivers/rtc.c include/rtc.h include/stdint.h include/util.h
 screen.o: drivers/screen.c include/screen.h include/util.h \
- include/stdint.h include/stdarg.h
+ include/stdint.h include/colors.h include/stdarg.h
 timer.o: drivers/timer.c include/timer.h include/stdint.h include/rtc.h \
- include/screen.h include/util.h include/terminal.h include/interrupts.h \
- include/scheduler.h include/pcb.h
+ include/screen.h include/util.h include/colors.h include/terminal.h \
+ include/interrupts.h include/scheduler.h include/pcb.h \
+ include/windowmanager.h
 fs.o: fs/fs.c include/fs/fs.h include/fs/inode.h include/stdint.h \
  include/fs/superblock.h include/bitmap.h include/fs/directory.h \
  include/memory.h include/diskdev.h include/ata.h include/terminal.h \
@@ -22,34 +23,41 @@ inode.o: fs/inode.c include/fs/inode.h include/stdint.h \
 diskdev.o: kernel/diskdev.c include/diskdev.h include/ata.h \
  include/stdint.h include/util.h include/terminal.h
 interrupts.o: kernel/interrupts.c include/interrupts.h include/stdint.h \
- include/terminal.h include/util.h include/screen.h
+ include/terminal.h include/util.h include/screen.h include/colors.h
 kernel.o: kernel/kernel.c include/util.h include/stdint.h include/pci.h \
  include/terminal.h include/keyboard.h include/interrupts.h \
- include/timer.h include/rtc.h include/screen.h include/pcb.h \
- include/memory.h include/process.h include/programs.h include/net/skb.h \
- include/net/netdev.h include/net/utils.h include/net/ethernet.h \
- include/net/arp.h include/net/ipv4.h include/net/icmp.h \
- include/net/udp.h include/ata.h include/bitmap.h include/net/socket.h \
- include/sync.h include/net/dns.h include/fs/fs.h include/fs/inode.h \
- include/fs/superblock.h
+ include/timer.h include/rtc.h include/screen.h include/colors.h \
+ include/pcb.h include/windowmanager.h include/memory.h include/process.h \
+ include/programs.h include/net/skb.h include/net/netdev.h \
+ include/net/utils.h include/net/ethernet.h include/net/arp.h \
+ include/net/ipv4.h include/net/icmp.h include/net/udp.h include/ata.h \
+ include/bitmap.h include/net/socket.h include/sync.h include/net/dns.h \
+ include/fs/fs.h include/fs/inode.h include/fs/superblock.h
 memory.o: kernel/memory.c include/memory.h include/stdint.h \
- include/screen.h include/util.h include/terminal.h include/timer.h \
- include/rtc.h include/sync.h include/diskdev.h include/ata.h \
- include/bitmap.h
+ include/screen.h include/util.h include/colors.h include/terminal.h \
+ include/timer.h include/rtc.h include/sync.h include/diskdev.h \
+ include/ata.h include/bitmap.h
 pcb.o: kernel/pcb.c include/pcb.h include/util.h include/stdint.h \
- include/terminal.h include/memory.h include/sync.h include/timer.h \
- include/rtc.h include/net/netdev.h include/pci.h include/scheduler.h
+ include/windowmanager.h include/colors.h include/terminal.h \
+ include/memory.h include/sync.h include/timer.h include/rtc.h \
+ include/net/netdev.h include/pci.h include/scheduler.h
 pci.o: kernel/pci.c include/pci.h include/stdint.h include/e1000.h \
- include/screen.h include/util.h include/terminal.h
+ include/screen.h include/util.h include/colors.h include/terminal.h
 process.o: kernel/process.c include/process.h include/stdint.h \
- include/terminal.h include/util.h include/screen.h include/pcb.h
+ include/terminal.h include/util.h include/screen.h include/colors.h \
+ include/pcb.h include/windowmanager.h
 scheduler.o: kernel/scheduler.c include/scheduler.h include/pcb.h \
- include/util.h include/stdint.h include/timer.h include/rtc.h
+ include/util.h include/stdint.h include/windowmanager.h include/colors.h \
+ include/timer.h include/rtc.h
+windowmanager.o: kernel/windowmanager.c include/windowmanager.h \
+ include/stdint.h include/colors.h include/screen.h include/util.h
 bitmap.o: lib/bitmap.c include/bitmap.h include/stdint.h include/memory.h
 sync.o: lib/sync.c include/sync.h include/stdint.h include/terminal.h \
- include/util.h include/scheduler.h include/pcb.h
+ include/util.h include/scheduler.h include/pcb.h include/windowmanager.h \
+ include/colors.h
 terminal.o: lib/terminal.c include/terminal.h include/util.h \
- include/stdint.h include/stdarg.h include/screen.h
+ include/stdint.h include/stdarg.h include/screen.h include/colors.h \
+ include/windowmanager.h
 util.o: lib/util.c include/util.h include/stdint.h
 arp.o: net/arp.c include/net/arp.h include/stdint.h include/net/utils.h \
  include/net/skb.h include/net/netdev.h include/pci.h include/memory.h \
@@ -62,12 +70,13 @@ dns.o: net/dns.c include/net/dns.h include/stdint.h include/net/utils.h \
 ethernet.o: net/ethernet.c include/net/ethernet.h include/stdint.h \
  include/net/skb.h include/net/netdev.h include/pci.h include/memory.h \
  include/net/utils.h include/util.h include/net/arp.h include/net/ipv4.h \
- include/net/icmp.h include/net/udp.h include/screen.h include/terminal.h
+ include/net/icmp.h include/net/udp.h include/screen.h include/colors.h \
+ include/terminal.h
 icmp.o: net/icmp.c include/net/icmp.h include/stdint.h include/net/skb.h \
  include/net/netdev.h include/pci.h include/memory.h include/net/utils.h \
  include/util.h include/net/ethernet.h include/net/arp.h \
- include/net/ipv4.h include/net/udp.h include/screen.h include/terminal.h \
- include/net/dns.h
+ include/net/ipv4.h include/net/udp.h include/screen.h include/colors.h \
+ include/terminal.h include/net/dns.h
 ipv4.o: net/ipv4.c include/net/ipv4.h include/stdint.h include/net/skb.h \
  include/net/netdev.h include/pci.h include/memory.h include/net/utils.h \
  include/util.h include/net/ethernet.h include/net/arp.h \

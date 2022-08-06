@@ -1,5 +1,7 @@
 #include <util.h>
 
+int kernel_size = 0;
+
 size_t strlen(const char* str) 
 {
 	size_t len = 0;

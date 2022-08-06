@@ -17,6 +17,8 @@
 #include <net/netdev.h>
 #include <scheduler.h>
 
+#include <windowmanager.h>
+
 #define stack_size 0x2000
 
  char* status[] = {"stopped ", "running ", "new     ", "blocked ", "sleeping"};
@@ -25,23 +27,26 @@ static struct pcb pcbs[MAX_NUM_OF_PCBS];
 struct pcb* current_running = NULL;
 static int pcb_count = 0;
 
-void pcb_function()
+void gensis()
 {
-	while(1)
+    while(1)
     {
-        //print_pcb_status();
         print_memory_status();
-        //netdev_print_status();
-        //networking_print_status();
+
+        for (int i = 0; i < MAX_NUM_OF_PCBS; i++){
+            if(pcbs[i].pid == -1 || pcbs[i].window.anchor == 0)
+                continue;
+
+            draw_window(&pcbs[i].window);
+        }
+
 		sleep(1);
 	}
 }
 
-void gensis()
+int attach_window(struct window w)
 {
-    while(1){
-        
-    }
+    current_running->window = w;
 }
 
 void gensis2()
@@ -241,9 +246,6 @@ void init_pcbs()
 
     //int ret = add_pcb(&gensis2, "Adam");
     //if(ret < 0) return; // error
-
-    ret = add_pcb(&pcb_function, "PCBd");
-    if(ret < 0) return; // error
 
 }
 
