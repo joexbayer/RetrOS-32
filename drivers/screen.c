@@ -265,8 +265,6 @@ void scr_scroll(size_t from, size_t to, size_t width, size_t height)
     width = current_running->window->x  +  current_running->window->width +1;
     height = current_running->window->y  + current_running->window->height +1;
 
-    dbgprintf("[SCR] Scroll %d %d -> %d %d\n", from ,to, height, width);
-
     /* Move all lines up, overwriting the oldest message. */
 	for (size_t y = to; y < height-1; y++)
 	{

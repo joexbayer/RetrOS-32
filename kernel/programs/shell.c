@@ -22,6 +22,8 @@
 #include <net/icmp.h>
 #include <fs/fs.h>
 
+#include <serial.h>
+
 #include <diskdev.h>
 
 
@@ -190,6 +192,7 @@ void exec_cmd()
 
 	if(strncmp("exit", shell_buffer, strlen("exit"))){
 		sync();
+		dbgprintf("[SHUTDOWN] NETOS has shut down.\n");
 		outportw(0x604, 0x2000);
 		return;
 	}

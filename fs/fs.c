@@ -28,10 +28,10 @@ int init_fs()
         return 1;
     }
 
-    dbgprintf("FS: Found Filesystem with size: %d (%d total)\n", superblock.nblocks*BLOCK_SIZE, superblock.size);
-    dbgprintf("FS: With a total of %d inodes (%d blocks)\n", superblock.ninodes, superblock.ninodes / INODES_PER_BLOCK);
-    dbgprintf("FS: And total of %d block\n", superblock.nblocks);
-    dbgprintf("FS: Max file size: %d bytes\n", NDIRECT*BLOCK_SIZE);
+    dbgprintf("[FS]: Found Filesystem with size: %d (%d total)\n", superblock.nblocks*BLOCK_SIZE, superblock.size);
+    dbgprintf("[FS]: With a total of %d inodes (%d blocks)\n", superblock.ninodes, superblock.ninodes / INODES_PER_BLOCK);
+    dbgprintf("[FS]: And total of %d block\n", superblock.nblocks);
+    dbgprintf("[FS]: Max file size: %d bytes\n", NDIRECT*BLOCK_SIZE);
 
     root_dir = inode_get(superblock.root_inode, &superblock);
     root_dir->nlink++;
@@ -54,16 +54,16 @@ void __superblock_sync()
     write_block_offset((char*) superblock.inode_map, get_bitmap_size(superblock.ninodes), 0, FS_INODE_BMAP_LOCATION);
     write_block_offset((char*) superblock.block_map, get_bitmap_size(superblock.nblocks), 0, FS_BLOCK_BMAP_LOCATION);
 
-    dbgprintf("[sync] Superblock... (DONE)\n");
+    dbgprintf("[FS] Superblock... (DONE)\n");
 }
 
 void sync()
 {
-    dbgprintf("[sync] Synchronizing filesystem.\n");
+    dbgprintf("[FS] Synchronizing filesystem.\n");
     __superblock_sync();
     inodes_sync(&superblock);
-    dbgprintf("[sync] %d inodes... (DONE)\n", superblock.ninodes);
-    twriteln("[sync] Filesystem successfully synchronized to disk!.");
+    dbgprintf("[FS] %d inodes... (DONE)\n", superblock.ninodes);
+    twriteln("[FS] Filesystem successfully synchronized to disk!.");
 }
 
 static inline void __inode_add_dir(struct directory_entry* entry, struct inode* inode, struct superblock* sb)
@@ -138,6 +138,8 @@ void create_file(char* name)
     };
     memcpy(new.name, name, strlen(name));
     __inode_add_dir(&new, current_dir, &superblock);
+
+    dbgprintf("[FS] Creating new file %s, inode: %d.\n", name, inode->inode);
 }
 
 void file_read(inode_t i)
@@ -216,6 +218,8 @@ void mkdir(char* name)
     __inode_add_dir(&back, inode, &superblock);
     __inode_add_dir(&self, inode, &superblock);
     __inode_add_dir(&new, current_dir, &superblock);
+
+    dbgprintf("[FS] Created directory %s with inode %d.\n", name, inode->inode);
 }
 
 void ls(char* path)
