@@ -76,7 +76,7 @@ void _main()
     //scrprintf(0, 10, "Kernal page: %x", kernel_page_dir);
 	//enable_paging();
 
-	twrite("\n");
+	/*twrite("\n");
 	twriteln("~~~ Welcome to NETOS! ~~~");
 	twriteln("                  .           o");
     twriteln("      .---.");
@@ -85,7 +85,7 @@ void _main()
     twriteln("               .                        *");
     twriteln("     *               - ) -       *");
     twriteln("            .               .");
-	twriteln("");
+	twriteln("");*/
 
 	STI();
 	start_tasks();

@@ -9,7 +9,8 @@ keyboard.o: drivers/keyboard.c include/keyboard.h include/stdint.h \
  include/interrupts.h include/sync.h include/io.h
 rtc.o: drivers/rtc.c include/rtc.h include/stdint.h include/io.h
 screen.o: drivers/screen.c include/screen.h include/util.h \
- include/stdint.h include/colors.h include/stdarg.h include/io.h
+ include/stdint.h include/colors.h include/pcb.h include/windowmanager.h \
+ include/stdarg.h include/io.h include/serial.h
 serial.o: drivers/serial.c include/serial.h include/stdint.h include/io.h \
  include/util.h include/stdarg.h
 timer.o: drivers/timer.c include/timer.h include/stdint.h include/rtc.h \
@@ -57,7 +58,8 @@ scheduler.o: kernel/scheduler.c include/scheduler.h include/pcb.h \
  include/util.h include/stdint.h include/windowmanager.h include/colors.h \
  include/timer.h include/rtc.h
 windowmanager.o: kernel/windowmanager.c include/windowmanager.h \
- include/stdint.h include/colors.h include/screen.h include/util.h
+ include/stdint.h include/colors.h include/screen.h include/util.h \
+ include/serial.h include/pcb.h
 bitmap.o: lib/bitmap.c include/bitmap.h include/stdint.h include/memory.h
 io.o: lib/io.c include/io.h include/stdint.h
 sync.o: lib/sync.c include/sync.h include/stdint.h include/terminal.h \

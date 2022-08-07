@@ -35,17 +35,17 @@ void gensis()
         print_memory_status();
 
         for (int i = 0; i < MAX_NUM_OF_PCBS; i++){
-            if(pcbs[i].pid == -1 || pcbs[i].window.anchor == 0)
+            if(pcbs[i].pid == -1 || pcbs[i].window == NULL)
                 continue;
 
-            draw_window(&pcbs[i].window);
+            draw_window(pcbs[i].window);
         }
 
 		sleep(1);
 	}
 }
 
-int attach_window(struct window w)
+int attach_window(struct window* w)
 {
     current_running->window = w;
 }
@@ -237,6 +237,7 @@ void init_pcbs()
     {
         pcbs[i].running = STOPPED;
         pcbs[i].pid = -1;
+        pcbs[i].window = NULL;
     }
 
     pcbs[0].next = &pcbs[0];

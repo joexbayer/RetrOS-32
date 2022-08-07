@@ -6,6 +6,7 @@
 
 struct window {
 
+    char name[40];
     uint8_t anchor;
     uint8_t height;
     uint8_t width;
@@ -14,5 +15,7 @@ struct window {
 };
 
 void draw_window(struct window* w);
+int get_window_width();
+int get_window_height();
 
 #endif /* __WINDOWMANAGER_H */

@@ -28,13 +28,13 @@
 struct window w = {
 	.anchor = 1,
 	.height = SCREEN_HEIGHT-3,
-	.width = SCREEN_WIDTH-3,
+	.width = SCREEN_WIDTH/2,
 	.color = VGA_COLOR_LIGHT_BLUE
 };
 
-static uint8_t SHELL_POSITION =SCREEN_HEIGHT-3;
+#define SHELL_POSITION (get_window_height()-1)
 static const uint8_t SHELL_MAX_SIZE = 50;
-static uint8_t shell_column = 3;
+static uint8_t shell_column = 0;
 static char shell_buffer[50];
 static uint8_t shell_buffer_length = 0;
 
@@ -58,7 +58,7 @@ void reset_shell()
 	shell_column = strlen(current_process->name)+2;
 	shell_buffer_length = 0;
 
-	scrwrite(w.anchor+1, SHELL_POSITION, current_process->name, VGA_COLOR_LIGHT_CYAN);
+	scrwrite(1, SHELL_POSITION, current_process->name, VGA_COLOR_LIGHT_CYAN);
 	scrwrite(shell_column, SHELL_POSITION, "> ", VGA_COLOR_LIGHT_CYAN);
 	shell_column += 1;
 
@@ -246,7 +246,7 @@ void shell_put(char c)
 
 void shell_main()
 {
-	attach_window(w);
+	attach_window(&w);
 	reset_shell();
 	sleep(2);
 	while(1)

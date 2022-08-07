@@ -10,8 +10,11 @@
  */
 
 #include <screen.h>
+#include <pcb.h>
+#include <windowmanager.h>
 #include <stdarg.h>
 #include <io.h>
+#include <serial.h>
 
 uint8_t font8x8_basic[128][8] = {
     { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},   // U+0000 (nul)
@@ -167,6 +170,10 @@ static inline uint16_t vga_entry(unsigned char uc, uint8_t color)
 
 void screen_set_cursor(int x, int y)
 {
+     if(current_running->window != NULL ){
+        y = current_running->window->anchor + y;
+        x = current_running->window->anchor + x;
+     }
 	uint16_t pos = y * SCREEN_WIDTH + x + 1;
 	outportb(0x3D4, 0x0F);
 	outportb(0x3D5, (uint8_t) (pos & 0xFF));
@@ -189,6 +196,11 @@ void scrcolor_set(enum vga_color fg, enum vga_color bg)
  */
 void scrwrite(int x, int y, char* str, uint8_t color)
 {
+     if(current_running->window != NULL ){
+        y = current_running->window->anchor + y;
+        x = current_running->window->anchor + x;
+        }
+
 	for (size_t i = 0; i < strlen(str); i++)
 	{
 		const size_t index = y * SCREEN_WIDTH + (x+i);
@@ -207,6 +219,10 @@ void scrwrite(int x, int y, char* str, uint8_t color)
  */
 void scrput(size_t x, size_t y, unsigned char c, uint8_t color)
 {
+    if(current_running->window != NULL ){
+        y = current_running->window->anchor + y;
+        x = current_running->window->anchor + x;
+    }
 	const size_t index = y * SCREEN_WIDTH + x;
 	VGA_MEMORY[index] = vga_entry(c, color);
 }
@@ -233,15 +249,22 @@ void scr_clear()
 void scr_scroll(size_t from, size_t to, size_t width, size_t height)
 {
     CLI();
+    from = current_running->window->anchor + from;
+    to = current_running->window->anchor + to;
+    width = current_running->window->anchor  +  current_running->window->width +1;
+    height = current_running->window->anchor  + current_running->window->height +1;
+
+    dbgprintf("[SCR] Scroll %d %d -> %d %d\n", from ,to, width, height);
+
     /* Move all lines up, overwriting the oldest message. */
-	for (size_t y = from; y < height+1; y++)
+	for (size_t y = from; y < height-1; y++)
 	{
-		for (size_t x = to; x < width; x++)
+		for (size_t x = to; x < width-1; x++)
 		{
 			const size_t index = y * SCREEN_WIDTH + x;
 			const size_t index_b = (y+1) * SCREEN_WIDTH + x;
 
-            if(y == height){
+            if(y+1 == height-1){
                 VGA_MEMORY[index] = ' ';
                 continue;
             }
@@ -262,6 +285,10 @@ void scr_scroll(size_t from, size_t to, size_t width, size_t height)
  */
 int32_t scrprintf(int32_t x, int32_t y, char* fmt, ...)
 {
+    if(current_running->window != NULL ){
+        y = current_running->window->anchor + y;
+        x = current_running->window->anchor + x;
+    }
 	va_list args;
 
 	int x_offset = 0;

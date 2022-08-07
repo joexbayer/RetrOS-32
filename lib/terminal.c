@@ -78,8 +78,8 @@ void __terminal_draw_lines()
 void terminal_clear()
 {	
 	/* Clears the terminal window */
-	for (size_t y = window.anchor+1; y < window.height-1; y++)
-		for (size_t x = window.anchor+1; x < window.width-1; x++)
+	for (size_t y = 1; y < get_window_height()-1; y++)
+		for (size_t x = 1; x < get_window_width()-1; x++)
 			scrput(x, y, ' ', terminal_color);
 }
 
@@ -89,8 +89,8 @@ void terminal_clear()
  */
 void init_terminal(void)
 {
-	terminal_row = window.height;
-	terminal_column = window.anchor;
+	terminal_row = get_window_height();
+	terminal_column = 0;
 	terminal_color = VGA_COLOR_LIGHT_GREY;
 
 	/* Clears screen */
@@ -99,8 +99,8 @@ void init_terminal(void)
 
 	__terminal_draw_lines();
 
-	for (size_t i = window.anchor+1; i < window.width-1; i++)
-		scrput(i, 0, ' ', VGA_COLOR_BLACK | VGA_COLOR_LIGHT_GREY << 4);
+	//for (size_t i = window.anchor+1; i < window.width-1; i++)
+	//	scrput(i, 0, ' ', VGA_COLOR_BLACK | VGA_COLOR_LIGHT_GREY << 4);
 
 	terminal_setcolor(VGA_COLOR_WHITE);
 	screen_set_cursor(0, 0); 
@@ -113,7 +113,7 @@ void init_terminal(void)
  */
 static void __terminal_scroll()
 {	
-	scr_scroll(window.anchor+1, window.anchor+1, window.width, window.height);
+	scr_scroll(1, 1, get_window_width(), get_window_height());
 }
 
  
@@ -138,16 +138,18 @@ void terminal_putchar(char c)
 
 	if(c == newline)
 	{
-		terminal_column = window.anchor+1;
+		terminal_column = 1;
 		__terminal_scroll();
 		return;
 	}
 	
-	if (terminal_column == window.width-1)
+	if (terminal_column+1 == get_window_width()-1)
 	{
-		return;
+		scrput(terminal_column, get_window_height()-1, '-', terminal_color);
+		terminal_column = 1;
+		__terminal_scroll();
 	}
-	scrput(terminal_column, terminal_row, uc, terminal_color);
+	scrput(terminal_column, get_window_height()-1, uc, terminal_color);
 	terminal_column++;
 }
  
@@ -241,7 +243,7 @@ int32_t twritef(char* fmt, ...)
 				fmt++;
 				break;
 			case '\n':
-				terminal_column = window.anchor+1;
+				terminal_column = 1;
 				__terminal_scroll();
 				break;
 			default:  
