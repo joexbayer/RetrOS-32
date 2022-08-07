@@ -11,7 +11,7 @@
 
 #include <timer.h>
 #include <screen.h>
-#include <terminal.h>
+#include <serial.h>
 #include <interrupts.h>
 #include <scheduler.h>
 #include <pcb.h>
@@ -92,5 +92,5 @@ void init_timer(uint32_t frequency)
 	outportb(0x40, l);
 	outportb(0x40, h);
 
-	twrite("PIT initialized.\n");
+	dbgprintf("PIT initialized.\n");
 }

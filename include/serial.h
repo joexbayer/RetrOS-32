@@ -4,6 +4,5 @@
 #include <stdint.h>
 
 void init_serial();
-void dbg(char* str);
-
+int32_t dbgprintf(char* fmt, ...);
 #endif /* __SERIAL_H */

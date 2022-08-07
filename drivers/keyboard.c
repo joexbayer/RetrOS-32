@@ -12,7 +12,7 @@
 
 #include <keyboard.h>
 #include <screen.h>
-#include <terminal.h>
+#include <serial.h>
 #include <interrupts.h>
 #include <util.h>
 #include <sync.h>
@@ -118,5 +118,5 @@ void init_keyboard()
   mutex_init(&kb_lock);
 	// Firstly, register our timer callback.
 	isr_install(KB_IRQ, &kb_callback);
-	twrite("PS/2 Keyboard initialized.\n");
+	dbgprintf("[PS/2] Keyboard initialized.\n");
 }

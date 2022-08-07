@@ -10,7 +10,7 @@
  * 
  */
 #include <interrupts.h>
-#include <terminal.h>
+#include <serial.h>
 #include <screen.h>
 #include <io.h>
 
@@ -38,7 +38,6 @@ void add_system_call(int index, syscall_t fn)
 
 int system_call(int index, int arg1, int arg2, int arg3)
 {	
-	twritef("%d %d %d %d\n", index, arg1, arg2,arg3);
 	EOI(48);
 	return 99;
 
@@ -148,6 +147,6 @@ void init_interrupts()
 
 	init_idt();
 
-	twriteln("Interrupts initialized.");
+	dbgprintf("[IQR] Interrupts initialized.");
 }
 

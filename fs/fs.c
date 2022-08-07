@@ -6,6 +6,7 @@
 #include <diskdev.h>
 #include <terminal.h>
 #include <bitmap.h>
+#include <serial.h>
 
 #include <util.h>
 
@@ -23,15 +24,14 @@ int init_fs()
     /* Read superblock and check magic. */
     read_block_offset((char*) &superblock, sizeof(struct superblock), 0, FS_START_LOCATION);
     if(superblock.magic != MAGIC){
-        twriteln("FS: No superblock found.");
         mkfs();
         return 1;
     }
 
-    twritef("FS: Found Filesystem with size: %d (%d total)\n", superblock.nblocks*BLOCK_SIZE, superblock.size);
-    twritef("FS: With a total of %d inodes (%d blocks)\n", superblock.ninodes, superblock.ninodes / INODES_PER_BLOCK);
-    twritef("FS: And total of %d block\n", superblock.nblocks);
-    twritef("FS: Max file size: %d bytes\n", NDIRECT*BLOCK_SIZE);
+    dbgprintf("FS: Found Filesystem with size: %d (%d total)\n", superblock.nblocks*BLOCK_SIZE, superblock.size);
+    dbgprintf("FS: With a total of %d inodes (%d blocks)\n", superblock.ninodes, superblock.ninodes / INODES_PER_BLOCK);
+    dbgprintf("FS: And total of %d block\n", superblock.nblocks);
+    dbgprintf("FS: Max file size: %d bytes\n", NDIRECT*BLOCK_SIZE);
 
     root_dir = inode_get(superblock.root_inode, &superblock);
     root_dir->nlink++;
@@ -42,10 +42,10 @@ int init_fs()
 
 void fs_stats()
 {
-    twritef("FS: Found Filesystem with size: %d (%d total)\n", superblock.nblocks*BLOCK_SIZE, superblock.size);
-    twritef("FS: With a total of %d inodes (%d blocks)\n", superblock.ninodes, superblock.ninodes / INODES_PER_BLOCK);
-    twritef("FS: And total of %d block\n", superblock.nblocks);
-    twritef("FS: Max file size: %d bytes\n", NDIRECT*BLOCK_SIZE);
+    twritef("[FS]: Found Filesystem with size: %d (%d total)\n", superblock.nblocks*BLOCK_SIZE, superblock.size);
+    twritef("[FS]: With a total of %d inodes (%d blocks)\n", superblock.ninodes, superblock.ninodes / INODES_PER_BLOCK);
+    twritef("[FS]: And total of %d block\n", superblock.nblocks);
+    twritef("[FS]: Max file size: %d bytes\n", NDIRECT*BLOCK_SIZE);
 }
 
 void __superblock_sync()
@@ -54,15 +54,15 @@ void __superblock_sync()
     write_block_offset((char*) superblock.inode_map, get_bitmap_size(superblock.ninodes), 0, FS_INODE_BMAP_LOCATION);
     write_block_offset((char*) superblock.block_map, get_bitmap_size(superblock.nblocks), 0, FS_BLOCK_BMAP_LOCATION);
 
-    twriteln("[sync] Superblock... (DONE)");
+    dbgprintf("[sync] Superblock... (DONE)\n");
 }
 
 void sync()
 {
-    twriteln("[sync] Synchronizing filesystem.");
+    dbgprintf("[sync] Synchronizing filesystem.\n");
     __superblock_sync();
     inodes_sync(&superblock);
-    twritef("[sync] %d inodes... (DONE)\n", superblock.ninodes);
+    dbgprintf("[sync] %d inodes... (DONE)\n", superblock.ninodes);
     twriteln("[sync] Filesystem successfully synchronized to disk!.");
 }
 
@@ -86,10 +86,10 @@ void mkfs()
     superblock.block_map = create_bitmap(superblock.nblocks);
     superblock.inode_map = create_bitmap(superblock.ninodes);
 
-    twritef("FS: Creating Filesystem with size: %d (%d total)\n", superblock.nblocks*BLOCK_SIZE, superblock.size);
-    twritef("FS: With a total of %d inodes (%d blocks)\n", superblock.ninodes, superblock.ninodes / INODES_PER_BLOCK);
-    twritef("FS: And total of %d block\n", superblock.nblocks);
-    twritef("FS: Max file size: %d bytes\n", NDIRECT*BLOCK_SIZE);
+    dbgprintf("[FS]: Creating Filesystem with size: %d (%d total)\n", superblock.nblocks*BLOCK_SIZE, superblock.size);
+    dbgprintf("[FS]: With a total of %d inodes (%d blocks)\n", superblock.ninodes, superblock.ninodes / INODES_PER_BLOCK);
+    dbgprintf("[FS]: And total of %d block\n", superblock.nblocks);
+    dbgprintf("[FS]: Max file size: %d bytes\n", NDIRECT*BLOCK_SIZE);
 
     inode_t root_inode = alloc_inode(&superblock, FS_DIRECTORY);
     struct inode* root = inode_get(root_inode, &superblock);

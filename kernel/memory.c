@@ -11,7 +11,7 @@
 
 #include <memory.h>
 #include <screen.h>
-#include <terminal.h>
+#include <serial.h>
 #include <timer.h>
 #include <sync.h>
 #include <diskdev.h>
@@ -197,7 +197,7 @@ void init_memory()
 		mem_position += MEM_CHUNK;
 	}
 
-	twriteln("Memory initilized.");
+	dbgprintf("[MEM] Memory initilized.\n");
 }
 
 

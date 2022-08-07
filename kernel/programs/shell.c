@@ -115,22 +115,26 @@ void exec_cmd()
 
 	if(strncmp("clear", shell_buffer, strlen("clear"))){
 		scr_clear();
+		return;
 	}
 
 	if(strncmp("stop", shell_buffer, strlen("stop"))){
 		int id = atoi(shell_buffer+strlen("stop")+1);
 		stop_task(id);
+		return;
 	}
 
 	if(strncmp("start", shell_buffer, strlen("start"))){
 		int id = atoi(shell_buffer+strlen("stop")+1);
 		start_process(id);
+		return;
 	}
 
 	if(strncmp("dig", shell_buffer, strlen("dig"))){
 		char* hostname = shell_buffer+strlen("dig")+1;
 		hostname[strlen(hostname)-1] = 0;
 		gethostname(hostname);
+		return;
 	}
 
 	if(strncmp("cat", shell_buffer, strlen("cat"))){
@@ -138,52 +142,61 @@ void exec_cmd()
 		inode_t inode = open(name);
 		file_read(inode);
 		file_close(inode);
+		return;
 	}
 
 	if(strncmp("ping", shell_buffer, strlen("ping"))){
 		char* hostname = shell_buffer+strlen("ping")+1;
 		hostname[strlen(hostname)-1] = 0;
 		ping(hostname);
+		return;
 	}
 
 	if(strncmp("touch", shell_buffer, strlen("touch"))){
 		char* hostname = shell_buffer+strlen("touch")+1;
 		hostname[strlen(hostname)-1] = 0;
 		create_file(hostname);
+		return;
 	}
 
 	if(strncmp("ps", shell_buffer, strlen("ps"))){
 		print_pcb_status();
+		return;
+	}
+
+	if(strncmp("fs", shell_buffer, strlen("fs"))){
+		fs_stats();
+		return;
 	}
 
 	if(strncmp("fdisk", shell_buffer, strlen("fdisk"))){
 		print_dev_status();
+		return;
 	}
 
 	if(strncmp("sync", shell_buffer, strlen("sync"))){
 		sync();
+		return;
 	}
 
 	if(strncmp("exit", shell_buffer, strlen("exit"))){
 		sync();
 		outportw(0x604, 0x2000);
-	}
-
-	if(strncmp("exit", shell_buffer, strlen("exit"))){
-		sync();
-		outportw(0x604, 0x2000);
+		return;
 	}
 
 	if(strncmp("cd", shell_buffer, strlen("cd"))){
 		char* name = shell_buffer+strlen("cd")+1;
 		name[strlen(name)-1] = 0;
 		chdir(name);
+		return;
 	}
 
 	if(strncmp("mkdir", shell_buffer, strlen("mkdir"))){
 		char* name = shell_buffer+strlen("mkdir")+1;
 		name[strlen(name)-1] = 0;
 		mkdir(name);
+		return;
 	}
 
 

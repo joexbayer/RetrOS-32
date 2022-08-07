@@ -1,11 +1,11 @@
-ata.o: drivers/ata.c include/ata.h include/stdint.h include/terminal.h \
- include/util.h include/interrupts.h include/memory.h include/io.h \
- include/diskdev.h
+ata.o: drivers/ata.c include/ata.h include/stdint.h include/interrupts.h \
+ include/memory.h include/io.h include/diskdev.h include/util.h \
+ include/serial.h
 e1000.o: drivers/e1000.c include/e1000.h include/stdint.h include/pci.h \
  include/screen.h include/util.h include/colors.h include/interrupts.h \
- include/net/netdev.h
+ include/net/netdev.h include/serial.h
 keyboard.o: drivers/keyboard.c include/keyboard.h include/stdint.h \
- include/screen.h include/util.h include/colors.h include/terminal.h \
+ include/screen.h include/util.h include/colors.h include/serial.h \
  include/interrupts.h include/sync.h include/io.h
 rtc.o: drivers/rtc.c include/rtc.h include/stdint.h include/io.h
 screen.o: drivers/screen.c include/screen.h include/util.h \
@@ -13,20 +13,20 @@ screen.o: drivers/screen.c include/screen.h include/util.h \
 serial.o: drivers/serial.c include/serial.h include/stdint.h include/io.h \
  include/util.h include/stdarg.h
 timer.o: drivers/timer.c include/timer.h include/stdint.h include/rtc.h \
- include/screen.h include/util.h include/colors.h include/terminal.h \
+ include/screen.h include/util.h include/colors.h include/serial.h \
  include/interrupts.h include/scheduler.h include/pcb.h \
  include/windowmanager.h include/io.h
 fs.o: fs/fs.c include/fs/fs.h include/fs/inode.h include/stdint.h \
  include/fs/superblock.h include/bitmap.h include/fs/directory.h \
  include/memory.h include/diskdev.h include/ata.h include/terminal.h \
- include/util.h
+ include/util.h include/serial.h
 inode.o: fs/inode.c include/fs/inode.h include/stdint.h \
  include/fs/superblock.h include/bitmap.h include/fs/directory.h \
- include/util.h include/diskdev.h include/ata.h
+ include/serial.h include/util.h include/diskdev.h include/ata.h
 diskdev.o: kernel/diskdev.c include/diskdev.h include/ata.h \
  include/stdint.h include/util.h include/terminal.h
 interrupts.o: kernel/interrupts.c include/interrupts.h include/stdint.h \
- include/terminal.h include/util.h include/screen.h include/colors.h \
+ include/serial.h include/screen.h include/util.h include/colors.h \
  include/io.h
 kernel.o: kernel/kernel.c include/util.h include/stdint.h include/pci.h \
  include/terminal.h include/keyboard.h include/interrupts.h \
@@ -39,16 +39,17 @@ kernel.o: kernel/kernel.c include/util.h include/stdint.h include/pci.h \
  include/fs/fs.h include/fs/inode.h include/fs/superblock.h \
  include/serial.h
 memory.o: kernel/memory.c include/memory.h include/stdint.h \
- include/screen.h include/util.h include/colors.h include/terminal.h \
+ include/screen.h include/util.h include/colors.h include/serial.h \
  include/timer.h include/rtc.h include/sync.h include/diskdev.h \
  include/ata.h include/bitmap.h
 pcb.o: kernel/pcb.c include/pcb.h include/util.h include/stdint.h \
- include/windowmanager.h include/colors.h include/terminal.h \
+ include/windowmanager.h include/colors.h include/serial.h \
  include/memory.h include/sync.h include/timer.h include/rtc.h \
- include/net/netdev.h include/pci.h include/scheduler.h
+ include/net/netdev.h include/pci.h include/scheduler.h \
+ include/terminal.h
 pci.o: kernel/pci.c include/pci.h include/stdint.h include/e1000.h \
  include/screen.h include/util.h include/colors.h include/terminal.h \
- include/io.h
+ include/serial.h include/io.h
 process.o: kernel/process.c include/process.h include/stdint.h \
  include/terminal.h include/util.h include/screen.h include/colors.h \
  include/pcb.h include/windowmanager.h

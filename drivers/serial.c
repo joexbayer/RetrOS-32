@@ -24,11 +24,77 @@ void serial_put(char a)
    	outportb(PORT, a);
 }
 
-void dbg(char* str)
+void serial_write(char* str)
 {
 	for (size_t i = 0; i < strlen(str); i++)
 		serial_put(str[i]);
-	serial_put('\n');
+}
+
+/**
+ * Writes the given string with formats to screen on give location.
+ * @param int x coordinate
+ * @param int y coordinate
+ * @param char* format string
+ * @param ... variable parameters
+ * @return number of bytes written
+ */
+int32_t dbgprintf(char* fmt, ...)
+{
+	va_list args;
+
+	int written = 0;
+	char str[MAX_FMT_STR_SIZE];
+	int num = 0;
+
+	va_start(args, fmt);
+
+	while (*fmt != '\0') {
+		switch (*fmt)
+		{
+			case '%':
+				memset(str, 0, MAX_FMT_STR_SIZE);
+				switch (*(fmt+1))
+				{
+					case 'd':
+						num = va_arg(args, int);
+						itoa(num, str);
+						serial_write(str);
+						break;
+					case 'i': ;
+						num = va_arg(args, int);
+						unsigned char bytes[4];
+						bytes[0] = (num >> 24) & 0xFF;
+						bytes[1] = (num >> 16) & 0xFF;
+						bytes[2] = (num >> 8) & 0xFF;
+						bytes[3] = num & 0xFF;
+						dbgprintf("%d.%d.%d.%d", bytes[3], bytes[2], bytes[1], bytes[0]);
+						break;
+					case 'x':
+					case 'X': ;
+						num = va_arg(args, int);
+						itohex(num, str);
+						serial_write(str);
+						break;
+					case 's': ;
+						char* str_arg = va_arg(args, char *);
+						serial_write(str_arg);
+						break;
+					case 'c': ;
+						char char_arg = (char)va_arg(args, int);
+						serial_put(char_arg);
+						break;
+					
+					default:
+						break;
+				}
+				fmt++;
+				break;
+			default:  
+				serial_put(*fmt);
+			}
+        fmt++;
+    }
+	return written;
 }
 
 void init_serial()
@@ -49,4 +115,6 @@ void init_serial()
 	}
 
     outportb(PORT + 4, 0x0F);
+
+	dbgprintf("[%s] Serial debugging activated %d!\n", "Serial", 20);
 }

@@ -11,11 +11,13 @@
  */
 
 #include <ata.h>
-#include <terminal.h>
 #include <interrupts.h>
 #include <memory.h>
 #include <io.h>
 #include <diskdev.h>
+#include <util.h>
+
+#include <serial.h>
 
 static uint8_t* ata_driver_data;
 struct ide_device ata_ide_device;
@@ -207,12 +209,12 @@ void ata_ide_init()
 
 		if(status & ATA_SR_ERR)
 		{
-			twriteln("ATA: Error while reading status");
+			dbgprintf("[ATA]: Error while reading status\n");
 			return;
 		}
 		while(!(status & ATA_SR_DRQ)) goto ata_status;
 
-		twriteln("ATA: Driver ready.");
+		dbgprintf("[ATA]: Driver ready.\n");
 
 		for(int i = 0; i < 256; i++)
 		{

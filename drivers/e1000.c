@@ -13,6 +13,7 @@
 #include <interrupts.h>
 #include <pci.h>
 #include <net/netdev.h>
+#include <serial.h>
 
 #define PACKET_SIZE   2048
 #define TX_SIZE 32
@@ -216,5 +217,7 @@ void e1000_attach(struct pci_device* dev)
 
 	/* Attach as current Netdevice. */
 	netdev_attach_driver(dev, &e1000_receive, &e1000_transmit, "Intel E1000", (uint8_t*)&mac);
+
+	dbgprintf("[E1000] Network card Intel E1000 found and attached!.\n");
 
 }

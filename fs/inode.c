@@ -2,6 +2,8 @@
 #include <fs/superblock.h>
 #include <fs/directory.h>
 
+#include <serial.h>
+
 #include <util.h>
 #include <diskdev.h>
 
@@ -18,6 +20,7 @@ static void __inode_sync(struct inode* inode, struct superblock* sb)
     int inode_loc = INODE_BLOCK_OFFSET(block_inode, inode_int);
 
     write_block_offset((char*) inode, sizeof(*inode), inode_loc, sb->inodes_start+block_inode);
+    dbgprintf("[sync] Synchronizing inode %d\n", inode_int);
 }
 
 static int __inode_cache_insert(struct inode* inode)

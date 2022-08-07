@@ -10,12 +10,13 @@
  */
 
 #include <pcb.h>
-#include <terminal.h>
+#include <serial.h>
 #include <memory.h>
 #include <sync.h>
 #include <timer.h>
 #include <net/netdev.h>
 #include <scheduler.h>
+#include <terminal.h>
 
 #include <windowmanager.h>
 
@@ -74,7 +75,7 @@ void print_pcb_status()
     int done_list[MAX_NUM_OF_PCBS];
     int done_list_count = 0;
     
-    twriteln(" PID   Stack       Size       Status       Name");
+    twriteln(" PID   Stack       Status       Name");
     for (int i = 0; i < MAX_NUM_OF_PCBS; i++)
     {
         if(pcbs[i].pid == -1)
@@ -108,7 +109,7 @@ void print_pcb_status()
 
         done_list[done_list_count] = largest;
         done_list_count++;
-        twritef("  %d    0x%x       %d       %s     %s\n", pcbs[largest].pid, pcbs[largest].esp, 0, status[pcbs[largest].running], pcbs[largest].name);
+        twritef("  %d    0x%x    %s     %s\n", pcbs[largest].pid, pcbs[largest].esp, status[pcbs[largest].running], pcbs[largest].name);
     }
     
 }
@@ -246,6 +247,7 @@ void init_pcbs()
 
     //int ret = add_pcb(&gensis2, "Adam");
     //if(ret < 0) return; // error
+    dbgprintf("[PCB] All process control blocks are ready.\n");
 
 }
 

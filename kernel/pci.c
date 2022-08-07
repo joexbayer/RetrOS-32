@@ -13,6 +13,7 @@
 #include <e1000.h>
 #include <screen.h>
 #include <terminal.h>
+#include <serial.h>
 #include <io.h>
 
 static const char* pci_classes[] =
@@ -152,6 +153,7 @@ void init_pci()
             }
         }
     }
+    dbgprintf("[PCI] Peripheral Component Interconnect devices probed.\n");
 }
 
 void list_pci_devices()
