@@ -171,8 +171,10 @@ static inline uint16_t vga_entry(unsigned char uc, uint8_t color)
 void screen_set_cursor(int x, int y)
 {
      if(current_running->window != NULL ){
-        y = current_running->window->anchor + y;
-        x = current_running->window->anchor + x;
+        y = current_running->window->y + y;
+        x = current_running->window->x + x;
+        if(is_window_visable() == 0)
+            return;
      }
 	uint16_t pos = y * SCREEN_WIDTH + x + 1;
 	outportb(0x3D4, 0x0F);
@@ -196,10 +198,12 @@ void scrcolor_set(enum vga_color fg, enum vga_color bg)
  */
 void scrwrite(int x, int y, char* str, uint8_t color)
 {
-     if(current_running->window != NULL ){
-        y = current_running->window->anchor + y;
-        x = current_running->window->anchor + x;
-        }
+    if(current_running->window != NULL ){
+        y = current_running->window->y + y;
+        x = current_running->window->x + x;
+        if(is_window_visable() == 0)
+            return;
+    }
 
 	for (size_t i = 0; i < strlen(str); i++)
 	{
@@ -219,9 +223,14 @@ void scrwrite(int x, int y, char* str, uint8_t color)
  */
 void scrput(size_t x, size_t y, unsigned char c, uint8_t color)
 {
+
     if(current_running->window != NULL ){
-        y = current_running->window->anchor + y;
-        x = current_running->window->anchor + x;
+        y = current_running->window->y + y;
+        x = current_running->window->x + x;
+        if(is_window_visable() == 0){
+            serial_put(c);
+            return;
+        }
     }
 	const size_t index = y * SCREEN_WIDTH + x;
 	VGA_MEMORY[index] = vga_entry(c, color);
@@ -248,18 +257,20 @@ void scr_clear()
 
 void scr_scroll(size_t from, size_t to, size_t width, size_t height)
 {
+    if(is_window_visable() == 0)
+        return;
     CLI();
-    from = current_running->window->anchor + from;
-    to = current_running->window->anchor + to;
-    width = current_running->window->anchor  +  current_running->window->width +1;
-    height = current_running->window->anchor  + current_running->window->height +1;
+    from = current_running->window->x + 1;
+    to = current_running->window->y + 1;
+    width = current_running->window->x  +  current_running->window->width +1;
+    height = current_running->window->y  + current_running->window->height +1;
 
-    dbgprintf("[SCR] Scroll %d %d -> %d %d\n", from ,to, width, height);
+    dbgprintf("[SCR] Scroll %d %d -> %d %d\n", from ,to, height, width);
 
     /* Move all lines up, overwriting the oldest message. */
-	for (size_t y = from; y < height-1; y++)
+	for (size_t y = to; y < height-1; y++)
 	{
-		for (size_t x = to; x < width-1; x++)
+		for (size_t x = from; x < width-1; x++)
 		{
 			const size_t index = y * SCREEN_WIDTH + x;
 			const size_t index_b = (y+1) * SCREEN_WIDTH + x;
@@ -285,9 +296,12 @@ void scr_scroll(size_t from, size_t to, size_t width, size_t height)
  */
 int32_t scrprintf(int32_t x, int32_t y, char* fmt, ...)
 {
+
     if(current_running->window != NULL ){
-        y = current_running->window->anchor + y;
-        x = current_running->window->anchor + x;
+        y = current_running->window->y + y;
+        x = current_running->window->x + x;
+        if(is_window_visable() == 0)
+            return;
     }
 	va_list args;
 

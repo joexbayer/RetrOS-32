@@ -13,9 +13,9 @@
 #include <terminal.h>
 
 void print_ethernet(struct ethernet_header* hdr){
-    scrprintf(1, 1, "dmac: %x:%x:%x:%x:%x:%x", hdr->dmac[0], hdr->dmac[1], hdr->dmac[2], hdr->dmac[3], hdr->dmac[4], hdr->dmac[5]);
-    scrprintf(1, 2, "smac: %x:%x:%x:%x:%x:%x", hdr->smac[0], hdr->smac[1], hdr->smac[2], hdr->smac[3], hdr->smac[4], hdr->smac[5]);
-    scrprintf(1, 3, "type: %x", hdr->ethertype);
+    twritef("dmac: %x:%x:%x:%x:%x:%x\n", hdr->dmac[0], hdr->dmac[1], hdr->dmac[2], hdr->dmac[3], hdr->dmac[4], hdr->dmac[5]);
+    twritef("smac: %x:%x:%x:%x:%x:%x\n", hdr->smac[0], hdr->smac[1], hdr->smac[2], hdr->smac[3], hdr->smac[4], hdr->smac[5]);
+    twritef("type: %x\n", hdr->ethertype);
 }
 
 int ethernet_add_header(struct sk_buff* skb, uint32_t ip)
@@ -44,7 +44,7 @@ uint8_t ethernet_parse(struct sk_buff* skb)
 {
     struct ethernet_header* header = (struct ethernet_header*) skb->data;
     header->ethertype = ntohs(header->ethertype);
-    //print_ethernet(header);
+    print_ethernet(header);
 
     skb->hdr.eth = header;
     skb->data += ETHER_HDR_LENGTH;

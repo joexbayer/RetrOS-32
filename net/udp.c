@@ -62,5 +62,7 @@ int udp_parse(struct sk_buff* skb){
 	if(ret <= 0)
 		twriteln("[Warning] socket buffer full!!");
 		
+	twritef("[UDP] PORT %d -> %d, len: %d.\n", hdr->srcport, hdr->destport, hdr->udp_length);
+
     return 1;
 }

@@ -21,10 +21,27 @@
 #include <net/icmp.h>
 #include <net/socket.h>
 #include <net/dhcp.h>
+#include <windowmanager.h>
+
 
 #define MAX_PACKET_SIZE 0x1000
 
 static uint16_t packets = 0;
+
+struct window __network_w = {
+	.x = SCREEN_WIDTH/2+2,
+    .y = 1,
+	.height = SCREEN_HEIGHT-3,
+	.width = SCREEN_WIDTH/2-4,
+	.color = VGA_COLOR_GREEN,
+	.visable = 1,
+	.name = "NETWORKING",
+    .state = {
+		.column = 1,
+		.row = SCREEN_HEIGHT-3,
+		.color = VGA_COLOR_LIGHT_GREY
+	}
+};
 
 int add_queue(uint8_t* buffer, uint16_t size);
 int get_next_queue();
@@ -140,6 +157,7 @@ int net_handle_recieve(struct sk_buff* skb)
  */
 void main()
 {
+    attach_window(&__network_w);
     while(1)
     {
         struct sk_buff* skb = next_skb();

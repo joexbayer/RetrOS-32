@@ -8,26 +8,34 @@
 
 void draw_window(struct window* w)
 {
-    dbgprintf("[WM] Window: Anchor %d, width: %d, height: %d\n", w->anchor, w->width, w->height);
+    if(w->visable == 0)
+        return;
+
+    //dbgprintf("[WM] Window: Anchor %d, width: %d, height: %d\n", w->x, w->width, w->height);
 
     for (uint8_t i = 0; i < w->width; i++)
     {
-        scrput(w->anchor+i, w->anchor, 205, w->color);
-        scrput(w->anchor+i, w->anchor+w->height, 196, w->color);
+        scrput(w->x+i, w->y, 205, w->color);
+        scrput(w->x+i, w->y+w->height, 196, w->color);
     }
 
     for (uint8_t i = 0; i < w->height; i++)
     {
-        scrput(w->anchor, w->anchor+i, 179, w->color);
-        scrput(w->anchor+w->width, w->anchor+i, 179, w->color);
+        scrput(w->x, w->y+i, 179, w->color);
+        scrput(w->x+w->width, w->y+i, 179, w->color);
     }
 
-    scrput(w->anchor, w->anchor, 213, w->color);
-    scrput(w->anchor+w->width, w->anchor, 184, w->color);
+    scrput(w->x, w->y, 213, w->color);
+    scrput(w->x+w->width, w->y, 184, w->color);
 
-    scrput(w->anchor, w->anchor+w->height, 192, w->color);
-    scrput(w->anchor+w->width, w->anchor+w->height, 217, w->color);
-    scrprintf(w->anchor+2, w->anchor, "TERMINAL");
+    scrput(w->x, w->y+w->height, 192, w->color);
+    scrput(w->x+w->width, w->y+w->height, 217, w->color);
+    scrprintf(w->x+2, w->y, w->name);
+}
+
+int attach_window(struct window* w)
+{
+    current_running->window = w;
 }
 
 int get_window_height()
@@ -44,4 +52,18 @@ int get_window_width()
         return current_running->window->width;
 
     return SCREEN_WIDTH;
+}
+
+uint8_t is_window_visable()
+{
+    if(current_running->window != NULL)
+        return current_running->window->visable;
+    
+    return 0;
+        
+}
+
+struct terminal_state* get_terminal_state()
+{
+    return &current_running->window->state;
 }

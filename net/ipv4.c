@@ -119,6 +119,7 @@ int ip_parse(struct sk_buff* skb)
         arp_add_entry(&content);
     }
 
+    twritef("[IPv%d] from %i, len: %d, id: %d\n", hdr->version, hdr->saddr, hdr->len, hdr->id);
 
     return 1;
 }

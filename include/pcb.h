@@ -48,7 +48,6 @@ int add_pcb( void (*entry)(), char* name);
 void print_pcb_status();
 
 void pcb_set_running(int pid);
-int attach_window(struct window* w);
 
 /* functions in entry.s */
 void _start_pcb();

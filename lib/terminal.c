@@ -19,13 +19,6 @@
 	https://wiki.osdev.org/Meaty_Skeleton
 */
 
-enum ASCII {
-	ASCII_BLOCK = 219,
-	ASCII_HORIZONTAL_LINE = 205,
-	ASCII_VERTICAL_LINE = 179,
-	ASCII_DOWN_INTERSECT = 203
-};
-
 static const char newline = '\n';
 
 #define TERMINAL_START 1
@@ -38,12 +31,6 @@ static const char newline = '\n';
 static size_t terminal_row;
 static size_t terminal_column;
 static uint8_t terminal_color;
-static struct window window = {
-		.anchor = 1,
-		.height = SCREEN_HEIGHT-3,
-		.width = SCREEN_WIDTH-3,
-		.color = VGA_COLOR_LIGHT_BLUE
-	};
 
 /**
  * Draws lines on the screen separating terminal, memory and example.
@@ -57,18 +44,6 @@ void __terminal_draw_lines()
 	for (size_t x = 0; x < SCREEN_WIDTH; x++)
 		scrput(x,TERMINAL_START, ASCII_HORIZONTAL_LINE, terminal_color);*/
 
-	for (size_t x = 0; x < SCREEN_HEIGHT; x++)
-		scrput(0, 0+x, ASCII_VERTICAL_LINE, VGA_COLOR_LIGHT_GREY);
-
-	for (size_t x = 0; x < SCREEN_HEIGHT; x++)
-		scrput(SCREEN_WIDTH-1, 0+x, ASCII_VERTICAL_LINE, VGA_COLOR_LIGHT_GREY);
-
-	scrput(0, SCREEN_HEIGHT-1, 192, VGA_COLOR_LIGHT_GREY);
-	scrput(SCREEN_WIDTH-1, SCREEN_HEIGHT-1, 217, VGA_COLOR_LIGHT_GREY);
-
-	for (size_t x = 1; x < SCREEN_WIDTH-1; x++)
-		scrput(x, SCREEN_HEIGHT-1, 196, VGA_COLOR_LIGHT_GREY);
-
 }
 
 /**
@@ -78,8 +53,8 @@ void __terminal_draw_lines()
 void terminal_clear()
 {	
 	/* Clears the terminal window */
-	for (size_t y = 1; y < get_window_height()-1; y++)
-		for (size_t x = 1; x < get_window_width()-1; x++)
+	for (int y = 1; y < get_window_height()-1; y++)
+		for (int x = 1; x < get_window_width()-1; x++)
 			scrput(x, y, ' ', terminal_color);
 }
 
@@ -134,23 +109,24 @@ void terminal_setcolor(uint8_t color)
  */
 void terminal_putchar(char c)
 {
+	struct terminal_state* state = get_terminal_state();
 	unsigned char uc = c;
 
 	if(c == newline)
 	{
-		terminal_column = 1;
+		state->column = 1;
 		__terminal_scroll();
 		return;
 	}
 	
-	if (terminal_column+1 == get_window_width()-1)
+	if (state->column+1 == get_window_width()-1)
 	{
-		scrput(terminal_column, get_window_height()-1, '-', terminal_color);
-		terminal_column = 1;
+		scrput(state->column, get_window_height()-1, '-', terminal_color);
+		state->column = 1;
 		__terminal_scroll();
 	}
-	scrput(terminal_column, get_window_height()-1, uc, terminal_color);
-	terminal_column++;
+	scrput(state->column, get_window_height()-1, uc, terminal_color);
+	state->column++;
 }
  
 /**
@@ -241,10 +217,6 @@ int32_t twritef(char* fmt, ...)
 						break;
 				}
 				fmt++;
-				break;
-			case '\n':
-				terminal_column = 1;
-				__terminal_scroll();
 				break;
 			default:  
 				terminal_putchar(*fmt);

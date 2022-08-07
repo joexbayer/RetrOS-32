@@ -5,4 +5,5 @@
 
 void init_serial();
 int32_t dbgprintf(char* fmt, ...);
+void serial_put(char a);
 #endif /* __SERIAL_H */

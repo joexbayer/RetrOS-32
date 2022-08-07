@@ -26,10 +26,19 @@
 
 
 struct window w = {
-	.anchor = 1,
+	.x = 1,
+	.y = 1,
 	.height = SCREEN_HEIGHT-3,
 	.width = SCREEN_WIDTH/2,
-	.color = VGA_COLOR_LIGHT_BLUE
+	.color = VGA_COLOR_LIGHT_BLUE,
+	.visable = 1,
+	.name = "TERMINAL",
+	.state = {
+		.column = 0,
+		.row = SCREEN_HEIGHT-3,
+		.color = VGA_COLOR_LIGHT_GREY
+	}
+	
 };
 
 #define SHELL_POSITION (get_window_height()-1)

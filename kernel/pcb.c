@@ -41,13 +41,8 @@ void gensis()
             draw_window(pcbs[i].window);
         }
 
-		sleep(1);
+		yield();
 	}
-}
-
-int attach_window(struct window* w)
-{
-    current_running->window = w;
 }
 
 void gensis2()

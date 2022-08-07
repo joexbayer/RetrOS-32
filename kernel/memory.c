@@ -18,6 +18,13 @@
 
 #include <bitmap.h>
 
+enum ASCII {
+	ASCII_BLOCK = 219,
+	ASCII_HORIZONTAL_LINE = 205,
+	ASCII_VERTICAL_LINE = 179,
+	ASCII_DOWN_INTERSECT = 203
+};
+
 #define MEM_START 0x300000
 #define MEM_END 0xEFFFFF
 #define MEM_CHUNK 0x400
@@ -81,6 +88,20 @@ void print_mem()
 void print_memory_status()
 {	
 	struct time* time = get_datetime();
+
+	for (size_t x = 0; x < SCREEN_HEIGHT; x++)
+		scrput(0, 0+x, ASCII_VERTICAL_LINE, VGA_COLOR_LIGHT_GREY);
+
+	for (size_t x = 0; x < SCREEN_HEIGHT; x++)
+		scrput(SCREEN_WIDTH-1, 0+x, ASCII_VERTICAL_LINE, VGA_COLOR_LIGHT_GREY);
+
+	scrput(0, SCREEN_HEIGHT-1, 192, VGA_COLOR_LIGHT_GREY);
+	scrput(SCREEN_WIDTH-1, SCREEN_HEIGHT-1, 217, VGA_COLOR_LIGHT_GREY);
+
+	for (size_t x = 1; x < SCREEN_WIDTH-1; x++)
+		scrput(x, SCREEN_HEIGHT-1, 196, VGA_COLOR_LIGHT_GREY);
+
+
 	scrcolor_set(VGA_COLOR_LIGHT_BROWN, VGA_COLOR_BLACK);
 	for (int i = 0; i < SCREEN_WIDTH-1; i++)
 		scrput(i, 0, 205, VGA_COLOR_LIGHT_GREY);
