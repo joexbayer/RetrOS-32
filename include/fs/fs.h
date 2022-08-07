@@ -15,4 +15,6 @@ void chdir(char* path);
 void mkdir(char* name);
 void create_file(char* name);
 
+void fs_stats();
+
 #endif /* __FS_H */

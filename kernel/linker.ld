@@ -12,27 +12,7 @@ SECTIONS
         _code_end = .;
     }
 
-    .rodata BLOCK(4K) : ALIGN(4K)
-    {
-        _ro_s = .;
-        *(.rodata)
-        _ro_e = .;
-    }
-
-    .data BLOCK(4K) : ALIGN(4K)
-    {
-        _data_s = .;
-        *(.data)
-        _data_e = .;
-    }
-
     _end = .;
 
-    .bss BLOCK(4K) : ALIGN(4K)
-    {
-        _bss_s = .;
-        *(.bss)
-        _bss_e = .;
-    }
 
 }

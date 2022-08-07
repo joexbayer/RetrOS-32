@@ -40,6 +40,14 @@ int init_fs()
     return 0;
 }
 
+void fs_stats()
+{
+    twritef("FS: Found Filesystem with size: %d (%d total)\n", superblock.nblocks*BLOCK_SIZE, superblock.size);
+    twritef("FS: With a total of %d inodes (%d blocks)\n", superblock.ninodes, superblock.ninodes / INODES_PER_BLOCK);
+    twritef("FS: And total of %d block\n", superblock.nblocks);
+    twritef("FS: Max file size: %d bytes\n", NDIRECT*BLOCK_SIZE);
+}
+
 void __superblock_sync()
 {
     write_block_offset((char*) &superblock, sizeof(struct superblock), 0, FS_START_LOCATION);

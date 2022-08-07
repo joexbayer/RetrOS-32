@@ -12,6 +12,7 @@
 #include <interrupts.h>
 #include <terminal.h>
 #include <screen.h>
+#include <io.h>
 
 static struct idt_entry idt_entries[IDT_ENTRIES];
 static struct idt_ptr   idt;

@@ -15,6 +15,7 @@
 #include <interrupts.h>
 #include <scheduler.h>
 #include <pcb.h>
+#include <io.h>
 
 #define PIT_IRQ		32
 

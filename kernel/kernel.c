@@ -16,6 +16,7 @@
 #include <net/socket.h>
 #include <net/dns.h>
 #include <fs/fs.h>
+#include <serial.h>
 
 /* This functions always needs to be on top? */
 void _main() 
@@ -29,6 +30,7 @@ void _main()
 	init_keyboard();
 	init_pcbs();
 	ata_ide_init();
+	init_serial();
 
 	init_pci();
 	init_sk_buffers();
@@ -42,6 +44,7 @@ void _main()
 	init_networking();
 	init_dhcpd();
 
+	CLI();
 	init_fs();
 	init_timer(1);
 	/* Testing printing ints and hex */
@@ -62,14 +65,12 @@ void _main()
 	start_process(0); // SHELL
 	start_process(2); // Networking
 
-
-
-	twritef("TEXT: %d\n", _code_end-_code);
+	/*twritef("TEXT: %d\n", _code_end-_code);
 	twritef("RODATA: %d\n", _ro_e-_ro_s);
 	twritef("DATA: %d\n", _data_e-_data_s);
 	twritef("BSS: %d\n", _bss_e-_bss_s);
 	twriteln("");
-	twritef("Total: %d (%d sectors)\n", _end-_code, ((_end-_code)/512)+2);
+	twritef("Total: %d (%d sectors)\n", _end-_code, ((_end-_code)/512)+2);*/
 
 	//load_page_directory(kernel_page_dir);
     //scrprintf(0, 10, "Kernal page: %x", kernel_page_dir);

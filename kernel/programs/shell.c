@@ -15,6 +15,7 @@
 #include <scheduler.h>
 #include <pcb.h>
 #include <process.h>
+#include <io.h>
 
 #include <windowmanager.h>
 #include <net/dns.h>
@@ -161,6 +162,11 @@ void exec_cmd()
 
 	if(strncmp("sync", shell_buffer, strlen("sync"))){
 		sync();
+	}
+
+	if(strncmp("exit", shell_buffer, strlen("exit"))){
+		sync();
+		outportw(0x604, 0x2000);
 	}
 
 	if(strncmp("exit", shell_buffer, strlen("exit"))){

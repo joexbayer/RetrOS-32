@@ -28,7 +28,8 @@ KERNELOBJ = bin/kernel_entry.o bin/kernel.o bin/terminal.o bin/pci.o \
 			bin/util.o bin/interrupts.o bin/irs_entry.o bin/timer.o \
 			bin/keyboard.o bin/screen.o bin/pcb.o bin/memory.o bin/e1000.o \
 			bin/sync.o bin/process.o bin/ata.o bin/bitmap.o bin/rtc.o \
-			bin/diskdev.o bin/scheduler.o bin/net.o bin/fs.o bin/windowmanager.o ${PROGRAMOBJ}
+			bin/diskdev.o bin/scheduler.o bin/net.o bin/fs.o bin/windowmanager.o \
+			bin/serial.o bin/io.o ${PROGRAMOBJ}
 BOOTOBJ = bin/bootloader.o
 
 .PHONY: all new image clean boot net kernel grub
@@ -148,6 +149,6 @@ net:
 	sudo tcpdump -qns 0 -X -r dump.dat -vvv -e
 
 qemu:
-	sudo qemu-system-i386 -device e1000,netdev=net0 -netdev user,id=net0,hostfwd=tcp::5555-:22 -object filter-dump,id=net0,netdev=net0,file=dump.dat boot.iso
+	sudo qemu-system-i386 -device e1000,netdev=net0 -serial stdio -netdev user,id=net0 -object filter-dump,id=net0,netdev=net0,file=dump.dat boot.iso
 
 run: docker qemu

@@ -14,7 +14,7 @@
 #include <terminal.h>
 #include <interrupts.h>
 #include <memory.h>
-#include <util.h>
+#include <io.h>
 #include <diskdev.h>
 
 static uint8_t* ata_driver_data;

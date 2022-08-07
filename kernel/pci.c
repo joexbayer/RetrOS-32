@@ -13,6 +13,7 @@
 #include <e1000.h>
 #include <screen.h>
 #include <terminal.h>
+#include <io.h>
 
 static const char* pci_classes[] =
 {

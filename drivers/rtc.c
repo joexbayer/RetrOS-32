@@ -11,7 +11,7 @@
  */
 
 #include <rtc.h>
-#include <util.h>
+#include <io.h>
 
 enum {
     RTC_ADDRESS = 0x70,
