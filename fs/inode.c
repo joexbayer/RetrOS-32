@@ -23,7 +23,7 @@ static void __inode_sync(struct inode* inode, struct superblock* sb)
     dbgprintf("[sync] Synchronizing inode %d\n", inode_int);
 }
 
-static int __inode_cache_insert(struct inode* inode)
+static int __inode_cache_insert(struct inode* inode, struct superblock* sb)
 {
     for (size_t i = 0; i < 10; i++)
         if(__inode_cache[i].type == 0){
@@ -31,6 +31,16 @@ static int __inode_cache_insert(struct inode* inode)
             memcpy(&__inode_cache[i], inode, sizeof(struct inode));
             return i;
         }
+    for (size_t i = 0; i < 10; i++)
+        if(__inode_cache[i].nlink == 0){
+            __inode_sync(&__inode_cache[i], sb);
+            dbgprintf("[FS] Saving inode %d to disk..\n", __inode_cache[i].inode);
+            dbgprintf("[FS] Caching inode %d.\n", inode->inode);
+            memcpy(&__inode_cache[i], inode, sizeof(struct inode));
+            return i;
+        }
+    
+
 
     return -1;
 
@@ -54,7 +64,7 @@ int __inode_load(inode_t inode, struct superblock* sb)
 
     dbgprintf("[FS] Loaded inode %d from disk.\n", disk_inode.inode);
 
-    int ret = __inode_cache_insert(&disk_inode);
+    int ret = __inode_cache_insert(&disk_inode, sb);
 
     return ret;
     
@@ -160,8 +170,13 @@ inode_t alloc_inode(struct superblock* sb, char TYPE)
         .size = 0,
         .type = TYPE
     };
+    get_current_time(&inode_disk.time);
 
-    __inode_cache_insert(&inode_disk);
+    int ret = __inode_cache_insert(&inode_disk, sb);
+    if(ret == -1){
+        dbgprintf("[FS] Cache is full with opened inodes!\n");
+        return 0;
+    }
 
     return inode;
 }

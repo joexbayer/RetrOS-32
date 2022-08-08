@@ -299,7 +299,7 @@ int32_t scrprintf(int32_t x, int32_t y, char* fmt, ...)
         y = current_running->window->y + y;
         x = current_running->window->x + x;
         if(is_window_visable() == 0)
-            return;
+            return 0;
     }
 	va_list args;
 

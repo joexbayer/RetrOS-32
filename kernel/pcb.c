@@ -165,7 +165,7 @@ int init_pcb(int pid, struct pcb* pcb, void (*entry)(), char* name)
     uint32_t stack = (uint32_t) alloc(stack_size);
     if((void*)stack == NULL)
     {
-        scrprintf(10, 14, "STACK == NULL");
+        dbgprintf("[PCB] STACK == NULL");
         return -1;
     }
 

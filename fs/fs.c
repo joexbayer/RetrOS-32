@@ -9,6 +9,7 @@
 #include <serial.h>
 
 #include <util.h>
+#include <rtc.h>
 
 #define FS_INODE_BMAP_LOCATION FS_START_LOCATION+1
 #define FS_BLOCK_BMAP_LOCATION FS_INODE_BMAP_LOCATION+1
@@ -17,6 +18,8 @@ static struct superblock superblock;
 static struct inode* root_dir;
 static struct inode* current_dir;
 static int FS_START_LOCATION = 0;
+
+static char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Nov", "Dec"};
 
 int init_fs()
 {
@@ -42,10 +45,10 @@ int init_fs()
 
 void fs_stats()
 {
-    twritef("[FS]: Found Filesystem with size: %d (%d total)\n", superblock.nblocks*BLOCK_SIZE, superblock.size);
-    twritef("[FS]: With a total of %d inodes (%d blocks)\n", superblock.ninodes, superblock.ninodes / INODES_PER_BLOCK);
-    twritef("[FS]: And total of %d block\n", superblock.nblocks);
-    twritef("[FS]: Max file size: %d bytes\n", NDIRECT*BLOCK_SIZE);
+    twritef("Found Filesystem with size: %d (%d total)\n", superblock.nblocks*BLOCK_SIZE, superblock.size);
+    twritef("With a total of %d inodes (%d blocks)\n", superblock.ninodes, superblock.ninodes / INODES_PER_BLOCK);
+    twritef("And total of %d block\n", superblock.nblocks);
+    twritef("Max file size: %d bytes\n", NDIRECT*BLOCK_SIZE);
 }
 
 void __superblock_sync()
@@ -131,6 +134,11 @@ void mkfs()
 void create_file(char* name)
 {
     inode_t inode_index = alloc_inode(&superblock, FS_FILE);
+    if(inode_index == 0){
+        twriteln("Cannot create file. (probably cache)");
+        return;
+    }
+
     struct inode* inode = inode_get(inode_index, &superblock);
 
     struct directory_entry new = {
@@ -198,6 +206,11 @@ void chdir(char* path)
 void mkdir(char* name)
 {
     inode_t inode_index = alloc_inode(&superblock, FS_DIRECTORY);
+    if(inode_index == 0){
+        twriteln("Cannot create directory. (probably cache)");
+        return;
+    }
+
     struct inode* inode = inode_get(inode_index, &superblock);
 
     struct directory_entry self = {
@@ -231,7 +244,9 @@ void ls(char* path)
     while (size < current_dir->size)
     {
         int ret = inode_read((char*) &entry, sizeof(struct directory_entry), current_dir, &superblock);
-        twritef(" %s\n", entry.name);
+        struct inode* inode = inode_get(entry.inode, &superblock);
+        struct time* time = &inode->time;
+        twritef("%d %s %d, %d:%d - %s%s\n",inode->size, months[time->month], time->day, time->hour, time->minute, entry.name, inode->type == FS_DIRECTORY ? "/" : "");
         size += ret;
     }
 }

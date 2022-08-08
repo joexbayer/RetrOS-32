@@ -2,6 +2,7 @@
 #define __inode_h
 
 #include <stdint.h>
+#include <rtc.h>
 
 #define FS_FILE 1
 #define FS_DIRECTORY 2
@@ -18,6 +19,8 @@ struct inode {
     uint16_t size;            // Size of file (bytes)
     uint8_t blocks[NDIRECT];   // Data block addresses
     uint16_t pos;
+
+    struct time time;
 };
 
 #define INODES_PER_BLOCK (512 / sizeof(struct inode))

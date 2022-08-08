@@ -19,7 +19,7 @@
 
 void serial_put(char a)
 {
-    while ((inportb(PORT + 5) & 0x20) == 0);
+    while ((inportb(PORT + 5) & 0x20) == 0){};
 
    	outportb(PORT, a);
 }
@@ -111,7 +111,7 @@ void init_serial()
 
 	// Check if serial is faulty (i.e: not same byte as sent)
 	if(inportb(PORT + 0) != 0xAE) {
-		twriteln("[warning] Serial ports could not be configured.");
+		return;
 	}
 
     outportb(PORT + 4, 0x0F);

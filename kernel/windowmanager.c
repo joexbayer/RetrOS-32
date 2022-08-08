@@ -36,6 +36,7 @@ void draw_window(struct window* w)
 int attach_window(struct window* w)
 {
     current_running->window = w;
+    return 1;
 }
 
 int get_window_height()
