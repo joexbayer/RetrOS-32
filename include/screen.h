@@ -7,7 +7,7 @@
 
 
 #define SCREEN_WIDTH 80
-#define SCREEN_HEIGHT 25
+#define SCREEN_HEIGHT 50
 
 extern uint16_t* const VGA_MEMORY;
 

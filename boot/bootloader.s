@@ -86,6 +86,11 @@ reading_same_segment:
     loop read_loop
 
 continue:
+
+    /* Setting video mode to 80x50 */
+    movw $0x1112, %ax
+    xor %bl, %bl
+    int $0x10
   
     # call set_video_mode
 
@@ -99,6 +104,8 @@ continue:
     /* Setup GDT for 32 land */
     jmp setup_gdt
 setup_gdt:
+
+    
     cli
 
     lgdt gdtp
