@@ -126,7 +126,7 @@ static void init_idt()
 		idt_set_gate(i, (uint32_t) irqs[i-32] , 0x08, 0x8E); // PIT timer
 	}
 	idt_set_gate(48, (uint32_t)&_syscall_entry, 0x08, 0x8E);
-	//idt_set_gate(14, &_page_fault_entry, 0x08, 0x8E);
+	idt_set_gate(14, &_page_fault_entry, 0x08, 0x8E);
 
 	idt_flush((uint32_t)&idt);
 }
