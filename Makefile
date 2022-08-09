@@ -108,11 +108,11 @@ bin/fs.o: ./fs/*.c
 	@echo [FILESYSTEM] Compiling the filesystem
 	@make -C ./fs/
 
-iso: bin/build compile
+iso2: bin/build compile
 	@echo [BUILD] Building ISO file and attaching filesystem.
 	@./bin/build
 
-iso2: compile
+iso: compile
 	@dd if=/dev/zero of=boot.iso bs=512 count=961
 	@dd if=./bin/bootblock of=boot.iso conv=notrunc bs=512 seek=0 count=1
 	@dd if=./bin/kernelout of=boot.iso conv=notrunc bs=512 seek=1 count=960

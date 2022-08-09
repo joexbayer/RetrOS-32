@@ -19,7 +19,7 @@ static struct inode* root_dir;
 static struct inode* current_dir;
 static int FS_START_LOCATION = 0;
 
-static char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Nov", "Dec"};
+static char* months[] = {"NAN", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Nov", "Dec"};
 
 int init_fs()
 {
