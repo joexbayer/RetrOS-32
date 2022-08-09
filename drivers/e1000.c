@@ -16,8 +16,8 @@
 #include <serial.h>
 
 #define PACKET_SIZE   2048
-#define TX_SIZE 32
-#define RX_SIZE 128
+#define TX_SIZE 10
+#define RX_SIZE 10
 #define TX_BUFF_SIZE (sizeof(struct e1000_tx_desc) * TX_SIZE)
 #define RX_BUFF_SIZE (sizeof(struct e1000_rx_desc) * RX_SIZE)
 
@@ -219,5 +219,6 @@ void e1000_attach(struct pci_device* dev)
 	netdev_attach_driver(dev, &e1000_receive, &e1000_transmit, "Intel E1000", (uint8_t*)&mac);
 
 	dbgprintf("[E1000] Network card Intel E1000 found and attached!.\n");
+	dbgprintf("[E1000] Data size: %d\n", TX_SIZE*PACKET_SIZE + RX_SIZE*PACKET_SIZE);
 
 }

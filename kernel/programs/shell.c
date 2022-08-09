@@ -68,7 +68,7 @@ void reset_shell()
 	memset(&shell_buffer, 0, 25);
 	shell_column = strlen(current_process->name)+2;
 	shell_buffer_length = 0;
-
+	dbgprintf("w: 0x%x, col: 0x%x, %d\n", &w, &shell_column, ((uint32_t) &shell_column)-((uint32_t) &w));
 	scrwrite(1, SHELL_POSITION, current_process->name, VGA_COLOR_LIGHT_CYAN);
 	scrwrite(shell_column, SHELL_POSITION, "> ", VGA_COLOR_LIGHT_CYAN);
 	shell_column += 1;

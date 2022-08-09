@@ -26,7 +26,7 @@ enum ASCII {
 };
 
 #define MEM_START 0x300000
-#define MEM_END 0xEFFFFF
+#define MEM_END 0x400000
 #define MEM_CHUNK 0x400
 #define CHUNKS_SIZE (MEM_END-MEM_START)/MEM_CHUNK
 
@@ -217,6 +217,8 @@ void init_memory()
 
 		mem_position += MEM_CHUNK;
 	}
+
+	dbgprintf("Mem data size: %d\n", sizeof(struct mem_chunk)*CHUNKS_SIZE);
 
 	dbgprintf("[MEM] Memory initilized.\n");
 }

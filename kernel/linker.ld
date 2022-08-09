@@ -12,6 +12,18 @@ SECTIONS
         _code_end = .;
     }
 
+    /* Read-only data. */
+	.rodata BLOCK(4K) : ALIGN(4K)
+	{
+		*(.rodata)
+	}
+ 
+	/* Read-write data (initialized) */
+	.data BLOCK(4K) : ALIGN(4K)
+	{
+		*(.data)
+	}
+
     _end = .;
 
 
