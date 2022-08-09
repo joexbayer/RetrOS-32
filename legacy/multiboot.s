@@ -45,6 +45,66 @@ _start:
 1:	hlt
 	jmp 1b
 
+syscall_return_value:
+  .long	0
+.global _syscall_entry
+_syscall_entry:
+    cli
+    push $0
+	push $48
+    pusha
+
+	pushl	%edx	/* Arg 3 */
+    pushl	%ecx	/* Arg 2 */
+    pushl	%ebx	/* Arg 1 */
+    pushl	%eax	/* Syscall number */
+
+    call system_call
+    movl	%eax, (syscall_return_value)
+	
+    popl	%edx	/* Arg 3 */
+    popl	%ecx	/* Arg 2 */
+    popl	%ebx	/* Arg 1 */
+    popl	%eax	/* Syscall number */
+    
+    popa    
+    
+    movl	(syscall_return_value), %eax
+
+    add $8, %esp
+    iret
+
+
+page_fault_14_scratch:
+  .long	0
+page_fault_14_err:
+  .long	0
+.global _page_fault_entry
+_page_fault_entry:
+    cli
+
+    movl	%eax, (page_fault_14_scratch)
+    popl	%eax
+    /* Get error code */
+    movl	%eax, (page_fault_14_err)
+    movl	(page_fault_14_scratch), %eax
+
+    pusha
+
+    movl	(page_fault_14_err), %eax
+    pushl	%eax
+    movl	%cr2, %eax
+    pushl	%eax
+
+    call page_fault_interrupt
+
+    addl $8, %esp
+    
+    popa    
+
+    add $8, %esp
+    iret
+
 .global _context_switch
 _context_switch:
     movl current_running, %eax

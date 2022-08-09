@@ -54,8 +54,7 @@ int system_call(int index, int arg1, int arg2, int arg3)
 int page_fault_interrupt(unsigned long cr2, unsigned long err)
 {
 	CLI();
-	scrprintf(10, 9, "CR2: %x %d   ERR: %d", cr2 &  0xfffff000, cr2, err);
-	scrprintf(10, 10, "EXCEPTION 14!!!");
+	dbgprintf("Page fault: 0x%x\n", cr2);
 	while(1);
 	
 }

@@ -30,6 +30,7 @@ static int pcb_count = 0;
 
 void gensis()
 {
+    dbgprintf("[GEN] Gensis running!\n");
     while(1)
     {
         print_memory_status();
@@ -57,7 +58,7 @@ void gensis2()
             yield();
         }
 
-        sleep(2);
+        yield();
     }
 }
 
@@ -211,6 +212,7 @@ int add_pcb(void (*entry)(), char* name)
     pcbs[i].prev = current_running;
 
     pcb_count++;
+    dbgprintf("Added %s\n", name);
     STI();
     return i;
 }   
@@ -234,7 +236,7 @@ void init_pcbs()
         pcbs[i].pid = -1;
         pcbs[i].window = NULL;
     }
-
+    current_running = &pcbs[0];
     pcbs[0].next = &pcbs[0];
     pcbs[0].prev = &pcbs[0];
 
@@ -249,7 +251,7 @@ void init_pcbs()
 
 void start_tasks()
 {
-    current_running = &pcbs[0];
+    dbgprintf("hi");
     start_pcb();
 
     /* We will never reach this.*/

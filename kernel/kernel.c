@@ -26,6 +26,7 @@ void _main()
 	init_terminal();
 	init_memory();
 	init_interrupts();
+	init_paging();
 	CLI();
 	init_keyboard();
 	init_pcbs();
@@ -46,7 +47,7 @@ void _main()
 
 	CLI();
 	init_fs();
-	init_timer(1);
+	
 	/* Testing printing ints and hex */
 	//char test[1000];
 	//itohex(3735928559, test);
@@ -86,8 +87,11 @@ void _main()
     twriteln("     *               - ) -       *");
     twriteln("            .               .");
 	twriteln("");*/
-
+	
+	
+	//while(1){};
 	STI();
+	init_timer(1);
 	start_tasks();
 
 	while(1){};
