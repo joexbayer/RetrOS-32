@@ -69,7 +69,7 @@ static int __sock_add_packet(char* buffer, uint16_t len, int socket_index)
 
     acquire(&sockets[socket_index]->sock_lock);
 
-    for (size_t i = sockets[socket_index]->last_read_buffer; i < BUFFERS_PER_SOCKET; i++)
+    for (int i = sockets[socket_index]->last_read_buffer; i < BUFFERS_PER_SOCKET; i++)
     {
         if(sockets[socket_index]->buffer_lens[i] == 0)
         {
@@ -143,9 +143,9 @@ int bind(int socket, const struct sockaddr *address, socklen_t address_len)
  * @param flags Flags..
  * @param address sockaddr of sender.
  * @param address_len length of address.
- * @return size_t 
+ * @return int 
  */ 
-size_t recvfrom(int socket, void *buffer, size_t length, int flags, struct sockaddr *address, socklen_t *address_len)
+int recvfrom(int socket, void *buffer, int length, int flags, struct sockaddr *address, socklen_t *address_len)
 {
     /* */
     return 0;
@@ -158,9 +158,9 @@ size_t recvfrom(int socket, void *buffer, size_t length, int flags, struct socka
  * @param buffer Buffer to copy data into
  * @param length Max length to copy.
  * @param flags flags..
- * @return size_t 
+ * @return int 
  */
-size_t recv(int socket, void *buffer, size_t length, int flags)
+int recv(int socket, void *buffer, int length, int flags)
 {
     int read = -1;
     while(read == -1) /* TODO: Block, instead of spinning. */
@@ -171,7 +171,7 @@ size_t recv(int socket, void *buffer, size_t length, int flags)
     return read;
 }
 
-size_t recv_timeout(int socket, void *buffer, size_t length, int flags, int timeout)
+int recv_timeout(int socket, void *buffer, int length, int flags, int timeout)
 {
     int time_start = get_time();
 
@@ -198,9 +198,9 @@ size_t recv_timeout(int socket, void *buffer, size_t length, int flags, int time
  * @param flags flags..
  * @param dest_addr sockaddr defining reciever.
  * @param dest_len lenght of dest_addr.
- * @return size_t 
+ * @return int 
  */
-size_t sendto(int socket, const void *message, size_t length, int flags, const struct sockaddr *dest_addr, socklen_t dest_len)
+int sendto(int socket, const void *message, int length, int flags, const struct sockaddr *dest_addr, socklen_t dest_len)
 {
     /* Flags are ignored... for now. */
     if(socket < 0 || socket > total_sockets)

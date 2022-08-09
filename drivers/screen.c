@@ -205,9 +205,9 @@ void scrwrite(int x, int y, char* str, uint8_t color)
             return;
     }
 
-	for (size_t i = 0; i < strlen(str); i++)
+	for (int i = 0; i < strlen(str); i++)
 	{
-		const size_t index = y * SCREEN_WIDTH + (x+i);
+		const int index = y * SCREEN_WIDTH + (x+i);
 		VGA_MEMORY[index] = vga_entry(str[i], color);
 	}
 }
@@ -215,13 +215,13 @@ void scrwrite(int x, int y, char* str, uint8_t color)
 /**
  * Puts a given character to the specified screen location.
  * Index calculation = y * SCREEN_WIDTH + x;
- * @param size_t x coordinate
- * @param size_t y coordinate
+ * @param int x coordinate
+ * @param int y coordinate
  * @param char c character to put on screen.
  * @param uint8_t color of character
  * @return void
  */
-void scrput(size_t x, size_t y, unsigned char c, uint8_t color)
+void scrput(int x, int y, unsigned char c, uint8_t color)
 {
 
     if(current_running->window != NULL ){
@@ -232,7 +232,7 @@ void scrput(size_t x, size_t y, unsigned char c, uint8_t color)
             return;
         }
     }
-	const size_t index = y * SCREEN_WIDTH + x;
+	const int index = y * SCREEN_WIDTH + x;
 	VGA_MEMORY[index] = vga_entry(c, color);
 }
 
@@ -243,11 +243,11 @@ void scrput(size_t x, size_t y, unsigned char c, uint8_t color)
 void scr_clear()
 {
     CLI();
-	for (size_t y = 1; y < SCREEN_HEIGHT-2; y++)
+	for (int y = 1; y < SCREEN_HEIGHT-2; y++)
 	{
-		for (size_t x = 1; x < SCREEN_WIDTH-1; x++)
+		for (int x = 1; x < SCREEN_WIDTH-1; x++)
 		{
-			const size_t index = y * SCREEN_WIDTH + x;
+			const int index = y * SCREEN_WIDTH + x;
 			VGA_MEMORY[index] = vga_entry(' ', 0);
 		}
 	}
@@ -255,7 +255,7 @@ void scr_clear()
 	
 }
 
-void scr_scroll(size_t from, size_t to, size_t width, size_t height)
+void scr_scroll(int from, int to, int width, int height)
 {
     if(is_window_visable() == 0)
         return;
@@ -266,12 +266,12 @@ void scr_scroll(size_t from, size_t to, size_t width, size_t height)
     height = current_running->window->y  + current_running->window->height +1;
 
     /* Move all lines up, overwriting the oldest message. */
-	for (size_t y = to; y < height-1; y++)
+	for (int y = to; y < height-1; y++)
 	{
-		for (size_t x = from; x < width-1; x++)
+		for (int x = from; x < width-1; x++)
 		{
-			const size_t index = y * SCREEN_WIDTH + x;
-			const size_t index_b = (y+1) * SCREEN_WIDTH + x;
+			const int index = y * SCREEN_WIDTH + x;
+			const int index_b = (y+1) * SCREEN_WIDTH + x;
 
             if(y+1 == height-1){
                 VGA_MEMORY[index] = ' ';

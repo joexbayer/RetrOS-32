@@ -42,7 +42,7 @@ static int interrupts = 0;
 static void _e1000_reset_tx_desc()
 {
 	memset(tx_desc_list, 0, TX_BUFF_SIZE);
-    for (size_t i = 0; i < TX_SIZE; i++)
+    for (int i = 0; i < TX_SIZE; i++)
     { 
 		/* Initialize transmit buffers  */
 		tx_desc_list[i].buffer_addr = (uint32_t)tx_buf[i];
@@ -56,7 +56,7 @@ static void _e1000_reset_tx_desc()
 static void _e1000_reset_rx_desc()
 {
     memset(rx_desc_list, 0, RX_BUFF_SIZE);
-    for (size_t i = 0; i < RX_SIZE; i++)
+    for (int i = 0; i < RX_SIZE; i++)
     {
 		/* Initialize recv buffers  */
 		rx_desc_list[i].buffer_addr = (uint32_t)rx_buf[i];

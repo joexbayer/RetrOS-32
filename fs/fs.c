@@ -167,7 +167,7 @@ void file_close(inode_t inode)
     inode_disk->nlink--;
 }
 
-inode_t open(char* name)
+inode_t fs_open(char* name)
 {
     struct directory_entry entry;
     current_dir->pos = 0;
@@ -203,7 +203,7 @@ void chdir(char* path)
     current_dir = inode;
 }
 
-void mkdir(char* name)
+void fs_mkdir(char* name)
 {
     inode_t inode_index = alloc_inode(&superblock, FS_DIRECTORY);
     if(inode_index == 0){

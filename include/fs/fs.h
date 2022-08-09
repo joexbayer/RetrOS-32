@@ -8,11 +8,11 @@
 int init_fs();
 void mkfs();
 
-inode_t open(char* name);
+inode_t fs_open(char* name);
 void file_close(inode_t inode);
 void file_read(inode_t i);
 void chdir(char* path);
-void mkdir(char* name);
+void fs_mkdir(char* name);
 void create_file(char* name);
 
 void fs_stats();

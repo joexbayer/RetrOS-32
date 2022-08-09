@@ -2,9 +2,9 @@
 
 int kernel_size = 0;
 
-size_t strlen(const char* str) 
+int strlen(const char* str) 
 {
-	size_t len = 0;
+	int len = 0;
 	while (str[len])
 		len++;
 	return len;
@@ -17,7 +17,7 @@ uint32_t strncmp(const char* str, const char* str2, uint32_t len)
 
 uint32_t memcmp(const uint8_t* ptr, const uint8_t* ptr2, uint32_t len)
 {
-	for (size_t i = 0; i < len; i++)
+	for (int i = 0; i < len; i++)
 	{
 		if(ptr[i] != ptr2[i])
 			return 0;
@@ -35,11 +35,11 @@ uint32_t memcmp(const uint8_t* ptr, const uint8_t* ptr2, uint32_t len)
 */
 
 /**
- * void *dest, const void *src, size_t n
+ * void *dest, const void *src, int n
  *
  * @return void*
  */
-void* memcpy(void *dest, const void *src, size_t n)
+void* memcpy(void *dest, const void *src, int n)
 {
 	uint32_t num_dwords	= n / 4;
 	uint32_t num_bytes	= n % 4;
@@ -62,11 +62,11 @@ void* memcpy(void *dest, const void *src, size_t n)
 	return dest;
 }
 /**
- * void *dest, int val, size_t n
+ * void *dest, int val, int n
  *
  * @return void*
  */
-void* memset(void *dest, int val, size_t n)
+void* memset(void *dest, int val, int n)
 {
 	uint32_t num_dwords = n / 4;
 	uint32_t num_bytes  = n % 4;

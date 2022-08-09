@@ -50,7 +50,7 @@ void gensis2()
 {
     while(1)
     {
-        for (size_t i = 0; i < 10000000; i++)
+        for (int i = 0; i < 10000000; i++)
         { 
             int random = rand();
             void* ptr = alloc(random * 5120 % 10000);
@@ -230,7 +230,7 @@ void init_pcbs()
 {   
 
     /* Stopped processes are eligible to be "replaced." */
-    for (size_t i = 0; i < MAX_NUM_OF_PCBS; i++)
+    for (int i = 0; i < MAX_NUM_OF_PCBS; i++)
     {
         pcbs[i].running = STOPPED;
         pcbs[i].pid = -1;

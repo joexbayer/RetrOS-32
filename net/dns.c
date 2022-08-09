@@ -41,7 +41,7 @@ static void __dns_name_compresion(uint8_t* request, char* host)
     int lock = 0;
     host[strlen(host)] = '.';
 
-    for(size_t i = 0 ; i < strlen(host); i++) 
+    for(int i = 0 ; i < strlen(host); i++) 
     {
         if(host[i]=='.') 
         {

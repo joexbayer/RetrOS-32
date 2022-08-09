@@ -96,9 +96,15 @@ bin/%.o: */%.s
 	@echo [KERNEL] Compiling $@
 	@$(AS) -o $@ -c $< $(ASFLAGS)
 
-bin/build: ./buildtools/build.c
-	@gcc ./buildtools/build.c -o ./bin/build
+bin/build: ./tools/build.c
+	@gcc ./tools/build.c -o ./bin/build
 	@echo [BUILD] Compiling $@
+
+bin/mkfs: ./tools/mkfs.c
+	@gcc ./tools/mkfs.c -o ./bin/mkfs -D__MKFS
+	@echo [BUILD] Compiling $@
+
+tools: bin/build bin/mkfs
 
 bin/net.o: ./net/*.c
 	@echo [NETWORKING] Compiling the network stack
@@ -108,7 +114,7 @@ bin/fs.o: ./fs/*.c
 	@echo [FILESYSTEM] Compiling the filesystem
 	@make -C ./fs/
 
-iso2: bin/build compile
+iso2: tools compile
 	@echo [BUILD] Building ISO file and attaching filesystem.
 	@./bin/build
 

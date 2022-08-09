@@ -19,7 +19,7 @@ struct arp_entry arp_entries[MAX_ARP_ENTRIES];
 
 void init_arp()
 {
-	for (size_t i = 0; i < MAX_ARP_ENTRIES; i++)
+	for (int i = 0; i < MAX_ARP_ENTRIES; i++)
 	{
 		arp_entries[i].sip = 0;
 	}
@@ -39,11 +39,11 @@ void init_arp()
 int arp_add_entry(struct arp_content* arp)
 {
 	/* Check if ARP entry already exists. */
-	for (size_t i = 0; i < MAX_ARP_ENTRIES; i++)
+	for (int i = 0; i < MAX_ARP_ENTRIES; i++)
 		if(memcmp((uint8_t*)&arp->smac, (uint8_t*)&arp_entries[i].smac, 6))
 			return 1;
 
-	for (size_t i = 0; i < MAX_ARP_ENTRIES; i++)
+	for (int i = 0; i < MAX_ARP_ENTRIES; i++)
 	{
 		if(arp_entries[i].sip == 0)
 		{
@@ -67,7 +67,7 @@ int arp_add_entry(struct arp_content* arp)
  */
 int arp_find_entry(uint32_t ip, uint8_t* mac)
 {
-	for (size_t i = 0; i < MAX_ARP_ENTRIES; i++){
+	for (int i = 0; i < MAX_ARP_ENTRIES; i++){
 		if(arp_entries[i].sip == ip){
 			memcpy(mac, arp_entries[i].smac, 6);
 			return 1;
@@ -79,7 +79,7 @@ int arp_find_entry(uint32_t ip, uint8_t* mac)
 void arp_print_cache()
 {
 	twriteln("ARP cache:");
-	for (size_t i = 0; i < MAX_ARP_ENTRIES; i++)
+	for (int i = 0; i < MAX_ARP_ENTRIES; i++)
 		if(arp_entries[i].sip != 0){
 
 			uint32_t ip = ntohl(arp_entries[i].sip);

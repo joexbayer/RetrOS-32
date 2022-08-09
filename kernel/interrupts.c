@@ -73,7 +73,7 @@ static void (*irqs[ISR_LINES])(struct registers*) = {
  * @param i IRQ line
  * @param handler function pointer to handler.
  */
-void isr_install(size_t i, void (*handler)()) {
+void isr_install(int i, void (*handler)()) {
 	handlers[i] = handler;
 }
 
@@ -115,12 +115,12 @@ static void init_idt()
 	memset(&idt_entries, 0, sizeof(struct idt_entry)*256);
 
 	/* Set all ISR_LINES to go to ISR0 */
-	for (size_t i = 0; i < 32; i++)
+	for (int i = 0; i < 32; i++)
 	{ 
 		idt_set_gate(i, (uint32_t) isr0 , 0x08, 0x8E);
 	}
 
-	for (size_t i = 32; i < 48; i++)
+	for (int i = 32; i < 48; i++)
 	{
 		idt_set_gate(i, (uint32_t) irqs[i-32] , 0x08, 0x8E); // PIT timer
 	}

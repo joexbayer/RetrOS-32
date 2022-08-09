@@ -44,7 +44,7 @@ void spin_unlock(int volatile *l)
  */
 void mutex_init(mutex_t* l)
 {
-    for (size_t i = 0; i < MAX_BLOCKED; i++)
+    for (int i = 0; i < MAX_BLOCKED; i++)
     {
         l->blocked[i] = -1;
     }
@@ -55,7 +55,7 @@ void mutex_init(mutex_t* l)
 inline void __lock_block(mutex_t* l)
 {
     /* TODO: Since we start from 0, newly blocked proceses may come before older blocked. */
-    for (size_t i = 0; i < MAX_BLOCKED; i++)
+    for (int i = 0; i < MAX_BLOCKED; i++)
     {
         if(l->blocked[i] == -1){
             l->blocked[i] = current_running->pid;
@@ -70,7 +70,7 @@ inline void __lock_block(mutex_t* l)
 
 inline int __lock_unlock(mutex_t* l)
 {
-    for (size_t i = 0; i < MAX_BLOCKED; i++)
+    for (int i = 0; i < MAX_BLOCKED; i++)
     {
         if(l->blocked[i] != -1){
             int ret = l->blocked[i];

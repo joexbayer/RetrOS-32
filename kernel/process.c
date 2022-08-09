@@ -130,9 +130,9 @@ void switch_process(int id)
 
 void list_processes()
 {
-    for (size_t i = 0; i < 50; i++)
+    for (int i = 0; i < 50; i++)
 	{
-		for (size_t j = 1; j < (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5); j++)
+		for (int j = 1; j < (SCREEN_HEIGHT/2 + SCREEN_HEIGHT/5); j++)
 		{
 			scrput(i, j, ' ', VGA_COLOR_BLACK | VGA_COLOR_BLACK << 4);
 		}

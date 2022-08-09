@@ -28,8 +28,8 @@ static const char newline = '\n';
  /*
 	TERMINAL
 */
-static size_t terminal_row;
-static size_t terminal_column;
+static int terminal_row;
+static int terminal_column;
 static uint8_t terminal_color;
 
 /**
@@ -41,7 +41,7 @@ void __terminal_draw_lines()
 {
 	
 	/*
-	for (size_t x = 0; x < SCREEN_WIDTH; x++)
+	for (int x = 0; x < SCREEN_WIDTH; x++)
 		scrput(x,TERMINAL_START, ASCII_HORIZONTAL_LINE, terminal_color);*/
 
 }
@@ -74,7 +74,7 @@ void init_terminal(void)
 
 	__terminal_draw_lines();
 
-	//for (size_t i = window.anchor+1; i < window.width-1; i++)
+	//for (int i = window.anchor+1; i < window.width-1; i++)
 	//	scrput(i, 0, ' ', VGA_COLOR_BLACK | VGA_COLOR_LIGHT_GREY << 4);
 
 	terminal_setcolor(VGA_COLOR_WHITE);
@@ -132,14 +132,14 @@ void terminal_putchar(char c)
 /**
  * Writes the given string to the terminal with terminal_putchar
  * @param char* data to print to screen
- * @param size_t size of data
+ * @param int size of data
  * @return void
  */
-void terminal_write(const char* data, size_t size)
+void terminal_write(const char* data, int size)
 {
 	//__terminal_putchar('<');
 	//__terminal_putchar(' ');
-	for (size_t i = 0; i < size; i++)
+	for (int i = 0; i < size; i++)
 		terminal_putchar(data[i]);
 }
 

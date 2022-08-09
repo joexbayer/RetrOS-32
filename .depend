@@ -114,3 +114,5 @@ udp.o: net/udp.c include/net/udp.h include/net/utils.h include/stdint.h \
  include/net/socket.h include/sync.h
 utils.o: net/utils.c include/net/utils.h include/stdint.h
 build.o: tools/build.c include/stdint.h
+mkfs.o: tools/mkfs.c include/stdint.h include/fs/fs.h include/fs/inode.h \
+ include/rtc.h include/fs/superblock.h include/bitmap.h

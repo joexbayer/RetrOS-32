@@ -15,12 +15,12 @@ extern int kernel_size;
 #define NULL (void *)0
 
 
-size_t strlen(const char* str);
+int strlen(const char* str);
 uint32_t strncmp(const char* str, const char* str2, uint32_t len);
 
 uint32_t memcmp(const uint8_t* str, const uint8_t* str2, uint32_t len);
-void* memset (void *dest, int val, size_t len);
-void* memcpy(void *dest, const void *src, size_t n);
+void* memset (void *dest, int val, int len);
+void* memcpy(void *dest, const void *src, int n);
 
 #define CLI() asm ("cli")
 #define STI() asm ("sti")

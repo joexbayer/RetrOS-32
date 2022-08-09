@@ -57,7 +57,7 @@ static const char backspace = '\b';
  */
 void shell_clear()
 {
-	for (size_t i = shell_column; i < SHELL_MAX_SIZE; i++)
+	for (int i = shell_column; i < SHELL_MAX_SIZE; i++)
 	{
 		scrput(i, SHELL_POSITION, ' ', VGA_COLOR_WHITE);
 	}	
@@ -68,7 +68,6 @@ void reset_shell()
 	memset(&shell_buffer, 0, 25);
 	shell_column = strlen(current_process->name)+2;
 	shell_buffer_length = 0;
-	dbgprintf("w: 0x%x, col: 0x%x, %d\n", &w, &shell_column, ((uint32_t) &shell_column)-((uint32_t) &w));
 	scrwrite(1, SHELL_POSITION, current_process->name, VGA_COLOR_LIGHT_CYAN);
 	scrwrite(shell_column, SHELL_POSITION, "> ", VGA_COLOR_LIGHT_CYAN);
 	shell_column += 1;
@@ -150,7 +149,7 @@ void exec_cmd()
 
 	if(strncmp("cat", shell_buffer, strlen("cat"))){
 		char* name = shell_buffer+strlen("cat")+1;
-		inode_t inode = open(name);
+		inode_t inode = fs_open(name);
 		file_read(inode);
 		file_close(inode);
 		return;
@@ -207,7 +206,7 @@ void exec_cmd()
 	if(strncmp("mkdir", shell_buffer, strlen("mkdir"))){
 		char* name = shell_buffer+strlen("mkdir")+1;
 		name[strlen(name)-1] = 0;
-		mkdir(name);
+		fs_mkdir(name);
 		return;
 	}
 

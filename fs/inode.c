@@ -25,13 +25,13 @@ static void __inode_sync(struct inode* inode, struct superblock* sb)
 
 static int __inode_cache_insert(struct inode* inode, struct superblock* sb)
 {
-    for (size_t i = 0; i < 10; i++)
+    for (int i = 0; i < 10; i++)
         if(__inode_cache[i].type == 0){
             dbgprintf("[FS] Caching inode %d.\n", inode->inode);
             memcpy(&__inode_cache[i], inode, sizeof(struct inode));
             return i;
         }
-    for (size_t i = 0; i < 10; i++)
+    for (int i = 0; i < 10; i++)
         if(__inode_cache[i].nlink == 0){
             __inode_sync(&__inode_cache[i], sb);
             dbgprintf("[FS] Saving inode %d to disk..\n", __inode_cache[i].inode);

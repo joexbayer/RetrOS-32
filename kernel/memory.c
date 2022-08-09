@@ -89,16 +89,16 @@ void print_memory_status()
 {	
 	struct time* time = get_datetime();
 
-	for (size_t x = 0; x < SCREEN_HEIGHT; x++)
+	for (int x = 0; x < SCREEN_HEIGHT; x++)
 		scrput(0, 0+x, ASCII_VERTICAL_LINE, VGA_COLOR_LIGHT_GREY);
 
-	for (size_t x = 0; x < SCREEN_HEIGHT; x++)
+	for (int x = 0; x < SCREEN_HEIGHT; x++)
 		scrput(SCREEN_WIDTH-1, 0+x, ASCII_VERTICAL_LINE, VGA_COLOR_LIGHT_GREY);
 
 	scrput(0, SCREEN_HEIGHT-1, 192, VGA_COLOR_LIGHT_GREY);
 	scrput(SCREEN_WIDTH-1, SCREEN_HEIGHT-1, 217, VGA_COLOR_LIGHT_GREY);
 
-	for (size_t x = 1; x < SCREEN_WIDTH-1; x++)
+	for (int x = 1; x < SCREEN_WIDTH-1; x++)
 		scrput(x, SCREEN_HEIGHT-1, 196, VGA_COLOR_LIGHT_GREY);
 
 
