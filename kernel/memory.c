@@ -225,12 +225,9 @@ void init_memory()
 
 
 /*  PAGIN / VIRTUAL MEMORY SECTION */
-#define TOTAL_PAGES 2
+#define TOTAL_PAGES 10
 uint32_t* kernel_page_dir = NULL;
 bitmap_t page_bitmap;
-
-#define TABLE_INDEX(vaddr) ((vaddr >> PAGE_TABLE_BITS) & PAGE_TABLE_MASK)
-#define DIRECTORY_INDEX(vaddr) ((vaddr >> PAGE_DIRECTORY_BITS) & PAGE_TABLE_MASK)
 
 uint32_t* alloc_page()
 {
@@ -253,6 +250,19 @@ static inline void directory_insert_table(uint32_t* directory, uint32_t vaddr, u
   	directory[DIRECTORY_INDEX(vaddr)] = (((uint32_t) table) & ~PAGE_MASK) | access;
 }
 
+void driver_mmap(uint32_t addr, int size)
+{
+	int permissions = PRESENT | RW;
+	uint32_t* kernel_page_table_e1000 = alloc_page();
+	for (int i = 0; i < size; i++)
+		table_set(kernel_page_table_e1000, (uint32_t) addr+(0x1000*i), (uint32_t) addr+(0x1000*i), permissions);
+	
+	dbgprintf("[mmap] Page for 0x%x set\n", addr);
+
+	directory_insert_table(kernel_page_dir,  addr, kernel_page_table_e1000, permissions);
+	return;
+}
+
 void init_paging()
 {
 	page_bitmap = create_bitmap(TOTAL_PAGES);
@@ -262,14 +272,13 @@ void init_paging()
 	uint32_t* kernel_page_table = alloc_page();
 
 
-	int permissions = PRESENT | RW | USER;
-	for (int addr = 0; addr < 640 * 1024; addr += PAGE_SIZE)
+	int permissions = PRESENT | RW;
+	for (int addr = 0; addr < 640 * 6024; addr += PAGE_SIZE)
     	table_set(kernel_page_table, addr, addr, permissions);
 	
 	table_set(kernel_page_table, (uint32_t) 0xB8000, (uint32_t) 0xB8000, permissions);
 	table_set(kernel_page_table, (uint32_t) 0xB9000, (uint32_t) 0xB9000, permissions);
 
-	
-	//directory_insert_table(kernel_page_dir, 0x100000, kernel_page_table_memory, permissions);
+ 
 	directory_insert_table(kernel_page_dir, 0, kernel_page_table, permissions); 
 }

@@ -3,7 +3,7 @@ ata.o: drivers/ata.c include/ata.h include/stdint.h include/interrupts.h \
  include/serial.h
 e1000.o: drivers/e1000.c include/e1000.h include/stdint.h include/pci.h \
  include/screen.h include/util.h include/colors.h include/interrupts.h \
- include/net/netdev.h include/serial.h
+ include/net/netdev.h include/memory.h include/serial.h
 keyboard.o: drivers/keyboard.c include/keyboard.h include/stdint.h \
  include/screen.h include/util.h include/colors.h include/serial.h \
  include/interrupts.h include/sync.h include/io.h
@@ -28,7 +28,7 @@ diskdev.o: kernel/diskdev.c include/diskdev.h include/ata.h \
  include/stdint.h include/util.h include/terminal.h
 interrupts.o: kernel/interrupts.c include/interrupts.h include/stdint.h \
  include/serial.h include/screen.h include/util.h include/colors.h \
- include/io.h
+ include/io.h include/memory.h
 kernel.o: kernel/kernel.c include/util.h include/stdint.h include/pci.h \
  include/terminal.h include/keyboard.h include/interrupts.h \
  include/timer.h include/rtc.h include/screen.h include/colors.h \

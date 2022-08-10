@@ -8,6 +8,7 @@ enum {
 	FREE
 };
 
+
 extern uint32_t* kernel_page_dir;
 
 struct mem_chunk
@@ -41,10 +42,19 @@ enum {
   PAGE_TABLE_SIZE = (1024 * 4096 - 1)
 };
 
+#define TABLE_INDEX(vaddr) ((vaddr >> PAGE_TABLE_BITS) & PAGE_TABLE_MASK)
+#define DIRECTORY_INDEX(vaddr) ((vaddr >> PAGE_DIRECTORY_BITS) & PAGE_TABLE_MASK)
 
 void init_memory();
 void* alloc(uint16_t size);
 void print_memory_status();
 void free(void* ptr);
+
+void driver_mmap(uint32_t addr, int size);
+
+
+void load_page_directory();
+void enable_paging();
+void init_paging();
 
 #endif

@@ -51,7 +51,7 @@ int netdev_transmit(void* buffer, uint32_t size)
 {
     current_netdev.sent++;
     int sent = current_netdev.write((char*) buffer, size);
-    
+
     return sent;
 }
 

@@ -27,6 +27,7 @@ _page_fault_entry:
 
     pusha
 
+    /* Push error code, and then contents of cr2 */
     movl	(page_fault_14_err), %eax
     pushl	%eax
     movl	%cr2, %eax
@@ -34,11 +35,10 @@ _page_fault_entry:
 
     call page_fault_interrupt
 
-    addl $8, %esp
+    addl	$8, %esp
     
     popa    
 
-    add $8, %esp
     iret
 
 .text

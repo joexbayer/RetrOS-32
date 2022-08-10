@@ -73,10 +73,11 @@ void _main()
 	twriteln("");
 	twritef("Total: %d (%d sectors)\n", _end-_code, ((_end-_code)/512)+2);*/
 
-	//load_page_directory(kernel_page_dir);
+	load_page_directory(kernel_page_dir);
     //scrprintf(0, 10, "Kernal page: %x", kernel_page_dir);
-	//enable_paging();
+	enable_paging();
 
+	dbgprintf("Enabled paging!\n");
 	/*twrite("\n");
 	twriteln("~~~ Welcome to NETOS! ~~~");
 	twriteln("                  .           o");

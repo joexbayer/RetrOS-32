@@ -14,6 +14,9 @@
 #include <screen.h>
 #include <io.h>
 
+//TEMP
+#include <memory.h>
+
 static struct idt_entry idt_entries[IDT_ENTRIES];
 static struct idt_ptr   idt;
 
@@ -51,12 +54,12 @@ int system_call(int index, int arg1, int arg2, int arg3)
 	return ret;
 }
 
-int page_fault_interrupt(unsigned long cr2, unsigned long err)
+void page_fault_interrupt(unsigned long cr2, unsigned long err)
 {
 	CLI();
-	dbgprintf("Page fault: 0x%x\n", cr2);
-	while(1);
-	
+	dbgprintf("Page fault: 0x%x %d\n", cr2, err);
+	dbgprintf("Page: %x\n", kernel_page_dir[DIRECTORY_INDEX(cr2)]);
+	driver_mmap(cr2, 0);
 }
 
 
@@ -125,7 +128,7 @@ static void init_idt()
 		idt_set_gate(i, (uint32_t) irqs[i-32] , 0x08, 0x8E); // PIT timer
 	}
 	idt_set_gate(48, (uint32_t)&_syscall_entry, 0x08, 0x8E);
-	//idt_set_gate(14, &_page_fault_entry, 0x08, 0x8E);
+	idt_set_gate(14, &_page_fault_entry, 0x08, 0x8E);
 
 	idt_flush((uint32_t)&idt);
 }

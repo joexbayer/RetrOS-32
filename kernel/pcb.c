@@ -251,8 +251,6 @@ void init_pcbs()
 
 void start_tasks()
 {
-    dbgprintf("hi");
     start_pcb();
-
     /* We will never reach this.*/
 }

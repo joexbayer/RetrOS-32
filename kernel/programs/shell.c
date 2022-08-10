@@ -257,6 +257,7 @@ void shell_put(char c)
 
 void shell_main()
 {
+	dbgprintf("Shell is running!\n");
 	attach_window(&w);
 	reset_shell();
 	sleep(2);

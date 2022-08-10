@@ -193,7 +193,7 @@ inode_t fs_open(char* name)
 
 void chdir(char* path)
 {
-    inode_t ret = open(path);
+    inode_t ret = fs_open(path);
     struct inode* inode = inode_get(ret, &superblock);
     if(inode->type != FS_DIRECTORY){
         twritef("%s is not a directory.\n", path);

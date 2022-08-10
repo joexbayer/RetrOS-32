@@ -13,11 +13,12 @@
 #include <interrupts.h>
 #include <pci.h>
 #include <net/netdev.h>
+#include <memory.h>
 #include <serial.h>
 
 #define PACKET_SIZE   2048
-#define TX_SIZE 10
-#define RX_SIZE 10
+#define TX_SIZE 32
+#define RX_SIZE 128
 #define TX_BUFF_SIZE (sizeof(struct e1000_tx_desc) * TX_SIZE)
 #define RX_BUFF_SIZE (sizeof(struct e1000_rx_desc) * RX_SIZE)
 
@@ -29,10 +30,10 @@ uint8_t mac[6] = {0x52, 0x54, 0x00, 0x12, 0x34, 0x56};
 
 /* Allocate space for transmit and recieve buffers. */
 struct e1000_tx_desc tx_desc_list[TX_SIZE];
-char tx_buf[TX_SIZE][PACKET_SIZE];
+char* tx_buf[TX_SIZE];
 
 struct e1000_rx_desc rx_desc_list[RX_SIZE];
-char rx_buf[RX_SIZE][PACKET_SIZE];
+char* rx_buf[RX_SIZE];
 
 static int interrupts = 0;
 
@@ -170,15 +171,21 @@ drop:
  */
 int e1000_transmit(char* buffer, uint32_t size)
 {
-	if(size >= PACKET_SIZE)
+	dbgprintf("[e1000] Sending %d bytes!\n", size);
+
+	if(size >= PACKET_SIZE){
+		dbgprintf("[e1000] Size %d is too large!\n", size);
 		return -1;
+	}
 
 	char* ptr = (char*) buffer;
 	uint16_t tail = E1000_DEVICE_GET(E1000_TDT);
 
 	struct e1000_tx_desc* txdesc = &tx_desc_list[tail];
-	if(!(txdesc->status & E1000_TXD_STAT_DD)) /* Check if status is DD (Descriptor Done) */
+	if(!(txdesc->status & E1000_TXD_STAT_DD)){
+		dbgprintf("[e1000] DD status is not done!\n");
 		return -1;
+	} /* Check if status is DD (Descriptor Done) */
 
 	memcpy(tx_buf[tail], ptr, size);
 	txdesc->length = size;
@@ -200,8 +207,18 @@ void e1000_callback()
 
 void e1000_attach(struct pci_device* dev)
 {
+	
     e1000 = (volatile uint32_t *)dev->base;
+
+	driver_mmap((uint32_t) e1000, 5);
+
     pci_enable_device_busmaster(dev->bus, dev->slot, dev->function);
+
+	for (int i = 0; i < TX_SIZE; i++)
+		tx_buf[i] = alloc(PACKET_SIZE);
+	
+	for (int i = 0; i < RX_SIZE; i++)
+		rx_buf[i] = alloc(PACKET_SIZE);
 
 	_e1000_tx_init();
 	_e1000_rx_init();
@@ -214,6 +231,7 @@ void e1000_attach(struct pci_device* dev)
 	E1000_DEVICE_SET(E1000_RDTR) = 0;
 	E1000_DEVICE_SET(E1000_RADV) = 0;
 	E1000_DEVICE_SET(E1000_IMS) = (1 << 7);
+
 
 	/* Attach as current Netdevice. */
 	netdev_attach_driver(dev, &e1000_receive, &e1000_transmit, "Intel E1000", (uint8_t*)&mac);

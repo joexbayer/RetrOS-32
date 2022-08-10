@@ -24,7 +24,7 @@ struct registers
 void init_interrupts();
 int invoke_syscall(int i, int arg1, int arg2, int arg3);
 void _syscall_entry(void);
-int page_fault_interrupt(unsigned long cr2, unsigned long err);
+void page_fault_interrupt(unsigned long cr2, unsigned long err);
 
 typedef void (*isr_t)();
 
