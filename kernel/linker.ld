@@ -23,16 +23,13 @@ SECTIONS
     {
         _data_s = .;
         *(.data)
-        *(.bss)
         _data_e = .;
-    }
-
-    .bss BLOCK(4K) : ALIGN(4K)
-    {
+        
         _bss_s = .;
         *(.bss)
         _bss_e = .;
     }
+
     _end = .;
 
 

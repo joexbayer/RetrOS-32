@@ -39,12 +39,9 @@ static int __inode_cache_insert(struct inode* inode, struct superblock* sb)
             memcpy(&__inode_cache[i], inode, sizeof(struct inode));
             return i;
         }
-    
 
 
     return -1;
-
-    /* REPLACE OLD INODE. */
 }
 
 void inodes_sync(struct superblock* sb)
@@ -62,7 +59,7 @@ int __inode_load(inode_t inode, struct superblock* sb)
     struct inode disk_inode;
     read_block_offset((char*) &disk_inode, sizeof(disk_inode), inode_loc, sb->inodes_start+block_inode);
 
-    dbgprintf("[FS] Loaded inode %d from disk.\n", disk_inode.inode);
+    dbgprintf("[FS] Loaded inode %d from disk. block: %d, inode_loc: %d\n", disk_inode.inode, sb->inodes_start+block_inode, inode_loc);
 
     int ret = __inode_cache_insert(&disk_inode, sb);
 

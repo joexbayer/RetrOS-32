@@ -59,7 +59,7 @@ void page_fault_interrupt(unsigned long cr2, unsigned long err)
 	CLI();
 	dbgprintf("Page fault: 0x%x %d\n", cr2, err);
 	dbgprintf("Page: %x\n", kernel_page_dir[DIRECTORY_INDEX(cr2)]);
-	driver_mmap(cr2, 0);
+	while(1);
 }
 
 

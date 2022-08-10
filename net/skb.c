@@ -10,6 +10,7 @@
  */
 #include <net/skb.h>
 #include <net/netdev.h>
+#include <serial.h>
 #include <sync.h>
 
 static struct sk_buff sk_buffers[MAX_SKBUFFERS];
@@ -23,6 +24,7 @@ void init_sk_buffers()
 		sk_buffers[i].stage = UNUSED;
 		sk_buffers[i].netdevice = &current_netdev;
 	}
+	dbgprintf("[sk_buff] Total size of buffers %d\n", sizeof(struct sk_buff)*MAX_SKBUFFERS);
 }
 
 struct sk_buff* next_skb()

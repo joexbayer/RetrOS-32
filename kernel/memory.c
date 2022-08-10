@@ -31,7 +31,7 @@ enum ASCII {
 #define CHUNKS_SIZE (MEM_END-MEM_START)/MEM_CHUNK
 
 static mutex_t mem_lock;
-struct mem_chunk chunks[CHUNKS_SIZE];
+struct mem_chunk chunks[CHUNKS_SIZE]; /* TODO: convert to bitmap */
 uint16_t chunks_used = 0;
 
 /* prototypes */

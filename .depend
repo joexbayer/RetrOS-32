@@ -100,7 +100,7 @@ routing.o: net/routing.c include/net/routing.h include/stdint.h \
 skb.o: net/skb.c include/net/skb.h include/stdint.h include/net/netdev.h \
  include/pci.h include/memory.h include/net/utils.h include/util.h \
  include/net/ethernet.h include/net/arp.h include/net/ipv4.h \
- include/net/icmp.h include/net/udp.h include/sync.h
+ include/net/icmp.h include/net/udp.h include/serial.h include/sync.h
 socket.o: net/socket.c include/net/socket.h include/util.h \
  include/stdint.h include/sync.h include/net/utils.h include/net/skb.h \
  include/net/netdev.h include/pci.h include/memory.h \
@@ -115,4 +115,5 @@ udp.o: net/udp.c include/net/udp.h include/net/utils.h include/stdint.h \
 utils.o: net/utils.c include/net/utils.h include/stdint.h
 build.o: tools/build.c include/stdint.h
 mkfs.o: tools/mkfs.c include/stdint.h include/fs/fs.h include/fs/inode.h \
- include/rtc.h include/fs/superblock.h include/bitmap.h
+ include/rtc.h include/fs/superblock.h include/bitmap.h \
+ include/fs/directory.h

@@ -268,6 +268,8 @@ void shell_main()
 			continue;
 		shell_put(c);
 	}
+	
+	exit();
 }
 
 PROGRAM(shell, &shell_main)

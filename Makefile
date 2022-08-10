@@ -100,8 +100,8 @@ bin/build: ./tools/build.c
 	@gcc ./tools/build.c -o ./bin/build
 	@echo [BUILD] Compiling $@
 
-bin/mkfs: ./tools/mkfs.c
-	@gcc ./tools/mkfs.c -o ./bin/mkfs -D__MKFS
+bin/mkfs: bin/fs.o bin/bitmap.o ./tools/mkfs.c
+	@gcc tools/mkfs.c bin/bitmap.o fs/bin/inode.o -I include/  -O2 -m32 -Wall -g --no-builtin -o ./bin/mkfs
 	@echo [BUILD] Compiling $@
 
 tools: bin/build bin/mkfs
@@ -116,6 +116,7 @@ bin/fs.o: ./fs/*.c
 
 iso2: tools compile
 	@echo [BUILD] Building ISO file and attaching filesystem.
+	@./bin/mkfs
 	@./bin/build
 
 iso: compile
@@ -123,6 +124,9 @@ iso: compile
 	@dd if=./bin/bootblock of=boot.iso conv=notrunc bs=512 seek=0 count=1
 	@dd if=./bin/kernelout of=boot.iso conv=notrunc bs=512 seek=1 count=960
 	@echo Created boot.iso.
+
+filesystem:
+	@dd if=/dev/zero of=filesystem.image bs=512 count=390
 
 compile: bindir bootblock kernel
 

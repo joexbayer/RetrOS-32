@@ -237,6 +237,6 @@ void e1000_attach(struct pci_device* dev)
 	netdev_attach_driver(dev, &e1000_receive, &e1000_transmit, "Intel E1000", (uint8_t*)&mac);
 
 	dbgprintf("[E1000] Network card Intel E1000 found and attached!.\n");
-	dbgprintf("[E1000] Data size: %d\n", TX_SIZE*PACKET_SIZE + RX_SIZE*PACKET_SIZE);
+	dbgprintf("[E1000] Data size: %d\n", TX_SIZE*sizeof(void*) + RX_SIZE*sizeof(void*));
 
 }

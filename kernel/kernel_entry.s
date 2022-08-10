@@ -151,5 +151,5 @@ spin_unlock_asm:
 .section .bss
 .align 16
 stack_bottom:
-.skip 16384 # 16 KiB
+.skip 8128 # 16 KiB
 stack:

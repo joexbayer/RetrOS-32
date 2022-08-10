@@ -48,8 +48,6 @@ void _main()
 	CLI();
 	init_fs();
 	
-
-	/* Test interrupt */
 	start_process(0); // SHELL
 	start_process(2); // Networking
 
@@ -65,17 +63,6 @@ void _main()
 	enable_paging();
 
 	dbgprintf("Enabled paging!\n");
-	/*twrite("\n");
-	twriteln("~~~ Welcome to NETOS! ~~~");
-	twriteln("                  .           o");
-    twriteln("      .---.");
-    twriteln("=   _/__~0_\\_     .  *            o       '");
-    twriteln("= = (_________)             .");
-    twriteln("               .                        *");
-    twriteln("     *               - ) -       *");
-    twriteln("            .               .");
-	twriteln("");*/
-	
 	
 	//while(1){};
 	STI();

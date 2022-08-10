@@ -24,7 +24,7 @@
 #include <windowmanager.h>
 
 
-#define MAX_PACKET_SIZE 0x1000
+#define MAX_PACKET_SIZE 0x900
 
 static uint16_t packets = 0;
 

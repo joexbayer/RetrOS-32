@@ -36,7 +36,11 @@ int init_fs()
     dbgprintf("[FS]: And total of %d block\n", superblock.nblocks);
     dbgprintf("[FS]: Max file size: %d bytes\n", NDIRECT*BLOCK_SIZE);
 
+    superblock.inodes_start = FS_START_LOCATION + 3;
+    superblock.blocks_start = superblock.inodes_start + (superblock.ninodes/ INODES_PER_BLOCK);
+
     root_dir = inode_get(superblock.root_inode, &superblock);
+    dbgprintf("[FS]: Root inode: %d\n", superblock.root_inode);
     root_dir->nlink++;
     current_dir = root_dir;
 
