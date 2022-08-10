@@ -48,30 +48,17 @@ void _main()
 	CLI();
 	init_fs();
 	
-	/* Testing printing ints and hex */
-	//char test[1000];
-	//itohex(3735928559, test);
-	//twrite(test);
-	//write("\n");
-
-	/* Testing PCI */
-	//int dev = pci_find_device(0x8086, 0x100E);
-	//if(dev){
-	//	twrite("PCI Device 0x100E Found!\n");
-	//}
-	
-	//bitmap_t b_test = create_bitmap(512);
 
 	/* Test interrupt */
 	start_process(0); // SHELL
 	start_process(2); // Networking
 
-	/*twritef("TEXT: %d\n", _code_end-_code);
-	twritef("RODATA: %d\n", _ro_e-_ro_s);
-	twritef("DATA: %d\n", _data_e-_data_s);
-	twritef("BSS: %d\n", _bss_e-_bss_s);
-	twriteln("");
-	twritef("Total: %d (%d sectors)\n", _end-_code, ((_end-_code)/512)+2);*/
+	dbgprintf("TEXT: %d\n", _code_end-_code);
+	dbgprintf("RODATA: %d\n", _ro_e-_ro_s);
+	dbgprintf("DATA: %d\n", _data_e-_data_s);
+	dbgprintf("BSS: %d\n", _bss_e-_bss_s);
+	dbgprintf("Total: %d (%d sectors)\n", _end-_code, ((_end-_code)/512)+2);
+	dbgprintf("Kernel reaching too: 0x%x\n", _end-_code);
 
 	load_page_directory(kernel_page_dir);
     //scrprintf(0, 10, "Kernal page: %x", kernel_page_dir);

@@ -12,18 +12,27 @@ SECTIONS
         _code_end = .;
     }
 
-    /* Read-only data. */
-	.rodata BLOCK(4K) : ALIGN(4K)
-	{
-		*(.rodata)
-	}
- 
-	/* Read-write data (initialized) */
-	.data BLOCK(4K) : ALIGN(4K)
-	{
-		*(.data)
-	}
+    .rodata BLOCK(4K) : ALIGN(4K)
+    {
+        _ro_s = .;
+        *(.rodata)
+        _ro_e = .;
+    }
 
+    .data BLOCK(4K) : ALIGN(4K)
+    {
+        _data_s = .;
+        *(.data)
+        *(.bss)
+        _data_e = .;
+    }
+
+    .bss BLOCK(4K) : ALIGN(4K)
+    {
+        _bss_s = .;
+        *(.bss)
+        _bss_e = .;
+    }
     _end = .;
 
 

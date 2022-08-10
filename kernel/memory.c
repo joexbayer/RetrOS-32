@@ -252,7 +252,7 @@ static inline void directory_insert_table(uint32_t* directory, uint32_t vaddr, u
 
 void driver_mmap(uint32_t addr, int size)
 {
-	int permissions = PRESENT | RW;
+	int permissions = PRESENT | READ_WRITE;
 	uint32_t* kernel_page_table_e1000 = alloc_page();
 	for (int i = 0; i < size; i++)
 		table_set(kernel_page_table_e1000, (uint32_t) addr+(0x1000*i), (uint32_t) addr+(0x1000*i), permissions);
@@ -272,7 +272,7 @@ void init_paging()
 	uint32_t* kernel_page_table = alloc_page();
 
 
-	int permissions = PRESENT | RW;
+	int permissions = PRESENT | READ_WRITE;
 	for (int addr = 0; addr < 640 * 6024; addr += PAGE_SIZE)
     	table_set(kernel_page_table, addr, addr, permissions);
 	
