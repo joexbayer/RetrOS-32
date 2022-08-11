@@ -114,12 +114,12 @@ bin/fs.o: ./fs/*.c
 	@echo [FILESYSTEM] Compiling the filesystem
 	@make -C ./fs/
 
-iso2: tools compile
+iso: tools compile
 	@echo [BUILD] Building ISO file and attaching filesystem.
 	@./bin/mkfs
 	@./bin/build
 
-iso: compile
+iso2: compile
 	@dd if=/dev/zero of=boot.iso bs=512 count=961
 	@dd if=./bin/bootblock of=boot.iso conv=notrunc bs=512 seek=0 count=1
 	@dd if=./bin/kernelout of=boot.iso conv=notrunc bs=512 seek=1 count=960
@@ -169,6 +169,6 @@ net:
 	sudo tcpdump -qns 0 -X -r dump.dat -vvv -e
 
 qemu:
-	sudo qemu-system-i386 -device e1000,netdev=net0 -serial stdio -netdev user,id=net0 -object filter-dump,id=net0,netdev=net0,file=dump.dat boot.iso
+	sudo qemu-system-i386 -device e1000,netdev=net0 -serial stdio -netdev user,id=net0 -object filter-dump,id=net0,netdev=net0,file=dump.dat boot2.iso
 
 run: docker qemu
