@@ -39,6 +39,8 @@ bootblock
 kernelout
 versions.txt
 image
+bin/build
+bin/mkfs
 bin/bootblock
 bin/kernel*
 *.vdi
