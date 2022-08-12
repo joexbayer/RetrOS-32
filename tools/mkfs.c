@@ -160,15 +160,15 @@ int main(int argc, char* argv[])
     write_block_offset((char*) superblock.inode_map, get_bitmap_size(superblock.ninodes), 0, FS_INODE_BMAP_LOCATION);
     write_block_offset((char*) superblock.block_map, get_bitmap_size(superblock.nblocks), 0, FS_BLOCK_BMAP_LOCATION);
 
-    printf("[FS] Creating Filesystem with size: %d (%d total)\n", superblock.nblocks*BLOCK_SIZE, superblock.size);
-    printf("[FS] With a total of %d inodes (%d blocks)\n", superblock.ninodes, superblock.ninodes / INODES_PER_BLOCK);
-    printf("[FS] And total of %d block\n", superblock.nblocks);
-    printf("[FS] Max file size: %d bytes\n", NDIRECT*BLOCK_SIZE);
-    printf("[FS] Written and saved filesystem to filesystem.image!\n");
+    printf("[MKFS] Creating Filesystem with size: %d (%d total)\n", superblock.nblocks*BLOCK_SIZE, superblock.size);
+    printf("[MKFS] With a total of %d inodes (%d blocks)\n", superblock.ninodes, superblock.ninodes / INODES_PER_BLOCK);
+    printf("[MKFS] And total of %d block\n", superblock.nblocks);
+    printf("[MKFS] Max file size: %d bytes\n", NDIRECT*BLOCK_SIZE);
+    printf("[MKFS] Written and saved filesystem to filesystem.image!\n");
 
     fseek(filesystem, 0L, SEEK_END);
     int sz = ftell(filesystem);
-    printf("[FS] Padding with %d bytes!\n", 200000-sz);
+    printf("[MKFS] Padding with %d bytes!\n", 200000-sz);
 
     int left = 200000-sz;
     while(left > 0){

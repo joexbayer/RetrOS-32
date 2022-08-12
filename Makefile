@@ -85,24 +85,24 @@ kernel: $(KERNELOBJ)
 
 # For assembling and compiling all .c and .s files.
 bin/%.o: */%.c
-	@echo [KERNEL] Compiling $@
+	@echo [KERNEL]     Compiling $@
 	@$(CC) -o $@ -c $< $(CCFLAGS)
 
 bin/%.o: */*/%.c
-	@echo [PROGRAM] Compiling $@
+	@echo [PROGRAM]    Compiling $@
 	@$(CC) -o $@ -c $< $(CCFLAGS)
 
 bin/%.o: */%.s
-	@echo [KERNEL] Compiling $@
+	@echo [KERNEL]     Compiling $@
 	@$(AS) -o $@ -c $< $(ASFLAGS)
 
 bin/build: ./tools/build.c
 	@gcc ./tools/build.c -o ./bin/build
-	@echo [BUILD] Compiling $@
+	@echo [BUILD]      Compiling $@
 
 bin/mkfs: bin/fs.o bin/bitmap.o ./tools/mkfs.c
 	@gcc tools/mkfs.c bin/bitmap.o fs/bin/inode.o -I include/  -O2 -m32 -Wall -g --no-builtin -o ./bin/mkfs
-	@echo [BUILD] Compiling $@
+	@echo [BUILD]      Compiling $@
 
 tools: bin/build bin/mkfs
 
@@ -115,7 +115,7 @@ bin/fs.o: ./fs/*.c
 	@make -C ./fs/
 
 iso: tools compile
-	@echo [BUILD] Building ISO file and attaching filesystem.
+	@echo [BUILD]      Building ISO file and attaching filesystem.
 	@./bin/mkfs
 	@./bin/build
 
@@ -159,7 +159,7 @@ check:
 	read eas
 	sudo diskutil unmountDisk /dev/disk2
 
-vdi: cleanvid iso
+vdi: cleanvid docker
 	qemu-img convert -f raw -O vdi boot.iso boot.vdi
 
 cleanvid:

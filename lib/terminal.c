@@ -32,19 +32,6 @@ static int terminal_row;
 static int terminal_column;
 static uint8_t terminal_color;
 
-/**
- * Draws lines on the screen separating terminal, memory and example.
- * 
- * @return void
- */
-void __terminal_draw_lines()
-{
-	
-	/*
-	for (int x = 0; x < SCREEN_WIDTH; x++)
-		scrput(x,TERMINAL_START, ASCII_HORIZONTAL_LINE, terminal_color);*/
-
-}
 
 /**
  * Clears the terminal window.
@@ -70,9 +57,6 @@ void init_terminal(void)
 
 	/* Clears screen */
 	scr_clear();
-
-
-	__terminal_draw_lines();
 
 	//for (int i = window.anchor+1; i < window.width-1; i++)
 	//	scrput(i, 0, ' ', VGA_COLOR_BLACK | VGA_COLOR_LIGHT_GREY << 4);

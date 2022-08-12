@@ -33,7 +33,7 @@ new: bindir network
 
 network: ${NETOBJS}
 	@$(LD) -o ${OUTPUTDIR}net.o $(addprefix ./bin/,$^) $(LDFLAGS) -r
-	@echo [NET] Network Object Created
+	@echo [NET]        Network Object Created
 
 .depend: **/*.[cSh]
 	@$(CC) $(CCFLAGS) -MM -MG **/*.[cS] > $@
@@ -45,7 +45,7 @@ bindir:
 
 # For assembling and compiling all .c and .s files.
 %.o: %.c
-	@echo [NET] Compiling bin/$@
+	@echo [NET]        Compiling bin/$@
 	@$(CC) -o bin/$@ -c $< $(CCFLAGS)
 
 clean:

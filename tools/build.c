@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
     int sz_3 = ftell(fs);
     rewind(fs);
 
-    FILE* image = fopen("./boot2.iso", "w+"); 
+    FILE* image = fopen("./boot.iso", "w+"); 
 
     printf("[BUILD] Bootblock: %d bytes\n", sz);
     printf("[BUILD] Kernel: %d bytes\n", sz_2);
