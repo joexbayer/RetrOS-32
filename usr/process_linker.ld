@@ -1,13 +1,12 @@
 OUTPUT_FORMAT("binary")
-ENTRY(main)
+ENTRY(_start)
 SECTIONS
 {
     . = 0x100000;
 
-    .text BLOCK(4K) : ALIGN(4K)
+    /*.text BLOCK(4K) : ALIGN(4K)
     {
         _code = .;
-        *(.text.prologue)
         *(.text)
         _code_end = .;
     }
@@ -30,6 +29,6 @@ SECTIONS
         _bss_e = .;
     }
 
-    _end = .;
+    _end = .;*/
 
 }

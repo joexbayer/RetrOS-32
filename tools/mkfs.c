@@ -101,27 +101,69 @@ static inline void __inode_add_dir(struct directory_entry* entry, struct inode* 
     inode_write((char*) entry, sizeof(struct directory_entry), inode, sb);
 }
 
-int main(int argc, char* argv[])
+
+void fs_setup_superblock(struct superblock* superblock, int size)
 {
+    superblock->magic = MAGIC;
+    superblock->size = size;
 
-    /* Make a filesystem image with given binary programs  */
-    filesystem = fopen("filesystem.image", "w+");
-
-    struct superblock superblock;
-
-    superblock.magic = MAGIC;
-    superblock.size = 200000; // TODO: turn into argv parameter.
-
-    superblock.ninodes = (superblock.size / (sizeof(struct inode)+NDIRECT*BLOCK_SIZE));
-    superblock.nblocks = superblock.ninodes*NDIRECT;
+    superblock->ninodes = (superblock->size / (sizeof(struct inode)+NDIRECT*BLOCK_SIZE));
+    superblock->nblocks = superblock->ninodes*NDIRECT;
 
     /* This will be recaculated at runtime in the kernel based on the kernel size. */
-    superblock.inodes_start = FS_START_LOCATION + 3;
-    superblock.blocks_start = superblock.inodes_start + (superblock.ninodes/ INODES_PER_BLOCK);
+    superblock->inodes_start = FS_START_LOCATION + 3;
+    superblock->blocks_start = superblock->inodes_start + (superblock->ninodes/ INODES_PER_BLOCK);
 
-    superblock.block_map = create_bitmap(superblock.nblocks);
-    superblock.inode_map = create_bitmap(superblock.ninodes);
+    superblock->block_map = create_bitmap(superblock->nblocks);
+    superblock->inode_map = create_bitmap(superblock->ninodes);
 
+}
+
+int add_userspace_program(struct superblock* sb, struct inode* current_dir, char* program)
+{   
+    /* Open the file and copy content to buffer*/
+    char path_buf[strlen("usr/bin/")+strlen(program)+1];
+    sprintf(path_buf, "%s%s", "usr/bin/", program);
+    printf("[MKFS] Adding %s ( %s) to the filesystem!\n", program, path_buf);
+
+    FILE* file = fopen(path_buf, "r");
+    fseek(file, 0L, SEEK_END);
+    int file_size = ftell(file);
+    rewind(file);
+    
+    char* buf = malloc(file_size);
+    int fret = fread(buf, 1, file_size, file);
+    if(fret <= 0)
+    {
+        printf("[MKFS] Error reading program %d!\n", program);
+    }
+
+    /* Create a inode and write the contents of the given program.*/
+    inode_t file_inode = alloc_inode(sb, FS_FILE);
+    struct inode* file_inode_disk = inode_get(file_inode, sb);
+    inode_write(buf, file_size, file_inode_disk, sb);
+
+    /* Add file to current dir */
+    struct directory_entry file_dir_entry = {
+        .inode = file_inode,
+    };
+    memcpy(file_dir_entry.name, program, strlen(program)+1);
+    __inode_add_dir(&file_dir_entry, current_dir, sb);
+
+    free(buf);
+
+    return 1;   
+}
+
+int main(int argc, char* argv[])
+{
+    /* Make a filesystem image with given binary programs  */
+    filesystem = fopen("filesystem.image", "w+");
+    
+    struct superblock superblock;
+    fs_setup_superblock(&superblock, 200000);
+
+    /* Create a root directory inode. */
     inode_t root_inode = alloc_inode(&superblock, FS_DIRECTORY);
     struct inode* root = inode_get(root_inode, &superblock);
     superblock.root_inode = root_inode;
@@ -150,9 +192,13 @@ int main(int argc, char* argv[])
 
     root_dir = root;
 
+    /* Save filesystem to disk! */
+
     __inode_add_dir(&back, root_dir, &superblock);
     __inode_add_dir(&self, root_dir, &superblock);
     __inode_add_dir(&home, root_dir, &superblock);
+
+    add_userspace_program(&superblock, root_dir, "counter");
 
     inodes_sync(&superblock);
 
@@ -166,6 +212,8 @@ int main(int argc, char* argv[])
     printf("[MKFS] Max file size: %d bytes\n", NDIRECT*BLOCK_SIZE);
     printf("[MKFS] Written and saved filesystem to filesystem.image!\n");
 
+
+    /* Padding 0s */
     fseek(filesystem, 0L, SEEK_END);
     int sz = ftell(filesystem);
     printf("[MKFS] Padding with %d bytes!\n", 200000-sz);

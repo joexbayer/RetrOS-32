@@ -10,6 +10,8 @@
  */
 #include <syscall.h>
 
+extern void main();
+
 static int counters = 0;
 static int value = 0;
 
