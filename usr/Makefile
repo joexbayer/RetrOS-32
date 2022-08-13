@@ -35,12 +35,13 @@ new: bindir programs
 programs: bin/process_entry.o ${USROBJS} 
 	@echo [USR] All user programs created and linked!
 
-bin/counter.o: counter.c bin/process_entry.o
+bin/%.o: %.c bin/process_entry.o
 	@$(CC) -o $@ -c $< $(CCFLAGS)
-	@$(LD) -o bin/counter bin/counter.o bin/process_entry.o ../bin/syscall.o $(LDFLAGS) -T ./process_linker.ld
+	@$(LD) -o $(basename $@) $@ bin/process_entry.o ../bin/syscall.o $(LDFLAGS) -T ./process_linker.ld
+	@echo [USR] Compiling $@
 
 bin/%.o: %.s
-	@echo [KERNEL]     Compiling $@
+	@echo [USR] Compiling $@
 	@$(AS) -o $@ -c $< $(ASFLAGS)
 
 .depend: **/*.[cSh]
@@ -52,5 +53,5 @@ bindir:
 	@mkdir -p bin
 
 clean:
-	rm -f ./bin/*.o
+	rm -f ./bin/*
 	rm -f .depend

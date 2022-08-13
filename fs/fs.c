@@ -250,7 +250,13 @@ void ls(char* path)
         int ret = inode_read((char*) &entry, sizeof(struct directory_entry), current_dir, &superblock);
         struct inode* inode = inode_get(entry.inode, &superblock);
         struct time* time = &inode->time;
-        twritef("%d %s %d, %d:%d - %s%s\n",inode->size, months[time->month], time->day, time->hour, time->minute, entry.name, inode->type == FS_DIRECTORY ? "/" : "");
+        twritef("%p %s %d, %d:%d - %s%s\n",
+            inode->size,
+            months[time->month],
+            time->day, time->hour, time->minute,
+            entry.name,
+            inode->type == FS_DIRECTORY ? "/" : ""
+        );
         size += ret;
     }
 }

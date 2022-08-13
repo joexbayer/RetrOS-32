@@ -324,6 +324,20 @@ int32_t scrprintf(int32_t x, int32_t y, char* fmt, ...)
 						scrwrite(x+x_offset, y, str, scrcolor);
 						x_offset += strlen(str);
 						break;
+                    case 'p': ; /* p for padded int */
+						num = va_arg(args, int);
+						itoa(num, str);
+						scrwrite(x+x_offset, y, str, scrcolor);
+						x_offset += strlen(str);
+
+                        if(strlen(str) < 3){
+                            int pad = 3-strlen(str);
+                            for (int i = 0; i < pad; i++){
+                                scrput(x+x_offset, y, ' ', scrcolor);
+                                x_offset++;
+                            }
+                        }
+						break;
 					case 'x':
 					case 'X': ;
 						num = va_arg(args, int);
@@ -341,9 +355,8 @@ int32_t scrprintf(int32_t x, int32_t y, char* fmt, ...)
 						scrput(x+x_offset, y, char_arg, scrcolor);
 						x_offset++;
 						break;
-					
 					default:
-						break;
+                        break;
 				}
 				fmt++;
 				break;
@@ -355,6 +368,7 @@ int32_t scrprintf(int32_t x, int32_t y, char* fmt, ...)
 			default:  
 				scrput(x+x_offset, y, *fmt, scrcolor);
 				x_offset++;
+                written++;
 			}
         fmt++;
     }

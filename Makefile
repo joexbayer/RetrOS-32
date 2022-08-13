@@ -103,6 +103,7 @@ bin/build: ./tools/build.c
 bin/mkfs: bin/fs.o bin/bitmap.o ./tools/mkfs.c
 	@gcc tools/mkfs.c bin/bitmap.o fs/bin/inode.o -I include/  -O2 -m32 -Wall -g --no-builtin -o ./bin/mkfs
 	@echo [BUILD]      Compiling $@
+	@./bin/mkfs
 
 tools: bin/build bin/mkfs
 
@@ -118,9 +119,8 @@ userspace:
 	@echo [USR] Compiling the userspace programs.
 	@make -C ./usr/
 
-iso: tools compile userspace
+iso: compile userspace tools
 	@echo [BUILD]      Building ISO file and attaching filesystem.
-	@./bin/mkfs
 	@./bin/build
 
 iso2: compile

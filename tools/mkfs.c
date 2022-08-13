@@ -124,7 +124,7 @@ int add_userspace_program(struct superblock* sb, struct inode* current_dir, char
     /* Open the file and copy content to buffer*/
     char path_buf[strlen("usr/bin/")+strlen(program)+1];
     sprintf(path_buf, "%s%s", "usr/bin/", program);
-    printf("[MKFS] Adding %s ( %s) to the filesystem!\n", program, path_buf);
+    printf("[MKFS] Attaching %s (%s) to the filesystem!\n", program, path_buf);
 
     FILE* file = fopen(path_buf, "r");
     fseek(file, 0L, SEEK_END);
@@ -153,6 +153,38 @@ int add_userspace_program(struct superblock* sb, struct inode* current_dir, char
     free(buf);
 
     return 1;   
+}
+
+int add_directory(struct superblock* sb, struct inode* parent, char* name)
+{
+    /* Create a root directory inode. */
+    inode_t dir_inode = alloc_inode(sb, FS_DIRECTORY);
+    struct inode* dir_inode_disk = inode_get(dir_inode,sb);
+
+    /* Basic directories */
+    struct directory_entry self = {
+        .inode = dir_inode,
+        .name = "."
+    };
+
+    struct directory_entry back = {
+        .inode = parent->inode,
+        .name = ".."
+    };
+
+    struct directory_entry in_parent = {
+        .inode = dir_inode,
+    };
+    memcpy(in_parent.name, name, strlen(name)+1);
+
+    __inode_add_dir(&back, dir_inode_disk, sb);
+    __inode_add_dir(&self, dir_inode_disk, sb);
+    __inode_add_dir(&in_parent, parent, sb);
+
+    printf("[MKFS] Creating directory %s to the filesystem!\n", name);
+
+    return dir_inode;
+
 }
 
 int main(int argc, char* argv[])
@@ -192,25 +224,28 @@ int main(int argc, char* argv[])
 
     root_dir = root;
 
+    printf("[MKFS] Creating Filesystem with size: %d (%d total)\n", superblock.nblocks*BLOCK_SIZE, superblock.size);
+    printf("[MKFS] With a total of %d inodes (%d blocks)\n", superblock.ninodes, superblock.ninodes / INODES_PER_BLOCK);
+    printf("[MKFS] And total of %d block\n", superblock.nblocks);
+    printf("[MKFS] Max file size: %d bytes\n", NDIRECT*BLOCK_SIZE);
+    printf("[MKFS] Written and saved filesystem to filesystem.image!\n");
     /* Save filesystem to disk! */
 
     __inode_add_dir(&back, root_dir, &superblock);
     __inode_add_dir(&self, root_dir, &superblock);
     __inode_add_dir(&home, root_dir, &superblock);
 
-    add_userspace_program(&superblock, root_dir, "counter");
+
+    int inode_index = add_directory(&superblock, root_dir, "bin");
+    struct inode* bin = inode_get(inode_index, &superblock);
+
+    add_userspace_program(&superblock, bin, "counter");
 
     inodes_sync(&superblock);
 
     write_block_offset((char*) &superblock, sizeof(struct superblock), 0, FS_START_LOCATION);
     write_block_offset((char*) superblock.inode_map, get_bitmap_size(superblock.ninodes), 0, FS_INODE_BMAP_LOCATION);
     write_block_offset((char*) superblock.block_map, get_bitmap_size(superblock.nblocks), 0, FS_BLOCK_BMAP_LOCATION);
-
-    printf("[MKFS] Creating Filesystem with size: %d (%d total)\n", superblock.nblocks*BLOCK_SIZE, superblock.size);
-    printf("[MKFS] With a total of %d inodes (%d blocks)\n", superblock.ninodes, superblock.ninodes / INODES_PER_BLOCK);
-    printf("[MKFS] And total of %d block\n", superblock.nblocks);
-    printf("[MKFS] Max file size: %d bytes\n", NDIRECT*BLOCK_SIZE);
-    printf("[MKFS] Written and saved filesystem to filesystem.image!\n");
 
 
     /* Padding 0s */

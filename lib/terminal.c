@@ -179,6 +179,19 @@ int32_t twritef(char* fmt, ...)
 						bytes[3] = num & 0xFF;
 						twritef("%d.%d.%d.%d", bytes[3], bytes[2], bytes[1], bytes[0]);
 						break;
+					case 'p': ; /* p for padded int */
+						num = va_arg(args, int);
+						itoa(num, str);
+						twrite(str);
+						x_offset += strlen(str);
+
+                        if(strlen(str) < 3){
+                            int pad = 3-strlen(str);
+                            for (int i = 0; i < pad; i++){
+                                terminal_putchar(' ');
+                            }
+                        }
+						break;
 					case 'x':
 					case 'X': ;
 						num = va_arg(args, int);
