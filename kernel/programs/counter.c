@@ -8,32 +8,18 @@
  * @copyright Copyright (c) 2022
  * 
  */
-
-#include <process.h>
-#include <sync.h>
-#include <util.h>
-#include <screen.h>
-
-#include <terminal.h>
+#include <syscall.h>
 
 static int counters = 0;
 static int value = 0;
-static mutex_t c_lock;
-
-void reset_value()
-{
-    value = 0;
-}
 
 void add()
 {
-    acquire(&c_lock);
     value++;
-    release(&c_lock);
 }
 
 
-void counter()
+void main()
 {
     int id = counters++;
     int num = 0;
@@ -43,19 +29,7 @@ void counter()
 		if(num % 100000000 == 0)
 		{  
             add();
-			scrprintf(10, 10+id, "Counter: %d   ", value);
+			screen_put(10, 10+id, 'a');
 		}
 	};
-
 }
-
-void test()
-{
-    
-}
-
-PROGRAM(counter, &counter)
-mutex_init(&c_lock);
-ATTACH("reset", &reset_value)
-ATTACH("test", &test);
-PROGRAM_END

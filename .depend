@@ -29,6 +29,7 @@ diskdev.o: kernel/diskdev.c include/diskdev.h include/ata.h \
 interrupts.o: kernel/interrupts.c include/interrupts.h include/stdint.h \
  include/serial.h include/screen.h include/util.h include/colors.h \
  include/io.h include/memory.h
+io.o: kernel/io.c include/io.h include/stdint.h
 kernel.o: kernel/kernel.c include/util.h include/stdint.h include/pci.h \
  include/terminal.h include/keyboard.h include/interrupts.h \
  include/timer.h include/rtc.h include/screen.h include/colors.h \
@@ -38,7 +39,7 @@ kernel.o: kernel/kernel.c include/util.h include/stdint.h include/pci.h \
  include/net/ipv4.h include/net/icmp.h include/net/udp.h include/ata.h \
  include/bitmap.h include/net/socket.h include/sync.h include/net/dns.h \
  include/fs/fs.h include/fs/inode.h include/fs/superblock.h \
- include/serial.h
+ include/serial.h include/syscall_helper.h
 memory.o: kernel/memory.c include/memory.h include/stdint.h \
  include/screen.h include/util.h include/colors.h include/serial.h \
  include/timer.h include/rtc.h include/sync.h include/diskdev.h \
@@ -57,14 +58,15 @@ process.o: kernel/process.c include/process.h include/stdint.h \
 scheduler.o: kernel/scheduler.c include/scheduler.h include/pcb.h \
  include/util.h include/stdint.h include/windowmanager.h include/colors.h \
  include/timer.h include/rtc.h
+sync.o: kernel/sync.c include/sync.h include/stdint.h include/terminal.h \
+ include/util.h include/scheduler.h include/pcb.h include/windowmanager.h \
+ include/colors.h
 windowmanager.o: kernel/windowmanager.c include/windowmanager.h \
  include/stdint.h include/colors.h include/screen.h include/util.h \
  include/serial.h include/pcb.h
 bitmap.o: lib/bitmap.c include/bitmap.h include/stdint.h include/memory.h
-io.o: lib/io.c include/io.h include/stdint.h
-sync.o: lib/sync.c include/sync.h include/stdint.h include/terminal.h \
- include/util.h include/scheduler.h include/pcb.h include/windowmanager.h \
- include/colors.h
+syscall.o: lib/syscall.c include/syscall_helper.h include/syscall.h \
+ include/stdint.h
 terminal.o: lib/terminal.c include/terminal.h include/util.h \
  include/stdint.h include/stdarg.h include/screen.h include/colors.h \
  include/windowmanager.h

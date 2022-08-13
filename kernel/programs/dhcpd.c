@@ -248,12 +248,8 @@ void dhcpd()
         __dhcp_send_request(dhcp_socket);
         read = recv_timeout(dhcp_socket, &buffer, 2048, 0, 2);
     }
-         
-
-    int rest = invoke_syscall(0, 1, 2, 3);
     twriteln("DHCP done!");
-    twritef("RET: %d\n", rest);
-
+    
     close(dhcp_socket);
     
     exit();

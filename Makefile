@@ -22,7 +22,7 @@ else
 	LD=i386-elf-ld
 endif
 
-PROGRAMOBJ = bin/counter.o bin/shell.o bin/networking.o bin/dhcpd.o
+PROGRAMOBJ = bin/shell.o bin/networking.o bin/dhcpd.o
 
 KERNELOBJ = bin/kernel_entry.o bin/kernel.o bin/terminal.o bin/pci.o \
 			bin/util.o bin/interrupts.o bin/irs_entry.o bin/timer.o \

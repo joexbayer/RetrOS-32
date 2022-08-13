@@ -17,6 +17,7 @@
 #include <net/dns.h>
 #include <fs/fs.h>
 #include <serial.h>
+#include <syscall_helper.h>
 
 /* This functions always needs to be on top? */
 void _main() 
@@ -41,7 +42,6 @@ void _main()
 
 	/* Programs defined in programs.h */
 	init_shell();
-	init_counter();
 	init_networking();
 	init_dhcpd();
 
@@ -49,7 +49,9 @@ void _main()
 	init_fs();
 	
 	start_process(0); // SHELL
-	start_process(2); // Networking
+	start_process(1); // Networking
+
+	add_system_call(SYSCALL_SCRPUT, (syscall_t)&scrput);
 
 	dbgprintf("TEXT: %d\n", _code_end-_code);
 	dbgprintf("RODATA: %d\n", _ro_e-_ro_s);

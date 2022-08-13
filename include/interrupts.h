@@ -21,6 +21,9 @@ struct registers
     uint32_t eip, cs, eflags, useresp, ss; // Pushed by the processor automatically.
 };
 
+typedef int (*syscall_t) ();
+void add_system_call(int index, syscall_t fn);
+
 void init_interrupts();
 int invoke_syscall(int i, int arg1, int arg2, int arg3);
 void _syscall_entry(void);
