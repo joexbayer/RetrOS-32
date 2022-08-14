@@ -208,12 +208,13 @@ int create_process(char* program)
     pcb->running = NEW;
     pcb->pid = i;
     memcpy(pcb->name, program, strlen(program)+1);
-    //pcb->esp = 0xEFFFFFF0;
-    pcb->esp = (uint32_t)alloc(stack_size)+stack_size-1;
+    pcb->esp = 0xEFFFFFF0;
+    //pcb->esp = (uint32_t)alloc(stack_size)+stack_size-1;
     pcb->ebp = pcb->esp;
-    pcb->k_esp = (uint32_t) alloc(stack_size)-stack_size-1;
+    pcb->k_esp = (uint32_t) alloc(stack_size)+stack_size-1;
     pcb->k_ebp = pcb->k_esp;
     pcb->window = current_running->window;
+    pcb->is_process = 1;
 
     dbgprintf("[INIT PROCESS] Setup PCB %d for %s\n", i, program);
 
@@ -261,6 +262,7 @@ int add_pcb(void (*entry)(), char* name)
     pcbs[i].next = next;
     pcbs[i].prev = current_running;
     pcbs[i].page_dir = kernel_page_dir;
+    pcbs[i].is_process = 0;
 
     pcb_count++;
     dbgprintf("Added %s\n", name);
