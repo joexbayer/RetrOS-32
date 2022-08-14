@@ -2,6 +2,7 @@
 #define MEMORY_H
 
 #include <stdint.h>
+#include <pcb.h>
 
 enum {
 	USED,
@@ -44,6 +45,8 @@ void print_memory_status();
 void free(void* ptr);
 
 void driver_mmap(uint32_t addr, int size);
+void flush_tlb_entry(uint32_t vaddr);
+void init_process_paging(struct pcb* pcb, char* data, int size);
 
 
 void load_page_directory();

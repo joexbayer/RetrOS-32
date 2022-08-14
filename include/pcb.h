@@ -46,6 +46,7 @@ void start_pcb();
 int stop_task(int pid);
 int add_pcb( void (*entry)(), char* name);
 void print_pcb_status();
+int create_process(char* program);
 
 void pcb_set_running(int pid);
 

@@ -9,29 +9,13 @@
  * 
  */
 #include <syscall.h>
-
-extern void main();
-
-static int counters = 0;
-static int value = 0;
-
-void add()
-{
-    value++;
-}
-
-
 void main()
 {
-    int id = counters++;
-    int num = 0;
+	int i = 1;
+
 	while(1)
-    {
-		num = (num+1) % 100000000;
-		if(num % 100000000 == 0)
-		{  
-            add();
-			screen_put(10, 10+id, 'a');
-		}
-	};
+	{
+		i = (i + 1) % 10000;
+		screen_put(0+i, 0, ' a');
+	}
 }

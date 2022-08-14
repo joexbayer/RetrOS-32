@@ -225,7 +225,7 @@ void init_memory()
 
 
 /*  PAGIN / VIRTUAL MEMORY SECTION */
-#define TOTAL_PAGES 10
+#define TOTAL_PAGES ((0x300000-0x200000) / PAGE_SIZE)
 uint32_t* kernel_page_dir = NULL;
 bitmap_t page_bitmap;
 
@@ -263,10 +263,41 @@ void driver_mmap(uint32_t addr, int size)
 	return;
 }
 
+void init_process_paging(struct pcb* pcb, char* data, int size)
+{
+	int permissions = PRESENT | READ_WRITE | USER;
+
+	/* Allocate directory and tables for data and stack */
+	uint32_t* process_directory = alloc_page();
+	uint32_t* process_data_table = alloc_page();
+	uint32_t* process_stack_table = alloc_page();
+
+	/* Map the process data to a page */
+	uint32_t* process_data_page = alloc_page();
+	memcpy(process_data_page, data, size);
+	table_set(process_data_table, 0x1000000, (uint32_t) process_data_page, permissions);
+	dbgprintf("[INIT PROCESS] Mapped data 0x1000000 to %x\n", process_data_page);
+
+	/* Map the process stack to a page */
+	uint32_t* process_stack_page = alloc_page();
+	memset(process_stack_page, 0, PAGE_SIZE);
+	table_set(process_stack_table, 0xEFFFFFF0 & ~PAGE_MASK, (uint32_t) process_stack_page, permissions);
+	dbgprintf("[INIT PROCESS] Mapped data %x to %x\n",0xEFFFFFF0 & ~PAGE_MASK, process_stack_page);
+
+	/* Insert page and data tables in directory. */
+	directory_insert_table(process_directory, 0x1000000, process_data_table, permissions); 
+	//directory_insert_table(process_directory, 0xEFFFFFF0 & ~PAGE_MASK, process_stack_table, permissions);
+
+	process_directory[0] = kernel_page_dir[0];
+
+	dbgprintf("[INIT PROCESS] Paging done.\n");
+	pcb->page_dir = (uint32_t)process_directory;
+}
+
 void init_paging()
 {
 	page_bitmap = create_bitmap(TOTAL_PAGES);
-
+	dbgprintf("[PAGIN] %d free pagable pages.\n", TOTAL_PAGES);
 
 	kernel_page_dir = alloc_page();
 	uint32_t* kernel_page_table = alloc_page();
@@ -279,6 +310,5 @@ void init_paging()
 	table_set(kernel_page_table, (uint32_t) 0xB8000, (uint32_t) 0xB8000, permissions);
 	table_set(kernel_page_table, (uint32_t) 0xB9000, (uint32_t) 0xB9000, permissions);
 
- 
 	directory_insert_table(kernel_page_dir, 0, kernel_page_table, permissions); 
 }

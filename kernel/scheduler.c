@@ -47,6 +47,9 @@ void context_switch()
             current_running = current_running->next;
             break;
         case NEW:
+            dbgprintf("[Context Switch] Running new PCB %s with page dir: %x: stack: %x\n", current_running->name, current_running->page_dir, current_running->esp);
+            load_page_directory(current_running->page_dir);
+            //tlb_flush_addr(current_running->page_dir);
             start_pcb();
             break; /* Never reached. */
         case SLEEPING:
@@ -60,4 +63,7 @@ void context_switch()
             break;
         }
     }
+    //dbgprintf("[Context Switch] Switching too PCB %s with page dir: %x, stack: %x, eip: %x\n", current_running->name, current_running->page_dir, current_running->esp, current_running->eip);
+    load_page_directory(current_running->page_dir);
+    tlb_flush_addr(current_running->page_dir);
 }

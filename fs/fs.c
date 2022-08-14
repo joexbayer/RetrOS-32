@@ -11,19 +11,22 @@
 #include <util.h>
 #include <rtc.h>
 
-#define FS_INODE_BMAP_LOCATION FS_START_LOCATION+1
-#define FS_BLOCK_BMAP_LOCATION FS_INODE_BMAP_LOCATION+1
-
 static struct superblock superblock;
 static struct inode* root_dir;
 static struct inode* current_dir;
+
 static int FS_START_LOCATION = 0;
+static int FS_INODE_BMAP_LOCATION = 0;
+static int FS_BLOCK_BMAP_LOCATION = 0;
 
 static char* months[] = {"NAN", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Nov", "Dec"};
 
 int init_fs()
 {
     FS_START_LOCATION = (kernel_size/512)+2;
+    FS_INODE_BMAP_LOCATION = FS_START_LOCATION+1;
+    FS_BLOCK_BMAP_LOCATION = FS_INODE_BMAP_LOCATION+1;
+
     /* Read superblock and check magic. */
     read_block_offset((char*) &superblock, sizeof(struct superblock), 0, FS_START_LOCATION);
     if(superblock.magic != MAGIC){
@@ -38,6 +41,12 @@ int init_fs()
 
     superblock.inodes_start = FS_START_LOCATION + 3;
     superblock.blocks_start = superblock.inodes_start + (superblock.ninodes/ INODES_PER_BLOCK);
+
+    superblock.block_map = create_bitmap(superblock.nblocks);
+    superblock.inode_map = create_bitmap(superblock.ninodes);
+    read_block_offset((char*) superblock.block_map, get_bitmap_size(superblock.nblocks), 0, FS_BLOCK_BMAP_LOCATION);
+    read_block_offset((char*) superblock.inode_map, get_bitmap_size(superblock.ninodes), 0, FS_INODE_BMAP_LOCATION);
+
 
     root_dir = inode_get(superblock.root_inode, &superblock);
     dbgprintf("[FS]: Root inode: %d\n", superblock.root_inode);
@@ -59,13 +68,14 @@ void __superblock_sync()
 {
     write_block_offset((char*) &superblock, sizeof(struct superblock), 0, FS_START_LOCATION);
     write_block_offset((char*) superblock.inode_map, get_bitmap_size(superblock.ninodes), 0, FS_INODE_BMAP_LOCATION);
-    write_block_offset((char*) superblock.block_map, get_bitmap_size(superblock.nblocks), 0, FS_BLOCK_BMAP_LOCATION);
+    //write_block_offset((char*) superblock.block_map, get_bitmap_size(superblock.nblocks), 0, FS_BLOCK_BMAP_LOCATION);
 
     dbgprintf("[FS] Superblock... (DONE)\n");
 }
 
 void sync()
 {
+    /*TODO: Causes pagefault! */
     dbgprintf("[FS] Synchronizing filesystem.\n");
     __superblock_sync();
     inodes_sync(&superblock);
@@ -154,15 +164,13 @@ void create_file(char* name)
     dbgprintf("[FS] Creating new file %s, inode: %d.\n", name, inode->inode);
 }
 
-void file_read(inode_t i)
+int file_read(char* buf, inode_t i)
 {
     struct inode* inode = inode_get(i, &superblock);
     inode->pos = 0;
-
-    char* value = alloc(inode->size);
-    inode_read(value, inode->size, inode, &superblock);
-    twritef("%s\n", value);
-    free(value);
+    
+    int ret = inode_read(buf, inode->size, inode, &superblock);
+    return ret;
 }
 
 void file_close(inode_t inode)

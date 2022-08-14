@@ -17,6 +17,7 @@
 #include <net/netdev.h>
 #include <scheduler.h>
 #include <terminal.h>
+#include <fs/fs.h>
 
 #include <windowmanager.h>
 
@@ -170,7 +171,6 @@ int init_pcb(int pid, struct pcb* pcb, void (*entry)(), char* name)
         return -1;
     }
 
-
     /* Stack grows down so we want the upper part of allocated memory.*/ 
     pcb->ebp = stack+stack_size-1;
     pcb->esp = stack+stack_size-1;
@@ -180,6 +180,51 @@ int init_pcb(int pid, struct pcb* pcb, void (*entry)(), char* name)
     pcb->org_stack = stack;
     memcpy(pcb->name, name, strlen(name)+1);
 
+    return 1;
+}
+
+int create_process(char* program)
+{
+    CLI();
+    /* Load process from disk */
+    inode_t inode = fs_open(program);
+
+    char buf[512]; /* WARNING: Needs to be max filesystem, but NOT overflow the stack of 8Kib */
+    int read = file_read((char* )buf, inode);
+    file_close(inode);
+    dbgprintf("[INIT PROCESS] Reading %s from disk (%d bytes)\n", program, read);
+
+    /* Create stack and pcb */
+     int i; /* Find a pcb is that is "free" */
+    for(i = 0; i < MAX_NUM_OF_PCBS; i++)
+        if(pcbs[i].running == STOPPED)
+            break;
+    
+    struct pcb* pcb = &pcbs[i];
+
+    pcb->eip = 0x1000000; /* External programs start */
+    pcb->running = NEW;
+    pcb->pid = i;
+    memcpy(pcb->name, program, strlen(program)+1);
+    pcb->esp = (uint32_t) alloc(stack_size)+stack_size-1;
+    pcb->ebp = pcb->esp;
+    pcb->window = current_running->window;
+
+    dbgprintf("[INIT PROCESS] Setup PCB %d for %s\n", i, program);
+
+    /* Memory map data */
+    init_process_paging(pcb, buf, read);
+
+    struct pcb* next = current_running->next;
+    current_running->next = &pcbs[i];
+    next->prev = &pcbs[i];
+    pcbs[i].next = next;
+    pcbs[i].prev = current_running;
+
+    pcb_count++;
+    STI();
+    dbgprintf("[INIT PROCESS] Created new process!\n");
+    /* Run */
     return 1;
 }
 
@@ -210,6 +255,7 @@ int add_pcb(void (*entry)(), char* name)
     next->prev = &pcbs[i];
     pcbs[i].next = next;
     pcbs[i].prev = current_running;
+    pcbs[i].page_dir = kernel_page_dir;
 
     pcb_count++;
     dbgprintf("Added %s\n", name);
@@ -220,6 +266,7 @@ int add_pcb(void (*entry)(), char* name)
 void start_pcb()
 {   
     current_running->running = RUNNING;
+    dbgprintf("[START PCB] Starting pcb!\n");
     _start_pcb(); /* asm function */
 }
 /**

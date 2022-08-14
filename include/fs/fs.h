@@ -10,7 +10,7 @@ void mkfs();
 
 inode_t fs_open(char* name);
 void file_close(inode_t inode);
-void file_read(inode_t i);
+int file_read(char* buf, inode_t i);
 void chdir(char* path);
 void fs_mkdir(char* name);
 void create_file(char* name);

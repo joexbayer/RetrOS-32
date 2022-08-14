@@ -150,7 +150,10 @@ void exec_cmd()
 	if(strncmp("cat", shell_buffer, strlen("cat"))){
 		char* name = shell_buffer+strlen("cat")+1;
 		inode_t inode = fs_open(name);
-		file_read(inode);
+
+		char buf[512];
+		file_read(buf, inode);
+		twritef("%s\n", buf);
 		file_close(inode);
 		return;
 	}
@@ -207,6 +210,12 @@ void exec_cmd()
 		char* name = shell_buffer+strlen("mkdir")+1;
 		name[strlen(name)-1] = 0;
 		fs_mkdir(name);
+		return;
+	}
+
+	if(strncmp("run", shell_buffer, strlen("run"))){
+		char* name = shell_buffer+strlen("run")+1;
+		create_process(name);
 		return;
 	}
 

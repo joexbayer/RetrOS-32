@@ -11,6 +11,13 @@ _start:
     cli
     call _main
 
+.global tlb_flush_addr
+.text
+tlb_flush_addr:
+  movl 4(%esp), %eax
+  invlpg (%eax)
+  ret
+
 page_fault_14_scratch:
   .long	0
 page_fault_14_err:
