@@ -63,7 +63,7 @@ void context_switch()
             break;
         }
     }
-    dbgprintf("[Context Switch] Switching too PCB %s with page dir: %x, stack: %x, kstack: %x\n", current_running->name, current_running->page_dir, current_running->esp, current_running->k_esp);
+    //dbgprintf("[Context Switch] Switching too PCB %s with page dir: %x, stack: %x, kstack: %x\n", current_running->name, current_running->page_dir, current_running->esp, current_running->k_esp);
     load_page_directory(current_running->page_dir);
 
     //tlb_flush_addr(current_running->page_dir);

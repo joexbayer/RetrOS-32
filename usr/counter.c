@@ -14,8 +14,15 @@ void main()
 	int i = 1;
 
 	while(1)
-	{
-		i = (i + 1) % 10000;
+	{	
 		screen_put(0+i, 0, ' a');
+		int test = 0;
+		for (int i = 0; i < 40000000; i++)
+		{
+			test = (test + 1) % 10000;
+		}
+		i++;
+		
+		
 	}
 }
