@@ -174,6 +174,8 @@ int init_pcb(int pid, struct pcb* pcb, void (*entry)(), char* name)
     /* Stack grows down so we want the upper part of allocated memory.*/ 
     pcb->ebp = stack+stack_size-1;
     pcb->esp = stack+stack_size-1;
+    pcb->k_esp = pcb->esp;
+    pcb->k_ebp = pcb->k_esp;
     pcb->eip = entry;
     pcb->running = NEW;
     pcb->pid = pid;
@@ -206,8 +208,11 @@ int create_process(char* program)
     pcb->running = NEW;
     pcb->pid = i;
     memcpy(pcb->name, program, strlen(program)+1);
-    pcb->esp = (uint32_t) alloc(stack_size)+stack_size-1;
+    //pcb->esp = 0xEFFFFFF0;
+    pcb->esp = (uint32_t)alloc(stack_size)+stack_size-1;
     pcb->ebp = pcb->esp;
+    pcb->k_esp = (uint32_t) alloc(stack_size)-stack_size-1;
+    pcb->k_ebp = pcb->k_esp;
     pcb->window = current_running->window;
 
     dbgprintf("[INIT PROCESS] Setup PCB %d for %s\n", i, program);

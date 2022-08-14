@@ -60,7 +60,8 @@ void _main()
 	dbgprintf("Total: %d (%d sectors)\n", _end-_code, ((_end-_code)/512)+2);
 	dbgprintf("Kernel reaching too: 0x%x\n", _end-_code);
 
-	load_page_directory(kernel_page_dir);
+	__asm__ volatile ("movl %%eax, %%cr3 " : :
+                      "a" (kernel_page_dir));
     //scrprintf(0, 10, "Kernal page: %x", kernel_page_dir);
 	enable_paging();
 

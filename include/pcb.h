@@ -20,6 +20,8 @@ struct pcb {
       uint32_t ebp;
       uint32_t esp;
       void (*eip)();
+      uint32_t k_esp;
+      uint32_t k_ebp;
       uint32_t fpu[32];
       /* DO NOT NOT CHANGE ABOVE.*/
       uint8_t running;

@@ -281,12 +281,14 @@ void init_process_paging(struct pcb* pcb, char* data, int size)
 	/* Map the process stack to a page */
 	uint32_t* process_stack_page = alloc_page();
 	memset(process_stack_page, 0, PAGE_SIZE);
-	table_set(process_stack_table, 0xEFFFFFF0 & ~PAGE_MASK, (uint32_t) process_stack_page, permissions);
-	dbgprintf("[INIT PROCESS] Mapped data %x to %x\n",0xEFFFFFF0 & ~PAGE_MASK, process_stack_page);
+
+	table_set(process_stack_table, 0xEFFFFFF0, (uint32_t) process_stack_page, permissions);
+
+	dbgprintf("[INIT PROCESS] Mapped data %x to %x\n",0x400000 & ~PAGE_MASK, process_stack_page);
 
 	/* Insert page and data tables in directory. */
 	directory_insert_table(process_directory, 0x1000000, process_data_table, permissions); 
-	//directory_insert_table(process_directory, 0xEFFFFFF0 & ~PAGE_MASK, process_stack_table, permissions);
+	directory_insert_table(process_directory, 0xEFFFFFF0, process_stack_table, permissions);
 
 	process_directory[0] = kernel_page_dir[0];
 

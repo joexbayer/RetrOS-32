@@ -108,15 +108,18 @@ _context_switch:
 
     pushfl
     pushal
-    fsave 12(%eax)
+    fsave 20(%eax)
     movl %esp, 4(%eax)
+    movl %ebp, 0(%eax)
+    # movl 12(%eax), %esp
+    # movl 16(%eax), %ebp
 
     call context_switch
-
     movl current_running, %eax
 
+    movl 0(%eax), %ebp
     movl 4(%eax), %esp
-    frstor 12(%eax)
+    frstor 20(%eax)
     popal
     popfl
 
@@ -127,6 +130,7 @@ _context_switch:
 _start_pcb:
     movl current_running, %eax
     movl 4(%eax), %esp
+    movl 0(%eax), %ebp  
     sti
     jmp *8(%eax)
 
