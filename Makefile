@@ -174,6 +174,6 @@ net:
 	sudo tcpdump -qns 0 -X -r dump.dat -vvv -e
 
 qemu:
-	sudo qemu-system-i386 -device e1000,netdev=net0 -serial stdio -netdev user,id=net0 -object filter-dump,id=net0,netdev=net0,file=dump.dat boot2.iso
+	sudo qemu-system-i386 -device e1000,netdev=net0 -serial stdio -netdev user,id=net0 -object filter-dump,id=net0,netdev=net0,file=dump.dat boot.iso
 
 run: docker qemu
