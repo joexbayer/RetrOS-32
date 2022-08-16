@@ -6,6 +6,18 @@
 #define USABLE_WIDTH (SCREEN_WIDTH-1)
 #define USABLE_HEIGHT (SCREEN_HEIGHT-1)
 
+struct window_binary_tree {
+	struct window* right;
+	struct window* root;
+	struct window* left;
+}
+
+static struct window windows[MAX_NUM_OF_PCBS];
+
+void split_screen() {
+	
+}
+
 void draw_window(struct window* w)
 {
     if(w->visable == 0)
@@ -35,7 +47,10 @@ void draw_window(struct window* w)
 
 int attach_window(struct window* w)
 {
-    current_running->window = w;
+    current_running->window = &windows[current_running->pid];
+    /* Setup window to based on current windows */
+
+
     return 1;
 }
 
