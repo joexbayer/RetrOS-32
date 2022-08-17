@@ -10,9 +10,10 @@ struct window_binary_tree {
 	struct window* right;
 	struct window* root;
 	struct window* left;
-}
+};
 
 static struct window windows[MAX_NUM_OF_PCBS];
+static struct window_binary_tree root;
 
 void split_screen() {
 	
@@ -47,9 +48,27 @@ void draw_window(struct window* w)
 
 int attach_window(struct window* w)
 {
+	/* This function should create a window for the process requesting it.
+	 * Importantly it should tile them by dividing the current main window in two.
+	 * Storing the windows in a binary tree.
+	 */
     current_running->window = &windows[current_running->pid];
     /* Setup window to based on current windows */
-
+	if(root.root == NULL)
+	{
+		root.root = current_running->window;
+		root.root->height = USABLE_HEIGHT;
+		root.root->width = USABLE_WIDTH;
+		root.root->visable = 1;
+		root.root->color = VGA_COLOR_LIGHT_GREY;
+		memcpy(root.root->name, "WINDOW", strlen("WINDOW"));
+		root.root->x = 1;
+		root.root->y = 1;
+		root.root->state.color = VGA_COLOR_LIGHT_GREY;
+		root.root->state.column = 0;
+		root.root->state.row = USABLE_HEIGHT-1;
+		return 1;
+	}
 
     return 1;
 }
