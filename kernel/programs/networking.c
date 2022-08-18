@@ -157,7 +157,7 @@ int net_handle_recieve(struct sk_buff* skb)
  */
 void main()
 {
-    attach_window(&__network_w);
+    //attach_window(&__network_w);
     while(1)
     {
         struct sk_buff* skb = next_skb();

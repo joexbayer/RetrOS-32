@@ -48,8 +48,8 @@ void draw_window(struct window* w)
 
 int attach_window(struct window* w)
 {
-    current_running->window = w;
-    return 0;
+    //current_running->window = w;
+    //return 0;
 	/* This function should create a window for the process requesting it.
 	 * Importantly it should tile them by dividing the current main window in two.
 	 * Storing the windows in a binary tree.
@@ -59,8 +59,8 @@ int attach_window(struct window* w)
 	if(root.root == NULL)
 	{
 		root.root = current_running->window;
-		root.root->height = USABLE_HEIGHT;
-		root.root->width = USABLE_WIDTH;
+		root.root->height = USABLE_HEIGHT-2;
+		root.root->width = USABLE_WIDTH-2;
 		root.root->visable = 1;
 		root.root->color = VGA_COLOR_LIGHT_GREY;
 		memcpy(root.root->name, "WINDOW", strlen("WINDOW"));
