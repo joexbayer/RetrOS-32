@@ -32,10 +32,10 @@ interrupts.o: kernel/interrupts.c include/interrupts.h include/stdint.h \
  include/serial.h include/screen.h include/util.h include/colors.h \
  include/io.h include/memory.h include/pcb.h include/windowmanager.h
 io.o: kernel/io.c include/io.h include/stdint.h
-kernel.o: kernel/kernel.c include/util.h include/stdint.h include/pci.h \
- include/terminal.h include/keyboard.h include/interrupts.h \
- include/timer.h include/rtc.h include/screen.h include/colors.h \
- include/pcb.h include/windowmanager.h include/memory.h include/process.h \
+kernel.o: kernel/kernel.c include/windowmanager.h include/stdint.h \
+ include/colors.h include/util.h include/pci.h include/terminal.h \
+ include/keyboard.h include/interrupts.h include/timer.h include/rtc.h \
+ include/screen.h include/pcb.h include/memory.h include/process.h \
  include/programs.h include/net/skb.h include/net/netdev.h \
  include/net/utils.h include/net/ethernet.h include/net/arp.h \
  include/net/ipv4.h include/net/icmp.h include/net/udp.h include/ata.h \

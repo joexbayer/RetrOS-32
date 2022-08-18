@@ -29,6 +29,7 @@ int get_window_width();
 int get_window_height();
 int attach_window(struct window* w);
 uint8_t is_window_visable();
+void init_wm();
 
 struct terminal_state* get_terminal_state();
 #endif /* __WINDOWMANAGER_H */

@@ -1,3 +1,4 @@
+#include <windowmanager.h>
 #include <util.h>
 #include <pci.h>
 #include <terminal.h>
@@ -33,6 +34,7 @@ void _main()
 	init_pcbs();
 	ata_ide_init();
 	init_serial();
+	init_wm();
 
 	init_pci();
 	init_sk_buffers();

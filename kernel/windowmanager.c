@@ -48,6 +48,8 @@ void draw_window(struct window* w)
 
 int attach_window(struct window* w)
 {
+    current_running->window = w;
+    return 0;
 	/* This function should create a window for the process requesting it.
 	 * Importantly it should tile them by dividing the current main window in two.
 	 * Storing the windows in a binary tree.
@@ -101,4 +103,10 @@ uint8_t is_window_visable()
 struct terminal_state* get_terminal_state()
 {
     return &current_running->window->state;
+}
+
+void init_wm(){
+	root.root = NULL;
+	root.left = NULL;
+	root.right = NULL;
 }
