@@ -1,3 +1,4 @@
+#include "util.h"
 #include <windowmanager.h>
 #include <screen.h>
 #include <serial.h>
@@ -7,9 +8,10 @@
 #define USABLE_HEIGHT (SCREEN_HEIGHT-1)
 
 struct window_binary_tree {
-	struct window* right;
-	struct window* root;
-	struct window* left;
+	struct window_binary_tree* right;
+	struct window_binary_tree* root;
+	struct window_binary_tree* left;
+    struct window* value;
 };
 
 static struct window windows[MAX_NUM_OF_PCBS];
@@ -46,6 +48,16 @@ void draw_window(struct window* w)
     scrprintf(w->x+2, w->y, w->name);
 }
 
+struct window_binary_tree* new_node()
+{
+    struct window_binary_tree* node = (struct window_binary_tree*) alloc(sizeof(struct window_binary_tree));
+    node->root = NULL;
+    node->left = NULL;
+    node->right = NULL;
+    node->value = NULL;
+    return node;
+}
+
 int attach_window(struct window* w)
 {
     //current_running->window = w;
@@ -55,22 +67,28 @@ int attach_window(struct window* w)
 	 * Storing the windows in a binary tree.
 	 */
     current_running->window = &windows[current_running->pid];
-    /* Setup window to based on current windows */
-	if(root.root == NULL)
+    /* Setup root window if nothing else is defined. */
+	if(root.root == NULL && root.left == NULL && root.root == NULL && root.value == NULL)
 	{
-		root.root = current_running->window;
-		root.root->height = USABLE_HEIGHT-2;
-		root.root->width = USABLE_WIDTH-2;
-		root.root->visable = 1;
-		root.root->color = VGA_COLOR_LIGHT_GREY;
-		memcpy(root.root->name, "WINDOW", strlen("WINDOW"));
-		root.root->x = 1;
-		root.root->y = 1;
-		root.root->state.color = VGA_COLOR_LIGHT_GREY;
-		root.root->state.column = 0;
-		root.root->state.row = USABLE_HEIGHT-1;
+		root.value = current_running->window;
+		root.value->height = USABLE_HEIGHT-2;
+		root.value->width = USABLE_WIDTH-2;
+		root.value->visable = 1;
+		root.value->color = VGA_COLOR_LIGHT_GREY;
+		memcpy(root.value->name, "WINDOW", strlen("WINDOW"));
+		root.value->x = 1;
+		root.value->y = 1;
+		root.value->state.color = VGA_COLOR_LIGHT_GREY;
+		root.value->state.column = 0;
+		root.value->state.row = USABLE_HEIGHT-1;
 		return 1;
 	}
+    
+    if(root.root == NULL) /* Will assume root is NOT null. */
+        return -1;
+    
+    /* Split the window */
+    if(root.left != NULL)
 
     return 1;
 }
