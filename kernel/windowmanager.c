@@ -83,12 +83,19 @@ int attach_window(struct window* w)
 		root.value->state.row = USABLE_HEIGHT-1;
 		return 1;
 	}
-    
-    if(root.root == NULL) /* Will assume root is NOT null. */
-        return -1;
-    
-    /* Split the window */
-    if(root.left != NULL)
+   
+    /* Will assume left AND right is NULL, and root never is.*/
+    struct window_binary_tree* current = &root;
+    while(current->left != NULL && current->right != NULL)
+       current = current->left;
+
+    current->left = new_node();
+    current->left->root = current;
+    current->left->value = current->value;
+
+    current->right = new_node();
+    current->right->root = current;
+    current->right->value = current_running->window;
 
     return 1;
 }
