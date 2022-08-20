@@ -56,6 +56,13 @@ struct window_binary_tree* new_node()
     node->right = NULL;
     node->value = NULL;
     return node;
+
+}
+
+int window_left_right_split(struct window_binary_tree* wbt)
+{
+
+		return 0;
 }
 
 int attach_window(struct window* w)
