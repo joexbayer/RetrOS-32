@@ -61,8 +61,8 @@ process.o: kernel/process.c include/process.h include/stdint.h \
 scheduler.o: kernel/scheduler.c include/scheduler.h include/pcb.h \
  include/util.h include/stdint.h include/windowmanager.h include/colors.h \
  include/timer.h include/rtc.h
-windowmanager.o: kernel/windowmanager.c include/windowmanager.h \
- include/stdint.h include/colors.h include/screen.h include/util.h \
+windowmanager.o: kernel/windowmanager.c include/util.h include/stdint.h \
+ include/windowmanager.h include/colors.h include/screen.h \
  include/serial.h include/pcb.h
 bitmap.o: lib/bitmap.c include/bitmap.h include/stdint.h include/memory.h \
  include/pcb.h include/util.h include/windowmanager.h include/colors.h

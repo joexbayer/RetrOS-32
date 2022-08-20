@@ -59,10 +59,34 @@ struct window_binary_tree* new_node()
 
 }
 
-int window_left_right_split(struct window_binary_tree* wbt)
+int init_window(struct window* w, int x, int y, int width, int height)
 {
+    w->x = x;
+    w->y = y;
+    w->color = VGA_COLOR_LIGHT_GREY;
+    memcpy(root.value->name, "WINDOW", strlen("WINDOW"));
+    w->visable = 1;
+    w->width = width;
+    w->height = height;
+    w->state.color = VGA_COLOR_LIGHT_GREY;
+    w->state.column = 0;
+    w->state.row = USABLE_HEIGHT-1;
 
-		return 0;
+    return 1;
+}   
+
+int window_split_horizontal(struct window_binary_tree* wbt)
+{
+    /* General idea: take the root of wbt and split its window left and right */
+    int l_width = wbt->value->width / 2;
+    struct window* left = wbt->left->value;
+    struct window* right = wbt->right->value;
+
+    /* This assumes that the left window is already "defined" and right not.*/
+
+    init_window(left, left->x, left->y, l_width, left->height);
+    init_window(right, l_width+1, left->y, l_width, left->height);
+    return 0;
 }
 
 int attach_window(struct window* w)
@@ -103,6 +127,8 @@ int attach_window(struct window* w)
     current->right = new_node();
     current->right->root = current;
     current->right->value = current_running->window;
+
+    window_split_horizontal(current);
 
     return 1;
 }
