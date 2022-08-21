@@ -15,7 +15,7 @@ void main()
 
 	while(1)
 	{	
-		screen_put(1+i, 1, 'a');
+		print_put('a');
 		int test = 0;
 		for (int i = 0; i < 40000000; i++)
 		{

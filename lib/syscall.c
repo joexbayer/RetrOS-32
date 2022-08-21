@@ -31,5 +31,5 @@ void screen_put(int x, int y, unsigned char c)
 
 void print_put(unsigned char c)
 {
-    int rest = invoke_syscall(SYSCALL_SCRPUT, c, 0, 0);
+    int rest = invoke_syscall(SYSCALL_PRTPUT, c, 0, 0);
 }
