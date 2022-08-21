@@ -17,8 +17,24 @@ struct window_binary_tree {
 static struct window windows[MAX_NUM_OF_PCBS];
 static struct window_binary_tree root;
 
-void split_screen() {
+void split_screen() 
+{
 	
+}
+
+void clear_window(struct window* w)
+{
+    for (uint8_t i = 0; i < w->width; i++)
+    {
+        scrput(w->x+i, w->y, ' ', w->color);
+        scrput(w->x+i, w->y+w->height, ' ', w->color);
+    }
+   
+    for (uint8_t i = 0; i < w->height; i++)
+    {
+        scrput(w->x, w->y+i, ' ', w->color);
+        scrput(w->x+w->width, w->y+i, ' ', w->color);
+    }
 }
 
 void draw_window(struct window* w)
@@ -64,7 +80,7 @@ int init_window(struct window* w, int x, int y, int width, int height)
     w->x = x;
     w->y = y;
     w->color = VGA_COLOR_LIGHT_GREY;
-    memcpy(root.value->name, "WINDOW", strlen("WINDOW"));
+    memcpy(w->name, "WINDOW", strlen("WINDOW"));
     w->visable = 1;
     w->width = width;
     w->height = height;
@@ -77,6 +93,9 @@ int init_window(struct window* w, int x, int y, int width, int height)
 
 int window_split_horizontal(struct window_binary_tree* wbt)
 {
+
+    clear_window(wbt->value);
+
     /* General idea: take the root of wbt and split its window left and right */
     int l_width = wbt->value->width / 2;
     struct window* left = wbt->left->value;
@@ -85,7 +104,8 @@ int window_split_horizontal(struct window_binary_tree* wbt)
     /* This assumes that the left window is already "defined" and right not.*/
 
     init_window(left, left->x, left->y, l_width, left->height);
-    init_window(right, l_width+1, left->y, l_width, left->height);
+    init_window(right, l_width+2, left->y, l_width, left->height);
+    right->color = VGA_COLOR_GREEN;
     return 0;
 }
 
