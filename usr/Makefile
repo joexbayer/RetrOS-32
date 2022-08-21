@@ -25,7 +25,7 @@ endif
 OUTPUTDIR = ./bin/
 
 USROBJS = bin/counter.o
-COMMON = ../bin/syscall.o
+COMMON = ../bin/syscall.o # ../bin/util.o ../bin/printf.o
 
 .PHONY: all new programs
 all: new
@@ -37,8 +37,8 @@ programs: bin/process_entry.o ${USROBJS}
 
 bin/%.o: %.c bin/process_entry.o
 	@$(CC) -o $@ -c $< $(CCFLAGS)
-	@$(LD) -o $(basename $@) $@ bin/process_entry.o ../bin/syscall.o $(LDFLAGS) -T ./process_linker.ld
-	@echo [USR] Compiling $@
+	@$(LD) -o $(basename $@) $@ bin/process_entry.o $(COMMON) $(LDFLAGS) -T ./process_linker.ld
+	@echo [USR] Compiling $(basename $@)
 
 bin/%.o: %.s
 	@echo [USR] Compiling $@

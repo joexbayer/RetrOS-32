@@ -223,15 +223,18 @@ void scrwrite(int x, int y, char* str, uint8_t color)
  */
 void scrput(int x, int y, unsigned char c, uint8_t color)
 {
-
+    
     if(current_running->window != NULL ){
-        y = current_running->window->y + y;
-        x = current_running->window->x + x;
+        y = (current_running->window->y + y);
+        x = (current_running->window->x + x);
+
         //if(is_window_visable() == 0){
         //    serial_put(c);
         //   return;
         //}
+
     }
+
 	const int index = y * SCREEN_WIDTH + x;
 	VGA_MEMORY[index] = vga_entry(c, color);
 }

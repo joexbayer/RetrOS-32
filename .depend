@@ -61,19 +61,21 @@ process.o: kernel/process.c include/process.h include/stdint.h \
 scheduler.o: kernel/scheduler.c include/scheduler.h include/pcb.h \
  include/util.h include/stdint.h include/windowmanager.h include/colors.h \
  include/timer.h include/rtc.h
+terminal.o: kernel/terminal.c include/terminal.h include/util.h \
+ include/stdint.h include/stdarg.h include/screen.h include/colors.h \
+ include/windowmanager.h
 windowmanager.o: kernel/windowmanager.c include/util.h include/stdint.h \
  include/windowmanager.h include/colors.h include/screen.h \
  include/serial.h include/pcb.h
 bitmap.o: lib/bitmap.c include/bitmap.h include/stdint.h include/memory.h \
  include/pcb.h include/util.h include/windowmanager.h include/colors.h
+printf.o: lib/printf.c include/stdarg.h include/syscall.h include/util.h \
+ include/stdint.h
 sync.o: lib/sync.c include/sync.h include/stdint.h include/terminal.h \
  include/util.h include/scheduler.h include/pcb.h include/windowmanager.h \
  include/colors.h
 syscall.o: lib/syscall.c include/syscall_helper.h include/syscall.h \
  include/stdint.h
-terminal.o: lib/terminal.c include/terminal.h include/util.h \
- include/stdint.h include/stdarg.h include/screen.h include/colors.h \
- include/windowmanager.h
 util.o: lib/util.c include/util.h include/stdint.h
 arp.o: net/arp.c include/net/arp.h include/stdint.h include/net/utils.h \
  include/net/skb.h include/net/netdev.h include/pci.h include/memory.h \

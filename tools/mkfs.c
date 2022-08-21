@@ -135,7 +135,7 @@ int add_userspace_program(struct superblock* sb, struct inode* current_dir, char
     int fret = fread(buf, 1, file_size, file);
     if(fret <= 0)
     {
-        printf("[MKFS] Error reading program %d!\n", program);
+        printf("[MKFS] Error reading program %s!\n", program);
     }
 
     /* Create a inode and write the contents of the given program.*/
@@ -149,6 +149,8 @@ int add_userspace_program(struct superblock* sb, struct inode* current_dir, char
     };
     memcpy(file_dir_entry.name, program, strlen(program)+1);
     __inode_add_dir(&file_dir_entry, current_dir, sb);
+
+    printf("[MKFS] Added userspace program %s (%d bytes)!\n", program, file_size);
 
     free(buf);
 

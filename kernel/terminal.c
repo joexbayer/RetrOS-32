@@ -21,29 +21,11 @@
 
 static const char newline = '\n';
 
-#define TERMINAL_START 1
-#define TERMINAL_WIDTH SCREEN_WIDTH
-#define PROCESS_WIDTH (SCREEN_WIDTH/3)+(SCREEN_WIDTH/6)
-
  /*
 	TERMINAL
 */
 static int terminal_row;
 static int terminal_column;
-static uint8_t terminal_color;
-
-
-/**
- * Clears the terminal window.
- * @return void
- */
-void terminal_clear()
-{	
-	/* Clears the terminal window */
-	for (int y = 1; y < get_window_height()-1; y++)
-		for (int x = 1; x < get_window_width()-1; x++)
-			scrput(x, y, ' ', terminal_color);
-}
 
 /**
  * Defines the terminal area and clears screen.
@@ -53,15 +35,10 @@ void init_terminal(void)
 {
 	terminal_row = get_window_height();
 	terminal_column = 0;
-	terminal_color = VGA_COLOR_LIGHT_GREY;
 
 	/* Clears screen */
 	scr_clear();
 
-	//for (int i = window.anchor+1; i < window.width-1; i++)
-	//	scrput(i, 0, ' ', VGA_COLOR_BLACK | VGA_COLOR_LIGHT_GREY << 4);
-
-	terminal_setcolor(VGA_COLOR_WHITE);
 	screen_set_cursor(0, 0); 
 }
 
@@ -73,17 +50,6 @@ void init_terminal(void)
 static void __terminal_scroll()
 {	
 	scr_scroll(1, 1, get_window_width(), get_window_height());
-}
-
- 
-/**
- * Defines color to use for printing.
- * @param uint8_t color of the text written to terminal.
- * @return void
- */
-void terminal_setcolor(uint8_t color)
-{
-	terminal_color = color;
 }
 
 /**
@@ -105,11 +71,11 @@ void terminal_putchar(char c)
 	
 	if (state->column+1 == get_window_width()-1)
 	{
-		scrput(state->column, get_window_height()-1, '-', terminal_color);
+		scrput(state->column, get_window_height()-1, '-', state->color);
 		state->column = 1;
 		__terminal_scroll();
 	}
-	scrput(state->column, get_window_height()-1, uc, terminal_color);
+	scrput(state->column, get_window_height()-1, uc, state->color);
 	state->column++;
 }
  
@@ -121,8 +87,6 @@ void terminal_putchar(char c)
  */
 void terminal_write(const char* data, int size)
 {
-	//__terminal_putchar('<');
-	//__terminal_putchar(' ');
 	for (int i = 0; i < size; i++)
 		terminal_putchar(data[i]);
 }

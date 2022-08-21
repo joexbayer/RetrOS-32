@@ -32,6 +32,8 @@ KERNELOBJ = bin/kernel_entry.o bin/kernel.o bin/terminal.o bin/pci.o \
 			bin/serial.o bin/io.o bin/syscall.o ${PROGRAMOBJ}
 BOOTOBJ = bin/bootloader.o
 
+LIBOBJ = bin/printf.o
+
 .PHONY: all new image clean boot net kernel grub
 all: iso
 
@@ -132,7 +134,7 @@ iso2: compile
 filesystem:
 	@dd if=/dev/zero of=filesystem.image bs=512 count=390
 
-compile: bindir bootblock kernel
+compile: bindir $(LIBOBJ) bootblock kernel
 
 img: iso
 	mv boot.iso boot.img

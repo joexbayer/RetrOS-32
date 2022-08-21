@@ -54,6 +54,7 @@ void _main()
 	start_process(1); // Networking
 
 	add_system_call(SYSCALL_SCRPUT, (syscall_t)&scrput);
+	add_system_call(SYSCALL_PRTPUT, (syscall_t)&terminal_putchar);
 
 	dbgprintf("TEXT: %d\n", _code_end-_code);
 	dbgprintf("RODATA: %d\n", _ro_e-_ro_s);

@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <pcb.h>
 
+extern char _code[], _end[], _code_end[], _ro_s[], _ro_e[], _data_s[], _data_e[], _bss_s[], _bss_e[];
+extern int kernel_size;
+
 enum {
 	USED,
 	FREE

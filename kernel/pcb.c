@@ -191,7 +191,7 @@ int create_process(char* program)
     /* Load process from disk */
     inode_t inode = fs_open(program);
 
-    char buf[512]; /* WARNING: Needs to be max filesystem, but NOT overflow the stack of 8Kib */
+    char buf[MAX_FILE_SIZE];
     int read = file_read((char* )buf, inode);
     file_close(inode);
     dbgprintf("[INIT PROCESS] Reading %s from disk (%d bytes)\n", program, read);
@@ -204,7 +204,7 @@ int create_process(char* program)
     
     struct pcb* pcb = &pcbs[i];
 
-    pcb->eip = 0x1000000; /* External programs start */
+    pcb->eip = (void (*)()) 0x1000000; /* External programs start */
     pcb->running = NEW;
     pcb->pid = i;
     memcpy(pcb->name, program, strlen(program)+1);
