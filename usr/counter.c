@@ -9,14 +9,24 @@
  * 
  */
 #include <syscall.h>
+
+inline void writeln(char* str)
+{
+  char len = 0;
+  while(str[len]){
+    len++;
+    print_put(str[len]);
+  }
+}
 void main()
 {
 	int i = 1;
 
 	while(1)
 	{	
-		print_put('a');
-		int test = 0;
+	  writeln("Counter: Tick!\n");
+		//print_put('a');
+    int test = 0;
 		for (int i = 0; i < 40000000; i++)
 		{
 			test = (test + 1) % 10000;
