@@ -17,10 +17,6 @@ struct window_binary_tree {
 static struct window windows[MAX_NUM_OF_PCBS];
 static struct window_binary_tree root;
 
-void split_screen() 
-{
-	
-}
 
 void clear_window(struct window* w)
 {
@@ -111,8 +107,6 @@ int window_split_horizontal(struct window_binary_tree* wbt)
 
 int attach_window(struct window* w)
 {
-    //current_running->window = w;
-    //return 0;
 	/* This function should create a window for the process requesting it.
 	 * Importantly it should tile them by dividing the current main window in two.
 	 * Storing the windows in a binary tree.
