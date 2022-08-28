@@ -27,7 +27,9 @@ struct sk_buff {
         struct ethernet_header* eth;
         struct arp_header* arp;
         struct ip_header* ip;
+        /* Can TCP and UDP be a union? */
         struct udp_header* udp;
+        struct tcp_header* tcp;
         struct icmp* icmp;
     } hdr;
 
@@ -71,6 +73,7 @@ struct sk_buff* next_skb();
 #include <net/ipv4.h>
 #include <net/icmp.h>
 #include <net/udp.h>
+#include <net/tcp.h>
 
 #endif // !SKB_H
 

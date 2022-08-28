@@ -24,7 +24,8 @@ endif
 
 OUTPUTDIR = ../bin/
 
-NETOBJS = netdev.o ethernet.o skb.o arp.o ipv4.o utils.o icmp.o udp.o socket.o dns.o routing.o
+NETOBJS = netdev.o ethernet.o skb.o arp.o ipv4.o utils.o icmp.o udp.o \
+	socket.o dns.o routing.o tcp.o
 
 .PHONY: all new network clean bindir
 all: new

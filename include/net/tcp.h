@@ -9,6 +9,7 @@ enum {
   TCP_LISTEN,
   TCP_SYN_RCVD,
   TCP_SYN_SENT,
+  /* Between SYN_SENT and ESTABLISHED a new socket is created. */
   TCP_ESTABLISHED,
   TCP_FIN_WAIT_1,
   TCP_FIN_WAIT_2,
@@ -34,9 +35,10 @@ struct tcp_header {
 
 };
 
-struct tcp_socket {
-  
-
+struct tcp_connection {
+    uint8_t state;
+    uint16_t src_port;
+    uint16_t dst_port;
 };
 
 #endif
