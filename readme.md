@@ -18,7 +18,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <h3 align="center">NET/OS</h3>
+  <h1 align="center">NET/OS</h1>
 
   <p align="center">
     Hobby operatingsystem project focusing on networking.
