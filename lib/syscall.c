@@ -9,8 +9,9 @@
  * 
  */
 #include <syscall_helper.h>
-#include <syscall.h>
+#include <usr_syscall.h>
 #include <stdint.h>
+#include <util.h>
 
 int malloc();
 

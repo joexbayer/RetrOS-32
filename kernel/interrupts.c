@@ -11,7 +11,6 @@
  */
 #include <interrupts.h>
 #include <serial.h>
-#include <screen.h>
 #include <io.h>
 
 //TEMP
@@ -19,24 +18,13 @@
 
 static struct idt_entry idt_entries[IDT_ENTRIES];
 static struct idt_ptr   idt;
+/* Handlers, default 0, will be installed when needed. */
+static void (*handlers[ISR_LINES])() = { 0 };
+static void (*irqs[ISR_LINES])(struct registers*) = {
+	isr32, isr33, isr34, isr35, isr36, isr37, isr38, isr39,
+	isr40, isr41, isr42, isr43, isr44, isr45, isr46, isr47
+};
 
-/* TODO: Move to own file? */
-syscall_t syscall[10];
-
-void add_system_call(int index, syscall_t fn)
-{
-	syscall[index] = fn;
-}
-
-int system_call(int index, int arg1, int arg2, int arg3)
-{	
-	/* Call system call function based on index. */
-	syscall_t fn = syscall[index];
-	int ret = fn(arg1, arg2, arg3);
-	//dbgprintf("[SYSCALL] %d: %s %s\n", index, current_running->name, current_running->window->name);
-	EOI(48);
-	return ret;
-}
 
 void page_fault_interrupt(unsigned long cr2, unsigned long err)
 {
@@ -45,15 +33,6 @@ void page_fault_interrupt(unsigned long cr2, unsigned long err)
 	dbgprintf("Page: %x, process: %s\n", kernel_page_dir[DIRECTORY_INDEX(cr2)], current_running->name);
 	while(1);
 }
-
-
-/* Handlers, default 0, will be installed when needed. */
-static void (*handlers[ISR_LINES])() = { 0 };
-
-static void (*irqs[ISR_LINES])(struct registers*) = {
-	isr32, isr33, isr34, isr35, isr36, isr37, isr38, isr39,
-	isr40, isr41, isr42, isr43, isr44, isr45, isr46, isr47
-};
 /**
  * @brief Given a IRQ line, it assigns a handler to it. 
  * 

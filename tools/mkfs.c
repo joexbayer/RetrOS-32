@@ -130,7 +130,7 @@ int add_userspace_program(struct superblock* sb, struct inode* current_dir, char
     fseek(file, 0L, SEEK_END);
     int file_size = ftell(file);
     rewind(file);
-    
+
     char* buf = malloc(file_size);
     int fret = fread(buf, 1, file_size, file);
     if(fret <= 0)

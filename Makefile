@@ -29,7 +29,7 @@ KERNELOBJ = bin/kernel_entry.o bin/kernel.o bin/terminal.o bin/pci.o \
 			bin/keyboard.o bin/screen.o bin/pcb.o bin/memory.o bin/e1000.o \
 			bin/sync.o bin/process.o bin/ata.o bin/bitmap.o bin/rtc.o \
 			bin/diskdev.o bin/scheduler.o bin/net.o bin/fs.o bin/windowmanager.o \
-			bin/serial.o bin/io.o bin/syscall.o ${PROGRAMOBJ}
+			bin/serial.o bin/io.o bin/syscalls.o bin/syscall.o ${PROGRAMOBJ}
 BOOTOBJ = bin/bootloader.o
 
 LIBOBJ = bin/printf.o
@@ -147,6 +147,7 @@ clean:
 	rm -f ./bin/bootblock
 	rm -f ./bin/kernelout
 	rm -f .depend
+	rm -f filesystem.image
 
 bindir:
 	@mkdir -p bin

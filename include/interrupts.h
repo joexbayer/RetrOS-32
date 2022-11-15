@@ -2,6 +2,7 @@
 #define INTERRUPTS_H
 
 #include <stdint.h>
+#include <syscalls.h>
 
 #define ISR_LINES	49
 #define PIC1		0x20		/* IO base address for master PIC */
@@ -21,11 +22,8 @@ struct registers
     uint32_t eip, cs, eflags, useresp, ss; // Pushed by the processor automatically.
 };
 
-typedef int (*syscall_t) ();
-void add_system_call(int index, syscall_t fn);
 
 void init_interrupts();
-int invoke_syscall(int i, int arg1, int arg2, int arg3);
 void _syscall_entry(void);
 void page_fault_interrupt(unsigned long cr2, unsigned long err);
 

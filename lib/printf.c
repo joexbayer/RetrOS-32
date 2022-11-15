@@ -10,7 +10,7 @@
  */
 
 #include <stdarg.h>
-#include <syscall.h>
+#include <usr_syscall.h>
 #include <util.h>
 
 /**

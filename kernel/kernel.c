@@ -19,6 +19,7 @@
 #include <fs/fs.h>
 #include <serial.h>
 #include <syscall_helper.h>
+#include <syscalls.h>
 
 /* This functions always needs to be on top? */
 void _main() 

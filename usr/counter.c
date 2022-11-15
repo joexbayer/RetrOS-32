@@ -8,7 +8,7 @@
  * @copyright Copyright (c) 2022
  * 
  */
-#include <syscall.h>
+#include <usr_syscall.h>
 
 inline void writeln(char* str)
 {

@@ -1,7 +1,7 @@
 /**
  * @file memory.c
  * @author Joe Bayer (joexbayer)
- * @brief A primitiv memory allocation program, using chunks with size of 4096
+ * @brief A primitiv memory allocation program and virtual memory functions.
  * @version 0.1
  * @date 2022-06-02
  * 

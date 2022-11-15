@@ -10,12 +10,12 @@ int strlen(const char* str)
 	return len;
 }
 
-uint32_t strncmp(const char* str, const char* str2, uint32_t len)
+inline uint32_t strncmp(const char* str, const char* str2, uint32_t len)
 {
 	return memcmp((uint8_t*)str, (uint8_t*)str2, len);
 }
 
-uint32_t memcmp(const uint8_t* ptr, const uint8_t* ptr2, uint32_t len)
+inline inline uint32_t memcmp(const uint8_t* ptr, const uint8_t* ptr2, uint32_t len)
 {
 	for (uint32_t i = 0; i < len; i++)
 	{
@@ -39,7 +39,7 @@ uint32_t memcmp(const uint8_t* ptr, const uint8_t* ptr2, uint32_t len)
  *
  * @return void*
  */
-void* memcpy(void *dest, const void *src, int n)
+inline void* memcpy(void *dest, const void *src, int n)
 {
 	uint32_t num_dwords	= n / 4;
 	uint32_t num_bytes	= n % 4;
@@ -66,7 +66,7 @@ void* memcpy(void *dest, const void *src, int n)
  *
  * @return void*
  */
-void* memset(void *dest, int val, int n)
+inline void* memset(void *dest, int val, int n)
 {
 	uint32_t num_dwords = n / 4;
 	uint32_t num_bytes  = n % 4;
@@ -88,7 +88,7 @@ void* memset(void *dest, int val, int n)
 	return dest;
 }
 
-int isdigit(char c)
+inline int isdigit(char c)
 {
     if ((c>='0') && (c<='9')) return 1;
     return 0;
@@ -98,7 +98,7 @@ int isdigit(char c)
  * Functions from Kerninghan/Ritchie - The C Programming Language
  */
 
-void reverse(char s[])
+inline void reverse(char s[])
 {
 	int c, i, j;
 
@@ -110,7 +110,7 @@ void reverse(char s[])
 	}
 }
 
-int atoi(char s[])
+inline int atoi(char s[])
 {
 	int i, n, sign;
 	for(i = 0; s[i] == ' '; i++) /* Skip white spaces */
@@ -125,7 +125,7 @@ int atoi(char s[])
 	return n*sign;
 }
 
-void itoa(int n, char s[])
+inline void itoa(int n, char s[])
 {
 	int i, sign;
 
@@ -143,7 +143,7 @@ void itoa(int n, char s[])
 	reverse(s);
 }
 
-void itohex(uint32_t n, char s[])
+inline void itohex(uint32_t n, char s[])
 {
   uint32_t i, d;
 

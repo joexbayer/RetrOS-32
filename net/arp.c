@@ -83,14 +83,8 @@ void arp_print_cache()
 		if(arp_entries[i].sip != 0){
 
 			uint32_t ip = ntohl(arp_entries[i].sip);
-			uint8_t bytes[4];
-			bytes[0] = (ip >> 24) & 0xFF;
-			bytes[1] = (ip >> 16) & 0xFF;
-			bytes[2] = (ip >> 8) & 0xFF;
-			bytes[3] = ip & 0xFF; 
-			twritef("(%d.%d.%d.%d) at %x:%x:%x:%x:%x:%x\n",
-					bytes[3], bytes[2], bytes[1], bytes[0],
-					arp_entries[i].smac[0], arp_entries[i].smac[1], arp_entries[i].smac[2], arp_entries[i].smac[3], arp_entries[i].smac[4], arp_entries[i].smac[5]);
+			twritef("(%i) at %x:%x:%x:%x:%x:%x\n",
+					ip, arp_entries[i].smac[0], arp_entries[i].smac[1], arp_entries[i].smac[2], arp_entries[i].smac[3], arp_entries[i].smac[4], arp_entries[i].smac[5]);
 		}
 }
 

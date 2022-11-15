@@ -1,13 +1,14 @@
 ata.o: drivers/ata.c include/ata.h include/stdint.h include/interrupts.h \
- include/memory.h include/pcb.h include/util.h include/windowmanager.h \
- include/colors.h include/io.h include/diskdev.h include/serial.h
+ include/syscalls.h include/memory.h include/pcb.h include/util.h \
+ include/windowmanager.h include/colors.h include/io.h include/diskdev.h \
+ include/serial.h
 e1000.o: drivers/e1000.c include/e1000.h include/stdint.h include/pci.h \
  include/screen.h include/util.h include/colors.h include/interrupts.h \
- include/net/netdev.h include/memory.h include/pcb.h \
+ include/syscalls.h include/net/netdev.h include/memory.h include/pcb.h \
  include/windowmanager.h include/serial.h
 keyboard.o: drivers/keyboard.c include/keyboard.h include/stdint.h \
  include/screen.h include/util.h include/colors.h include/serial.h \
- include/interrupts.h include/sync.h include/io.h
+ include/interrupts.h include/syscalls.h include/sync.h include/io.h
 rtc.o: drivers/rtc.c include/rtc.h include/stdint.h include/io.h
 screen.o: drivers/screen.c include/screen.h include/util.h \
  include/stdint.h include/colors.h include/pcb.h include/windowmanager.h \
@@ -16,8 +17,8 @@ serial.o: drivers/serial.c include/serial.h include/stdint.h include/io.h \
  include/util.h include/stdarg.h
 timer.o: drivers/timer.c include/timer.h include/stdint.h include/rtc.h \
  include/screen.h include/util.h include/colors.h include/serial.h \
- include/interrupts.h include/scheduler.h include/pcb.h \
- include/windowmanager.h include/io.h
+ include/interrupts.h include/syscalls.h include/scheduler.h \
+ include/pcb.h include/windowmanager.h include/io.h
 fs.o: fs/fs.c include/fs/fs.h include/fs/inode.h include/stdint.h \
  include/rtc.h include/fs/superblock.h include/bitmap.h \
  include/fs/directory.h include/memory.h include/pcb.h include/util.h \
@@ -29,19 +30,20 @@ inode.o: fs/inode.c include/fs/inode.h include/stdint.h include/rtc.h \
 diskdev.o: kernel/diskdev.c include/diskdev.h include/ata.h \
  include/stdint.h include/util.h include/terminal.h include/serial.h
 interrupts.o: kernel/interrupts.c include/interrupts.h include/stdint.h \
- include/serial.h include/screen.h include/util.h include/colors.h \
- include/io.h include/memory.h include/pcb.h include/windowmanager.h
+ include/syscalls.h include/serial.h include/io.h include/memory.h \
+ include/pcb.h include/util.h include/windowmanager.h include/colors.h
 io.o: kernel/io.c include/io.h include/stdint.h
 kernel.o: kernel/kernel.c include/windowmanager.h include/stdint.h \
  include/colors.h include/util.h include/pci.h include/terminal.h \
- include/keyboard.h include/interrupts.h include/timer.h include/rtc.h \
- include/screen.h include/pcb.h include/memory.h include/process.h \
- include/programs.h include/net/skb.h include/net/netdev.h \
- include/net/utils.h include/net/ethernet.h include/net/arp.h \
- include/net/ipv4.h include/net/icmp.h include/net/udp.h \
- include/net/tcp.h include/ata.h include/bitmap.h include/net/socket.h \
- include/sync.h include/net/dns.h include/fs/fs.h include/fs/inode.h \
- include/fs/superblock.h include/serial.h include/syscall_helper.h
+ include/keyboard.h include/interrupts.h include/syscalls.h \
+ include/timer.h include/rtc.h include/screen.h include/pcb.h \
+ include/memory.h include/process.h include/programs.h include/net/skb.h \
+ include/net/netdev.h include/net/utils.h include/net/ethernet.h \
+ include/net/arp.h include/net/ipv4.h include/net/icmp.h \
+ include/net/udp.h include/net/tcp.h include/ata.h include/bitmap.h \
+ include/net/socket.h include/sync.h include/net/dns.h include/fs/fs.h \
+ include/fs/inode.h include/fs/superblock.h include/serial.h \
+ include/syscall_helper.h
 memory.o: kernel/memory.c include/memory.h include/stdint.h include/pcb.h \
  include/util.h include/windowmanager.h include/colors.h include/screen.h \
  include/serial.h include/timer.h include/rtc.h include/sync.h \
@@ -61,6 +63,8 @@ process.o: kernel/process.c include/process.h include/stdint.h \
 scheduler.o: kernel/scheduler.c include/scheduler.h include/memory.h \
  include/stdint.h include/pcb.h include/util.h include/windowmanager.h \
  include/colors.h include/timer.h include/rtc.h
+syscalls.o: kernel/syscalls.c include/syscalls.h include/interrupts.h \
+ include/stdint.h
 terminal.o: kernel/terminal.c include/terminal.h include/util.h \
  include/stdint.h include/stdarg.h include/screen.h include/colors.h \
  include/windowmanager.h
@@ -69,13 +73,13 @@ windowmanager.o: kernel/windowmanager.c include/util.h include/stdint.h \
  include/screen.h include/serial.h
 bitmap.o: lib/bitmap.c include/bitmap.h include/stdint.h include/memory.h \
  include/pcb.h include/util.h include/windowmanager.h include/colors.h
-printf.o: lib/printf.c include/stdarg.h include/syscall.h include/util.h \
- include/stdint.h
+printf.o: lib/printf.c include/stdarg.h include/usr_syscall.h \
+ include/util.h include/stdint.h
 sync.o: lib/sync.c include/sync.h include/stdint.h include/terminal.h \
  include/util.h include/scheduler.h include/pcb.h include/windowmanager.h \
  include/colors.h
-syscall.o: lib/syscall.c include/syscall_helper.h include/syscall.h \
- include/stdint.h
+syscall.o: lib/syscall.c include/syscall_helper.h include/usr_syscall.h \
+ include/stdint.h include/util.h
 util.o: lib/util.c include/util.h include/stdint.h
 arp.o: net/arp.c include/net/arp.h include/stdint.h include/net/utils.h \
  include/net/skb.h include/net/netdev.h include/pci.h include/memory.h \
@@ -138,4 +142,4 @@ build.o: tools/build.c include/stdint.h
 mkfs.o: tools/mkfs.c include/stdint.h include/fs/fs.h include/fs/inode.h \
  include/rtc.h include/fs/superblock.h include/bitmap.h \
  include/fs/directory.h
-counter.o: usr/counter.c include/syscall.h
+counter.o: usr/counter.c include/usr_syscall.h
