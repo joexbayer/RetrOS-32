@@ -73,6 +73,7 @@ windowmanager.o: kernel/windowmanager.c include/util.h include/stdint.h \
  include/screen.h include/serial.h
 bitmap.o: lib/bitmap.c include/bitmap.h include/stdint.h include/memory.h \
  include/pcb.h include/util.h include/windowmanager.h include/colors.h
+list.o: lib/list.c include/list.h
 printf.o: lib/printf.c include/stdarg.h include/usr_syscall.h \
  include/util.h include/stdint.h
 sync.o: lib/sync.c include/sync.h include/stdint.h include/terminal.h \

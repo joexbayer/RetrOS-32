@@ -12,6 +12,13 @@
 
 #define NULL (void *)0
 
+/* From linux kernel. */
+#define offsetof(st, m) \
+    ((int)((char *)&((st *)0)->m - (char *)0))
+#define container_of(ptr, type, member) ({\
+   const typeof(((type *)0)->member) * __mptr = (ptr);\
+   (type *)((char *)__mptr - offsetof(type, member)); })
+
 
 int strlen(const char* str);
 uint32_t strncmp(const char* str, const char* str2, uint32_t len);

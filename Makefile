@@ -1,4 +1,4 @@
-CCFLAGS=-m32 -std=gnu99 -O2 \
+CCFLAGS=-m32 -std=gnu11 -O2 \
 		-g -Wall -Wextra -Wpedantic -Wstrict-aliasing \
 		-Wno-pointer-arith -Wno-unused-parameter -nostdlib \
 		-nostdinc -ffreestanding -fno-pie -fno-stack-protector \
@@ -29,10 +29,10 @@ KERNELOBJ = bin/kernel_entry.o bin/kernel.o bin/terminal.o bin/pci.o \
 			bin/keyboard.o bin/screen.o bin/pcb.o bin/memory.o bin/e1000.o \
 			bin/sync.o bin/process.o bin/ata.o bin/bitmap.o bin/rtc.o \
 			bin/diskdev.o bin/scheduler.o bin/net.o bin/fs.o bin/windowmanager.o \
-			bin/serial.o bin/io.o bin/syscalls.o bin/syscall.o ${PROGRAMOBJ}
+			bin/serial.o bin/io.o bin/syscalls.o bin/list.o ${PROGRAMOBJ}
 BOOTOBJ = bin/bootloader.o
 
-LIBOBJ = bin/printf.o
+LIBOBJ = bin/printf.o bin/syscall.o
 
 .PHONY: all new image clean boot net kernel grub
 all: iso
