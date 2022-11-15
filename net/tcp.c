@@ -25,7 +25,7 @@ int tcp_send_syn(struct tcp_connection* conn, uint16_t dst_port, uint16_t src_po
 }
 
 
-int tcp_parse(struct skb_buff* skb)
+int tcp_parse(struct sk_buff* skb)
 {
     
     return 0;

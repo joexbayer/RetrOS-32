@@ -293,7 +293,7 @@ void init_process_paging(struct pcb* pcb, char* data, int size)
 	process_directory[0] = kernel_page_dir[0];
 
 	dbgprintf("[INIT PROCESS] Paging done.\n");
-	pcb->page_dir = (uint32_t)process_directory;
+	pcb->page_dir = (uint32_t*)process_directory;
 }
 
 void init_paging()

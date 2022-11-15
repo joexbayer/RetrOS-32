@@ -147,10 +147,12 @@ uint8_t font8x8_basic[128][8] = {
     { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}    // U+007F
 };
 
+/* Only used for graphics mode
 static void putpixel(unsigned char* screen, int x,int y, int width, int color) {
     unsigned where = x + y*width;
     screen[where] = color;
 }
+*/
 
 #define MAX_FMT_STR_SIZE 50
 

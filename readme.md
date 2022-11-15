@@ -21,7 +21,7 @@
   <h1 align="center">NET/OS</h1>
 
   <p align="center">
-    Hobby operatingsystem project focusing on networking.
+    Hobby 32bit operatingsystem project focusing on networking.
     <br />
     <a href="https://github.com/joexbayer/NETOS"><strong>Explore the docs »</strong></a>
     <br />

@@ -1,5 +1,6 @@
 #include "util.h"
 #include <windowmanager.h>
+#include <memory.h>
 #include <screen.h>
 #include <serial.h>
 #include <pcb.h>

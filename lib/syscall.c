@@ -26,10 +26,10 @@ int invoke_syscall(int i, int arg1, int arg2, int arg3)
 
 void screen_put(int x, int y, unsigned char c)
 {
-    int rest = invoke_syscall(SYSCALL_SCRPUT, x, y, c);
+    invoke_syscall(SYSCALL_SCRPUT, x, y, c);
 }
 
 void print_put(unsigned char c)
 {
-    int rest = invoke_syscall(SYSCALL_PRTPUT, c, 0, 0);
+    invoke_syscall(SYSCALL_PRTPUT, c, 0, 0);
 }

@@ -1,6 +1,7 @@
 #include <diskdev.h>
 #include <util.h>
 #include <terminal.h>
+#include <serial.h>
 
 struct diskdev disk_device;
 

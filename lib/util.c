@@ -17,7 +17,7 @@ uint32_t strncmp(const char* str, const char* str2, uint32_t len)
 
 uint32_t memcmp(const uint8_t* ptr, const uint8_t* ptr2, uint32_t len)
 {
-	for (int i = 0; i < len; i++)
+	for (uint32_t i = 0; i < len; i++)
 	{
 		if(ptr[i] != ptr2[i])
 			return 0;

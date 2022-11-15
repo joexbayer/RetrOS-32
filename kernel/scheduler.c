@@ -1,4 +1,5 @@
 #include <scheduler.h>
+#include <memory.h>
 #include <pcb.h>
 #include <timer.h>
 
