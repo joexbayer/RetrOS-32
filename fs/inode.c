@@ -101,11 +101,31 @@ int inode_read(char* buf, int size, struct inode* inode, struct superblock* sb)
     if(size > MAX_FILE_SIZE || size > inode->size || (size + inode->pos) > inode->size)
         return -1;
     
-    int block = (size+inode->pos) / BLOCK_SIZE;
-    if(inode->blocks[block] == 0)
-        return -1;
+    int left = size;
+    int new_pos = inode->pos % BLOCK_SIZE;
+    int block = (inode->pos) / BLOCK_SIZE;
+    int progress = 0;
+
+    if(new_pos + size > BLOCK_SIZE){
+        int to_read = BLOCK_SIZE - new_pos;
+        read_block_offset(&buf[progress], to_read, new_pos, sb->blocks_start+inode->blocks[block]);
+        inode->pos += to_read;
+        left -= to_read;
+        progress += to_read;
+    }
+
+    while (left > BLOCK_SIZE)
+    {
+        block = (left+inode->pos) / BLOCK_SIZE;
+        if(inode->blocks[block] == 0)
+            return -1;
+        read_block_offset(&buf[progress], BLOCK_SIZE, 0, sb->blocks_start+inode->blocks[block]);
+        left -= BLOCK_SIZE;
+        inode->pos += BLOCK_SIZE;
+        progress += BLOCK_SIZE;
+    }
     
-    read_block_offset(buf, size, inode->pos, sb->blocks_start+inode->blocks[block]);
+    read_block_offset(&buf[progress], left, inode->pos % BLOCK_SIZE, sb->blocks_start+inode->blocks[block]);
     inode->pos += size;
 
     return inode->size > size ? size : inode->size;
@@ -123,12 +143,14 @@ int inode_write(char* buf, int size, struct inode* inode, struct superblock* sb)
         inode->blocks[block] = new_block(sb);
     
     int new_pos = inode->pos % BLOCK_SIZE;
+    int progress = 0;
     
-    if(new_pos + size > 512){
+    if(new_pos + size > BLOCK_SIZE){
         int to_write = BLOCK_SIZE - new_pos;
-        write_block_offset(buf, to_write, new_pos, sb->blocks_start+inode->blocks[block]);
+        write_block_offset(&buf[progress], to_write, new_pos, sb->blocks_start+inode->blocks[block]);
         inode->pos += to_write;
         size -= to_write;
+        progress += to_write;
     }
 
     /* Recalculate block */
@@ -139,16 +161,17 @@ int inode_write(char* buf, int size, struct inode* inode, struct superblock* sb)
     /* While size is greater than block size keep writing blocks */
     while (size > BLOCK_SIZE)
     {
-        write_block(buf, sb->blocks_start+inode->blocks[block]);
+        write_block(&buf[progress], sb->blocks_start+inode->blocks[block]);
         inode->pos += BLOCK_SIZE;
         size -= BLOCK_SIZE;
+        progress += BLOCK_SIZE;
 
         block = (size+inode->pos) / BLOCK_SIZE;
         if(inode->blocks[block] == 0)
             inode->blocks[block] = new_block(sb);
     }
     
-    write_block_offset(buf, size, inode->pos % BLOCK_SIZE, sb->blocks_start+inode->blocks[block]);
+    write_block_offset(&buf[progress], size, inode->pos % BLOCK_SIZE, sb->blocks_start+inode->blocks[block]);
     inode->pos += size;
     inode->size += original_size;
 
