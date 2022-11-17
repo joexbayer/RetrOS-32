@@ -180,6 +180,13 @@ _For more examples, please refer to the [Documentation](https://example.com)_
   - [x] Windows
   - [ ] Dynamic resize
 
+### General Improvements
+
+1. Less hardcoded arrays, more linked lists.
+2. More tables like sys_call_table.
+3. Complete rework of pcb and scheduling.
+4. Virtual Memory rework.
+5. Complete rework of socket.c
 
 See the [open issues](https://github.com/joexbayer/NETOS/issues) for a full list of proposed features (and known issues).
 
