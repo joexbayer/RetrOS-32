@@ -192,8 +192,8 @@ int create_process(char* program)
     inode_t inode = fs_open(program);
 
     char buf[MAX_FILE_SIZE];
-    int read = file_read((char* )buf, inode);
-    file_close(inode);
+    int read = fs_read((char* )buf, inode);
+    fs_close(inode);
     dbgprintf("[INIT PROCESS] Reading %s from disk (%d bytes)\n", program, read);
 
     /* Create stack and pcb */

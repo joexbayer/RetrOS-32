@@ -116,7 +116,6 @@ void fs_setup_superblock(struct superblock* superblock, int size)
 
     superblock->block_map = create_bitmap(superblock->nblocks);
     superblock->inode_map = create_bitmap(superblock->ninodes);
-
 }
 
 int add_userspace_program(struct superblock* sb, struct inode* current_dir, char* program)
@@ -128,11 +127,11 @@ int add_userspace_program(struct superblock* sb, struct inode* current_dir, char
 
     FILE* file = fopen(path_buf, "r");
     fseek(file, 0L, SEEK_END);
-    int file_size = ftell(file);
+    int fs_size = ftell(file);
     rewind(file);
 
-    char* buf = malloc(file_size);
-    int fret = fread(buf, 1, file_size, file);
+    char* buf = malloc(fs_size);
+    int fret = fread(buf, 1, fs_size, file);
     if(fret <= 0)
     {
         printf("[MKFS] Error reading program %s!\n", program);
@@ -141,7 +140,7 @@ int add_userspace_program(struct superblock* sb, struct inode* current_dir, char
     /* Create a inode and write the contents of the given program.*/
     inode_t file_inode = alloc_inode(sb, FS_FILE);
     struct inode* file_inode_disk = inode_get(file_inode, sb);
-    inode_write(buf, file_size, file_inode_disk, sb);
+    inode_write(buf, fs_size, file_inode_disk, sb);
 
     /* Add file to current dir */
     struct directory_entry file_dir_entry = {
@@ -150,7 +149,7 @@ int add_userspace_program(struct superblock* sb, struct inode* current_dir, char
     memcpy(file_dir_entry.name, program, strlen(program)+1);
     __inode_add_dir(&file_dir_entry, current_dir, sb);
 
-    printf("[MKFS] Added userspace program %s (%d bytes)!\n", program, file_size);
+    printf("[MKFS] Added userspace program %s (%d bytes)!\n", program, fs_size);
 
     free(buf);
 

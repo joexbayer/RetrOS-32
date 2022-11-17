@@ -9,11 +9,14 @@ int init_fs();
 void mkfs();
 
 inode_t fs_open(char* name);
-void file_close(inode_t inode);
-int file_read(char* buf, inode_t i);
+void fs_close(inode_t inode);
+int fs_read(char* buf, inode_t i);
+int fs_write(void* buf, int size, inode_t i);
 void chdir(char* path);
 void fs_mkdir(char* name);
-void create_file(char* name);
+void fcreate(char* name);
+
+int fs_size(inode_t i);
 
 void fs_stats();
 

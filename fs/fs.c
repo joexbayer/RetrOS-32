@@ -145,7 +145,7 @@ void mkfs()
     current_dir->pos = 0;
 }
 
-void create_file(char* name)
+void fcreate(char* name)
 {
     inode_t inode_index = alloc_inode(&superblock, FS_FILE);
     if(inode_index == 0){
@@ -161,19 +161,30 @@ void create_file(char* name)
     memcpy(new.name, name, strlen(name));
     __inode_add_dir(&new, current_dir, &superblock);
 
+    
     dbgprintf("[FS] Creating new file %s, inode: %d.\n", name, inode->inode);
 }
 
-int file_read(char* buf, inode_t i)
+int fs_read(char* buf, inode_t i)
 {
     struct inode* inode = inode_get(i, &superblock);
-    inode->pos = 0;
+    inode->pos = 0; /* Should not set pos = 0*/
     
     int ret = inode_read(buf, inode->size, inode, &superblock);
     return ret;
 }
 
-void file_close(inode_t inode)
+int fs_write(void* buf, int size, inode_t i)
+{
+    char* buffer = (char*) buf;
+    struct inode* inode = inode_get(i, &superblock);
+    inode->pos = 0; /* Should not set pos = 0*/
+    
+    int ret = inode_write(buffer, size, inode, &superblock);
+    return ret;
+}
+
+void fs_close(inode_t inode)
 {
     struct inode* inode_disk = inode_get(inode, &superblock);
     inode_disk->nlink--;
@@ -185,10 +196,12 @@ inode_t fs_open(char* name)
     current_dir->pos = 0;
 
     int size = 0;
+    dbgprintf("Dir %d\n", current_dir->size);
     while (size <= current_dir->size)
     {
         int ret = inode_read((char*) &entry, sizeof(struct directory_entry), current_dir, &superblock);
-        if(memcmp((void*)entry.name, (void*)name, strlen(entry.name)))
+        int mem_ret = memcmp((void*)entry.name, (void*)name, strlen(entry.name));
+        if(mem_ret == 0)
             break;
         size += ret;
     }
@@ -199,8 +212,16 @@ inode_t fs_open(char* name)
     struct inode* inode = inode_get(entry.inode, &superblock);
     inode->nlink++;
     inode->pos = 0;
+
+    dbgprintf("[FS] Opened file %s with size %d, inode: %d\n", name, inode->size, inode->inode);
     
     return entry.inode;
+}
+
+int fs_size(inode_t i)
+{
+    struct inode* inode = inode_get(i, &superblock);
+    return inode->size;
 }
 
 void chdir(char* path)
@@ -211,6 +232,8 @@ void chdir(char* path)
         twritef("%s is not a directory.\n", path);
         return;
     }
+
+    dbgprintf("[FS] Changing directory to %s, inode: %d\n", path, inode->inode);
 
     current_dir = inode;
 }
@@ -258,7 +281,7 @@ void ls(char* path)
         int ret = inode_read((char*) &entry, sizeof(struct directory_entry), current_dir, &superblock);
         struct inode* inode = inode_get(entry.inode, &superblock);
         struct time* time = &inode->time;
-        twritef("%p %s %d, %d:%d - %s%s\n",
+        twritef("%x %s %d, %d:%d - %s%s\n",
             inode->size,
             months[time->month],
             time->day, time->hour, time->minute,

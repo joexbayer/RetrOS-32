@@ -50,7 +50,7 @@ uint8_t ethernet_parse(struct sk_buff* skb)
     skb->data += ETHER_HDR_LENGTH;
 
     uint8_t broadcastmac[] = {255, 255, 255, 255, 255, 255};
-    if(memcmp(header->dmac, skb->netdevice->mac, 6) || memcmp(skb->hdr.eth->dmac, (uint8_t*)&broadcastmac, 6)){
+    if(memcmp(header->dmac, skb->netdevice->mac, 6) == 0 || memcmp(skb->hdr.eth->dmac, (uint8_t*)&broadcastmac, 6) == 0){
 		return 1;
 	}
 

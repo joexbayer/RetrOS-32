@@ -12,7 +12,7 @@ int strlen(const char* str)
 
 inline uint32_t strncmp(const char* str, const char* str2, uint32_t len)
 {
-	return memcmp((uint8_t*)str, (uint8_t*)str2, len);
+	return memcmp((uint8_t*)str, (uint8_t*)str2, len) == 0;
 }
 
 inline inline uint32_t memcmp(const uint8_t* ptr, const uint8_t* ptr2, uint32_t len)
@@ -20,10 +20,10 @@ inline inline uint32_t memcmp(const uint8_t* ptr, const uint8_t* ptr2, uint32_t 
 	for (uint32_t i = 0; i < len; i++)
 	{
 		if(ptr[i] != ptr2[i])
-			return 0;
+			return -1;
 	}
 
-	return 1;
+	return 0;
 }
 
 /* TODO: Move some functions into own files. */

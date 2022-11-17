@@ -35,6 +35,8 @@ boot2.iso
 *.img
 *.dat
 
+tests/filesystem.test
+filesystem.test
 bootblock
 kernelout
 versions.txt

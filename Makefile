@@ -102,12 +102,16 @@ bin/build: ./tools/build.c
 	@gcc ./tools/build.c -o ./bin/build
 	@echo [BUILD]      Compiling $@
 
-bin/mkfs: bin/fs.o bin/bitmap.o ./tools/mkfs.c
+bin/mkfs: fs_test bin/fs.o bin/bitmap.o ./tools/mkfs.c
 	@gcc tools/mkfs.c bin/bitmap.o fs/bin/inode.o -I include/  -O2 -m32 -Wall -g --no-builtin -o ./bin/mkfs
 	@echo [BUILD]      Compiling $@
 	@./bin/mkfs
 
 tools: bin/build bin/mkfs
+
+fs_test:
+	make -C tests/
+	./tests/bin/fs_test.o
 
 bin/net.o: ./net/*.c
 	@echo [NETWORKING] Compiling the network stack
@@ -143,11 +147,13 @@ clean:
 	make -C ./net clean
 	make -C ./fs clean
 	make -C ./usr clean
+	make -C ./tests clean
 	rm -f ./bin/*.o
 	rm -f ./bin/bootblock
 	rm -f ./bin/kernelout
 	rm -f .depend
 	rm -f filesystem.image
+	rm -f filesystem.test
 
 bindir:
 	@mkdir -p bin

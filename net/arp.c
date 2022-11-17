@@ -39,9 +39,11 @@ void init_arp()
 int arp_add_entry(struct arp_content* arp)
 {
 	/* Check if ARP entry already exists. */
-	for (int i = 0; i < MAX_ARP_ENTRIES; i++)
-		if(memcmp((uint8_t*)&arp->smac, (uint8_t*)&arp_entries[i].smac, 6))
+	for (int i = 0; i < MAX_ARP_ENTRIES; i++){
+		int ret = memcmp((uint8_t*)&arp->smac, (uint8_t*)&arp_entries[i].smac, 6);
+		if(ret == 0)
 			return 1;
+	}
 
 	for (int i = 0; i < MAX_ARP_ENTRIES; i++)
 	{

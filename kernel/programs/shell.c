@@ -152,9 +152,9 @@ void exec_cmd()
 		inode_t inode = fs_open(name);
 
 		char buf[512];
-		file_read(buf, inode);
+		fs_read(buf, inode);
 		twritef("%s\n", buf);
-		file_close(inode);
+		fs_close(inode);
 		return;
 	}
 
@@ -168,7 +168,7 @@ void exec_cmd()
 	if(strncmp("touch", shell_buffer, strlen("touch"))){
 		char* hostname = shell_buffer+strlen("touch")+1;
 		hostname[strlen(hostname)-1] = 0;
-		create_file(hostname);
+		fcreate(hostname);
 		return;
 	}
 
