@@ -35,6 +35,7 @@
 
 
 #define DISKSIZE 200000
+#define SMALL_BUFFER_SIZE 1024
 #define DEBUG 0
 
 int test_count = 0;
@@ -162,7 +163,7 @@ int main(int argc, char const *argv[])
 
     ls("");
 
-    fcreate("test.txt");
+    fs_create("test.txt");
     testprintf(1, "Created test.txt file.");
 
     ls("");
@@ -176,7 +177,7 @@ int main(int argc, char const *argv[])
     ls("");
 
 
-    fcreate("test2.txt");
+    fs_create("test2.txt");
     testprintf(1, "Created test2.txt file in test directory.");
     ls("");
     
@@ -198,7 +199,29 @@ int main(int argc, char const *argv[])
     int mem_ret = memcmp(buffer, test_text, strlen(test_text)+1);
     testprintf(mem_ret == 0, "Correct content of test2.txt");
 
+    fs_close(open_inode);
+    testprintf(1, "Closed test2.txt");
 
+    printf("TEST - Testing large files with %d max size.\n", MAX_FILE_SIZE);
+
+    fs_create("large_file.txt");
+    testprintf(1, "Created large_file.txt file.");
+
+    inode_t large_inode = fs_open("large_file.txt");
+    testprintf(large_inode > 0, "Opened large_file.txt");
+
+    char small_buffer[SMALL_BUFFER_SIZE];
+    for (size_t i = 0; i < SMALL_BUFFER_SIZE; i++) small_buffer[i] = 123;
+    
+    int small_write = fs_write(small_buffer, SMALL_BUFFER_SIZE, large_inode);
+    testprintf(small_write == SMALL_BUFFER_SIZE, "Wrote 1024 bytes to large_file.txt");
+
+    char small_read_buffer[SMALL_BUFFER_SIZE];
+    int small_read = fs_read(small_read_buffer, large_inode);
+    testprintf(small_read == SMALL_BUFFER_SIZE, "Read 1024 bytes from large_file.txt");
+    
+    int small_mem_ret = memcmp(small_read_buffer, small_buffer, SMALL_BUFFER_SIZE);
+    testprintf(small_mem_ret == 0, "Correct content of large_file.txt");
 
     fclose(filesystem);
     /* code */

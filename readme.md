@@ -187,6 +187,8 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 3. Complete rework of pcb and scheduling.
 4. Virtual Memory rework.
 5. Complete rework of socket.c
+6. SKB rework.
+7. sync.c rework (depends on pcb)
 
 See the [open issues](https://github.com/joexbayer/NETOS/issues) for a full list of proposed features (and known issues).
 

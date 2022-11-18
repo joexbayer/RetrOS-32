@@ -145,7 +145,7 @@ void mkfs()
     current_dir->pos = 0;
 }
 
-void fcreate(char* name)
+void fs_create(char* name)
 {
     inode_t inode_index = alloc_inode(&superblock, FS_FILE);
     if(inode_index == 0){

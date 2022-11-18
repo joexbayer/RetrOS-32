@@ -14,7 +14,7 @@ int fs_read(char* buf, inode_t i);
 int fs_write(void* buf, int size, inode_t i);
 void chdir(char* path);
 void fs_mkdir(char* name);
-void fcreate(char* name);
+void fs_create(char* name);
 
 int fs_size(inode_t i);
 

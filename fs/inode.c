@@ -138,7 +138,7 @@ int inode_write(char* buf, int size, struct inode* inode, struct superblock* sb)
     if((size + inode->pos) > MAX_FILE_SIZE)
         return -1; /* TODO: FILE OUT OF SPACE ERROR. */
 
-    int block = (size+inode->pos) / BLOCK_SIZE;
+    int block = (inode->pos) / BLOCK_SIZE;
     if(inode->blocks[block] == 0)
         inode->blocks[block] = new_block(sb);
     

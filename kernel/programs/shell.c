@@ -166,9 +166,9 @@ void exec_cmd()
 	}
 
 	if(strncmp("touch", shell_buffer, strlen("touch"))){
-		char* hostname = shell_buffer+strlen("touch")+1;
-		hostname[strlen(hostname)-1] = 0;
-		fcreate(hostname);
+		char* filename = shell_buffer+strlen("touch")+1;
+		filename[strlen(filename)-1] = 0;
+		fs_create(filename);
 		return;
 	}
 
