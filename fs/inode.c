@@ -15,192 +15,211 @@ static struct inode __inode_cache[INODE_CACHE_SIZE];
 
 static void __inode_sync(struct inode* inode, struct superblock* sb)
 {
-    int inode_int = inode->inode;
-    int block_inode = INODE_TO_BLOCK(inode->inode);
-    int inode_loc = INODE_BLOCK_OFFSET(block_inode, inode_int);
+	int inode_int = inode->inode;
+	int block_inode = INODE_TO_BLOCK(inode->inode);
+	int inode_loc = INODE_BLOCK_OFFSET(block_inode, inode_int);
 
-    write_block_offset((char*) inode, sizeof(*inode), inode_loc, sb->inodes_start+block_inode);
-    dbgprintf("[sync] Synchronizing inode %d\n", inode_int);
+	write_block_offset((char*) inode, sizeof(*inode), inode_loc, sb->inodes_start+block_inode);
+	dbgprintf("[sync] Synchronizing inode %d\n", inode_int);
 }
 
 static int __inode_cache_insert(struct inode* inode, struct superblock* sb)
 {
-    for (int i = 0; i < 10; i++)
-        if(__inode_cache[i].type == 0){
-            dbgprintf("[FS] Caching inode %d.\n", inode->inode);
-            memcpy(&__inode_cache[i], inode, sizeof(struct inode));
-            return i;
-        }
-    for (int i = 0; i < 10; i++)
-        if(__inode_cache[i].nlink == 0){
-            __inode_sync(&__inode_cache[i], sb);
-            dbgprintf("[FS] Saving inode %d to disk..\n", __inode_cache[i].inode);
-            dbgprintf("[FS] Caching inode %d.\n", inode->inode);
-            memcpy(&__inode_cache[i], inode, sizeof(struct inode));
-            return i;
-        }
+	for (int i = 0; i < 10; i++)
+		if(__inode_cache[i].type == 0){
+			dbgprintf("[FS] Caching inode %d.\n", inode->inode);
+			memcpy(&__inode_cache[i], inode, sizeof(struct inode));
+			return i;
+		}
+	for (int i = 0; i < 10; i++)
+		if(__inode_cache[i].nlink == 0){
+			__inode_sync(&__inode_cache[i], sb);
+			dbgprintf("[FS] Saving inode %d to disk..\n", __inode_cache[i].inode);
+			dbgprintf("[FS] Caching inode %d.\n", inode->inode);
+			memcpy(&__inode_cache[i], inode, sizeof(struct inode));
+			return i;
+	}
 
 
-    return -1;
+	return -1;
 }
 
 void inodes_sync(struct superblock* sb)
 {
-    for (int i = 0; i < INODE_CACHE_SIZE; i++)
-        if(__inode_cache[i].type != 0)
-            __inode_sync(&__inode_cache[i], sb);
+	for (int i = 0; i < INODE_CACHE_SIZE; i++)
+		if(__inode_cache[i].type != 0)
+			__inode_sync(&__inode_cache[i], sb);
 }
 
 int __inode_load(inode_t inode, struct superblock* sb)
 {   
-    int block_inode = INODE_TO_BLOCK(inode);
-    int inode_loc = INODE_BLOCK_OFFSET(block_inode, inode);
+	int block_inode = INODE_TO_BLOCK(inode);
+	int inode_loc = INODE_BLOCK_OFFSET(block_inode, inode);
 
-    struct inode disk_inode;
-    read_block_offset((char*) &disk_inode, sizeof(disk_inode), inode_loc, sb->inodes_start+block_inode);
+	struct inode disk_inode;
+	read_block_offset((char*) &disk_inode, sizeof(disk_inode), inode_loc, sb->inodes_start+block_inode);
 
-    dbgprintf("[FS] Loaded inode %d from disk. block: %d, inode_loc: %d\n", disk_inode.inode, sb->inodes_start+block_inode, inode_loc);
+	dbgprintf("[FS] Loaded inode %d from disk. block: %d, inode_loc: %d\n", disk_inode.inode, sb->inodes_start+block_inode, inode_loc);
 
-    int ret = __inode_cache_insert(&disk_inode, sb);
+	int ret = __inode_cache_insert(&disk_inode, sb);
 
-    return ret;
+	return ret;
     
 }
 
 static inline int new_inode(struct superblock* sb)
 {
-    return get_free_bitmap(sb->inode_map, sb->ninodes)+1;
+	return get_free_bitmap(sb->inode_map, sb->ninodes)+1;
 }
 
 static inline int new_block(struct superblock* sb)
 {
-    int b =  get_free_bitmap(sb->block_map, sb->nblocks)+1;
-    return b;
+	return get_free_bitmap(sb->block_map, sb->nblocks)+1;
 }
 
 struct inode* inode_get(inode_t inode, struct superblock* sb)
 {
-    for (int i = 0; i < INODE_CACHE_SIZE; i++)
-        if(__inode_cache[i].inode == inode){
-            return &__inode_cache[i];
-        }
+	for (int i = 0; i < INODE_CACHE_SIZE; i++)
+		if(__inode_cache[i].inode == inode){
+			return &__inode_cache[i];
+	}
 
-    int ret = __inode_load(inode, sb);
-    if(ret >= 0){
-        return &__inode_cache[ret];
-    }
-    return NULL;
+	int ret = __inode_load(inode, sb);
+	if(ret >= 0){
+		return &__inode_cache[ret];
+	}
+	return NULL;
 }
 
 int inode_add_directory_entry(struct directory_entry* entry, struct inode* inode, struct superblock* sb)
 {
-    return -1;
+	return -1;
 }
 
+/**
+ * @brief Reads specified amounts of bytes from inode into given buffer.
+ * Needs superblock to specify which "fs".
+ * @param buf Buffer to copy data into
+ * @param size Size of data to copy
+ * @param inode file inode
+ * @param sb superblock of fs
+ * @return int amount of bytes (< 0 on error.)
+ */
 int inode_read(char* buf, int size, struct inode* inode, struct superblock* sb)
 {
-    if(size > MAX_FILE_SIZE || size > inode->size || (size + inode->pos) > inode->size)
-        return -1;
-    
-    int left = size;
-    int new_pos = inode->pos % BLOCK_SIZE;
-    int block = (inode->pos) / BLOCK_SIZE;
-    int progress = 0;
+	int left = size;
+	int new_pos = inode->pos % BLOCK_SIZE;
+	int block = (inode->pos) / BLOCK_SIZE;
+	int progress = 0;
 
-    if(new_pos != 0 && new_pos + size > BLOCK_SIZE){
-        int to_read = BLOCK_SIZE - new_pos;
-        read_block_offset(&buf[progress], to_read, new_pos, sb->blocks_start+inode->blocks[block]);
-        inode->pos += to_read;
-        left -= to_read;
-        progress += to_read;
-    }
+	if(size > MAX_FILE_SIZE || size > inode->size || (size + inode->pos) > inode->size)
+		return -1;
 
-    while (left > BLOCK_SIZE)
-    {
-        block = (inode->pos) / BLOCK_SIZE;
-        if(inode->blocks[block] == 0){
-            return -2;
-        }
-        read_block_offset(&buf[progress], BLOCK_SIZE, 0, sb->blocks_start+inode->blocks[block]);
-        left -= BLOCK_SIZE;
-        inode->pos += BLOCK_SIZE;
-        progress += BLOCK_SIZE;
-        
-    }
-     block = (inode->pos) / BLOCK_SIZE;
-    read_block_offset(&buf[progress], left, inode->pos % BLOCK_SIZE, sb->blocks_start+inode->blocks[block]);
-    inode->pos += size;
+	/* If we will read past a block "border", only read the missing part of current block. */   
+	if(new_pos != 0 && new_pos + size > BLOCK_SIZE){
+		int to_read = BLOCK_SIZE - new_pos;
+		read_block_offset(&buf[progress], to_read, new_pos, sb->blocks_start+inode->blocks[block]);
+		inode->pos += to_read;
+		left -= to_read;
+		progress += to_read;
+	}
 
-    return inode->size > size ? size : inode->size;
+	/* Read entire blocks while possible. */
+	while (left > BLOCK_SIZE)
+	{
+		block = (inode->pos) / BLOCK_SIZE;
+		if(inode->blocks[block] == 0){
+			return -2;
+		}
+		read_block_offset(&buf[progress], BLOCK_SIZE, 0, sb->blocks_start+inode->blocks[block]);
+		left -= BLOCK_SIZE;
+		inode->pos += BLOCK_SIZE;
+		progress += BLOCK_SIZE;
+	}
+
+	block = (inode->pos) / BLOCK_SIZE;
+	read_block_offset(&buf[progress], left, inode->pos % BLOCK_SIZE, sb->blocks_start+inode->blocks[block]);
+	inode->pos += size;
+
+	return inode->size > size ? size : inode->size;
 }
 
+/**
+ * @brief Writes specified amount of bytes from given buffer into inode.
+ * Needs superblock to specify which "fs".
+ * @param buf Buffer to write from
+ * @param size amount of bytes to write
+ * @param inode inode of file
+ * @param sb superblock of fs
+ * @return int amount of bytes written.
+ */
 int inode_write(char* buf, int size, struct inode* inode, struct superblock* sb)
 {
-    int original_size = size;
+	int original_size = size;
+	int new_pos = inode->pos % BLOCK_SIZE;
+	int progress = 0;
+	int block = (inode->pos) / BLOCK_SIZE;
 
-    if((size + inode->pos) > MAX_FILE_SIZE)
-        return -1; /* TODO: FILE OUT OF SPACE ERROR. */
+	if((size + inode->pos) > MAX_FILE_SIZE || block > NDIRECT)
+		return -1; /* TODO: FILE OUT OF SPACE ERROR. */
 
-    int block = (inode->pos) / BLOCK_SIZE;
-    if(inode->blocks[block] == 0)
-        inode->blocks[block] = new_block(sb);
-    
-    int new_pos = inode->pos % BLOCK_SIZE;
-    int progress = 0;
-    
-    if(new_pos != 0 && new_pos + size > BLOCK_SIZE){
-        int to_write = BLOCK_SIZE - new_pos;
-        write_block_offset(&buf[progress], to_write, new_pos, sb->blocks_start+inode->blocks[block]);
-        inode->pos += to_write;
-        size -= to_write;
-        progress += to_write;
-    }
+	if(inode->blocks[block] == 0)
+		inode->blocks[block] = new_block(sb);
 
-    /* Recalculate block */
-    block = (inode->pos) / BLOCK_SIZE;
-    if(inode->blocks[block] == 0)
-        inode->blocks[block] = new_block(sb);
 
-    dbgprintf("[TESTDBG] while %d bytes!\n", size);
-    /* While size is greater than block size keep writing blocks */
-    while (size > BLOCK_SIZE)
-    {
-        write_block(&buf[progress], sb->blocks_start+inode->blocks[block]);
-        inode->pos += BLOCK_SIZE;
-        size -= BLOCK_SIZE;
-        progress += BLOCK_SIZE;
+	/* If we will write past a block "border", only write the missing part of current block. */    
+	if(new_pos != 0 && new_pos + size > BLOCK_SIZE){
+		int to_write = BLOCK_SIZE - new_pos;
+		write_block_offset(&buf[progress], BLOCK_SIZE - new_pos, new_pos, sb->blocks_start+inode->blocks[block]);
+		inode->pos += to_write;
+		size -= to_write;
+		progress += to_write;
+	}
 
-        block = (inode->pos) / BLOCK_SIZE;
-        if(inode->blocks[block] == 0)
-            inode->blocks[block] = new_block(sb);
-    }
-    
-    write_block_offset(&buf[progress], size, inode->pos % BLOCK_SIZE, sb->blocks_start+inode->blocks[block]);
-    inode->pos += size;
-    inode->size += original_size;
+	/* Recalculate block */
+	block = (inode->pos) / BLOCK_SIZE;
+	if(inode->blocks[block] == 0)
+		inode->blocks[block] = new_block(sb);
 
-    return original_size;
+	/* While size is greater than block size keep writing blocks */
+	while (size > BLOCK_SIZE)
+	{
+		write_block(&buf[progress], sb->blocks_start+inode->blocks[block]);
+		inode->pos += BLOCK_SIZE;
+		size -= BLOCK_SIZE;
+		progress += BLOCK_SIZE;
+
+		block = (inode->pos) / BLOCK_SIZE;
+		if(inode->blocks[block] == 0)
+			inode->blocks[block] = new_block(sb);
+	}
+
+	write_block_offset(&buf[progress], size, inode->pos % BLOCK_SIZE, sb->blocks_start+inode->blocks[block]);
+	inode->pos += size;
+	inode->size += original_size;
+
+	return original_size;
 }
 
 inode_t alloc_inode(struct superblock* sb, char TYPE)
 {
-    if(TYPE != FS_FILE && TYPE != FS_DIRECTORY)
-        return -1;
-    
-    inode_t inode = new_inode(sb);
+	if(TYPE != FS_FILE && TYPE != FS_DIRECTORY)
+		return -1;
 
-    struct inode inode_disk = {
-        .inode = inode,
-        .size = 0,
-        .type = TYPE
-    };
-    get_current_time(&inode_disk.time);
+	inode_t inode = new_inode(sb);
 
-    int ret = __inode_cache_insert(&inode_disk, sb);
-    if(ret == -1){
-        dbgprintf("[FS] Cache is full with opened inodes!\n");
-        return 0;
-    }
+	struct inode inode_disk = {
+		.inode = inode,
+		.size = 0,
+		.type = TYPE
+	};
+	get_current_time(&inode_disk.time);
 
-    return inode;
+	int ret = __inode_cache_insert(&inode_disk, sb);
+	if(ret == -1){
+		dbgprintf("[FS] Cache is full with opened inodes!\n");
+		return 0;
+	}
+
+	return inode;
 }
