@@ -36,6 +36,7 @@
 
 #define DISKSIZE 200000
 #define SMALL_BUFFER_SIZE 1024
+#define LARGE_BUFFER_SIZE 4096
 #define DEBUG 0
 
 int test_count = 0;
@@ -163,8 +164,8 @@ int main(int argc, char const *argv[])
 
     ls("");
 
-    fs_create("test.txt");
-    testprintf(1, "Created test.txt file.");
+    int create_test = fs_create("test.txt");
+    testprintf(create_test == 0, "Created test.txt file.");
 
     ls("");
 
@@ -177,8 +178,8 @@ int main(int argc, char const *argv[])
     ls("");
 
 
-    fs_create("test2.txt");
-    testprintf(1, "Created test2.txt file in test directory.");
+    int create_test2 = fs_create("test2.txt");
+    testprintf(create_test2 == 0, "Created test2.txt file in test directory.");
     ls("");
     
     inode_t open_inode = fs_open("test2.txt");
@@ -204,24 +205,49 @@ int main(int argc, char const *argv[])
 
     printf("TEST - Testing large files with %d max size.\n", MAX_FILE_SIZE);
 
-    fs_create("large_file.txt");
-    testprintf(1, "Created large_file.txt file.");
+    int create_large = fs_create("large_file.txt");
+    testprintf(create_large == 0, "Created large_file.txt file.");
 
     inode_t large_inode = fs_open("large_file.txt");
     testprintf(large_inode > 0, "Opened large_file.txt");
 
     char small_buffer[SMALL_BUFFER_SIZE];
-    for (size_t i = 0; i < SMALL_BUFFER_SIZE; i++) small_buffer[i] = 123;
+    for (size_t i = 0; i < SMALL_BUFFER_SIZE; i++) small_buffer[i] = i % 111;
     
     int small_write = fs_write(small_buffer, SMALL_BUFFER_SIZE, large_inode);
-    testprintf(small_write == SMALL_BUFFER_SIZE, "Wrote 1024 bytes to large_file.txt");
+    testprintf(small_write == SMALL_BUFFER_SIZE, "Wrote bytes to large_file.txt");
 
     char small_read_buffer[SMALL_BUFFER_SIZE];
     int small_read = fs_read(small_read_buffer, large_inode);
-    testprintf(small_read == SMALL_BUFFER_SIZE, "Read 1024 bytes from large_file.txt");
+    testprintf(small_read == SMALL_BUFFER_SIZE, "Read bytes from large_file.txt");
     
     int small_mem_ret = memcmp(small_read_buffer, small_buffer, SMALL_BUFFER_SIZE);
     testprintf(small_mem_ret == 0, "Correct content of large_file.txt");
+
+    fs_close(large_inode);
+
+    int create_xlarge = fs_create("xlarge_file.txt");
+    testprintf(create_xlarge == 0, "Created xlarge_file.txt file.");
+
+    large_inode = fs_open("xlarge_file.txt");
+    testprintf(large_inode > 0, "Opened xlarge_file.txt");
+
+    char* large_buffer = malloc(LARGE_BUFFER_SIZE);
+    for (short i = 0; i < LARGE_BUFFER_SIZE; i++) large_buffer[i] = i % 111;
+
+    int large_write = fs_write(large_buffer, LARGE_BUFFER_SIZE, large_inode);
+    testprintf(large_write == LARGE_BUFFER_SIZE, "Wrote bytes to extra_large_file.txt");
+
+    char* large_read_buffer = malloc(LARGE_BUFFER_SIZE);
+    int large_read = fs_read(large_read_buffer, large_inode);
+    testprintf(large_read == LARGE_BUFFER_SIZE, "Read bytes from extra_large_file.txt");
+
+    int large_mem_ret = memcmp(large_read_buffer, large_buffer, LARGE_BUFFER_SIZE);
+    testprintf(large_mem_ret == 0, "Correct content of extra_large_file.txt");
+
+    free(large_buffer);
+    free(large_read_buffer);
+    fs_close(large_inode);
 
     fclose(filesystem);
     /* code */

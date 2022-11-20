@@ -145,12 +145,15 @@ void mkfs()
     current_dir->pos = 0;
 }
 
-void fs_create(char* name)
+int fs_create(char* name)
 {
+    if(strlen(name)+1 > FS_DIRECTORY_NAME_SIZE)
+        return -1;
+
     inode_t inode_index = alloc_inode(&superblock, FS_FILE);
     if(inode_index == 0){
         twriteln("Cannot create file. (probably cache)");
-        return;
+        return -1;
     }
 
     struct inode* inode = inode_get(inode_index, &superblock);
@@ -161,8 +164,9 @@ void fs_create(char* name)
     memcpy(new.name, name, strlen(name));
     __inode_add_dir(&new, current_dir, &superblock);
 
-    
     dbgprintf("[FS] Creating new file %s, inode: %d.\n", name, inode->inode);
+    
+    return 0;
 }
 
 int fs_read(char* buf, inode_t i)
@@ -180,6 +184,7 @@ int fs_write(void* buf, int size, inode_t i)
     struct inode* inode = inode_get(i, &superblock);
     inode->pos = 0; /* Should not set pos = 0*/
     
+    dbgprintf("[FS] writing %d from inode %d\n", size, i);
     int ret = inode_write(buffer, size, inode, &superblock);
     return ret;
 }
@@ -194,8 +199,12 @@ inode_t fs_open(char* name)
 {
     struct directory_entry entry;
     current_dir->pos = 0;
-
     int size = 0;
+
+    if(strlen(name)+1 > FS_DIRECTORY_NAME_SIZE)
+        return -1;
+
+
     dbgprintf("Dir %d\n", current_dir->size);
     while (size <= current_dir->size)
     {
@@ -210,6 +219,9 @@ inode_t fs_open(char* name)
         twriteln("Cant find");
 
     struct inode* inode = inode_get(entry.inode, &superblock);
+    if(inode == NULL)
+        return 0;
+
     inode->nlink++;
     inode->pos = 0;
 
@@ -238,15 +250,20 @@ void chdir(char* path)
     current_dir = inode;
 }
 
-void fs_mkdir(char* name)
+int fs_mkdir(char* name)
 {
+    if(strlen(name)+1 > FS_DIRECTORY_NAME_SIZE)
+        return -1;
+
     inode_t inode_index = alloc_inode(&superblock, FS_DIRECTORY);
     if(inode_index == 0){
         twriteln("Cannot create directory. (probably cache)");
-        return;
+        return -1;
     }
 
     struct inode* inode = inode_get(inode_index, &superblock);
+    if(inode == NULL)
+        return -1;
 
     struct directory_entry self = {
         .inode = inode->inode,
@@ -268,6 +285,8 @@ void fs_mkdir(char* name)
     __inode_add_dir(&new, current_dir, &superblock);
 
     dbgprintf("[FS] Created directory %s with inode %d.\n", name, inode->inode);
+
+    return 0;
 }
 
 void ls(char* path)

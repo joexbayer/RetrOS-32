@@ -74,7 +74,8 @@ static inline int new_inode(struct superblock* sb)
 
 static inline int new_block(struct superblock* sb)
 {
-    return get_free_bitmap(sb->block_map, sb->nblocks)+1;
+    int b =  get_free_bitmap(sb->block_map, sb->nblocks)+1;
+    return b;
 }
 
 struct inode* inode_get(inode_t inode, struct superblock* sb)
@@ -106,7 +107,7 @@ int inode_read(char* buf, int size, struct inode* inode, struct superblock* sb)
     int block = (inode->pos) / BLOCK_SIZE;
     int progress = 0;
 
-    if(new_pos + size > BLOCK_SIZE){
+    if(new_pos != 0 && new_pos + size > BLOCK_SIZE){
         int to_read = BLOCK_SIZE - new_pos;
         read_block_offset(&buf[progress], to_read, new_pos, sb->blocks_start+inode->blocks[block]);
         inode->pos += to_read;
@@ -116,15 +117,17 @@ int inode_read(char* buf, int size, struct inode* inode, struct superblock* sb)
 
     while (left > BLOCK_SIZE)
     {
-        block = (left+inode->pos) / BLOCK_SIZE;
-        if(inode->blocks[block] == 0)
-            return -1;
+        block = (inode->pos) / BLOCK_SIZE;
+        if(inode->blocks[block] == 0){
+            return -2;
+        }
         read_block_offset(&buf[progress], BLOCK_SIZE, 0, sb->blocks_start+inode->blocks[block]);
         left -= BLOCK_SIZE;
         inode->pos += BLOCK_SIZE;
         progress += BLOCK_SIZE;
+        
     }
-    
+     block = (inode->pos) / BLOCK_SIZE;
     read_block_offset(&buf[progress], left, inode->pos % BLOCK_SIZE, sb->blocks_start+inode->blocks[block]);
     inode->pos += size;
 
@@ -145,7 +148,7 @@ int inode_write(char* buf, int size, struct inode* inode, struct superblock* sb)
     int new_pos = inode->pos % BLOCK_SIZE;
     int progress = 0;
     
-    if(new_pos + size > BLOCK_SIZE){
+    if(new_pos != 0 && new_pos + size > BLOCK_SIZE){
         int to_write = BLOCK_SIZE - new_pos;
         write_block_offset(&buf[progress], to_write, new_pos, sb->blocks_start+inode->blocks[block]);
         inode->pos += to_write;
@@ -154,10 +157,11 @@ int inode_write(char* buf, int size, struct inode* inode, struct superblock* sb)
     }
 
     /* Recalculate block */
-    block = (size+inode->pos) / BLOCK_SIZE;
+    block = (inode->pos) / BLOCK_SIZE;
     if(inode->blocks[block] == 0)
         inode->blocks[block] = new_block(sb);
 
+    dbgprintf("[TESTDBG] while %d bytes!\n", size);
     /* While size is greater than block size keep writing blocks */
     while (size > BLOCK_SIZE)
     {
@@ -166,7 +170,7 @@ int inode_write(char* buf, int size, struct inode* inode, struct superblock* sb)
         size -= BLOCK_SIZE;
         progress += BLOCK_SIZE;
 
-        block = (size+inode->pos) / BLOCK_SIZE;
+        block = (inode->pos) / BLOCK_SIZE;
         if(inode->blocks[block] == 0)
             inode->blocks[block] = new_block(sb);
     }

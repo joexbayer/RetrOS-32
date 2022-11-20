@@ -12,6 +12,7 @@
 #include <process.h>
 #include <screen.h>
 #include <terminal.h>
+#include <scheduler.h>
 
 #include <net/netdev.h>
 #include <net/packet.h>
@@ -146,8 +147,10 @@ void main()
     while(1)
     {
         struct sk_buff* skb = next_skb();
-        if(skb == NULL)
+        if(skb == NULL){
+            yield();
             continue;
+        }
         skb->stage = IN_PROGRESS;
 
         switch (skb->action)
