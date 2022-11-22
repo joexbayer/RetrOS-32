@@ -10,28 +10,20 @@
  */
 #include <usr_syscall.h>
 
-inline void writeln(char* str)
-{
-  char len = 0;
-  while(str[len]){
-    len++;
-    print_put(str[len]);
-  }
-}
 void main()
 {
-	int i = 1;
+	int j = 1;
 
 	while(1)
 	{	
-	  writeln("Counter: Tick!\n");
+	  printf("Counter: %d!\n", j);
 		//print_put('a');
-    int test = 0;
+    	int test = 0;
 		for (int i = 0; i < 40000000; i++)
 		{
 			test = (test + 1) % 10000;
 		}
-		i++;
+		j++;
 		
 		
 	}

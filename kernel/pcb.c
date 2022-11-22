@@ -204,10 +204,12 @@ int create_process(char* program)
     
     struct pcb* pcb = &pcbs[i];
 
+    char* pname = "program";
+
     pcb->eip = (void (*)()) 0x1000000; /* External programs start */
     pcb->running = NEW;
     pcb->pid = i;
-    memcpy(pcb->name, program, strlen(program)+1);
+    memcpy(pcb->name, pname, strlen(pname)+1);
     pcb->esp = 0xEFFFFFF0;
     pcb->ebp = pcb->esp;
     pcb->k_esp = (uint32_t) alloc(stack_size)+stack_size-1;
