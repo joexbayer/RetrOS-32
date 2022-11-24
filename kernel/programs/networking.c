@@ -9,7 +9,6 @@
  * 
  */
 
-#include <process.h>
 #include <screen.h>
 #include <terminal.h>
 #include <scheduler.h>
@@ -141,7 +140,7 @@ int net_handle_recieve(struct sk_buff* skb)
  * @brief Main networking event loop.
  * 
  */
-void main()
+void networking_main()
 {
     attach_window(NULL);
     while(1)
@@ -168,11 +167,3 @@ void main()
         FREE_SKB(skb);
     }
 }
-
-PROGRAM(networking, &main)
-ATTACH("lsnet", &list_net_devices)
-ATTACH("arp -a", &arp_print_cache);
-ATTACH("arp", &arp_request)
-ATTACH("netdev", &netdev_print_status);
-ATTACH("ip", &networking_print_status);
-PROGRAM_END

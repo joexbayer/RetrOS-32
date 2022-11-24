@@ -8,8 +8,6 @@
 #include <screen.h>
 #include <pcb.h>
 #include <memory.h>
-#include <process.h>
-#include <programs.h>
 #include <net/skb.h>
 #include <net/arp.h>
 #include <ata.h>
@@ -20,6 +18,7 @@
 #include <serial.h>
 #include <syscall_helper.h>
 #include <syscalls.h>
+#include <kthreads.h>
 
 /* This functions always needs to be on top? */
 void _main() 
@@ -43,16 +42,14 @@ void _main()
 	init_sockets();
 	init_dns();
 
-	/* Programs defined in programs.h */
-	init_shell();
-	init_networking();
-	init_dhcpd();
-
 	CLI();
 	init_fs();
 	
-	start_process(0); // SHELL
-	start_process(1); // Networking
+	register_kthread(&shell_main, "Shell");
+	register_kthread(&networking_main, "Networking");
+	register_kthread(&dhcpd, "dhcpd");
+
+	start("Shell");
 
 	add_system_call(SYSCALL_SCRPUT, (syscall_t)&scrput);
 	add_system_call(SYSCALL_PRTPUT, (syscall_t)&terminal_putchar);

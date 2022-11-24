@@ -37,13 +37,16 @@ kernel.o: kernel/kernel.c include/windowmanager.h include/stdint.h \
  include/colors.h include/util.h include/pci.h include/terminal.h \
  include/keyboard.h include/interrupts.h include/syscalls.h \
  include/timer.h include/rtc.h include/screen.h include/pcb.h \
- include/memory.h include/process.h include/programs.h include/net/skb.h \
- include/net/netdev.h include/net/utils.h include/net/ethernet.h \
- include/net/arp.h include/net/ipv4.h include/net/icmp.h \
- include/net/udp.h include/net/tcp.h include/ata.h include/bitmap.h \
- include/net/socket.h include/sync.h include/net/dns.h include/fs/fs.h \
- include/fs/inode.h include/fs/superblock.h include/serial.h \
- include/syscall_helper.h
+ include/memory.h include/net/skb.h include/net/netdev.h \
+ include/net/utils.h include/net/ethernet.h include/net/arp.h \
+ include/net/ipv4.h include/net/icmp.h include/net/udp.h \
+ include/net/tcp.h include/ata.h include/bitmap.h include/net/socket.h \
+ include/sync.h include/net/dns.h include/fs/fs.h include/fs/inode.h \
+ include/fs/superblock.h include/serial.h include/syscall_helper.h \
+ include/kthreads.h
+kthreads.o: kernel/kthreads.c include/kthreads.h include/stdint.h \
+ include/terminal.h include/util.h include/screen.h include/colors.h \
+ include/pcb.h include/windowmanager.h
 memory.o: kernel/memory.c include/memory.h include/stdint.h include/pcb.h \
  include/util.h include/windowmanager.h include/colors.h include/screen.h \
  include/serial.h include/timer.h include/rtc.h include/sync.h \
@@ -57,9 +60,6 @@ pcb.o: kernel/pcb.c include/pcb.h include/util.h include/stdint.h \
 pci.o: kernel/pci.c include/pci.h include/stdint.h include/e1000.h \
  include/screen.h include/util.h include/colors.h include/terminal.h \
  include/serial.h include/io.h
-process.o: kernel/process.c include/process.h include/stdint.h \
- include/terminal.h include/util.h include/screen.h include/colors.h \
- include/pcb.h include/windowmanager.h
 scheduler.o: kernel/scheduler.c include/scheduler.h include/memory.h \
  include/stdint.h include/pcb.h include/util.h include/windowmanager.h \
  include/colors.h include/timer.h include/rtc.h

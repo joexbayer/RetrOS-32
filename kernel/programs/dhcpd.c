@@ -10,7 +10,6 @@
  */
 
 #include <net/dhcp.h>
-#include <process.h>
 #include <scheduler.h>
 #include <net/socket.h>
 #include <net/ipv4.h>
@@ -260,9 +259,3 @@ dhcp_error:
     exit();
     while(1);
 }
-
-PROGRAM(dhcpd, &dhcpd)
-dhcp_state.ip = 0;
-dhcp_state.state = DHCP_STOPPED;
-dhcp_state.tries = 0;
-PROGRAM_END

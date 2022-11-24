@@ -79,7 +79,7 @@ int gethostname(char* hostname)
 
     /* Check for cache first. */
     for (int i = 0; i < DNS_CACHE_ENTRIES; i++)
-        if(memcmp((uint8_t*) &__dns_cache[i].name,(uint8_t*) hostname, strlen(hostname))){
+        if(memcmp((uint8_t*) &__dns_cache[i].name,(uint8_t*) hostname, strlen(hostname)) == 0){
             twritef("[DNS] (%s at %i) (cache)\n", hostname, __dns_cache[i].ip);
             return __dns_cache[i].ip;
         }

@@ -14,7 +14,7 @@
 #include <terminal.h>
 #include <scheduler.h>
 #include <pcb.h>
-#include <process.h>
+#include <kthreads.h>
 #include <io.h>
 
 #include <windowmanager.h>
@@ -52,6 +52,8 @@ static uint8_t shell_buffer_length = 0;
 static const char newline = '\n';
 static const char backspace = '\b';
 
+static char* shell_name = "Kernel";
+
 /*
  *	IMPLEMENTATIONS
  */
@@ -66,9 +68,9 @@ void shell_clear()
 void reset_shell()
 {
 	memset(&shell_buffer, 0, 25);
-	shell_column = strlen(current_process->name)+2;
+	shell_column = strlen(shell_name)+2;
 	shell_buffer_length = 0;
-	scrwrite(1, SHELL_POSITION, current_process->name, VGA_COLOR_LIGHT_CYAN);
+	scrwrite(1, SHELL_POSITION, shell_name, VGA_COLOR_LIGHT_CYAN);
 	scrwrite(shell_column, SHELL_POSITION, "> ", VGA_COLOR_LIGHT_CYAN);
 	shell_column += 1;
 
@@ -79,39 +81,6 @@ void reset_shell()
 void exec_cmd()
 {
 	twritef("\n");
-	for (int i = 0; i < current_process->total_functions; i++)
-	{
-		if(strncmp(current_process->functions[i].name, shell_buffer, strlen(current_process->functions[i].name))){
-			current_process->functions[i].f();
-			return;
-		}
-	}
-
-	if(strncmp("help", shell_buffer, strlen("help"))){
-		twriteln("HELP: ");
-		twriteln("ls: see processes.");
-		twriteln("lsf: see functions for process.");
-		twriteln("switch $id: use process functions.");
-		twriteln("start $id: start a process.");
-		twriteln("stop $id: stop a process.");
-		return;
-	}
-	
-	if(strncmp("lsi", shell_buffer, strlen("lsi"))){
-		list_instances();
-		return;
-	}
-
-	if(strncmp("lsf", shell_buffer, strlen("lsf"))){
-		list_functions();
-		return;
-	}
-
-	if(strncmp("switch", shell_buffer, strlen("switch"))){
-		int id = atoi(shell_buffer+strlen("switch")+1);
-		switch_process(id);
-		return;
-	}
 
 	if(strncmp("lspci", shell_buffer, strlen("lspci"))){
 		list_pci_devices();
@@ -131,12 +100,6 @@ void exec_cmd()
 	if(strncmp("stop", shell_buffer, strlen("stop"))){
 		int id = atoi(shell_buffer+strlen("stop")+1);
 		stop_task(id);
-		return;
-	}
-
-	if(strncmp("start", shell_buffer, strlen("start"))){
-		int id = atoi(shell_buffer+strlen("stop")+1);
-		start_process(id);
 		return;
 	}
 
@@ -218,6 +181,11 @@ void exec_cmd()
 		create_process(name);
 		return;
 	}
+	int r = start(shell_buffer);
+	if(r == -1)
+		twritef("Unknown command: %s\n", shell_buffer);
+	else
+		twriteln("Started process.");
 
 
 	//twrite(shell_buffer);
@@ -280,7 +248,3 @@ void shell_main()
 	
 	exit();
 }
-
-PROGRAM(shell, &shell_main)
-reset_shell();
-PROGRAM_END
