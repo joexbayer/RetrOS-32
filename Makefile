@@ -24,7 +24,7 @@ endif
 
 PROGRAMOBJ = bin/shell.o bin/networking.o bin/dhcpd.o
 
-KERNELOBJ = bin/kernel_entry.o bin/kernel.o bin/terminal.o bin/pci.o \
+KERNELOBJ = bin/kernel_entry.o bin/kernel.o bin/terminal.o bin/helpers.o bin/pci.o \
 			bin/util.o bin/interrupts.o bin/irs_entry.o bin/timer.o \
 			bin/keyboard.o bin/screen.o bin/pcb.o bin/memory.o bin/e1000.o \
 			bin/sync.o bin/process.o bin/ata.o bin/bitmap.o bin/rtc.o \

@@ -4,6 +4,6 @@
 void print_write(const char* data, int size);
 void print(const char* data);
 void println(const char* data);
-int32_t printf(char* fmt, ...);
+int printf(char* fmt, ...);
 
 #endif /* __PRINTF_H */

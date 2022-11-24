@@ -1,4 +1,4 @@
-CCFLAGS=-m32 -std=gnu99 -O2 \
+CCFLAGS=-m32 -std=gnu11 -O2 \
 		-g -Wall -Wextra -Wpedantic -Wstrict-aliasing \
 		-Wno-pointer-arith -Wno-unused-parameter -nostdlib \
 		-nostdinc -ffreestanding -fno-pie -fno-stack-protector \

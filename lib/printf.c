@@ -44,7 +44,7 @@ void println(const char* data)
 
 #define MAX_FMT_STR_SIZE 50
 
-int32_t printf(char* fmt, ...)
+int printf(char* fmt, ...)
 {
 	va_list args;
 

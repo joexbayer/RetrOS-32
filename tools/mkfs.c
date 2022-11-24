@@ -23,6 +23,8 @@
 #include <time.h>
 
 
+#define FS_SIZE 1000000
+
 #include <fs/fs.h>
 #include <fs/inode.h>
 #include <fs/superblock.h>
@@ -194,7 +196,7 @@ int main(int argc, char* argv[])
     filesystem = fopen("filesystem.image", "w+");
     
     struct superblock superblock;
-    fs_setup_superblock(&superblock, 200000);
+    fs_setup_superblock(&superblock, 1000000);
 
     /* Create a root directory inode. */
     inode_t root_inode = alloc_inode(&superblock, FS_DIRECTORY);
@@ -252,9 +254,9 @@ int main(int argc, char* argv[])
     /* Padding 0s */
     fseek(filesystem, 0L, SEEK_END);
     int sz = ftell(filesystem);
-    printf("[MKFS] Padding with %d bytes!\n", 200000-sz);
+    printf("[MKFS] Padding with %d bytes!\n", 1000000-sz);
 
-    int left = 200000-sz;
+    int left = 1000000-sz;
     while(left > 0){
         putc(0, filesystem);
         left--;

@@ -7,7 +7,7 @@
 #define FS_FILE 1
 #define FS_DIRECTORY 2
 
-#define MAX_FILE_SIZE 4096
+#define MAX_FILE_SIZE 4096*2
 #define NDIRECT MAX_FILE_SIZE / 512
 
 typedef uint16_t inode_t;

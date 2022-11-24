@@ -16,7 +16,7 @@ void main()
 
 	while(1)
 	{	
-	  printf("Counter: %d!\n", j);
+	  	printf("Counter: %d!\n", j);
 		//print_put('a');
     	int test = 0;
 		for (int i = 0; i < 40000000; i++)

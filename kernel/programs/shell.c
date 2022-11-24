@@ -269,7 +269,7 @@ void shell_main()
 	dbgprintf("Shell is running!\n");
 	attach_window(&w);
 	reset_shell();
-	sleep(2);
+	//sleep(2);
 	while(1)
 	{
 		char c = kb_get_char();
