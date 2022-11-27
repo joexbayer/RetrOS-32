@@ -30,13 +30,32 @@ static struct pcb pcbs[MAX_NUM_OF_PCBS];
 struct pcb* current_running = &pcbs[0];
 
 static struct pcb* running_queue = &pcbs[0];
+inline void pcb_queue_push_running(struct pcb* pcb)
+{
+    pcb_queue_push(running_queue, pcb);
+}
+
 void pcb_queue_push(struct pcb* queue, struct pcb* pcb)
 {
+    CLI();
     struct pcb* prev = queue->prev;
     queue->prev = pcb;
     pcb->next = queue;
     prev->next = pcb;
+    STI();
 
+}
+
+void pcb_queue_remove(struct pcb* pcb)
+{
+    if(pcb->pid == 0)
+        return;
+
+    CLI();
+    struct pcb* prev = pcb->prev;
+    prev->next = pcb->next;
+    pcb->next->prev = prev;
+    STI();
 }
 
 static int pcb_count = 0;
