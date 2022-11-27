@@ -23,18 +23,20 @@
 
 #define stack_size 0x2000
 
- char* status[] = {"stopped ", "running ", "new     ", "blocked ", "sleeping"};
+static const char* status[] = {"stopped ", "running ", "new     ", "blocked ", "sleeping"};
 
 static struct pcb pcbs[MAX_NUM_OF_PCBS];
+static int pcb_count = 0;
 
 struct pcb* current_running = &pcbs[0];
+static struct pcb* pcb_running_queue = &pcbs[0];
 
-static struct pcb* running_queue = &pcbs[0];
-inline void pcb_queue_push_running(struct pcb* pcb)
-{
-    pcb_queue_push(running_queue, pcb);
-}
-
+/**
+ * @brief Push pcb struct at the end of given queue
+ * 
+ * @param queue 
+ * @param pcb 
+ */
 void pcb_queue_push(struct pcb* queue, struct pcb* pcb)
 {
     CLI();
@@ -44,6 +46,16 @@ void pcb_queue_push(struct pcb* queue, struct pcb* pcb)
     prev->next = pcb;
     STI();
 
+}
+
+/**
+ * @brief Wrapper function to push to running queue
+ * 
+ * @param pcb 
+ */
+void pcb_queue_push_running(struct pcb* pcb)
+{
+    pcb_queue_push(pcb_running_queue, pcb);
 }
 
 void pcb_queue_remove(struct pcb* pcb)
@@ -58,7 +70,6 @@ void pcb_queue_remove(struct pcb* pcb)
     STI();
 }
 
-static int pcb_count = 0;
 
 void gensis()
 {
@@ -76,22 +87,6 @@ void gensis()
 
 		yield();
 	}
-}
-
-void gensis2()
-{
-    while(1)
-    {
-        for (int i = 0; i < 10000000; i++)
-        { 
-            int random = rand();
-            void* ptr = alloc(random * 5120 % 10000);
-            free(ptr);
-            yield();
-        }
-
-        yield();
-    }
 }
 
 /**
@@ -254,7 +249,7 @@ int create_process(char* program)
     /* Memory map data */
     init_process_paging(pcb, buf, read);
 
-    pcb_queue_push(running_queue, pcb);
+    pcb_queue_push(pcb_running_queue, pcb);
 
     pcb_count++;
     STI();
@@ -285,7 +280,7 @@ int add_pcb(void (*entry)(), char* name)
     int ret = init_pcb(i, &pcbs[i], entry, name);
     if(!ret) return ret;
 
-    pcb_queue_push(running_queue, &pcbs[i]);
+    pcb_queue_push(pcb_running_queue, &pcbs[i]);
 
     pcbs[i].page_dir = kernel_page_dir;
     pcbs[i].is_process = 0;
