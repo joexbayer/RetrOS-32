@@ -66,6 +66,7 @@ void pcb_queue_push(struct pcb** queue, struct pcb* pcb, int type)
         (*queue)->prev = pcb;
         pcb->next = (*queue);
         prev->next = pcb;
+        pcb->prev = prev;
 
         dbgprintf("[DOUBLE QUEUE] Added %s to a queue\n", pcb->name);
 
@@ -85,6 +86,9 @@ void pcb_queue_remove(struct pcb* pcb)
     struct pcb* prev = pcb->prev;
     prev->next = pcb->next;
     pcb->next->prev = prev;
+
+    pcb->next = NULL;
+    pcb->prev = NULL;
     STI();
 
     dbgprintf("[QUEUE] Removed %s to a queue\n", pcb->name);
@@ -154,6 +158,15 @@ void gensis()
 	}
 }
 
+
+void gensis2()
+{
+    while(1)
+    {
+
+	}
+}
+
 /**
  * @brief Main function of the PCB background process.
  * Printing out information about the currently running processes.
@@ -202,30 +215,52 @@ void print_pcb_status()
     
 }
 
+void pcb_print_queues()
+{
+    twritef("Running queue (0x%x):\n ====> ", pcb_running_queue);
+    struct pcb* next = pcb_running_queue;
+
+    twritef("[%d]%s ->", next->pid, next->name);
+    
+    if(next->prev != pcb_running_queue)
+        next = next->prev;
+
+    while(next != pcb_running_queue){
+        
+        twritef("[%d]%s -> ", next->pid, next->name);
+        next = next->prev;
+    }
+    
+    twritef("\n\n");
+    twritef("Blocked queue (0x%x):\n ====> ", pcb_blocked_queue);
+    next = pcb_blocked_queue;
+    while(next != NULL){
+        twritef("[%d]%s ->", next->pid, next->name);
+        next = next->next;
+    }
+    twritef("\n");
+}
+
 
 void pcb_set_blocked(int pid)
 {
-    int i;
-    for(i = 0; i < MAX_NUM_OF_PCBS; i++)
-        if(pcbs[i].pid == pid){
-            pcbs[i].running = BLOCKED;
+    if(pid < 0 || pid > MAX_NUM_OF_PCBS)
+        return;
 
-            pcb_queue_remove(&pcbs[i]);
-            pcb_queue_push(&pcb_blocked_queue, &pcbs[i], SINGLE_LINKED);
+    pcbs[pid].running = BLOCKED;
 
-            pcbs[i].blocked_count++;
-            return;
-        }
+    pcb_queue_remove(&pcbs[pid]);
+    pcb_queue_push(&pcb_blocked_queue, &pcbs[pid], SINGLE_LINKED);
+
+    pcbs[pid].blocked_count++;
 }
 
 void pcb_set_running(int pid)
 {
-    int i;
-    for(i = 0; i < MAX_NUM_OF_PCBS; i++)
-        if(pcbs[i].pid == pid){
-            pcbs[i].running = RUNNING;
-            return;
-        }
+    if(pid < 0 || pid > MAX_NUM_OF_PCBS)
+        return;
+
+    pcbs[pid].running = RUNNING;
 }
 
 /**
@@ -236,28 +271,22 @@ void pcb_set_running(int pid)
  */
 int stop_task(int pid)
 {
-    /* 
-        FIXME: BUG, after a task is stopped, the next started task will fill its place.
-        BUT, the next task after that will have the same stack as a other PCB.
-     */
-    for (int i = 0; i < pcb_count; i++)
-    {
-        if(pcbs[i].pid == pid)
-        {
-            CLI();
-            pcbs[i].running = STOPPED;
-            free((void*)pcbs[i].org_stack);
-            pcb_count--;
-            pcbs[i].prev->next = pcbs[i].next;
-            pcbs[i].next->prev = pcbs[i].prev;
 
-            pcbs[i].esp = 0;
-            pcbs[i].ebp = 0;
-            STI();
-            return i;
-        }
-    }
-    return -1;
+    if(pid < 0 || pid > MAX_NUM_OF_PCBS)
+        return -1;
+
+    CLI();
+    pcbs[pid].running = STOPPED;
+    free((void*)pcbs[pid].org_stack);
+    pcb_count--;
+    pcbs[pid].prev->next = pcbs[pid].next;
+    pcbs[pid].next->prev = pcbs[pid].prev;
+
+    pcbs[pid].esp = 0;
+    pcbs[pid].ebp = 0;
+    STI();
+
+    return pid;
 }
 
 /**
@@ -399,8 +428,8 @@ void init_pcbs()
     int ret = add_pcb(&gensis, "Gensis");
     if(ret < 0) return; // error
 
-    //int ret = add_pcb(&gensis2, "Adam");
-    //if(ret < 0) return; // error
+    ret = add_pcb(&gensis2, "Adam");
+    if(ret < 0) return; // error
     dbgprintf("[PCB] All process control blocks are ready.\n");
 
 }

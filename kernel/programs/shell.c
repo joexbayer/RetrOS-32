@@ -97,6 +97,11 @@ void exec_cmd()
 		return;
 	}
 
+	if(strncmp("queues", shell_buffer, strlen("queues"))){
+		pcb_print_queues();
+		return;
+	}
+
 	if(strncmp("stop", shell_buffer, strlen("stop"))){
 		int id = atoi(shell_buffer+strlen("stop")+1);
 		stop_task(id);

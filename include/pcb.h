@@ -66,6 +66,7 @@ void pcb_queue_push_running(struct pcb* pcb);
 void pcb_queue_remove(struct pcb* pcb);
 void pcb_queue_push(struct pcb** queue, struct pcb* pcb, int type);
 struct pcb* pcb_queue_pop(struct pcb** queue, int type);
+void pcb_print_queues();
 
 /* functions in entry.s */
 void _start_pcb();
