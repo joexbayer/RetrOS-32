@@ -72,11 +72,9 @@ ls:
 
 bootblock: $(BOOTOBJ)
 	@$(LD) $(LDFLAGS) -o bin/bootblock $^ -Ttext 0x7C00 --oformat=binary
-	@echo [BOOT] Bootblock created.
 
 kernel: $(KERNELOBJ)
 	@$(LD) -o bin/kernelout $^ $(LDFLAGS) -T ./kernel/linker.ld
-	@echo [KERNEL] Kernel created.
 
 .depend: **/*.[cSh]
 	@$(CC) $(CCFLAGS) -MM -MG **/*.[cS] > $@
@@ -130,6 +128,7 @@ filesystem:
 	@dd if=/dev/zero of=filesystem.image bs=512 count=390
 
 compile: bindir $(LIBOBJ) bootblock kernel
+	@echo "[Compile] Finished."
 	$(TIME-END)
 
 img: iso
