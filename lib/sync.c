@@ -52,35 +52,6 @@ void mutex_init(mutex_t* l)
     l->state = UNLOCKED;
 }
 
-inline void __lock_block(mutex_t* l)
-{
-    /* TODO: Since we start from 0, newly blocked proceses may come before older blocked. */
-    for (int i = 0; i < MAX_BLOCKED; i++)
-    {
-        if(l->blocked[i] == -1){
-            l->blocked[i] = current_running->pid;
-            //twritef("Blocking %d\n", current_running->pid);
-            block();
-            return;
-        }
-    }
-
-    twriteln("PANIC 1");
-}
-
-inline int __lock_unlock(mutex_t* l)
-{
-    for (int i = 0; i < MAX_BLOCKED; i++)
-    {
-        if(l->blocked[i] != -1){
-            int ret = l->blocked[i];
-            l->blocked[i] = -1;
-            return ret;
-        }
-    }
-    return -1;
-}
-
 
 /**
  * @brief Locks the given l and blocks in case its already locked.
@@ -93,7 +64,9 @@ void acquire(mutex_t* l)
     switch (l->state)
     {
     case LOCKED:
-        __lock_block(l);
+        pcb_queue_remove(current_running);
+        pcb_queue_push(&l->pcb_blocked, current_running, SINGLE_LINKED);
+        block();
         break;
     
     case UNLOCKED:
@@ -114,12 +87,13 @@ void acquire(mutex_t* l)
  */
 void release(mutex_t* l)
 {
-    int pid = __lock_unlock(l);
-    if(pid != -1){
-        //twritef("Unblocking %d\n", pid);
-        unblock(pid);
+    struct pcb* blocked = pcb_queue_pop(&l->pcb_blocked, SINGLE_LINKED);
+    if(blocked != NULL){
+        pcb_queue_push_running(blocked);
+        unblock(blocked->pid);
         return;
-    }
+    }    
+
 
     l->state = UNLOCKED;
 }

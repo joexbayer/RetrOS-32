@@ -30,7 +30,13 @@ void exit()
 void block()
 {
     current_running->running = BLOCKED;
-    yield();
+    current_running->blocked_count++;
+    _context_switch();
+}
+
+void explicit_block(int pid)
+{
+    pcb_set_blocked(pid);
 }
 
 void unblock(int pid)

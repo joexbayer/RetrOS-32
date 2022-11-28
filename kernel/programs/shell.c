@@ -103,6 +103,18 @@ void exec_cmd()
 		return;
 	}
 
+	if(strncmp("block", shell_buffer, strlen("block"))){
+		int id = atoi(shell_buffer+strlen("block")+1);
+		pcb_set_blocked(id);
+		return;
+	}
+
+	if(strncmp("unblock", shell_buffer, strlen("unblock"))){
+		int id = atoi(shell_buffer+strlen("unblock")+1);
+		pcb_set_running(id);
+		return;
+	}
+
 	if(strncmp("dig", shell_buffer, strlen("dig"))){
 		char* hostname = shell_buffer+strlen("dig")+1;
 		hostname[strlen(hostname)-1] = 0;
@@ -154,6 +166,7 @@ void exec_cmd()
 		sync();
 		return;
 	}
+	
 
 	if(strncmp("exit", shell_buffer, strlen("exit"))){
 		sync();

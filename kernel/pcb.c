@@ -30,6 +30,7 @@ static int pcb_count = 0;
 
 struct pcb* current_running = &pcbs[0];
 static struct pcb* pcb_running_queue = &pcbs[0];
+static struct pcb* pcb_blocked_queue = NULL;
 
 /**
  * @brief Push pcb struct at the end of given queue
@@ -37,16 +38,92 @@ static struct pcb* pcb_running_queue = &pcbs[0];
  * @param queue 
  * @param pcb 
  */
-void pcb_queue_push(struct pcb* queue, struct pcb* pcb)
+void pcb_queue_push(struct pcb** queue, struct pcb* pcb, int type)
 {
     CLI();
-    struct pcb* prev = queue->prev;
-    queue->prev = pcb;
-    pcb->next = queue;
-    prev->next = pcb;
+    switch (type)
+    {
+    case SINGLE_LINKED:
+        ;
+        struct pcb* current = (*queue);
+        if(current == NULL)
+        {
+            (*queue) = pcb;
+            return;
+        }
+        while (current->next == NULL)
+        {
+            current = current->next;
+        }
+        current->next = pcb;
+        pcb->next = NULL;
+        dbgprintf("[SINGLE QUEUE] Added %s to a queue\n", pcb->name);
+        break;
+    
+    case DOUBLE_LINKED:
+        ;
+        struct pcb* prev = (*queue)->prev;
+        (*queue)->prev = pcb;
+        pcb->next = (*queue);
+        prev->next = pcb;
+
+        dbgprintf("[DOUBLE QUEUE] Added %s to a queue\n", pcb->name);
+
+    default:
+        break;
+    }
+
     STI();
 
 }
+
+
+
+void pcb_queue_remove(struct pcb* pcb)
+{
+    CLI();
+    struct pcb* prev = pcb->prev;
+    prev->next = pcb->next;
+    pcb->next->prev = prev;
+    STI();
+
+    dbgprintf("[QUEUE] Removed %s to a queue\n", pcb->name);
+}
+
+struct pcb* pcb_queue_pop(struct pcb** queue, int type)
+{
+    if((*queue)->pid == 0)
+        return NULL;
+
+    CLI();
+
+    switch (type)
+    {
+    case SINGLE_LINKED:
+        struct pcb* current = (*queue);
+
+        if(current == NULL)
+            return NULL;
+
+        (*queue) = (*queue)->next;
+        STI();
+        dbgprintf("[SINGLE QUEUE] Poped %s to a queue\n", current->name);
+        return current;
+    
+    case DOUBLE_LINKED:
+        /* code */
+        break;
+
+    default:
+        break;
+    }
+
+    STI();
+
+    return NULL;
+}
+
+
 
 /**
  * @brief Wrapper function to push to running queue
@@ -55,21 +132,9 @@ void pcb_queue_push(struct pcb* queue, struct pcb* pcb)
  */
 void pcb_queue_push_running(struct pcb* pcb)
 {
-    pcb_queue_push(pcb_running_queue, pcb);
+    dbgprintf("[QUEUE] Added %s to a running queue\n", pcb->name);
+    pcb_queue_push(&pcb_running_queue, pcb, DOUBLE_LINKED);
 }
-
-void pcb_queue_remove(struct pcb* pcb)
-{
-    if(pcb->pid == 0)
-        return;
-
-    CLI();
-    struct pcb* prev = pcb->prev;
-    prev->next = pcb->next;
-    pcb->next->prev = prev;
-    STI();
-}
-
 
 void gensis()
 {
@@ -84,7 +149,7 @@ void gensis()
 
             draw_window(pcbs[i].window);
         }
-
+        draw_window(pcbs[1].window);
 		yield();
 	}
 }
@@ -132,9 +197,25 @@ void print_pcb_status()
 
         done_list[done_list_count] = largest;
         done_list_count++;
-        twritef("  %d    0x%x    %s     %s\n", pcbs[largest].pid, pcbs[largest].esp, status[pcbs[largest].running], pcbs[largest].name);
+        twritef("  %d    0x%x    %s     %s bl: %d\n", pcbs[largest].pid, pcbs[largest].esp, status[pcbs[largest].running], pcbs[largest].name, pcbs[largest].blocked_count);
     }
     
+}
+
+
+void pcb_set_blocked(int pid)
+{
+    int i;
+    for(i = 0; i < MAX_NUM_OF_PCBS; i++)
+        if(pcbs[i].pid == pid){
+            pcbs[i].running = BLOCKED;
+
+            pcb_queue_remove(&pcbs[i]);
+            pcb_queue_push(&pcb_blocked_queue, &pcbs[i], SINGLE_LINKED);
+
+            pcbs[i].blocked_count++;
+            return;
+        }
 }
 
 void pcb_set_running(int pid)
@@ -249,7 +330,7 @@ int create_process(char* program)
     /* Memory map data */
     init_process_paging(pcb, buf, read);
 
-    pcb_queue_push(pcb_running_queue, pcb);
+    pcb_queue_push_running(pcb);
 
     pcb_count++;
     STI();
@@ -280,7 +361,7 @@ int add_pcb(void (*entry)(), char* name)
     int ret = init_pcb(i, &pcbs[i], entry, name);
     if(!ret) return ret;
 
-    pcb_queue_push(pcb_running_queue, &pcbs[i]);
+    pcb_queue_push_running(&pcbs[i]);
 
     pcbs[i].page_dir = kernel_page_dir;
     pcbs[i].is_process = 0;

@@ -16,6 +16,12 @@ enum {
     SLEEPING
 };
 
+/* Should be in list.h? */
+enum {
+    SINGLE_LINKED,
+    DOUBLE_LINKED
+};
+
 struct pcb {
       uint32_t ebp;
       uint32_t esp;
@@ -29,6 +35,8 @@ struct pcb {
       int16_t pid;
       uint16_t sleep_time;
       uint32_t org_stack;
+
+      uint32_t blocked_count;
 
       uint32_t* page_dir;
 
@@ -52,9 +60,12 @@ void print_pcb_status();
 int create_process(char* program);
 
 void pcb_set_running(int pid);
+void pcb_set_blocked(int pid);
 
 void pcb_queue_push_running(struct pcb* pcb);
 void pcb_queue_remove(struct pcb* pcb);
+void pcb_queue_push(struct pcb** queue, struct pcb* pcb, int type);
+struct pcb* pcb_queue_pop(struct pcb** queue, int type);
 
 /* functions in entry.s */
 void _start_pcb();
