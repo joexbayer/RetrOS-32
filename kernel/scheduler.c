@@ -2,6 +2,7 @@
 #include <memory.h>
 #include <pcb.h>
 #include <timer.h>
+#include <serial.h>
 
 void sleep(int time)
 {

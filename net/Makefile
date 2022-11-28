@@ -7,6 +7,21 @@ ASFLAGS=
 LDFLAGS=
 MAKEFLAGS += --no-print-directory
 
+ifneq ($(words $(MAKECMDGOALS)),1)
+.DEFAULT_GOAL = all
+%:
+	@$(MAKE) $@ --no-print-directory -rRf $(firstword $(MAKEFILE_LIST))
+else
+ifndef ECHO
+T := $(shell $(MAKE) $(MAKECMDGOALS) --no-print-directory \
+    -nrRf $(firstword $(MAKEFILE_LIST)) \
+    ECHO="COUNTTHIS" | grep -c "COUNTTHIS")
+
+N := x
+C = $(words $N)$(eval N := x $N)
+ECHO = echo -ne "\r[$(words $N)/$T] (`expr $C '*' 100 / $T`%)"
+endif
+
 UNAME := $(shell uname)
 ifeq ($(UNAME),Linux)
 	CC=gcc
@@ -34,7 +49,6 @@ new: bindir network
 
 network: ${NETOBJS}
 	@$(LD) -o ${OUTPUTDIR}net.o $(addprefix ./bin/,$^) $(LDFLAGS) -r
-	@echo [NET]        Network Object Created
 
 .depend: **/*.[cSh]
 	@$(CC) $(CCFLAGS) -MM -MG **/*.[cS] > $@
@@ -46,9 +60,10 @@ bindir:
 
 # For assembling and compiling all .c and .s files.
 %.o: %.c
-	@echo [NET]        Compiling bin/$@
+	@$(ECHO) [NET]        Compiling bin/$@
 	@$(CC) -o bin/$@ -c $< $(CCFLAGS)
 
 clean:
 	rm -f ./bin/*.o
 	rm -f .depend
+endif

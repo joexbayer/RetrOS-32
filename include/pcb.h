@@ -53,7 +53,7 @@ int create_process(char* program);
 
 void pcb_set_running(int pid);
 
-inline void pcb_queue_push_running(struct pcb* pcb);
+void pcb_queue_push_running(struct pcb* pcb);
 void pcb_queue_remove(struct pcb* pcb);
 
 /* functions in entry.s */

@@ -15,11 +15,13 @@ inline uint32_t strncmp(const char* str, const char* str2, uint32_t len)
 	return memcmp((uint8_t*)str, (uint8_t*)str2, len) == 0;
 }
 
-inline inline uint32_t memcmp(const uint8_t* ptr, const uint8_t* ptr2, uint32_t len)
+inline inline uint32_t memcmp(const void* ptr, const void* ptr2, uint32_t len)
 {
+	char* ptr_c = (char*) ptr;
+	char* ptr2_c = (char*) ptr2;
 	for (uint32_t i = 0; i < len; i++)
 	{
-		if(ptr[i] != ptr2[i])
+		if(ptr_c[i] != ptr2_c[i])
 			return -1;
 	}
 
