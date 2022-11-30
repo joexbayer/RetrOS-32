@@ -12,6 +12,7 @@
 #include <terminal.h>
 #include <scheduler.h>
 #include <pcb.h>
+#include <serial.h>
 
 /* Fucntions defined in kernel_entry.s */
 void spin_lock_asm(int volatile *l);
@@ -61,11 +62,14 @@ void mutex_init(mutex_t* l)
 void acquire(mutex_t* l)
 {
     CLI();
+
     switch (l->state)
     {
     case LOCKED:
         pcb_queue_remove(current_running);
         pcb_queue_push(&l->pcb_blocked, current_running, SINGLE_LINKED);
+
+        //dbgprintf("[SYNC] %s blocked trying to acquire 0x%x\n", current_running->name, l);
         block();
         break;
     
@@ -77,6 +81,8 @@ void acquire(mutex_t* l)
         twriteln("PANIC 2");
         break;
     }
+
+    //dbgprintf("[SYNC] %s acquired 0x%x\n", current_running->name, l);
     STI();
 }
 
@@ -87,13 +93,20 @@ void acquire(mutex_t* l)
  */
 void release(mutex_t* l)
 {
+
+    //dbgprintf("[SYNC] %s released 0x%x\n", current_running->name, l);
+
+    CLI();
     struct pcb* blocked = pcb_queue_pop(&l->pcb_blocked, SINGLE_LINKED);
     if(blocked != NULL){
         pcb_queue_push_running(blocked);
         unblock(blocked->pid);
+
+        //dbgprintf("[SYNC] %s unblocked %s waiting for 0x%x\n", current_running->name, blocked->name, l);
         return;
     }    
 
 
     l->state = UNLOCKED;
+    STI();
 }

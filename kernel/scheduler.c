@@ -19,10 +19,9 @@ void yield()
 
 void exit()
 {
-    while(1);
 
     CLI();
-    stop_task(current_running->pid);
+    current_running->running = ZOMBIE;
 
     _context_switch();
 }
@@ -47,12 +46,21 @@ void unblock(int pid)
 void context_switch()
 {   
     current_running = current_running->next;
+    if(current_running == NULL)
+            current_running = pcb_get_new_running();
+    
     while(current_running->running != RUNNING)
     {
         switch (current_running->running)
         {
         case STOPPED:
             current_running = current_running->next;
+            break;
+        case ZOMBIE:
+            ;
+            struct pcb* next = current_running->next;
+            pcb_cleanup(current_running->pid);
+            current_running = next;
             break;
         case NEW:
             dbgprintf("[Context Switch] Running new PCB %s with page dir: %x: stack: %x kstack: %x\n", current_running->name, current_running->page_dir, current_running->esp, current_running->k_esp);

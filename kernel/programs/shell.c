@@ -104,7 +104,7 @@ void exec_cmd()
 
 	if(strncmp("stop", shell_buffer, strlen("stop"))){
 		int id = atoi(shell_buffer+strlen("stop")+1);
-		stop_task(id);
+		pcb_cleanup(id);
 		return;
 	}
 

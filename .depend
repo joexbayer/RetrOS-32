@@ -63,6 +63,9 @@ pci.o: kernel/pci.c include/pci.h include/stdint.h include/e1000.h \
 scheduler.o: kernel/scheduler.c include/scheduler.h include/memory.h \
  include/stdint.h include/pcb.h include/util.h include/windowmanager.h \
  include/colors.h include/timer.h include/rtc.h include/serial.h
+sync.o: kernel/sync.c include/sync.h include/stdint.h include/terminal.h \
+ include/util.h include/scheduler.h include/pcb.h include/windowmanager.h \
+ include/colors.h include/serial.h
 syscalls.o: kernel/syscalls.c include/syscalls.h include/interrupts.h \
  include/stdint.h
 terminal.o: kernel/terminal.c include/terminal.h include/util.h \
@@ -76,9 +79,6 @@ bitmap.o: lib/bitmap.c include/bitmap.h include/stdint.h include/memory.h \
 list.o: lib/list.c include/list.h
 printf.o: lib/printf.c include/stdarg.h include/usr_syscall.h \
  include/util.h include/stdint.h
-sync.o: lib/sync.c include/sync.h include/stdint.h include/terminal.h \
- include/util.h include/scheduler.h include/pcb.h include/windowmanager.h \
- include/colors.h
 syscall.o: lib/syscall.c include/syscall_helper.h include/usr_syscall.h \
  include/stdint.h include/util.h
 util.o: lib/util.c include/util.h include/stdint.h

@@ -13,6 +13,7 @@ enum {
     RUNNING,
     NEW,
     BLOCKED,
+    ZOMBIE,
     SLEEPING
 };
 
@@ -54,7 +55,6 @@ extern struct pcb* current_running;
 void init_pcbs();
 void start_tasks();
 void start_pcb();
-int stop_task(int pid);
 int add_pcb( void (*entry)(), char* name);
 void print_pcb_status();
 int create_process(char* program);
@@ -67,6 +67,8 @@ void pcb_queue_remove(struct pcb* pcb);
 void pcb_queue_push(struct pcb** queue, struct pcb* pcb, int type);
 struct pcb* pcb_queue_pop(struct pcb** queue, int type);
 void pcb_print_queues();
+
+int pcb_cleanup(int pid);
 
 /* functions in entry.s */
 void _start_pcb();
