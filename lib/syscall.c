@@ -39,3 +39,8 @@ void exit()
 {
     invoke_syscall(SYSCALL_EXIT, 0, 0, 0);
 }
+
+void sleep(int seconds)
+{
+    invoke_syscall(SYSCALL_SLEEP, seconds, 0, 0);
+}

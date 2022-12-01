@@ -17,11 +17,7 @@ void main()
 	while(1)
 	{	
 	  	printf("Counter: %d!\n", j);
-    	int test = 0;
-		for (int i = 0; i < 40000000; i++)
-		{
-			test = (test + 1) % 10000;
-		}
+		sleep(1);
 		j++;
 
 		if(j == 100)

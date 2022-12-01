@@ -55,6 +55,7 @@ void _main()
 	add_system_call(SYSCALL_SCRPUT, (syscall_t)&scrput);
 	add_system_call(SYSCALL_PRTPUT, (syscall_t)&terminal_putchar);
 	add_system_call(SYSCALL_EXIT, (syscall_t)&exit);
+	add_system_call(SYSCALL_SLEEP, (syscall_t)&sleep);
 
 	dbgprintf("TEXT: %d\n", _code_end-_code);
 	dbgprintf("RODATA: %d\n", _ro_e-_ro_s);
