@@ -105,6 +105,7 @@ struct pcb* pcb_queue_pop(struct pcb** queue, int type)
 	switch (type)
 	{
 	case SINGLE_LINKED:
+		;
 		struct pcb* current = (*queue);
 
 		if(current == NULL)

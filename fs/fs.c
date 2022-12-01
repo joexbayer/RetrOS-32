@@ -216,6 +216,7 @@ inode_t fs_open(char* name)
 	return 0;
 
 fs_open_done:
+	dbgprintf("[FS] Opened file %s inode: %d\n", name, entry.inode);
 
 	struct inode* inode = inode_get(entry.inode, &superblock);
 	if(inode == NULL)
@@ -224,7 +225,6 @@ fs_open_done:
 	inode->nlink++;
 	inode->pos = 0;
 
-	dbgprintf("[FS] Opened file %s with size %d, inode: %d\n", name, inode->size, inode->inode);
 	
 	return entry.inode;
 }
