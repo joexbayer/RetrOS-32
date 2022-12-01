@@ -13,8 +13,8 @@ enum {
     RUNNING,
     NEW,
     BLOCKED,
-    ZOMBIE,
-    SLEEPING
+    SLEEPING,
+    ZOMBIE
 };
 
 /* Should be in list.h? */

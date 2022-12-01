@@ -23,7 +23,7 @@
 
 #define stack_size 0x2000
 
-static const char* status[] = {"stopped ", "running ", "new     ", "blocked ", "sleeping"};
+static const char* status[] = {"stopped ", "running ", "new     ", "blocked ", "sleeping", "zombie"};
 
 static struct pcb pcbs[MAX_NUM_OF_PCBS];
 static int pcb_count = 0;
@@ -163,7 +163,7 @@ void gensis2()
 {
 	while(1)
 	{
-		
+
 	}
 }
 
@@ -176,7 +176,7 @@ void print_pcb_status()
 	int done_list[MAX_NUM_OF_PCBS];
 	int done_list_count = 0;
 	
-	twriteln(" PID   Stack       Status       Name");
+	twriteln(" PID   Stack       Status       Type      Name");
 	for (int i = 0; i < MAX_NUM_OF_PCBS; i++)
 	{
 		if(pcbs[i].pid == -1)
@@ -210,7 +210,7 @@ void print_pcb_status()
 
 		done_list[done_list_count] = largest;
 		done_list_count++;
-		twritef("  %d    0x%x    %s     %s bl: %d\n", pcbs[largest].pid, pcbs[largest].esp, status[pcbs[largest].running], pcbs[largest].name, pcbs[largest].blocked_count);
+		twritef("  %d    0x%x    %s     %s   %s\n", pcbs[largest].pid, pcbs[largest].esp, status[pcbs[largest].running], pcbs[largest].is_process == 1 ? "Process" : "kthread", pcbs[largest].name);
 	}
 	
 }

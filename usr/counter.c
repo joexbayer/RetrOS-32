@@ -14,13 +14,10 @@ void main()
 {
 	int j = 1;
 
-	while(1)
+	while(j < 100)
 	{	
 	  	printf("Counter: %d!\n", j);
 		sleep(1);
 		j++;
-
-		if(j == 100)
-			return;
 	}
 }
