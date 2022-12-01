@@ -43,7 +43,7 @@ kernel.o: kernel/kernel.c include/windowmanager.h include/stdint.h \
  include/net/tcp.h include/ata.h include/bitmap.h include/net/socket.h \
  include/sync.h include/net/dns.h include/fs/fs.h include/fs/inode.h \
  include/fs/superblock.h include/serial.h include/syscall_helper.h \
- include/kthreads.h
+ include/kthreads.h include/scheduler.h
 kthreads.o: kernel/kthreads.c include/kthreads.h include/stdint.h \
  include/terminal.h include/util.h include/screen.h include/colors.h \
  include/pcb.h include/windowmanager.h

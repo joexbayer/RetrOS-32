@@ -4,7 +4,8 @@
 enum {
     SYSCALL_ALLOC,
     SYSCALL_SCRPUT,
-    SYSCALL_PRTPUT
+    SYSCALL_PRTPUT,
+    SYSCALL_EXIT
 };
 
 #endif /* __SYSCALL_HELPER_H */

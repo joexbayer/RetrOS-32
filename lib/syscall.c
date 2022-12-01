@@ -34,3 +34,8 @@ void print_put(unsigned char c)
 {
     invoke_syscall(SYSCALL_PRTPUT, c, 0, 0);
 }
+
+void exit()
+{
+    invoke_syscall(SYSCALL_EXIT, 0, 0, 0);
+}

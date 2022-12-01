@@ -8,7 +8,7 @@
  * @copyright Copyright (c) 2022
  * 
  */
-#include <usr_syscall.h>
+#include <printf.h>
 
 void main()
 {
@@ -17,14 +17,14 @@ void main()
 	while(1)
 	{	
 	  	printf("Counter: %d!\n", j);
-		//print_put('a');
     	int test = 0;
 		for (int i = 0; i < 40000000; i++)
 		{
 			test = (test + 1) % 10000;
 		}
 		j++;
-		
-		
+
+		if(j == 100)
+			return;
 	}
 }

@@ -196,7 +196,11 @@ void exec_cmd()
 
 	if(strncmp("run", shell_buffer, strlen("run"))){
 		char* name = shell_buffer+strlen("run")+1;
-		create_process(name);
+		name[strlen(name)-1] = 0;
+		int pid = create_process(name);
+		if(pid == 0)
+			twritef("%s does not exist\n", name);
+
 		return;
 	}
 	int r = start(shell_buffer);

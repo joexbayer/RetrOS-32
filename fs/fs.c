@@ -204,17 +204,18 @@ inode_t fs_open(char* name)
 	if(strlen(name)+1 > FS_DIRECTORY_NAME_SIZE)
 		return -1;
 
-	while (size <= current_dir->size)
+	while (size < current_dir->size)
 	{
 		int ret = inode_read((char*) &entry, sizeof(struct directory_entry), current_dir, &superblock);
 		int mem_ret = memcmp((void*)entry.name, (void*)name, strlen(entry.name));
 		if(mem_ret == 0)
-			break;
+			goto fs_open_done;
 		size += ret;
 	}
 
-	if(entry.inode == 0)
-		twriteln("Cant find");
+	return 0;
+
+fs_open_done:
 
 	struct inode* inode = inode_get(entry.inode, &superblock);
 	if(inode == NULL)

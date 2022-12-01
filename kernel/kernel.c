@@ -19,6 +19,7 @@
 #include <syscall_helper.h>
 #include <syscalls.h>
 #include <kthreads.h>
+#include <scheduler.h>
 
 /* This functions always needs to be on top? */
 void _main() 
@@ -53,6 +54,7 @@ void _main()
 
 	add_system_call(SYSCALL_SCRPUT, (syscall_t)&scrput);
 	add_system_call(SYSCALL_PRTPUT, (syscall_t)&terminal_putchar);
+	add_system_call(SYSCALL_EXIT, (syscall_t)&exit);
 
 	dbgprintf("TEXT: %d\n", _code_end-_code);
 	dbgprintf("RODATA: %d\n", _ro_e-_ro_s);

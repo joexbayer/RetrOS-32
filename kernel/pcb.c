@@ -163,7 +163,7 @@ void gensis2()
 {
 	while(1)
 	{
-
+		
 	}
 }
 
@@ -330,6 +330,8 @@ int create_process(char* program)
 	CLI();
 	/* Load process from disk */
 	inode_t inode = fs_open(program);
+	if(inode == 0)
+		return 0;
 
 	char buf[MAX_FILE_SIZE];
 	int read = fs_read((char* )buf, inode);
@@ -369,7 +371,7 @@ int create_process(char* program)
 	STI();
 	dbgprintf("[INIT PROCESS] Created new process!\n");
 	/* Run */
-	return 1;
+	return i;
 }
 
 /**
