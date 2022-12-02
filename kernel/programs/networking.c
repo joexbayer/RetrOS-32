@@ -37,18 +37,18 @@ void networking_print_status()
     int state = dhcp_get_state();
     if(state != DHCP_SUCCESS){
         twritef(" (%s)      \n", dhcp_state_names[state]);
-        twritef(" IP: %s\n", "N/A");
+        twritef(" IP:  %s\n", "N/A");
         twritef(" DNS: %s\n", "N/A");
-        twritef(" GW: %s\n", "N/A");
+        twritef(" GW:  %s\n", "N/A");
     } else {
         int ip = dhcp_get_ip();
-        twritef(" IP: %i     \n", ip);
+        twritef(" IP:  %i     \n", ip);
 
         int dns = dhcp_get_dns();
         twritef(" DNS: %i     \n", dns);
         
         int gw = dhcp_get_gw();
-        twritef(" GW: %i     \n", gw);
+        twritef(" GW:  %i     \n", gw);
     }
 
     twritef(" MAC: %x:%x:%x:%x:%x:%x\n", current_netdev.mac[0], current_netdev.mac[1], current_netdev.mac[2], current_netdev.mac[3], current_netdev.mac[4], current_netdev.mac[5]);

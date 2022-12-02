@@ -45,11 +45,7 @@ void spin_unlock(int volatile *l)
  */
 void mutex_init(mutex_t* l)
 {
-    for (int i = 0; i < MAX_BLOCKED; i++)
-    {
-        l->blocked[i] = -1;
-    }
-
+    l->pcb_blocked = NULL;
     l->state = UNLOCKED;
 }
 

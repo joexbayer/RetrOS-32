@@ -15,7 +15,6 @@ void spin_unlock(int volatile *p);
 typedef int volatile spinlock_t;
 
 typedef struct _mutex {
-    int blocked[MAX_BLOCKED]; /* List of PIDs blocked.*/
     int state;
     struct pcb* pcb_blocked;
 } mutex_t;

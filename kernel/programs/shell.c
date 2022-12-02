@@ -167,6 +167,11 @@ void exec_cmd()
 		return;
 	}
 
+	if(strncmp("netinfo", shell_buffer, strlen("netinfo"))){
+		networking_print_status();
+		return;
+	}
+
 	if(strncmp("sync", shell_buffer, strlen("sync"))){
 		sync();
 		return;
