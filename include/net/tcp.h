@@ -2,43 +2,67 @@
 #define __TCP_H
 
 #include <stdint.h>
+#include <net/socket.h>
+
+# define TCP_MSS        512
 
 /* TCP STATES */
 enum {
-  TCP_CLOSED,
-  TCP_LISTEN,
-  TCP_SYN_RCVD,
-  TCP_SYN_SENT,
-  /* Between SYN_SENT and ESTABLISHED a new socket is created. */
-  TCP_ESTABLISHED,
-  TCP_FIN_WAIT_1,
-  TCP_FIN_WAIT_2,
-  TCP_CLOSING,
-  TCP_TIME_WAIT,
-  TCP_CLOSE_WAIT,
-  TCP_LAST_ACK
+	TCP_CLOSED,
+	TCP_LISTEN,
+	TCP_SYN_RCVD,
+	TCP_SYN_SENT,
+	/* Between SYN_SENT and ESTABLISHED a new socket is created. */
+	TCP_ESTABLISHED,
+	TCP_FIN_WAIT_1,
+	TCP_FIN_WAIT_2,
+	TCP_CLOSING,
+	TCP_TIME_WAIT,
+	TCP_CLOSE_WAIT,
+	TCP_LAST_ACK
 };
 
-struct tcp_header {
-   uint16_t src_port;
-   uint16_t dst_port;
+struct tcp_header
+  {
+    uint16_t source;
+    uint16_t dest;
+    uint32_t seq;
+    uint32_t ack_seq;
+    uint16_t doff:4;
+    uint16_t res1:4;
+    uint16_t res2:2;
+    uint16_t urg:1;
+    uint16_t ack:1;
+    uint16_t psh:1;
+    uint16_t rst:1;
+    uint16_t syn:1;
+    uint16_t fin:1;
 
-   uint32_t seq;
-   uint32_t ack;
-
-   uint16_t flags;
-   uint16_t cwnd;
-   uint16_t csum;
-
-   uint16_t urgptr;
-    
-
+    uint16_t window;
+    uint16_t check;
+    uint16_t urg_ptr;
 };
 
 struct tcp_connection {
-    uint8_t state;
-    uint16_t src_port;
-    uint16_t dst_port;
+	uint8_t state;
+	uint16_t src_port;
+	uint16_t dst_port;
+
+	uint32_t retransmits;
+	uint32_t tcpi_snd_mss;
+	uint32_t tcpi_rcv_mss;
+
+	uint32_t last_data_sent;
+	uint32_t last_ack_sent;
+	uint32_t last_data_recv;
+	uint32_t last_ack_recv;
+
+	uint16_t backlog;
+
 };
+
+
+int tcp_is_listening(struct sock* sock);
+int tcp_set_listening(struct sock* sock, int backlog);
 
 #endif

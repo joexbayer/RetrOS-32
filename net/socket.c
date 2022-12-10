@@ -21,7 +21,7 @@
 #define DYNAMIC_PORT_START 49152
 #define NUMBER_OF_DYMANIC_PORTS 16383
 
-static struct sock** sockets;
+static struct sock** socket_table;
 static int total_sockets;
 static bitmap_t port_map;
 static bitmap_t socket_map;
@@ -41,8 +41,6 @@ static bitmap_t socket_map;
  * 
  */
 
-
-
 inline static uint16_t __get_free_port()
 {
     return ntohs(get_free_bitmap(port_map, NUMBER_OF_DYMANIC_PORTS) + DYNAMIC_PORT_START);
@@ -50,9 +48,9 @@ inline static uint16_t __get_free_port()
 
 inline static void __socket_bind(int socket, uint16_t port, uint32_t ip)
 {
-    sockets[socket]->bound_ip = ip;
+    socket_table[socket]->bound_ip = ip;
     /* if given port is 0 chose a random one. */
-    sockets[socket]->bound_port = port == 0 ? __get_free_port() : port;
+    socket_table[socket]->bound_port = port == 0 ? __get_free_port() : port;
 }
 
 
@@ -66,43 +64,42 @@ inline static void __socket_bind(int socket, uint16_t port, uint32_t ip)
  */
 static int __sock_add_packet(char* buffer, uint16_t len, int socket_index)
 {
+    acquire(&socket_table[socket_index]->sock_lock);
 
-    acquire(&sockets[socket_index]->sock_lock);
-
-    for (int i = sockets[socket_index]->last_read_buffer; i < BUFFERS_PER_SOCKET; i++)
-    {
-        if(sockets[socket_index]->buffer_lens[i] == 0)
-        {
-            /* If a free buffer exist add packet to buffer. */
-            memcpy(sockets[socket_index]->buffers[i], buffer, len);
-            sockets[socket_index]->buffer_lens[i] = len;
-            release(&sockets[socket_index]->sock_lock);
-            return 1;
-        }
+    int next = socket_table[socket_index]->next_write_buffer;
+    if(socket_table[socket_index]->buffer_lens[next] > 0){
+        release(&socket_table[socket_index]->sock_lock);
+        return -1; /* TODO: Something is wrong if next is already filled... */
     }
 
-    release(&sockets[socket_index]->sock_lock);
-    return -1;
+    /* If a free buffer exist add packet to buffer. */
+    memcpy(socket_table[socket_index]->buffers[next], buffer, len);
+    socket_table[socket_index]->buffer_lens[next] = len;
+
+    socket_table[socket_index]->next_write_buffer = (socket_table[socket_index]->next_write_buffer + 1) % BUFFERS_PER_SOCKET;
+
+    release(&socket_table[socket_index]->sock_lock);
+    return 1;
 }
 
 inline static int __sock_read_packet(int index, char* buffer)
 {
-    acquire(&sockets[index]->sock_lock);
+    acquire(&socket_table[index]->sock_lock);
 
     /* If no packet is avaiable return -1 */
-    int next = sockets[index]->last_read_buffer;
-    if(sockets[index]->buffer_lens[next] <= 0){
-        release(&sockets[index]->sock_lock);
+    int next = socket_table[index]->last_read_buffer;
+    if(socket_table[index]->buffer_lens[next] <= 0){
+        release(&socket_table[index]->sock_lock);
         return -1;
     }
     
     /* Copy packet over to given buffer and move to next. */
-    int read = sockets[index]->buffer_lens[next];
-    memcpy(buffer, sockets[index]->buffers[next], read);
-    sockets[index]->buffer_lens[next] = 0;
-    sockets[index]->last_read_buffer = (sockets[index]->last_read_buffer + 1) % BUFFERS_PER_SOCKET;
+    int read = socket_table[index]->buffer_lens[next];
+    memcpy(buffer, socket_table[index]->buffers[next], read);
+    socket_table[index]->buffer_lens[next] = 0;
+    socket_table[index]->last_read_buffer = (socket_table[index]->last_read_buffer + 1) % BUFFERS_PER_SOCKET;
 
-    release(&sockets[index]->sock_lock);
+    release(&socket_table[index]->sock_lock);
     return read;
 }
 
@@ -208,7 +205,7 @@ int sendto(int socket, const void *message, int length, int flags, const struct 
 
     /* Cast sockaddr back to sockaddr_in. Cast originally to comply with linux implementation.*/
     struct sockaddr_in* addr = (struct sockaddr_in*) dest_addr;
-    if(sockets[socket]->bound_port == 0)
+    if(socket_table[socket]->bound_port == 0)
         __socket_bind(socket, __get_free_port(), INADDR_ANY);
 
     /* Get new SKB for packet. */
@@ -217,10 +214,10 @@ int sendto(int socket, const void *message, int length, int flags, const struct 
     skb->stage = IN_PROGRESS;
 
     /* Forward packet to specified protocol. */
-    switch (sockets[socket]->type)
+    switch (socket_table[socket]->type)
     {
     case SOCK_DGRAM:
-        if(udp_send(skb, (char*) message, BROADCAST_IP, addr->sin_addr.s_addr, ntohs(sockets[socket]->bound_port), ntohs(addr->sin_port), length) <= 0)
+        if(udp_send(skb, (char*) message, BROADCAST_IP, addr->sin_addr.s_addr, ntohs(socket_table[socket]->bound_port), ntohs(addr->sin_port), length) <= 0)
             return 0;
         break;
 
@@ -249,7 +246,7 @@ int udp_deliver_packet(uint32_t ip, uint16_t port, char* buffer, uint16_t len)
 {   
     /* Interate over sockets and add packet if socket exists with matching port and IP */
     for (int i = 0; i < total_sockets; i++)
-        if(sockets[i]->bound_port == htons(port) && (sockets[i]->bound_ip == ip || sockets[i]->bound_ip == INADDR_ANY))
+        if(socket_table[i]->bound_port == htons(port) && (socket_table[i]->bound_ip == ip || socket_table[i]->bound_ip == INADDR_ANY))
             return __sock_add_packet(buffer, len, i);
 
     return -1;
@@ -257,7 +254,7 @@ int udp_deliver_packet(uint32_t ip, uint16_t port, char* buffer, uint16_t len)
 
 void close(socket_t socket)
 {
-    free((void*) sockets[socket]);
+    free((void*) socket_table[socket]);
     unset_bitmap(socket_map, (int) socket);
     total_sockets--;
 }
@@ -276,29 +273,54 @@ socket_t socket(int domain, int type, int protocol)
     //int current = get_free_bitmap(socket_map, MAX_NUMBER_OF_SOCKETS);
     int current = get_free_bitmap(socket_map, MAX_NUMBER_OF_SOCKETS);
 
-    sockets[current] = alloc(sizeof(struct sock)); /* Allocate space for a socket. Needs to be freed. */
-    sockets[current]->domain = domain;
-    sockets[current]->protocol = protocol;
-    sockets[current]->type = type;
-    sockets[current]->socket = current;
-    sockets[current]->bound_port = 0;
-    sockets[current]->last_read_buffer = 0;
+    socket_table[current] = alloc(sizeof(struct sock)); /* Allocate space for a socket. Needs to be freed. */
+    socket_table[current]->domain = domain;
+    socket_table[current]->protocol = protocol;
+    socket_table[current]->type = type;
+    socket_table[current]->socket = current;
+    socket_table[current]->bound_port = 0;
+    socket_table[current]->last_read_buffer = 0;
+    socket_table[current]->next_write_buffer = 0;
 
     for (int i = 0; i < BUFFERS_PER_SOCKET; i++)
     {
-        sockets[current]->buffer_lens[i] = 0;
+        socket_table[current]->buffer_lens[i] = 0;
     }
     
 
-    mutex_init(&(sockets[current]->sock_lock));
+    mutex_init(&(socket_table[current]->sock_lock));
 
     total_sockets++;
     return (socket_t) current;
 }
 
+int accept(int socket, struct sockaddr *address, socklen_t *address_len)
+{
+
+    /* accept: only is valid in a TCP connection context. */
+    if(!tcp_is_listening(socket_table[socket]))
+        return -1;
+    
+
+    /* Create new TCP socket? */
+
+    return -1;
+}
+int connect(int socket, const struct sockaddr *address, socklen_t address_len)
+{
+    
+    return -1;
+}
+
+int listen(int socket, int backlog)
+{
+    return tcp_set_listening(socket_table[socket], backlog);
+}
+
+
 void init_sockets()
 {
-    sockets = (struct sock**) alloc(MAX_NUMBER_OF_SOCKETS * sizeof(void*));
+    socket_table = (struct sock**) alloc(MAX_NUMBER_OF_SOCKETS * sizeof(void*));
     port_map = create_bitmap(NUMBER_OF_DYMANIC_PORTS);
     socket_map = create_bitmap(MAX_NUMBER_OF_SOCKETS);
     total_sockets = 0;

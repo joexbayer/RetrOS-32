@@ -60,10 +60,14 @@ struct sock {
     char* buffers[BUFFERS_PER_SOCKET][2048];
     uint16_t buffer_lens[BUFFERS_PER_SOCKET];
     uint8_t last_read_buffer;
+    uint8_t next_write_buffer;
+
+    /* if tcp socket */
+    struct tcp_connection* tcp_conn;
 };
 
-int accept(int socket, struct sockaddr *address, socklen_t *address_len);
 int bind(int socket, const struct sockaddr *address, socklen_t address_len);
+int accept(int socket, struct sockaddr *address, socklen_t *address_len);
 int connect(int socket, const struct sockaddr *address, socklen_t address_len);
 int listen(int socket, int backlog);
 int recv(int socket, void *buffer, int length, int flags);
@@ -78,6 +82,6 @@ void init_sockets();
 int udp_deliver_packet(uint32_t ip, uint16_t port, char* buffer, uint16_t len);
 int get_total_sockets();
 
-
+#include <net/tcp.h>
 
 #endif /* SOCKET_H */
