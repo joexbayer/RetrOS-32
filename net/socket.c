@@ -259,7 +259,6 @@ void close(socket_t socket)
     total_sockets--;
 }
 
-
 /**
  * @brief Creates a socket and allocates a struct sock representation.
  * Needed for the network stack to forward data to correct socket.

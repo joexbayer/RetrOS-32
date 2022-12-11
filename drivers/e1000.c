@@ -17,8 +17,8 @@
 #include <serial.h>
 
 #define PACKET_SIZE   2048
-#define TX_SIZE 32
-#define RX_SIZE 128
+#define TX_SIZE 16
+#define RX_SIZE 16
 #define TX_BUFF_SIZE (sizeof(struct e1000_tx_desc) * TX_SIZE)
 #define RX_BUFF_SIZE (sizeof(struct e1000_rx_desc) * RX_SIZE)
 
@@ -148,6 +148,7 @@ int e1000_receive(char* buffer, uint32_t size)
 	uint32_t length = rx_desc_list[next].length;
 	if(length >= PACKET_SIZE || length > size)
 	{
+		dbgprintf("[e1000] Dropping packet with length %d\n", length);
 		length = -1;
 		goto drop;
 	}
@@ -158,6 +159,7 @@ drop:
 	rx_desc_list[next].status = 0;
 	next = (next + 1) % RX_SIZE;
 	E1000_DEVICE_SET(E1000_RDT) = (tail + 1 ) % RX_SIZE;
+	dbgprintf("[e1000] received %d bytes! (tail: %d) (\n", length, next);
 	return length;
 }
 
@@ -171,7 +173,6 @@ drop:
  */
 int e1000_transmit(char* buffer, uint32_t size)
 {
-	dbgprintf("[e1000] Sending %d bytes!\n", size);
 
 	if(size >= PACKET_SIZE){
 		dbgprintf("[e1000] Size %d is too large!\n", size);
@@ -194,6 +195,7 @@ int e1000_transmit(char* buffer, uint32_t size)
 
 	E1000_DEVICE_SET(E1000_TDT) = (tail+1) % TX_SIZE;
 
+	dbgprintf("[e1000] Sending %d bytes! (tail: %d)\n", size, (tail+1) % TX_SIZE);
 	return size;
 }
 

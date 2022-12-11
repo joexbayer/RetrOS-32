@@ -155,6 +155,7 @@ void* alloc(uint16_t size)
 			chunks_used += chunks_needed;
 			
 			release(&mem_lock);
+			dbgprintf("[MEMORY] Allocating %d bytes of data\n", size);
 			return chunks[i].from;
 		}	
 	}

@@ -52,13 +52,12 @@ struct tcp_connection {
 	uint32_t tcpi_snd_mss;
 	uint32_t tcpi_rcv_mss;
 
-	uint32_t last_data_sent;
-	uint32_t last_ack_sent;
-	uint32_t last_data_recv;
-	uint32_t last_ack_recv;
+	uint32_t* last_data_sent;
+	uint32_t* last_ack_sent;
+	uint32_t* last_data_recv;
+	uint32_t* last_ack_recv;
 
 	uint16_t backlog;
-
 };
 
 
