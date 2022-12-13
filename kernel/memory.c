@@ -15,6 +15,7 @@
 #include <timer.h>
 #include <sync.h>
 #include <diskdev.h>
+#include <hashmap.h>
 
 #include <bitmap.h>
 
@@ -32,6 +33,7 @@ enum ASCII {
 
 static mutex_t mem_lock;
 struct mem_chunk chunks[CHUNKS_SIZE]; /* TODO: convert to bitmap */
+static struct hashmap memmory_hasmap;
 uint16_t chunks_used = 0;
 
 /* prototypes */
@@ -118,16 +120,26 @@ void print_memory_status()
 	scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
 }
 
+int memory_get_usage(char* name)
+{
+	return hashmap_get(&memmory_hasmap, name);
+}
+
+void memory_register_alloc(char* name, int size)
+{
+		int current = hashmap_get(&memmory_hasmap, name);
+		if(current == -1){
+			hashmap_put(&memmory_hasmap, name, size);
+			return;
+		}
+
+		hashmap_add(&memmory_hasmap, name, size);
+}
+
 /* implementation */
 
-/**
- * @brief Allocates sequential chunks with fixed size 4Kb each.
- * Will allocate multiple chunks if needed.
- * 
- * @param uint16_t size, how much memory is needed (Best if 4Kb aligned.).
- * @return void* to memory location. NULL if not enough continious chunks.
- */
-void* alloc(uint16_t size)
+
+void* __alloc_internal(uint16_t size)
 {
 	if(size == 0) return NULL;
 	acquire(&mem_lock);
@@ -155,13 +167,31 @@ void* alloc(uint16_t size)
 			chunks_used += chunks_needed;
 			
 			release(&mem_lock);
-			dbgprintf("[MEMORY] Allocating %d bytes of data\n", size);
 			return chunks[i].from;
 		}	
 	}
 
 	release(&mem_lock);
 	return NULL;
+}
+
+/**
+ * @brief Allocates sequential chunks with fixed size 4Kb each.
+ * Will allocate multiple chunks if needed.
+ * 
+ * @param uint16_t size, how much memory is needed (Best if 4Kb aligned.).
+ * @return void* to memory location. NULL if not enough continious chunks.
+ */
+void* alloc(uint16_t size)
+{
+	void* ret = __alloc_internal(size);
+	if(ret == NULL)
+		return NULL;
+	
+	dbgprintf("[MEMORY] %s Allocating %d bytes of data\n", current_running == NULL ? "kernel" : current_running->name, size);
+	//memory_register_alloc( current_running == NULL ? "kernel" : current_running->name, size);
+
+	return ret;
 }
 /**
  * @brief Will free all chunks associated with chunk pointed to by ptr. 

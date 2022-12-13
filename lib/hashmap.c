@@ -11,6 +11,7 @@
 
 #include <hashmap.h>
 #include <memory.h>
+#include <util.h>
 
 inline int simple_hash(char* key)
 {
@@ -26,8 +27,8 @@ inline int simple_hash(char* key)
 void hashmap_put(hashmap_t* map, char* key, int value)
 {
 
-	int h = hash(key);
-	struct hash_node* new_node = alloc(sizeof(struct hash_node));
+	int h = simple_hash(key);
+	struct hash_node* new_node = __alloc_internal(sizeof(struct hash_node));
 	new_node->key = key;
 	new_node->value = value;
 	new_node->next = map->buckets[h];
@@ -36,11 +37,11 @@ void hashmap_put(hashmap_t* map, char* key, int value)
 
 int hashmap_get(hashmap_t* map, char* key)
 {
-	int h = hash(key);
+	int h = simple_hash(key);
 
 	struct hash_node* current = map->buckets[h];
 	while (current != NULL) {
-		if (strcmp(current->key, key) == 0) {
+		if (memcmp(current->key, key, strlen(key)) == 0) {
 			return current->value;
 		}
 		current = current->next;
@@ -51,11 +52,11 @@ int hashmap_get(hashmap_t* map, char* key)
 
 int hashmap_add(hashmap_t* map, char* key, int value)
 {
-	int h = hash(key);
+	int h = simple_hash(key);
 
 	struct hash_node* current = map->buckets[h];
 	while (current != NULL) {
-		if (strcmp(current->key, key) == 0) {
+		if (memcmp(current->key, key, strlen(key)) == 0) {
 			current->value += value;
 			return current->value;
 		}

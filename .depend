@@ -50,7 +50,7 @@ kthreads.o: kernel/kthreads.c include/kthreads.h include/stdint.h \
 memory.o: kernel/memory.c include/memory.h include/stdint.h include/pcb.h \
  include/util.h include/windowmanager.h include/colors.h include/screen.h \
  include/serial.h include/timer.h include/rtc.h include/sync.h \
- include/diskdev.h include/ata.h include/bitmap.h
+ include/diskdev.h include/ata.h include/hashmap.h include/bitmap.h
 pcb.o: kernel/pcb.c include/pcb.h include/util.h include/stdint.h \
  include/windowmanager.h include/colors.h include/serial.h \
  include/memory.h include/sync.h include/timer.h include/rtc.h \
@@ -76,6 +76,9 @@ windowmanager.o: kernel/windowmanager.c include/util.h include/stdint.h \
  include/screen.h include/serial.h
 bitmap.o: lib/bitmap.c include/bitmap.h include/stdint.h include/memory.h \
  include/pcb.h include/util.h include/windowmanager.h include/colors.h
+hashmap.o: lib/hashmap.c include/hashmap.h include/memory.h \
+ include/stdint.h include/pcb.h include/util.h include/windowmanager.h \
+ include/colors.h
 list.o: lib/list.c include/list.h
 printf.o: lib/printf.c include/stdarg.h include/usr_syscall.h \
  include/util.h include/stdint.h

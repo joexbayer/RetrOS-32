@@ -55,7 +55,7 @@ KERNELOBJ = bin/kernel_entry.o bin/kernel.o bin/terminal.o bin/helpers.o bin/pci
 			bin/keyboard.o bin/screen.o bin/pcb.o bin/memory.o bin/e1000.o \
 			bin/sync.o bin/kthreads.o bin/ata.o bin/bitmap.o bin/rtc.o \
 			bin/diskdev.o bin/scheduler.o bin/windowmanager.o \
-			bin/serial.o bin/io.o bin/syscalls.o bin/list.o ${PROGRAMOBJ} bin/net.o bin/fs.o
+			bin/serial.o bin/io.o bin/syscalls.o bin/list.o bin/hashmap.o ${PROGRAMOBJ} bin/net.o bin/fs.o
 BOOTOBJ = bin/bootloader.o
 
 LIBOBJ = bin/printf.o bin/syscall.o
