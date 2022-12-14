@@ -263,6 +263,18 @@ void pcb_set_running(int pid)
 	pcbs[pid].running = RUNNING;
 }
 
+void pcb_memory_usage()
+{
+	twriteln("\nMemory usage by process:\n");
+	for (int i = 0; i < MAX_NUM_OF_PCBS; i++)
+	{
+		if(pcbs[i].pid == -1)
+			continue;
+
+		twritef(" - %s\n     * %d bytes\n", pcbs[i].name, memory_get_usage(pcbs[i].name));
+	}
+}
+
 /**
  * @brief Sets the process with given pid to stopped. Also frees the process's stack.
  * 

@@ -26,6 +26,15 @@ enum ASCII {
 	ASCII_DOWN_INTERSECT = 203
 };
 
+/**
+ * Memory Map:
+ * 0x100000 - 0x200000: permanents
+ * 0x200000 - 0x300000: pages
+ * 0x300000 - 0x400000: dynamic
+ */
+
+#define PERMANENT_MEM_START 0x100000
+#define PERMANENT_MEM_END 0x200000
 #define MEM_START 0x300000
 #define MEM_END 0x400000
 #define MEM_CHUNK 0x400
@@ -35,6 +44,7 @@ static mutex_t mem_lock;
 struct mem_chunk chunks[CHUNKS_SIZE]; /* TODO: convert to bitmap */
 static struct hashmap memmory_hasmap;
 uint16_t chunks_used = 0;
+static uint32_t memory_permanent_ptr = PERMANENT_MEM_START;
 
 /* prototypes */
 void init_memory();
@@ -138,6 +148,22 @@ void memory_register_alloc(char* name, int size)
 
 /* implementation */
 
+/**
+ * @brief Permanent allocation (no free)
+ * 
+ */
+void* palloc(int size)
+{
+	if(memory_permanent_ptr + size > PERMANENT_MEM_END){
+		dbgprintf("[WARNING] Out of permanent memory!\n");
+		return NULL;
+	}
+	uint32_t new = memory_permanent_ptr + size;
+	memory_permanent_ptr += size;
+
+	return (void*) new;
+}
+
 
 void* __alloc_internal(uint16_t size)
 {
@@ -188,8 +214,8 @@ void* alloc(uint16_t size)
 	if(ret == NULL)
 		return NULL;
 	
-	dbgprintf("[MEMORY] %s Allocating %d bytes of data\n", current_running == NULL ? "kernel" : current_running->name, size);
-	//memory_register_alloc( current_running == NULL ? "kernel" : current_running->name, size);
+	dbgprintf("[MEMORY] %s Allocating %d bytes of data\n", current_running->name, size);
+	memory_register_alloc(current_running->name, size);
 
 	return ret;
 }

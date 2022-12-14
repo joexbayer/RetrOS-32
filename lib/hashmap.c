@@ -28,7 +28,7 @@ void hashmap_put(hashmap_t* map, char* key, int value)
 {
 
 	int h = simple_hash(key);
-	struct hash_node* new_node = alloc(sizeof(struct hash_node));
+	struct hash_node* new_node = palloc(sizeof(struct hash_node));
 	new_node->key = key;
 	new_node->value = value;
 	new_node->next = map->buckets[h];
@@ -68,13 +68,5 @@ int hashmap_add(hashmap_t* map, char* key, int value)
 
 void hashmap_free(hashmap_t* map)
 {
-	for (int i = 0; i < HASH_SIZE; i++) {
-
-		struct hash_node* current = map->buckets[i];
-		while (current != NULL) {
-			struct hash_node* next = current->next;
-			free(current);
-			current = next;
-		}
-	}
+	/* hashmap currently uses non freeable memory. */
 }

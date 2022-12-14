@@ -22,7 +22,7 @@
 #include <scheduler.h>
 
 /* This functions always needs to be on top? */
-void _main() 
+void _main(uint32_t magic) 
 {
 	kernel_size = _end-_code;
     /* Initialize terminal interface */

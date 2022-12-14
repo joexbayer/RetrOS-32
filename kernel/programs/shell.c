@@ -176,6 +176,11 @@ void exec_cmd()
 		sync();
 		return;
 	}
+
+	if(strncmp("memmap", shell_buffer, strlen("memmap"))){
+		pcb_memory_usage();
+		return;
+	}
 	
 
 	if(strncmp("exit", shell_buffer, strlen("exit"))){
