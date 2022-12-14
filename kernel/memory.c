@@ -40,6 +40,13 @@ enum ASCII {
 #define MEM_CHUNK 0x400
 #define CHUNKS_SIZE (MEM_END-MEM_START)/MEM_CHUNK
 
+/* Virtual Memory*/
+#define TOTAL_PAGES ((0x300000-0x200000) / PAGE_SIZE)
+uint32_t* kernel_page_dir = NULL;
+static bitmap_t page_bitmap;
+static int used_pages = 0;
+
+/* Dynamic Memory */
 static mutex_t mem_lock;
 struct mem_chunk chunks[CHUNKS_SIZE]; /* TODO: convert to bitmap */
 static struct hashmap memmory_hasmap;
@@ -128,6 +135,15 @@ void print_memory_status()
 	print_mem();
 
 	scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
+}
+
+void memory_total_usage()
+{
+	twritef("\nTotal Memory Usage:\n\n");
+	twritef("Permanent: %d/%d (%d% )\n", memory_permanent_ptr-PERMANENT_MEM_START, PERMANENT_MEM_END-PERMANENT_MEM_START, ((memory_permanent_ptr-PERMANENT_MEM_START)/(PERMANENT_MEM_END-PERMANENT_MEM_START))*100);
+	twritef("Dynamic: %d/%d (%d% )\n", (chunks_used*MEM_CHUNK), CHUNKS_SIZE*MEM_CHUNK, ((chunks_used*MEM_CHUNK)/(CHUNKS_SIZE*MEM_CHUNK))*100);
+	twritef("Pages: %d/%d (%d% )\n", used_pages, TOTAL_PAGES, (used_pages/TOTAL_PAGES)*100);
+
 }
 
 int memory_get_usage(char* name)
@@ -282,15 +298,13 @@ void init_memory()
 
 
 /*  PAGIN / VIRTUAL MEMORY SECTION */
-#define TOTAL_PAGES ((0x300000-0x200000) / PAGE_SIZE)
-uint32_t* kernel_page_dir = NULL;
-bitmap_t page_bitmap;
 
 uint32_t* alloc_page()
 {
 	int bit = get_free_bitmap(page_bitmap, TOTAL_PAGES);
 	uint32_t* paddr = (uint32_t*) (0x200000 + (bit * PAGE_SIZE));
 	memset(paddr, 0, PAGE_SIZE);
+	used_pages++;
 
 	return paddr;
 }

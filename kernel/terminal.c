@@ -175,6 +175,8 @@ int32_t twritef(char* fmt, ...)
 						break;
 					
 					default:
+						terminal_putchar(*fmt);
+						x_offset++;
 						break;
 				}
 				fmt++;

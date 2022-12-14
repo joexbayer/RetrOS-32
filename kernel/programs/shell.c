@@ -179,6 +179,7 @@ void exec_cmd()
 
 	if(strncmp("memmap", shell_buffer, strlen("memmap"))){
 		pcb_memory_usage();
+		memory_total_usage();
 		return;
 	}
 	
