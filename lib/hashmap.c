@@ -28,7 +28,7 @@ void hashmap_put(hashmap_t* map, char* key, int value)
 {
 
 	int h = simple_hash(key);
-	struct hash_node* new_node = __alloc_internal(sizeof(struct hash_node));
+	struct hash_node* new_node = alloc(sizeof(struct hash_node));
 	new_node->key = key;
 	new_node->value = value;
 	new_node->next = map->buckets[h];

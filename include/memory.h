@@ -56,6 +56,6 @@ void load_page_directory();
 void enable_paging();
 void init_paging();
 
-int memory_get_usage(const char* name);
+int memory_get_usage(char* name);
 
 #endif

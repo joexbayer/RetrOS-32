@@ -10,7 +10,7 @@
  */
 #include <printf.h>
 
-void main()
+int main()
 {
 	int j = 1;
 
@@ -20,4 +20,6 @@ void main()
 		sleep(1);
 		j++;
 	}
+
+	return 0;
 }
