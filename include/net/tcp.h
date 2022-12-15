@@ -2,9 +2,25 @@
 #define __TCP_H
 
 #include <stdint.h>
+
+struct tcp_connection {
+	uint8_t state;
+
+	uint32_t retransmits;
+	uint32_t tcpi_snd_mss;
+	uint32_t tcpi_rcv_mss;
+
+	uint32_t* last_data_sent;
+	uint32_t* last_ack_sent;
+	uint32_t* last_data_recv;
+	uint32_t* last_ack_recv;
+
+	uint16_t backlog;
+};
+
 #include <net/socket.h>
 
-# define TCP_MSS        512
+#define TCP_MSS        512
 
 /* TCP STATES */
 enum {
@@ -41,23 +57,6 @@ struct tcp_header
     uint16_t window;
     uint16_t check;
     uint16_t urg_ptr;
-};
-
-struct tcp_connection {
-	uint8_t state;
-	uint16_t src_port;
-	uint16_t dst_port;
-
-	uint32_t retransmits;
-	uint32_t tcpi_snd_mss;
-	uint32_t tcpi_rcv_mss;
-
-	uint32_t* last_data_sent;
-	uint32_t* last_ack_sent;
-	uint32_t* last_data_recv;
-	uint32_t* last_ack_recv;
-
-	uint16_t backlog;
 };
 
 

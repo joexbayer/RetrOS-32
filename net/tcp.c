@@ -1,9 +1,6 @@
 #include <net/tcp.h>
 #include <net/skb.h>
-
-#define MAX_TCP_CONNECTIONS 20
-
-static struct tcp_connection tcp_connections[MAX_TCP_CONNECTIONS];
+#include <serial.h>
 
 int tcp_register_connection(struct sock* sock, uint16_t dst_port, uint16_t src_port)
 {
@@ -13,63 +10,77 @@ int tcp_register_connection(struct sock* sock, uint16_t dst_port, uint16_t src_p
 
 inline int tcp_is_listening(struct sock* sock)
 {
-	return sock->tcp_conn != NULL && sock->tcp_conn->state == TCP_LISTEN;
+	return sock->tcp_conn.state == TCP_LISTEN;
 }
 
 inline int tcp_set_listening(struct sock* sock, int backlog)
 {
-	if(sock->tcp_conn != NULL)
-		return -1;
 	
-	sock->tcp_conn->backlog = backlog;
-	sock->tcp_conn->state = TCP_LISTEN;
+	sock->tcp_conn.backlog = backlog;
+	sock->tcp_conn.state = TCP_LISTEN;
 
 	return 1;
 }
 
 
 
-int tcp_send_ack(struct tcp_connection* conn, uint16_t dst_port, uint16_t src_port)
+int tcp_send_ack(struct sock* sock, uint16_t dst_port, uint16_t src_port)
 {
 	return 0;
 }
 
-int tcp_send_syn(struct tcp_connection* conn, uint16_t dst_port, uint16_t src_port)
+int tcp_send_syn(struct sock* sock, uint16_t dst_port, uint16_t src_port)
 {	
 
-	struct sock* sock = (struct sock*) container_of(&conn, struct sock, tcp_conn);
-
-
-
-
 	return 0;
 }
 
-int tcp_recv_syn(struct tcp_connection* conn)
+int tcp_recv_ack(struct sock* sock, struct sk_buff* skb)
 {
-	conn->state = TCP_SYN_RCVD;
+	return -1;
+}
+
+int tcp_recv_syn(struct sock* sock, struct sk_buff* skb)
+{
+	/**
+	 * A listening socket can only "connect" to one client at a time.
+	 * Incomming "connects" while socket is busy needs to be queued.
+	 */
+	if(sock->tcp_conn.state != TCP_LISTEN)
+		return -1;
+
+	/* send syn ack & more*/
+
+	sock->tcp_conn.state = TCP_SYN_RCVD;
 	return 1;
 }
 
 
 int tcp_parse(struct sk_buff* skb)
 {
-		struct tcp_header* hdr = (struct udp_header* ) skb->data;
+		struct tcp_header* hdr = (struct tcp_header* ) skb->data;
+		struct sock* sk = sock_find_net_tcp(hdr->source, hdr->dest);
 		skb->hdr.tcp = hdr;
 
+		if(sk == NULL){
+			dbgprintf("[TCP] No socket found for TCP packet while parsing.\n");
+			return -1;
+		}
+
 		if(hdr->syn == 1 && hdr->ack == 0){
-			/* SYN */
+			return tcp_recv_syn(sk, skb);
 		}
 
 		if(hdr->syn == 1 && hdr->ack == 1){
-			/* SYN / ACK */
+			/* SYN / ACK (Only relvant for "connect" )*/
+			return -1;
 		}
 
 		if(hdr->syn == 0 && hdr->ack == 1){
-			/* ACK */
+			return tcp_recv_ack(sk, skb);
 		}
 		
-		return 0;
+		return -1;
 }
 
 void tcp_connection_update()
@@ -78,26 +89,5 @@ void tcp_connection_update()
 	* based on state of a tcp connection
 	*/
 
-
-	for (int i = 0; i < MAX_TCP_CONNECTIONS; i++) {
-			
-		struct tcp_connection* connection = &tcp_connections[i];
-
-		switch (connection->state) {
-			case TCP_CLOSED:
-				break;
-
-			case TCP_LISTEN:
-				break;
-			
-			case TCP_SYN_RCVD:
-				/* Send syn/ack */
-				break;
-			default:
-				
-				break;
-		}
-	}
-	return;
 }
 

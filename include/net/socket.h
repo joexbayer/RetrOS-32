@@ -3,6 +3,7 @@
 
 #include <util.h>
 #include <sync.h>
+#include <net/tcp.h>
 
 /**
  * @brief Following the Linux and UNIX implementation for learning purposes:
@@ -42,7 +43,6 @@ struct sockaddr {
 	sa_family_t	sa_family;	/* address family, AF_xxx	*/
 	char		sa_data[14];	/* 14 bytes of protocol address	*/
 };
-
 struct sock {
     int type;
     int protocol;
@@ -63,7 +63,7 @@ struct sock {
     uint8_t next_write_buffer;
 
     /* if tcp socket */
-    struct tcp_connection* tcp_conn;
+    struct tcp_connection tcp_conn;
 };
 
 int bind(int socket, const struct sockaddr *address, socklen_t address_len);
@@ -82,6 +82,8 @@ void init_sockets();
 int udp_deliver_packet(uint32_t ip, uint16_t port, char* buffer, uint16_t len);
 int get_total_sockets();
 
-#include <net/tcp.h>
+struct sock* sock_find_listen_tcp(uint16_t d_port);
+struct sock* sock_find_net_tcp(uint16_t s_port, uint16_t d_port);
+
 
 #endif /* SOCKET_H */

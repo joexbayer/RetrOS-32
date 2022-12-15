@@ -185,6 +185,37 @@ int recv_timeout(int socket, void *buffer, int length, int flags, int timeout)
 
 }
 
+struct sock* sock_find_listen_tcp(uint16_t d_port)
+{
+    for (int i = 0; i < MAX_NUMBER_OF_SOCKETS; i++)
+    {   
+        if(socket_table[i] == NULL)
+            continue;
+
+        if(socket_table[i]->bound_port == d_port &&  socket_table[i]->tcp_conn.state == TCP_LISTEN)
+            return socket_table[i];
+    }
+
+    return NULL;
+    
+}
+struct sock* sock_find_net_tcp(uint16_t s_port, uint16_t d_port)
+{
+    struct sock* _sk = NULL; /* save listen socket incase no established connection is found. */
+    for (int i = 0; i < MAX_NUMBER_OF_SOCKETS; i++)
+    {
+        if(socket_table[i] == NULL)
+            continue;
+        
+        if(socket_table[i]->bound_port == d_port &&  socket_table[i]->tcp_conn.state == TCP_LISTEN)
+            _sk = socket_table[i];
+
+        if(socket_table[i]->bound_port == d_port &&  socket_table[i]->recv_addr.sin_port == s_port && socket_table[i]->tcp_conn.state == TCP_ESTABLISHED)
+            return socket_table[i];
+    }
+
+    return _sk;
+}
 
 /**
  * @brief Sends data to reciever defined by sockaddr.
@@ -305,6 +336,7 @@ int accept(int socket, struct sockaddr *address, socklen_t *address_len)
 
     return -1;
 }
+
 int connect(int socket, const struct sockaddr *address, socklen_t address_len)
 {
     
@@ -316,6 +348,10 @@ int listen(int socket, int backlog)
     return tcp_set_listening(socket_table[socket], backlog);
 }
 
+int send(int socket, const void *message, int length, int flags)
+{
+    return -1;
+}
 
 void init_sockets()
 {
