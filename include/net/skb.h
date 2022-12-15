@@ -21,6 +21,8 @@ enum sk_action {
 
 struct sk_buff {
 
+    struct sk_buff* next;
+
     struct netdev* netdevice;
 
     struct {

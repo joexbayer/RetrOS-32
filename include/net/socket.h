@@ -3,6 +3,10 @@
 
 #include <util.h>
 #include <sync.h>
+
+/* forward declare struct sock*/
+struct sock;
+
 #include <net/tcp.h>
 
 /**
