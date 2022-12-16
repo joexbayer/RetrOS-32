@@ -15,12 +15,12 @@
 
 static struct sk_buff sk_buffers[MAX_SKBUFFERS]; /* depricated */
 
-static mutex_t skb_mutex;
-static mutex_t skb_tx_mutex;
-static mutex_t skb_rx_mutex;
+static struct skb_queue {
+	mutex_t mutex;
+	struct sk_buff* queue;
+} skb_rx_queue, skb_tx_queue;
 
-static struct sk_buff* skb_tx_queue = NULL;
-static struct sk_buff* skb_rx_queue = NULL;
+static mutex_t skb_mutex;
 
 int skb_transmit(struct sk_buff* skb)
 {
@@ -47,8 +47,8 @@ struct sk_buff* skb_queue_pop(struct sk_buff** queue)
 void init_sk_buffers()
 {
 	mutex_init(&skb_mutex);
-	mutex_init(&skb_rx_mutex);
-	mutex_init(&skb_tx_mutex);
+	mutex_init(&skb_rx_queue.mutex);
+	mutex_init(&skb_tx_queue.mutex);
 
 	for (uint16_t i = 0; i < MAX_SKBUFFERS; i++)
 	{

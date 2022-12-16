@@ -9,4 +9,4 @@ RUN apt-get update && \
   apt-get install -y build-essential && apt-get install -y gcc-multilib
 
 WORKDIR /NETOS
-CMD ["make"]
+CMD ["make -j4"]
