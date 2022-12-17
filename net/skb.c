@@ -17,31 +17,79 @@ static struct sk_buff sk_buffers[MAX_SKBUFFERS]; /* depricated */
 
 static struct skb_queue {
 	mutex_t mutex;
-	struct sk_buff* queue;
+	struct sk_buff* head;
+	struct sk_buff* tail;
+	int size; /***/
 } skb_rx_queue, skb_tx_queue;
 
 static mutex_t skb_mutex;
 
+static int __skb_queue_push(struct skb_queue* skb_queue, struct sk_buff* skb)
+{
+	acquire(&skb_queue->mutex);
+
+	if(skb_queue->tail == NULL){
+		skb_queue->head = skb;
+		skb_queue->tail = skb;
+		goto skb_queue_push_done;
+	}	
+	
+	skb_queue->tail->next = skb;
+	skb_queue->tail = skb;
+	skb->next = NULL;
+
+skb_queue_push_done:
+	skb_queue->size++;
+	release(&skb_queue->mutex);
+
+	return 1;
+}
+
+static struct sk_buff* __skb_queue_pop(struct skb_queue* skb_queue)
+{
+	if(skb_queue->head == NULL) return NULL;
+
+	acquire(&skb_queue->mutex);
+	
+	struct sk_buff* next = skb_queue->head;
+	skb_queue->head = next->next;
+	next->next = NULL;
+
+	skb_queue->size--;;
+
+	release(&skb_queue->mutex);
+
+	return next;
+}
+
 int skb_transmit(struct sk_buff* skb)
 {
-
-	return -1;
+	return __skb_queue_push(&skb_tx_queue, skb);
 }
 
 struct sk_buff* skb_next()
 {
-
-	return -1;
+	return __skb_queue_pop(&skb_rx_queue);
 }
 
-int skb_queue_push(struct sk_buff* skb)
+struct sk_buff* skb_new()
 {
-	return -1;
+	struct sk_buff* new = (struct sk_buff*) alloc(sizeof(struct sk_buff));
+	if(new == NULL) return NULL;
+
+	memset(new, 0, sizeof(struct sk_buff));
+	new->stage = UNUSED;
+	new->netdevice = &current_netdev;
+
+	return new;
 }
 
-struct sk_buff* skb_queue_pop(struct sk_buff** queue)
+int skb_free(struct sk_buff* skb)
 {
-	return NULL;
+	free(skb->data);
+	free(skb);
+
+	return 1;
 }
 
 void init_sk_buffers()
@@ -49,6 +97,8 @@ void init_sk_buffers()
 	mutex_init(&skb_mutex);
 	mutex_init(&skb_rx_queue.mutex);
 	mutex_init(&skb_tx_queue.mutex);
+	skb_rx_queue.size = 0;
+	skb_tx_queue.size = 0;
 
 	for (uint16_t i = 0; i < MAX_SKBUFFERS; i++)
 	{
