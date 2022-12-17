@@ -10,10 +10,10 @@ static void putpixel(int x,int y, int color) {
     *pixel_offset = color;
 }
 
-int vesa_put_char(char c, int x, int y)
+void vesa_put_char(char c, int x, int y)
 {
     for (int l = 0; l < 8; l++) {
-        for (int i = 8; i > 0; i--) {
+        for (int i = 8; i >= 0; i--) {
             if (font8x8_basic[c][l] & (1 << i)) {
                 putpixel(x+i,  y+l, 0x00FF0000);
             }
@@ -28,7 +28,7 @@ void vesa_write(int x, int y, const char* data, int size)
 }
 
 
-int vesa_background()
+void vesa_background()
 {
 
     for (int i = 0; i < vbe_info->height; i++)

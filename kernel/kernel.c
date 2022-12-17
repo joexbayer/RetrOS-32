@@ -38,6 +38,7 @@ void _main(uint32_t magic)
 	dbgprintf("Framebuffer: 0x%x\n", vbe_info->framebuffer);
 
     /* Initialize terminal interface */	
+
 	init_terminal();
 	init_memory();
 	init_interrupts();
