@@ -380,7 +380,7 @@ void init_paging()
     	table_set(kernel_page_table, addr, addr, permissions);
 	
 	uint32_t* kernel_page_table_vesa = alloc_page();
-	for (int addr = 0; addr < (3840*1000)+PAGE_SIZE; addr += PAGE_SIZE)
+	for (int addr = 0; addr < 2621441; addr += PAGE_SIZE)
 		table_set(kernel_page_table_vesa, vbe_info->framebuffer+addr, vbe_info->framebuffer+addr, permissions);
 	
 	table_set(kernel_page_table, (uint32_t) 0xB8000, (uint32_t) 0xB8000, permissions);

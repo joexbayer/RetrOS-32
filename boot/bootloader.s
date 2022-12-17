@@ -118,7 +118,7 @@ set_video_mode:
 
     mov $0x4F02, %ax	
     mov $0x411A, %bx
-    int $0x10
+    int $0x10 
 
     push %es
 	mov $0x4F01, %ax

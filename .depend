@@ -20,7 +20,7 @@ timer.o: drivers/timer.c include/timer.h include/stdint.h include/rtc.h \
  include/interrupts.h include/syscalls.h include/scheduler.h \
  include/pcb.h include/windowmanager.h include/io.h
 vesa.o: drivers/vesa.c include/vesa.h include/stdint.h include/vbe.h \
- include/util.h
+ include/colors.h include/util.h
 fs.o: fs/fs.c include/fs/fs.h include/fs/inode.h include/stdint.h \
  include/rtc.h include/fs/superblock.h include/bitmap.h \
  include/fs/directory.h include/memory.h include/pcb.h include/util.h \
