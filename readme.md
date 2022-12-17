@@ -95,13 +95,19 @@ To get a local copy up and running follow these simple example steps.
 
 ### Prerequisites
 
-Only need Docker to compile the .iso file and QEMU for emulation.
+Only need Docker to compile the .iso file and QEMU for emulation.<br>
+For native compilation you will need:
+ * i386-elf-gcc and i386-elf-ld for MacOS.
+ * build-essential and gcc-multilib for Linux / WSL (ubuntu)
+
 
 ### Installation
 
 _To compile the kernel and its needed programs you simply need to run *make* and *make qemu* to open QEMU_
 
 #### MacOS / Linux
+
+##### MacOS can compile the kernel but not the needed tools.
 1. Clone the repo
    ```sh
    git clone https://github.com/joexbayer/NETOS.git
@@ -110,7 +116,7 @@ _To compile the kernel and its needed programs you simply need to run *make* and
   
    Native:
    ```sh
-   make
+   make compile
    ```
    Docker:
    ```sh
@@ -118,7 +124,7 @@ _To compile the kernel and its needed programs you simply need to run *make* and
    ```
 3. Launch QEMU
    ```sh
-   make QEMU
+   make qemu
    ```
 #### Windows
   For Windows you have 2 options:
@@ -141,7 +147,7 @@ _To compile the kernel and its needed programs you simply need to run *make* and
    ```
 3. Launch QEMU
    ```sh
-   make QEMU
+   ./make.cmd run
    ```
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
