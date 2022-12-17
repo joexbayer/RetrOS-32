@@ -16,6 +16,7 @@
 #include <sync.h>
 #include <diskdev.h>
 #include <hashmap.h>
+#include <vbe.h>
 
 #include <bitmap.h>
 
@@ -374,14 +375,18 @@ void init_paging()
 
 	kernel_page_dir = alloc_page();
 	uint32_t* kernel_page_table = alloc_page();
-
-
 	int permissions = PRESENT | READ_WRITE;
 	for (int addr = 0; addr < 640 * 6024; addr += PAGE_SIZE)
     	table_set(kernel_page_table, addr, addr, permissions);
 	
+	uint32_t* kernel_page_table_vesa = alloc_page();
+	for (int addr = 0; addr < (3840*1000)+PAGE_SIZE; addr += PAGE_SIZE)
+		table_set(kernel_page_table_vesa, vbe_info->framebuffer+addr, vbe_info->framebuffer+addr, permissions);
+	
 	table_set(kernel_page_table, (uint32_t) 0xB8000, (uint32_t) 0xB8000, permissions);
 	table_set(kernel_page_table, (uint32_t) 0xB9000, (uint32_t) 0xB9000, permissions);
 
-	directory_insert_table(kernel_page_dir, 0, kernel_page_table, permissions); 
+	directory_insert_table(kernel_page_dir, 0, kernel_page_table, permissions);
+
+	directory_insert_table(kernel_page_dir, vbe_info->framebuffer, kernel_page_table_vesa, permissions); 
 }

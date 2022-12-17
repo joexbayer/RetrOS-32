@@ -20,12 +20,24 @@
 #include <syscalls.h>
 #include <kthreads.h>
 #include <scheduler.h>
+#include <vbe.h>
 
 /* This functions always needs to be on top? */
 void _main(uint32_t magic) 
 {
+
+	vbe_info = (struct vbe_mode_info_structure*) magic;
+
 	kernel_size = _end-_code;
-    /* Initialize terminal interface */
+	init_serial();
+	dbgprintf("VBE INFO:\n");
+	dbgprintf("Height: %d\n", vbe_info->height);
+	dbgprintf("Width: %d\n", vbe_info->width);
+	dbgprintf("Pitch: %d\n", vbe_info->pitch);
+	dbgprintf("Bpp: %d\n", vbe_info->bpp);
+	dbgprintf("Framebuffer: 0x%x\n", vbe_info->framebuffer);
+
+    /* Initialize terminal interface */	
 	init_terminal();
 	init_memory();
 	init_interrupts();
@@ -34,7 +46,6 @@ void _main(uint32_t magic)
 	init_keyboard();
 	init_pcbs();
 	ata_ide_init();
-	init_serial();
 	init_wm();
 
 	init_pci();
@@ -64,16 +75,17 @@ void _main(uint32_t magic)
 	dbgprintf("Total: %d (%d sectors)\n", _end-_code, ((_end-_code)/512)+2);
 	dbgprintf("Kernel reaching too: 0x%x\n", _end-_code);
 
-	__asm__ volatile ("movl %%eax, %%cr3 " : :
-                      "a" (kernel_page_dir));
+	load_page_directory(kernel_page_dir);
     //scrprintf(0, 10, "Kernal page: %x", kernel_page_dir);
 	enable_paging();
 
 	dbgprintf("Enabled paging!\n");
 	
 	//while(1){};
+	vesa_background();
 	STI();
 	init_timer(1);
+
 	start_tasks();
 
 	while(1){};

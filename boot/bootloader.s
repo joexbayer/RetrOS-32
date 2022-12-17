@@ -12,29 +12,7 @@
 .global _start
 _start:
     jmp main
-    .space 3 - (.-_start)
 
-    /* Configuration for a 2.88MB floppy using FAT 12, needed when booting with USB on real hardware. */
-    OEMname:            .ascii      "MYBOOT  "
-    bytesPerSector:     .word       512
-    sectPerCluster:     .byte       1
-    reservedSectors:    .word       1
-    numFAT:             .byte       2
-    numRootDirEntries:  .word       240
-    numSectors:         .word       5760
-    mediaType:          .byte       0xf0
-    numFATsectors:      .word       9
-    sectorsPerTrack:    .word       36
-    numHeads:           .word       2
-    numHiddenSectors:   .long       0
-    numSectorsHuge:     .long       0
-    driveNum:           .byte       0
-    reserved:           .byte       0x00
-    signature:          .byte       0x29
-    volumeID:           .long       0x54428E71
-    volumeLabel:        .ascii      "NO NAME    "
-    fileSysType:        .ascii      "FAT12   "
-    
 main:
 
     mov %cs, %ax
@@ -70,7 +48,7 @@ main:
 read_loop:
     movb $0x42, %ah /* 0x42 Extended Read Sectors From Drive */
     int $0x13
-    jc error
+    jc kill
 
     /* Check if still in same segment. */
     addw $64, sector /* Adding the 64 sectors read*/
@@ -88,11 +66,11 @@ reading_same_segment:
 continue:
 
     /* Setting video mode to 80x50 */
-    movw $0x1112, %ax
-    xor %bl, %bl
-    int $0x10
+    # movw $0x1112, %ax
+    # xor %bl, %bl
+    # int $0x10
   
-    # call set_video_mode
+    call set_video_mode
 
     /* enable A20 line */
     call set_a20
@@ -133,51 +111,23 @@ set_a20:
     movb    $0xd1,%al               # 0xd1 -> port 0x64
     outb    %al,$0x64                                                                                
 
-set_a20.2:
-    inb     $0x64,%al               # Wait for not busy
-    testb   $0x2,%al
-    jnz     set_a20.2
-
-    movb    $0xdf,%al               # 0xdf -> port 0x60
-    outb    %al,$0x60
-
-    # Fast gate a20
-    in $0x92, %al
-    or $2, %al
-    out %al, $0x92
-    retw
-
 set_video_mode:
-    movb $0x00, %ah
-    movb $0x13, %al
-    int $0x10   
+    # movb $0x00, %ah
+    # movb $0x10, %al
+    # int $0x10
+
+    mov $0x4F02, %ax	
+    mov $0x411A, %bx
+    int $0x10
+
+    push %es
+	mov $0x4F01, %ax
+	mov $0x411A, %cx	
+	mov $vbe_info_structure, %di
+	int $0x10
+	pop %es
+
     ret
-
-error:
-    /*
-        If an error occurs, then mostly likely the hardware does not support int 13h 0x42.
-        Therefor try to read 63 sectors (a little more than 32kb) as a last resort with 0x02.
-        TODO: Doenst work if kernel is bigger than 32kb.
-    */
-    movw $error_str, %si
-    call print
-
-    movw $0x1000, %bx
-    movw %bx, %es
-
-    movw $0, %bx
-
-    movb drive_num, %dl # Set drive
-    movb $63, %al   # Set AL 63.
-    movb $0x02, %ah # Bios function read from drive.
-    movb $0x00, %ch # Track or cylinder to read from.
-    movb $0x02, %cl # sector to read from start 2
-    movb $0x00, %dh # head to read from
-
-    int $0x13
-    jc kill
-
-    jmp continue
 
 kill:
     movw $total_error_str, %si
@@ -188,6 +138,8 @@ kill:
 .code32
 enter32:
     /* jump to kernel loaded at 0x10000 */
+    movl $vbe_info_structure, %eax
+    pushl %eax
     movl $0x10000, %eax
     jmpl *%eax
 
@@ -213,13 +165,10 @@ return:
 /* Strings */
 welcome_str:
     .asciz "********* Welcome to NETOS bootloader! *********\n"
-error_str:
-    .asciz "Error while reading, trying again...\n"
 total_error_str:
     .asciz "Unable to boot.\n"
 drive_num:
     .word 0x0000
-
 /* Reading in kernel, using  DAP (Disk Address Packet) */
 disk_address_packet:
     .byte 0x10 /* size of DAP (set this to 10h) */
@@ -264,7 +213,7 @@ data_descriptor:
 gdt_end:
 
 /* BOOT SIGNATURE */
-padding:
+vbe_info_structure:
     . = _start + 510
     .byte 0x55
     .byte 0xaa
