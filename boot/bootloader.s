@@ -117,12 +117,12 @@ set_video_mode:
     # int $0x10
 
     mov $0x4F02, %ax	
-    mov $0x411A, %bx
+    mov $0x4101, %bx
     int $0x10 
 
     push %es
 	mov $0x4F01, %ax
-	mov $0x411A, %cx	
+	mov $0x4101, %cx	
 	mov $vbe_info_structure, %di
 	int $0x10
 	pop %es

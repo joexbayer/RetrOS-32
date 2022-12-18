@@ -67,8 +67,7 @@ all: iso
 	$(TIME-END)
 
 ls:
-	find . -name '*.c' | xargs wc -l
-	find . -name '*.h' | xargs wc -l
+	find -name '*.[c|h]' | xargs wc -l
 
 bootblock: $(BOOTOBJ)
 	@$(LD) $(LDFLAGS) -o bin/bootblock $^ -Ttext 0x7C00 --oformat=binary

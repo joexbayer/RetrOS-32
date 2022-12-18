@@ -36,6 +36,7 @@ void _main(uint32_t magic)
 	dbgprintf("Pitch: %d\n", vbe_info->pitch);
 	dbgprintf("Bpp: %d\n", vbe_info->bpp);
 	dbgprintf("Framebuffer: 0x%x\n", vbe_info->framebuffer);
+	dbgprintf("Memory Size: %d (0x%x)\n", vbe_info->width*vbe_info->height*(vbe_info->bpp/8), vbe_info->width*vbe_info->height*(vbe_info->bpp/8));
 
     /* Initialize terminal interface */	
 

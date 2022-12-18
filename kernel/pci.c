@@ -138,6 +138,11 @@ void init_pci()
                     uint32_t base = pci_get_device_base32(bus, slot, function);
 
 					int driver_index = pci_register_device(bus, slot, function, vendor, device, class, irq, base);
+                    dbgprintf("[PCI DEVICE] ID: 0x%x, %s\n", 
+                        device,
+                        class < 0x11 ? pci_classes[class] : pci_classes[0]
+                    );
+                    
                     devices_found++;
 
                     int i = 0;

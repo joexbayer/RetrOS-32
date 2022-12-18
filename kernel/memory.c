@@ -379,8 +379,12 @@ void init_paging()
 	for (int addr = 0; addr < 640 * 6024; addr += PAGE_SIZE)
     	table_set(kernel_page_table, addr, addr, permissions);
 	
+	/**
+	 * Identity map vesa color framebuffer
+	 * 
+	 */
 	uint32_t* kernel_page_table_vesa = alloc_page();
-	for (int addr = 0; addr < 2621441; addr += PAGE_SIZE)
+	for (int addr = 0; addr < (vbe_info->width*vbe_info->height*(vbe_info->bpp/8))+1; addr += PAGE_SIZE)
 		table_set(kernel_page_table_vesa, vbe_info->framebuffer+addr, vbe_info->framebuffer+addr, permissions);
 	
 	table_set(kernel_page_table, (uint32_t) 0xB8000, (uint32_t) 0xB8000, permissions);

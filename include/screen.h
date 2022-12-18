@@ -6,9 +6,10 @@
 
 
 
-#define SCREEN_WIDTH 132
-#define SCREEN_HEIGHT 60
+#define SCREEN_WIDTH 160
+#define SCREEN_HEIGHT 128
 
+/* MOVE TO vga.[c|h] */
 extern uint16_t* const VGA_MEMORY;
 
 void scrcolor_set(enum vga_color fg, enum vga_color bg);
