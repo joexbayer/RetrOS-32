@@ -84,7 +84,7 @@ void _main(uint32_t magic)
 	dbgprintf("Enabled paging!\n");
 	
 	//while(1){};
-	vesa_background();
+	//vesa_background();
 	STI();
 	init_timer(1);
 

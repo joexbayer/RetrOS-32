@@ -12,7 +12,7 @@ keyboard.o: drivers/keyboard.c include/keyboard.h include/stdint.h \
 rtc.o: drivers/rtc.c include/rtc.h include/stdint.h include/io.h
 screen.o: drivers/screen.c include/screen.h include/util.h \
  include/stdint.h include/colors.h include/pcb.h include/windowmanager.h \
- include/stdarg.h include/io.h include/serial.h
+ include/stdarg.h include/io.h include/serial.h include/vesa.h
 serial.o: drivers/serial.c include/serial.h include/stdint.h include/io.h \
  include/util.h include/stdarg.h
 timer.o: drivers/timer.c include/timer.h include/stdint.h include/rtc.h \

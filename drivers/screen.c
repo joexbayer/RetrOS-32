@@ -15,6 +15,7 @@
 #include <stdarg.h>
 #include <io.h>
 #include <serial.h>
+#include <vesa.h>
 
 #define MAX_FMT_STR_SIZE 50
 
@@ -71,8 +72,9 @@ void scrwrite(int x, int y, char* str, uint8_t color)
 
 	for (int i = 0; i < strlen(str); i++)
 	{
-		const int index = y * SCREEN_WIDTH + (x+i);
-		VGA_MEMORY[index] = vga_entry(str[i], color);
+		//const int index = y * SCREEN_WIDTH + (x+i);
+		//VGA_MEMORY[index] = vga_entry(str[i], color);
+		vesa_put_char(str[i], x+i,y);
 	}
 }
 
@@ -99,8 +101,10 @@ void scrput(int x, int y, unsigned char c, uint8_t color)
 
     }
 
-	const int index = y * SCREEN_WIDTH + x;
-	VGA_MEMORY[index] = vga_entry(c, color);
+	//const int index = y * SCREEN_WIDTH + x;
+	//VGA_MEMORY[index] = vga_entry(c, color);
+
+	vesa_put_char(c, x , y);
 }
 
 /**
@@ -114,8 +118,9 @@ void scr_clear()
 	{
 		for (int x = 1; x < SCREEN_WIDTH-1; x++)
 		{
-			const int index = y * SCREEN_WIDTH + x;
-			VGA_MEMORY[index] = vga_entry(' ', 0);
+			//const int index = y * SCREEN_WIDTH + x;
+			//VGA_MEMORY[index] = vga_entry(' ', 0);
+			vesa_put_char(' ', x, y);
 		}
 	}
     STI();
