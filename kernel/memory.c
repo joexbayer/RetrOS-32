@@ -17,6 +17,7 @@
 #include <diskdev.h>
 #include <hashmap.h>
 #include <vbe.h>
+#include <terminal.h>
 
 #include <bitmap.h>
 

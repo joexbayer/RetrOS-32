@@ -57,6 +57,7 @@ void enable_paging();
 void init_paging();
 
 int memory_get_usage(char* name);
+void memory_total_usage();
 
 void* palloc(int size);
 

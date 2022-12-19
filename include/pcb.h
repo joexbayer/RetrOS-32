@@ -70,6 +70,11 @@ void pcb_print_queues();
 
 int pcb_cleanup(int pid);
 
+struct pcb* pcb_get_new_running();
+
+void pcb_memory_usage();
+
+
 /* functions in entry.s */
 void _start_pcb();
 void _context_switch();

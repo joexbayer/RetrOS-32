@@ -30,8 +30,8 @@ main:
     movw $welcome_str, %si
     call print
 
-    mov $0x0, %ah
-    int $0x16
+    # mov $0x0, %ah
+    # int $0x16
 
     /*
         Using int 13h with 42 Extended Reac Sectors from Drive, to read inn sectors.

@@ -54,31 +54,6 @@ void scrcolor_set(enum vga_color fg, enum vga_color bg)
 }
 
 /**
- * Writes given string to terminal at specified position.
- * @param int x coordinate of screen.
- * @param int y coordinate of screen.
- * @param char* str string to print.
- * @param uint8_t color of string
- * @return void
- */
-void scrwrite(int x, int y, char* str, uint8_t color)
-{
-    if(current_running->window != NULL ){
-        y = current_running->window->y + y;
-        x = current_running->window->x + x;
-        if(is_window_visable() == 0)
-            return;
-    }
-
-	for (int i = 0; i < strlen(str); i++)
-	{
-		//const int index = y * SCREEN_WIDTH + (x+i);
-		//VGA_MEMORY[index] = vga_entry(str[i], color);
-		vesa_put_char(str[i], x+i,y);
-	}
-}
-
-/**
  * Puts a given character to the specified screen location.
  * Index calculation = y * SCREEN_WIDTH + x;
  * @param int x coordinate
@@ -104,7 +79,33 @@ void scrput(int x, int y, unsigned char c, uint8_t color)
 	//const int index = y * SCREEN_WIDTH + x;
 	//VGA_MEMORY[index] = vga_entry(c, color);
 
-	vesa_put_char(c, x , y);
+	//vesa_put_char(c, x , y);
+}
+
+/**
+ * Writes given string to terminal at specified position.
+ * @param int x coordinate of screen.
+ * @param int y coordinate of screen.
+ * @param char* str string to print.
+ * @param uint8_t color of string
+ * @return void
+ */
+void scrwrite(int x, int y, char* str, uint8_t color)
+{
+    if(current_running->window != NULL ){
+        y = current_running->window->y + y;
+        x = current_running->window->x + x;
+        if(is_window_visable() == 0)
+            return;
+    }
+
+	for (int i = 0; i < strlen(str); i++)
+	{
+		//const int index = y * SCREEN_WIDTH + (x+i);
+		//VGA_MEMORY[index] = vga_entry(str[i], color);
+
+		//scrput(x+i, y, str[i], VGA_COLOR_BLACK);
+	}
 }
 
 /**
@@ -120,7 +121,9 @@ void scr_clear()
 		{
 			//const int index = y * SCREEN_WIDTH + x;
 			//VGA_MEMORY[index] = vga_entry(' ', 0);
-			vesa_put_char(' ', x, y);
+			//vesa_put_char(' ', x, y);
+			
+			//scrput(x, y, ' ', VGA_COLOR_BLACK);
 		}
 	}
     STI();

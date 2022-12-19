@@ -8,7 +8,11 @@ e1000.o: drivers/e1000.c include/e1000.h include/stdint.h include/pci.h \
  include/windowmanager.h include/serial.h
 keyboard.o: drivers/keyboard.c include/keyboard.h include/stdint.h \
  include/screen.h include/util.h include/colors.h include/serial.h \
- include/interrupts.h include/syscalls.h include/sync.h include/io.h
+ include/interrupts.h include/syscalls.h include/sync.h include/io.h \
+ include/vbe.h include/vesa.h
+mouse.o: drivers/mouse.c include/stdint.h include/interrupts.h \
+ include/syscalls.h include/mouse.h include/io.h include/serial.h \
+ include/vesa.h include/colors.h
 rtc.o: drivers/rtc.c include/rtc.h include/stdint.h include/io.h
 screen.o: drivers/screen.c include/screen.h include/util.h \
  include/stdint.h include/colors.h include/pcb.h include/windowmanager.h \
@@ -20,7 +24,7 @@ timer.o: drivers/timer.c include/timer.h include/stdint.h include/rtc.h \
  include/interrupts.h include/syscalls.h include/scheduler.h \
  include/pcb.h include/windowmanager.h include/io.h
 vesa.o: drivers/vesa.c include/vesa.h include/stdint.h include/vbe.h \
- include/colors.h include/util.h
+ include/colors.h include/util.h include/font8.h
 fs.o: fs/fs.c include/fs/fs.h include/fs/inode.h include/stdint.h \
  include/rtc.h include/fs/superblock.h include/bitmap.h \
  include/fs/directory.h include/memory.h include/pcb.h include/util.h \
@@ -45,7 +49,7 @@ kernel.o: kernel/kernel.c include/windowmanager.h include/stdint.h \
  include/net/tcp.h include/net/socket.h include/sync.h include/ata.h \
  include/bitmap.h include/net/dns.h include/fs/fs.h include/fs/inode.h \
  include/fs/superblock.h include/serial.h include/syscall_helper.h \
- include/kthreads.h include/scheduler.h include/vbe.h
+ include/kthreads.h include/scheduler.h include/vbe.h include/mouse.h
 kthreads.o: kernel/kthreads.c include/kthreads.h include/stdint.h \
  include/terminal.h include/util.h include/screen.h include/colors.h \
  include/pcb.h include/windowmanager.h
@@ -53,7 +57,7 @@ memory.o: kernel/memory.c include/memory.h include/stdint.h include/pcb.h \
  include/util.h include/windowmanager.h include/colors.h include/screen.h \
  include/serial.h include/timer.h include/rtc.h include/sync.h \
  include/diskdev.h include/ata.h include/hashmap.h include/vbe.h \
- include/bitmap.h
+ include/terminal.h include/bitmap.h
 pcb.o: kernel/pcb.c include/pcb.h include/util.h include/stdint.h \
  include/windowmanager.h include/colors.h include/serial.h \
  include/memory.h include/sync.h include/timer.h include/rtc.h \

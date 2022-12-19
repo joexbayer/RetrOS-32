@@ -18,6 +18,9 @@
 #include <sync.h>
 #include <io.h>
 
+#include <vbe.h>
+#include <vesa.h>
+
 #define KB_IRQ		33 /* Default is 1, 33 after mapped. */
 #define KB_BUFFER_SIZE 255
 
@@ -82,8 +85,16 @@ char kb_get_char()
 	return c;
 }
 
+// static int tick = 0;
 void kb_add_char(char c)
 {
+  
+  /*char fmt_str[4];
+  vesa_fill(tick);
+  itoa(tick, fmt_str);
+  vesa_write_str(40, 40, fmt_str); 
+  tick++;*/
+
 	kb_buffer[kb_buffer_head] = c;
 	kb_buffer_head = (kb_buffer_head + 1) % KB_BUFFER_SIZE;
 }

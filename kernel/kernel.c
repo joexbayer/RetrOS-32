@@ -21,6 +21,7 @@
 #include <kthreads.h>
 #include <scheduler.h>
 #include <vbe.h>
+#include <mouse.h>
 
 /* This functions always needs to be on top? */
 void _main(uint32_t magic) 
@@ -46,6 +47,7 @@ void _main(uint32_t magic)
 	init_paging();
 	CLI();
 	init_keyboard();
+	mouse_init();
 	init_pcbs();
 	ata_ide_init();
 	init_wm();
@@ -84,7 +86,8 @@ void _main(uint32_t magic)
 	dbgprintf("Enabled paging!\n");
 	
 	//while(1){};
-	//vesa_background();
+	vesa_fill(VESA8_COLOR_DARK_TURQUOISE);
+	vesa_background();
 	STI();
 	init_timer(1);
 
