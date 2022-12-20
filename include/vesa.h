@@ -10,6 +10,7 @@ void vesa_put_char(unsigned char c, int x, int y);
 void vesa_put_icon(int x, int y);
 void vesa_write_str(int x, int y, const char* data);
 void vesa_fill(unsigned char color);
+void vesa_fillrect(int x, int y, int w, int h, int color);
 
 void vesa_put_pixel(int x,int y, unsigned char color);
 

@@ -64,19 +64,21 @@ void mouse_handler()
                     if(mouse_byte[2] == 255)
                         mouse_byte[2] = 1;
 
-                    int l = 3;
+					vesa_fillrect(mouse_x, mouse_y, 16, 16, VESA8_COLOR_DARK_TURQUOISE);
+
                     mouse_x += mouse_byte[1];
 		            mouse_y -= mouse_byte[2];
 
                     if (mouse_x < 0) mouse_x = 0;
 		            if (mouse_y < 0) mouse_y = 0;
 
-                    if (mouse_x > 640) mouse_x = 640;
-		            if (mouse_y > 480) mouse_y = 480;
+                    if (mouse_x > 640-16) mouse_x = 640-16;
+		            if (mouse_y > 480-16) mouse_y = 480-16;
 					
 					mouse_cycle = 0;
                     dbgprintf("%d - %d \n", mouse_x,mouse_y);
-                    vesa_put_pixel(mouse_x, mouse_y, VESA8_COLOR_DARK_RED);
+					vesa_put_icon16(mouse_x, mouse_y, mouse_x, mouse_y);
+
 					break;
 			}
 		}
