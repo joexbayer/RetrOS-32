@@ -4,8 +4,10 @@
 #include <stdint.h>
 
 #define PIXELS_PER_CHAR 8
+#define PIXELS_PER_ICON 16
 
 void vesa_put_char(unsigned char c, int x, int y);
+void vesa_put_icon(int x, int y);
 void vesa_write_str(int x, int y, const char* data);
 void vesa_fill(unsigned char color);
 

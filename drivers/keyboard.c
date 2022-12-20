@@ -85,15 +85,16 @@ char kb_get_char()
 	return c;
 }
 
-// static int tick = 0;
+static int tick = 0;
 void kb_add_char(char c)
 {
   
   /*char fmt_str[4];
   vesa_fill(tick);
   itoa(tick, fmt_str);
-  vesa_write_str(40, 40, fmt_str); 
-  tick++;*/
+  vesa_write_str(40, 40, fmt_str); */
+  vesa_put_icon(10, 10);
+  tick++;
 
 	kb_buffer[kb_buffer_head] = c;
 	kb_buffer_head = (kb_buffer_head + 1) % KB_BUFFER_SIZE;

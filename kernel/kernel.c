@@ -85,6 +85,7 @@ void _main(uint32_t magic)
 
 	dbgprintf("Enabled paging!\n");
 	
+	 vesa_init();
 	//while(1){};
 	vesa_fill(VESA8_COLOR_DARK_TURQUOISE);
 	vesa_background();
