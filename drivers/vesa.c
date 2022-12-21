@@ -107,7 +107,6 @@ void vesa_put_pixel(int x,int y, unsigned char color)
 void vesa_put_char(unsigned char c, int x, int y)
 {
     for (int l = 0; l < 8; l++) {
-
         for (int i = 8; i >= 0; i--) {
             if (font8x8_basic[c][l] & (1 << i)) {
                 putpixel((x*PIXELS_PER_CHAR)+i,  (y*PIXELS_PER_CHAR)+l, VGA_COLOR_WHITE);
