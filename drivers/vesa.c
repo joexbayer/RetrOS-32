@@ -1,8 +1,8 @@
 #include <vesa.h>
-#include <vbe.h>
 #include <colors.h>
 #include <util.h>
 #include <font8.h>
+#include <stdarg.h>
 
 struct vbe_mode_info_structure* vbe_info;
 
@@ -91,27 +91,19 @@ unsigned short b8to16(unsigned char c)
     return (((unsigned short)c)<<8 ) | c;
 }
 
-inline void putpixel(int x,int y, char color) {
-
-    uint8_t* pixel_offset = (uint8_t*) (y * vbe_info->pitch + (x * (vbe_info->bpp/8)) + vbe_info->framebuffer);
-
-    *pixel_offset = color;
-}
-
-
-void vesa_put_pixel(int x,int y, unsigned char color)
+void vesa_put_pixel(uint8_t* buffer, int x,int y, unsigned char color)
 {
-    putpixel(x , y, color);
+    putpixel(buffer, x , y, color);
 }
 
-void vesa_put_char(unsigned char c, int x, int y)
+void vesa_put_char(uint8_t* buffer, unsigned char c, int x, int y, int color) 
 {
     for (int l = 0; l < 8; l++) {
         for (int i = 8; i >= 0; i--) {
             if (font8x8_basic[c][l] & (1 << i)) {
-                putpixel((x*PIXELS_PER_CHAR)+i,  (y*PIXELS_PER_CHAR)+l, VGA_COLOR_WHITE);
+                putpixel(buffer, (x)+i,  (y)+l, color);
             } else {
-                putpixel((x*PIXELS_PER_CHAR)+i,  (y*PIXELS_PER_CHAR)+l, VESA_BG_COLOR);
+                //putpixel((x)+i,  (y)+l, VESA_BG_COLOR);
             }
         }
     }
@@ -121,98 +113,141 @@ void vesa_put_char(unsigned char c, int x, int y)
     Possible icons colors prefix:
     18, 
 */
-void vesa_put_icon32(int x, int y)
+void vesa_put_icon32(uint8_t* buffer, int x, int y)
 {
     for (int l = 0; l < 32; l++) {
 
         for (int i = 0; i < 32; i++) {
             if (test_icon32[l][i] != 0x0) {
-                putpixel((x)+i,  (y)+l, vesa_icon_color_map[test_icon32[l][i]]);
+                putpixel(buffer, (x)+i,  (y)+l, vesa_icon_color_map[test_icon32[l][i]]);
             } else {
-                putpixel((x)+i,  (y)+l, VESA_BG_COLOR);
+                //putpixel((x)+i,  (y)+l, VESA_BG_COLOR);
             }
         }
     }
 }
 
-void vesa_put_icon16(int x, int y)
+void vesa_put_icon16(uint8_t* buffer, int x, int y)
 {
     for (int l = 0; l < 16; l++) {
 
         for (int i = 0; i < 16; i++) {
             if (cursor[l][i] != 0x0) {
-                putpixel((x)+i,  (y)+l, vesa_icon_color_map[cursor[l][i]]);
+                putpixel(buffer, (x)+i,  (y)+l, vesa_icon_color_map[cursor[l][i]]);
             } else {
-                putpixel((x)+i,  (y)+l, VESA_BG_COLOR);
+                //putpixel((x)+i,  (y)+l, VESA_BG_COLOR);
             }
         }
     }
 }
 
-void vesa_write(int x, int y, const char* data, int size)
+void vesa_write(uint8_t* buffer, int x, int y, const char* data, int size, int color)
 {
 	for (int i = 0; i < size; i++)
-		vesa_put_char( data[i], x+i, y);
+		vesa_put_char(buffer, data[i], x+(i*PIXELS_PER_CHAR), y, color);
 }
 
-void vesa_write_str(int x, int y, const char* data)
+void vesa_write_str(uint8_t* buffer, int x, int y, const char* data, int color)
 {
-	vesa_write(x, y, data, strlen(data));
+	vesa_write(buffer, x, y, data, strlen(data), color);
 }
 
-inline void vesa_line_horizontal(int x, int y, int length, int color)
+void vesa_inner_box(uint8_t* buffer, int x, int y, int w, int h)
 {
-    for (int i = x; i < (x+length); i++)
-        putpixel(i, y, color);
-}
+    vesa_fillrect(buffer, x, y, w, h, VESA8_COLOR_LIGHT_GRAY3);
 
-inline void vesa_line_vertical(int x, int y, int length, int color)
-{
-    for (int i = y; i < (y+length); i++)
-        putpixel(x, i, color);
-}
+    vesa_line_horizontal(buffer, x, y, w, VESA8_COLOR_DARK_GRAY2);
+    vesa_line_horizontal(buffer, x, y+h, w, VESA8_COLOR_LIGHT_GRAY1);
 
-void vesa_fillrect(int x, int y, int w, int h, int color) {
-    int i, j;
-    
-    for (j = y; j < (y+h); j++)
-        for (i = x; i < (x+w); i++)
-            putpixel(i, j, color);
-}
-
-void vesa_inner_box(int x, int y, int w, int h)
-{
-    vesa_fillrect(x, y, w, h, VESA8_COLOR_LIGHT_GRAY3);
-
-    vesa_line_horizontal(x, y, w, VESA8_COLOR_DARK_GRAY2);
-    vesa_line_horizontal(x, y+h, w, VESA8_COLOR_LIGHT_GRAY1);
-
-    vesa_line_vertical(x, y, h, VESA8_COLOR_DARK_GRAY2);
-    vesa_line_vertical(x+w, y, h, VESA8_COLOR_LIGHT_GRAY1);
+    vesa_line_vertical(buffer, x, y, h, VESA8_COLOR_DARK_GRAY2);
+    vesa_line_vertical(buffer, x+w, y, h, VESA8_COLOR_LIGHT_GRAY1);
 
 }
 
-void vesa_fill(unsigned char color)
+void vesa_fill(uint8_t* buffer, unsigned char color)
 {
     for (int i = 0; i < vbe_info->height; i++)
         for (int j = 0; j < vbe_info->width; j++)
-            putpixel(j, i, color);
-
-
-    vesa_fillrect(0, 480-25, 640, 25, VESA8_COLOR_LIGHT_GRAY3);
-    vesa_line_horizontal(0, 480-25, 640, VESA8_COLOR_LIGHT_GRAY1);
-    vesa_line_horizontal(0, 480-26, 640, VESA8_COLOR_LIGHT_GRAY1);
-
+            putpixel(buffer, j, i, color);
 }
 
-void vesa_background()
+#define GFX_MAX_FMT_STR_SIZE 50
+
+int vesa_printf(uint8_t* buffer, int32_t x, int32_t y, int color, char* fmt, ...)
 {
+	va_list args;
 
-    char* welcome = "Welcome to VESA! In a glorious 640x480x8 resolution.";
-    vesa_write_str(1, 1, welcome);
+	int x_offset = 0;
+	int written = 0;
+	char str[GFX_MAX_FMT_STR_SIZE];
+	int num = 0;
 
-    vesa_inner_box(638-80, 480-22, 80, 19);
-    vesa_put_icon32(10, 10);
+	va_start(args, fmt);
+
+	while (*fmt != '\0') {
+		switch (*fmt)
+		{
+			case '%':
+				memset(str, 0, GFX_MAX_FMT_STR_SIZE);
+				switch (*(fmt+1))
+				{
+					case 'd':
+					case 'i': ;
+						num = va_arg(args, int);
+						itoa(num, str);
+						vesa_write_str(buffer, x+(x_offset*PIXELS_PER_CHAR), y, str, color);
+						x_offset += strlen(str);
+						break;
+                    case 'p': ; /* p for padded int */
+						num = va_arg(args, int);
+						itoa(num, str);
+						vesa_write_str(buffer, x+(x_offset*PIXELS_PER_CHAR), y, str, color);
+						x_offset += strlen(str);
+
+                        if(strlen(str) < 3){
+                            int pad = 3-strlen(str);
+                            for (int i = 0; i < pad; i++){
+                                vesa_put_char(buffer, ' ', x+(x_offset*PIXELS_PER_CHAR), y, color);
+                                x_offset++;
+                            }
+                        }
+						break;
+					case 'x':
+					case 'X': ;
+						num = va_arg(args, int);
+						itohex(num, str);
+						vesa_write_str(buffer, x+x_offset, y, str, color);
+						x_offset += strlen(str);
+						break;
+					case 's': ;
+						char* str_arg = va_arg(args, char *);
+						vesa_write_str(buffer, x+(x_offset*PIXELS_PER_CHAR), y, str_arg, color);
+						x_offset += strlen(str_arg);
+						break;
+					case 'c': ;
+						char char_arg = (char)va_arg(args, int);
+						vesa_put_char(buffer, char_arg, x+(x_offset*PIXELS_PER_CHAR), y, color);
+						x_offset++;
+						break;
+					default:
+                        break;
+				}
+				fmt++;
+				break;
+			case '\n':
+				y++;
+				written += x_offset;
+				x_offset = 0;
+				break;
+			default:  
+				vesa_put_char(buffer, *fmt, x+(x_offset*PIXELS_PER_CHAR), y, color);
+				x_offset++;
+                written++;
+			}
+        fmt++;
+    }
+	written += x_offset;
+	return written;
 }
 
 void vesa_init()
@@ -222,5 +257,4 @@ void vesa_init()
     vesa_icon_color_map[0xdb] = VESA8_COLOR_GRAY1;
     vesa_icon_color_map[0xFC] = 43; // 67
     vesa_icon_color_map[0x02] = 1;
-
 }

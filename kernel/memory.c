@@ -12,7 +12,7 @@
 #include <memory.h>
 #include <screen.h>
 #include <serial.h>
-#include <timer.h>
+#include <rtc.h>
 #include <sync.h>
 #include <diskdev.h>
 #include <hashmap.h>
@@ -57,7 +57,7 @@ static uint32_t memory_permanent_ptr = PERMANENT_MEM_START;
 
 /* prototypes */
 void init_memory();
-void* alloc(uint16_t size);
+void* alloc(int size);
 void free(void* ptr);
 
 /* Helper functions */
@@ -108,7 +108,8 @@ void print_mem()
 
 void print_memory_status()
 {	
-	struct time* time = get_datetime();
+	struct time time;
+	get_current_time(&time);
 
 	for (int x = 0; x < SCREEN_HEIGHT; x++)
 		scrput(0, 0+x, ASCII_VERTICAL_LINE, VGA_COLOR_LIGHT_GREY);
@@ -132,7 +133,7 @@ void print_memory_status()
 	scrput(SCREEN_WIDTH-1, 0, 184, VGA_COLOR_LIGHT_GREY);
 	
 	scrprintf(2,0, "NETOS");
-	scrprintf(SCREEN_WIDTH-18, 0, "%d:%d:%d %d/%d/%d", time->hour, time->minute, time->second, time->day, time->month, time->year);
+	scrprintf(SCREEN_WIDTH-18, 0, "%d:%d:%d %d/%d/%d", time.hour, time.minute, time.second, time.day, time.month, time.year);
 
 	print_mem();
 
@@ -226,7 +227,7 @@ void* __alloc_internal(uint16_t size)
  * @param uint16_t size, how much memory is needed (Best if 4Kb aligned.).
  * @return void* to memory location. NULL if not enough continious chunks.
  */
-void* alloc(uint16_t size)
+void* alloc(int size)
 {
 	void* ret = __alloc_internal(size);
 	if(ret == NULL)

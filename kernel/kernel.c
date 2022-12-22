@@ -23,6 +23,9 @@
 #include <vbe.h>
 #include <mouse.h>
 
+#include <gfx/window.h>
+#include <gfx/composition.h>
+
 /* This functions always needs to be on top? */
 void _main(uint32_t magic) 
 {
@@ -64,8 +67,10 @@ void _main(uint32_t magic)
 	register_kthread(&shell_main, "Shell");
 	register_kthread(&networking_main, "Networking");
 	register_kthread(&dhcpd, "dhcpd");
+	register_kthread(&gfx_compositor_main, "wServer");
 
 	start("Shell");
+	start("wServer");
 
 	add_system_call(SYSCALL_SCRPUT, (syscall_t)&scrput);
 	add_system_call(SYSCALL_PRTPUT, (syscall_t)&terminal_putchar);
@@ -86,9 +91,18 @@ void _main(uint32_t magic)
 	dbgprintf("Enabled paging!\n");
 	
 	 vesa_init();
-	//while(1){};
-	vesa_fill(VESA8_COLOR_DARK_TURQUOISE);
-	vesa_background();
+
+	/* Test window */
+	struct gfx_window w = {
+		.name = "Window",
+		.x = 100,
+		.y = 100,
+		.width = 300,
+		.height = 300,
+		.in_focus = 1
+	};
+	gfx_composition_add_window(&w);
+
 	STI();
 	init_timer(1);
 

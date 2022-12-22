@@ -8,18 +8,18 @@
 #define USABLE_WIDTH (SCREEN_WIDTH-1)
 #define USABLE_HEIGHT (SCREEN_HEIGHT-1)
 
-struct window_binary_tree {
-	struct window_binary_tree* right;
-	struct window_binary_tree* root;
-	struct window_binary_tree* left;
-    struct window* value;
+struct text_window_binary_tree {
+	struct text_window_binary_tree* right;
+	struct text_window_binary_tree* root;
+	struct text_window_binary_tree* left;
+    struct text_window* value;
 };
 
-static struct window windows[MAX_NUM_OF_PCBS];
-static struct window_binary_tree root;
+static struct text_window windows[MAX_NUM_OF_PCBS];
+static struct text_window_binary_tree root;
 
 
-void clear_window(struct window* w)
+void clear_window(struct text_window* w)
 {
     for (uint8_t i = 0; i < w->width; i++)
     {
@@ -34,7 +34,7 @@ void clear_window(struct window* w)
     }
 }
 
-void draw_window(struct window* w)
+void draw_window(struct text_window* w)
 {
     if(w->visable == 0)
         return;
@@ -61,9 +61,9 @@ void draw_window(struct window* w)
     scrprintf(w->x+2, w->y, w->name);
 }
 
-struct window_binary_tree* new_node()
+struct text_window_binary_tree* new_node()
 {
-    struct window_binary_tree* node = (struct window_binary_tree*) alloc(sizeof(struct window_binary_tree));
+    struct text_window_binary_tree* node = (struct text_window_binary_tree*) alloc(sizeof(struct text_window_binary_tree));
     node->root = NULL;
     node->left = NULL;
     node->right = NULL;
@@ -72,7 +72,7 @@ struct window_binary_tree* new_node()
 
 }
 
-int init_window(struct window* w, int x, int y, int width, int height)
+int init_window(struct text_window* w, int x, int y, int width, int height)
 {
     w->x = x;
     w->y = y;
@@ -88,15 +88,15 @@ int init_window(struct window* w, int x, int y, int width, int height)
     return 1;
 }   
 
-int window_split_horizontal(struct window_binary_tree* wbt)
+int window_split_horizontal(struct text_window_binary_tree* wbt)
 {
 
     clear_window(wbt->value);
 
     /* General idea: take the root of wbt and split its window left and right */
     int l_width = wbt->value->width / 2;
-    struct window* left = wbt->left->value;
-    struct window* right = wbt->right->value;
+    struct text_window* left = wbt->left->value;
+    struct text_window* right = wbt->right->value;
 
     /* This assumes that the left window is already "defined" and right not.*/
 
@@ -106,7 +106,7 @@ int window_split_horizontal(struct window_binary_tree* wbt)
     return 0;
 }
 
-int attach_window(struct window* w)
+int attach_window(struct text_window* w)
 {
 	/* This function should create a window for the process requesting it.
 	 * Importantly it should tile them by dividing the current main window in two.
@@ -131,7 +131,7 @@ int attach_window(struct window* w)
 	}
    
     /* Will assume left AND right is NULL, and root never is.*/
-    struct window_binary_tree* current = &root;
+    struct text_window_binary_tree* current = &root;
     while(current->left != NULL && current->right != NULL)
        current = current->left;
 

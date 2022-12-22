@@ -14,6 +14,7 @@
 #include <mouse.h>
 #include <io.h>
 #include <serial.h>
+#include <util.h>
 
 #include <vesa.h>
 #include <colors.h>
@@ -22,20 +23,9 @@ static uint8_t mouse_cycle=0;
 static char  mouse_byte[3];
 static int32_t  mouse_x=0;
 static int32_t  mouse_y=0;
-static uint8_t mouse_ready = 0;
-
-#define MOUSE_PORT   0x60
-#define MOUSE_STATUS 0x64
-#define MOUSE_ABIT   0x02
-#define MOUSE_BBIT   0x01
-#define MOUSE_WRITE  0xD4
-#define MOUSE_F_BIT  0x20
-#define MOUSE_V_BIT  0x08
-
 
 void mouse_handler()
 {
-
    uint8_t status = inportb(MOUSE_STATUS);
 	while (status & MOUSE_BBIT) {
 		char mouse_in = inportb(MOUSE_PORT);
@@ -43,7 +33,10 @@ void mouse_handler()
 			switch (mouse_cycle) {
 				case 0:
 					mouse_byte[0] = mouse_in;
-					if (!(mouse_in & MOUSE_V_BIT)) return;
+					if (!(mouse_in & MOUSE_V_BIT)){
+						STI();
+						return;
+					}
 					++mouse_cycle;
 					break;
 				case 1:
@@ -58,14 +51,6 @@ void mouse_handler()
 						break;
 					}
 
-                    if(mouse_byte[1] == 255)
-                        mouse_byte[1] = 1;
-
-                    if(mouse_byte[2] == 255)
-                        mouse_byte[2] = 1;
-
-					vesa_fillrect(mouse_x, mouse_y, 16, 16, VESA8_COLOR_DARK_TURQUOISE);
-
                     mouse_x += mouse_byte[1];
 		            mouse_y -= mouse_byte[2];
 
@@ -76,14 +61,17 @@ void mouse_handler()
 		            if (mouse_y > 480-16) mouse_y = 480-16;
 					
 					mouse_cycle = 0;
-                    dbgprintf("%d - %d \n", mouse_x,mouse_y);
-					vesa_put_icon16(mouse_x, mouse_y, mouse_x, mouse_y);
-
 					break;
 			}
 		}
 		status = inportb(MOUSE_STATUS);
 	}
+}
+
+void mouse_get(struct mouse* m)
+{
+	m->x = mouse_x;
+	m->y = mouse_y;
 }
 
 void mouse_wait(uint8_t a_type) {
@@ -108,11 +96,8 @@ void mouse_wait(uint8_t a_type) {
 inline void mouse_write(uint8_t command)
 {
     mouse_wait(1);
-    //Tell the mouse we are sending a command
     outportb(0x64, 0xD4);
-    //Wait for the final part
     mouse_wait(1);
-    //Finally write
     outportb(0x60, command);
 }
 

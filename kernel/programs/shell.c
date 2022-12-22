@@ -27,7 +27,7 @@
 #include <diskdev.h>
 
 
-struct window w = {
+struct text_window w = {
 	.x = 1,
 	.y = 1,
 	.height = SCREEN_HEIGHT-3,

@@ -14,5 +14,6 @@ struct time {
 };
 
 int get_current_time(struct time* time);
+int get_time();
 
 #endif /* RTC_H */

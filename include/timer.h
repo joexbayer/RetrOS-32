@@ -8,9 +8,8 @@
 
 
 void init_timer(uint32_t frequency);
-int get_time();
 struct time* get_datetime();
-
+int timer_get_tick();
 int time_get_difference();
 
 #endif // !TIMER_H

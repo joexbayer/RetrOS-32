@@ -43,7 +43,7 @@ enum {
 #define DIRECTORY_INDEX(vaddr) ((vaddr >> PAGE_DIRECTORY_BITS) & PAGE_TABLE_MASK)
 
 void init_memory();
-void* alloc(uint16_t size);
+void* alloc(int size);
 void print_memory_status();
 void free(void* ptr);
 

@@ -31,7 +31,7 @@ void* memcpy(void *dest, const void *src, int n);
 #define STI() asm ("sti")
 
 int atoi(char s[]);
-void itoa(int n, char s[]);
+void itoa(int n, char s[]); 
 void itohex(uint32_t n, char s[]);
 
 int isdigit(char c);

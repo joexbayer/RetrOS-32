@@ -50,13 +50,15 @@ endif
 # ---------------- Objects to compile ----------------
 PROGRAMOBJ = bin/shell.o bin/networking.o bin/dhcpd.o
 
+GFXOBJ = bin/window.o bin/component.o bin/composition.o
+
 KERNELOBJ = bin/kernel_entry.o bin/kernel.o bin/terminal.o bin/helpers.o bin/pci.o \
 			bin/util.o bin/interrupts.o bin/irs_entry.o bin/timer.o \
 			bin/keyboard.o bin/screen.o bin/pcb.o bin/memory.o bin/e1000.o \
 			bin/sync.o bin/kthreads.o bin/ata.o bin/bitmap.o bin/rtc.o \
 			bin/diskdev.o bin/scheduler.o bin/windowmanager.o \
 			bin/serial.o bin/io.o bin/syscalls.o bin/list.o bin/hashmap.o bin/vesa.o\
-			bin/mouse.o ${PROGRAMOBJ} bin/net.o bin/fs.o
+			bin/mouse.o ${PROGRAMOBJ} ${GFXOBJ} bin/net.o bin/fs.o
 BOOTOBJ = bin/bootloader.o
 
 LIBOBJ = bin/printf.o bin/syscall.o

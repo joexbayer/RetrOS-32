@@ -30,6 +30,7 @@ uint8_t __rtc_get_register(int reg)
     return inportb(RTC_DATA);
 }
 
+
 int get_current_time(struct time* time)
 {
     uint8_t reg_b;
@@ -59,5 +60,11 @@ int get_current_time(struct time* time)
       }
 
     return 1;
+}
 
+int get_time()
+{
+    struct time t;
+    get_current_time(&t);
+	return (t.hour*3600)+(t.minute*60)+t.second;
 }

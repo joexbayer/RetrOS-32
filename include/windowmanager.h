@@ -10,7 +10,7 @@ struct terminal_state {
     uint8_t color;
 };
 
-struct window {
+struct text_window {
 
     char name[40];
     uint8_t x;
@@ -24,10 +24,10 @@ struct window {
 
 };
 
-void draw_window(struct window* w);
+void draw_window(struct text_window* w);
 int get_window_width();
 int get_window_height();
-int attach_window(struct window* w);
+int attach_window(struct text_window* w);
 uint8_t is_window_visable();
 void init_wm();
 

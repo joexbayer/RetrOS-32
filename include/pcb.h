@@ -43,7 +43,7 @@ struct pcb {
 
       char name[pcb_max_name_length];
 
-      struct window* window;
+      struct text_window* window;
 
       struct pcb *next;
       struct pcb *prev;

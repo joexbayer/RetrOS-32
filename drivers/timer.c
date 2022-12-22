@@ -20,47 +20,19 @@
 #define PIT_IRQ		32
 
 static int tick = 0;
-static int time = 0;
-static int time_min = 0;
-static int time_hour = 0;
-
-static struct time current_time;
-
-int get_time()
-{
-	return (time_hour*3600)+(time_min*60)+time;
-}
-
-struct time* get_datetime()
-{
-	return &current_time;
-}
-
 static void timer_callback()
 {
-	if(tick > 100){
-		tick = 0;
-		get_current_time(&current_time);
-		time++;
-
-		if(time > 59){
-			time_min++;
-			time = 0;
-			if(time_min > 59){
-				time_hour++;
-				time_min = 0;
-			}
-		}
-		
-		//scrprintf(10, 9, "%d:%d:%d", time_hour, time_min, time);
-	}
-
 	tick++;
 	if(current_running != NULL)
 	{
 		EOI(32);
 		yield();
 	}
+}
+
+int timer_get_tick()
+{
+	return tick;
 }
 
 int time_get_difference(struct time* t1, struct time* t2)
