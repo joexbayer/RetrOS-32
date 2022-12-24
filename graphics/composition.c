@@ -10,6 +10,7 @@
 #include <colors.h>
 #include <screen.h>
 #include <mouse.h>
+#include <gfx/component.h>
 
 static struct gfx_window* order;
 static uint8_t* gfx_composition_buffer;
@@ -34,6 +35,24 @@ void gfx_composition_add_window(struct gfx_window* w)
     order->next = iter;
 }
 
+void gfx_mouse_event(int x, int y, char flags)
+{
+
+    for (struct gfx_window* i = order; i != NULL; i = i->next)
+        if(gfx_point_in_rectangle(i->x, i->y, i->x+i->width, i->y+i->height, x, y))
+            return i->click(i, x, y);
+    
+    /* No window was clicked. */
+}
+
+static unsigned long long rdtsc(void)
+{
+    unsigned long long int x;
+    __asm__ volatile (".byte 0x0f, 0x31" : "=A" (x));
+    return x;
+}
+
+
 void gfx_compositor_main()
 {
     int buffer_size = vbe_info->width*vbe_info->height*(vbe_info->bpp/8)+1;
@@ -43,15 +62,24 @@ void gfx_compositor_main()
 
     while(1)
     {
+        
+        /**
+         * Problem with interrupts from mouse?
+         * Manages to corrupt some register or variables.
+         * 
+         * Should also NOT redraw entire screen, only things that change.
+         */
         CLI();
+        int test = rdtsc();
+
         /* Main composition loop */
-        vesa_fill(gfx_composition_buffer, VESA8_COLOR_DARK_TURQUOISE); /* Background */
+        memset(gfx_composition_buffer, VESA8_COLOR_DARK_TURQUOISE, buffer_size);
 
         /* Draw windows in reversed order */
         gfx_recursive_draw(order);
 
-        vesa_fillrect(gfx_composition_buffer, 0, 480-25, 640, 25, VESA8_COLOR_LIGHT_GRAY3); /* Taskbar */
-        vesa_line_horizontal(gfx_composition_buffer, 0, 480-25, 640, VESA8_COLOR_LIGHT_GRAY1); /* contour taskbar */
+        vesa_fillrect(gfx_composition_buffer, 0, 480-25, 640, 25, VESA8_COLOR_LIGHT_GRAY3);
+        vesa_line_horizontal(gfx_composition_buffer, 0, 480-25, 640, VESA8_COLOR_LIGHT_GRAY1); 
         vesa_line_horizontal(gfx_composition_buffer, 0, 480-26, 640, VESA8_COLOR_LIGHT_GRAY1);
 
         vesa_inner_box(gfx_composition_buffer, 638-80, 480-22, 80, 19);
@@ -67,13 +95,16 @@ void gfx_compositor_main()
         mouse_get(&m);
 
         vesa_put_icon16(gfx_composition_buffer, m.x, m.y);
-
         /* Copy buffer over to framebuffer. */
-        memcpy((uint8_t*)vbe_info->framebuffer, gfx_composition_buffer, buffer_size-1);
 
-        CLI();
+        vesa_printf(gfx_composition_buffer, 10, 100, VESA8_COLOR_DARK_BLUE, "%d", rdtsc() - test);
+
+        STI();
 
         yield();
+
+        memcpy((uint8_t*)vbe_info->framebuffer, gfx_composition_buffer, buffer_size-1);
+
 
     }
 }

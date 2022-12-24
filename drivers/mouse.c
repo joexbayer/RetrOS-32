@@ -18,6 +18,7 @@
 
 #include <vesa.h>
 #include <colors.h>
+#include <gfx/composition.h>
 
 static uint8_t mouse_cycle=0;
 static char  mouse_byte[3];
@@ -26,6 +27,7 @@ static int32_t  mouse_y=0;
 
 void mouse_handler()
 {
+	CLI();
    uint8_t status = inportb(MOUSE_STATUS);
 	while (status & MOUSE_BBIT) {
 		char mouse_in = inportb(MOUSE_PORT);
@@ -34,7 +36,6 @@ void mouse_handler()
 				case 0:
 					mouse_byte[0] = mouse_in;
 					if (!(mouse_in & MOUSE_V_BIT)){
-						STI();
 						return;
 					}
 					++mouse_cycle;
@@ -60,6 +61,10 @@ void mouse_handler()
                     if (mouse_x > 640-16) mouse_x = 640-16;
 		            if (mouse_y > 480-16) mouse_y = 480-16;
 					
+
+					if(mouse_byte[0] & 1)
+						gfx_mouse_event(mouse_x, mouse_y, mouse_byte[0]);
+
 					mouse_cycle = 0;
 					break;
 			}

@@ -12,7 +12,8 @@ keyboard.o: drivers/keyboard.c include/keyboard.h include/stdint.h \
  include/vbe.h include/vesa.h
 mouse.o: drivers/mouse.c include/stdint.h include/interrupts.h \
  include/syscalls.h include/mouse.h include/io.h include/serial.h \
- include/util.h include/vesa.h include/vbe.h include/colors.h
+ include/util.h include/vesa.h include/vbe.h include/colors.h \
+ include/gfx/composition.h include/gfx/window.h
 rtc.o: drivers/rtc.c include/rtc.h include/stdint.h include/io.h
 screen.o: drivers/screen.c include/screen.h include/util.h \
  include/stdint.h include/colors.h include/pcb.h include/windowmanager.h \
@@ -41,9 +42,10 @@ composition.o: graphics/composition.c include/vesa.h include/stdint.h \
  include/vbe.h include/gfx/window.h include/colors.h include/scheduler.h \
  include/util.h include/memory.h include/pcb.h include/windowmanager.h \
  include/serial.h include/rtc.h include/timer.h include/screen.h \
- include/mouse.h
+ include/mouse.h include/gfx/component.h
 window.o: graphics/window.c include/gfx/window.h include/stdint.h \
- include/colors.h include/vesa.h include/vbe.h
+ include/colors.h include/gfx/component.h include/serial.h include/vesa.h \
+ include/vbe.h
 diskdev.o: kernel/diskdev.c include/diskdev.h include/ata.h \
  include/stdint.h include/util.h include/terminal.h include/serial.h
 interrupts.o: kernel/interrupts.c include/interrupts.h include/stdint.h \

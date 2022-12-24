@@ -71,6 +71,7 @@ void _main(uint32_t magic)
 
 	start("Shell");
 	start("wServer");
+	start("Networking");
 
 	add_system_call(SYSCALL_SCRPUT, (syscall_t)&scrput);
 	add_system_call(SYSCALL_PRTPUT, (syscall_t)&terminal_putchar);
@@ -99,7 +100,8 @@ void _main(uint32_t magic)
 		.y = 100,
 		.width = 300,
 		.height = 300,
-		.in_focus = 1
+		.in_focus = 1,
+		.click = &gfx_default_click
 	};
 	gfx_composition_add_window(&w);
 
