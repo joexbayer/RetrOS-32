@@ -36,4 +36,6 @@ void itohex(uint32_t n, char s[]);
 
 int isdigit(char c);
 int rand(void);
+
+unsigned long long rdtsc(void);
 #endif

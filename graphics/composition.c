@@ -37,19 +37,14 @@ void gfx_composition_add_window(struct gfx_window* w)
 
 void gfx_mouse_event(int x, int y, char flags)
 {
-
     for (struct gfx_window* i = order; i != NULL; i = i->next)
-        if(gfx_point_in_rectangle(i->x, i->y, i->x+i->width, i->y+i->height, x, y))
-            return i->click(i, x, y);
+        if(gfx_point_in_rectangle(i->x, i->y, i->x+i->width, i->y+i->height, x, y)){
+            /* on click when left mouse down, add new hover event hook */
+            if(flags & 1)
+                return i->click(i, x, y, flags);
+        }
     
     /* No window was clicked. */
-}
-
-static unsigned long long rdtsc(void)
-{
-    unsigned long long int x;
-    __asm__ volatile (".byte 0x0f, 0x31" : "=A" (x));
-    return x;
 }
 
 
@@ -71,6 +66,8 @@ void gfx_compositor_main()
          */
         CLI();
         int test = rdtsc();
+        struct mouse m;
+        int mouse_ret = mouse_event_get(&m);
 
         /* Main composition loop */
         memset(gfx_composition_buffer, VESA8_COLOR_DARK_TURQUOISE, buffer_size);
@@ -91,18 +88,19 @@ void gfx_compositor_main()
         time.hour -= 1;
         vesa_printf(gfx_composition_buffer, 638-65, 480-16, VESA8_COLOR_BLACK, "%d:%d %s", time.hour > 12 ? time.hour-12 : time.hour, time.minute, time.hour > 12 ? "PM" : "AM");
 
-        struct mouse m;
-        mouse_get(&m);
 
-        vesa_put_icon16(gfx_composition_buffer, m.x, m.y);
-        /* Copy buffer over to framebuffer. */
+        if(mouse_ret){
+            gfx_mouse_event(m.x, m.y, m.flags);
+            vesa_put_icon16(gfx_composition_buffer, m.x, m.y);
+        }
 
-        vesa_printf(gfx_composition_buffer, 10, 100, VESA8_COLOR_DARK_BLUE, "%d", rdtsc() - test);
+        vesa_printf(gfx_composition_buffer, 10, 100, VESA8_COLOR_DARK_BLUE, "%d", (rdtsc() - test)-100000);
 
         STI();
 
         yield();
 
+        /* Copy buffer over to framebuffer. */
         memcpy((uint8_t*)vbe_info->framebuffer, gfx_composition_buffer, buffer_size-1);
 
 

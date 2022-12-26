@@ -22,7 +22,7 @@ struct gfx_window {
     uint16_t width, height;
 
     /* TODO: Click function should also take a mouse event  */
-    void (*click)(struct gfx_window*, int x, int y);
+    void (*click)(struct gfx_window*, int x, int y, char flags);
 
     /* Pointer to inner memory where applications draw. */
     uint8_t* inner;
@@ -37,7 +37,7 @@ struct gfx_window {
 };
 
 void gfx_draw_window(uint8_t* buffer, struct gfx_window* window);
-void gfx_default_click(struct gfx_window* window, int x, int y);
+void gfx_default_click(struct gfx_window* window, int x, int y, char flags);
 
 
 #endif //  __WINDOW_H   

@@ -11,9 +11,10 @@
 
 struct mouse {
     int x, y;
+    char flags;
 };
 
 void mouse_init();
-void mouse_get(struct mouse* m);
+int mouse_event_get(struct mouse* m);
 
 #endif /* FA227328_E158_4ACA_9652_4D12EC113A2B */

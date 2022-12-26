@@ -20,10 +20,27 @@
 #include <colors.h>
 #include <gfx/composition.h>
 
-static uint8_t mouse_cycle=0;
+static uint8_t mouse_cycle = 0;
+static uint8_t received = 0; 
 static char  mouse_byte[3];
-static int32_t  mouse_x=0;
-static int32_t  mouse_y=0;
+static int32_t  mouse_x = 0;
+static int32_t  mouse_y = 0;
+
+#define MAX_MOUSE_EVENTS 15
+
+int mouse_event_get(struct mouse* m)
+{
+	if(received)
+		return 0;
+	
+	m->flags = mouse_byte[0];
+	m->x = mouse_x;
+	m->y = mouse_y;
+	received = 1;
+
+	return 1;
+}
+
 
 void mouse_handler()
 {
@@ -60,23 +77,14 @@ void mouse_handler()
 
                     if (mouse_x > 640-16) mouse_x = 640-16;
 		            if (mouse_y > 480-16) mouse_y = 480-16;
-					
 
-					if(mouse_byte[0] & 1)
-						gfx_mouse_event(mouse_x, mouse_y, mouse_byte[0]);
-
+					received = 0;
 					mouse_cycle = 0;
 					break;
 			}
 		}
 		status = inportb(MOUSE_STATUS);
 	}
-}
-
-void mouse_get(struct mouse* m)
-{
-	m->x = mouse_x;
-	m->y = mouse_y;
 }
 
 void mouse_wait(uint8_t a_type) {

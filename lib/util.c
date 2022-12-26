@@ -168,3 +168,10 @@ int rand(void)  // RAND_MAX assumed to be 32767
     next = next * 1103515245 + 12345;
     return (unsigned int) (next / 65536) % 32768;
 }
+
+unsigned long long rdtsc(void)
+{
+    unsigned long long int x;
+    __asm__ volatile (".byte 0x0f, 0x31" : "=A" (x));
+    return x;
+}

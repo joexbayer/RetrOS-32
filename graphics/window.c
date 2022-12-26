@@ -20,7 +20,7 @@ void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
     vesa_write_str(buffer, window->x+4, window->y+4, window->name, VESA8_COLOR_WHITE);
 }
 
-void gfx_default_click(struct gfx_window* window, int x, int y)
+void gfx_default_click(struct gfx_window* window, int x, int y, char flags)
 {
     dbgprintf("[GFX WINDOW] Clicked %s.\n", window->name);
 
