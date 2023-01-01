@@ -54,13 +54,13 @@ ISR_NO_ERR 46
 ISR_NO_ERR 47
 
 isr_entry:
-	pusha
+    pushal
 
 	push %eax
     call isr_handler
 	pop %eax
 
-    popa
+    popal
     add $8, %esp
 	
 	iret

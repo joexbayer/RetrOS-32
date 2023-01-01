@@ -40,6 +40,7 @@ void serial_write(char* str)
  */
 int32_t dbgprintf(char* fmt, ...)
 {
+	CLI();
 	va_list args;
 
 	int written = 0;
@@ -94,6 +95,7 @@ int32_t dbgprintf(char* fmt, ...)
 			}
         fmt++;
     }
+	STI();
 	return written;
 }
 

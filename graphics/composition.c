@@ -47,13 +47,25 @@ void gfx_mouse_event(int x, int y, char flags)
     /* No window was clicked. */
 }
 
-
 void gfx_compositor_main()
 {
     int buffer_size = vbe_info->width*vbe_info->height*(vbe_info->bpp/8)+1;
 
     dbgprintf("[WSERVER] %d bytes allocated for composition buffer.\n", buffer_size);
     gfx_composition_buffer = (uint8_t*) alloc(buffer_size);
+
+    /* Main composition loop */
+    memset(gfx_composition_buffer, VESA8_COLOR_DARK_TURQUOISE, buffer_size);
+
+    /* Draw windows in reversed order */
+    gfx_recursive_draw(order);
+
+    vesa_fillrect(gfx_composition_buffer, 0, 480-25, 640, 25, VESA8_COLOR_LIGHT_GRAY3);
+    vesa_line_horizontal(gfx_composition_buffer, 0, 480-25, 640, VESA8_COLOR_LIGHT_GRAY1); 
+    vesa_line_horizontal(gfx_composition_buffer, 0, 480-26, 640, VESA8_COLOR_LIGHT_GRAY1);
+
+    vesa_inner_box(gfx_composition_buffer, 638-80, 480-22, 80, 19);
+    vesa_put_icon32(gfx_composition_buffer, 10, 10);
 
     while(1)
     {
@@ -69,32 +81,13 @@ void gfx_compositor_main()
         struct mouse m;
         int mouse_ret = mouse_event_get(&m);
 
-        /* Main composition loop */
-        memset(gfx_composition_buffer, VESA8_COLOR_DARK_TURQUOISE, buffer_size);
-
-        /* Draw windows in reversed order */
-        gfx_recursive_draw(order);
-
-        vesa_fillrect(gfx_composition_buffer, 0, 480-25, 640, 25, VESA8_COLOR_LIGHT_GRAY3);
-        vesa_line_horizontal(gfx_composition_buffer, 0, 480-25, 640, VESA8_COLOR_LIGHT_GRAY1); 
-        vesa_line_horizontal(gfx_composition_buffer, 0, 480-26, 640, VESA8_COLOR_LIGHT_GRAY1);
-
-        vesa_inner_box(gfx_composition_buffer, 638-80, 480-22, 80, 19);
-        vesa_put_icon32(gfx_composition_buffer, 10, 10);
-
 
         struct time time;
         get_current_time(&time);
         time.hour -= 1;
-        vesa_printf(gfx_composition_buffer, 638-65, 480-16, VESA8_COLOR_BLACK, "%d:%d %s", time.hour > 12 ? time.hour-12 : time.hour, time.minute, time.hour > 12 ? "PM" : "AM");
+        //vesa_printf(gfx_composition_buffer, 638-65, 480-16, VESA8_COLOR_BLACK, "%d:%d %s", time.hour > 12 ? time.hour-12 : time.hour, time.minute, time.hour > 12 ? "PM" : "AM");
 
-
-        if(mouse_ret){
-            gfx_mouse_event(m.x, m.y, m.flags);
-            vesa_put_icon16(gfx_composition_buffer, m.x, m.y);
-        }
-
-        vesa_printf(gfx_composition_buffer, 10, 100, VESA8_COLOR_DARK_BLUE, "%d", (rdtsc() - test)-100000);
+        //vesa_printf(gfx_composition_buffer, 10, 100, VESA8_COLOR_DARK_BLUE, "%d", (rdtsc() - test)-100000);
 
         STI();
 
@@ -102,6 +95,11 @@ void gfx_compositor_main()
 
         /* Copy buffer over to framebuffer. */
         memcpy((uint8_t*)vbe_info->framebuffer, gfx_composition_buffer, buffer_size-1);
+
+        if(mouse_ret){
+            gfx_mouse_event(m.x, m.y, m.flags);
+            vesa_put_icon16((uint8_t*)vbe_info->framebuffer, m.x, m.y);
+        }
 
 
     }

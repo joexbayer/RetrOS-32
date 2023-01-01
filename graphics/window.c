@@ -22,7 +22,7 @@ void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
 
 void gfx_default_click(struct gfx_window* window, int x, int y, char flags)
 {
-    dbgprintf("[GFX WINDOW] Clicked %s.\n", window->name);
+    dbgprintf("[GFX WINDOW] Clicked %s\n", window->name);
 
     if(gfx_point_in_rectangle(window->x+2, window->y+2, window->x+window->width-4, window->y+GFX_WINDOW_TITLE_HEIGHT, x, y)){
         dbgprintf("[GFX WINDOW] Clicked %s title\n", window->name);

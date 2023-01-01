@@ -161,7 +161,6 @@ void vesa_inner_box(uint8_t* buffer, int x, int y, int w, int h)
 
     vesa_line_vertical(buffer, x, y, h, VESA8_COLOR_DARK_GRAY2);
     vesa_line_vertical(buffer, x+w, y, h, VESA8_COLOR_LIGHT_GRAY1);
-
 }
 
 void vesa_fill(uint8_t* buffer, unsigned char color)
@@ -169,6 +168,14 @@ void vesa_fill(uint8_t* buffer, unsigned char color)
     for (int i = 0; i < vbe_info->height; i++)
         for (int j = 0; j < vbe_info->width; j++)
             putpixel(buffer, j, i, color);
+}
+
+void vesa_fillrect(uint8_t* buffer, int x, int y, int w, int h, int color){
+    int i, j;
+    
+    for (j = y; j < (y+h); j++)
+        for (i = x; i < (x+w); i++)
+            putpixel(buffer, i, j, color);
 }
 
 #define GFX_MAX_FMT_STR_SIZE 50
