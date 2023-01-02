@@ -42,4 +42,6 @@ void vesa_fillrect(uint8_t* buffer, int x, int y, int w, int h, int color);
 
 int vesa_printf(uint8_t* buffer, int32_t x, int32_t y, int color, char* fmt, ...);
 
+void vesa_init();
+
 #endif /* DFA8C135_4052_4480_8A44_09EA9D67997D */

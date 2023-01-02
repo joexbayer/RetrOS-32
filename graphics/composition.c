@@ -13,8 +13,11 @@
 #include <gfx/component.h>
 
 static struct gfx_window* order;
-static char gfx_mouse_state = 0;
 static uint8_t* gfx_composition_buffer;
+
+/* Mouse globals */
+static char gfx_mouse_state = 0;
+static struct mouse m;
 
 void gfx_recursive_draw(struct gfx_window* w)
 {
@@ -22,6 +25,20 @@ void gfx_recursive_draw(struct gfx_window* w)
         gfx_recursive_draw(w->next);
     
     gfx_draw_window(gfx_composition_buffer, w);
+}
+
+void gfx_order_push_front(struct gfx_window* w)
+{
+    for (struct gfx_window* i = order; i != NULL; i = i->next)
+    {
+        if(i->next == w){
+            i->next = w->next;
+            break;
+        }
+    }
+    struct gfx_window* save = order;
+    order = w;
+    w->next = save;
 }
 
 void gfx_composition_add_window(struct gfx_window* w)
@@ -41,10 +58,14 @@ void gfx_mouse_event(int x, int y, char flags)
     dbgprintf("[GFX MOUSE] Event registered.\n");
     for (struct gfx_window* i = order; i != NULL; i = i->next)
         if(gfx_point_in_rectangle(i->x, i->y, i->x+i->width, i->y+i->height, x, y)){
-            /* on click when left mouse down, add new hover event hook */
+            /* on click when left mouse down */
             if(flags & 1 && gfx_mouse_state == 0){
                 gfx_mouse_state = 1;
                 i->mousedown(i, x, y);
+
+                if(i != order)
+                    gfx_order_push_front(i);
+
             } else if(!(flags & 1) && gfx_mouse_state == 1) {
                 /* If mouse state is "down" send click event */
                 gfx_mouse_state = 0;
@@ -63,7 +84,7 @@ void gfx_compositor_main()
     int buffer_size = vbe_info->width*vbe_info->height*(vbe_info->bpp/8)+1;
 
     dbgprintf("[WSERVER] %d bytes allocated for composition buffer.\n", buffer_size);
-    gfx_composition_buffer = (uint8_t*) alloc(buffer_size);
+    gfx_composition_buffer = (uint8_t*) palloc(buffer_size);
 
     while(1)
     {
@@ -76,7 +97,6 @@ void gfx_compositor_main()
          */
         CLI();
         int test = rdtsc();
-        struct mouse m;
         int mouse_ret = mouse_event_get(&m);
 
 
@@ -96,9 +116,9 @@ void gfx_compositor_main()
         struct time time;
         get_current_time(&time);
         time.hour -= 1;
-        //vesa_printf(gfx_composition_buffer, 638-65, 480-16, VESA8_COLOR_BLACK, "%d:%d %s", time.hour > 12 ? time.hour-12 : time.hour, time.minute, time.hour > 12 ? "PM" : "AM");
+        vesa_printf(gfx_composition_buffer, 638-65, 480-16, VESA8_COLOR_BLACK, "%d:%d %s", time.hour > 12 ? time.hour-12 : time.hour, time.minute, time.hour > 12 ? "PM" : "AM");
 
-        //vesa_printf(gfx_composition_buffer, 10, 100, VESA8_COLOR_DARK_BLUE, "%d", (rdtsc() - test)-100000);
+        vesa_printf(gfx_composition_buffer, 8, 480-16, VESA8_COLOR_DARK_BLUE, "%d", (rdtsc() - test)-100000);
 
         STI();
 
@@ -109,8 +129,8 @@ void gfx_compositor_main()
 
         if(mouse_ret){
             gfx_mouse_event(m.x, m.y, m.flags);
-            vesa_put_icon16((uint8_t*)vbe_info->framebuffer, m.x, m.y);
         }
+        vesa_put_icon16((uint8_t*)vbe_info->framebuffer, m.x, m.y);
 
 
     }

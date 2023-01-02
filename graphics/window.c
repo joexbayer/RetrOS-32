@@ -34,6 +34,13 @@ void gfx_default_hover(struct gfx_window* window, int x, int y)
     dbgprintf("[GFX] %s: hover event.\n", window->name);
     if(window->is_moving.state == GFX_WINDOW_MOVING){
 
+        if(window->x - (window->is_moving.x - x) < 0 || window->x - (window->is_moving.x - x) + window->width > 640)
+            return;
+        
+        if(window->y - (window->is_moving.y - y) < 0 || window->y - (window->is_moving.y - y) + window->height > 480)
+            return;
+
+
         window->x -= window->is_moving.x - x;
         window->y -= window->is_moving.y - y;
 

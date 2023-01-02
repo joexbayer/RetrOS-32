@@ -91,7 +91,7 @@ void _main(uint32_t magic)
 
 	dbgprintf("Enabled paging!\n");
 	
-	 vesa_init();
+	vesa_init();
 
 	/* Test window */
 	struct gfx_window w = {
@@ -108,6 +108,21 @@ void _main(uint32_t magic)
 		.mouseup = &gfx_default_mouse_up
 	};
 	gfx_composition_add_window(&w);
+
+	struct gfx_window w2 = {
+		.name = "Window",
+		.x = 150,
+		.y = 110,
+		.width = 300,
+		.height = 300,
+		.in_focus = 1,
+		.is_moving = GFX_WINDOW_STATIC,
+		.click = &gfx_default_click,
+		.hover = &gfx_default_hover,
+		.mousedown = &gfx_default_mouse_down,
+		.mouseup = &gfx_default_mouse_up
+	};
+	gfx_composition_add_window(&w2);
 
 	STI();
 	init_timer(1);
