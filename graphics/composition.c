@@ -13,6 +13,7 @@
 #include <gfx/component.h>
 
 static struct gfx_window* order;
+static char gfx_mouse_state = 0;
 static uint8_t* gfx_composition_buffer;
 
 void gfx_recursive_draw(struct gfx_window* w)
@@ -37,11 +38,21 @@ void gfx_composition_add_window(struct gfx_window* w)
 
 void gfx_mouse_event(int x, int y, char flags)
 {
+    dbgprintf("[GFX MOUSE] Event registered.\n");
     for (struct gfx_window* i = order; i != NULL; i = i->next)
         if(gfx_point_in_rectangle(i->x, i->y, i->x+i->width, i->y+i->height, x, y)){
             /* on click when left mouse down, add new hover event hook */
-            if(flags & 1)
-                return i->click(i, x, y, flags);
+            if(flags & 1 && gfx_mouse_state == 0){
+                gfx_mouse_state = 1;
+                i->mousedown(i, x, y);
+            } else if(!(flags & 1) && gfx_mouse_state == 1) {
+                /* If mouse state is "down" send click event */
+                gfx_mouse_state = 0;
+                i->click(i, x, y);
+                i->mouseup(i, x, y);
+            }
+
+            return i->hover(i, x, y);       
         }
     
     /* No window was clicked. */
@@ -53,19 +64,6 @@ void gfx_compositor_main()
 
     dbgprintf("[WSERVER] %d bytes allocated for composition buffer.\n", buffer_size);
     gfx_composition_buffer = (uint8_t*) alloc(buffer_size);
-
-    /* Main composition loop */
-    memset(gfx_composition_buffer, VESA8_COLOR_DARK_TURQUOISE, buffer_size);
-
-    /* Draw windows in reversed order */
-    gfx_recursive_draw(order);
-
-    vesa_fillrect(gfx_composition_buffer, 0, 480-25, 640, 25, VESA8_COLOR_LIGHT_GRAY3);
-    vesa_line_horizontal(gfx_composition_buffer, 0, 480-25, 640, VESA8_COLOR_LIGHT_GRAY1); 
-    vesa_line_horizontal(gfx_composition_buffer, 0, 480-26, 640, VESA8_COLOR_LIGHT_GRAY1);
-
-    vesa_inner_box(gfx_composition_buffer, 638-80, 480-22, 80, 19);
-    vesa_put_icon32(gfx_composition_buffer, 10, 10);
 
     while(1)
     {
@@ -81,6 +79,19 @@ void gfx_compositor_main()
         struct mouse m;
         int mouse_ret = mouse_event_get(&m);
 
+
+        /* Main composition loop */
+        memset(gfx_composition_buffer, VESA8_COLOR_DARK_TURQUOISE, buffer_size);
+
+        /* Draw windows in reversed order */
+        gfx_recursive_draw(order);
+
+        vesa_fillrect(gfx_composition_buffer, 0, 480-25, 640, 25, VESA8_COLOR_LIGHT_GRAY3);
+        vesa_line_horizontal(gfx_composition_buffer, 0, 480-25, 640, VESA8_COLOR_LIGHT_GRAY1); 
+        vesa_line_horizontal(gfx_composition_buffer, 0, 480-26, 640, VESA8_COLOR_LIGHT_GRAY1);
+
+        vesa_inner_box(gfx_composition_buffer, 638-80, 480-22, 80, 19);
+        vesa_put_icon32(gfx_composition_buffer, 10, 10);
 
         struct time time;
         get_current_time(&time);

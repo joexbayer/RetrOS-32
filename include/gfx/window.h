@@ -9,8 +9,8 @@
 #define GFX_WINDOW_TITLE_HEIGHT 12
 
 enum window_states {
-    MOVING,
-    STATIC
+    GFX_WINDOW_MOVING,
+    GFX_WINDOW_STATIC
 };
 
 struct gfx_window {
@@ -22,7 +22,10 @@ struct gfx_window {
     uint16_t width, height;
 
     /* TODO: Click function should also take a mouse event  */
-    void (*click)(struct gfx_window*, int x, int y, char flags);
+    void (*click)(struct gfx_window*, int x, int y);
+    void (*hover)(struct gfx_window*, int x, int y);
+    void (*mousedown)(struct gfx_window*, int x, int y);
+    void (*mouseup)(struct gfx_window*, int x, int y);
 
     /* Pointer to inner memory where applications draw. */
     uint8_t* inner;
@@ -37,7 +40,12 @@ struct gfx_window {
 };
 
 void gfx_draw_window(uint8_t* buffer, struct gfx_window* window);
-void gfx_default_click(struct gfx_window* window, int x, int y, char flags);
+
+/* Default mouse event hooks */
+void gfx_default_click(struct gfx_window* window, int x, int y);
+void gfx_default_hover(struct gfx_window* window, int x, int y);
+void gfx_default_mouse_down(struct gfx_window* window, int x, int y);
+void gfx_default_mouse_up(struct gfx_window* window, int x, int y);
 
 
 #endif //  __WINDOW_H   

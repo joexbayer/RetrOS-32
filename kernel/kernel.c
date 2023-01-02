@@ -101,7 +101,11 @@ void _main(uint32_t magic)
 		.width = 300,
 		.height = 300,
 		.in_focus = 1,
-		.click = &gfx_default_click
+		.is_moving = GFX_WINDOW_STATIC,
+		.click = &gfx_default_click,
+		.hover = &gfx_default_hover,
+		.mousedown = &gfx_default_mouse_down,
+		.mouseup = &gfx_default_mouse_up
 	};
 	gfx_composition_add_window(&w);
 

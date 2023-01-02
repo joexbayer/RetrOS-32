@@ -45,6 +45,7 @@ bin/build
 bin/mkfs
 bin/bootblock
 bin/kernel*
+usr/bin/counter
 *.vdi
 
 # Executables

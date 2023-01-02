@@ -20,12 +20,46 @@ void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
     vesa_write_str(buffer, window->x+4, window->y+4, window->name, VESA8_COLOR_WHITE);
 }
 
-void gfx_default_click(struct gfx_window* window, int x, int y, char flags)
+void gfx_default_click(struct gfx_window* window, int x, int y)
 {
     dbgprintf("[GFX WINDOW] Clicked %s\n", window->name);
 
     if(gfx_point_in_rectangle(window->x+2, window->y+2, window->x+window->width-4, window->y+GFX_WINDOW_TITLE_HEIGHT, x, y)){
         dbgprintf("[GFX WINDOW] Clicked %s title\n", window->name);
     }
+}
 
+void gfx_default_hover(struct gfx_window* window, int x, int y)
+{
+    dbgprintf("[GFX] %s: hover event.\n", window->name);
+    if(window->is_moving.state == GFX_WINDOW_MOVING){
+
+        window->x -= window->is_moving.x - x;
+        window->y -= window->is_moving.y - y;
+
+        window->is_moving.x = x;
+        window->is_moving.y = y;
+    }
+}
+
+void gfx_default_mouse_down(struct gfx_window* window, int x, int y)
+{
+    dbgprintf("[GFX] %s: mousedown event.\n", window->name);
+    if(gfx_point_in_rectangle(window->x+2, window->y+2, window->x+window->width-4, window->y+GFX_WINDOW_TITLE_HEIGHT, x, y)){
+        window->is_moving.state = GFX_WINDOW_MOVING;
+        window->is_moving.x = x;
+        window->is_moving.y = y;
+        dbgprintf("[GFX] %s: moving.\n", window->name);
+    }
+}
+
+void gfx_default_mouse_up(struct gfx_window* window, int x, int y)
+{
+    dbgprintf("[GFX] %s: mouse up event.\n", window->name);
+    if(gfx_point_in_rectangle(window->x+2, window->y+2, window->x+window->width-4, window->y+GFX_WINDOW_TITLE_HEIGHT, x, y)){
+        window->is_moving.state = GFX_WINDOW_STATIC;
+        window->is_moving.x = x;
+        window->is_moving.y = y;
+        dbgprintf("[GFX] %s: static.\n", window->name);
+    }
 }
