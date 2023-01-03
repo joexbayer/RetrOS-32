@@ -2,15 +2,20 @@
 #define __GFX_COMPONENT_H
 
 #include <stdint.h>
+#include <gfx/window.h>
 
 enum gfx_components {
-    GFX_BUTTON
+    GFX_BUTTON,
+    GFX_RECTANGLE
 };
 
 
 struct gfx_component {
+    struct gfx_component* next;
+
     uint8_t type;
 
+    uint8_t color;
     uint16_t x, y;
     uint16_t width, height;
 

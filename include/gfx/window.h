@@ -2,6 +2,9 @@
 #define __WINDOW_H
 
 #include <stdint.h>
+struct gfx_window;
+#include <gfx/component.h>
+#include <pcb.h>
 #include <colors.h>
 
 #define GFX_MAX_WINDOW_NAME_SIZE 20
@@ -35,6 +38,8 @@ struct gfx_window {
         uint16_t x;
         uint16_t y;
     } is_moving;
+
+    struct pcb* owner;
 
     uint8_t in_focus;
 };

@@ -36,9 +36,12 @@ void gfx_order_push_front(struct gfx_window* w)
             break;
         }
     }
+    
+    order->in_focus = 0;
     struct gfx_window* save = order;
     order = w;
     w->next = save;
+    order->in_focus = 1;
 }
 
 void gfx_composition_add_window(struct gfx_window* w)
