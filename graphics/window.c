@@ -28,6 +28,9 @@ void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
             for (i = window->y+16; i < (window->y+window->height-2); i++)
                 putpixel(buffer, j, i, window->inner[c++], vbe_info->pitch);
     }
+    window->changed = 0;
+
+    //dbgprintf("[WINDOW] %s was drawn.\n", window->name);
 
 }   
 
@@ -56,6 +59,8 @@ void gfx_default_hover(struct gfx_window* window, int x, int y)
 
         window->is_moving.x = x;
         window->is_moving.y = y;
+        
+        window->changed = 1;
     }
 }
 
@@ -97,6 +102,7 @@ struct gfx_window* gfx_new_window(int width, int height)
     w->y = 10;
     w->owner = current_running;
     current_running->gfx_window = w;
+    w->changed = 1;
 
     w->is_moving.state = GFX_WINDOW_STATIC;
     /* Window can just use the name of the owner? */

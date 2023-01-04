@@ -6,7 +6,7 @@
 
 void sleep(int time)
 {
-    current_running->sleep_time = get_time() + time;
+    current_running->sleep_time = timer_get_tick() + time;
     current_running->running = SLEEPING;
     yield();
 }
@@ -69,7 +69,7 @@ void context_switch()
             start_pcb();
             break; /* Never reached. */
         case SLEEPING:
-            if(get_time() >= current_running->sleep_time)
+            if(timer_get_tick() >= current_running->sleep_time)
                 current_running->running = RUNNING;
             else
                 current_running = current_running->next;

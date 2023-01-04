@@ -145,16 +145,17 @@ void pcb_queue_push_running(struct pcb* pcb)
 void gensis()
 {
 	dbgprintf("[GEN] Gensis running!\n");
+	struct gfx_window* window = gfx_new_window(100, 100);
 	while(1)
 	{
-		print_memory_status();
+		/*print_memory_status();
 
 		for (int i = 0; i < MAX_NUM_OF_PCBS; i++){
 			if(pcbs[i].pid == -1 || pcbs[i].window == NULL)
 				continue;
 			
 			draw_window(pcbs[i].window);
-		}
+		}*/
 		yield();
 	}
 }

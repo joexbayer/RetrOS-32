@@ -18,6 +18,7 @@ enum window_states {
 
 struct gfx_window {
     struct gfx_window* next;
+    struct gfx_window* prev;
 
     char name[GFX_MAX_WINDOW_NAME_SIZE];
     
@@ -42,6 +43,8 @@ struct gfx_window {
     struct pcb* owner;
 
     uint8_t in_focus;
+
+    char changed;
 };
 
 void gfx_draw_window(uint8_t* buffer, struct gfx_window* window);

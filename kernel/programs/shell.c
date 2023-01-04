@@ -45,8 +45,8 @@ struct text_window w = {
 	
 };
 
-#define SHELL_POSITION 0
-static const uint8_t SHELL_MAX_SIZE = 50;
+#define SHELL_POSITION 300-12
+static const uint8_t SHELL_MAX_SIZE = 300/8;
 static uint8_t shell_column = 0;
 static char shell_buffer[50];
 static uint8_t shell_buffer_length = 0;
@@ -61,9 +61,10 @@ static char* shell_name = "Kernel";
  */
 void shell_clear()
 {
-	for (int i = shell_column; i < SHELL_MAX_SIZE; i++)
+	for (int i = 1; i < SHELL_MAX_SIZE; i++)
 	{
-		gfx_draw_char(i*8, SHELL_POSITION, ' ', VESA8_COLOR_WHITE);
+		//gfx_draw_char(i*8, SHELL_POSITION, ' ', VESA8_COLOR_WHITE);
+		gfx_draw_rectangle(i*8, SHELL_POSITION, 8, 8, VESA8_COLOR_BLACK);
 	}	
 }
 
@@ -73,7 +74,7 @@ void reset_shell()
 	shell_column = strlen(shell_name)+1;
 	shell_buffer_length = 0;
 	gfx_draw_text(1, SHELL_POSITION, shell_name, VESA8_COLOR_LIGHT_GREEN);
-	gfx_draw_text(shell_column, SHELL_POSITION, ":", VESA8_COLOR_LIGHT_GREEN);
+	gfx_draw_text(shell_column+strlen(shell_name), SHELL_POSITION, ":", VESA8_COLOR_LIGHT_GREEN);
 	shell_column += 1;
 
 	screen_set_cursor(shell_column, SHELL_POSITION);
@@ -272,8 +273,8 @@ void shell_main()
 	dbgprintf("Shell is running!\n");
 	attach_window(&w);
 
-	struct gfx_window* window = gfx_new_window(100, 100);
-	gfx_draw_rectangle(0, 0, 100, 100, VESA8_COLOR_BLACK);
+	struct gfx_window* window = gfx_new_window(300, 300);
+	//gfx_draw_rectangle(20, 20, 150, 100, VESA8_COLOR_BLUE);
 	//gfx_draw_text(0, 0, "Terminal!", VESA8_COLOR_LIGHT_GREEN);
 
 	reset_shell();

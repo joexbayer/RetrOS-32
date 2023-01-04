@@ -19,6 +19,17 @@ static uint8_t* gfx_composition_buffer;
 static char gfx_mouse_state = 0;
 static struct mouse m;
 
+int gfx_check_changes(struct gfx_window* w)
+{
+    while(w != NULL){
+        if(w->changed)
+            return 1;
+
+        w = w->next;
+    }
+    return 0;
+}
+
 void gfx_recursive_draw(struct gfx_window* w)
 {
     if(w->next != NULL)
@@ -102,12 +113,14 @@ void gfx_compositor_main()
         int test = rdtsc();
         int mouse_ret = mouse_event_get(&m);
 
-
         /* Main composition loop */
-        memset(gfx_composition_buffer, VESA8_COLOR_DARK_TURQUOISE, buffer_size);
+        if(gfx_check_changes(order)){
+            memset(gfx_composition_buffer, VESA8_COLOR_DARK_TURQUOISE, buffer_size);
 
-        /* Draw windows in reversed order */
-        gfx_recursive_draw(order);
+            /* Draw windows in reversed order */
+            gfx_recursive_draw(order);
+        }
+        STI();
 
         vesa_fillrect(gfx_composition_buffer, 0, 480-25, 640, 25, VESA8_COLOR_LIGHT_GRAY3);
         vesa_line_horizontal(gfx_composition_buffer, 0, 480-25, 640, VESA8_COLOR_LIGHT_GRAY1); 
@@ -123,9 +136,8 @@ void gfx_compositor_main()
 
         vesa_printf(gfx_composition_buffer, 8, 480-16, VESA8_COLOR_DARK_BLUE, "%d", (rdtsc() - test)-100000);
 
-        STI();
 
-        yield();
+        sleep(2);
 
         /* Copy buffer over to framebuffer. */
         memcpy((uint8_t*)vbe_info->framebuffer, gfx_composition_buffer, buffer_size-1);

@@ -15,6 +15,8 @@ int gfx_draw_rectangle(int x, int y, int width, int height, char color)
     for (j = y; j < (y+width); j++)
         for (i = x; i < (x+height); i++)
             putpixel(current_running->gfx_window->inner, i, j, color, current_running->gfx_window->width-8);
+
+    current_running->gfx_window->changed = 1;
     return 1;
 }
 
@@ -27,6 +29,7 @@ int gfx_draw_char(int x, int y, char c, char color)
             }
         }
     }
+    current_running->gfx_window->changed = 1;
 }
 
 int gfx_draw_text(int x, int y, char* str, char color)
