@@ -3,6 +3,7 @@
 
 #include <util.h>
 #include <windowmanager.h>
+#include <gfx/window.h>
 
 #define MAX_NUM_OF_PCBS 10
 #define pcb_max_name_length 25
@@ -44,6 +45,7 @@ struct pcb {
       char name[pcb_max_name_length];
 
       struct text_window* window;
+      struct gfx_window* gfx_window;
 
       struct pcb *next;
       struct pcb *prev;

@@ -13,6 +13,7 @@
 #include <stdarg.h>
 #include <screen.h>
 #include <windowmanager.h>
+#include <gfx/gfxlib.h>
 /*
 	Main code for terminal output mainportly used for debuggin and displaying information.
 	Terminal code from:
@@ -69,13 +70,13 @@ void terminal_putchar(char c)
 		return;
 	}
 	
-	if (state->column+1 == get_window_width()-1)
+	if (state->column+1 == 80)
 	{
-		scrput(state->column, get_window_height()-1, '-', state->color);
+		gfx_draw_char(state->column*8, 10, '-', state->color);
 		state->column = 1;
 		__terminal_scroll();
 	}
-	scrput(state->column, get_window_height()-1, uc, state->color);
+	gfx_draw_char(state->column*8, 10, uc, state->color);
 	state->column++;
 }
  

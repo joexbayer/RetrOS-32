@@ -14,28 +14,28 @@ void vesa_fill(uint8_t* buffer, unsigned char color);
 
 void vesa_put_pixel(uint8_t* buffer, int x,int y, unsigned char color);
 
-inline void putpixel(uint8_t* buffer, int x,int y, char color) {
+inline void putpixel(uint8_t* buffer, int x,int y, char color, int pitch) {
 
-    uint8_t* pixel_offset = (uint8_t*) (y * vbe_info->pitch + (x * (vbe_info->bpp/8)) + buffer);
+    uint8_t* pixel_offset = (uint8_t*) (y * pitch + (x * (vbe_info->bpp/8)) + buffer);
     *pixel_offset = color;
 }
 
-inline unsigned char getpixel(uint8_t* buffer, int x,int y) {
+inline unsigned char* getpixel(uint8_t* buffer, int x,int y, int pitch) {
 
-    uint8_t* pixel_offset = (uint8_t*) (y * vbe_info->pitch + (x * (vbe_info->bpp/8)) + buffer);
-    return *pixel_offset;
+    uint8_t* pixel_offset = (uint8_t*) (y * pitch + (x * (vbe_info->bpp/8)) + buffer);
+    return pixel_offset;
 }
 
 inline void vesa_line_horizontal(uint8_t* buffer, int x, int y, int length, int color)
 {
     for (int i = x; i < (x+length); i++)
-        putpixel(buffer, i, y, color);
+        putpixel(buffer, i, y, color, vbe_info->pitch);
 }
 
 inline void vesa_line_vertical(uint8_t* buffer, int x, int y, int length, int color)
 {
     for (int i = y; i < (y+length); i++)
-        putpixel(buffer, x, i, color);
+        putpixel(buffer, x, i, color, vbe_info->pitch);
 }
 
 void vesa_fillrect(uint8_t* buffer, int x, int y, int w, int h, int color);

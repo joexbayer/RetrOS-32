@@ -26,6 +26,8 @@
 
 #include <diskdev.h>
 
+#include <gfx/gfxlib.h>
+
 
 struct text_window w = {
 	.x = 1,
@@ -43,7 +45,7 @@ struct text_window w = {
 	
 };
 
-#define SHELL_POSITION (get_window_height()-1)
+#define SHELL_POSITION 0
 static const uint8_t SHELL_MAX_SIZE = 50;
 static uint8_t shell_column = 0;
 static char shell_buffer[50];
@@ -61,17 +63,17 @@ void shell_clear()
 {
 	for (int i = shell_column; i < SHELL_MAX_SIZE; i++)
 	{
-		scrput(i, SHELL_POSITION, ' ', VGA_COLOR_WHITE);
+		gfx_draw_char(i*8, SHELL_POSITION, ' ', VESA8_COLOR_WHITE);
 	}	
 }
 
 void reset_shell()
 {
 	memset(&shell_buffer, 0, 25);
-	shell_column = strlen(shell_name)+2;
+	shell_column = strlen(shell_name)+1;
 	shell_buffer_length = 0;
-	scrwrite(1, SHELL_POSITION, shell_name, VGA_COLOR_LIGHT_CYAN);
-	scrwrite(shell_column, SHELL_POSITION, "> ", VGA_COLOR_LIGHT_CYAN);
+	gfx_draw_text(1, SHELL_POSITION, shell_name, VESA8_COLOR_LIGHT_GREEN);
+	gfx_draw_text(shell_column, SHELL_POSITION, ":", VESA8_COLOR_LIGHT_GREEN);
 	shell_column += 1;
 
 	screen_set_cursor(shell_column, SHELL_POSITION);
@@ -247,7 +249,7 @@ void shell_put(char c)
 		if(shell_column < 1)
 			return;
 		shell_column -= 1;
-		scrput(shell_column, SHELL_POSITION, ' ', VGA_COLOR_WHITE);
+		gfx_draw_char(shell_column*8, SHELL_POSITION, ' ', VESA8_COLOR_WHITE);
 		shell_buffer[shell_buffer_length] = 0;
 		shell_buffer_length--;
 		screen_set_cursor(shell_column-1, SHELL_POSITION);
@@ -258,7 +260,7 @@ void shell_put(char c)
 	{
 		return;
 	}
-	scrput(shell_column, SHELL_POSITION, uc, VGA_COLOR_WHITE);
+	gfx_draw_char(shell_column*8, SHELL_POSITION, uc, VESA8_COLOR_WHITE);
 	shell_buffer[shell_buffer_length] = uc;
 	shell_buffer_length++;
 	screen_set_cursor(shell_column, SHELL_POSITION);
@@ -269,6 +271,11 @@ void shell_main()
 {
 	dbgprintf("Shell is running!\n");
 	attach_window(&w);
+
+	struct gfx_window* window = gfx_new_window(100, 100);
+	gfx_draw_rectangle(0, 0, 100, 100, VESA8_COLOR_BLACK);
+	//gfx_draw_text(0, 0, "Terminal!", VESA8_COLOR_LIGHT_GREEN);
+
 	reset_shell();
 	//sleep(2);
 	while(1)

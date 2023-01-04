@@ -93,7 +93,7 @@ unsigned short b8to16(unsigned char c)
 
 void vesa_put_pixel(uint8_t* buffer, int x,int y, unsigned char color)
 {
-    putpixel(buffer, x , y, color);
+    putpixel(buffer, x , y, color, vbe_info->pitch);
 }
 
 void vesa_put_char(uint8_t* buffer, unsigned char c, int x, int y, int color) 
@@ -101,9 +101,7 @@ void vesa_put_char(uint8_t* buffer, unsigned char c, int x, int y, int color)
     for (int l = 0; l < 8; l++) {
         for (int i = 8; i >= 0; i--) {
             if (font8x8_basic[c][l] & (1 << i)) {
-                putpixel(buffer, (x)+i,  (y)+l, color);
-            } else {
-                //putpixel((x)+i,  (y)+l, VESA_BG_COLOR);
+                putpixel(buffer, (x)+i,  (y)+l, color, vbe_info->pitch);
             }
         }
     }
@@ -119,7 +117,7 @@ void vesa_put_icon32(uint8_t* buffer, int x, int y)
 
         for (int i = 0; i < 32; i++) {
             if (test_icon32[l][i] != 0x0) {
-                putpixel(buffer, (x)+i,  (y)+l, vesa_icon_color_map[test_icon32[l][i]]);
+                putpixel(buffer, (x)+i,  (y)+l, vesa_icon_color_map[test_icon32[l][i]], vbe_info->pitch);
             } else {
                 //putpixel((x)+i,  (y)+l, VESA_BG_COLOR);
             }
@@ -133,7 +131,7 @@ void vesa_put_icon16(uint8_t* buffer, int x, int y)
 
         for (int i = 0; i < 16; i++) {
             if (cursor[l][i] != 0x0) {
-                putpixel(buffer, (x)+i,  (y)+l, vesa_icon_color_map[cursor[l][i]]);
+                putpixel(buffer, (x)+i,  (y)+l, vesa_icon_color_map[cursor[l][i]], vbe_info->pitch);
             } else {
                 //putpixel((x)+i,  (y)+l, VESA_BG_COLOR);
             }
@@ -167,15 +165,14 @@ void vesa_fill(uint8_t* buffer, unsigned char color)
 {
     for (int i = 0; i < vbe_info->height; i++)
         for (int j = 0; j < vbe_info->width; j++)
-            putpixel(buffer, j, i, color);
+            putpixel(buffer, j, i, color, vbe_info->pitch);
 }
 
 void vesa_fillrect(uint8_t* buffer, int x, int y, int w, int h, int color){
     int i, j;
-    
     for (j = y; j < (y+h); j++)
         for (i = x; i < (x+w); i++)
-            putpixel(buffer, i, j, color);
+            putpixel(buffer, i, j, color, vbe_info->pitch);
 }
 
 #define GFX_MAX_FMT_STR_SIZE 50
