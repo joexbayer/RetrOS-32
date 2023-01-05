@@ -49,7 +49,7 @@ int get_current_time(struct time* time)
     {
         time->second = (time->second & 0x0F) + ((time->second / 16) * 10);
         time->minute = (time->minute & 0x0F) + ((time->minute / 16) * 10);
-        time->hour = ( (time->hour & 0x0F) + (((time->hour & 0x70) / 16) * 10) ) | (time->hour & 0x80);
+        time->hour = (( (time->hour & 0x0F) + (((time->hour & 0x70) / 16) * 10) ) | (time->hour & 0x80)) - 1;
         time->day = (time->day & 0x0F) + ((time->day / 16) * 10);
         time->month = (time->month & 0x0F) + ((time->month / 16) * 10);
         time->year = (time->year & 0x0F) + ((time->year / 16) * 10);

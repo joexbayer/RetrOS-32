@@ -28,7 +28,7 @@ static void (*irqs[ISR_LINES])(struct registers*) = {
 
 void page_fault_interrupt(unsigned long cr2, unsigned long err)
 {
-	dbgprintf("Page fault: 0x%x %d\n", cr2, err);
+	dbgprintf("Page fault: 0x%x (Stack: 0x%x) %d\n", cr2, current_running->org_stack, err);
 	dbgprintf("Page: %x, process: %s\n", kernel_page_dir[DIRECTORY_INDEX(cr2)], current_running->name);
 	CLI();
 	while(1);

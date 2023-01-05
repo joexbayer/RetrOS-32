@@ -378,7 +378,7 @@ void init_paging()
 	kernel_page_dir = alloc_page();
 	uint32_t* kernel_page_table = alloc_page();
 	int permissions = PRESENT | READ_WRITE;
-	for (int addr = 0; addr < 640 * 6024; addr += PAGE_SIZE)
+	for (int addr = 0; addr < 4194304; addr += PAGE_SIZE)
     	table_set(kernel_page_table, addr, addr, permissions);
 	
 	/**

@@ -299,6 +299,7 @@ void ls(char* path)
 		int ret = inode_read((char*) &entry, sizeof(struct directory_entry), current_dir, &superblock);
 		struct inode* inode = inode_get(entry.inode, &superblock);
 		struct time* time = &inode->time;
+		dbgprintf("%d\n", time->month);
 		twritef("%x %s %d, %d:%d - %s%s\n",
 			inode->size,
 			months[time->month],

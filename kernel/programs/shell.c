@@ -46,9 +46,10 @@ struct text_window w = {
 };
 
 #define SHELL_POSITION 300-12
-static const uint8_t SHELL_MAX_SIZE = 300/8;
+#define SHELL_MAX_SIZE 300/8
+
 static uint8_t shell_column = 0;
-static char shell_buffer[50];
+static char shell_buffer[SHELL_MAX_SIZE];
 static uint8_t shell_buffer_length = 0;
 
 static const char newline = '\n';
@@ -61,29 +62,26 @@ static char* shell_name = "Kernel";
  */
 void shell_clear()
 {
-	for (int i = 1; i < SHELL_MAX_SIZE; i++)
-	{
-		//gfx_draw_char(i*8, SHELL_POSITION, ' ', VESA8_COLOR_WHITE);
-		gfx_draw_rectangle(i*8, SHELL_POSITION, 8, 8, VESA8_COLOR_BLACK);
-	}	
+	gfx_draw_rectangle(0, SHELL_POSITION, 300, 8, VESA8_COLOR_BLACK);
 }
 
 void reset_shell()
 {
-	memset(&shell_buffer, 0, 25);
+	shell_clear();
+	memset(&shell_buffer, 0, SHELL_MAX_SIZE);
 	shell_column = strlen(shell_name)+1;
 	shell_buffer_length = 0;
-	gfx_draw_text(1, SHELL_POSITION, shell_name, VESA8_COLOR_LIGHT_GREEN);
-	gfx_draw_text(shell_column+strlen(shell_name), SHELL_POSITION, ":", VESA8_COLOR_LIGHT_GREEN);
+	gfx_draw_text(0, SHELL_POSITION, shell_name, VESA8_COLOR_LIGHT_GREEN);
+	gfx_draw_text(shell_column+strlen(shell_name)*8, SHELL_POSITION, ":", VESA8_COLOR_LIGHT_GREEN);
 	shell_column += 1;
 
-	screen_set_cursor(shell_column, SHELL_POSITION);
-	shell_clear();
+	//screen_set_cursor(shell_column, SHELL_POSITION);
+	//shell_clear();
 }
 
 void exec_cmd()
 {
-	twritef("\n");
+	twriteln("\n");
 
 	if(strncmp("lspci", shell_buffer, strlen("lspci"))){
 		list_pci_devices();
@@ -247,13 +245,13 @@ void shell_put(char c)
 
 	if(uc == backspace)
 	{
-		if(shell_column < 1)
+		if(shell_buffer_length < 1)
 			return;
 		shell_column -= 1;
-		gfx_draw_char(shell_column*8, SHELL_POSITION, ' ', VESA8_COLOR_WHITE);
+		gfx_draw_rectangle(shell_column*8, SHELL_POSITION, 8, 8, VESA8_COLOR_BLACK);
 		shell_buffer[shell_buffer_length] = 0;
 		shell_buffer_length--;
-		screen_set_cursor(shell_column-1, SHELL_POSITION);
+		//screen_set_cursor(shell_column-1, SHELL_POSITION);
 		return;
 	}
 
@@ -274,10 +272,11 @@ void shell_main()
 	attach_window(&w);
 
 	struct gfx_window* window = gfx_new_window(300, 300);
-	//gfx_draw_rectangle(20, 20, 150, 100, VESA8_COLOR_BLUE);
 	//gfx_draw_text(0, 0, "Terminal!", VESA8_COLOR_LIGHT_GREEN);
-
+	terminal_fill();
 	reset_shell();
+
+	//gfx_draw_rectangle(0, 0, 300, 290, VESA8_COLOR_BLUE);
 	//sleep(2);
 	while(1)
 	{

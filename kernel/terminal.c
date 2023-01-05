@@ -28,6 +28,11 @@ static const char newline = '\n';
 static int terminal_row;
 static int terminal_column;
 
+
+static unsigned char text_buffer[2000];
+static int text_head = 0;
+static int text_tail = 0;
+
 /**
  * Defines the terminal area and clears screen.
  * @return void
@@ -50,7 +55,26 @@ void init_terminal(void)
  */
 static void __terminal_scroll()
 {	
-	scr_scroll(1, 1, get_window_width(), get_window_height());
+	if(text_head < 1)
+		return;
+
+	int x = 0, y = 0;
+	gfx_draw_rectangle(0, 0, 300, 300, VESA8_COLOR_BLACK);
+	for (int i = 0; i < text_head; i++)
+	{
+		if(text_buffer[i] == '\n'){
+			x = 0;
+			y++;
+			continue;
+		}
+
+		gfx_draw_char(x*8, y*8, text_buffer[i], VESA8_COLOR_LIGHT_GREEN);
+		x++;
+	}
+
+	dbgprintf("Drawing! %d\n", text_head);
+	
+	
 }
 
 /**
@@ -62,6 +86,9 @@ void terminal_putchar(char c)
 {
 	struct terminal_state* state = get_terminal_state();
 	unsigned char uc = c;
+	
+	text_buffer[text_head] = c;
+	text_head++;
 
 	if(c == newline)
 	{
@@ -69,14 +96,7 @@ void terminal_putchar(char c)
 		__terminal_scroll();
 		return;
 	}
-	
-	if (state->column+1 == 80)
-	{
-		gfx_draw_char(state->column*8, 10, '-', state->color);
-		state->column = 1;
-		__terminal_scroll();
-	}
-	gfx_draw_char(state->column*8, 10, uc, state->color);
+
 	state->column++;
 }
  
@@ -110,6 +130,15 @@ void twriteln(const char* data)
 }
 
 #define MAX_FMT_STR_SIZE 50
+
+
+void terminal_fill()
+{
+	for (int i = 0; i < 300/8; i++)
+	{
+		gfx_draw_rectangle(0, i*8, 300, 8, i);
+	}
+}
 
 int32_t twritef(char* fmt, ...)
 {

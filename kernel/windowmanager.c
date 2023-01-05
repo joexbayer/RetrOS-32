@@ -83,7 +83,7 @@ int init_window(struct text_window* w, int x, int y, int width, int height)
     w->height = height;
     w->state.color = VGA_COLOR_LIGHT_GREY;
     w->state.column = 0;
-    w->state.row = USABLE_HEIGHT-1;
+    w->state.row = 300-20;
 
     return 1;
 }   

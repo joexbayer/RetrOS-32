@@ -42,7 +42,7 @@ int get_current_time(struct time* time_s){
     struct tm tm = *localtime(&t);
 
     time_s->year = tm.tm_year;
-    time_s->month = tm.tm_mon;
+    time_s->month = tm.tm_mon+1;
     time_s->day = tm.tm_mday;
     time_s->hour = tm.tm_hour;
     time_s->minute = tm.tm_min;

@@ -120,7 +120,6 @@ void gfx_compositor_main()
             /* Draw windows in reversed order */
             gfx_recursive_draw(order);
         }
-        STI();
 
         vesa_fillrect(gfx_composition_buffer, 0, 480-25, 640, 25, VESA8_COLOR_LIGHT_GRAY3);
         vesa_line_horizontal(gfx_composition_buffer, 0, 480-25, 640, VESA8_COLOR_LIGHT_GRAY1); 
@@ -131,11 +130,11 @@ void gfx_compositor_main()
 
         struct time time;
         get_current_time(&time);
-        time.hour -= 1;
         vesa_printf(gfx_composition_buffer, 638-65, 480-16, VESA8_COLOR_BLACK, "%d:%d %s", time.hour > 12 ? time.hour-12 : time.hour, time.minute, time.hour > 12 ? "PM" : "AM");
 
         vesa_printf(gfx_composition_buffer, 8, 480-16, VESA8_COLOR_DARK_BLUE, "%d", (rdtsc() - test)-100000);
 
+        STI();
 
         sleep(2);
 
