@@ -1,11 +1,12 @@
 ata.o: drivers/ata.c include/ata.h include/stdint.h include/interrupts.h \
  include/syscalls.h include/memory.h include/pcb.h include/util.h \
- include/windowmanager.h include/colors.h include/io.h include/diskdev.h \
- include/serial.h
+ include/windowmanager.h include/colors.h include/gfx/window.h \
+ include/gfx/component.h include/io.h include/diskdev.h include/serial.h
 e1000.o: drivers/e1000.c include/e1000.h include/stdint.h include/pci.h \
  include/screen.h include/util.h include/colors.h include/interrupts.h \
  include/syscalls.h include/net/netdev.h include/memory.h include/pcb.h \
- include/windowmanager.h include/serial.h
+ include/windowmanager.h include/gfx/window.h include/gfx/component.h \
+ include/serial.h
 keyboard.o: drivers/keyboard.c include/keyboard.h include/stdint.h \
  include/screen.h include/util.h include/colors.h include/serial.h \
  include/interrupts.h include/syscalls.h include/sync.h include/io.h \
@@ -13,93 +14,112 @@ keyboard.o: drivers/keyboard.c include/keyboard.h include/stdint.h \
 mouse.o: drivers/mouse.c include/stdint.h include/interrupts.h \
  include/syscalls.h include/mouse.h include/io.h include/serial.h \
  include/util.h include/vesa.h include/vbe.h include/colors.h \
- include/gfx/composition.h include/gfx/window.h include/gfx/component.h
+ include/gfx/composition.h include/gfx/window.h include/gfx/component.h \
+ include/pcb.h include/windowmanager.h
 rtc.o: drivers/rtc.c include/rtc.h include/stdint.h include/io.h
 screen.o: drivers/screen.c include/screen.h include/util.h \
  include/stdint.h include/colors.h include/pcb.h include/windowmanager.h \
- include/stdarg.h include/io.h include/serial.h include/vesa.h \
- include/vbe.h
+ include/gfx/window.h include/gfx/component.h include/stdarg.h \
+ include/io.h include/serial.h include/vesa.h include/vbe.h \
+ include/gfx/gfxlib.h
 serial.o: drivers/serial.c include/serial.h include/stdint.h include/io.h \
  include/util.h include/stdarg.h
 timer.o: drivers/timer.c include/timer.h include/stdint.h include/rtc.h \
  include/screen.h include/util.h include/colors.h include/serial.h \
  include/interrupts.h include/syscalls.h include/scheduler.h \
- include/pcb.h include/windowmanager.h include/io.h
+ include/pcb.h include/windowmanager.h include/gfx/window.h \
+ include/gfx/component.h include/io.h
 vesa.o: drivers/vesa.c include/vesa.h include/stdint.h include/vbe.h \
  include/colors.h include/util.h include/font8.h include/stdarg.h
 fs.o: fs/fs.c include/fs/fs.h include/fs/inode.h include/stdint.h \
  include/rtc.h include/fs/superblock.h include/bitmap.h \
- include/fs/directory.h include/memory.h include/pcb.h include/util.h \
- include/windowmanager.h include/colors.h include/diskdev.h include/ata.h \
- include/terminal.h include/serial.h
+ include/fs/fs_error.h include/fs/directory.h include/memory.h \
+ include/pcb.h include/util.h include/windowmanager.h include/colors.h \
+ include/gfx/window.h include/gfx/component.h include/diskdev.h \
+ include/ata.h include/terminal.h include/serial.h
 inode.o: fs/inode.c include/fs/inode.h include/stdint.h include/rtc.h \
  include/fs/superblock.h include/bitmap.h include/fs/directory.h \
  include/serial.h include/util.h include/diskdev.h include/ata.h
 button.o: graphics/button.c include/gfx/button.h
 component.o: graphics/component.c include/gfx/component.h \
- include/stdint.h include/gfx/window.h include/colors.h
+ include/stdint.h include/gfx/window.h include/pcb.h include/util.h \
+ include/windowmanager.h include/colors.h include/vesa.h include/vbe.h
 composition.o: graphics/composition.c include/vesa.h include/stdint.h \
- include/vbe.h include/gfx/window.h include/gfx/component.h \
- include/colors.h include/scheduler.h include/util.h include/memory.h \
- include/pcb.h include/windowmanager.h include/serial.h include/rtc.h \
- include/timer.h include/screen.h include/mouse.h
+ include/vbe.h include/gfx/window.h include/gfx/component.h include/pcb.h \
+ include/util.h include/windowmanager.h include/colors.h \
+ include/scheduler.h include/memory.h include/serial.h include/rtc.h \
+ include/timer.h include/screen.h include/mouse.h include/sync.h
+gfxlib.o: graphics/gfxlib.c include/pcb.h include/util.h include/stdint.h \
+ include/windowmanager.h include/colors.h include/gfx/window.h \
+ include/gfx/component.h include/font8.h include/vbe.h include/stdarg.h \
+ include/vesa.h
 window.o: graphics/window.c include/gfx/window.h include/stdint.h \
- include/gfx/component.h include/colors.h include/util.h include/serial.h \
- include/vesa.h include/vbe.h
+ include/gfx/component.h include/pcb.h include/util.h \
+ include/windowmanager.h include/colors.h include/gfx/composition.h \
+ include/serial.h include/vesa.h include/vbe.h
 diskdev.o: kernel/diskdev.c include/diskdev.h include/ata.h \
  include/stdint.h include/util.h include/terminal.h include/serial.h
 interrupts.o: kernel/interrupts.c include/interrupts.h include/stdint.h \
  include/syscalls.h include/serial.h include/io.h include/memory.h \
- include/pcb.h include/util.h include/windowmanager.h include/colors.h
+ include/pcb.h include/util.h include/windowmanager.h include/colors.h \
+ include/gfx/window.h include/gfx/component.h
 io.o: kernel/io.c include/io.h include/stdint.h
 kernel.o: kernel/kernel.c include/windowmanager.h include/stdint.h \
  include/colors.h include/util.h include/pci.h include/terminal.h \
  include/keyboard.h include/interrupts.h include/syscalls.h \
  include/timer.h include/rtc.h include/screen.h include/pcb.h \
- include/memory.h include/net/skb.h include/net/netdev.h \
- include/net/utils.h include/net/ethernet.h include/net/arp.h \
- include/net/ipv4.h include/net/icmp.h include/net/udp.h \
- include/net/tcp.h include/net/socket.h include/sync.h include/ata.h \
- include/bitmap.h include/net/dns.h include/fs/fs.h include/fs/inode.h \
+ include/gfx/window.h include/gfx/component.h include/memory.h \
+ include/net/skb.h include/net/netdev.h include/net/utils.h \
+ include/net/ethernet.h include/net/arp.h include/net/ipv4.h \
+ include/net/icmp.h include/net/udp.h include/net/tcp.h \
+ include/net/socket.h include/sync.h include/ata.h include/bitmap.h \
+ include/net/dns.h include/fs/fs.h include/fs/inode.h \
  include/fs/superblock.h include/serial.h include/syscall_helper.h \
  include/kthreads.h include/scheduler.h include/vbe.h include/mouse.h \
- include/gfx/window.h include/gfx/component.h include/gfx/composition.h
+ include/gfx/composition.h
 kthreads.o: kernel/kthreads.c include/kthreads.h include/stdint.h \
  include/terminal.h include/util.h include/screen.h include/colors.h \
- include/pcb.h include/windowmanager.h
+ include/pcb.h include/windowmanager.h include/gfx/window.h \
+ include/gfx/component.h
 memory.o: kernel/memory.c include/memory.h include/stdint.h include/pcb.h \
- include/util.h include/windowmanager.h include/colors.h include/screen.h \
+ include/util.h include/windowmanager.h include/colors.h \
+ include/gfx/window.h include/gfx/component.h include/screen.h \
  include/serial.h include/rtc.h include/sync.h include/diskdev.h \
  include/ata.h include/hashmap.h include/vbe.h include/terminal.h \
  include/bitmap.h
 pcb.o: kernel/pcb.c include/pcb.h include/util.h include/stdint.h \
- include/windowmanager.h include/colors.h include/serial.h \
- include/memory.h include/sync.h include/timer.h include/rtc.h \
- include/net/netdev.h include/pci.h include/scheduler.h \
- include/terminal.h include/fs/fs.h include/fs/inode.h \
- include/fs/superblock.h include/bitmap.h
+ include/windowmanager.h include/colors.h include/gfx/window.h \
+ include/gfx/component.h include/serial.h include/memory.h include/sync.h \
+ include/timer.h include/rtc.h include/net/netdev.h include/pci.h \
+ include/scheduler.h include/terminal.h include/fs/fs.h \
+ include/fs/inode.h include/fs/superblock.h include/bitmap.h \
+ include/gfx/gfxlib.h
 pci.o: kernel/pci.c include/pci.h include/stdint.h include/e1000.h \
  include/screen.h include/util.h include/colors.h include/terminal.h \
  include/serial.h include/io.h
 scheduler.o: kernel/scheduler.c include/scheduler.h include/memory.h \
  include/stdint.h include/pcb.h include/util.h include/windowmanager.h \
- include/colors.h include/timer.h include/rtc.h include/serial.h
+ include/colors.h include/gfx/window.h include/gfx/component.h \
+ include/timer.h include/rtc.h include/serial.h
 sync.o: kernel/sync.c include/sync.h include/stdint.h include/terminal.h \
  include/util.h include/scheduler.h include/pcb.h include/windowmanager.h \
- include/colors.h include/serial.h
+ include/colors.h include/gfx/window.h include/gfx/component.h \
+ include/serial.h
 syscalls.o: kernel/syscalls.c include/syscalls.h include/interrupts.h \
  include/stdint.h
 terminal.o: kernel/terminal.c include/terminal.h include/util.h \
- include/stdint.h include/stdarg.h include/screen.h include/colors.h \
- include/windowmanager.h
+ include/stdint.h include/stdarg.h include/colors.h include/gfx/gfxlib.h
 windowmanager.o: kernel/windowmanager.c include/util.h include/stdint.h \
  include/windowmanager.h include/colors.h include/memory.h include/pcb.h \
- include/screen.h include/serial.h
+ include/gfx/window.h include/gfx/component.h include/screen.h \
+ include/serial.h
 bitmap.o: lib/bitmap.c include/bitmap.h include/stdint.h include/memory.h \
- include/pcb.h include/util.h include/windowmanager.h include/colors.h
+ include/pcb.h include/util.h include/windowmanager.h include/colors.h \
+ include/gfx/window.h include/gfx/component.h
+font8.o: lib/font8.c include/font8.h include/stdint.h
 hashmap.o: lib/hashmap.c include/hashmap.h include/memory.h \
  include/stdint.h include/pcb.h include/util.h include/windowmanager.h \
- include/colors.h
+ include/colors.h include/gfx/window.h include/gfx/component.h
 list.o: lib/list.c include/list.h
 printf.o: lib/printf.c include/stdarg.h include/usr_syscall.h \
  include/util.h include/stdint.h
@@ -109,9 +129,10 @@ util.o: lib/util.c include/util.h include/stdint.h
 arp.o: net/arp.c include/net/arp.h include/stdint.h include/net/utils.h \
  include/net/skb.h include/net/netdev.h include/pci.h include/memory.h \
  include/pcb.h include/util.h include/windowmanager.h include/colors.h \
- include/net/ethernet.h include/net/ipv4.h include/net/icmp.h \
- include/net/udp.h include/net/tcp.h include/net/socket.h include/sync.h \
- include/net/dhcp.h include/terminal.h
+ include/gfx/window.h include/gfx/component.h include/net/ethernet.h \
+ include/net/ipv4.h include/net/icmp.h include/net/udp.h \
+ include/net/tcp.h include/net/socket.h include/sync.h include/net/dhcp.h \
+ include/terminal.h include/serial.h
 dns.o: net/dns.c include/net/dns.h include/stdint.h include/net/utils.h \
  include/net/dhcp.h include/net/netdev.h include/pci.h \
  include/net/socket.h include/util.h include/sync.h include/net/tcp.h \
@@ -119,23 +140,25 @@ dns.o: net/dns.c include/net/dns.h include/stdint.h include/net/utils.h \
 ethernet.o: net/ethernet.c include/net/ethernet.h include/stdint.h \
  include/net/skb.h include/net/netdev.h include/pci.h include/memory.h \
  include/pcb.h include/util.h include/windowmanager.h include/colors.h \
- include/net/utils.h include/net/arp.h include/net/ipv4.h \
- include/net/icmp.h include/net/udp.h include/net/tcp.h \
- include/net/socket.h include/sync.h include/screen.h include/terminal.h
+ include/gfx/window.h include/gfx/component.h include/net/utils.h \
+ include/net/arp.h include/net/ipv4.h include/net/icmp.h \
+ include/net/udp.h include/net/tcp.h include/net/socket.h include/sync.h \
+ include/screen.h include/terminal.h
 icmp.o: net/icmp.c include/net/icmp.h include/stdint.h include/net/skb.h \
  include/net/netdev.h include/pci.h include/memory.h include/pcb.h \
  include/util.h include/windowmanager.h include/colors.h \
- include/net/utils.h include/net/ethernet.h include/net/arp.h \
- include/net/ipv4.h include/net/udp.h include/net/tcp.h \
- include/net/socket.h include/sync.h include/screen.h include/terminal.h \
- include/net/dns.h
+ include/gfx/window.h include/gfx/component.h include/net/utils.h \
+ include/net/ethernet.h include/net/arp.h include/net/ipv4.h \
+ include/net/udp.h include/net/tcp.h include/net/socket.h include/sync.h \
+ include/screen.h include/terminal.h include/net/dns.h
 ipv4.o: net/ipv4.c include/net/ipv4.h include/stdint.h include/net/skb.h \
  include/net/netdev.h include/pci.h include/memory.h include/pcb.h \
  include/util.h include/windowmanager.h include/colors.h \
- include/net/utils.h include/net/ethernet.h include/net/arp.h \
- include/net/icmp.h include/net/udp.h include/net/tcp.h \
- include/net/socket.h include/sync.h include/terminal.h \
- include/net/routing.h include/net/dhcp.h
+ include/gfx/window.h include/gfx/component.h include/net/utils.h \
+ include/net/ethernet.h include/net/arp.h include/net/icmp.h \
+ include/net/udp.h include/net/tcp.h include/net/socket.h include/sync.h \
+ include/terminal.h include/net/routing.h include/net/dhcp.h \
+ include/serial.h
 netdev.o: net/netdev.c include/net/netdev.h include/stdint.h \
  include/pci.h include/terminal.h include/util.h
 routing.o: net/routing.c include/net/routing.h include/stdint.h \
@@ -143,29 +166,31 @@ routing.o: net/routing.c include/net/routing.h include/stdint.h \
  include/net/utils.h
 skb.o: net/skb.c include/net/skb.h include/stdint.h include/net/netdev.h \
  include/pci.h include/memory.h include/pcb.h include/util.h \
- include/windowmanager.h include/colors.h include/net/utils.h \
- include/net/ethernet.h include/net/arp.h include/net/ipv4.h \
- include/net/icmp.h include/net/udp.h include/net/tcp.h \
- include/net/socket.h include/sync.h include/serial.h
+ include/windowmanager.h include/colors.h include/gfx/window.h \
+ include/gfx/component.h include/net/utils.h include/net/ethernet.h \
+ include/net/arp.h include/net/ipv4.h include/net/icmp.h \
+ include/net/udp.h include/net/tcp.h include/net/socket.h include/sync.h \
+ include/serial.h
 socket.o: net/socket.c include/net/socket.h include/util.h \
  include/stdint.h include/sync.h include/net/tcp.h include/net/utils.h \
  include/net/skb.h include/net/netdev.h include/pci.h include/memory.h \
  include/pcb.h include/windowmanager.h include/colors.h \
- include/net/ethernet.h include/net/arp.h include/net/ipv4.h \
- include/net/icmp.h include/net/udp.h include/bitmap.h include/timer.h \
- include/rtc.h
+ include/gfx/window.h include/gfx/component.h include/net/ethernet.h \
+ include/net/arp.h include/net/ipv4.h include/net/icmp.h \
+ include/net/udp.h include/bitmap.h include/timer.h include/rtc.h
 tcp.o: net/tcp.c include/net/tcp.h include/stdint.h include/net/socket.h \
  include/util.h include/sync.h include/net/skb.h include/net/netdev.h \
  include/pci.h include/memory.h include/pcb.h include/windowmanager.h \
- include/colors.h include/net/utils.h include/net/ethernet.h \
- include/net/arp.h include/net/ipv4.h include/net/icmp.h \
- include/net/udp.h include/serial.h
+ include/colors.h include/gfx/window.h include/gfx/component.h \
+ include/net/utils.h include/net/ethernet.h include/net/arp.h \
+ include/net/ipv4.h include/net/icmp.h include/net/udp.h include/serial.h
 udp.o: net/udp.c include/net/udp.h include/net/utils.h include/stdint.h \
  include/net/skb.h include/net/netdev.h include/pci.h include/memory.h \
  include/pcb.h include/util.h include/windowmanager.h include/colors.h \
- include/net/ethernet.h include/net/arp.h include/net/ipv4.h \
- include/net/icmp.h include/net/tcp.h include/net/socket.h include/sync.h \
- include/terminal.h
+ include/gfx/window.h include/gfx/component.h include/net/ethernet.h \
+ include/net/arp.h include/net/ipv4.h include/net/icmp.h \
+ include/net/tcp.h include/net/socket.h include/sync.h include/terminal.h \
+ include/serial.h
 utils.o: net/utils.c include/net/utils.h include/stdint.h
 fs_test.o: tests/fs_test.c include/stdint.h include/stdarg.h \
  include/fs/fs.h include/fs/inode.h include/rtc.h include/fs/superblock.h \

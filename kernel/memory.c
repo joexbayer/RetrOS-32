@@ -113,7 +113,7 @@ void* palloc(int size)
 }
 
 
-void* __alloc_internal(uint16_t size)
+void* __alloc_internal(int size)
 {
 	if(size == 0) return NULL;
 	acquire(&mem_lock);

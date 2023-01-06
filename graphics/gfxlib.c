@@ -169,7 +169,7 @@ int gfx_draw_format_text(int x, int y, char color, char* fmt, ...)
 					case 'X': ;
 						num = va_arg(args, int);
 						itohex(num, str);
-						gfx_draw_text(x+x_offset, y, str, color);
+						gfx_draw_text(x+(x_offset*PIXELS_PER_CHAR), y, str, color);
 						x_offset += strlen(str);
 						break;
 					case 's': ;
@@ -193,7 +193,7 @@ int gfx_draw_format_text(int x, int y, char color, char* fmt, ...)
 				x_offset = 0;
 				break;
 			default:  
-				gfx_draw_char(*fmt, x+(x_offset*PIXELS_PER_CHAR), y, color);
+				gfx_draw_char(x+(x_offset*PIXELS_PER_CHAR), y, *fmt, color);
 				x_offset++;
                 written++;
 			}

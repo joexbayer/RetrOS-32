@@ -167,12 +167,11 @@ void Genesis()
 
 void pcb_info()
 {
-	struct gfx_window* window = gfx_new_window(200, 400);
-	gfx_draw_rectangle(0, 0, 100, 100, VESA8_COLOR_GRAY3);
-	gfx_draw_text(1, 1, "Hello.", VESA8_COLOR_DARK_BLUE);
+	struct gfx_window* window = gfx_new_window(375, 75);
 	while(1)
 	{
-		//print_pcb_status();
+		gfx_draw_rectangle(0, 0, 375, 75, VESA8_COLOR_LIGHT_GRAY5);
+		print_pcb_status();
 		sleep(1000);
 	}
 }
@@ -186,7 +185,7 @@ void print_pcb_status()
 	int done_list[MAX_NUM_OF_PCBS];
 	int done_list_count = 0;
 	
-	gfx_draw_text(10, 10, " PID   Stack       Status       Type      Name", VESA8_COLOR_BLACK);
+	gfx_draw_text(10, 10, "PID Stack     Status    Type     Name", VESA8_COLOR_LIGHT_BROWN);
 	for (int i = 0; i < MAX_NUM_OF_PCBS; i++)
 	{
 		if(pcbs[i].pid == -1)
@@ -220,7 +219,7 @@ void print_pcb_status()
 
 		done_list[done_list_count] = largest;
 		done_list_count++;
-		gfx_draw_format_text(10, 10+done_list_count*8, VESA8_COLOR_BLACK, " %d    0x%x    %s     %s   %s\n", pcbs[largest].pid, pcbs[largest].esp, status[pcbs[largest].running], pcbs[largest].is_process == 1 ? "Process" : "kthread", pcbs[largest].name);
+		gfx_draw_format_text(10, 10+done_list_count*8, VESA8_COLOR_BLACK, " %d  0x%x  %s  %s  %s\n", pcbs[largest].pid, pcbs[largest].esp, status[pcbs[largest].running], pcbs[largest].is_process == 1 ? "Process" : "kthread", pcbs[largest].name);
 	}
 	
 }
@@ -418,7 +417,6 @@ void init_pcbs()
 
 	int ret = add_pcb(&Genesis, "Genesis");
 	if(ret < 0) return; // error
-	 ret = add_pcb(&Genesis, "Genesis2");
 
 	dbgprintf("[PCB] All process control blocks are ready.\n");
 

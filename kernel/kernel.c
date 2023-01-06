@@ -70,7 +70,7 @@ void _main(uint32_t magic)
 	start("Shell");
 	start("wServer");
 	start("Networking");
-	//start("PCB Status");
+	start("PCB Status");
 
 	add_system_call(SYSCALL_SCRPUT, (syscall_t)&scrput);
 	add_system_call(SYSCALL_PRTPUT, (syscall_t)&terminal_putchar);
