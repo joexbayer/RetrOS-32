@@ -59,7 +59,7 @@ static void __terminal_scroll()
 		return;
 
 	int x = 0, y = 0;
-	gfx_draw_rectangle(0, 0, 300, 300, VESA8_COLOR_BLACK);
+	gfx_draw_rectangle(0, 0, 400, 275, VESA8_COLOR_BLACK);
 	for (int i = 0; i < text_head; i++)
 	{
 		if(text_buffer[i] == '\n'){

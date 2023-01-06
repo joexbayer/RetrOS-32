@@ -58,7 +58,7 @@ static int __dhcp_add_option(struct dhcp* dhcp, int offset, uint8_t opcode, uint
 
 static int __dhcp_get_option(struct dhcp* dhcp, uint8_t opcode)
 {
-    twritef("Default: %x\n", dhcp->dhcp_cookie);
+    //twritef("Default: %x\n", dhcp->dhcp_cookie);
     int offset = 0;
     uint8_t* ptr = (uint8_t*) &(dhcp->dhcp_options[0]);
 
@@ -115,7 +115,7 @@ static int __dhcp_send_discovery(socket_t socket)
     optoff += __dhcp_add_option(&dhcp_disc, optoff,  53, 1, (uint8_t *) &opt1);
     optoff += __dhcp_add_option(&dhcp_disc, optoff, 255, 0, (uint8_t *) &opt0);
 
-    twritef("%d %d\n", optoff, sizeof(dhcp_disc));
+    //twritef("%d %d\n", optoff, sizeof(dhcp_disc));
 
     struct sockaddr_in addr;
     addr.sin_port = htons(DHCP_DEST_PORT);
@@ -172,7 +172,7 @@ static void __dhcp_handle_offer(struct dhcp* offer)
     dhcp_state.gateway = server_ip;
     dhcp_state.state = DHCP_SUCCESS;
 
-    twriteln("[DHCP] Recieved IP.");
+    //twriteln("[DHCP] Recieved IP.");
 }
 
 int dhcp_get_state()
@@ -247,7 +247,7 @@ void dhcpd()
         __dhcp_send_request(dhcp_socket);
         read = recv_timeout(dhcp_socket, &buffer, 2048, 0, 2);
     }
-    twriteln("DHCP done!");
+    //twriteln("DHCP done!");
     
     close(dhcp_socket);
     

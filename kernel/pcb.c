@@ -142,9 +142,9 @@ void pcb_queue_push_running(struct pcb* pcb)
 	pcb_queue_push(&pcb_running_queue, pcb, DOUBLE_LINKED);
 }
 
-void gensis()
+void Genesis()
 {
-	dbgprintf("[GEN] Gensis running!\n");
+	dbgprintf("[GEN] Genesis running!\n");
 	struct gfx_window* window = gfx_new_window(100, 100);
 	while(1)
 	{
@@ -161,7 +161,7 @@ void gensis()
 }
 
 
-void gensis2()
+void Genesis2()
 {
 	while(1)
 	{
@@ -445,10 +445,10 @@ void init_pcbs()
 	pcbs[0].next = &pcbs[0];
 	pcbs[0].prev = &pcbs[0];
 
-	int ret = add_pcb(&gensis, "Gensis");
+	int ret = add_pcb(&Genesis, "Genesis");
 	if(ret < 0) return; // error
 
-	ret = add_pcb(&gensis2, "Adam");
+	ret = add_pcb(&Genesis2, "Adam");
 	if(ret < 0) return; // error
 	dbgprintf("[PCB] All process control blocks are ready.\n");
 

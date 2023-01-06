@@ -45,8 +45,9 @@ struct text_window w = {
 	
 };
 
-#define SHELL_POSITION 300-12
-#define SHELL_MAX_SIZE 300/8
+#define SHELL_HEIGHT 275
+#define SHELL_POSITION SHELL_HEIGHT-12
+#define SHELL_MAX_SIZE SHELL_HEIGHT/8
 
 static uint8_t shell_column = 0;
 static char shell_buffer[SHELL_MAX_SIZE];
@@ -55,14 +56,14 @@ static uint8_t shell_buffer_length = 0;
 static const char newline = '\n';
 static const char backspace = '\b';
 
-static char* shell_name = "Kernel";
+static char* shell_name = "Kernel >";
 
 /*
  *	IMPLEMENTATIONS
  */
 void shell_clear()
 {
-	gfx_draw_rectangle(0, SHELL_POSITION, 300, 8, VESA8_COLOR_BLACK);
+	gfx_draw_rectangle(0, SHELL_POSITION, SHELL_HEIGHT, 8, VESA8_COLOR_BLACK);
 }
 
 void reset_shell()
@@ -72,7 +73,6 @@ void reset_shell()
 	shell_column = strlen(shell_name)+1;
 	shell_buffer_length = 0;
 	gfx_draw_text(0, SHELL_POSITION, shell_name, VESA8_COLOR_LIGHT_GREEN);
-	gfx_draw_text(shell_column+strlen(shell_name)*8, SHELL_POSITION, ":", VESA8_COLOR_LIGHT_GREEN);
 	shell_column += 1;
 
 	//screen_set_cursor(shell_column, SHELL_POSITION);
@@ -81,7 +81,7 @@ void reset_shell()
 
 void exec_cmd()
 {
-	twriteln("\n");
+	twritef("Kernel > %s", shell_buffer);
 
 	if(strncmp("lspci", shell_buffer, strlen("lspci"))){
 		list_pci_devices();
@@ -175,6 +175,8 @@ void exec_cmd()
 
 	if(strncmp("sync", shell_buffer, strlen("sync"))){
 		sync();
+		current_running->gfx_window->width = 400;
+		current_running->gfx_window->height = 400;
 		return;
 	}
 
@@ -271,7 +273,7 @@ void shell_main()
 	dbgprintf("Shell is running!\n");
 	attach_window(&w);
 
-	struct gfx_window* window = gfx_new_window(300, 300);
+	struct gfx_window* window = gfx_new_window(400, SHELL_HEIGHT);
 	//gfx_draw_text(0, 0, "Terminal!", VESA8_COLOR_LIGHT_GREEN);
 	terminal_fill();
 	reset_shell();

@@ -11,8 +11,14 @@
 #include <screen.h>
 #include <mouse.h>
 #include <gfx/component.h>
+#include <sync.h>
 
 static struct gfx_window* order;
+static mutex_t order_lock = {
+    .pcb_blocked = NULL,
+    .state = UNLOCKED
+};
+
 static uint8_t* gfx_composition_buffer;
 
 /* Mouse globals */
@@ -40,6 +46,7 @@ void gfx_recursive_draw(struct gfx_window* w)
 
 void gfx_order_push_front(struct gfx_window* w)
 {
+    acquire(&order_lock);
     for (struct gfx_window* i = order; i != NULL; i = i->next)
     {
         if(i->next == w){
@@ -53,18 +60,42 @@ void gfx_order_push_front(struct gfx_window* w)
     order = w;
     w->next = save;
     order->in_focus = 1;
+    release(&order_lock);
+}
+
+void gfx_composition_remove_window(struct gfx_window* w)
+{
+    acquire(&order_lock);
+
+    struct gfx_window* iter = order;
+    while(iter->next != w && iter != NULL)
+        iter = iter->next;
+    
+    if(iter == NULL){
+        release(&order_lock);
+        return;
+    }
+    
+    iter->next = w->next;
+
+    release(&order_lock);
 }
 
 void gfx_composition_add_window(struct gfx_window* w)
 {
+    acquire(&order_lock);
+
     if(order == NULL){
         order = w;
+        release(&order_lock);
         return;
     }
     
     struct gfx_window* iter = order;
     order = w;
     order->next = iter;
+
+    release(&order_lock);
 }
 
 void gfx_mouse_event(int x, int y, char flags)
@@ -96,6 +127,7 @@ void gfx_mouse_event(int x, int y, char flags)
 void gfx_compositor_main()
 {
     int buffer_size = vbe_info->width*vbe_info->height*(vbe_info->bpp/8)+1;
+    mutex_init(&order_lock);
 
     dbgprintf("[WSERVER] %d bytes allocated for composition buffer.\n", buffer_size);
     gfx_composition_buffer = (uint8_t*) palloc(buffer_size);
@@ -116,9 +148,10 @@ void gfx_compositor_main()
         /* Main composition loop */
         if(gfx_check_changes(order)){
             memset(gfx_composition_buffer, VESA8_COLOR_DARK_TURQUOISE, buffer_size);
-
             /* Draw windows in reversed order */
+            //acquire(&order_lock);
             gfx_recursive_draw(order);
+            //release(&order_lock);
         }
 
         vesa_fillrect(gfx_composition_buffer, 0, 480-25, 640, 25, VESA8_COLOR_LIGHT_GRAY3);

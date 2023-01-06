@@ -1,3 +1,13 @@
+/**
+ * @file window.c
+ * @author Joe Bayer (joexbayer)
+ * @brief GFX Window API
+ * @version 0.1
+ * @date 2023-01-06
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ */
 #include <gfx/window.h>
 #include <util.h>
 #include <gfx/component.h>
@@ -6,6 +16,12 @@
 #include <serial.h>
 #include <vesa.h>
 
+/**
+ * @brief Draw given window to a frambuffer.
+ * 
+ * @param buffer 
+ * @param window 
+ */
 void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
 {
     /* Draw main frame of window with title bar and borders */
@@ -22,10 +38,13 @@ void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
     vesa_fillrect(buffer, window->x+2, window->y+2, window->width-4, GFX_WINDOW_TITLE_HEIGHT, window->in_focus ? VESA8_COLOR_DARK_BLUE : VESA8_COLOR_DARK_GRAY1);
 
     vesa_write_str(buffer, window->x+4, window->y+4, window->name, VESA8_COLOR_WHITE);
+
+    /* Copy inner window framebuffer to given buffer with relativ pitch. */
     if(window->inner != NULL){
         int i, j, c = 0;
         for (j = window->x+2; j < (window->x+window->width-2); j++)
             for (i = window->y+16; i < (window->y+window->height-2); i++)
+                /* FIXME: Because of the j, i order we use height as pitch in gfxlib. */
                 putpixel(buffer, j, i, window->inner[c++], vbe_info->pitch);
     }
     window->changed = 0;
@@ -34,6 +53,13 @@ void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
 
 }   
 
+/**
+ * @brief Default handler for click event from mouse on given window.
+ * 
+ * @param window Window that was clicked.
+ * @param x 
+ * @param y 
+ */
 void gfx_default_click(struct gfx_window* window, int x, int y)
 {
     dbgprintf("[GFX WINDOW] Clicked %s\n", window->name);
@@ -42,6 +68,7 @@ void gfx_default_click(struct gfx_window* window, int x, int y)
         dbgprintf("[GFX WINDOW] Clicked %s title\n", window->name);
     }
 }
+
 
 void gfx_default_hover(struct gfx_window* window, int x, int y)
 {
@@ -86,6 +113,24 @@ void gfx_default_mouse_up(struct gfx_window* window, int x, int y)
     }
 }
 
+int gfx_destory_window(struct gfx_window* w)
+{
+    gfx_composition_remove_window(w);
+
+    free(w->inner);
+    w->owner->window = NULL;
+    free(w);
+
+    return 0;
+
+}
+/**
+ * @brief 
+ * 
+ * @param width 
+ * @param height 
+ * @return struct gfx_window* 
+ */
 struct gfx_window* gfx_new_window(int width, int height)
 {
     struct gfx_window* w = (struct gfx_window*) alloc(sizeof(struct gfx_window));
