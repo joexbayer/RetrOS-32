@@ -12,6 +12,7 @@
 #include <net/arp.h>
 #include <net/dhcp.h>
 #include <terminal.h>
+#include <serial.h>
 
 #define MAX_ARP_ENTRIES 25
 
@@ -51,7 +52,7 @@ int arp_add_entry(struct arp_content* arp)
 		{
 			memcpy((uint8_t*)&arp_entries[i].smac, (uint8_t*)&arp->smac, 6);
 			arp_entries[i].sip = arp->sip;
-			twriteln("Added APR entry.");
+			dbgprintf("Added APR entry.\n");
 			return 1;
 		}
 	}
@@ -78,18 +79,6 @@ int arp_find_entry(uint32_t ip, uint8_t* mac)
 	return 0;
 }
 
-void arp_print_cache()
-{
-	twriteln("ARP cache:");
-	for (int i = 0; i < MAX_ARP_ENTRIES; i++)
-		if(arp_entries[i].sip != 0){
-
-			uint32_t ip = ntohl(arp_entries[i].sip);
-			twritef("(%i) at %x:%x:%x:%x:%x:%x\n",
-					ip, arp_entries[i].smac[0], arp_entries[i].smac[1], arp_entries[i].smac[2], arp_entries[i].smac[3], arp_entries[i].smac[4], arp_entries[i].smac[5]);
-		}
-}
-
 /**
  * @brief Helper method that adds ethernet header and send ARP packet.
  * 
@@ -100,10 +89,8 @@ void arp_print_cache()
 void __arp_send(struct arp_content* content, struct arp_header* hdr, struct sk_buff* skb)
 {
 	skb->proto = ARP;
-	twriteln("Creating Ethernet header.");
 	int ret = ethernet_add_header(skb, content->dip);
 	if(ret <= 0){
-		twriteln("Error adding ethernet header");
 		return;
 	}
 
@@ -118,7 +105,6 @@ void __arp_send(struct arp_content* content, struct arp_header* hdr, struct sk_b
 	skb->data += sizeof(struct arp_content);
 	skb->len += sizeof(struct arp_content);
 
-	twritef("Creating ARP Response. size: %d \n", skb->len);
 	skb->stage = NEW_SKB;
 	skb->action = SEND;
 }
@@ -157,7 +143,6 @@ void arp_request()
 	if(dhcp_get_ip() == -1)
 		return;
 
-	twriteln("Creating ARP packet.");
 	struct sk_buff* skb = get_skb();
     ALLOCATE_SKB(skb);
     skb->stage = IN_PROGRESS;
@@ -196,8 +181,6 @@ uint8_t arp_parse(struct sk_buff* skb)
 
 	struct arp_content* arp_content = (struct arp_content*) skb->data;
 	ARPC_NTOHL(arp_content);
-
-	twriteln("Received ARP!");
 
 	switch (a_hdr->opcode)
 	{

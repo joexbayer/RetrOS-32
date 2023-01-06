@@ -74,7 +74,7 @@ void acquire(mutex_t* l)
         break;
     
     default:
-        twriteln("PANIC 2");
+        dbgprintf("PANIC 2\n");
         break;
     }
 

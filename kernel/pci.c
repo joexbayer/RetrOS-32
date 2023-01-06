@@ -163,13 +163,9 @@ void init_pci()
 
 void list_pci_devices()
 {
-    twritef("PCI Devices: \n");
     for (int i = 0; i < _pci_devices_size; i++)
     {
-        twritef("ID: 0x%x, %s\n", 
-                _pci_devices[i].device,
-                _pci_devices[i].class < 0x11 ? pci_classes[ _pci_devices[i].class] : pci_classes[0]
-        );
+        
     }   
 }
 

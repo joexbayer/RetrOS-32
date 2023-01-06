@@ -7,7 +7,7 @@
 
 void icmp_print(struct sk_buff* skb)
 {
-    twritef("Ping reply from %i: icmp_seq= %d ttl=64\n", skb->hdr.ip->saddr, skb->hdr.icmp->sequence/256);
+    //twritef("Ping reply from %i: icmp_seq= %d ttl=64\n", skb->hdr.ip->saddr, skb->hdr.icmp->sequence/256);
 }
 
 void icmp_handle(struct sk_buff* skb)
@@ -82,7 +82,6 @@ void ping(char* hostname)
     if(!isdigit(hostname[0])){
         ip = gethostname(hostname);
         if(ip <= 0){
-            twriteln("ICMP: Cannot resolve hostname.");
             return;
         }
     } else {
@@ -101,7 +100,6 @@ int icmp_parse(struct sk_buff* skb)
     // calculate checksum, should be 0.
     uint16_t csum_icmp = checksum(icmp_hdr, skb->len, 0);
     if( 0 != csum_icmp){
-        twriteln("Checksum failed (ICMP)");
         return 0;
     }
 

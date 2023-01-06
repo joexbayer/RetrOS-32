@@ -55,30 +55,3 @@ int read_block_offset(char* usr_buf, int size, int offset, int block)
 
     return size;   
 }
-
-
-void print_dev_status()
-{
-    
-    if(disk_device.attached){
-        static const char* SIZES[] = { "B", "kB", "MB", "GB" };
-        uint32_t div_used = 0;
-        uint32_t used = disk_device.dev->size*512;
-
-        while (used >= 1024 && div_used < (sizeof SIZES / sizeof *SIZES)) {
-            div_used++;   
-            used /= 1024;
-        }
-
-        twritef("Disk Model: %s\n", disk_device.dev->model);
-        twritef("Disk Size: %d%s, %d bytes, %d sectors.\n", used, SIZES[div_used], disk_device.dev->size*512, disk_device.dev->size);
-        twriteln("Units: sectors of 1 x 512 = 512 bytes");
-        twriteln("I/O Size: 512 bytes");
-
-        return;
-    }
-
-
-    twriteln("No disk attached.");
-
-}

@@ -73,14 +73,14 @@ int gethostname(char* hostname)
 {
 
     if(dhcp_get_state() == DHCP_STOPPED){
-        twriteln("[DNS] Unable to resolve hostname. No IP.");
+        //twriteln("[DNS] Unable to resolve hostname. No IP.");
         return -1;
     }
 
     /* Check for cache first. */
     for (int i = 0; i < DNS_CACHE_ENTRIES; i++)
         if(memcmp((uint8_t*) &__dns_cache[i].name,(uint8_t*) hostname, strlen(hostname)) == 0){
-            twritef("[DNS] (%s at %i) (cache)\n", hostname, __dns_cache[i].ip);
+            //twritef("[DNS] (%s at %i) (cache)\n", hostname, __dns_cache[i].ip);
             return __dns_cache[i].ip;
         }
 
@@ -151,12 +151,12 @@ int gethostname(char* hostname)
 
         if(result <= 0)
         {
-            twriteln("[DNS] Unable to resolve hostname.");
+            //twriteln("[DNS] Unable to resolve hostname.");
             close(__dns_socket);
             return -1;
         }
 
-        twritef("[DNS] (%s at %i)\n", hostname, result);
+        //twritef("[DNS] (%s at %i)\n", hostname, result);
 
         __dns_add_cache(hostname_save, result);
 

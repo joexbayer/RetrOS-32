@@ -1,4 +1,5 @@
 #include <fs/fs.h>
+#include <fs/fs_error.h>
 #include <fs/superblock.h>
 #include <fs/inode.h>
 #include <fs/directory.h>
@@ -56,12 +57,19 @@ int init_fs()
 	return 0;
 }
 
-void fs_stats()
+int fs_get_size()
 {
-	twritef("Found Filesystem with size: %d (%d total)\n", superblock.nblocks*BLOCK_SIZE, superblock.size);
-	twritef("With a total of %d inodes (%d blocks)\n", superblock.ninodes, superblock.ninodes / INODES_PER_BLOCK);
-	twritef("And total of %d block\n", superblock.nblocks);
-	twritef("Max file size: %d bytes\n", NDIRECT*BLOCK_SIZE);
+	return superblock.size;
+}
+
+int fs_get_inodes()
+{
+	return superblock.ninodes;
+}
+
+int fs_get_blocks()
+{
+	return superblock.nblocks;
 }
 
 void __superblock_sync()
@@ -80,7 +88,6 @@ void sync()
 	__superblock_sync();
 	inodes_sync(&superblock);
 	dbgprintf("[FS] %d inodes... (DONE)\n", superblock.ninodes);
-	twriteln("[FS] Filesystem successfully synchronized to disk!.");
 }
 
 static inline void __inode_add_dir(struct directory_entry* entry, struct inode* inode, struct superblock* sb)
@@ -148,12 +155,11 @@ void mkfs()
 int fs_create(char* name)
 {
 	if(strlen(name)+1 > FS_DIRECTORY_NAME_SIZE)
-		return -1;
+		return -FS_ERR_NAME_SIZE;
 
 	inode_t inode_index = alloc_inode(&superblock, FS_FILE);
 	if(inode_index == 0){
-		twriteln("Cannot create file. (probably cache)");
-		return -1;
+		return -FS_ERR_CREATE;
 	}
 
 	struct inode* inode = inode_get(inode_index, &superblock);
@@ -202,7 +208,7 @@ inode_t fs_open(char* name)
 	int size = 0;
 
 	if(strlen(name)+1 > FS_DIRECTORY_NAME_SIZE)
-		return -1;
+		return -FS_ERR_NAME_SIZE;
 
 	while (size < current_dir->size)
 	{
@@ -220,7 +226,7 @@ fs_open_done:
 
 	struct inode* inode = inode_get(entry.inode, &superblock);
 	if(inode == NULL)
-		return 0;
+		return -FS_ERR_FILE_MISSING;
 
 	inode->nlink++;
 	inode->pos = 0;
@@ -235,34 +241,34 @@ int fs_size(inode_t i)
 	return inode->size;
 }
 
-void chdir(char* path)
+int chdir(char* path)
 {
 	inode_t ret = fs_open(path);
 	struct inode* inode = inode_get(ret, &superblock);
 	if(inode->type != FS_DIRECTORY){
-		twritef("%s is not a directory.\n", path);
-		return;
+		return -FS_ERR_NOT_DIRECTORY;
 	}
 
 	dbgprintf("[FS] Changing directory to %s, inode: %d\n", path, inode->inode);
 
 	current_dir = inode;
+
+	return 0;
 }
 
 int fs_mkdir(char* name)
 {
 	if(strlen(name)+1 > FS_DIRECTORY_NAME_SIZE)
-		return -1;
+		return -FS_ERR_NAME_SIZE;
 
 	inode_t inode_index = alloc_inode(&superblock, FS_DIRECTORY);
 	if(inode_index == 0){
-		twriteln("Cannot create directory. (probably cache)");
-		return -1;
+		return -FS_ERR_CREATE_INODE;
 	}
 
 	struct inode* inode = inode_get(inode_index, &superblock);
 	if(inode == NULL)
-		return -1;
+		return -FS_ERR_INODE_MISSING;
 
 	struct directory_entry self = {
 		.inode = inode->inode,
@@ -300,13 +306,13 @@ void ls(char* path)
 		struct inode* inode = inode_get(entry.inode, &superblock);
 		struct time* time = &inode->time;
 		dbgprintf("%d\n", time->month);
-		twritef("%x %s %d, %d:%d - %s%s\n",
+		/*twritef(term, "%x %s %d, %d:%d - %s%s\n",
 			inode->size,
 			months[time->month],
 			time->day, time->hour, time->minute,
 			entry.name,
 			inode->type == FS_DIRECTORY ? "/" : ""
-		);
+		);*/
 		size += ret;
 	}
 }

@@ -61,7 +61,7 @@ void* alloc(int size);
 void free(void* ptr);
 
 /* Helper functions */
-int _check_chunks(int i, int chunks_needed)
+inline int _check_chunks(int i, int chunks_needed)
 {
 	for (int j = 0; j < chunks_needed; j++)
 		if(chunks[i+j].status != FREE)
@@ -70,83 +70,12 @@ int _check_chunks(int i, int chunks_needed)
 	return 1;
 }
 
-void print_mem()
-{
-	static const char* SIZES[] = { "B", "kB", "MB", "GB" };
-    uint32_t div_used = 0;
-	uint32_t div_main = 0;
-
-	int disk_used = disk_size();
-	uint32_t div_disk = 0;
-
-	int used = (chunks_used*MEM_CHUNK);
-	int main = CHUNKS_SIZE*MEM_CHUNK;
-
-    while (used >= 1024 && div_used < (sizeof SIZES / sizeof *SIZES)) {
-        div_used++;   
-        used /= 1024;
-    }
-
-	while (disk_used >= 1024 && div_disk < (sizeof SIZES / sizeof *SIZES)) {
-        div_disk++;   
-        disk_used /= 1024;
-    }
-
-	while (main >= 1024 && div_main < (sizeof SIZES / sizeof *SIZES)) {
-        div_main++;   
-        main /= 1024;
-    }
-	
-	if(div_main > 3 || div_main > 3)
-		return;
-
-
-	scrprintf(18, 0, "DISK: %d%s", disk_used ,SIZES[div_disk]);
-	
-	scrprintf(40, 0, "MEM: %d%s / %d%s", used ,SIZES[div_used], main, SIZES[div_main]);
-}
-
-void print_memory_status()
-{	
-	struct time time;
-	get_current_time(&time);
-
-	for (int x = 0; x < SCREEN_HEIGHT; x++)
-		scrput(0, 0+x, ASCII_VERTICAL_LINE, VGA_COLOR_LIGHT_GREY);
-
-	for (int x = 0; x < SCREEN_HEIGHT; x++)
-		scrput(SCREEN_WIDTH-1, 0+x, ASCII_VERTICAL_LINE, VGA_COLOR_LIGHT_GREY);
-
-	scrput(0, SCREEN_HEIGHT-1, 192, VGA_COLOR_LIGHT_GREY);
-	scrput(SCREEN_WIDTH-1, SCREEN_HEIGHT-1, 217, VGA_COLOR_LIGHT_GREY);
-
-	for (int x = 1; x < SCREEN_WIDTH-1; x++)
-		scrput(x, SCREEN_HEIGHT-1, 196, VGA_COLOR_LIGHT_GREY);
-
-
-	scrcolor_set(VGA_COLOR_LIGHT_BROWN, VGA_COLOR_BLACK);
-	for (int i = 0; i < SCREEN_WIDTH-1; i++)
-		scrput(i, 0, 205, VGA_COLOR_LIGHT_GREY);
-
-	//scrput(50, 0, 203, VGA_COLOR_LIGHT_GREY);
-	scrput(0, 0, 213, VGA_COLOR_LIGHT_GREY);
-	scrput(SCREEN_WIDTH-1, 0, 184, VGA_COLOR_LIGHT_GREY);
-	
-	scrprintf(2,0, "NETOS");
-	scrprintf(SCREEN_WIDTH-18, 0, "%d:%d:%d %d/%d/%d", time.hour, time.minute, time.second, time.day, time.month, time.year);
-
-	print_mem();
-
-	scrcolor_set(VGA_COLOR_WHITE, VGA_COLOR_BLACK);
-}
-
 void memory_total_usage()
 {
-	twritef("\nTotal Memory Usage:\n\n");
-	twritef("Permanent: %d/%d (%d% )\n", memory_permanent_ptr-PERMANENT_MEM_START, PERMANENT_MEM_END-PERMANENT_MEM_START, ((memory_permanent_ptr-PERMANENT_MEM_START)/(PERMANENT_MEM_END-PERMANENT_MEM_START))*100);
-	twritef("Dynamic: %d/%d (%d% )\n", (chunks_used*MEM_CHUNK), CHUNKS_SIZE*MEM_CHUNK, ((chunks_used*MEM_CHUNK)/(CHUNKS_SIZE*MEM_CHUNK))*100);
-	twritef("Pages: %d/%d (%d% )\n", used_pages, TOTAL_PAGES, (used_pages/TOTAL_PAGES)*100);
-
+	//twritef("\nTotal Memory Usage:\n\n");
+	//twritef("Permanent: %d/%d (%d% )\n", memory_permanent_ptr-PERMANENT_MEM_START, PERMANENT_MEM_END-PERMANENT_MEM_START, ((memory_permanent_ptr-PERMANENT_MEM_START)/(PERMANENT_MEM_END-PERMANENT_MEM_START))*100);
+	//twritef("Dynamic: %d/%d (%d% )\n", (chunks_used*MEM_CHUNK), CHUNKS_SIZE*MEM_CHUNK, ((chunks_used*MEM_CHUNK)/(CHUNKS_SIZE*MEM_CHUNK))*100);
+	//twritef("Pages: %d/%d (%d% )\n", used_pages, TOTAL_PAGES, (used_pages/TOTAL_PAGES)*100);
 }
 
 int memory_get_usage(char* name)
@@ -233,7 +162,7 @@ void* alloc(int size)
 	if(ret == NULL)
 		return NULL;
 	
-	dbgprintf("[MEMORY] %s Allocating %d bytes of data\n", current_running->name, size);
+	dbgprintf("[MEMORY] %s Allocating %d bytes of data (%d/%d)\n", current_running->name, size, (chunks_used*MEM_CHUNK), MEM_CHUNK*CHUNKS_SIZE);
 	memory_register_alloc(current_running->name, size);
 
 	return ret;

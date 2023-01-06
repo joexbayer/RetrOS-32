@@ -48,9 +48,6 @@ void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
                 putpixel(buffer, j, i, window->inner[c++], vbe_info->pitch);
     }
     window->changed = 0;
-
-    //dbgprintf("[WINDOW] %s was drawn.\n", window->name);
-
 }   
 
 /**
@@ -153,6 +150,8 @@ struct gfx_window* gfx_new_window(int width, int height)
     /* Window can just use the name of the owner? */
     memcpy(w->name, current_running->name, strlen(current_running->name));
     w->in_focus = 1;
+
+    dbgprintf("[Window] Created new window for %s at 0x%x: inner 0x%x (total %x - %x)\n", current_running->name, w, w->inner, sizeof(struct gfx_window), width*height);
 
     gfx_composition_add_window(w);
 

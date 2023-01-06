@@ -24,7 +24,6 @@ int write_block_offset(char* usr_buf, int size, int offset, int block);
 int read_block(char* buf, int block);
 int read_block_offset(char* usr_buf, int size, int offset, int block);
 
-void print_dev_status();
 int disk_size();
 
 #endif

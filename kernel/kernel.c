@@ -42,9 +42,6 @@ void _main(uint32_t magic)
 	dbgprintf("Framebuffer: 0x%x\n", vbe_info->framebuffer);
 	dbgprintf("Memory Size: %d (0x%x)\n", vbe_info->width*vbe_info->height*(vbe_info->bpp/8), vbe_info->width*vbe_info->height*(vbe_info->bpp/8));
 
-    /* Initialize terminal interface */	
-
-	init_terminal();
 	init_memory();
 	init_interrupts();
 	init_paging();
@@ -68,10 +65,12 @@ void _main(uint32_t magic)
 	register_kthread(&networking_main, "Networking");
 	register_kthread(&dhcpd, "dhcpd");
 	register_kthread(&gfx_compositor_main, "wServer");
+	register_kthread(&pcb_info, "PCB Status");
 
 	start("Shell");
 	start("wServer");
 	start("Networking");
+	//start("PCB Status");
 
 	add_system_call(SYSCALL_SCRPUT, (syscall_t)&scrput);
 	add_system_call(SYSCALL_PRTPUT, (syscall_t)&terminal_putchar);

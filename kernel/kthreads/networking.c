@@ -12,6 +12,7 @@
 #include <screen.h>
 #include <terminal.h>
 #include <scheduler.h>
+#include <serial.h>
 
 #include <net/netdev.h>
 #include <net/packet.h>
@@ -33,7 +34,7 @@ int get_next_queue();
 
 void networking_print_status()
 {
-    twriteln("DHCP");
+    /*twriteln("DHCP");
     int state = dhcp_get_state();
     if(state != DHCP_SUCCESS){
         twritef(" (%s)      \n", dhcp_state_names[state]);
@@ -53,7 +54,7 @@ void networking_print_status()
 
     twritef(" MAC: %x:%x:%x:%x:%x:%x\n", current_netdev.mac[0], current_netdev.mac[1], current_netdev.mac[2], current_netdev.mac[3], current_netdev.mac[4], current_netdev.mac[5]);
     twritef(" Packets: %d\n", packets);
-    twritef(" Sockets: %d\n", get_total_sockets());
+    twritef(" Sockets: %d\n", get_total_sockets());*/
 
 }
 
@@ -66,7 +67,7 @@ void net_handle_send(struct sk_buff* skb)
 {
     int read = netdev_transmit(skb->head, skb->len);
     if(read <= 0){
-        twriteln("Error sending packet.");
+        dbgprintf("Error sending packet\n");
     }
     packets++;
 }
@@ -124,7 +125,7 @@ int net_handle_recieve(struct sk_buff* skb)
                 return net_drop_packet(skb);
 
             // send arp response.
-            twriteln("Recieved ARP packet.");
+            dbgprintf("Recieved ARP packet.\n");
             break;
 
         default:

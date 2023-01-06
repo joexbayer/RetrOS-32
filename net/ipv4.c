@@ -18,6 +18,7 @@
 #include <net/routing.h>
 
 #include <net/dhcp.h>
+#include <serial.h>
 
 /**
  * @brief Helper function to send IP packet, attaching ethernet header
@@ -39,7 +40,7 @@ int __ip_send(struct ip_header* ihdr, struct sk_buff* skb, uint32_t dip)
     uint32_t next_hop = route(dip);
 	int ret = ethernet_add_header(skb, next_hop);
 	if(ret <= 0){
-		twriteln("Error adding ethernet header");
+		dbgprintf("[IP] Error adding ethernet header\n");
 		return 0;
 	}
 
@@ -94,7 +95,7 @@ int ip_parse(struct sk_buff* skb)
      */
     uint16_t csum = checksum(hdr, hdr->ihl * 4, 0);
     if(0 != csum){
-        twriteln("Checksum failed (IPv4)");
+        dbgprintf("[IP] Checksum failed (IPv4)\n");
         return 0;
     }
 
@@ -102,7 +103,7 @@ int ip_parse(struct sk_buff* skb)
     skb->data = skb->data+(skb->hdr.ip->ihl*4);
 
     if(BROADCAST_IP != ntohl(skb->hdr.ip->daddr) && ntohl(skb->hdr.ip->daddr) != (uint32_t)dhcp_get_ip()){
-        twritef("IP mismatch: %d %d\n", skb->hdr.ip->daddr, dhcp_get_ip());
+        dbgprintf("[IP] IP mismatch: %d %d\n", skb->hdr.ip->daddr, dhcp_get_ip());
         return 0; /* Currently only accept broadcast packets. */
     }
 
@@ -119,17 +120,7 @@ int ip_parse(struct sk_buff* skb)
         arp_add_entry(&content);
     }
 
-    twritef("[IPv%d] from %i, len: %d, id: %d\n", hdr->version, hdr->saddr, hdr->len, hdr->id);
+    dbgprintf("[IPv%d] from %i, len: %d, id: %d\n", hdr->version, hdr->saddr, hdr->len, hdr->id);
 
     return 1;
-}
-
-void print_ip(uint32_t ip)
-{
-    unsigned char bytes[4];
-    bytes[0] = (ip >> 24) & 0xFF;
-    bytes[1] = (ip >> 16) & 0xFF;
-    bytes[2] = (ip >> 8) & 0xFF;
-    bytes[3] = ip & 0xFF;   
-    twritef("%d.%d.%d.%d\n", bytes[3], bytes[2], bytes[1], bytes[0]); 
 }

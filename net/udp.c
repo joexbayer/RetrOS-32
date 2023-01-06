@@ -14,6 +14,8 @@
 #include <terminal.h>
 #include <net/socket.h>
 
+#include <serial.h>
+
 
 int udp_send(struct sk_buff* skb, char* data, uint32_t sip, uint32_t dip, uint16_t sport, uint16_t dport, uint32_t length)
 {
@@ -49,7 +51,7 @@ int udp_parse(struct sk_buff* skb){
 
 	uint16_t udp_checksum = transport_checksum(skb->hdr.ip->saddr, skb->hdr.ip->daddr, UDP, (uint8_t*)skb->data, skb->hdr.udp->udp_length);
 	if( udp_checksum != 0){
-		twritef("UDP checksum failed %d %x.\n", udp_checksum, udp_checksum);
+		dbgprintf("[UDP] checksum failed %d %x.\n", udp_checksum, udp_checksum);
 		/* TODO  UDP CHECKSUM IS BROKEN. */
 	}
 	skb->data = skb->data + sizeof(struct udp_header);
@@ -60,9 +62,9 @@ int udp_parse(struct sk_buff* skb){
 
 	int ret = udp_deliver_packet(skb->hdr.ip->daddr, skb->hdr.udp->destport, (char*)skb->data, payload_size);
 	if(ret <= 0)
-		twriteln("[Warning] socket buffer full!!");
+		dbgprintf("[UDP][Warning] socket buffer full!!");
 		
-	twritef("[UDP] PORT %d -> %d, len: %d.\n", hdr->srcport, hdr->destport, hdr->udp_length);
+	dbgprintf("[UDP] PORT %d -> %d, len: %d.\n", hdr->srcport, hdr->destport, hdr->udp_length);
 
     return 1;
 }

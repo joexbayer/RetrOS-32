@@ -20,6 +20,8 @@
 #include <fs/fs.h>
 
 #include <windowmanager.h>
+#include <gfx/gfxlib.h>
+
 
 #define stack_size 0x2000
 
@@ -146,6 +148,8 @@ void Genesis()
 {
 	dbgprintf("[GEN] Genesis running!\n");
 	struct gfx_window* window = gfx_new_window(100, 100);
+	gfx_draw_rectangle(0, 0, 100, 100, VESA8_COLOR_DARK_RED);
+	gfx_draw_text(1, 1, "Hello.", VESA8_COLOR_WHITE);
 	while(1)
 	{
 		/*print_memory_status();
@@ -161,11 +165,15 @@ void Genesis()
 }
 
 
-void Genesis2()
+void pcb_info()
 {
+	struct gfx_window* window = gfx_new_window(200, 400);
+	gfx_draw_rectangle(0, 0, 100, 100, VESA8_COLOR_GRAY3);
+	gfx_draw_text(1, 1, "Hello.", VESA8_COLOR_DARK_BLUE);
 	while(1)
 	{
-
+		//print_pcb_status();
+		sleep(1000);
 	}
 }
 
@@ -178,7 +186,7 @@ void print_pcb_status()
 	int done_list[MAX_NUM_OF_PCBS];
 	int done_list_count = 0;
 	
-	twriteln(" PID   Stack       Status       Type      Name");
+	gfx_draw_text(10, 10, " PID   Stack       Status       Type      Name", VESA8_COLOR_BLACK);
 	for (int i = 0; i < MAX_NUM_OF_PCBS; i++)
 	{
 		if(pcbs[i].pid == -1)
@@ -212,34 +220,9 @@ void print_pcb_status()
 
 		done_list[done_list_count] = largest;
 		done_list_count++;
-		twritef("  %d    0x%x    %s     %s   %s\n", pcbs[largest].pid, pcbs[largest].esp, status[pcbs[largest].running], pcbs[largest].is_process == 1 ? "Process" : "kthread", pcbs[largest].name);
+		gfx_draw_format_text(10, 10+done_list_count*8, VESA8_COLOR_BLACK, " %d    0x%x    %s     %s   %s\n", pcbs[largest].pid, pcbs[largest].esp, status[pcbs[largest].running], pcbs[largest].is_process == 1 ? "Process" : "kthread", pcbs[largest].name);
 	}
 	
-}
-
-void pcb_print_queues()
-{
-	twritef("Running queue (0x%x):\n ====> ", pcb_running_queue);
-	struct pcb* next = pcb_running_queue;
-
-	twritef("[%d]%s ->", next->pid, next->name);
-	
-	if(next->prev != pcb_running_queue)
-		next = next->prev;
-
-	while(next != pcb_running_queue){
-		twritef("[%d]%s -> ", next->pid, next->name);
-		next = next->prev;
-	}
-	
-	twritef("\n\n");
-	twritef("Blocked queue (0x%x):\n ====> ", pcb_blocked_queue);
-	next = pcb_blocked_queue;
-	while(next != NULL){
-		twritef("[%d]%s ->", next->pid, next->name);
-		next = next->next;
-	}
-	twritef("\n");
 }
 
 
@@ -262,18 +245,6 @@ void pcb_set_running(int pid)
 		return;
 
 	pcbs[pid].running = RUNNING;
-}
-
-void pcb_memory_usage()
-{
-	twriteln("\nMemory usage by process:\n");
-	for (int i = 0; i < MAX_NUM_OF_PCBS; i++)
-	{
-		if(pcbs[i].pid == -1)
-			continue;
-
-		twritef(" - %s\n     * %d bytes\n", pcbs[i].name, memory_get_usage(pcbs[i].name));
-	}
 }
 
 /**
@@ -447,9 +418,8 @@ void init_pcbs()
 
 	int ret = add_pcb(&Genesis, "Genesis");
 	if(ret < 0) return; // error
+	 ret = add_pcb(&Genesis, "Genesis2");
 
-	ret = add_pcb(&Genesis2, "Adam");
-	if(ret < 0) return; // error
 	dbgprintf("[PCB] All process control blocks are ready.\n");
 
 }

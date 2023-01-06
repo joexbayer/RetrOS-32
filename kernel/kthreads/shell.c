@@ -58,6 +58,11 @@ static const char backspace = '\b';
 
 static char* shell_name = "Kernel >";
 
+static struct terminal term  = {
+	.head = 0,
+	.tail = 0
+};
+
 /*
  *	IMPLEMENTATIONS
  */
@@ -81,7 +86,7 @@ void reset_shell()
 
 void exec_cmd()
 {
-	twritef("Kernel > %s", shell_buffer);
+	twritef(&term, "Kernel > %s", shell_buffer);
 
 	if(strncmp("lspci", shell_buffer, strlen("lspci"))){
 		list_pci_devices();
@@ -95,11 +100,6 @@ void exec_cmd()
 
 	if(strncmp("clear", shell_buffer, strlen("clear"))){
 		scr_clear();
-		return;
-	}
-
-	if(strncmp("queues", shell_buffer, strlen("queues"))){
-		pcb_print_queues();
 		return;
 	}
 
@@ -134,7 +134,7 @@ void exec_cmd()
 
 		char buf[512];
 		fs_read(buf, inode);
-		twritef("%s\n", buf);
+		twritef(&term, "%s\n", buf);
 		fs_close(inode);
 		return;
 	}
@@ -157,17 +157,7 @@ void exec_cmd()
 		print_pcb_status();
 		return;
 	}
-
-	if(strncmp("fs", shell_buffer, strlen("fs"))){
-		fs_stats();
-		return;
-	}
-
-	if(strncmp("fdisk", shell_buffer, strlen("fdisk"))){
-		print_dev_status();
-		return;
-	}
-
+	
 	if(strncmp("netinfo", shell_buffer, strlen("netinfo"))){
 		networking_print_status();
 		return;
@@ -177,12 +167,6 @@ void exec_cmd()
 		sync();
 		current_running->gfx_window->width = 400;
 		current_running->gfx_window->height = 400;
-		return;
-	}
-
-	if(strncmp("memmap", shell_buffer, strlen("memmap"))){
-		pcb_memory_usage();
-		memory_total_usage();
 		return;
 	}
 	
@@ -213,15 +197,15 @@ void exec_cmd()
 		name[strlen(name)-1] = 0;
 		int pid = create_process(name);
 		if(pid == 0)
-			twritef("%s does not exist\n", name);
+			twritef(&term, "%s does not exist\n", name);
 
 		return;
 	}
 	int r = start(shell_buffer);
 	if(r == -1)
-		twritef("Unknown command: %s\n", shell_buffer);
+		twritef(&term, "Unknown command: %s\n", shell_buffer);
 	else
-		twriteln("Started process.");
+		twriteln("Started process.", &term);
 
 
 	//twrite(shell_buffer);
@@ -272,10 +256,10 @@ void shell_main()
 {
 	dbgprintf("Shell is running!\n");
 	attach_window(&w);
-
+	
+	memset(term.textbuffer, 0, TERMINAL_BUFFER_SIZE);
 	struct gfx_window* window = gfx_new_window(400, SHELL_HEIGHT);
 	//gfx_draw_text(0, 0, "Terminal!", VESA8_COLOR_LIGHT_GREEN);
-	terminal_fill();
 	reset_shell();
 
 	//gfx_draw_rectangle(0, 0, 300, 290, VESA8_COLOR_BLUE);

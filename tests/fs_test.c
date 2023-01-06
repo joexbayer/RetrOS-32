@@ -162,30 +162,22 @@ int main(int argc, char const *argv[])
     init_fs();
     testprintf(1, "Created filesystem.");
 
-    ls("");
-
     int create_test = fs_create("test.txt");
     testprintf(create_test == 0, "Created test.txt file.");
-
-    ls("");
 
     fs_mkdir("testdir");
     testprintf(1, "Created test directory.");
 
-    ls("");
     chdir("testdir");
     testprintf(1, "Changed directory to test");
-    ls("");
 
 
     int create_test2 = fs_create("test2.txt");
     testprintf(create_test2 == 0, "Created test2.txt file in test directory.");
-    ls("");
     
     inode_t open_inode = fs_open("test2.txt");
     testprintf(open_inode > 0, "Opened test2.txt");
 
-    ls("");
     int size = fs_size(open_inode);
     testprintf(size == 0, "File test2.txt is empty.");
 

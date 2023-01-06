@@ -54,6 +54,8 @@ struct pcb {
 
 extern struct pcb* current_running;
 
+void pcb_info();
+
 void init_pcbs();
 void start_tasks();
 void start_pcb();

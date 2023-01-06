@@ -35,18 +35,6 @@ void netdev_attach_driver(
     memcpy(current_netdev.name, name, strlen(name)+1);
 }
 
-void netdev_print_status()
-{
-    if(!netdev_attached)
-        return;
-        
-    twritef("Card %s\n", current_netdev.name);
-    twritef("PCI BAR0: 0x%x\n", current_netdev.driver.base);
-    twritef("Transmit: %d\n", current_netdev.sent);
-    twritef("Recieved: %d (%d dropped)\n", current_netdev.received, current_netdev.dropped);
-
-}
-
 int netdev_transmit(void* buffer, uint32_t size)
 {
     current_netdev.sent++;
