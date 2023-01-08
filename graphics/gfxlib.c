@@ -8,6 +8,7 @@
  * @copyright Copyright (c) 2023
  * 
  */
+#include <gfx/gfxlib.h>
 #include <pcb.h>
 #include <font8.h>
 #include <vbe.h>
@@ -122,6 +123,79 @@ int gfx_draw_text(int x, int y, char* str, char color)
     }
 
     return 0;
+}
+
+void gfx_line(int x, int y, int length, int option, int color)
+{
+
+	CLI();
+	switch (option)
+	{
+	case GFX_LINE_INNER_VERTICAL:
+		for (int i = y; i < (y+length); i++){
+			putpixel(current_running->gfx_window->inner, i, x, VESA8_COLOR_LIGHT_GRAY4, current_running->gfx_window->height-18);
+			putpixel(current_running->gfx_window->inner, i, x+1, VESA8_COLOR_GRAY4, current_running->gfx_window->height-18);
+		}
+		break;
+	
+	case GFX_LINE_INNER_HORIZONTAL:
+		for (int i = x; i < (x+length); i++){
+			putpixel(current_running->gfx_window->inner, y+1, i, VESA8_COLOR_LIGHT_GRAY4, current_running->gfx_window->height-18);
+			putpixel(current_running->gfx_window->inner, y, i, VESA8_COLOR_GRAY4, current_running->gfx_window->height-18);
+		}
+		break;
+
+	case GFX_LINE_OUTER_VERTICAL:
+		for (int i = y; i < (y+length); i++){
+			putpixel(current_running->gfx_window->inner, i, x, VESA8_COLOR_GRAY4, current_running->gfx_window->height-18);
+			putpixel(current_running->gfx_window->inner, i, x+1, VESA8_COLOR_LIGHT_GRAY4, current_running->gfx_window->height-18);
+		}
+		break;
+
+	case GFX_LINE_OUTER_HORIZONTAL:
+		for (int i = x; i < (x+length); i++){
+			putpixel(current_running->gfx_window->inner, y+1, i, VESA8_COLOR_GRAY4, current_running->gfx_window->height-18);
+			putpixel(current_running->gfx_window->inner, y, i, VESA8_COLOR_LIGHT_GRAY4, current_running->gfx_window->height-18);
+		}
+		break;
+
+	case GFX_LINE_VERTICAL:
+		for (int i = y; i < (y+length); i++)
+			putpixel(current_running->gfx_window->inner, i, x, color, current_running->gfx_window->height-18);
+		break;
+
+	case GFX_LINE_HORIZONTAL:
+		for (int i = x; i < (x+length); i++)
+        	putpixel(current_running->gfx_window->inner, y, i, color, current_running->gfx_window->height-18);
+		break;
+
+
+	default:
+		break;
+	}
+	STI();
+}
+
+void gfx_inner_box(int x, int y, int w, int h)
+{
+    gfx_draw_rectangle(x, y, w, h, VESA8_COLOR_LIGHT_GRAY3);
+
+    gfx_line(x, y, w, GFX_LINE_HORIZONTAL, VESA8_COLOR_DARK_GRAY2);
+    gfx_line(x, y+h, w, GFX_LINE_HORIZONTAL, VESA8_COLOR_DARK_GRAY2);
+
+    gfx_line(x, y, h,GFX_LINE_VERTICAL, VESA8_COLOR_DARK_GRAY2);
+    gfx_line(x+w, y, h, GFX_LINE_VERTICAL, VESA8_COLOR_LIGHT_GRAY1);
+}
+
+void gfx_outer_box(int x, int y, int w, int h)
+{
+    gfx_draw_rectangle(x, y, w, h, VESA8_COLOR_LIGHT_GRAY3);
+
+    gfx_line(x, y, w, GFX_LINE_HORIZONTAL, VESA8_COLOR_LIGHT_GRAY1);
+    gfx_line(x, y+h, w, GFX_LINE_HORIZONTAL,VESA8_COLOR_DARK_GRAY2);
+
+    gfx_line(x, y, h, GFX_LINE_VERTICAL,VESA8_COLOR_LIGHT_GRAY1);
+    gfx_line(x+w, y, h,GFX_LINE_VERTICAL, VESA8_COLOR_DARK_GRAY2);
 }
 
 

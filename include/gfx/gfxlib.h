@@ -1,6 +1,17 @@
 #ifndef __GFXLIB_H
 #define __GFXLIB_H
 
+enum GFX_LINE_ATTRIBUTES {
+    GFX_LINE_INNER_VERTICAL,
+    GFX_LINE_INNER_HORIZONTAL,
+    GFX_LINE_OUTER_VERTICAL,
+    GFX_LINE_OUTER_HORIZONTAL,
+    GFX_LINE_VERTICAL,
+    GFX_LINE_HORIZONTAL
+};
+
+void gfx_line(int x, int y, int length, int option, int color);
+
 int gfx_draw_rectangle(int x, int y, int width, int height, char color);
 int gfx_draw_char(int x, int y, char c, char color);
 int gfx_draw_text(int x, int y, char* str, char color);

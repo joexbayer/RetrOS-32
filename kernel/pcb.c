@@ -171,6 +171,14 @@ void pcb_info()
 	while(1)
 	{
 		gfx_draw_rectangle(0, 0, 375, 75, VESA8_COLOR_LIGHT_GRAY5);
+
+		gfx_line(2, 2, 66, GFX_LINE_OUTER_VERTICAL, VESA8_COLOR_BLUE);
+		gfx_line(3, 2, 371, GFX_LINE_INNER_HORIZONTAL, VESA8_COLOR_BLUE);
+
+		gfx_line(372, 2, 66, GFX_LINE_INNER_VERTICAL, VESA8_COLOR_BLUE);
+		gfx_line(2, 68, 371, GFX_LINE_OUTER_HORIZONTAL, VESA8_COLOR_BLUE);
+
+
 		print_pcb_status();
 		sleep(1000);
 	}
@@ -261,6 +269,9 @@ int pcb_cleanup(int pid)
 	CLI();
 
 	dbgprintf("[PCB] Cleaning zombie process %s\n", pcbs[pid].name);
+
+	if(pcbs[pid].gfx_window != NULL)
+		gfx_destory_window(pcbs[pid].gfx_window);
 
 	pcb_queue_remove(&pcbs[pid]);
 	free((void*)pcbs[pid].org_stack);
