@@ -370,6 +370,7 @@ int create_process(char* program)
 	pcb->k_esp = (uint32_t) alloc(stack_size)+stack_size-1;
 	pcb->k_ebp = pcb->k_esp;
 	pcb->window = pcbs[2].window;
+	pcb->term = current_running->term;
 	//dbgprintf("[INIT PROCESS] Adding window %s\n", pcb->window->name);
 	pcb->is_process = 1;
 
