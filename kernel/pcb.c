@@ -183,7 +183,7 @@ void system_info()
 		gfx_draw_rectangle(2, 98, 60, 106, VESA8_COLOR_BLACK);
 		gfx_draw_rectangle(5, 100, 25, 100, VESA8_COLOR_DARK_GREEN);
 
-		gfx_draw_text(5, 5, "Memory", VESA8_COLOR_BLACK);
+		gfx_draw_text(9, 90, "Memory", VESA8_COLOR_BLACK);
 		int mem_dyn = memory_dynamic_usage();
 		gfx_draw_rectangle(5, 200-mem_dyn/10, 25, mem_dyn/10, VESA8_COLOR_GREEN);
 
@@ -191,7 +191,9 @@ void system_info()
 		int perm_dyn = memory_perm_usage();
 		gfx_draw_rectangle(34, 200-perm_dyn/10, 25, perm_dyn/10, VESA8_COLOR_GREEN);
 
-		gfx_draw_char(5, 200, 'P', VESA8_COLOR_BLACK);
+		//gfx_inner_box(2, 98, 60, 106, 0);	
+		//gfx_draw_char(12, 205, 'D', VESA8_COLOR_BLACK);
+		//gfx_draw_char(12+30, 205, 'P', VESA8_COLOR_BLACK);
 
 		for (int i= 0; i < 20; i++)
 			gfx_line(5, 100+(i*5), 55, GFX_LINE_HORIZONTAL, VESA8_COLOR_BLACK);

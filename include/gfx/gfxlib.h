@@ -21,6 +21,9 @@ int gfx_get_window_width();
 int gfx_get_window_height();
 int gfx_window_reize(int width, int height);
 
+void gfx_inner_box(int x, int y, int w, int h, int fill);
+void gfx_outer_box(int x, int y, int w, int h, int fill);
+
 void gfx_commit();
 
 #endif // !__GFXLIB_H
