@@ -93,18 +93,12 @@ _syscall_entry:
 .global _context_switch
 _context_switch:
 
-    pushl %eax
-    pushl %ebx
-    pushl %ecx
-    pushl %edx
-    pushl %edi
-    pushl %esi
+    movl current_running, %eax
 
     pushfl
     pushal
-
-    movl current_running, %eax
     fnsave 24(%eax)
+
     movl %esp, 4(%eax)
     movl %ebp, 0(%eax)
     cmpl $0, 20(%eax)
@@ -122,13 +116,6 @@ skip:
     frstor 24(%eax)
     popal
     popfl
-
-    popl %esi
-    popl %edi
-    popl %edx
-    popl %ecx
-    popl %ebx
-    popl %eax
 
     sti
     ret

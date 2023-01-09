@@ -370,13 +370,12 @@ int create_process(char* program)
 	pcb->esp = 0xEFFFFFF0;
 	pcb->ebp = pcb->esp;
 	pcb->k_esp = (uint32_t) alloc(stack_size)+stack_size-1;
+	dbgprintf("[INIT PROCESS] Setup PCB %d for %s\n", i, program);
 	pcb->k_ebp = pcb->k_esp;
-	pcb->window = pcbs[2].window;
+	//pcb->window = pcbs[2].window;
 	pcb->term = current_running->term;
 	//dbgprintf("[INIT PROCESS] Adding window %s\n", pcb->window->name);
 	pcb->is_process = 1;
-
-	dbgprintf("[INIT PROCESS] Setup PCB %d for %s\n", i, program);
 
 	/* Memory map data */
 	init_process_paging(pcb, buf, read);

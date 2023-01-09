@@ -162,6 +162,7 @@ void* __alloc_internal(int size)
 			chunks_used += chunks_needed;
 			
 			release(&mem_lock);
+			memset((char*)chunks[i].from, 0, size);
 			return chunks[i].from;
 		}	
 	}
@@ -184,7 +185,7 @@ void* alloc(int size)
 		return NULL;
 	
 	dbgprintf("[MEMORY] %s Allocating %d bytes of data (%d/%d)\n", current_running->name, size, (chunks_used*MEM_CHUNK), MEM_CHUNK*CHUNKS_SIZE);
-	memory_register_alloc(current_running->name, size);
+	//memory_register_alloc(current_running->name, size);
 
 	return ret;
 }

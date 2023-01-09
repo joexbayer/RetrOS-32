@@ -14,7 +14,7 @@ int main()
 {
 	int j = 1;
 
-	while(j < 100)
+	while(j < 10)
 	{	
 	  	printf("Counter: %d!\n", j);
 		sleep(1);
