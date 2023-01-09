@@ -147,11 +147,19 @@ void pcb_queue_push_running(struct pcb* pcb)
 void Genesis()
 {
 	dbgprintf("[GEN] Genesis running!\n");
-	struct gfx_window* window = gfx_new_window(100, 100);
-	gfx_draw_rectangle(0, 0, 100, 100, VESA8_COLOR_DARK_RED);
-	gfx_draw_text(1, 1, "Hello.", VESA8_COLOR_WHITE);
+	struct gfx_window* window = gfx_new_window(400, 100);
 	while(1)
 	{
+		gfx_draw_rectangle(0, 0, 400, 100, VESA8_COLOR_LIGHT_GRAY5);
+		gfx_line(2, 2, 66, GFX_LINE_OUTER_VERTICAL, VESA8_COLOR_BLUE);
+		gfx_line(3, 2, 396, GFX_LINE_INNER_HORIZONTAL, VESA8_COLOR_BLUE);
+
+		gfx_line(396, 2, 66, GFX_LINE_INNER_VERTICAL, VESA8_COLOR_BLUE);
+		gfx_line(2, 68, 396, GFX_LINE_OUTER_HORIZONTAL, VESA8_COLOR_BLUE);
+
+		print_pcb_status();
+		
+		gfx_commit();
 		/*print_memory_status();
 
 		for (int i = 0; i < MAX_NUM_OF_PCBS; i++){
@@ -160,27 +168,37 @@ void Genesis()
 			
 			draw_window(pcbs[i].window);
 		}*/
-		yield();
+		sleep(200);
 	}
 }
 
 
-void pcb_info()
+void system_info()
 {
-	struct gfx_window* window = gfx_new_window(375, 75);
+	struct gfx_window* window = gfx_new_window(225, 375);
 	while(1)
 	{
-		gfx_draw_rectangle(0, 0, 375, 75, VESA8_COLOR_LIGHT_GRAY5);
+		gfx_draw_rectangle(0, 0, 225, 375, VESA8_COLOR_LIGHT_GRAY5);
+		
+		gfx_draw_rectangle(2, 98, 60, 106, VESA8_COLOR_BLACK);
+		gfx_draw_rectangle(5, 100, 25, 100, VESA8_COLOR_DARK_GREEN);
 
-		gfx_line(2, 2, 66, GFX_LINE_OUTER_VERTICAL, VESA8_COLOR_BLUE);
-		gfx_line(3, 2, 371, GFX_LINE_INNER_HORIZONTAL, VESA8_COLOR_BLUE);
+		gfx_draw_text(5, 5, "Memory", VESA8_COLOR_BLACK);
+		int mem_dyn = memory_dynamic_usage();
+		gfx_draw_rectangle(5, 200-mem_dyn/10, 25, mem_dyn/10, VESA8_COLOR_GREEN);
 
-		gfx_line(372, 2, 66, GFX_LINE_INNER_VERTICAL, VESA8_COLOR_BLUE);
-		gfx_line(2, 68, 371, GFX_LINE_OUTER_HORIZONTAL, VESA8_COLOR_BLUE);
+		gfx_draw_rectangle(34, 100, 25, 100, VESA8_COLOR_DARK_GREEN);
+		int perm_dyn = memory_perm_usage();
+		gfx_draw_rectangle(34, 200-perm_dyn/10, 25, perm_dyn/10, VESA8_COLOR_GREEN);
 
+		gfx_draw_char(5, 200, 'P', VESA8_COLOR_BLACK);
 
-		print_pcb_status();
-		sleep(1000);
+		for (int i= 0; i < 20; i++)
+			gfx_line(5, 100+(i*5), 55, GFX_LINE_HORIZONTAL, VESA8_COLOR_BLACK);
+
+		gfx_commit();
+
+		sleep(200);
 	}
 }
 

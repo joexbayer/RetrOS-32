@@ -46,6 +46,7 @@ struct pcb {
 
       struct text_window* window;
       struct gfx_window* gfx_window;
+      struct terminal* term;
 
       struct pcb *next;
       struct pcb *prev;
@@ -54,7 +55,7 @@ struct pcb {
 
 extern struct pcb* current_running;
 
-void pcb_info();
+void system_info();
 
 void init_pcbs();
 void start_tasks();

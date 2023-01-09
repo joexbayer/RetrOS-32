@@ -86,7 +86,7 @@ void reset_shell()
 
 void exec_cmd()
 {
-	twritef(&term, "Kernel > %s", shell_buffer);
+	twritef("Kernel > %s", shell_buffer);
 
 	if(strncmp("lspci", shell_buffer, strlen("lspci"))){
 		list_pci_devices();
@@ -95,6 +95,7 @@ void exec_cmd()
 
 	if(strncmp("ls", shell_buffer, strlen("ls"))){
 		ls("");
+		gfx_commit();
 		return;
 	}
 
@@ -134,7 +135,7 @@ void exec_cmd()
 
 		char buf[512];
 		fs_read(buf, inode);
-		twritef(&term, "%s\n", buf);
+		twritef("%s\n", buf);
 		fs_close(inode);
 		return;
 	}
@@ -197,17 +198,17 @@ void exec_cmd()
 		name[strlen(name)-1] = 0;
 		int pid = create_process(name);
 		if(pid == 0)
-			twritef(&term, "%s does not exist\n", name);
+			twritef("%s does not exist\n", name);
 
 		return;
 	}
 	int r = start(shell_buffer);
 	if(r == -1)
-		twritef(&term, "Unknown command: %s\n", shell_buffer);
+		twritef("Unknown command: %s\n", shell_buffer);
 	else
-		twriteln("Started process.", &term);
+		twriteln("Started process.");
 
-
+	gfx_commit();
 	//twrite(shell_buffer);
 }
 
@@ -235,6 +236,7 @@ void shell_put(char c)
 			return;
 		shell_column -= 1;
 		gfx_draw_rectangle(shell_column*8, SHELL_POSITION, 8, 8, VESA8_COLOR_BLACK);
+		gfx_commit();
 		shell_buffer[shell_buffer_length] = 0;
 		shell_buffer_length--;
 		//screen_set_cursor(shell_column-1, SHELL_POSITION);
@@ -246,6 +248,7 @@ void shell_put(char c)
 		return;
 	}
 	gfx_draw_char(shell_column*8, SHELL_POSITION, uc, VESA8_COLOR_WHITE);
+	gfx_commit();
 	shell_buffer[shell_buffer_length] = uc;
 	shell_buffer_length++;
 	screen_set_cursor(shell_column, SHELL_POSITION);
@@ -259,6 +262,7 @@ void shell_main()
 	
 	memset(term.textbuffer, 0, TERMINAL_BUFFER_SIZE);
 	struct gfx_window* window = gfx_new_window(400, SHELL_HEIGHT);
+	terminal_attach(&term);
 	//gfx_draw_text(0, 0, "Terminal!", VESA8_COLOR_LIGHT_GREEN);
 	reset_shell();
 

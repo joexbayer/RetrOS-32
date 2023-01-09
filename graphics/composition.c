@@ -60,6 +60,9 @@ void gfx_order_push_front(struct gfx_window* w)
     order = w;
     w->next = save;
     order->in_focus = 1;
+
+    w->changed = 1;
+
     release(&order_lock);
 }
 
@@ -166,6 +169,9 @@ void gfx_compositor_main()
         vesa_printf(gfx_composition_buffer, 638-65, 480-16, VESA8_COLOR_BLACK, "%d:%d %s", time.hour > 12 ? time.hour-12 : time.hour, time.minute, time.hour > 12 ? "PM" : "AM");
 
         vesa_printf(gfx_composition_buffer, 8, 480-16, VESA8_COLOR_DARK_BLUE, "%d", (rdtsc() - test)-100000);
+
+
+        vesa_printf(gfx_composition_buffer, 100, 480-16, VESA8_COLOR_DARK_BLUE, "%d", (timer_get_tick()*10) % 1000);
 
         STI();
 

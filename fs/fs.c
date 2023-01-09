@@ -306,13 +306,13 @@ void ls(char* path)
 		struct inode* inode = inode_get(entry.inode, &superblock);
 		struct time* time = &inode->time;
 		dbgprintf("%d\n", time->month);
-		/*twritef(term, "%x %s %d, %d:%d - %s%s\n",
+		twritef("%x %s %d, %d:%d - %s%s\n",
 			inode->size,
 			months[time->month],
 			time->day, time->hour, time->minute,
 			entry.name,
 			inode->type == FS_DIRECTORY ? "/" : ""
-		);*/
+		);
 		size += ret;
 	}
 }

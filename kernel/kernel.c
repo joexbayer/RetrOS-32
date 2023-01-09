@@ -65,12 +65,12 @@ void _main(uint32_t magic)
 	register_kthread(&networking_main, "Networking");
 	register_kthread(&dhcpd, "dhcpd");
 	register_kthread(&gfx_compositor_main, "wServer");
-	register_kthread(&pcb_info, "PCB Status");
+	register_kthread(&system_info, "System Status");
 
 	start("Shell");
 	start("wServer");
 	start("Networking");
-	start("PCB Status");
+	start("System Status");
 
 	add_system_call(SYSCALL_SCRPUT, (syscall_t)&scrput);
 	add_system_call(SYSCALL_PRTPUT, (syscall_t)&terminal_putchar);

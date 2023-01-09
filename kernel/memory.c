@@ -94,6 +94,27 @@ void memory_register_alloc(char* name, int size)
 		hashmap_add(&memmory_hasmap, name, size);
 }
 
+
+int memory_dynamic_usage()
+{
+	return chunks_used; 
+}
+
+int memory_dynamic_total()
+{
+	return CHUNKS_SIZE; 
+}
+
+int memory_perm_usage()
+{
+	return (memory_permanent_ptr-PERMANENT_MEM_START)/MEM_CHUNK;
+}
+
+int memory_perm_total()
+{
+	return (PERMANENT_MEM_END-PERMANENT_MEM_START)/MEM_CHUNK;
+}
+
 /* implementation */
 
 /**

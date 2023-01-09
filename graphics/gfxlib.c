@@ -65,7 +65,7 @@ int gfx_draw_rectangle(int x, int y, int width, int height, char color)
             putpixel(current_running->gfx_window->inner, j, i, color, current_running->gfx_window->height-18);
     STI();
 
-    current_running->gfx_window->changed = 1;
+    //current_running->gfx_window->changed = 1;
     return 0;
 }
 
@@ -98,9 +98,14 @@ int gfx_draw_char(int x, int y, char c, char color)
     STI();
 
 	//dbgprintf("[GFX] %s put %c\n", current_running->name, c);
-    current_running->gfx_window->changed = 1;
+    //current_running->gfx_window->changed = 1;
 
     return 0;
+}
+
+void gfx_commit()
+{
+	current_running->gfx_window->changed = 1;
 }
 
 /**

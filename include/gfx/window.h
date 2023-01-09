@@ -4,6 +4,7 @@
 #include <stdint.h>
 struct gfx_window;
 #include <gfx/component.h>
+#include <terminal.h>
 #include <pcb.h>
 #include <colors.h>
 
