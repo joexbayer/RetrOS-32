@@ -69,7 +69,6 @@ void gfx_default_click(struct gfx_window* window, int x, int y)
 
 void gfx_default_hover(struct gfx_window* window, int x, int y)
 {
-    dbgprintf("[GFX] %s: hover event.\n", window->name);
     if(window->is_moving.state == GFX_WINDOW_MOVING){
 
         if(window->x - (window->is_moving.x - x) < 0 || window->x - (window->is_moving.x - x) + window->width > 640)
@@ -90,23 +89,19 @@ void gfx_default_hover(struct gfx_window* window, int x, int y)
 
 void gfx_default_mouse_down(struct gfx_window* window, int x, int y)
 {
-    dbgprintf("[GFX] %s: mousedown event.\n", window->name);
     if(gfx_point_in_rectangle(window->x+2, window->y+2, window->x+window->width-4, window->y+GFX_WINDOW_TITLE_HEIGHT, x, y)){
         window->is_moving.state = GFX_WINDOW_MOVING;
         window->is_moving.x = x;
         window->is_moving.y = y;
-        dbgprintf("[GFX] %s: moving.\n", window->name);
     }
 }
 
 void gfx_default_mouse_up(struct gfx_window* window, int x, int y)
 {
-    dbgprintf("[GFX] %s: mouse up event.\n", window->name);
     if(gfx_point_in_rectangle(window->x+2, window->y+2, window->x+window->width-4, window->y+GFX_WINDOW_TITLE_HEIGHT, x, y)){
         window->is_moving.state = GFX_WINDOW_STATIC;
         window->is_moving.x = x;
         window->is_moving.y = y;
-        dbgprintf("[GFX] %s: static.\n", window->name);
     }
 }
 

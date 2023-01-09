@@ -103,7 +103,6 @@ void gfx_composition_add_window(struct gfx_window* w)
 
 void gfx_mouse_event(int x, int y, char flags)
 {
-    dbgprintf("[GFX MOUSE] Event registered.\n");
     for (struct gfx_window* i = order; i != NULL; i = i->next)
         if(gfx_point_in_rectangle(i->x, i->y, i->x+i->width, i->y+i->height, x, y)){
             /* on click when left mouse down */
