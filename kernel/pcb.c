@@ -175,28 +175,56 @@ void Genesis()
 
 void system_info()
 {
+	static const char* SIZES[] = { "B", "kB", "MB", "GB" };
+	int memory_info = 106;
 	struct gfx_window* window = gfx_new_window(225, 375);
 	while(1)
 	{
 		gfx_draw_rectangle(0, 0, 225, 375, VESA8_COLOR_LIGHT_GRAY5);
 		
-		gfx_draw_rectangle(2, 98, 60, 106, VESA8_COLOR_BLACK);
+		gfx_draw_rectangle(2, 98, 90, 106, VESA8_COLOR_BLACK);
 		gfx_draw_rectangle(5, 100, 25, 100, VESA8_COLOR_DARK_GREEN);
 
-		gfx_draw_text(9, 90, "Memory", VESA8_COLOR_BLACK);
+		gfx_draw_text(25, 90, "Memory", VESA8_COLOR_BLACK);
 		int mem_dyn = memory_dynamic_usage();
 		gfx_draw_rectangle(5, 200-mem_dyn/10, 25, mem_dyn/10, VESA8_COLOR_GREEN);
 
 		gfx_draw_rectangle(34, 100, 25, 100, VESA8_COLOR_DARK_GREEN);
-		int perm_dyn = memory_perm_usage();
+		int perm_dyn = memory_permanent_usage();
 		gfx_draw_rectangle(34, 200-perm_dyn/10, 25, perm_dyn/10, VESA8_COLOR_GREEN);
 
-		//gfx_inner_box(2, 98, 60, 106, 0);	
-		//gfx_draw_char(12, 205, 'D', VESA8_COLOR_BLACK);
-		//gfx_draw_char(12+30, 205, 'P', VESA8_COLOR_BLACK);
+		gfx_draw_rectangle(63, 100, 25, 100, VESA8_COLOR_DARK_GREEN);
+		gfx_draw_rectangle(63, 200-(memory_pages_usage()/2.5), 25, memory_pages_usage()/2.5, VESA8_COLOR_GREEN);
+
+		gfx_inner_box(2, 98, 90, 106, 0);	
+
+		uint32_t div_used = 0;
+        uint32_t used = mem_dyn*0x400;
+
+		/*while (used >= 1024 && div_used < (sizeof SIZES / sizeof *SIZES)) {
+            div_used++;   
+            used /= 1024;
+        }*/
+
+		gfx_inner_box(96, memory_info-4, 110, 30, 0);
+
+		gfx_draw_format_text(100, memory_info, VESA8_COLOR_BLACK, "Dynamic:");
+		gfx_draw_format_text(100, memory_info+8, VESA8_COLOR_BLACK, "Total   %dkb", mem_dyn);
+		gfx_draw_format_text(100, memory_info+16, VESA8_COLOR_BLACK, "Free    %dkb", memory_dynamic_total()-mem_dyn);
+		
+		gfx_inner_box(96, memory_info+30, 110, 28, 0);	
+		gfx_draw_format_text(100, memory_info+32, VESA8_COLOR_BLACK, "Permanent:");
+		gfx_draw_format_text(100, memory_info+40, VESA8_COLOR_BLACK, "Total   %dkb", perm_dyn);
+		gfx_draw_format_text(100, memory_info+48, VESA8_COLOR_BLACK, "Free    %dkb", memory_permanent_total()-perm_dyn);
+
+		gfx_inner_box(96, memory_info+62, 110, 30, 0);	
+		gfx_draw_format_text(100, memory_info+64, VESA8_COLOR_BLACK, "Pages:");
+		gfx_draw_format_text(100, memory_info+64+8, VESA8_COLOR_BLACK, "Total   %d", memory_pages_usage());
+		gfx_draw_format_text(100, memory_info+64+18, VESA8_COLOR_BLACK, "Free    %d", memory_pages_total());
+
 
 		for (int i= 0; i < 20; i++)
-			gfx_line(5, 100+(i*5), 55, GFX_LINE_HORIZONTAL, VESA8_COLOR_BLACK);
+			gfx_line(5, 100+(i*5), 85, GFX_LINE_HORIZONTAL, VESA8_COLOR_BLACK);
 
 		gfx_commit();
 

@@ -55,12 +55,10 @@ void terminal_attach(struct terminal* term)
  */
 void terminal_putchar(char c)
 {
-
-
 	if(current_running->term == NULL || current_running->term->head < 0 || current_running->term->head > TERMINAL_BUFFER_SIZE)
 		return;
 
-	unsigned char uc = c;	
+	//unsigned char uc = c;	
 	current_running->term->textbuffer[current_running->term->head] = c;
 	current_running->term->head++;
 

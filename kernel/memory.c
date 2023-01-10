@@ -105,12 +105,12 @@ int memory_dynamic_total()
 	return CHUNKS_SIZE; 
 }
 
-int memory_perm_usage()
+int memory_permanent_usage()
 {
 	return (memory_permanent_ptr-PERMANENT_MEM_START)/MEM_CHUNK;
 }
 
-int memory_perm_total()
+int memory_permanent_total()
 {
 	return (PERMANENT_MEM_END-PERMANENT_MEM_START)/MEM_CHUNK;
 }
@@ -261,6 +261,16 @@ uint32_t* alloc_page()
 	used_pages++;
 
 	return paddr;
+}
+
+int memory_pages_total()
+{
+	return TOTAL_PAGES;
+}
+
+int memory_pages_usage()
+{
+	return used_pages;
 }
 
 

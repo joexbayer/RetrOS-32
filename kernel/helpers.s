@@ -93,10 +93,11 @@ _syscall_entry:
 .global _context_switch
 _context_switch:
 
-    movl current_running, %eax
-
     pushfl
     pushal
+    
+    movl current_running, %eax
+
     fnsave 24(%eax)
 
     movl %esp, 4(%eax)

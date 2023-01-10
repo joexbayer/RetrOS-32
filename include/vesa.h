@@ -12,6 +12,8 @@ void vesa_put_icon(uint8_t* buffer, int x, int y);
 void vesa_write_str(uint8_t* buffer, int x, int y, const char* data, int color);
 void vesa_fill(uint8_t* buffer, unsigned char color);
 
+void vesa_init();
+
 void vesa_put_pixel(uint8_t* buffer, int x,int y, unsigned char color);
 
 inline void putpixel(uint8_t* buffer, int x,int y, char color, int pitch) {

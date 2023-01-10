@@ -188,7 +188,7 @@ void gfx_inner_box(int x, int y, int w, int h, int fill)
     	gfx_draw_rectangle(x, y, w, h, VESA8_COLOR_LIGHT_GRAY3);
 
     gfx_line(x, y, w, GFX_LINE_HORIZONTAL, VESA8_COLOR_DARK_GRAY2);
-    gfx_line(x, y+h, w, GFX_LINE_HORIZONTAL, VESA8_COLOR_DARK_GRAY2);
+    gfx_line(x, y+h, w, GFX_LINE_HORIZONTAL, VESA8_COLOR_LIGHT_GRAY1);
 
     gfx_line(x, y, h,GFX_LINE_VERTICAL, VESA8_COLOR_DARK_GRAY2);
     gfx_line(x+w, y, h, GFX_LINE_VERTICAL, VESA8_COLOR_LIGHT_GRAY1);
