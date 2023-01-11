@@ -29,17 +29,31 @@ enum ASCII {
 };
 
 /**
- * Memory Map:
+ * Individual Process Memory Map:
  * 0x100000 - 0x200000: permanents
  * 0x200000 - 0x300000: pages
  * 0x300000 - 0x400000: dynamic
+ * 
+ * Total Memory map:
+ * 
+ * End		0x1600000
+ * 	
+ * 		    ~ for processes 500kb each, total of 24 processes.
+ * 	
+ * 			0x0400000 (kernel end)
+ * 
+ * 			0x0300000 (page end / Kernel start)
+ * 
+ * 			0x0200000 (Permanent end / Page start)
+ * 
+ * Start 	0x0100000 (Permanent start)
  */
 
 #define PERMANENT_MEM_START 0x100000
-#define PERMANENT_MEM_END 0x200000
-#define MEM_START 0x300000
-#define MEM_END 0x400000
-#define MEM_CHUNK 0x400
+#define PERMANENT_MEM_END 	0x200000
+#define MEM_START 			0x300000
+#define MEM_END   			0x400000
+#define MEM_CHUNK 			0x400
 #define CHUNKS_SIZE (MEM_END-MEM_START)/MEM_CHUNK
 
 /* Virtual Memory*/
@@ -250,6 +264,34 @@ void init_memory()
 	dbgprintf("[MEM] Memory initilized.\n");
 }
 
+#define MEMORY_PROCESS_BLOCK_SIZE 128
+#define MEMORY_PROCESS_SIZE 500*1024
+
+void* malloc(int size)
+{
+	bitmap_t map = current_running->memory_bitmap;
+	int needed_blocks = size/MEMORY_PROCESS_BLOCK_SIZE;
+	int free_block_start = bitmap_get_continous(map, MEMORY_PROCESS_BLOCK_SIZE/MEMORY_PROCESS_BLOCK_SIZE, needed_blocks);
+	if(free_block_start < 1)
+		return NULL;
+
+	current_running->used_memory += size;
+	return (void*) 0x400000 + MEMORY_PROCESS_SIZE*current_running->pid + free_block_start * MEMORY_PROCESS_BLOCK_SIZE;
+}
+
+void* calloc(int size, int val)
+{
+	void* m = malloc(size);
+	if(m == NULL)	
+		return NULL;
+
+	memset(m, val, size);
+	return m;
+}
+
+
+/* per process memory allocator total 512kb with minimum of 128 bytes per allocation. */
+
 
 /*  PAGIN / VIRTUAL MEMORY SECTION */
 
@@ -298,6 +340,22 @@ void driver_mmap(uint32_t addr, int size)
 	return;
 }
 
+/**
+ * @brief 
+ * 
+ * @param pcb 
+ * @param data 
+ * @param size 
+ * 
+ * Process memory map
+ * 	
+ * STACK 		0xEFFFFFF0
+ * 				
+ * HEAP 		0x1001000?
+ * 				~ 0x1000 (8kib)
+ * DATA 		0x1000000
+ * 
+ */
 void init_process_paging(struct pcb* pcb, char* data, int size)
 {
 	int permissions = PRESENT | READ_WRITE | USER;
@@ -316,9 +374,7 @@ void init_process_paging(struct pcb* pcb, char* data, int size)
 	/* Map the process stack to a page */
 	uint32_t* process_stack_page = alloc_page();
 	memset(process_stack_page, 0, PAGE_SIZE);
-
 	table_set(process_stack_table, 0xEFFFFFF0, (uint32_t) process_stack_page, permissions);
-
 	dbgprintf("[INIT PROCESS] Mapped data %x to %x\n",0x400000 & ~PAGE_MASK, process_stack_page);
 
 	/* Insert page and data tables in directory. */

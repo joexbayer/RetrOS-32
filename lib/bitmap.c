@@ -43,6 +43,49 @@ void destroy_bitmap(bitmap_t b)
     free((void*) b);
 }
 
+inline int __continous_helper(bitmap_t b, int start, int size)
+{
+    for (int j = 0; j < size; j++)
+    {
+        if(get_bitmap(b, start+j) != 0){
+            return -1;
+        }
+    }
+    return 0;
+}
+
+int bitmap_unset_continous(bitmap_t b, int start, int size)
+{
+    for (int i = start; i < (start+size); i++)
+    {
+        unset_bitmap(b, i);
+    }
+    return 0;
+}
+
+int bitmap_get_continous(bitmap_t b, int n, int size)
+{
+    for (int i = 0; i < n; i++)
+    {
+        if(get_bitmap(b, i) == 0)
+        {
+            
+            int ret = __continous_helper(b, i, size);
+
+            if(ret < 0)
+                break;
+
+            for (int j = 0; j < size; j++)
+            {
+                set_bitmap(b, i+j);
+            }
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 int get_free_bitmap(bitmap_t b, int n)
 {
     for (int i = 0; i < n; i++)

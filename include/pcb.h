@@ -4,8 +4,9 @@
 #include <util.h>
 #include <windowmanager.h>
 #include <gfx/window.h>
+#include <bitmap.h>
 
-#define MAX_NUM_OF_PCBS 10
+#define MAX_NUM_OF_PCBS 24
 #define pcb_max_name_length 25
 
 /* TODO: Move to new file */
@@ -25,31 +26,34 @@ enum {
 };
 
 struct pcb {
-      uint32_t ebp;
-      uint32_t esp;
-      void (*eip)();
-      uint32_t k_esp;
-      uint32_t k_ebp;
-      uint32_t is_process;
-      uint32_t fpu[32];
-      /* DO NOT NOT CHANGE ABOVE.*/
-      uint8_t running;
-      int16_t pid;
-      uint16_t sleep_time;
-      uint32_t org_stack;
+    uint32_t ebp;
+    uint32_t esp;
+    void (*eip)();
+    uint32_t k_esp;
+    uint32_t k_ebp;
+    uint32_t is_process;
+    uint32_t fpu[32];
+    /* DO NOT NOT CHANGE ABOVE.*/
+    uint8_t running;
+    int16_t pid;
+    uint16_t sleep_time;
+    uint32_t org_stack;
 
-      uint32_t blocked_count;
+    uint32_t blocked_count;
 
-      uint32_t* page_dir;
+    uint32_t* page_dir;
 
-      char name[pcb_max_name_length];
+    char name[pcb_max_name_length];
 
-      struct text_window* window;
-      struct gfx_window* gfx_window;
-      struct terminal* term;
+    struct text_window* window;
+    struct gfx_window* gfx_window;
+    struct terminal* term;
 
-      struct pcb *next;
-      struct pcb *prev;
+    bitmap_t memory_bitmap;
+    int used_memory;
+
+    struct pcb *next;
+    struct pcb *prev;
 }__attribute__((packed));
 
 

@@ -22,7 +22,6 @@
 #include <windowmanager.h>
 #include <gfx/gfxlib.h>
 
-
 #define stack_size 0x2000
 
 static const char* status[] = {"stopped ", "running ", "new     ", "blocked ", "sleeping", "zombie"};
@@ -323,6 +322,7 @@ int pcb_cleanup(int pid)
 
 	pcb_queue_remove(&pcbs[pid]);
 	free((void*)pcbs[pid].org_stack);
+	destroy_bitmap(pcbs->memory_bitmap);
 	pcb_count--;
 	
 	memset(&pcbs[pid], 0, sizeof(struct pcb));
@@ -363,6 +363,9 @@ int init_pcb(int pid, struct pcb* pcb, void (*entry)(), char* name)
 	pcb->running = NEW;
 	pcb->pid = pid;
 	pcb->org_stack = stack;
+	pcb->memory_bitmap = create_bitmap(500*1024/128);
+	pcb->used_memory = 0;
+
 	memcpy(pcb->name, name, strlen(name)+1);
 
 	return 1;
