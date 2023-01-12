@@ -4,6 +4,7 @@
 #include <util.h>
 #include <windowmanager.h>
 #include <gfx/window.h>
+#include <memory.h>
 #include <bitmap.h>
 
 #define MAX_NUM_OF_PCBS 24
@@ -49,7 +50,7 @@ struct pcb {
     struct gfx_window* gfx_window;
     struct terminal* term;
 
-    bitmap_t memory_bitmap;
+    struct allocation* allocations;
     int used_memory;
 
     struct pcb *next;

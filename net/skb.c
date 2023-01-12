@@ -74,7 +74,7 @@ struct sk_buff* skb_next()
 
 struct sk_buff* skb_new()
 {
-	struct sk_buff* new = (struct sk_buff*) alloc(sizeof(struct sk_buff));
+	struct sk_buff* new = (struct sk_buff*) kalloc(sizeof(struct sk_buff));
 	if(new == NULL) return NULL;
 
 	memset(new, 0, sizeof(struct sk_buff));
@@ -86,8 +86,8 @@ struct sk_buff* skb_new()
 
 int skb_free(struct sk_buff* skb)
 {
-	free(skb->data);
-	free(skb);
+	kfree(skb->data);
+	kfree(skb);
 
 	return 1;
 }

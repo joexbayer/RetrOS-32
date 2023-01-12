@@ -39,13 +39,19 @@ enum {
   PAGE_MASK = 0xfff,
 };
 
+struct allocation {
+  int address;
+  int size;
+  struct allocation* next;
+};
+
 #define TABLE_INDEX(vaddr) ((vaddr >> PAGE_TABLE_BITS) & PAGE_TABLE_MASK)
 #define DIRECTORY_INDEX(vaddr) ((vaddr >> PAGE_DIRECTORY_BITS) & PAGE_TABLE_MASK)
 
 void init_memory();
-void* alloc(int size);
+void* kalloc(int size);
 void print_memory_status();
-void free(void* ptr);
+void kfree(void* ptr);
 
 void driver_mmap(uint32_t addr, int size);
 void flush_tlb_entry(uint32_t vaddr);
@@ -67,5 +73,7 @@ int memory_get_usage(char* name);
 void memory_total_usage();
 
 void* palloc(int size);
+
+void* malloc(int size);
 
 #endif

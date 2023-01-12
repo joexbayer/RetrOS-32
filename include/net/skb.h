@@ -55,7 +55,7 @@ struct sk_buff* get_skb();
 struct sk_buff* next_skb();
 
 #define ALLOCATE_SKB(skb)               \
-    (skb)->data = alloc(0x600);         \
+    (skb)->data = kalloc(0x600);         \
     memset((skb)->data, 0, 0x600);       \
     (skb)->head = skb->data;            \
     (skb)->tail = skb->head;            \
@@ -65,7 +65,7 @@ struct sk_buff* next_skb();
 
 #define FREE_SKB(skb)           \
     if((skb)->head != NULL)     \
-        free((skb)->head);      \
+        kfree((skb)->head);      \
     (skb)->len = -1;            \
     (skb)->stage = UNUSED;      \
     (skb)->head = NULL;

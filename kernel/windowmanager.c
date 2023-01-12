@@ -63,7 +63,7 @@ void draw_window(struct text_window* w)
 
 struct text_window_binary_tree* new_node()
 {
-    struct text_window_binary_tree* node = (struct text_window_binary_tree*) alloc(sizeof(struct text_window_binary_tree));
+    struct text_window_binary_tree* node = (struct text_window_binary_tree*) kalloc(sizeof(struct text_window_binary_tree));
     node->root = NULL;
     node->left = NULL;
     node->right = NULL;

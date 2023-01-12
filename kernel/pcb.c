@@ -150,6 +150,8 @@ void Genesis()
 	while(1)
 	{
 		gfx_draw_rectangle(0, 0, 400, 100, VESA8_COLOR_LIGHT_GRAY5);
+		gfx_draw_rectangle(3, 3, 395, 66, VESA8_COLOR_LIGHT_GRAY1);
+
 		gfx_line(2, 2, 66, GFX_LINE_OUTER_VERTICAL, VESA8_COLOR_BLUE);
 		gfx_line(3, 2, 396, GFX_LINE_INNER_HORIZONTAL, VESA8_COLOR_BLUE);
 
@@ -157,6 +159,8 @@ void Genesis()
 		gfx_line(2, 68, 396, GFX_LINE_OUTER_HORIZONTAL, VESA8_COLOR_BLUE);
 
 		print_pcb_status();
+
+		gfx_draw_format_text(10, 80, VESA8_COLOR_BLACK, "Total: %d", pcb_count);
 		
 		gfx_commit();
 		/*print_memory_status();
@@ -240,7 +244,8 @@ void print_pcb_status()
 	int done_list[MAX_NUM_OF_PCBS];
 	int done_list_count = 0;
 	
-	gfx_draw_text(10, 10, "PID Stack     Status    Type     Name", VESA8_COLOR_LIGHT_BROWN);
+	gfx_draw_text(10, 7, "Name           Status    Memory    Stack     PID", VESA8_COLOR_LIGHT_BROWN);
+	gfx_line(10, 7+9, 382, GFX_LINE_HORIZONTAL, VESA8_COLOR_GRAY2);
 	for (int i = 0; i < MAX_NUM_OF_PCBS; i++)
 	{
 		if(pcbs[i].pid == -1)
@@ -274,11 +279,15 @@ void print_pcb_status()
 
 		done_list[done_list_count] = largest;
 		done_list_count++;
-		gfx_draw_format_text(10, 10+done_list_count*8, VESA8_COLOR_BLACK, " %d  0x%x  %s  %s  %s\n", pcbs[largest].pid, pcbs[largest].esp, status[pcbs[largest].running], pcbs[largest].is_process == 1 ? "Process" : "kthread", pcbs[largest].name);
-	}
-	
-}
+		//gfx_draw_format_text(10, 10+done_list_count*8, VESA8_COLOR_BLACK, " %d  0x%x  %s  %s  %s\n", pcbs[largest].pid, pcbs[largest].used_memory, status[pcbs[largest].running], pcbs[largest].is_process == 1 ? "Process" : "kthread", pcbs[largest].name);
 
+		gfx_draw_format_text(10, 10+done_list_count*8, VESA8_COLOR_BLACK, "%s", pcbs[largest].name);
+		gfx_draw_format_text(10 + 15*8, 10+done_list_count*8, VESA8_COLOR_BLACK, "%s",status[pcbs[largest].running]);
+		gfx_draw_format_text(10+15*8+10*8, 10+done_list_count*8, VESA8_COLOR_BLACK, "%d", pcbs[largest].used_memory);
+		gfx_draw_format_text(10+15*8+10*8 + 10*8, 10+done_list_count*8, VESA8_COLOR_BLACK, "0x%x", pcbs[largest].esp);
+		gfx_draw_format_text(10+15*8+10*8+10*8+11*8, 10+done_list_count*8, VESA8_COLOR_BLACK, "%d", pcbs[largest].pid);
+	}
+}
 
 void pcb_set_blocked(int pid)
 {
@@ -321,8 +330,17 @@ int pcb_cleanup(int pid)
 		gfx_destory_window(pcbs[pid].gfx_window);
 
 	pcb_queue_remove(&pcbs[pid]);
-	free((void*)pcbs[pid].org_stack);
-	destroy_bitmap(pcbs->memory_bitmap);
+	kfree((void*)pcbs[pid].org_stack);
+
+	struct allocation* iter = pcbs[pid].allocations;
+	while(iter != NULL)
+	{
+		struct allocation* next = iter->next;
+		kfree(iter);
+		iter = next;
+	}
+	
+
 	pcb_count--;
 	
 	memset(&pcbs[pid], 0, sizeof(struct pcb));
@@ -347,7 +365,7 @@ int pcb_cleanup(int pid)
  */
 int init_pcb(int pid, struct pcb* pcb, void (*entry)(), char* name)
 {
-	uint32_t stack = (uint32_t) alloc(stack_size);
+	uint32_t stack = (uint32_t) kalloc(stack_size);
 	if((void*)stack == NULL)
 	{
 		dbgprintf("[PCB] STACK == NULL");
@@ -363,7 +381,7 @@ int init_pcb(int pid, struct pcb* pcb, void (*entry)(), char* name)
 	pcb->running = NEW;
 	pcb->pid = pid;
 	pcb->org_stack = stack;
-	pcb->memory_bitmap = create_bitmap(500*1024/128);
+	pcb->allocations = NULL;
 	pcb->used_memory = 0;
 
 	memcpy(pcb->name, name, strlen(name)+1);
@@ -400,7 +418,7 @@ int create_process(char* program)
 	memcpy(pcb->name, pname, strlen(pname)+1);
 	pcb->esp = 0xEFFFFFF0;
 	pcb->ebp = pcb->esp;
-	pcb->k_esp = (uint32_t) alloc(stack_size)+stack_size-1;
+	pcb->k_esp = (uint32_t) kalloc(stack_size)+stack_size-1;
 	dbgprintf("[INIT PROCESS] Setup PCB %d for %s\n", i, program);
 	pcb->k_ebp = pcb->k_esp;
 	//pcb->window = pcbs[2].window;

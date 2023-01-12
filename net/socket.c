@@ -285,7 +285,7 @@ int udp_deliver_packet(uint32_t ip, uint16_t port, char* buffer, uint16_t len)
 
 void close(socket_t socket)
 {
-    free((void*) socket_table[socket]);
+    kfree((void*) socket_table[socket]);
     unset_bitmap(socket_map, (int) socket);
     total_sockets--;
 }
@@ -303,7 +303,7 @@ socket_t socket(int domain, int type, int protocol)
     //int current = get_free_bitmap(socket_map, MAX_NUMBER_OF_SOCKETS);
     int current = get_free_bitmap(socket_map, MAX_NUMBER_OF_SOCKETS);
 
-    socket_table[current] = alloc(sizeof(struct sock)); /* Allocate space for a socket. Needs to be freed. */
+    socket_table[current] = kalloc(sizeof(struct sock)); /* Allocate space for a socket. Needs to be freed. */
     socket_table[current]->domain = domain;
     socket_table[current]->protocol = protocol;
     socket_table[current]->type = type;
@@ -355,7 +355,7 @@ int send(int socket, const void *message, int length, int flags)
 
 void init_sockets()
 {
-    socket_table = (struct sock**) alloc(MAX_NUMBER_OF_SOCKETS * sizeof(void*));
+    socket_table = (struct sock**) kalloc(MAX_NUMBER_OF_SOCKETS * sizeof(void*));
     port_map = create_bitmap(NUMBER_OF_DYMANIC_PORTS);
     socket_map = create_bitmap(MAX_NUMBER_OF_SOCKETS);
     total_sockets = 0;

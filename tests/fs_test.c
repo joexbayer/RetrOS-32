@@ -80,6 +80,11 @@ int disk_size()
 }
 
 
+void kfree(void* ptr)
+{
+    free(ptr);
+}
+
 /* Functions needed for inode and bitmap to work. */
 int32_t dbgprintf(char* fmt, ...)
 {
@@ -116,7 +121,7 @@ int32_t twritef(char* fmt, ...)
     return 0;
 }
 
-void* alloc(int size){
+void* kalloc(int size){
     return malloc(size);
 }
 

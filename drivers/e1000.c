@@ -217,10 +217,10 @@ void e1000_attach(struct pci_device* dev)
     pci_enable_device_busmaster(dev->bus, dev->slot, dev->function);
 
 	for (int i = 0; i < TX_SIZE; i++)
-		tx_buf[i] = alloc(PACKET_SIZE);
+		tx_buf[i] = kalloc(PACKET_SIZE);
 	
 	for (int i = 0; i < RX_SIZE; i++)
-		rx_buf[i] = alloc(PACKET_SIZE);
+		rx_buf[i] = kalloc(PACKET_SIZE);
 
 	_e1000_tx_init();
 	_e1000_rx_init();

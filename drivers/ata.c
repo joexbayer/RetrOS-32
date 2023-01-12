@@ -187,7 +187,7 @@ void ata_ide_init()
 	isr_install(ATA_PRIMARY_IRQ, &ata_primary);
 	isr_install(ATA_SECONDARY_IRQ, &ata_secondary);
 
-	ata_driver_data = alloc(512);
+	ata_driver_data = kalloc(512);
 
 	uint16_t io;
 	__ide_set_drive(ATA_PRIMARY, ATA_MASTER);

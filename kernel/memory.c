@@ -71,8 +71,8 @@ static uint32_t memory_permanent_ptr = PERMANENT_MEM_START;
 
 /* prototypes */
 void init_memory();
-void* alloc(int size);
-void free(void* ptr);
+void* kalloc(int size);
+void kfree(void* ptr);
 
 /* Helper functions */
 inline int _check_chunks(int i, int chunks_needed)
@@ -192,7 +192,7 @@ void* __alloc_internal(int size)
  * @param uint16_t size, how much memory is needed (Best if 4Kb aligned.).
  * @return void* to memory location. NULL if not enough continious chunks.
  */
-void* alloc(int size)
+void* kalloc(int size)
 {
 	void* ret = __alloc_internal(size);
 	if(ret == NULL)
@@ -209,7 +209,7 @@ void* alloc(int size)
  * @param void* ptr, pointer to memory to free.
  * @return void
  */
-void free(void* ptr)
+void kfree(void* ptr)
 {
 	if(ptr == NULL) return;
 
@@ -264,19 +264,49 @@ void init_memory()
 	dbgprintf("[MEM] Memory initilized.\n");
 }
 
-#define MEMORY_PROCESS_BLOCK_SIZE 128
 #define MEMORY_PROCESS_SIZE 500*1024
 
 void* malloc(int size)
 {
-	bitmap_t map = current_running->memory_bitmap;
-	int needed_blocks = size/MEMORY_PROCESS_BLOCK_SIZE;
-	int free_block_start = bitmap_get_continous(map, MEMORY_PROCESS_BLOCK_SIZE/MEMORY_PROCESS_BLOCK_SIZE, needed_blocks);
-	if(free_block_start < 1)
+	if(current_running->allocations == NULL){
+		struct allocation* allocation = kalloc(sizeof(struct allocation));
+		allocation->address = 0x400000 + MEMORY_PROCESS_SIZE*current_running->pid;
+		allocation->size = size;
+		allocation->next = NULL;
+
+		current_running->allocations = allocation;
+		current_running->used_memory += size;
+		return (void*) allocation->address;
+	}
+
+	struct allocation* iter = current_running->allocations;
+	while(iter->next != NULL){
+		if(iter->next->address - (iter->address+iter->size) >= size){
+			/* Found spot for allocation */
+			struct allocation* new = kalloc(sizeof(struct allocation));
+			new->address = iter->address+iter->size;
+			new->size = size;
+			new->next = NULL;
+
+			struct allocation* next = iter->next;
+			iter->next = new;
+			new->next = next;
+			current_running->used_memory += size;
+			return (void*) new->address;
+		}
+		iter = iter->next;
+	}
+
+	if(iter->address+iter->size+size >= (0x400000 + MEMORY_PROCESS_SIZE*current_running->pid + MEMORY_PROCESS_SIZE))
 		return NULL;
 
-	current_running->used_memory += size;
-	return (void*) 0x400000 + MEMORY_PROCESS_SIZE*current_running->pid + free_block_start * MEMORY_PROCESS_BLOCK_SIZE;
+	struct allocation* new = kalloc(sizeof(struct allocation));
+	new->address = iter->address+iter->size;
+	new->size = size;
+	new->next = NULL;
+
+	iter->next = new;
+	return (void*) new->address;
 }
 
 void* calloc(int size, int val)
@@ -392,11 +422,21 @@ void init_paging()
 	page_bitmap = create_bitmap(TOTAL_PAGES);
 	dbgprintf("[PAGIN] %d free pagable pages.\n", TOTAL_PAGES);
 
+
 	kernel_page_dir = alloc_page();
 	uint32_t* kernel_page_table = alloc_page();
 	int permissions = PRESENT | READ_WRITE;
-	for (int addr = 0; addr < 4194304; addr += PAGE_SIZE)
-    	table_set(kernel_page_table, addr, addr, permissions);
+	for (int addr = 0; addr < 0x400000; addr += PAGE_SIZE)
+		table_set(kernel_page_table, addr, addr, permissions);
+
+	for (int i = 1; i < 7; i++)
+	{
+		uint32_t* kernel_page_table_memory = alloc_page();
+		for (int addr = 0x400000*i; addr < 0x400000*(i+1); addr += PAGE_SIZE)
+			table_set(kernel_page_table_memory, addr, addr, permissions);
+
+		directory_insert_table(kernel_page_dir, 0x400000*i, kernel_page_table_memory, permissions);
+	}
 	
 	/**
 	 * Identity map vesa color framebuffer

@@ -35,12 +35,12 @@ int get_bitmap_size(int n)
 
 bitmap_t create_bitmap(int n)
 {
-    return (bitmap_t) alloc((n + 7) / 8);
+    return (bitmap_t) kalloc((n + 7) / 8);
 }
 
 void destroy_bitmap(bitmap_t b)
 {
-    free((void*) b);
+    kfree((void*) b);
 }
 
 inline int __continous_helper(bitmap_t b, int start, int size)

@@ -57,9 +57,14 @@ int32_t dbgprintf(char* fmt, ...)
     return 0;
 }
 
-void* alloc(int size){
+void* kalloc(int size){
     return malloc(size);
 }
+void kfree(void* ptr)
+{
+    free(ptr);
+}
+
 
 /* Functions simulating the disk device read / write functions. */
 int read_block(char* buf, int block)
