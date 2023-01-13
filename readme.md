@@ -65,11 +65,13 @@
 
 
 <!-- ABOUT THE PROJECT -->
+<p align="center">
+<img src="https://github.com/joexbayer/NETOS/blob/main/graphics/Screenshot%202023-01-13%20203522.png?raw=true">)
+</p>
+
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
-
-TODO
+32bit Hobby Operatingsystem with Windows 95 style graphics, multitasking and networking!
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
