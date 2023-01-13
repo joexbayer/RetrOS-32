@@ -62,8 +62,8 @@ gfxlib.o: graphics/gfxlib.c include/gfx/gfxlib.h include/pcb.h \
 window.o: graphics/window.c include/gfx/window.h include/stdint.h \
  include/gfx/component.h include/terminal.h include/util.h include/pcb.h \
  include/windowmanager.h include/colors.h include/memory.h \
- include/bitmap.h include/gfx/composition.h include/serial.h \
- include/vesa.h include/vbe.h
+ include/bitmap.h include/gfx/composition.h include/gfx/gfxlib.h \
+ include/serial.h include/vesa.h include/vbe.h
 diskdev.o: kernel/diskdev.c include/diskdev.h include/ata.h \
  include/stdint.h include/util.h include/terminal.h include/serial.h
 interrupts.o: kernel/interrupts.c include/interrupts.h include/stdint.h \

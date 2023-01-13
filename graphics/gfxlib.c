@@ -196,6 +196,8 @@ void gfx_inner_box(int x, int y, int w, int h, int fill)
 	STI();
 }
 
+
+
 void gfx_outer_box(int x, int y, int w, int h, int fill)
 {
 	CLI();
@@ -209,6 +211,12 @@ void gfx_outer_box(int x, int y, int w, int h, int fill)
     gfx_line(x+w, y, h,GFX_LINE_VERTICAL, VESA8_COLOR_DARK_GRAY2);
 
 	STI();
+}
+
+void gfx_button(int x, int y, int w, int h, char* text)
+{
+	gfx_outer_box(x, y, w, h, 0);
+	gfx_draw_text(x+2, y+2, text, VESA8_COLOR_BLACK);
 }
 
 

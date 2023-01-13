@@ -21,13 +21,6 @@
 
 #include <bitmap.h>
 
-enum ASCII {
-	ASCII_BLOCK = 219,
-	ASCII_HORIZONTAL_LINE = 205,
-	ASCII_VERTICAL_LINE = 179,
-	ASCII_DOWN_INTERSECT = 203
-};
-
 /**
  * Individual Process Memory Map:
  * 0x100000 - 0x200000: permanents
@@ -49,12 +42,6 @@ enum ASCII {
  * Start 	0x0100000 (Permanent start)
  */
 
-#define PERMANENT_MEM_START 0x100000
-#define PERMANENT_MEM_END 	0x200000
-#define MEM_START 			0x300000
-#define MEM_END   			0x400000
-#define MEM_CHUNK 			0x400
-#define CHUNKS_SIZE (MEM_END-MEM_START)/MEM_CHUNK
 
 /* Virtual Memory*/
 #define TOTAL_PAGES ((0x300000-0x200000) / PAGE_SIZE)
@@ -68,6 +55,8 @@ struct mem_chunk chunks[CHUNKS_SIZE]; /* TODO: convert to bitmap */
 static struct hashmap memmory_hasmap;
 uint16_t chunks_used = 0;
 static uint32_t memory_permanent_ptr = PERMANENT_MEM_START;
+
+static int memory_process_used = 0;
 
 /* prototypes */
 void init_memory();
@@ -127,6 +116,15 @@ int memory_permanent_usage()
 int memory_permanent_total()
 {
 	return (PERMANENT_MEM_END-PERMANENT_MEM_START)/MEM_CHUNK;
+}
+
+int memory_process_total()
+{
+	return 0x100000*12;
+}
+int memory_process_usage()
+{
+	return memory_process_used;
 }
 
 /* implementation */
@@ -266,6 +264,31 @@ void init_memory()
 
 #define MEMORY_PROCESS_SIZE 500*1024
 
+void free(void* ptr)
+{
+	if(ptr == current_running->allocations->address){
+		struct allocation* next = current_running->allocations;
+		current_running->allocations = current_running->allocations->next;
+		current_running->used_memory -= next->size;
+		memory_process_used -= next->size;
+		kfree(next);
+		return;
+	}
+
+	struct allocation* iter = current_running->allocations;
+	while(iter->next != NULL){
+		if(iter->next->address == ptr){
+			
+			struct allocation* save = iter->next;
+			iter->next = iter->next->next;
+			current_running->used_memory -= save->size;
+			memory_process_used -= save->size;
+			kfree(save);
+			return;
+		}
+	}
+}
+
 void* malloc(int size)
 {
 	if(current_running->allocations == NULL){
@@ -276,6 +299,8 @@ void* malloc(int size)
 
 		current_running->allocations = allocation;
 		current_running->used_memory += size;
+		
+		memory_process_used += size;
 		return (void*) allocation->address;
 	}
 
@@ -292,6 +317,7 @@ void* malloc(int size)
 			iter->next = new;
 			new->next = next;
 			current_running->used_memory += size;
+			memory_process_used += size;
 			return (void*) new->address;
 		}
 		iter = iter->next;
@@ -306,6 +332,7 @@ void* malloc(int size)
 	new->next = NULL;
 
 	iter->next = new;
+	memory_process_used += size;
 	return (void*) new->address;
 }
 

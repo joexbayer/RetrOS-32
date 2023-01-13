@@ -12,6 +12,7 @@
 #include <util.h>
 #include <gfx/component.h>
 #include <gfx/composition.h>
+#include <gfx/gfxlib.h>
 #include <colors.h>
 #include <serial.h>
 #include <vesa.h>
@@ -36,6 +37,8 @@ void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
 
     /* header color */
     vesa_fillrect(buffer, window->x+2, window->y+2, window->width-4, GFX_WINDOW_TITLE_HEIGHT, window->in_focus ? VESA8_COLOR_DARK_BLUE : VESA8_COLOR_DARK_GRAY1);
+    vesa_fillrect(buffer, window->x+2+window->width-GFX_WINDOW_TITLE_HEIGHT-4,  window->y+2, GFX_WINDOW_TITLE_HEIGHT-1, GFX_WINDOW_TITLE_HEIGHT-1, GFX_WINDOW_BG_COLOR);
+    vesa_put_char(buffer, 'X', window->x+2+window->width-GFX_WINDOW_TITLE_HEIGHT-2,  window->y+4, VESA8_COLOR_BLACK);
 
     vesa_write_str(buffer, window->x+4, window->y+4, window->name, VESA8_COLOR_WHITE);
 
@@ -61,6 +64,11 @@ void gfx_default_click(struct gfx_window* window, int x, int y)
 {
     dbgprintf("[GFX WINDOW] Clicked %s\n", window->name);
 
+    if(gfx_point_in_rectangle(window->x+2+window->width-GFX_WINDOW_TITLE_HEIGHT-4,  window->y+2, window->x+2+window->width-GFX_WINDOW_TITLE_HEIGHT-4+GFX_WINDOW_TITLE_HEIGHT-1, window->y+2+GFX_WINDOW_TITLE_HEIGHT-1, x, y)){
+        dbgprintf("[GFX WINDOW] Clicked %s exit button\n", window->name);
+        window->owner->running = ZOMBIE;
+        return; 
+    }
     if(gfx_point_in_rectangle(window->x+2, window->y+2, window->x+window->width-4, window->y+GFX_WINDOW_TITLE_HEIGHT, x, y)){
         dbgprintf("[GFX WINDOW] Clicked %s title\n", window->name);
     }
@@ -107,11 +115,15 @@ void gfx_default_mouse_up(struct gfx_window* window, int x, int y)
 
 int gfx_destory_window(struct gfx_window* w)
 {
+    CLI();
+    
     gfx_composition_remove_window(w);
 
-    kfree(w->inner);
+    free(w->inner);
     w->owner->window = NULL;
     kfree(w);
+
+    STI();
 
     return 0;
 

@@ -12,6 +12,13 @@ enum {
 	FREE
 };
 
+#define PERMANENT_MEM_START 0x100000
+#define PERMANENT_MEM_END 	0x200000
+#define MEM_START 			0x300000
+#define MEM_END   			0x400000
+#define MEM_CHUNK 			0x400
+#define CHUNKS_SIZE (MEM_END-MEM_START)/MEM_CHUNK
+
 
 extern uint32_t* kernel_page_dir;
 
@@ -74,6 +81,9 @@ void memory_total_usage();
 
 void* palloc(int size);
 
+int memory_process_usage();
+int memory_process_total();
 void* malloc(int size);
+void free(void* ptr);
 
 #endif

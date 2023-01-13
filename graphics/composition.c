@@ -69,17 +69,28 @@ void gfx_order_push_front(struct gfx_window* w)
 void gfx_composition_remove_window(struct gfx_window* w)
 {
     acquire(&order_lock);
+    dbgprintf("Removing window\n");
+
+    if(order == w)
+    {
+        order = w->next;
+        if(order != NULL) order->changed = 1;
+        
+        goto gfx_composition_remove_window_exit;
+    }
 
     struct gfx_window* iter = order;
-    while(iter->next != w && iter != NULL)
+    while(iter != NULL && iter->next != w)
         iter = iter->next;
-    
+    dbgprintf("Removing window\n");
     if(iter == NULL){
-        release(&order_lock);
-        return;
+        goto gfx_composition_remove_window_exit;
     }
-    
+
+    dbgprintf("Removing window\n");
     iter->next = w->next;
+    
+gfx_composition_remove_window_exit:
 
     release(&order_lock);
 }
