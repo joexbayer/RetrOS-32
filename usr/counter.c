@@ -13,11 +13,12 @@
 int main()
 {
 	int j = 1;
+	//create_window(100, 100);
 
 	while(j < 10)
 	{	
 	  	printf("Counter: %d!\n", j);
-		sleep(1);
+		sleep(1000);
 		j++;
 	}
 

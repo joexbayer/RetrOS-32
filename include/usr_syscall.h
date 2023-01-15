@@ -11,6 +11,8 @@ void print_put(unsigned char c);
 void exit();
 void sleep(int seconds);
 
+void create_window(int width, int height);
+
 #ifdef __cplusplus
 }
 #endif

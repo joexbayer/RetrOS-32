@@ -78,6 +78,8 @@ void _main(uint32_t magic)
 	add_system_call(SYSCALL_PRTPUT, (syscall_t)&terminal_putchar);
 	add_system_call(SYSCALL_EXIT, (syscall_t)&exit);
 	add_system_call(SYSCALL_SLEEP, (syscall_t)&sleep);
+	add_system_call(SYSCALL_GFX_WINDOW, (syscall_t)&gfx_new_window);
+	
 
 	dbgprintf("TEXT: %d\n", _code_end-_code);
 	dbgprintf("RODATA: %d\n", _ro_e-_ro_s);

@@ -44,3 +44,8 @@ void sleep(int seconds)
 {
     invoke_syscall(SYSCALL_SLEEP, seconds, 0, 0);
 }
+
+void create_window(int width, int height)
+{
+    invoke_syscall(SYSCALL_GFX_WINDOW, width, height, 0);
+}

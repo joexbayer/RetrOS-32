@@ -438,6 +438,8 @@ void init_process_paging(struct pcb* pcb, char* data, int size)
 	directory_insert_table(process_directory, 0x1000000, process_data_table, permissions); 
 	directory_insert_table(process_directory, 0xEFFFFFF0, process_stack_table, permissions);
 
+	dbgprintf("[INIT PROCESS] Mapped memory %x to %x\n", 0x400000 + MEMORY_PROCESS_SIZE*current_running->pid + MEMORY_PROCESS_SIZE, 0x400000 + MEMORY_PROCESS_SIZE*current_running->pid);
+
 	process_directory[0] = kernel_page_dir[0];
 
 	dbgprintf("[INIT PROCESS] Paging done.\n");
