@@ -156,7 +156,7 @@ struct gfx_window* gfx_new_window(int width, int height)
     w->is_moving.state = GFX_WINDOW_STATIC;
     /* Window can just use the name of the owner? */
     memcpy(w->name, current_running->name, strlen(current_running->name));
-    w->in_focus = 1;
+    w->in_focus = 0;
 
     dbgprintf("[Window] Created new window for %s at 0x%x: inner 0x%x (total %x - %x)\n", current_running->name, w, w->inner, sizeof(struct gfx_window), width*height);
 

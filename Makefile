@@ -48,7 +48,7 @@ endif
 
 
 # ---------------- Objects to compile ----------------
-PROGRAMOBJ = bin/shell.o bin/networking.o bin/dhcpd.o
+PROGRAMOBJ = bin/shell.o bin/networking.o bin/dhcpd.o bin/error.o
 
 GFXOBJ = bin/window.o bin/component.o bin/composition.o bin/gfxlib.o
 

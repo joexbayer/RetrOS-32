@@ -101,12 +101,15 @@ void gfx_composition_add_window(struct gfx_window* w)
 
     if(order == NULL){
         order = w;
+        order->in_focus = 1;
         release(&order_lock);
         return;
     }
     
     struct gfx_window* iter = order;
+    order->in_focus = 0;
     order = w;
+    order->in_focus = 1;
     order->next = iter;
 
     release(&order_lock);
@@ -197,4 +200,4 @@ void gfx_compositor_main()
 
 
     }
-}
+}   

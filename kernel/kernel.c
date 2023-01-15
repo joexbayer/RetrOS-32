@@ -66,11 +66,13 @@ void _main(uint32_t magic)
 	register_kthread(&dhcpd, "dhcpd");
 	register_kthread(&gfx_compositor_main, "wServer");
 	register_kthread(&system_info, "System Status");
+	register_kthread(&error_main, "Error");
 
 	start("Shell");
 	start("wServer");
 	start("Networking");
 	start("System Status");
+	//start("Error");
 
 	add_system_call(SYSCALL_SCRPUT, (syscall_t)&scrput);
 	add_system_call(SYSCALL_PRTPUT, (syscall_t)&terminal_putchar);

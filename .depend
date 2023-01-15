@@ -11,7 +11,9 @@ e1000.o: drivers/e1000.c include/e1000.h include/stdint.h include/pci.h \
 keyboard.o: drivers/keyboard.c include/keyboard.h include/stdint.h \
  include/screen.h include/util.h include/colors.h include/serial.h \
  include/interrupts.h include/syscalls.h include/sync.h include/io.h \
- include/vbe.h include/vesa.h
+ include/pcb.h include/windowmanager.h include/gfx/window.h \
+ include/gfx/component.h include/terminal.h include/memory.h \
+ include/bitmap.h include/vbe.h include/vesa.h
 mouse.o: drivers/mouse.c include/stdint.h include/interrupts.h \
  include/syscalls.h include/mouse.h include/io.h include/serial.h \
  include/util.h include/vesa.h include/vbe.h include/colors.h \
@@ -67,10 +69,10 @@ window.o: graphics/window.c include/gfx/window.h include/stdint.h \
 diskdev.o: kernel/diskdev.c include/diskdev.h include/ata.h \
  include/stdint.h include/util.h include/terminal.h include/serial.h
 interrupts.o: kernel/interrupts.c include/interrupts.h include/stdint.h \
- include/syscalls.h include/serial.h include/io.h include/memory.h \
- include/pcb.h include/util.h include/windowmanager.h include/colors.h \
- include/gfx/window.h include/gfx/component.h include/terminal.h \
- include/bitmap.h
+ include/syscalls.h include/pcb.h include/util.h include/windowmanager.h \
+ include/colors.h include/gfx/window.h include/gfx/component.h \
+ include/terminal.h include/memory.h include/bitmap.h include/serial.h \
+ include/io.h include/scheduler.h include/kthreads.h
 io.o: kernel/io.c include/io.h include/stdint.h
 kernel.o: kernel/kernel.c include/windowmanager.h include/stdint.h \
  include/colors.h include/util.h include/pci.h include/terminal.h \

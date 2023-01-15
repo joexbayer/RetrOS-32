@@ -47,6 +47,7 @@ bin/bootblock
 bin/kernel*
 usr/bin/counter
 *.vdi
+filesystem.image
 
 # Executables
 *.exe

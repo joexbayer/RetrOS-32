@@ -10,8 +10,11 @@
  * 
  */
 #include <interrupts.h>
+#include <pcb.h>
 #include <serial.h>
 #include <io.h>
+#include <scheduler.h>
+#include <kthreads.h>
 
 //TEMP
 #include <memory.h>
@@ -31,7 +34,9 @@ void page_fault_interrupt(unsigned long cr2, unsigned long err)
 	dbgprintf("Page fault: 0x%x (Stack: 0x%x) %d\n", cr2, current_running->org_stack, err);
 	dbgprintf("Page: %x, process: %s\n", kernel_page_dir[DIRECTORY_INDEX(cr2)], current_running->name);
 	CLI();
-	while(1);
+	current_running->running = ZOMBIE;
+	start("Error");
+	yield();
 }
 /**
  * @brief Given a IRQ line, it assigns a handler to it. 

@@ -28,23 +28,6 @@
 
 #include <gfx/gfxlib.h>
 
-
-struct text_window w = {
-	.x = 1,
-	.y = 1,
-	.height = SCREEN_HEIGHT-3,
-	.width = SCREEN_WIDTH/1.5,
-	.color = VGA_COLOR_LIGHT_BLUE,
-	.visable = 1,
-	.name = "TERMINAL",
-	.state = {
-		.column = 0,
-		.row = SCREEN_HEIGHT-3,
-		.color = VGA_COLOR_LIGHT_GREY
-	}
-	
-};
-
 #define SHELL_HEIGHT 275
 #define SHELL_POSITION SHELL_HEIGHT-12
 #define SHELL_MAX_SIZE SHELL_HEIGHT/8
@@ -258,8 +241,7 @@ void shell_put(char c)
 void shell_main()
 {
 	dbgprintf("Shell is running!\n");
-	attach_window(&w);
-	
+
 	memset(term.textbuffer, 0, TERMINAL_BUFFER_SIZE);
 	struct gfx_window* window = gfx_new_window(400, SHELL_HEIGHT);
 	terminal_attach(&term);
