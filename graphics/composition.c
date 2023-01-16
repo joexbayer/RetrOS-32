@@ -75,8 +75,10 @@ void gfx_composition_remove_window(struct gfx_window* w)
     if(order == w)
     {
         order = w->next;
-        if(order != NULL) order->changed = 1;
-        
+        if(order != NULL){
+            order->changed = 1;
+            order->in_focus = 1;
+        }
         goto gfx_composition_remove_window_exit;
     }
 

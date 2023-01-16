@@ -14,9 +14,9 @@ enum {
 
 #define PERMANENT_MEM_START 0x100000
 #define PERMANENT_MEM_END 	0x200000
-#define MEM_START 			0x300000
-#define MEM_END   			0x400000
-#define MEM_CHUNK 			0x400
+#define MEM_START 			    0x300000
+#define MEM_END   			    0x400000
+#define MEM_CHUNK 			    0x400
 #define CHUNKS_SIZE (MEM_END-MEM_START)/MEM_CHUNK
 
 
@@ -30,7 +30,7 @@ struct mem_chunk
 	uint8_t status;
 };
 
-enum {
+enum virtual_memory_constants {
   /* Main permission bits. */
   PRESENT = 1,
   READ_WRITE = 2,

@@ -389,7 +389,7 @@ static inline void table_set(uint32_t* page_table, uint32_t vaddr, uint32_t padd
 }
 
 
-static inline void directory_insert_table(uint32_t* directory, uint32_t vaddr, uint32_t* table, int access)
+static inline void directory_set(uint32_t* directory, uint32_t vaddr, uint32_t* table, int access)
 {
   	directory[DIRECTORY_INDEX(vaddr)] = (((uint32_t) table) & ~PAGE_MASK) | access;
 }
@@ -403,7 +403,7 @@ void driver_mmap(uint32_t addr, int size)
 	
 	dbgprintf("[mmap] Page for 0x%x set\n", addr);
 
-	directory_insert_table(kernel_page_dir,  addr, kernel_page_table_e1000, permissions);
+	directory_set(kernel_page_dir,  addr, kernel_page_table_e1000, permissions);
 	return;
 }
 
@@ -458,9 +458,9 @@ void init_process_paging(struct pcb* pcb, char* data, int size)
 	dbgprintf("[INIT PROCESS] Mapped dynamic memory %x to %x\n", start, start);
 
 	/* Insert page and data tables in directory. */
-	directory_insert_table(process_directory, 0x1000000, process_data_table, permissions); 
-	directory_insert_table(process_directory, start, kernel_page_table_memory, permissions);
-	directory_insert_table(process_directory, 0xEFFFFFF0, process_stack_table, permissions);
+	directory_set(process_directory, 0x1000000, process_data_table, permissions); 
+	directory_set(process_directory, start, kernel_page_table_memory, permissions);
+	directory_set(process_directory, 0xEFFFFFF0, process_stack_table, permissions);
 
 	process_directory[0] = kernel_page_dir[0];
 
@@ -486,7 +486,7 @@ void init_paging()
 		for (int addr = 0x400000*i; addr < 0x400000*(i+1); addr += PAGE_SIZE)
 			table_set(kernel_page_table_memory, addr, addr, permissions);
 
-		directory_insert_table(kernel_page_dir, 0x400000*i, kernel_page_table_memory, permissions);
+		directory_set(kernel_page_dir, 0x400000*i, kernel_page_table_memory, permissions);
 	}
 	
 	/**
@@ -500,7 +500,7 @@ void init_paging()
 	table_set(kernel_page_table, (uint32_t) 0xB8000, (uint32_t) 0xB8000, permissions);
 	table_set(kernel_page_table, (uint32_t) 0xB9000, (uint32_t) 0xB9000, permissions);
 
-	directory_insert_table(kernel_page_dir, 0, kernel_page_table, permissions);
+	directory_set(kernel_page_dir, 0, kernel_page_table, permissions);
 
-	directory_insert_table(kernel_page_dir, vbe_info->framebuffer, kernel_page_table_vesa, permissions); 
+	directory_set(kernel_page_dir, vbe_info->framebuffer, kernel_page_table_vesa, permissions); 
 }

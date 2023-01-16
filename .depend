@@ -53,9 +53,9 @@ component.o: graphics/component.c include/gfx/component.h \
 composition.o: graphics/composition.c include/vesa.h include/stdint.h \
  include/vbe.h include/gfx/window.h include/gfx/component.h \
  include/terminal.h include/util.h include/pcb.h include/windowmanager.h \
- include/colors.h include/memory.h include/bitmap.h include/scheduler.h \
- include/serial.h include/rtc.h include/timer.h include/screen.h \
- include/mouse.h include/sync.h
+ include/colors.h include/memory.h include/bitmap.h include/gfx/gfxlib.h \
+ include/scheduler.h include/serial.h include/rtc.h include/timer.h \
+ include/screen.h include/mouse.h include/sync.h
 gfxlib.o: graphics/gfxlib.c include/gfx/gfxlib.h include/pcb.h \
  include/util.h include/stdint.h include/windowmanager.h include/colors.h \
  include/gfx/window.h include/gfx/component.h include/terminal.h \

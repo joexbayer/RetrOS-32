@@ -76,7 +76,7 @@ void __superblock_sync()
 {
 	write_block_offset((char*) &superblock, sizeof(struct superblock), 0, FS_START_LOCATION);
 	write_block_offset((char*) superblock.inode_map, get_bitmap_size(superblock.ninodes), 0, FS_INODE_BMAP_LOCATION);
-	//write_block_offset((char*) superblock.block_map, get_bitmap_size(superblock.nblocks), 0, FS_BLOCK_BMAP_LOCATION);
+	write_block_offset((char*) superblock.block_map, get_bitmap_size(superblock.nblocks), 0, FS_BLOCK_BMAP_LOCATION);
 
 	dbgprintf("[FS] Superblock... (DONE)\n");
 }

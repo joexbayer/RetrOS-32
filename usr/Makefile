@@ -32,16 +32,16 @@ all: new
 
 new: bindir programs
 
-programs: bin/process_entry.o ${USROBJS} 
+programs: bin/entry.o ${USROBJS} 
 	@echo [USR] All user programs created and linked!
 
-bin/%.o: %.c bin/process_entry.o
+bin/%.o: %.c bin/entry.o
 	@$(CC) -o $@ -c $< $(CCFLAGS)
-	@$(LD) -o $(basename $@) $@ bin/process_entry.o $(COMMON) $(LDFLAGS) -T ./process_linker.ld
+	@$(LD) -o $(basename $@) $@ ./bin/entry.o $(COMMON) $(LDFLAGS) -T ./utils/linker.ld
 	@echo [USR] Compiling $(basename $@)
 
-bin/%.o: %.s
-	@echo [USR] Compiling $@
+bin/%.o: */%.s
+	@echo [USR] Compiling dependency $@
 	@$(AS) -o $@ -c $< $(ASFLAGS)
 
 .depend: **/*.[cSh]
