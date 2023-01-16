@@ -352,6 +352,16 @@ void* calloc(int size, int val)
 
 /*  PAGIN / VIRTUAL MEMORY SECTION */
 
+void memory_free_page(void* addr)
+{
+	int bit = (((uint32_t) addr) - 0x200000) / PAGE_SIZE;
+	if(bit < 0 || bit > TOTAL_PAGES)
+		return;
+	
+	unset_bitmap(page_bitmap, bit);
+	memset(addr, 0, PAGE_SIZE);
+}
+
 uint32_t* alloc_page()
 {
 	int bit = get_free_bitmap(page_bitmap, TOTAL_PAGES);
@@ -397,6 +407,12 @@ void driver_mmap(uint32_t addr, int size)
 	return;
 }
 
+void cleanup_process_paging(struct pcb* pcb)
+{
+
+}
+
+
 /**
  * @brief 
  * 
@@ -408,10 +424,9 @@ void driver_mmap(uint32_t addr, int size)
  * 	
  * STACK 		0xEFFFFFF0
  * 				
- * HEAP 		0x1001000?
- * 				~ 0x1000 (8kib)
  * DATA 		0x1000000
  * 
+ * Dynamic		  ~ 512kb
  */
 void init_process_paging(struct pcb* pcb, char* data, int size)
 {
