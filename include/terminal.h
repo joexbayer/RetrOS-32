@@ -17,6 +17,8 @@ void terminal_putchar(char c);
 int32_t twritef(char* fmt, ...);
 
 
+void terminal_commit();
+
 void terminal_attach(struct terminal* term);
 
 

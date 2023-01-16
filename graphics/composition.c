@@ -1,6 +1,7 @@
 #include <vesa.h>
 #include <vbe.h>
 #include <gfx/window.h>
+#include <gfx/gfxlib.h>
 #include <scheduler.h>
 #include <util.h>
 #include <memory.h>
@@ -138,6 +139,26 @@ void gfx_mouse_event(int x, int y, char flags)
         }
     
     /* No window was clicked. */
+}
+
+void gfx_window_debugger()
+{
+    gfx_new_window(300, 300);
+    while (1)
+    {
+        int prog = 0;
+        gfx_draw_rectangle(0, 0, 300, 300, GFX_WINDOW_BG_COLOR);
+        for (struct gfx_window* i = order; i != NULL; i = i->next)
+        {
+            gfx_draw_format_text(5, 5+prog*64, VESA8_COLOR_BLACK, "%s", i->owner->name);
+            gfx_draw_format_text(5, 5+prog*64+8, VESA8_COLOR_BLACK, " - Inner: 0x%x (%d bytes)", i->inner, i->inner_height*i->inner_width);
+            gfx_draw_format_text(5, 5+prog*64+16, VESA8_COLOR_BLACK, " - Location: 0x%x", i);
+            
+            prog++;
+        }
+        sleep(1000);
+        
+    }
 }
 
 void gfx_compositor_main()

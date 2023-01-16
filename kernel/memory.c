@@ -434,11 +434,18 @@ void init_process_paging(struct pcb* pcb, char* data, int size)
 	table_set(process_stack_table, 0xEFFFFFF0, (uint32_t) process_stack_page, permissions);
 	dbgprintf("[INIT PROCESS] Mapped data %x to %x\n",0x400000 & ~PAGE_MASK, process_stack_page);
 
+	/* Dynamic per process memory */
+	int start = 0x400000 + MEMORY_PROCESS_SIZE*pcb->pid;
+	uint32_t* kernel_page_table_memory = alloc_page();
+	for (int addr = start; addr < start+MEMORY_PROCESS_SIZE; addr += PAGE_SIZE)
+		table_set(kernel_page_table_memory, addr, addr, permissions);
+
+	dbgprintf("[INIT PROCESS] Mapped dynamic memory %x to %x\n", start, start);
+
 	/* Insert page and data tables in directory. */
 	directory_insert_table(process_directory, 0x1000000, process_data_table, permissions); 
+	directory_insert_table(process_directory, start, kernel_page_table_memory, permissions);
 	directory_insert_table(process_directory, 0xEFFFFFF0, process_stack_table, permissions);
-
-	dbgprintf("[INIT PROCESS] Mapped memory %x to %x\n", 0x400000 + MEMORY_PROCESS_SIZE*current_running->pid + MEMORY_PROCESS_SIZE, 0x400000 + MEMORY_PROCESS_SIZE*current_running->pid);
 
 	process_directory[0] = kernel_page_dir[0];
 

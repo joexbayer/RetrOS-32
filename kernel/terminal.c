@@ -19,11 +19,9 @@
 static const char newline = '\n';
 
 /**
- * Used to remove old messages and keep newest.
- * Scrolls down the terminal by moving all lines 1 step up.
- * @return void
+ * Writes out terminal buffer to screen.
  */
-static void __terminal_scroll()
+void terminal_commit()
 {	
 	if(current_running->term == NULL)
 		return;
@@ -61,11 +59,7 @@ void terminal_putchar(char c)
 	//unsigned char uc = c;	
 	current_running->term->textbuffer[current_running->term->head] = c;
 	current_running->term->head++;
-
-	if(c == newline)
-	{
-		__terminal_scroll();
-	}
+	gfx_commit();
 }
  
 /**

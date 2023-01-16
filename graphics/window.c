@@ -128,6 +128,7 @@ int gfx_destory_window(struct gfx_window* w)
     return 0;
 
 }
+
 /**
  * @brief 
  * 
@@ -139,12 +140,14 @@ struct gfx_window* gfx_new_window(int width, int height)
 {
     struct gfx_window* w = (struct gfx_window*) kalloc(sizeof(struct gfx_window));
     /* if a userspace program wants a window they will need to allocate inner themself. */
-    w->inner = malloc(width*height);
+    w->inner = calloc(width*height);
 
     w->click = &gfx_default_click;
     w->mousedown = &gfx_default_mouse_down;
     w->mouseup = &gfx_default_mouse_up;
     w->hover = &gfx_default_hover;
+    w->inner_height = height;
+    w->inner_width = width;
     w->width = width + 4;
     w->height = height + 14;
     w->x = 10;

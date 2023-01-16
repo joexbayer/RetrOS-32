@@ -209,6 +209,7 @@ void shell_put(char c)
 		shell_buffer[shell_buffer_length] = newline;
 		shell_buffer_length++;
 		exec_cmd();
+		terminal_commit();
 		reset_shell();
 		return;
 	}
