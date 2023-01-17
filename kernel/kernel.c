@@ -82,18 +82,18 @@ void _main(uint32_t magic)
 	add_system_call(SYSCALL_GFX_WINDOW, (syscall_t)&gfx_new_window);
 	
 
-	dbgprintf("TEXT: %d\n", _code_end-_code);
-	dbgprintf("RODATA: %d\n", _ro_e-_ro_s);
-	dbgprintf("DATA: %d\n", _data_e-_data_s);
-	dbgprintf("BSS: %d\n", _bss_e-_bss_s);
-	dbgprintf("Total: %d (%d sectors)\n", _end-_code, ((_end-_code)/512)+2);
-	dbgprintf("Kernel reaching too: 0x%x\n", _end-_code);
+	dbgprintf("[KERNEL] TEXT: %d\n", _code_end-_code);
+	dbgprintf("[KERNEL] RODATA: %d\n", _ro_e-_ro_s);
+	dbgprintf("[KERNEL] DATA: %d\n", _data_e-_data_s);
+	dbgprintf("[KERNEL] BSS: %d\n", _bss_e-_bss_s);
+	dbgprintf("[KERNEL] Total: %d (%d sectors)\n", _end-_code, ((_end-_code)/512)+2);
+	dbgprintf("[KERNEL] Kernel reaching too: 0x%x\n", _end-_code);
 
 	load_page_directory(kernel_page_dir);
     //scrprintf(0, 10, "Kernal page: %x", kernel_page_dir);
 	enable_paging();
 
-	dbgprintf("Enabled paging!\n");
+	dbgprintf("[KERNEL] Enabled paging!\n");
 	
 	vesa_init();
 

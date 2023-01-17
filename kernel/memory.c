@@ -44,7 +44,7 @@
 
 
 /* Virtual Memory*/
-#define TOTAL_PAGES ((0x300000-0x200000) / PAGE_SIZE)
+#define TOTAL_PAGES ((PAGE_MEM_END-PAGE_MEM_START) / PAGE_SIZE)
 uint32_t* kernel_page_dir = NULL;
 static bitmap_t page_bitmap;
 static int used_pages = 0;
@@ -354,21 +354,25 @@ void* calloc(int size, int val)
 
 void memory_free_page(void* addr)
 {
-	int bit = (((uint32_t) addr) - 0x200000) / PAGE_SIZE;
+	if((uint32_t)addr > PAGE_MEM_END ||  (uint32_t)addr < PAGE_MEM_START)
+		return;
+
+	int bit = (((uint32_t) addr) - PAGE_MEM_START) / PAGE_SIZE;
 	if(bit < 0 || bit > TOTAL_PAGES)
 		return;
 	
 	unset_bitmap(page_bitmap, bit);
-	memset(addr, 0, PAGE_SIZE);
+	dbgprintf("[MEMORY] Free page %d at 0x%x\n", bit, addr);
 }
 
-uint32_t* alloc_page()
+uint32_t* memory_alloc_page()
 {
 	int bit = get_free_bitmap(page_bitmap, TOTAL_PAGES);
-	uint32_t* paddr = (uint32_t*) (0x200000 + (bit * PAGE_SIZE));
+	uint32_t* paddr = (uint32_t*) (PAGE_MEM_START + (bit * PAGE_SIZE));
 	memset(paddr, 0, PAGE_SIZE);
 	used_pages++;
 
+	dbgprintf("[MEMORY] Allocated page %d at 0x%x\n", bit, paddr);
 	return paddr;
 }
 
@@ -397,9 +401,9 @@ static inline void directory_set(uint32_t* directory, uint32_t vaddr, uint32_t* 
 void driver_mmap(uint32_t addr, int size)
 {
 	int permissions = PRESENT | READ_WRITE;
-	uint32_t* kernel_page_table_e1000 = alloc_page();
+	uint32_t* kernel_page_table_e1000 = memory_alloc_page();
 	for (int i = 0; i < size; i++)
-		table_set(kernel_page_table_e1000, (uint32_t) addr+(0x1000*i), (uint32_t) addr+(0x1000*i), permissions);
+		table_set(kernel_page_table_e1000, (uint32_t) addr+(PAGE_SIZE*i), (uint32_t) addr+(PAGE_SIZE*i), permissions);
 	
 	dbgprintf("[mmap] Page for 0x%x set\n", addr);
 
@@ -409,7 +413,20 @@ void driver_mmap(uint32_t addr, int size)
 
 void cleanup_process_paging(struct pcb* pcb)
 {
+	/* Only cleanup pages above 1 to protect kernel table at 0 */
+	for (int i = 1; i < 1024; i++)
+	{
+		uint32_t* table = pcb->page_dir[i];
 
+		if(table == 0 || table == NULL)
+			continue;
+
+		for (int j = 0; j < 1024; j++)
+			if(table[j] != 0 || table[j] != NULL)
+				memory_free_page(table[j]);
+
+		memory_free_page(table);
+	}
 }
 
 
@@ -433,25 +450,25 @@ void init_process_paging(struct pcb* pcb, char* data, int size)
 	int permissions = PRESENT | READ_WRITE | USER;
 
 	/* Allocate directory and tables for data and stack */
-	uint32_t* process_directory = alloc_page();
-	uint32_t* process_data_table = alloc_page();
-	uint32_t* process_stack_table = alloc_page();
+	uint32_t* process_directory = memory_alloc_page();
+	uint32_t* process_data_table = memory_alloc_page();
+	uint32_t* process_stack_table = memory_alloc_page();
 
 	/* Map the process data to a page */
-	uint32_t* process_data_page = alloc_page();
+	uint32_t* process_data_page = memory_alloc_page();
 	memcpy(process_data_page, data, size);
 	table_set(process_data_table, 0x1000000, (uint32_t) process_data_page, permissions);
 	dbgprintf("[INIT PROCESS] Mapped data 0x1000000 to %x\n", process_data_page);
 
 	/* Map the process stack to a page */
-	uint32_t* process_stack_page = alloc_page();
+	uint32_t* process_stack_page = memory_alloc_page();
 	memset(process_stack_page, 0, PAGE_SIZE);
 	table_set(process_stack_table, 0xEFFFFFF0, (uint32_t) process_stack_page, permissions);
-	dbgprintf("[INIT PROCESS] Mapped data %x to %x\n",0x400000 & ~PAGE_MASK, process_stack_page);
+	dbgprintf("[INIT PROCESS] Mapped data %x to %x\n", 0x1000000, process_stack_page);
 
 	/* Dynamic per process memory */
 	int start = 0x400000 + MEMORY_PROCESS_SIZE*pcb->pid;
-	uint32_t* kernel_page_table_memory = alloc_page();
+	uint32_t* kernel_page_table_memory = memory_alloc_page();
 	for (int addr = start; addr < start+MEMORY_PROCESS_SIZE; addr += PAGE_SIZE)
 		table_set(kernel_page_table_memory, addr, addr, permissions);
 
@@ -474,15 +491,15 @@ void init_paging()
 	dbgprintf("[PAGIN] %d free pagable pages.\n", TOTAL_PAGES);
 
 
-	kernel_page_dir = alloc_page();
-	uint32_t* kernel_page_table = alloc_page();
+	kernel_page_dir = memory_alloc_page();
+	uint32_t* kernel_page_table = memory_alloc_page();
 	int permissions = PRESENT | READ_WRITE;
 	for (int addr = 0; addr < 0x400000; addr += PAGE_SIZE)
 		table_set(kernel_page_table, addr, addr, permissions);
 
 	for (int i = 1; i < 7; i++)
 	{
-		uint32_t* kernel_page_table_memory = alloc_page();
+		uint32_t* kernel_page_table_memory = memory_alloc_page();
 		for (int addr = 0x400000*i; addr < 0x400000*(i+1); addr += PAGE_SIZE)
 			table_set(kernel_page_table_memory, addr, addr, permissions);
 
@@ -493,7 +510,7 @@ void init_paging()
 	 * Identity map vesa color framebuffer
 	 * 
 	 */
-	uint32_t* kernel_page_table_vesa = alloc_page();
+	uint32_t* kernel_page_table_vesa = memory_alloc_page();
 	for (int addr = 0; addr < (vbe_info->width*vbe_info->height*(vbe_info->bpp/8))+1; addr += PAGE_SIZE)
 		table_set(kernel_page_table_vesa, vbe_info->framebuffer+addr, vbe_info->framebuffer+addr, permissions);
 	

@@ -14,6 +14,8 @@ enum {
 
 #define PERMANENT_MEM_START 0x100000
 #define PERMANENT_MEM_END 	0x200000
+#define PAGE_MEM_START      0x200000
+#define PAGE_MEM_END        0x300000
 #define MEM_START 			    0x300000
 #define MEM_END   			    0x400000
 #define MEM_CHUNK 			    0x400
@@ -74,7 +76,9 @@ int memory_pages_usage();
 
 void load_page_directory();
 void enable_paging();
+
 void init_paging();
+void cleanup_process_paging(struct pcb* pcb);
 
 int memory_get_usage(char* name);
 void memory_total_usage();
