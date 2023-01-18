@@ -266,7 +266,7 @@ void init_memory()
 
 void free(void* ptr)
 {
-	if(ptr == current_running->allocations->address){
+	if((int)ptr == current_running->allocations->address){
 		struct allocation* next = current_running->allocations;
 		current_running->allocations = current_running->allocations->next;
 		current_running->used_memory -= next->size;
@@ -277,7 +277,7 @@ void free(void* ptr)
 
 	struct allocation* iter = current_running->allocations;
 	while(iter->next != NULL){
-		if(iter->next->address == ptr){
+		if(iter->next->address == (int)ptr){
 			
 			struct allocation* save = iter->next;
 			iter->next = iter->next->next;
@@ -416,17 +416,15 @@ void cleanup_process_paging(struct pcb* pcb)
 	/* Only cleanup pages above 1 to protect kernel table at 0 */
 	for (int i = 1; i < 1024; i++)
 	{
-		uint32_t* table = pcb->page_dir[i];
-
-		if(table == 0 || table == NULL)
-			continue;
-
+		uint32_t* table = (uint32_t*) pcb->page_dir[i];
 		for (int j = 0; j < 1024; j++)
-			if(table[j] != 0 || table[j] != NULL)
-				memory_free_page(table[j]);
+			if(table[j] != 0)
+				memory_free_page((void*)table[j]);
 
 		memory_free_page(table);
 	}
+
+	memory_free_page(pcb->page_dir);
 }
 
 
