@@ -356,6 +356,9 @@ int pcb_cleanup(int pid)
 
 	pcb_count--;
 	
+	if(pcbs[pid].is_process)
+		cleanup_process_paging(&pcbs[pid]);
+
 	memset(&pcbs[pid], 0, sizeof(struct pcb));
 
 	pcbs[pid].running = STOPPED;
