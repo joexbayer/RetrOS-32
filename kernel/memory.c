@@ -413,8 +413,27 @@ void driver_mmap(uint32_t addr, int size)
 
 void cleanup_process_paging(struct pcb* pcb)
 {
-	/* Only cleanup pages above 1 to protect kernel table at 0 */
-	for (int i = 1; i < 1024; i++)
+	uint32_t directory = (uint32_t)pcb->page_dir;
+	uint32_t data_table = (uint32_t)pcb->page_dir[DIRECTORY_INDEX(0x1000000)] & ~PAGE_MASK;
+	uint32_t data_page = (uint32_t)((uint32_t*)(pcb->page_dir[DIRECTORY_INDEX(0x1000000)] & ~PAGE_MASK))[TABLE_INDEX(0x1000000)]& ~PAGE_MASK;
+
+	uint32_t stack_table = (uint32_t)pcb->page_dir[DIRECTORY_INDEX(0x1000000)] & ~PAGE_MASK;
+	uint32_t stack_page = (uint32_t)((uint32_t*)(pcb->page_dir[DIRECTORY_INDEX(0x1000000)] & ~PAGE_MASK))[TABLE_INDEX(0x1000000)]& ~PAGE_MASK;
+
+	uint32_t dynamic_mem = (uint32_t)pcb->page_dir[DIRECTORY_INDEX((0x400000 + MEMORY_PROCESS_SIZE*pcb->pid))] & ~PAGE_MASK;
+
+	dbgprintf("[Memory] Cleaning up pages from pcb.\n");
+
+	memory_free_page(stack_page);
+	memory_free_page(stack_table);
+
+	memory_free_page(data_page);
+	memory_free_page(data_table);
+
+	memory_free_page(dynamic_mem);
+	memory_free_page(directory);
+	/* Only cleanup pages above 1 to protect kernel table at 0 
+	for (int i = 0; i < 1024; i++)
 	{
 		uint32_t* table = (uint32_t*) pcb->page_dir[i];
 		for (int j = 0; j < 1024; j++)
@@ -424,7 +443,7 @@ void cleanup_process_paging(struct pcb* pcb)
 		memory_free_page(table);
 	}
 
-	memory_free_page(pcb->page_dir);
+	memory_free_page(pcb->page_dir);*/
 }
 
 
