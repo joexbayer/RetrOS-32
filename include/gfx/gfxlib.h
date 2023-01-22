@@ -26,6 +26,8 @@ void gfx_outer_box(int x, int y, int w, int h, int fill);
 
 void gfx_button(int x, int y, int w, int h, char* text);
 
+void gfx_set_color(unsigned char);
+
 void gfx_commit();
 
 #endif // !__GFXLIB_H

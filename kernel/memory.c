@@ -424,14 +424,14 @@ void cleanup_process_paging(struct pcb* pcb)
 
 	dbgprintf("[Memory] Cleaning up pages from pcb.\n");
 
-	memory_free_page(stack_page);
-	memory_free_page(stack_table);
+	memory_free_page((void*) stack_page);
+	memory_free_page((void*) stack_table);
 
-	memory_free_page(data_page);
-	memory_free_page(data_table);
+	memory_free_page((void*) data_page);
+	memory_free_page((void*) data_table);
 
-	memory_free_page(dynamic_mem);
-	memory_free_page(directory);
+	memory_free_page((void*) dynamic_mem);
+	memory_free_page((void*) directory);
 	/* Only cleanup pages above 1 to protect kernel table at 0 
 	for (int i = 0; i < 1024; i++)
 	{

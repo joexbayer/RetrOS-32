@@ -41,7 +41,7 @@ bin/%.o: %.c bin/entry.o
 	@echo [USR] Compiling $(basename $@)
 
 bin/%.o: */%.s
-	@echo [USR] Compiling dependency $@
+	@echo [USR] Compiling dependency $<
 	@$(AS) -o $@ -c $< $(ASFLAGS)
 
 .depend: **/*.[cSh]

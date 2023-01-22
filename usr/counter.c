@@ -8,7 +8,7 @@
  * @copyright Copyright (c) 2022
  * 
  */
-#include <printf.h>
+#include <lib/printf.h>
 
 int main()
 {

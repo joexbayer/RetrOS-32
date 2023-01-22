@@ -44,6 +44,7 @@ struct gfx_window {
     struct pcb* owner;
 
     uint8_t in_focus;
+    uint8_t color;
 
     char changed;
 };

@@ -20,6 +20,11 @@
     (type *)( (char *)__mptr - offsetof(type,member) );})
 
 
+struct coordiante {
+    int x;
+    int y;
+};
+
 int strlen(const char* str);
 uint32_t strncmp(const char* str, const char* str2, uint32_t len);
 

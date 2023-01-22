@@ -86,24 +86,24 @@ kernel: $(KERNELOBJ)
 
 # For assembling and compiling all .c and .s files.
 bin/%.o: */%.c
-	@$(ECHO) [KERNEL]     Compiling $@
+	@$(ECHO) [KERNEL]     Compiling $<
 	@$(CC) -o $@ -c $< $(CCFLAGS)
 
 bin/%.o: */*/%.c
-	@$(ECHO) [PROGRAM]    Compiling $@
+	@$(ECHO) [PROGRAM]    Compiling $<
 	@$(CC) -o $@ -c $< $(CCFLAGS)
 
 bin/%.o: */%.s
-	@$(ECHO) [KERNEL]     Compiling $@
+	@$(ECHO) [KERNEL]     Compiling $<
 	@$(AS) -o $@ -c $< $(ASFLAGS)
 
 bin/build: ./tools/build.c
 	@gcc ./tools/build.c -o ./bin/build
-	@echo [BUILD]      Compiling $@
+	@echo [BUILD]      Compiling $<
 
 bin/mkfs: fs_test bin/fs.o bin/bitmap.o ./tools/mkfs.c
 	@gcc tools/mkfs.c bin/bitmap.o fs/bin/inode.o -I include/  -O2 -m32 -Wall -g --no-builtin -o ./bin/mkfs
-	@echo [BUILD]      Compiling $@
+	@echo [BUILD]      Compiling $<
 	@./bin/mkfs
 
 tools: bin/build bin/mkfs

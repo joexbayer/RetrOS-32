@@ -9,7 +9,7 @@
  * 
  */
 #include <syscall_helper.h>
-#include <usr_syscall.h>
+#include <lib/syscall.h>
 #include <stdint.h>
 #include <util.h>
 

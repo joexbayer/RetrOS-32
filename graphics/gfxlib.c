@@ -130,6 +130,11 @@ int gfx_draw_text(int x, int y, char* str, char color)
     return 0;
 }
 
+void gfx_set_color(unsigned char c)
+{
+	current_running->gfx_window->color = c;
+}
+
 void gfx_line(int x, int y, int length, int option, int color)
 {
 

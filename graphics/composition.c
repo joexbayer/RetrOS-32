@@ -137,7 +137,8 @@ void gfx_mouse_event(int x, int y, char flags)
                 i->mouseup(i, x, y);
             }
 
-            return i->hover(i, x, y);       
+            i->hover(i, x, y);
+            return;
         }
     
     /* No window was clicked. */

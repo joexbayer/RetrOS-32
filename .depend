@@ -135,9 +135,9 @@ hashmap.o: lib/hashmap.c include/hashmap.h include/memory.h \
  include/colors.h include/gfx/window.h include/gfx/component.h \
  include/terminal.h include/bitmap.h
 list.o: lib/list.c include/list.h
-printf.o: lib/printf.c include/stdarg.h include/usr_syscall.h \
+printf.o: lib/printf.c include/stdarg.h include/lib/syscall.h \
  include/util.h include/stdint.h
-syscall.o: lib/syscall.c include/syscall_helper.h include/usr_syscall.h \
+syscall.o: lib/syscall.c include/syscall_helper.h include/lib/syscall.h \
  include/stdint.h include/util.h
 util.o: lib/util.c include/util.h include/stdint.h
 arp.o: net/arp.c include/net/arp.h include/stdint.h include/net/utils.h \
@@ -215,4 +215,4 @@ build.o: tools/build.c include/stdint.h
 mkfs.o: tools/mkfs.c include/stdint.h include/fs/fs.h include/fs/inode.h \
  include/rtc.h include/fs/superblock.h include/bitmap.h \
  include/fs/directory.h
-counter.o: usr/counter.c include/printf.h include/usr_syscall.h
+counter.o: usr/counter.c include/lib/printf.h include/lib/syscall.h

@@ -43,7 +43,10 @@ inline void vesa_line_vertical(uint8_t* buffer, int x, int y, int length, int co
 void vesa_fillrect(uint8_t* buffer, int x, int y, int w, int h, int color);
 
 int vesa_printf(uint8_t* buffer, int32_t x, int32_t y, int color, char* fmt, ...);
-
+void vesa_inner_box(uint8_t* buffer, int x, int y, int w, int h);
 void vesa_init();
+
+void vesa_put_icon16(uint8_t* buffer, int x, int y);
+void vesa_put_icon32(uint8_t* buffer, int x, int y);
 
 #endif /* DFA8C135_4052_4480_8A44_09EA9D67997D */

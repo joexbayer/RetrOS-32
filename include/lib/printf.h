@@ -1,7 +1,7 @@
 #ifndef __PRINTF_H
 #define __PRINTF_H
 
-#include <usr_syscall.h>
+#include <lib/syscall.h>
 
 #ifdef __cplusplus
 extern "C"

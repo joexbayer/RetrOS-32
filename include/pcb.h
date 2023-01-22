@@ -1,6 +1,8 @@
 #ifndef PCB_H
 #define PCB_H
 
+struct pcb;
+
 #include <util.h>
 #include <windowmanager.h>
 #include <gfx/window.h>
