@@ -130,8 +130,8 @@ int gfx_destory_window(struct gfx_window* w)
 }
 
 /**
- * @brief 
- * 
+ * @brief Creates a new window and attaches it to the process who called the function.
+ * Allocates the inner buffer in the processes personal memory.
  * @param width 
  * @param height 
  * @return struct gfx_window* 

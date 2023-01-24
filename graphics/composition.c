@@ -1,3 +1,13 @@
+/**
+ * @file composition.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Window Server composition and window manage api.
+ * @version 0.1
+ * @date 2023-01-24
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ */
 #include <vesa.h>
 #include <vbe.h>
 #include <gfx/window.h>
@@ -31,7 +41,6 @@ int gfx_check_changes(struct gfx_window* w)
     while(w != NULL){
         if(w->changed)
             return 1;
-
         w = w->next;
     }
     return 0;
@@ -45,6 +54,11 @@ void gfx_recursive_draw(struct gfx_window* w)
     gfx_draw_window(gfx_composition_buffer, w);
 }
 
+/**
+ * @brief Push a window to the front of "order" list.
+ * Changing its z-axis position in the framebuffer.
+ * @param w 
+ */
 void gfx_order_push_front(struct gfx_window* w)
 {
     acquire(&order_lock);
@@ -67,10 +81,14 @@ void gfx_order_push_front(struct gfx_window* w)
     release(&order_lock);
 }
 
+/**
+ * @brief Removes a window from the "order" list.
+ * Important keep the order list intact even if removing the first element.
+ * @param w 
+ */
 void gfx_composition_remove_window(struct gfx_window* w)
 {
     acquire(&order_lock);
-    dbgprintf("Removing window\n");
 
     if(order == w)
     {
@@ -85,19 +103,23 @@ void gfx_composition_remove_window(struct gfx_window* w)
     struct gfx_window* iter = order;
     while(iter != NULL && iter->next != w)
         iter = iter->next;
-    dbgprintf("Removing window\n");
     if(iter == NULL){
         goto gfx_composition_remove_window_exit;
     }
 
-    dbgprintf("Removing window\n");
     iter->next = w->next;
     
 gfx_composition_remove_window_exit:
 
+    dbgprintf("[GFX] Removing window\n");
     release(&order_lock);
 }
 
+/**
+ * @brief Adds new window in the "order" list.
+ * 
+ * @param w 
+ */
 void gfx_composition_add_window(struct gfx_window* w)
 {
     acquire(&order_lock);
@@ -118,6 +140,13 @@ void gfx_composition_add_window(struct gfx_window* w)
     release(&order_lock);
 }
 
+/**
+ * @brief raw mouse event handler for window API.
+ * 
+ * @param x 
+ * @param y 
+ * @param flags 
+ */
 void gfx_mouse_event(int x, int y, char flags)
 {
     for (struct gfx_window* i = order; i != NULL; i = i->next)
@@ -144,6 +173,9 @@ void gfx_mouse_event(int x, int y, char flags)
     /* No window was clicked. */
 }
 
+/**
+ * @brief Sample kthread to debug windows
+ */
 void gfx_window_debugger()
 {
     gfx_new_window(300, 300);
@@ -164,6 +196,15 @@ void gfx_window_debugger()
     }
 }
 
+/**
+ * @brief Main window server kthread entry function
+ * Allocates a second framebuffer that will be memcpy'd to the VGA framebuffer.
+ * 
+ * Handles mouse events and pushes them to correct window.
+ * Only redraws screen if a window has changed.
+ * 
+ * In current state its still very slow.
+ */
 void gfx_compositor_main()
 {
     int buffer_size = vbe_info->width*vbe_info->height*(vbe_info->bpp/8)+1;

@@ -74,6 +74,7 @@ interrupts.o: kernel/interrupts.c include/interrupts.h include/stdint.h \
  include/terminal.h include/memory.h include/bitmap.h include/serial.h \
  include/io.h include/scheduler.h include/kthreads.h
 io.o: kernel/io.c include/io.h include/stdint.h
+ipc.o: kernel/ipc.c include/ipc.h include/stdint.h
 kernel.o: kernel/kernel.c include/windowmanager.h include/stdint.h \
  include/colors.h include/util.h include/pci.h include/terminal.h \
  include/keyboard.h include/interrupts.h include/syscalls.h \
