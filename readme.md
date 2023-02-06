@@ -171,23 +171,34 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 
 - [x] Bootloader
 - [x] Multi-threaded pre-emptive scheduling
-- [x] Keyboard, PIT, VGA, RTC, Serial drivers.
-- [x] E1000 NIC driver.
+- [x] Interrupt handling
+- [x] Keyboard, PIT, VGA (640x480x8), RTC, Serial drivers, E1000
+- [x] PCI.
 - [x] Networkstack
   - [x] Ethernet, IP, ARP, UDP
   - [x] Socket API
   - [x] DHCP
   - [x] DNS
   - [ ] TCP
+  - [ ] HTTP
 - [x] ATA IDE Driver
-  - [x] INODE Filesystem
+  - [x] Ext2 (like) Filesystem
   - [x] read / write
 - [x] Memory
-  - [x] Virtual Memory
+  - [x] 32bit Virtual Memory
+  - [x] kalloc / kfree (kernel)
+  - [x] malloc / free (process) 
 - [x] Window Manager
   - [x] Windows
   - [ ] Dynamic resize
-
+- [x] Terminal, Window Server, Process Informtaion.
+- [x] Library (printf, memcpy, etc)
+- [ ] IPC
+- [x] System calls
+- [x] Tools
+  - [x] Build
+  - [x] mkfs
+  - [x] Testing
 ### General Improvements
 
 1. Less hardcoded arrays, more linked lists.
