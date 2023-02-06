@@ -115,8 +115,11 @@ int gethostname(char* hostname)
  
     sendto(__dns_socket, (char*)buf, question_size, 0, (struct sockaddr*)&dest, sizeof(dest));
     int ret = recv(__dns_socket, buf, 2048, 0);
-    if(ret <= 0)
+    if(ret <= 0){
+        //release(&__dns_mutex);
+        close(__dns_socket);
         return 0;
+    }
     
     struct dns_answer* answer;
     int last_length = 0;
@@ -143,20 +146,21 @@ int gethostname(char* hostname)
             break;
         }
 
-        /*twritef("DNS: %x name\n", ntohs(answer->name));
-        twritef("DNS: %x type\n",  ntohs(answer->type));
-        twritef("DNS: %x _class\n",ntohs(answer->_class));
-        twritef("DNS: %x ttl\n", ntohl(answer->ttl));
-        twritef("DNS: %x len\n", ntohs(answer->data_len));*/
+        dbgprintf("[DNS]: %x name\n", ntohs(answer->name));
+        dbgprintf("[DNS]: %x type\n",  ntohs(answer->type));
+        dbgprintf("[DNS]: %x _class\n",ntohs(answer->_class));
+        dbgprintf("[DNS]: %x ttl\n", ntohl(answer->ttl));
+        dbgprintf("[DNS]: %x len\n", ntohs(answer->data_len));
 
         if(result <= 0)
         {
-            //twriteln("[DNS] Unable to resolve hostname.");
+            dbgprintf("[DNS] Unable to resolve hostname.");
+            //release(&__dns_mutex);
             close(__dns_socket);
             return -1;
         }
 
-        //twritef("[DNS] (%s at %i)\n", hostname, result);
+        dbgprintf("[DNS] (%s at %i)\n", hostname, result);
 
         __dns_add_cache(hostname_save, result);
 

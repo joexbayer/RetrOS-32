@@ -26,7 +26,7 @@ struct sock;
 
 #define INADDR_ANY 1
 
-#define BUFFERS_PER_SOCKET 5
+#define BUFFERS_PER_SOCKET 15
 
 typedef uint8_t socket_t;
 typedef uint32_t socklen_t;

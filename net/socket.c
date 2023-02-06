@@ -69,7 +69,9 @@ static int __sock_add_packet(char* buffer, uint16_t len, int socket_index)
     int next = socket_table[socket_index]->next_write_buffer;
     if(socket_table[socket_index]->buffer_lens[next] > 0){
         release(&socket_table[socket_index]->sock_lock);
+        dbgprintf("[SOCKET] next was not empty! %d\n", socket_table[socket_index]->buffer_lens[next]);
         return -1; /* TODO: Something is wrong if next is already filled... */
+    
     }
 
     /* If a free buffer exist add packet to buffer. */
@@ -304,6 +306,7 @@ socket_t socket(int domain, int type, int protocol)
     int current = get_free_bitmap(socket_map, MAX_NUMBER_OF_SOCKETS);
 
     socket_table[current] = kalloc(sizeof(struct sock)); /* Allocate space for a socket. Needs to be freed. */
+    memset(socket_table[current], 0, sizeof(struct sock));
     socket_table[current]->domain = domain;
     socket_table[current]->protocol = protocol;
     socket_table[current]->type = type;

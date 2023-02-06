@@ -248,6 +248,8 @@ void dhcpd()
         read = recv_timeout(dhcp_socket, &buffer, 2048, 0, 2);
     }
     //twriteln("DHCP done!");
+
+    dbgprintf("[DHCP] IP: %i\n[DHCP] GW: %i\n[DHCP] DNS: %i\n[DHCP] State: %s\n", dhcp_state.ip, dhcp_state.gateway, dhcp_state.dns);
     
     close(dhcp_socket);
     

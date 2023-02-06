@@ -62,7 +62,7 @@ int udp_parse(struct sk_buff* skb){
 
 	int ret = udp_deliver_packet(skb->hdr.ip->daddr, skb->hdr.udp->destport, (char*)skb->data, payload_size);
 	if(ret <= 0)
-		dbgprintf("[UDP][Warning] socket buffer full!!");
+		dbgprintf("[UDP][Warning] socket buffer full!! %d\n", ret);
 		
 	dbgprintf("[UDP] PORT %d -> %d, len: %d.\n", hdr->srcport, hdr->destport, hdr->udp_length);
 

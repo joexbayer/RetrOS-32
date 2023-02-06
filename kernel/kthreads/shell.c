@@ -108,7 +108,8 @@ void exec_cmd()
 	if(strncmp("dig", shell_buffer, strlen("dig"))){
 		char* hostname = shell_buffer+strlen("dig")+1;
 		hostname[strlen(hostname)-1] = 0;
-		gethostname(hostname);
+		int ret = gethostname(hostname);
+		twritef("%s IN (A) %i\n", hostname, ret);
 		return;
 	}
 
@@ -211,6 +212,7 @@ void shell_put(char c)
 		exec_cmd();
 		terminal_commit();
 		reset_shell();
+		
 		return;
 	}
 
