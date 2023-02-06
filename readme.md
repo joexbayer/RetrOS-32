@@ -188,8 +188,11 @@ _For more examples, please refer to the [Documentation](https://example.com)_
   - [x] 32bit Virtual Memory
   - [x] kalloc / kfree (kernel)
   - [x] malloc / free (process) 
-- [x] Window Manager
-  - [x] Windows
+- [x] Graphics
+  - [x] Window Manager
+  - [x] GFXLib
+  - [x] Double framebuffer rendering
+  - [x] Mouse events
   - [ ] Dynamic resize
 - [x] Terminal, Window Server, Process Informtaion.
 - [x] Library (printf, memcpy, etc)
