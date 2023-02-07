@@ -58,12 +58,12 @@ int gfx_draw_rectangle(int x, int y, int width, int height, char color)
     if(x < 0 || y < 0 || x+width > current_running->gfx_window->width || y+height > current_running->gfx_window->height)
         return -2;
 
-    CLI();
+    //CLI();
     int i, j;
     for (j = y; j < (y+height); j++)
         for (i = x; i < (x+width); i++)
             putpixel(current_running->gfx_window->inner, j, i, color, current_running->gfx_window->height-18);
-    STI();
+    //STI();
 
     //current_running->gfx_window->changed = 1;
     return 0;
@@ -84,7 +84,7 @@ int gfx_draw_char(int x, int y, char c, char color)
     if(current_running->gfx_window == NULL)
         return -1;
 
-    CLI();
+    //CLI();
     for (int l = 0; l < 8; l++) {
         for (int i = 8; i >= 0; i--) {
             if (font8x8_basic[c][l] & (1 << i)) {
@@ -95,7 +95,7 @@ int gfx_draw_char(int x, int y, char c, char color)
             }
         }
     }
-    STI();
+    //STI();
 
 	//dbgprintf("[GFX] %s put %c\n", current_running->name, c);
     //current_running->gfx_window->changed = 1;
@@ -138,7 +138,7 @@ void gfx_set_color(unsigned char c)
 void gfx_line(int x, int y, int length, int option, int color)
 {
 
-	CLI();
+	//CLI();
 	switch (option)
 	{
 	case GFX_LINE_INNER_VERTICAL:
@@ -183,12 +183,12 @@ void gfx_line(int x, int y, int length, int option, int color)
 	default:
 		break;
 	}
-	STI();
+	//STI();
 }
 
 void gfx_inner_box(int x, int y, int w, int h, int fill)
 {	
-	CLI();
+	//CLI();
 	if(fill)
     	gfx_draw_rectangle(x, y, w, h, VESA8_COLOR_LIGHT_GRAY3);
 
@@ -198,14 +198,14 @@ void gfx_inner_box(int x, int y, int w, int h, int fill)
     gfx_line(x, y, h,GFX_LINE_VERTICAL, VESA8_COLOR_DARK_GRAY2);
     gfx_line(x+w, y, h, GFX_LINE_VERTICAL, VESA8_COLOR_LIGHT_GRAY1);
 
-	STI();
+	//STI();
 }
 
 
 
 void gfx_outer_box(int x, int y, int w, int h, int fill)
 {
-	CLI();
+	//CLI();
 	if(fill)
     	gfx_draw_rectangle(x, y, w, h, VESA8_COLOR_LIGHT_GRAY3);
 
@@ -215,7 +215,7 @@ void gfx_outer_box(int x, int y, int w, int h, int fill)
     gfx_line(x, y, h, GFX_LINE_VERTICAL,VESA8_COLOR_LIGHT_GRAY1);
     gfx_line(x+w, y, h,GFX_LINE_VERTICAL, VESA8_COLOR_DARK_GRAY2);
 
-	STI();
+	//STI();
 }
 
 void gfx_button(int x, int y, int w, int h, char* text)
