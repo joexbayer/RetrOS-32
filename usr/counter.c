@@ -17,7 +17,7 @@ int main()
 	while(j < 10)
 	{	
 	  	printf("Counter: %d!\n", j);
-		sleep(500);
+		sleep(50);
 		j++;
 	}
 
