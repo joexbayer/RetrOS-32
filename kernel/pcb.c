@@ -22,7 +22,7 @@
 #include <windowmanager.h>
 #include <gfx/gfxlib.h>
 
-#define stack_size 0x2000
+#define STACK_SIZE 0x2000
 
 static const char* status[] = {"stopped ", "running ", "new     ", "blocked ", "sleeping", "zombie"};
 
@@ -331,7 +331,6 @@ void pcb_set_running(int pid)
  */
 int pcb_cleanup(int pid)
 {
-
 	if(pid < 0 || pid > MAX_NUM_OF_PCBS)
 		return -1;
 
@@ -343,7 +342,8 @@ int pcb_cleanup(int pid)
 		gfx_destory_window(pcbs[pid].gfx_window);
 
 	pcb_queue_remove(&pcbs[pid]);
-	kfree((void*)pcbs[pid].org_stack);
+	dbgprintf("[PCB] Cleanup on PID %d stack: 0x%x (original: 0x%x)\n", pid, pcbs[pid].esp, pcbs[pid].org_stack);
+	dbgprintf("[PCB] Cleanup on PID %d kstack: 0x%x\n", pid, pcbs[pid].k_esp);
 
 	struct allocation* iter = pcbs[pid].allocations;
 	while(iter != NULL)
@@ -353,11 +353,12 @@ int pcb_cleanup(int pid)
 		iter = next;
 	}
 	
-
 	pcb_count--;
 	
 	if(pcbs[pid].is_process)
 		cleanup_process_paging(&pcbs[pid]);
+	else
+		kfree((void*)pcbs[pid].org_stack);
 
 	memset(&pcbs[pid], 0, sizeof(struct pcb));
 
@@ -381,7 +382,7 @@ int pcb_cleanup(int pid)
  */
 int init_pcb(int pid, struct pcb* pcb, void (*entry)(), char* name)
 {
-	uint32_t stack = (uint32_t) kalloc(stack_size);
+	uint32_t stack = (uint32_t) kalloc(STACK_SIZE);
 	if((void*)stack == NULL)
 	{
 		dbgprintf("[PCB] STACK == NULL");
@@ -389,8 +390,8 @@ int init_pcb(int pid, struct pcb* pcb, void (*entry)(), char* name)
 	}
 
 	/* Stack grows down so we want the upper part of allocated memory.*/ 
-	pcb->ebp = stack+stack_size-1;
-	pcb->esp = stack+stack_size-1;
+	pcb->ebp = stack+STACK_SIZE-1;
+	pcb->esp = stack+STACK_SIZE-1;
 	pcb->k_esp = pcb->esp;
 	pcb->k_ebp = pcb->k_esp;
 	pcb->eip = entry;
@@ -434,7 +435,7 @@ int create_process(char* program)
 	memcpy(pcb->name, pname, strlen(pname)+1);
 	pcb->esp = 0xEFFFFFF0;
 	pcb->ebp = pcb->esp;
-	pcb->k_esp = (uint32_t) kalloc(stack_size)+stack_size-1;
+	pcb->k_esp = (uint32_t) kalloc(STACK_SIZE)+STACK_SIZE-1;
 	dbgprintf("[INIT PROCESS] Setup PCB %d for %s\n", i, program);
 	pcb->k_ebp = pcb->k_esp;
 	//pcb->window = pcbs[2].window;

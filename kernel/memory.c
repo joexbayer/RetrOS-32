@@ -154,7 +154,7 @@ void* __alloc_internal(int size)
 	int chunks_needed = 0;
 	while(chunks_needed*MEM_CHUNK < size)
 		chunks_needed++;
-	
+
 
 	if(!chunks_needed) chunks_needed = 1;
 	for (int i = 0; i < CHUNKS_SIZE; i++)
@@ -172,9 +172,8 @@ void* __alloc_internal(int size)
 			
 			chunks[i].chunks_used = chunks_needed;
 			chunks_used += chunks_needed;
-			
+
 			release(&mem_lock);
-			memset((char*)chunks[i].from, 0, size);
 			return chunks[i].from;
 		}	
 	}
@@ -221,7 +220,7 @@ void kfree(void* ptr)
 				release(&mem_lock);
 				return; /* Tried to free memory not used. */
 			}
-
+			
 			int used = chunks[i].chunks_used;
 			for (int j = 0; j < used; j++)
 			{

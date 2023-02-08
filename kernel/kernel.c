@@ -72,7 +72,7 @@ void _main(uint32_t magic)
 	start("Shell");
 	start("wServer");
 	start("Networking");
-	start("Window Debugger");
+	//start("Window Debugger");
 	//start("Error");
 
 	add_system_call(SYSCALL_SCRPUT, (syscall_t)&scrput);

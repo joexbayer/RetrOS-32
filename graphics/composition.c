@@ -231,7 +231,7 @@ void gfx_compositor_main()
             memset(gfx_composition_buffer, VESA8_COLOR_DARK_TURQUOISE, buffer_size);
             /* Draw windows in reversed order */
             //acquire(&order_lock);
-            gfx_recursive_draw(order);
+            gfx_recursive_draw(order);  
             //release(&order_lock);
         }
 
