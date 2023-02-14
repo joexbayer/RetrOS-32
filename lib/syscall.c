@@ -49,3 +49,8 @@ void create_window(int width, int height)
 {
     invoke_syscall(SYSCALL_GFX_WINDOW, width, height, 0);
 }
+
+int gfx_draw_syscall(int option, void* data)
+{
+    invoke_syscall(SYSCALL_GFX_DRAW, option, data, 0);
+}

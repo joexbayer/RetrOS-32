@@ -241,6 +241,8 @@ void shell_put(char c)
 	shell_column++;
 }
 
+#include <gfx/api.h>
+
 void shell_main()
 {
 	dbgprintf("Shell is running!\n");

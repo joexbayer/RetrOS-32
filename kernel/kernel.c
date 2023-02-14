@@ -25,6 +25,7 @@
 
 #include <gfx/window.h>
 #include <gfx/composition.h>
+#include <gfx/api.h>
 
 /* This functions always needs to be on top? */
 void _main(uint32_t magic) 
@@ -80,6 +81,7 @@ void _main(uint32_t magic)
 	add_system_call(SYSCALL_EXIT, (syscall_t)&exit);
 	add_system_call(SYSCALL_SLEEP, (syscall_t)&sleep);
 	add_system_call(SYSCALL_GFX_WINDOW, (syscall_t)&gfx_new_window);
+	add_system_call(SYSCALL_GFX_DRAW, (syscall_t)&gfx_syscall_hook);
 	
 
 	dbgprintf("[KERNEL] TEXT: %d\n", _code_end-_code);
