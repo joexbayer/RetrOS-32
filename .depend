@@ -92,7 +92,8 @@ kernel.o: kernel/kernel.c include/windowmanager.h include/stdint.h \
  include/net/dns.h include/fs/fs.h include/fs/inode.h \
  include/fs/superblock.h include/serial.h include/syscall_helper.h \
  include/kthreads.h include/scheduler.h include/vbe.h include/mouse.h \
- include/gfx/composition.h include/gfx/api.h include/gfx/gfxlib.h
+ include/ipc.h include/gfx/composition.h include/gfx/api.h \
+ include/gfx/gfxlib.h
 kthreads.o: kernel/kthreads.c include/kthreads.h include/stdint.h \
  include/terminal.h include/util.h include/screen.h include/colors.h \
  include/pcb.h include/windowmanager.h include/gfx/window.h \

@@ -22,6 +22,7 @@
 #include <scheduler.h>
 #include <vbe.h>
 #include <mouse.h>
+#include <ipc.h>
 
 #include <gfx/window.h>
 #include <gfx/composition.h>
@@ -51,6 +52,7 @@ void _main(uint32_t magic)
 	mouse_init();
 	init_pcbs();
 	ata_ide_init();
+	ipc_msg_box_init();
 	init_wm();
 
 	init_pci();
