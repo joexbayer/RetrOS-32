@@ -24,8 +24,8 @@ endif
 
 OUTPUTDIR = ./bin/
 
-USROBJS = bin/counter.o
-COMMON = ../bin/syscall.o ../bin/util.o ../bin/printf.o
+USROBJS = bin/counter.o bin/clock.o
+COMMON = ../bin/syscall.o ../bin/util.o ../bin/printf.o ../bin/graphics.o
 
 .PHONY: all new programs
 all: new

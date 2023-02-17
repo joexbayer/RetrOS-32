@@ -6,11 +6,14 @@ int gfx_syscall_hook(int option, void* data)
 {
     switch (option)
     {
-    case GFX_DRAW_CHAR:;
+    case GFX_DRAW_CHAR_OPT:;
         struct gfx_char* c = (struct gfx_char*)data;
         gfx_draw_char(c->x, c->y, c->data, c->color);
         break;
-    
+    case GFX_DRAW_RECTANGLE_OPT:;
+        struct gfx_rectangle* r = (struct gfx_rectangle*)data;
+        gfx_draw_rectangle(r->x, r->y, r->width, r->height, r->color);
+        break;
     default:
         break;
     }

@@ -71,12 +71,12 @@ void _main(uint32_t magic)
 	register_kthread(&system_info, "System");
 	register_kthread(&error_main, "Error");
 	register_kthread(&gfx_window_debugger, "Debugger");
+	//start("Debugger");
+	//start("Error");
 
 	start("Shell");
 	start("wServer");
 	start("Networking");
-	//start("Debugger");
-	//start("Error");
 
 	add_system_call(SYSCALL_SCRPUT, (syscall_t)&scrput);
 	add_system_call(SYSCALL_PRTPUT, (syscall_t)&terminal_putchar);

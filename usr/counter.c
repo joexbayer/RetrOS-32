@@ -10,33 +10,32 @@
  */
 #include <lib/printf.h>
 #include <lib/graphics.h>
-#include <rtc.h>
 
 int main()
 {
+	struct gfx_char number = {
+		.color = 15,
+		.data = '0',
+		.x = 46,
+		.y = 46
+	};
+
+	struct gfx_rectangle rect = {
+		.color = 28,
+		.x = 46,
+		.y = 46,
+		.width = 8,
+		.height = 8
+	};
 
 	int j = 1;
 	create_window(100, 100);
-
-	struct gfx_char test = {
-		.color = 15,
-		.data = '0',
-		.x = 2,
-		.y = 2
-	};
-
-	struct time t;
-	get_current_time(&t);
-
-	printf("%d:%d:%d\n", t.hour, t.minute,t.second);
-
-
 	while(j < 10)
 	{	
-	  	printf("Counter: %d!\n", j);
-		test.data = 48+j;
-		test.x += 8;
-		gfx_draw_syscall(GFX_DRAW_CHAR, &test);
+	  	printf("Counter started.\n");
+		number.data = 48+j;
+		gfx_draw_syscall(GFX_DRAW_RECTANGLE_OPT, &rect);
+		gfx_draw_syscall(GFX_DRAW_CHAR_OPT, &number);
 		sleep(50);
 		j++;
 	}

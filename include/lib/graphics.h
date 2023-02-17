@@ -7,14 +7,15 @@
  */
 
 enum gfx_lib_api_options {
-    GFX_DRAW_CHAR,
-    GFX_DRAW_TEXT,
-    GFX_PUT_CHAR,
-    GFX_DRAW_RECTANGLE
+    GFX_DRAW_CHAR_OPT,
+    GFX_DRAW_TEXT_OPT,
+    GFX_PUT_CHAR_OPT,
+    GFX_DRAW_RECTANGLE_OPT
 };
 
 struct gfx_rectangle {
     int x, y, width, height;
+    unsigned char color;
 };
 
 #define GFX_TEXT_MAX 100
@@ -29,5 +30,7 @@ struct gfx_char {
     char data;
     unsigned char color;
 };
+
+//int gfx_write_text(int x, int y, char* text, unsigned char color);
 
 #endif /* __GRAPHICS_H */

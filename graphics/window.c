@@ -140,7 +140,8 @@ struct gfx_window* gfx_new_window(int width, int height)
 {
     struct gfx_window* w = (struct gfx_window*) kalloc(sizeof(struct gfx_window));
     /* if a userspace program wants a window they will need to allocate inner themself. */
-    w->inner = calloc(width*height);
+    w->inner = malloc(width*height);
+    memset(w->inner, VESA8_COLOR_LIGHT_GRAY3, width*height);
 
     w->click = &gfx_default_click;
     w->mousedown = &gfx_default_mouse_down;

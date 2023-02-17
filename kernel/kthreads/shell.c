@@ -249,6 +249,8 @@ void shell_main()
 
 	memset(term.textbuffer, 0, TERMINAL_BUFFER_SIZE);
 	struct gfx_window* window = gfx_new_window(400, SHELL_HEIGHT);
+	gfx_draw_rectangle(0,0, 400, SHELL_HEIGHT, 0);
+	
 	terminal_attach(&term);
 	//gfx_draw_text(0, 0, "Terminal!", VESA8_COLOR_LIGHT_GREEN);
 	reset_shell();

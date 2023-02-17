@@ -355,8 +355,10 @@ int pcb_cleanup(int pid)
 	
 	pcb_count--;
 	
-	if(pcbs[pid].is_process)
+	if(pcbs[pid].is_process){
 		cleanup_process_paging(&pcbs[pid]);
+		kfree((void*)pcbs[pid].org_stack);
+	}
 	else
 		kfree((void*)pcbs[pid].org_stack);
 
