@@ -13,6 +13,8 @@ void sleep(int seconds);
 
 void create_window(int width, int height);
 
+int gfx_draw(int option, void* data);
+
 #ifdef __cplusplus
 }
 #endif

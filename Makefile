@@ -50,7 +50,7 @@ endif
 # ---------------- Objects to compile ----------------
 PROGRAMOBJ = bin/shell.o bin/networking.o bin/dhcpd.o bin/error.o
 
-GFXOBJ = bin/window.o bin/component.o bin/composition.o bin/gfxlib.o
+GFXOBJ = bin/window.o bin/component.o bin/composition.o bin/gfxlib.o bin/api.o
 
 KERNELOBJ = bin/kernel_entry.o bin/kernel.o bin/terminal.o bin/helpers.o bin/pci.o \
 			bin/util.o bin/interrupts.o bin/irs_entry.o bin/timer.o \
@@ -58,10 +58,10 @@ KERNELOBJ = bin/kernel_entry.o bin/kernel.o bin/terminal.o bin/helpers.o bin/pci
 			bin/sync.o bin/kthreads.o bin/ata.o bin/bitmap.o bin/rtc.o \
 			bin/diskdev.o bin/scheduler.o bin/windowmanager.o \
 			bin/serial.o bin/io.o bin/syscalls.o bin/list.o bin/hashmap.o bin/vesa.o\
-			bin/mouse.o ${PROGRAMOBJ} ${GFXOBJ} bin/font8.o bin/net.o bin/fs.o
+			bin/mouse.o bin/ipc.o ${PROGRAMOBJ} ${GFXOBJ} bin/font8.o bin/net.o bin/fs.o
 BOOTOBJ = bin/bootloader.o
 
-LIBOBJ = bin/printf.o bin/syscall.o
+LIBOBJ = bin/printf.o bin/syscall.o bin/graphics.o
 
 # ---------------- Makefile rules ----------------
 

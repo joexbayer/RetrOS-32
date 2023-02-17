@@ -55,3 +55,7 @@ int get_current_time(struct time* time)
 {
     invoke_syscall(SYSCALL_GFX_GET_TIME, (int)time, 0, 0);
 }
+int gfx_draw_syscall(int option, void* data)
+{
+    invoke_syscall(SYSCALL_GFX_DRAW, option, data, 0);
+}
