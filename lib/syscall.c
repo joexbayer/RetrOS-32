@@ -12,6 +12,7 @@
 #include <lib/syscall.h>
 #include <stdint.h>
 #include <util.h>
+#include <rtc.h>
 
 int malloc();
 
@@ -48,4 +49,9 @@ void sleep(int seconds)
 void create_window(int width, int height)
 {
     invoke_syscall(SYSCALL_GFX_WINDOW, width, height, 0);
+}
+
+int get_current_time(struct time* time)
+{
+    invoke_syscall(SYSCALL_GFX_GET_TIME, (int)time, 0, 0);
 }

@@ -45,6 +45,7 @@ fs.o: fs/fs.c include/fs/fs.h include/fs/inode.h include/stdint.h \
 inode.o: fs/inode.c include/fs/inode.h include/stdint.h include/rtc.h \
  include/fs/superblock.h include/bitmap.h include/fs/directory.h \
  include/serial.h include/util.h include/diskdev.h include/ata.h
+api.o: graphics/api.c
 button.o: graphics/button.c include/gfx/button.h
 component.o: graphics/component.c include/gfx/component.h \
  include/stdint.h include/gfx/window.h include/terminal.h include/util.h \
@@ -74,7 +75,10 @@ interrupts.o: kernel/interrupts.c include/interrupts.h include/stdint.h \
  include/terminal.h include/memory.h include/bitmap.h include/serial.h \
  include/io.h include/scheduler.h include/kthreads.h
 io.o: kernel/io.c include/io.h include/stdint.h
-ipc.o: kernel/ipc.c include/ipc.h include/stdint.h
+ipc.o: kernel/ipc.c include/ipc.h include/stdint.h include/memory.h \
+ include/pcb.h include/util.h include/windowmanager.h include/colors.h \
+ include/gfx/window.h include/gfx/component.h include/terminal.h \
+ include/bitmap.h
 kernel.o: kernel/kernel.c include/windowmanager.h include/stdint.h \
  include/colors.h include/util.h include/pci.h include/terminal.h \
  include/keyboard.h include/interrupts.h include/syscalls.h \
@@ -131,6 +135,7 @@ bitmap.o: lib/bitmap.c include/bitmap.h include/stdint.h include/memory.h \
  include/pcb.h include/util.h include/windowmanager.h include/colors.h \
  include/gfx/window.h include/gfx/component.h include/terminal.h
 font8.o: lib/font8.c include/font8.h include/stdint.h
+graphics.o: lib/graphics.c include/lib/graphics.h
 hashmap.o: lib/hashmap.c include/hashmap.h include/memory.h \
  include/stdint.h include/pcb.h include/util.h include/windowmanager.h \
  include/colors.h include/gfx/window.h include/gfx/component.h \

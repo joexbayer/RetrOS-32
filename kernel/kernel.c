@@ -80,6 +80,7 @@ void _main(uint32_t magic)
 	add_system_call(SYSCALL_EXIT, (syscall_t)&exit);
 	add_system_call(SYSCALL_SLEEP, (syscall_t)&sleep);
 	add_system_call(SYSCALL_GFX_WINDOW, (syscall_t)&gfx_new_window);
+	add_system_call(SYSCALL_GFX_GET_TIME,  (syscall_t)&get_current_time);
 	
 
 	dbgprintf("[KERNEL] TEXT: %d\n", _code_end-_code);
