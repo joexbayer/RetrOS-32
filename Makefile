@@ -58,7 +58,7 @@ KERNELOBJ = bin/kernel_entry.o bin/kernel.o bin/terminal.o bin/helpers.o bin/pci
 			bin/sync.o bin/kthreads.o bin/ata.o bin/bitmap.o bin/rtc.o \
 			bin/diskdev.o bin/scheduler.o bin/windowmanager.o \
 			bin/serial.o bin/io.o bin/syscalls.o bin/list.o bin/hashmap.o bin/vesa.o\
-			bin/mouse.o bin/ipc.o ${PROGRAMOBJ} ${GFXOBJ} bin/font8.o bin/net.o bin/fs.o ´
+			bin/mouse.o bin/ipc.o ${PROGRAMOBJ} ${GFXOBJ} bin/font8.o bin/net.o bin/fs.o
 BOOTOBJ = bin/bootloader.o
 
 LIBOBJ = bin/printf.o bin/syscall.o bin/graphics.o
