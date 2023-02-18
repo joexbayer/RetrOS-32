@@ -248,7 +248,7 @@ int main(int argc, char* argv[])
     struct inode* bin = inode_get(inode_index, &superblock);
 
     add_userspace_program(&superblock, bin, "counter");
-    //add_userspace_program(&superblock, bin, "clock");
+    add_userspace_program(&superblock, bin, "clock");
 
     inodes_sync(&superblock);
 

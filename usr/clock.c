@@ -13,20 +13,27 @@
 #include <lib/graphics.h>
 #include <rtc.h>
 
+#define center_x(size) ((100/2) - ((size*8)/2))
+
 static char* months[] = {"NAN", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Nov", "Dec"};
 
 int main()
 {
     struct time current_time;
-    create_window(200, 100);
+    gfx_create_window(100, 100);
+    gfx_set_title("Clock");
 
     while (1)
     {
         get_current_time(&current_time);
         
-        //gfx_write_text(2, 2, "Clock:", 0);
+        gfx_draw_rectangle(0, 0, 100, 100, 28);
+        gfx_draw_text(30, 12, "Clock", 0);
+        gfx_draw_format_text(30, 22, 0, "%s%d:%s%d", current_time.hour > 9 ? "" : "0", current_time.hour, current_time.minute > 9 ? "" : "0", current_time.minute);
+        gfx_draw_format_text(26, 32, 0, "%d. %s", current_time.day, months[current_time.month]);
+        gfx_draw_format_text(center_x(4), 42, 0, "2%d%d", current_time.centuary, current_time.year);
 
-        sleep(1000);
+        sleep(10000);
     }
     
     printf("Clock started\n");

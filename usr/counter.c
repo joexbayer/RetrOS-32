@@ -13,29 +13,13 @@
 
 int main()
 {
-	struct gfx_char number = {
-		.color = 15,
-		.data = '0',
-		.x = 46,
-		.y = 46
-	};
-
-	struct gfx_rectangle rect = {
-		.color = 28,
-		.x = 46,
-		.y = 46,
-		.width = 8,
-		.height = 8
-	};
-
 	int j = 1;
-	create_window(100, 100);
+	gfx_create_window(100, 100);
+	printf("Counter started.\n");
 	while(j < 10)
 	{	
-	  	printf("Counter started.\n");
-		number.data = 48+j;
-		gfx_draw_syscall(GFX_DRAW_RECTANGLE_OPT, &rect);
-		gfx_draw_syscall(GFX_DRAW_CHAR_OPT, &number);
+		gfx_draw_rectangle(46, 46, 8, 8, 28);
+		gfx_draw_char(46, 46, 48+j, 15);	
 		sleep(50);
 		j++;
 	}

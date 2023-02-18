@@ -12,14 +12,16 @@ enum GFX_LINE_ATTRIBUTES {
 
 void gfx_line(int x, int y, int length, int option, int color);
 
-int gfx_draw_rectangle(int x, int y, int width, int height, char color);
-int gfx_draw_char(int x, int y, char c, char color);
+int __internal_gfx_draw_rectangle(int x, int y, int width, int height, char color);
+int __internal_gfx_draw_char(int x, int y, char c, char color);
 int __internal_gfx_draw_text(int x, int y, char* str, char color);
-int gfx_draw_format_text(int x, int y, char color, char* fmt, ...);
+int __internal_gfx_draw_format_text(int x, int y, char color, char* fmt, ...);
 
 int gfx_get_window_width();
 int gfx_get_window_height();
 int gfx_window_reize(int width, int height);
+
+int __gfx_set_title(char* title);
 
 void gfx_inner_box(int x, int y, int w, int h, int fill);
 void gfx_outer_box(int x, int y, int w, int h, int fill);

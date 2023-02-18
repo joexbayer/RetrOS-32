@@ -149,8 +149,8 @@ void Genesis()
 	struct gfx_window* window = gfx_new_window(400, 100);
 	while(1)
 	{
-		gfx_draw_rectangle(0, 0, 400, 100, VESA8_COLOR_LIGHT_GRAY5);
-		gfx_draw_rectangle(3, 3, 395, 66, VESA8_COLOR_LIGHT_GRAY1);
+		__internal_gfx_draw_rectangle(0, 0, 400, 100, VESA8_COLOR_LIGHT_GRAY5);
+		__internal_gfx_draw_rectangle(3, 3, 395, 66, VESA8_COLOR_LIGHT_GRAY1);
 
 		gfx_line(2, 2, 66, GFX_LINE_OUTER_VERTICAL, VESA8_COLOR_BLUE);
 		gfx_line(3, 2, 396, GFX_LINE_INNER_HORIZONTAL, VESA8_COLOR_BLUE);
@@ -160,7 +160,7 @@ void Genesis()
 
 		print_pcb_status();
 
-		gfx_draw_format_text(10, 80, VESA8_COLOR_BLACK, "Total: %d", pcb_count);
+		__internal_gfx_draw_format_text(10, 80, VESA8_COLOR_BLACK, "Total: %d", pcb_count);
 		
 		gfx_commit();
 		/*print_memory_status();
@@ -183,21 +183,21 @@ void system_info()
 	struct gfx_window* window = gfx_new_window(225, 375);
 	while(1)
 	{
-		gfx_draw_rectangle(0, 0, 225, 375, VESA8_COLOR_LIGHT_GRAY5);
+		__internal_gfx_draw_rectangle(0, 0, 225, 375, VESA8_COLOR_LIGHT_GRAY5);
 		
-		gfx_draw_rectangle(2, 98, 90, 106, VESA8_COLOR_BLACK);
-		gfx_draw_rectangle(5, 100, 25, 100, VESA8_COLOR_DARK_GREEN);
+		__internal_gfx_draw_rectangle(2, 98, 90, 106, VESA8_COLOR_BLACK);
+		__internal_gfx_draw_rectangle(5, 100, 25, 100, VESA8_COLOR_DARK_GREEN);
 
 		__internal_gfx_draw_text(60, 90, "Memory", VESA8_COLOR_BLACK);
 		int mem_dyn = memory_dynamic_usage();
-		gfx_draw_rectangle(5, 200-mem_dyn/10, 25, mem_dyn/10, VESA8_COLOR_GREEN);
+		__internal_gfx_draw_rectangle(5, 200-mem_dyn/10, 25, mem_dyn/10, VESA8_COLOR_GREEN);
 
-		gfx_draw_rectangle(34, 100, 25, 100, VESA8_COLOR_DARK_GREEN);
+		__internal_gfx_draw_rectangle(34, 100, 25, 100, VESA8_COLOR_DARK_GREEN);
 		int perm_dyn = memory_permanent_usage();
-		gfx_draw_rectangle(34, 200-perm_dyn/10, 25, perm_dyn/10, VESA8_COLOR_GREEN);
+		__internal_gfx_draw_rectangle(34, 200-perm_dyn/10, 25, perm_dyn/10, VESA8_COLOR_GREEN);
 
-		gfx_draw_rectangle(63, 100, 25, 100, VESA8_COLOR_DARK_GREEN);
-		gfx_draw_rectangle(63, 200-(memory_pages_usage()/2.5), 25, memory_pages_usage()/2.5, VESA8_COLOR_GREEN);
+		__internal_gfx_draw_rectangle(63, 100, 25, 100, VESA8_COLOR_DARK_GREEN);
+		__internal_gfx_draw_rectangle(63, 200-(memory_pages_usage()/2.5), 25, memory_pages_usage()/2.5, VESA8_COLOR_GREEN);
 
 		gfx_inner_box(2, 98, 90, 106, 0);	
 
@@ -206,37 +206,37 @@ void system_info()
             used /= 1024;
         }*/
 
-		gfx_draw_rectangle(96, memory_info-4, 125, 30, VESA8_COLOR_LIGHT_GRAY1);
+		__internal_gfx_draw_rectangle(96, memory_info-4, 125, 30, VESA8_COLOR_LIGHT_GRAY1);
 		gfx_inner_box(96, memory_info-4, 125, 30, 0);
 
-		gfx_draw_format_text(100, memory_info, VESA8_COLOR_BLACK, "Dynamic:");
-		gfx_draw_format_text(100, memory_info+8, VESA8_COLOR_BLACK, "Used      %dkb", mem_dyn);
-		gfx_draw_format_text(100, memory_info+16, VESA8_COLOR_BLACK, "Free      %dkb", memory_dynamic_total()-mem_dyn);
+		__internal_gfx_draw_format_text(100, memory_info, VESA8_COLOR_BLACK, "Dynamic:");
+		__internal_gfx_draw_format_text(100, memory_info+8, VESA8_COLOR_BLACK, "Used      %dkb", mem_dyn);
+		__internal_gfx_draw_format_text(100, memory_info+16, VESA8_COLOR_BLACK, "Free      %dkb", memory_dynamic_total()-mem_dyn);
 		
-		gfx_draw_rectangle(96, memory_info+30, 125, 28, VESA8_COLOR_LIGHT_GRAY1);
+		__internal_gfx_draw_rectangle(96, memory_info+30, 125, 28, VESA8_COLOR_LIGHT_GRAY1);
 		gfx_inner_box(96, memory_info+30, 125, 28, 0);	
 
-		gfx_draw_format_text(100, memory_info+32, VESA8_COLOR_BLACK, "Permanent:");
-		gfx_draw_format_text(100, memory_info+40, VESA8_COLOR_BLACK, "Used      %dkb", perm_dyn);
-		gfx_draw_format_text(100, memory_info+48, VESA8_COLOR_BLACK, "Free      %dkb", memory_permanent_total()-perm_dyn);
+		__internal_gfx_draw_format_text(100, memory_info+32, VESA8_COLOR_BLACK, "Permanent:");
+		__internal_gfx_draw_format_text(100, memory_info+40, VESA8_COLOR_BLACK, "Used      %dkb", perm_dyn);
+		__internal_gfx_draw_format_text(100, memory_info+48, VESA8_COLOR_BLACK, "Free      %dkb", memory_permanent_total()-perm_dyn);
 
-		gfx_draw_rectangle(96, memory_info+62, 125, 30, VESA8_COLOR_LIGHT_GRAY1);
+		__internal_gfx_draw_rectangle(96, memory_info+62, 125, 30, VESA8_COLOR_LIGHT_GRAY1);
 		gfx_inner_box(96, memory_info+62, 125, 30, 0);	
 
-		gfx_draw_format_text(100, memory_info+64, VESA8_COLOR_BLACK, "Pages:");
-		gfx_draw_format_text(100, memory_info+64+8, VESA8_COLOR_BLACK, "Used        %s%d", memory_pages_usage() > 99 ? " " : "" ,  memory_pages_usage());
-		gfx_draw_format_text(100, memory_info+64+18, VESA8_COLOR_BLACK, "Free        %d", memory_pages_total());
+		__internal_gfx_draw_format_text(100, memory_info+64, VESA8_COLOR_BLACK, "Pages:");
+		__internal_gfx_draw_format_text(100, memory_info+64+8, VESA8_COLOR_BLACK, "Used        %s%d", memory_pages_usage() > 99 ? " " : "" ,  memory_pages_usage());
+		__internal_gfx_draw_format_text(100, memory_info+64+18, VESA8_COLOR_BLACK, "Free        %d", memory_pages_total());
 
 
-		gfx_draw_rectangle(96, memory_info+98, 125, 30, VESA8_COLOR_LIGHT_GRAY1);
+		__internal_gfx_draw_rectangle(96, memory_info+98, 125, 30, VESA8_COLOR_LIGHT_GRAY1);
 		gfx_inner_box(96, memory_info+98, 125, 30, 0);	
-		gfx_draw_format_text(100, memory_info+100, VESA8_COLOR_BLACK, "Process:");
-		gfx_draw_format_text(100, memory_info+100+8, VESA8_COLOR_BLACK, "Used      %dkb", memory_process_usage()/1024);
-		gfx_draw_format_text(100, memory_info+100+18, VESA8_COLOR_BLACK, "Free       %dmb", memory_process_total()/1024/1024);
+		__internal_gfx_draw_format_text(100, memory_info+100, VESA8_COLOR_BLACK, "Process:");
+		__internal_gfx_draw_format_text(100, memory_info+100+8, VESA8_COLOR_BLACK, "Used      %dkb", memory_process_usage()/1024);
+		__internal_gfx_draw_format_text(100, memory_info+100+18, VESA8_COLOR_BLACK, "Free       %dmb", memory_process_total()/1024/1024);
 
 		//gfx_outer_box(100, 200, 70, 20, 1);
-		gfx_draw_format_text(5, 210, VESA8_COLOR_BLACK, "Total:");
-		gfx_draw_format_text(5, 220, VESA8_COLOR_BLACK, "%dkb/%dmb", (mem_dyn*MEM_CHUNK+perm_dyn*MEM_CHUNK+(memory_pages_usage()*4096)+memory_process_usage())/1024, (0x100000*15)/1024/1024);
+		__internal_gfx_draw_format_text(5, 210, VESA8_COLOR_BLACK, "Total:");
+		__internal_gfx_draw_format_text(5, 220, VESA8_COLOR_BLACK, "%dkb/%dmb", (mem_dyn*MEM_CHUNK+perm_dyn*MEM_CHUNK+(memory_pages_usage()*4096)+memory_process_usage())/1024, (0x100000*15)/1024/1024);
 
 
 		for (int i= 0; i < 20; i++)
@@ -292,13 +292,13 @@ void print_pcb_status()
 
 		done_list[done_list_count] = largest;
 		done_list_count++;
-		//gfx_draw_format_text(10, 10+done_list_count*8, VESA8_COLOR_BLACK, " %d  0x%x  %s  %s  %s\n", pcbs[largest].pid, pcbs[largest].used_memory, status[pcbs[largest].running], pcbs[largest].is_process == 1 ? "Process" : "kthread", pcbs[largest].name);
+		//__internal_gfx_draw_format_text(10, 10+done_list_count*8, VESA8_COLOR_BLACK, " %d  0x%x  %s  %s  %s\n", pcbs[largest].pid, pcbs[largest].used_memory, status[pcbs[largest].running], pcbs[largest].is_process == 1 ? "Process" : "kthread", pcbs[largest].name);
 
-		gfx_draw_format_text(10, 10+done_list_count*8, VESA8_COLOR_BLACK, "%s", pcbs[largest].name);
-		gfx_draw_format_text(10 + 15*8, 10+done_list_count*8, VESA8_COLOR_BLACK, "%s",status[pcbs[largest].running]);
-		gfx_draw_format_text(10+15*8+10*8, 10+done_list_count*8, VESA8_COLOR_BLACK, "%d", pcbs[largest].used_memory);
-		gfx_draw_format_text(10+15*8+10*8 + 10*8, 10+done_list_count*8, VESA8_COLOR_BLACK, "0x%x", pcbs[largest].esp);
-		gfx_draw_format_text(10+15*8+10*8+10*8+11*8, 10+done_list_count*8, VESA8_COLOR_BLACK, "%d", pcbs[largest].pid);
+		__internal_gfx_draw_format_text(10, 10+done_list_count*8, VESA8_COLOR_BLACK, "%s", pcbs[largest].name);
+		__internal_gfx_draw_format_text(10 + 15*8, 10+done_list_count*8, VESA8_COLOR_BLACK, "%s",status[pcbs[largest].running]);
+		__internal_gfx_draw_format_text(10+15*8+10*8, 10+done_list_count*8, VESA8_COLOR_BLACK, "%d", pcbs[largest].used_memory);
+		__internal_gfx_draw_format_text(10+15*8+10*8 + 10*8, 10+done_list_count*8, VESA8_COLOR_BLACK, "0x%x", pcbs[largest].esp);
+		__internal_gfx_draw_format_text(10+15*8+10*8+10*8+11*8, 10+done_list_count*8, VESA8_COLOR_BLACK, "%d", pcbs[largest].pid);
 	}
 }
 

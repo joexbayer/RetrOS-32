@@ -32,5 +32,9 @@ struct gfx_char {
 };
 
 int gfx_draw_text(int x, int y, char* text, unsigned char color);
+int gfx_draw_format_text(int x, int y, char color, char* fmt, ...);
+int gfx_draw_char(int x, int y, char data, unsigned char color);
+int gfx_draw_rectangle(int x, int y, int width, int height, unsigned char color);
+
 
 #endif /* __GRAPHICS_H */

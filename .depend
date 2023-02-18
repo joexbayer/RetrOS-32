@@ -138,7 +138,8 @@ bitmap.o: lib/bitmap.c include/bitmap.h include/stdint.h include/memory.h \
  include/pcb.h include/util.h include/windowmanager.h include/colors.h \
  include/gfx/window.h include/gfx/component.h include/terminal.h
 font8.o: lib/font8.c include/font8.h include/stdint.h
-graphics.o: lib/graphics.c include/lib/graphics.h
+graphics.o: lib/graphics.c include/lib/graphics.h include/lib/syscall.h \
+ include/util.h include/stdint.h include/stdarg.h
 hashmap.o: lib/hashmap.c include/hashmap.h include/memory.h \
  include/stdint.h include/pcb.h include/util.h include/windowmanager.h \
  include/colors.h include/gfx/window.h include/gfx/component.h \

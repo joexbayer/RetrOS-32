@@ -1,4 +1,4 @@
-CCFLAGS=-m32 -std=gnu11 -O2 \
+CCFLAGS=-m32 -std=gnu11 -O1 \
 		-g -Wall -Wextra -Wpedantic -Wstrict-aliasing \
 		-Wno-pointer-arith -Wno-unused-parameter -nostdlib \
 		-nostdinc -ffreestanding -fno-pie -fno-stack-protector \
@@ -123,6 +123,7 @@ userspace:
 
 iso: compile userspace tools
 	@echo [BUILD]      Building ISO file and attaching filesystem.
+	@rm -f boot.iso
 	@./bin/build
 	$(TIME-END)
 
