@@ -60,7 +60,7 @@ void reset_shell()
 	memset(&shell_buffer, 0, SHELL_MAX_SIZE);
 	shell_column = strlen(shell_name)+1;
 	shell_buffer_length = 0;
-	gfx_draw_text(0, SHELL_POSITION, shell_name, VESA8_COLOR_LIGHT_GREEN);
+	__internal_gfx_draw_text(0, SHELL_POSITION, shell_name, VESA8_COLOR_LIGHT_GREEN);
 	shell_column += 1;
 
 	//screen_set_cursor(shell_column, SHELL_POSITION);
@@ -252,7 +252,7 @@ void shell_main()
 	gfx_draw_rectangle(0,0, 400, SHELL_HEIGHT, 0);
 	
 	terminal_attach(&term);
-	//gfx_draw_text(0, 0, "Terminal!", VESA8_COLOR_LIGHT_GREEN);
+	//__internal_gfx_draw_text(0, 0, "Terminal!", VESA8_COLOR_LIGHT_GREEN);
 	reset_shell();
 
 	//gfx_draw_rectangle(0, 0, 300, 290, VESA8_COLOR_BLUE);

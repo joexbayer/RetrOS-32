@@ -117,7 +117,7 @@ void gfx_commit()
  * @param color 
  * @return int 0 on success, less than 0 on error.
  */
-int gfx_draw_text(int x, int y, char* str, char color)
+int __internal_gfx_draw_text(int x, int y, char* str, char color)
 {
     if(current_running->gfx_window == NULL)
         return -1;
@@ -221,7 +221,7 @@ void gfx_outer_box(int x, int y, int w, int h, int fill)
 void gfx_button(int x, int y, int w, int h, char* text)
 {
 	gfx_outer_box(x, y, w, h, 0);
-	gfx_draw_text(x+2, y+2, text, VESA8_COLOR_BLACK);
+	__internal_gfx_draw_text(x+2, y+2, text, VESA8_COLOR_BLACK);
 }
 
 
@@ -248,13 +248,13 @@ int gfx_draw_format_text(int x, int y, char color, char* fmt, ...)
 					case 'i': ;
 						num = va_arg(args, int);
 						itoa(num, str);
-						gfx_draw_text(x+(x_offset*PIXELS_PER_CHAR), y, str, color);
+						__internal_gfx_draw_text(x+(x_offset*PIXELS_PER_CHAR), y, str, color);
 						x_offset += strlen(str);
 						break;
                     case 'p': ; /* p for padded int */
 						num = va_arg(args, int);
 						itoa(num, str);
-						gfx_draw_text(x+(x_offset*PIXELS_PER_CHAR), y, str, color);
+						__internal_gfx_draw_text(x+(x_offset*PIXELS_PER_CHAR), y, str, color);
 						x_offset += strlen(str);
 
                         if(strlen(str) < 3){
@@ -269,12 +269,12 @@ int gfx_draw_format_text(int x, int y, char color, char* fmt, ...)
 					case 'X': ;
 						num = va_arg(args, int);
 						itohex(num, str);
-						gfx_draw_text(x+(x_offset*PIXELS_PER_CHAR), y, str, color);
+						__internal_gfx_draw_text(x+(x_offset*PIXELS_PER_CHAR), y, str, color);
 						x_offset += strlen(str);
 						break;
 					case 's': ;
 						char* str_arg = va_arg(args, char *);
-						gfx_draw_text(x+(x_offset*PIXELS_PER_CHAR), y, str_arg, color);
+						__internal_gfx_draw_text(x+(x_offset*PIXELS_PER_CHAR), y, str_arg, color);
 						x_offset += strlen(str_arg);
 						break;
 					case 'c': ;

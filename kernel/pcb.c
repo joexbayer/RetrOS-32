@@ -188,7 +188,7 @@ void system_info()
 		gfx_draw_rectangle(2, 98, 90, 106, VESA8_COLOR_BLACK);
 		gfx_draw_rectangle(5, 100, 25, 100, VESA8_COLOR_DARK_GREEN);
 
-		gfx_draw_text(60, 90, "Memory", VESA8_COLOR_BLACK);
+		__internal_gfx_draw_text(60, 90, "Memory", VESA8_COLOR_BLACK);
 		int mem_dyn = memory_dynamic_usage();
 		gfx_draw_rectangle(5, 200-mem_dyn/10, 25, mem_dyn/10, VESA8_COLOR_GREEN);
 
@@ -257,7 +257,7 @@ void print_pcb_status()
 	int done_list[MAX_NUM_OF_PCBS];
 	int done_list_count = 0;
 	
-	gfx_draw_text(10, 7, "Name           Status    Memory    Stack     PID", VESA8_COLOR_LIGHT_BROWN);
+	__internal_gfx_draw_text(10, 7, "Name           Status    Memory    Stack     PID", VESA8_COLOR_LIGHT_BROWN);
 	gfx_line(10, 7+9, 382, GFX_LINE_HORIZONTAL, VESA8_COLOR_GRAY2);
 	for (int i = 0; i < MAX_NUM_OF_PCBS; i++)
 	{

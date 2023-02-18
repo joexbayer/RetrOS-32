@@ -31,6 +31,6 @@ struct gfx_char {
     unsigned char color;
 };
 
-//int gfx_write_text(int x, int y, char* text, unsigned char color);
+int gfx_draw_text(int x, int y, char* text, unsigned char color);
 
 #endif /* __GRAPHICS_H */
