@@ -12,6 +12,11 @@
 
 #define NULL (void *)0
 
+extern float sin_12[12];
+extern float cos_12[12];
+extern float cos_60[60];
+extern float sin_60[60];
+
 /* From linux kernel. */
 #define offsetof(st, m) \
     ((int)((char *)&((st *)0)->m - (char *)0))

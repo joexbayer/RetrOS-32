@@ -66,7 +66,7 @@
 
 <!-- ABOUT THE PROJECT -->
 <p align="center">
-<img src="https://github.com/joexbayer/NETOS/blob/main/graphics/Screenshot%202023-01-13%20203522.png?raw=true">)
+<img src="https://github.com/joexbayer/NETOS/blob/main/graphics/screenshot.png?raw=true">)
 </p>
 
 ## About The Project

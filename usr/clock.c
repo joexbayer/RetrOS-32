@@ -12,28 +12,36 @@
 #include <lib/printf.h>
 #include <lib/graphics.h>
 #include <rtc.h>
+#include <util.h>
 
-#define center_x(size) ((100/2) - ((size*8)/2))
+#define center_x(size) ((110/2) - ((size*8)/2))
 
 static char* months[] = {"NAN", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Nov", "Dec"};
 
 int main()
 {
     struct time current_time;
-    gfx_create_window(100, 100);
+    gfx_create_window(110, 140);
     gfx_set_title("Clock");
 
     while (1)
     {
         get_current_time(&current_time);
         
-        gfx_draw_rectangle(0, 0, 100, 100, 28);
-        gfx_draw_text(30, 12, "Clock", 0);
-        gfx_draw_format_text(30, 22, 0, "%s%d:%s%d", current_time.hour > 9 ? "" : "0", current_time.hour, current_time.minute > 9 ? "" : "0", current_time.minute);
-        gfx_draw_format_text(26, 32, 0, "%d. %s", current_time.day, months[current_time.month]);
-        gfx_draw_format_text(center_x(4), 42, 0, "2%d%d", current_time.centuary, current_time.year);
+        gfx_draw_rectangle(0, 0, 110, 140, 28);
 
-        sleep(10000);
+        int angle_id = (0.5 * (current_time.hour%12 * 60 + current_time.minute) / 6);
+
+		gfx_draw_line(55, 55, 50 + (50*sin_60[angle_id])/1.5, 50+ (50*cos_60[angle_id])/1.25, 0);
+		gfx_draw_line(55, 55, 50 + (50*sin_60[current_time.minute])/1.25, 50+ (50*cos_60[current_time.minute])/1.25, 0);
+		gfx_draw_line(55, 55, 50 + (50*sin_60[current_time.second])/1.25, 50+ (50*cos_60[current_time.second])/1.25, 12);
+
+        gfx_draw_circle(55, 55, 50, 0);
+
+        gfx_draw_format_text(center_x(5), 112, 0, "%s%d:%s%d", current_time.hour > 9 ? "" : "0", current_time.hour, current_time.minute > 9 ? "" : "0", current_time.minute);
+        gfx_draw_format_text(center_x(6), 124, 0, "%d. %s", current_time.day, months[current_time.month]);
+
+        sleep(100);
     }
     
     printf("Clock started\n");

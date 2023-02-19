@@ -471,16 +471,31 @@ void init_process_paging(struct pcb* pcb, char* data, int size)
 	uint32_t* process_stack_table = memory_alloc_page();
 
 	/* Map the process data to a page */
+	int i = 0;
+	dbgprintf("[INIT PROCESS] Mapping %d bytes of data\n", size);
+	while (size > 4096)
+	{
+		uint32_t* process_data_page = memory_alloc_page();
+		memcpy(process_data_page, data+(i*4096), 4096);
+		table_set(process_data_table, 0x1000000+(i*4096), (uint32_t) process_data_page, permissions);
+		dbgprintf("[INIT PROCESS] Mapped data 0x%x to %x\n",0x1000000+(i*4096), process_data_page);
+		size -= 4096;
+		i++;
+	}
+	
 	uint32_t* process_data_page = memory_alloc_page();
-	memcpy(process_data_page, data, size);
-	table_set(process_data_table, 0x1000000, (uint32_t) process_data_page, permissions);
-	dbgprintf("[INIT PROCESS] Mapped data 0x1000000 to %x\n", process_data_page);
+	memcpy(process_data_page, data+(i*4096), size);
+	table_set(process_data_table, 0x1000000+(i*4096), (uint32_t) process_data_page, permissions);
+	dbgprintf("[INIT PROCESS] Mapped data 0x%x to %x\n",0x1000000+(i*4096), process_data_page);
+	
+	directory_set(process_directory, 0x1000000, process_data_table, permissions); 
+
 
 	/* Map the process stack to a page */
 	uint32_t* process_stack_page = memory_alloc_page();
 	memset(process_stack_page, 0, PAGE_SIZE);
 	table_set(process_stack_table, 0xEFFFFFF0, (uint32_t) process_stack_page, permissions);
-	dbgprintf("[INIT PROCESS] Mapped data %x to %x\n", 0x1000000, process_stack_page);
+	dbgprintf("[INIT PROCESS] Mapped stack %x to %x\n", 0x1000000, process_stack_page);
 
 	/* Dynamic per process memory */
 	int start = 0x400000 + MEMORY_PROCESS_SIZE*pcb->pid;
@@ -491,7 +506,6 @@ void init_process_paging(struct pcb* pcb, char* data, int size)
 	dbgprintf("[INIT PROCESS] Mapped dynamic memory %x to %x\n", start, start);
 
 	/* Insert page and data tables in directory. */
-	directory_set(process_directory, 0x1000000, process_data_table, permissions); 
 	directory_set(process_directory, start, kernel_page_table_memory, permissions);
 	directory_set(process_directory, 0xEFFFFFF0, process_stack_table, permissions);
 

@@ -16,6 +16,35 @@ int gfx_draw_char(int x, int y, char data, unsigned char color)
     return 0;
 }
 
+int gfx_draw_circle(int x, int y, int r, unsigned char color)
+{
+	struct gfx_circle c = {
+		.x = x,
+		.y = y,
+		.r = r,
+		.color = color
+	};
+
+	gfx_draw_syscall(GFX_DRAW_CIRCLE_OPT, &c);
+
+	return 0;
+}
+
+int gfx_draw_line(int x0, int y0, int x1, int y1, unsigned char color)
+{
+	struct gfx_line line = {
+		.x0 = x0,
+		.y0 = y0,
+		.y1 = y1,
+		.x1 = x1,
+		.color = color
+	};
+
+	gfx_draw_syscall(GFX_DRAW_LINE_OPT, &line);
+
+	return 0;
+}
+
 int gfx_draw_rectangle(int x, int y, int width, int height, unsigned char color)
 {
     struct gfx_rectangle rect = {

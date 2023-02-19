@@ -14,6 +14,7 @@
 #include <terminal.h>
 #include <scheduler.h>
 #include <pcb.h>
+#include <rtc.h>
 #include <kthreads.h>
 #include <io.h>
 
@@ -51,7 +52,7 @@ static struct terminal term  = {
  */
 void shell_clear()
 {
-	__internal_gfx_draw_rectangle(0, SHELL_POSITION, SHELL_HEIGHT, 8, VESA8_COLOR_BLACK);
+	__gfx_draw_rectangle(0, SHELL_POSITION, SHELL_HEIGHT, 8, VESA8_COLOR_BLACK);
 }
 
 void reset_shell()
@@ -60,7 +61,7 @@ void reset_shell()
 	memset(&shell_buffer, 0, SHELL_MAX_SIZE);
 	shell_column = strlen(shell_name)+1;
 	shell_buffer_length = 0;
-	__internal_gfx_draw_text(0, SHELL_POSITION, shell_name, VESA8_COLOR_LIGHT_GREEN);
+	__gfx_draw_text(0, SHELL_POSITION, shell_name, VESA8_COLOR_LIGHT_GREEN);
 	shell_column += 1;
 
 	//screen_set_cursor(shell_column, SHELL_POSITION);
@@ -221,7 +222,7 @@ void shell_put(char c)
 		if(shell_buffer_length < 1)
 			return;
 		shell_column -= 1;
-		__internal_gfx_draw_rectangle(shell_column*8, SHELL_POSITION, 8, 8, VESA8_COLOR_BLACK);
+		__gfx_draw_rectangle(shell_column*8, SHELL_POSITION, 8, 8, VESA8_COLOR_BLACK);
 		gfx_commit();
 		shell_buffer[shell_buffer_length] = 0;
 		shell_buffer_length--;
@@ -233,7 +234,7 @@ void shell_put(char c)
 	{
 		return;
 	}
-	__internal_gfx_draw_char(shell_column*8, SHELL_POSITION, uc, VESA8_COLOR_WHITE);
+	__gfx_draw_char(shell_column*8, SHELL_POSITION, uc, VESA8_COLOR_WHITE);
 	gfx_commit();
 	shell_buffer[shell_buffer_length] = uc;
 	shell_buffer_length++;
@@ -243,19 +244,21 @@ void shell_put(char c)
 
 #include <gfx/api.h>
 
+int c_test = 0;
+
 void shell_main()
 {
 	dbgprintf("Shell is running!\n");
 
 	memset(term.textbuffer, 0, TERMINAL_BUFFER_SIZE);
 	struct gfx_window* window = gfx_new_window(400, SHELL_HEIGHT);
-	__internal_gfx_draw_rectangle(0,0, 400, SHELL_HEIGHT, 0);
-	
-	terminal_attach(&term);
-	//__internal_gfx_draw_text(0, 0, "Terminal!", VESA8_COLOR_LIGHT_GREEN);
-	reset_shell();
 
-	//__internal_gfx_draw_rectangle(0, 0, 300, 290, VESA8_COLOR_BLUE);
+		__gfx_draw_rectangle(0,0, 400, SHELL_HEIGHT, 0);
+
+
+	terminal_attach(&term);
+	//__gfx_draw_text(0, 0, "Terminal!", VESA8_COLOR_LIGHT_GREEN);
+	reset_shell();
 	//sleep(2);
 	while(1)
 	{
@@ -263,6 +266,7 @@ void shell_main()
 		if(c == -1)
 			continue;
 		shell_put(c);
+		c_test++;
 	}
 	
 	exit();

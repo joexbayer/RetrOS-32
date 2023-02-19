@@ -50,7 +50,7 @@ int gfx_window_reize(int width, int height)
  * @param color
  * @return int 0 on success, less than 0 on error
  */
-int __internal_gfx_draw_rectangle(int x, int y, int width, int height, char color)
+int __gfx_draw_rectangle(int x, int y, int width, int height, char color)
 {
     if(current_running->gfx_window == NULL)
         return -1;
@@ -78,7 +78,7 @@ int __internal_gfx_draw_rectangle(int x, int y, int width, int height, char colo
  * @param color 
  * @return int 0 on success, less than 0 on error.
  */
-int __internal_gfx_draw_char(int x, int y, char c, char color)
+int __gfx_draw_char(int x, int y, char c, char color)
 {
 
     if(current_running->gfx_window == NULL)
@@ -109,7 +109,7 @@ void gfx_commit()
 }
 
 /**
- * @brief __internal_gfx_draw_char wrapper for strings
+ * @brief __gfx_draw_char wrapper for strings
  * 
  * @param x 
  * @param y 
@@ -117,14 +117,14 @@ void gfx_commit()
  * @param color 
  * @return int 0 on success, less than 0 on error.
  */
-int __internal_gfx_draw_text(int x, int y, char* str, char color)
+int __gfx_draw_text(int x, int y, char* str, char color)
 {
     if(current_running->gfx_window == NULL)
         return -1;
 
     for (int i = 0; i < strlen(str); i++)
     {
-        __internal_gfx_draw_char(x+(i*8), y, str[i], color);
+        __gfx_draw_char(x+(i*8), y, str[i], color);
     }
 
     return 0;
@@ -190,7 +190,7 @@ void gfx_inner_box(int x, int y, int w, int h, int fill)
 {	
 	//CLI();
 	if(fill)
-    	__internal_gfx_draw_rectangle(x, y, w, h, VESA8_COLOR_LIGHT_GRAY3);
+    	__gfx_draw_rectangle(x, y, w, h, VESA8_COLOR_LIGHT_GRAY3);
 
     gfx_line(x, y, w, GFX_LINE_HORIZONTAL, VESA8_COLOR_DARK_GRAY2);
     gfx_line(x, y+h, w, GFX_LINE_HORIZONTAL, VESA8_COLOR_LIGHT_GRAY1);
@@ -212,13 +212,115 @@ int __gfx_set_title(char* title)
 	return 0;
 }
 
+#define ABS(N) ((N<0)?(-N):(N))
+
+/**
+plotLine(x0, y0, x1, y1)
+    dx = abs(x1 - x0)
+    sx = x0 < x1 ? 1 : -1
+    dy = -abs(y1 - y0)
+    sy = y0 < y1 ? 1 : -1
+    error = dx + dy
+    
+    while true
+        plot(x0, y0)
+        if x0 == x1 && y0 == y1 break
+        e2 = 2 * error
+        if e2 >= dy
+            if x0 == x1 break
+            error = error + dy
+            x0 = x0 + sx
+        end if
+        if e2 <= dx
+            if y0 == y1 break
+            error = error + dx
+            y0 = y0 + sy
+        end if
+    end while
+*/
+
+void __gfx_draw_line(int x0, int y0, int x1, int y1, unsigned char color)  
+{  
+    int dx, dy, p, x, y, sx, sy, error;
+	int t1 = x1-x0;
+	int t2 = y1-y0;
+    dx= ABS(t1);
+	sx = x0 < x1 ? 1 : -1;
+    dy=-(ABS(t2));  
+	sy = y0 < y1 ? 1 : -1;
+
+	error = dx + dy;
+
+    while(1)  
+    {  
+		putpixel(current_running->gfx_window->inner, x0, y0, color, current_running->gfx_window->height-18); 
+		if (x0 == x1 && y0 == y1) break;
+        int e2 = 2*error;
+
+		if( e2 >= dy){
+			if (x0 == x1) break;
+			error = error + dy;
+			x0 = x0 + sx;
+		}
+
+		if( e2 <= dx){
+			if (y0 == y1) break;
+			error = error + dx;
+			y0 = y0 + sy;
+		}
+    }
+
+	gfx_commit();
+}  
+
+void __gfx_draw_circle_helper(int xc, int yc, int x, int y, unsigned char color)
+{
+    putpixel(current_running->gfx_window->inner, xc+x, yc+y, color, current_running->gfx_window->height-18);
+    putpixel(current_running->gfx_window->inner, xc-x, yc+y, color, current_running->gfx_window->height-18);
+    putpixel(current_running->gfx_window->inner, xc+x, yc-y, color, current_running->gfx_window->height-18);
+    putpixel(current_running->gfx_window->inner, xc-x, yc-y, color, current_running->gfx_window->height-18);
+    putpixel(current_running->gfx_window->inner, xc+y, yc+x, color, current_running->gfx_window->height-18);
+    putpixel(current_running->gfx_window->inner, xc-y, yc+x, color, current_running->gfx_window->height-18);
+    putpixel(current_running->gfx_window->inner, xc+y, yc-x, color, current_running->gfx_window->height-18);
+    putpixel(current_running->gfx_window->inner, xc-y, yc-x, color, current_running->gfx_window->height-18);
+}
+ 
+// using Bresenham's algorithm
+void __gfx_draw_circle(int xc, int yc, int r, unsigned char color)
+{
+    int x = 0, y = r;
+    int d = 3 - 2 * r;
+    __gfx_draw_circle_helper(xc, yc, x, y, color);
+    while (y >= x)
+    {
+        // for each pixel we will
+        // draw all eight pixels
+         
+        x++;
+ 
+        // check for decision parameter
+        // and correspondingly
+        // update d, x, y
+        if (d > 0)
+        {
+            y--;
+            d = d + 4 * (x - y) + 10;
+        }
+        else
+            d = d + 4 * x + 6;
+        __gfx_draw_circle_helper(xc, yc, x, y, color);
+    }
+
+	gfx_commit();
+}
+
 
 
 void gfx_outer_box(int x, int y, int w, int h, int fill)
 {
 	//CLI();
 	if(fill)
-    	__internal_gfx_draw_rectangle(x, y, w, h, VESA8_COLOR_LIGHT_GRAY3);
+    	__gfx_draw_rectangle(x, y, w, h, VESA8_COLOR_LIGHT_GRAY3);
 
     gfx_line(x, y, w, GFX_LINE_HORIZONTAL, VESA8_COLOR_LIGHT_GRAY1);
     gfx_line(x, y+h, w, GFX_LINE_HORIZONTAL,VESA8_COLOR_DARK_GRAY2);
@@ -232,12 +334,12 @@ void gfx_outer_box(int x, int y, int w, int h, int fill)
 void gfx_button(int x, int y, int w, int h, char* text)
 {
 	gfx_outer_box(x, y, w, h, 0);
-	__internal_gfx_draw_text(x+2, y+2, text, VESA8_COLOR_BLACK);
+	__gfx_draw_text(x+2, y+2, text, VESA8_COLOR_BLACK);
 }
 
 
 #define GFX_MAX_FMT 50
-int __internal_gfx_draw_format_text(int x, int y, char color, char* fmt, ...)
+int __gfx_draw_format_text(int x, int y, char color, char* fmt, ...)
 {
 	va_list args;
 
@@ -259,19 +361,19 @@ int __internal_gfx_draw_format_text(int x, int y, char color, char* fmt, ...)
 					case 'i': ;
 						num = va_arg(args, int);
 						itoa(num, str);
-						__internal_gfx_draw_text(x+(x_offset*PIXELS_PER_CHAR), y, str, color);
+						__gfx_draw_text(x+(x_offset*PIXELS_PER_CHAR), y, str, color);
 						x_offset += strlen(str);
 						break;
                     case 'p': ; /* p for padded int */
 						num = va_arg(args, int);
 						itoa(num, str);
-						__internal_gfx_draw_text(x+(x_offset*PIXELS_PER_CHAR), y, str, color);
+						__gfx_draw_text(x+(x_offset*PIXELS_PER_CHAR), y, str, color);
 						x_offset += strlen(str);
 
                         if(strlen(str) < 3){
                             int pad = 3-strlen(str);
                             for (int i = 0; i < pad; i++){
-                                __internal_gfx_draw_char(' ', x+(x_offset*PIXELS_PER_CHAR), y, color);
+                                __gfx_draw_char(' ', x+(x_offset*PIXELS_PER_CHAR), y, color);
                                 x_offset++;
                             }
                         }
@@ -280,17 +382,17 @@ int __internal_gfx_draw_format_text(int x, int y, char color, char* fmt, ...)
 					case 'X': ;
 						num = va_arg(args, int);
 						itohex(num, str);
-						__internal_gfx_draw_text(x+(x_offset*PIXELS_PER_CHAR), y, str, color);
+						__gfx_draw_text(x+(x_offset*PIXELS_PER_CHAR), y, str, color);
 						x_offset += strlen(str);
 						break;
 					case 's': ;
 						char* str_arg = va_arg(args, char *);
-						__internal_gfx_draw_text(x+(x_offset*PIXELS_PER_CHAR), y, str_arg, color);
+						__gfx_draw_text(x+(x_offset*PIXELS_PER_CHAR), y, str_arg, color);
 						x_offset += strlen(str_arg);
 						break;
 					case 'c': ;
 						char char_arg = (char)va_arg(args, int);
-						__internal_gfx_draw_char(char_arg, x+(x_offset*PIXELS_PER_CHAR), y, color);
+						__gfx_draw_char(char_arg, x+(x_offset*PIXELS_PER_CHAR), y, color);
 						x_offset++;
 						break;
 					default:
@@ -304,7 +406,7 @@ int __internal_gfx_draw_format_text(int x, int y, char color, char* fmt, ...)
 				x_offset = 0;
 				break;
 			default:  
-				__internal_gfx_draw_char(x+(x_offset*PIXELS_PER_CHAR), y, *fmt, color);
+				__gfx_draw_char(x+(x_offset*PIXELS_PER_CHAR), y, *fmt, color);
 				x_offset++;
                 written++;
 			}

@@ -226,6 +226,6 @@ mkfs.o: tools/mkfs.c include/stdint.h include/fs/fs.h include/fs/inode.h \
  include/rtc.h include/fs/superblock.h include/bitmap.h \
  include/fs/directory.h
 clock.o: usr/clock.c include/lib/printf.h include/lib/syscall.h \
- include/lib/graphics.h include/rtc.h include/stdint.h
+ include/lib/graphics.h include/rtc.h include/stdint.h include/util.h
 counter.o: usr/counter.c include/lib/printf.h include/lib/syscall.h \
  include/lib/graphics.h
