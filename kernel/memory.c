@@ -414,7 +414,18 @@ void cleanup_process_paging(struct pcb* pcb)
 {
 	uint32_t directory = (uint32_t)pcb->page_dir;
 	uint32_t data_table = (uint32_t)pcb->page_dir[DIRECTORY_INDEX(0x1000000)] & ~PAGE_MASK;
-	uint32_t data_page = (uint32_t)((uint32_t*)(pcb->page_dir[DIRECTORY_INDEX(0x1000000)] & ~PAGE_MASK))[TABLE_INDEX(0x1000000)]& ~PAGE_MASK;
+
+	int size = pcb->data_size;
+	int i = 0;
+	while(size > 4096){
+		uint32_t data_page = (uint32_t)((uint32_t*)(pcb->page_dir[DIRECTORY_INDEX(0x1000000)] & ~PAGE_MASK))[TABLE_INDEX(0x1000000+(i*4096))]& ~PAGE_MASK;
+		memory_free_page((void*) data_page);
+		size -= 4096;
+		i++;
+	}
+
+	uint32_t data_page = (uint32_t)((uint32_t*)(pcb->page_dir[DIRECTORY_INDEX(0x1000000)] & ~PAGE_MASK))[TABLE_INDEX(0x1000000+(i*4096))]& ~PAGE_MASK;
+	memory_free_page((void*) data_page);
 
 	uint32_t stack_table = (uint32_t)pcb->page_dir[DIRECTORY_INDEX(0x1000000)] & ~PAGE_MASK;
 	uint32_t stack_page = (uint32_t)((uint32_t*)(pcb->page_dir[DIRECTORY_INDEX(0x1000000)] & ~PAGE_MASK))[TABLE_INDEX(0x1000000)]& ~PAGE_MASK;
@@ -426,7 +437,6 @@ void cleanup_process_paging(struct pcb* pcb)
 	memory_free_page((void*) stack_page);
 	memory_free_page((void*) stack_table);
 
-	memory_free_page((void*) data_page);
 	memory_free_page((void*) data_table);
 
 	memory_free_page((void*) dynamic_mem);

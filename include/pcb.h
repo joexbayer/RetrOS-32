@@ -45,6 +45,7 @@ struct pcb {
     uint32_t blocked_count;
 
     uint32_t* page_dir;
+    uint32_t data_size;
 
     char name[pcb_max_name_length];
 

@@ -343,7 +343,6 @@ int pcb_cleanup(int pid)
 
 	pcb_queue_remove(&pcbs[pid]);
 	dbgprintf("[PCB] Cleanup on PID %d stack: 0x%x (original: 0x%x)\n", pid, pcbs[pid].esp, pcbs[pid].org_stack);
-	dbgprintf("[PCB] Cleanup on PID %d kstack: 0x%x\n", pid, pcbs[pid].k_esp);
 
 	struct allocation* iter = pcbs[pid].allocations;
 	while(iter != NULL)
@@ -434,6 +433,7 @@ int create_process(char* program)
 	pcb->eip = (void (*)()) 0x1000000; /* External programs start */
 	pcb->running = NEW;
 	pcb->pid = i;
+	pcb->data_size = read;
 	memcpy(pcb->name, pname, strlen(pname)+1);
 	pcb->esp = 0xEFFFFFF0;
 	pcb->ebp = pcb->esp;

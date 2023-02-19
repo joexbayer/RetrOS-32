@@ -24,6 +24,7 @@ int main()
     gfx_create_window(110, 140);
     gfx_set_title("Clock");
 
+    printf("Clock started\n");
     while (1)
     {
         get_current_time(&current_time);
@@ -32,9 +33,9 @@ int main()
 
         int angle_id = (0.5 * (current_time.hour%12 * 60 + current_time.minute) / 6);
 
-		gfx_draw_line(55, 55, 50 + (50*sin_60[angle_id])/1.5, 50+ (50*cos_60[angle_id])/1.25, 0);
-		gfx_draw_line(55, 55, 50 + (50*sin_60[current_time.minute])/1.25, 50+ (50*cos_60[current_time.minute])/1.25, 0);
-		gfx_draw_line(55, 55, 50 + (50*sin_60[current_time.second])/1.25, 50+ (50*cos_60[current_time.second])/1.25, 12);
+		gfx_draw_line(55, 55, 55 + (50*sin_60[angle_id])/1.5, 55+ (50*cos_60[angle_id])/1.5, 0);
+		gfx_draw_line(55, 55, 55 + (50*sin_60[current_time.minute])/1.1, 55+ (50*cos_60[current_time.minute])/1.1, 0);
+		gfx_draw_line(55, 55, 55 + (50*sin_60[current_time.second])/1.1, 55+ (50*cos_60[current_time.second])/1.1, 12);
 
         gfx_draw_circle(55, 55, 50, 0);
 
@@ -44,6 +45,5 @@ int main()
         sleep(100);
     }
     
-    printf("Clock started\n");
 	return 0;
 }
