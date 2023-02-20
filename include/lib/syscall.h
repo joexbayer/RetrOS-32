@@ -16,6 +16,10 @@ void gfx_create_window(int width, int height);
 int gfx_draw_syscall(int option, void* data);
 int gfx_set_title(char* title);
 
+int open(char* name);
+int write(int fd, void* buffer, int size);
+int read(int fd, void* buffer, int size);
+
 #ifdef __cplusplus
 }
 #endif

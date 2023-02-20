@@ -88,12 +88,6 @@ void exec_cmd()
 		return;
 	}
 
-	if(strncmp("stop", shell_buffer, strlen("stop"))){
-		int id = atoi(shell_buffer+strlen("stop")+1);
-		pcb_cleanup(id);
-		return;
-	}
-
 	if(strncmp("block", shell_buffer, strlen("block"))){
 		int id = atoi(shell_buffer+strlen("block")+1);
 		pcb_set_blocked(id);

@@ -53,14 +53,29 @@ void gfx_create_window(int width, int height)
 
 int get_current_time(struct time* time)
 {
-    invoke_syscall(SYSCALL_GFX_GET_TIME, (int)time, 0, 0);
+    return invoke_syscall(SYSCALL_GFX_GET_TIME, (int)time, 0, 0);
 }
 int gfx_draw_syscall(int option, void* data)
 {
-    invoke_syscall(SYSCALL_GFX_DRAW, option, data, 0);
+    return invoke_syscall(SYSCALL_GFX_DRAW, option, data, 0);
 }
 
 int gfx_set_title(char* title)
 {
-    invoke_syscall(SYSCALL_GFX_SET_TITLE, title, 0, 0);
+    return invoke_syscall(SYSCALL_GFX_SET_TITLE, title, 0, 0);
+}
+
+int open(char* name)
+{
+    return invoke_syscall(SYSCALL_OPEN, (int)name, 0, 0);
+}
+
+int write(int fd, void* buffer, int size)
+{
+    return invoke_syscall(SYSCALL_WRITE, fd, (int)buffer, size);
+}
+
+int read(int fd, void* buffer, int size)
+{
+    return invoke_syscall(SYSCALL_READ, fd, (int)buffer, size);
 }

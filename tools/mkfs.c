@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
+#include <sync.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -63,6 +63,21 @@ void* kalloc(int size){
 void kfree(void* ptr)
 {
     free(ptr);
+}
+
+void mutex_init(mutex_t* l)
+{
+
+}
+
+void acquire(mutex_t* l)
+{
+
+}
+
+void release(mutex_t* l)
+{
+
 }
 
 

@@ -9,6 +9,7 @@
 #include <fcntl.h>
 
 #include <time.h>
+#include <sync.h>
 
 #include <fs/fs.h>
 #include <fs/inode.h>
@@ -72,6 +73,21 @@ int get_current_time(struct time* time_s){
     time_s->second = tm.tm_sec;
 
     return 0;
+}
+
+void mutex_init(mutex_t* l)
+{
+
+}
+
+void acquire(mutex_t* l)
+{
+
+}
+
+void release(mutex_t* l)
+{
+
 }
 
 int disk_size()

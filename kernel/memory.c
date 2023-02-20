@@ -427,8 +427,8 @@ void cleanup_process_paging(struct pcb* pcb)
 	uint32_t data_page = (uint32_t)((uint32_t*)(pcb->page_dir[DIRECTORY_INDEX(0x1000000)] & ~PAGE_MASK))[TABLE_INDEX(0x1000000+(i*4096))]& ~PAGE_MASK;
 	memory_free_page((void*) data_page);
 
-	uint32_t stack_table = (uint32_t)pcb->page_dir[DIRECTORY_INDEX(0x1000000)] & ~PAGE_MASK;
-	uint32_t stack_page = (uint32_t)((uint32_t*)(pcb->page_dir[DIRECTORY_INDEX(0x1000000)] & ~PAGE_MASK))[TABLE_INDEX(0x1000000)]& ~PAGE_MASK;
+	uint32_t stack_table = (uint32_t)pcb->page_dir[DIRECTORY_INDEX(0xEFFFFFF0)] & ~PAGE_MASK;
+	uint32_t stack_page = (uint32_t)((uint32_t*)(pcb->page_dir[DIRECTORY_INDEX(0xEFFFFFF0)] & ~PAGE_MASK))[TABLE_INDEX(0xEFFFFFF0)]& ~PAGE_MASK;
 
 	uint32_t dynamic_mem = (uint32_t)pcb->page_dir[DIRECTORY_INDEX((0x400000 + MEMORY_PROCESS_SIZE*pcb->pid))] & ~PAGE_MASK;
 

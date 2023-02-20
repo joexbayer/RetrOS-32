@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <rtc.h>
+#include <sync.h>
 
 #define FS_FILE 1
 #define FS_DIRECTORY 2
@@ -19,6 +20,8 @@ struct inode {
     uint16_t size;            // Size of file (bytes)
     uint8_t blocks[NDIRECT];   // Data block addresses
     uint16_t pos;
+
+    mutex_t lock;
 
     struct time time;
 };
