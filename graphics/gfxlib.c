@@ -78,7 +78,7 @@ int __gfx_draw_rectangle(int x, int y, int width, int height, char color)
  * @param color 
  * @return int 0 on success, less than 0 on error.
  */
-int __gfx_draw_char(int x, int y, char c, char color)
+int __gfx_draw_char(int x, int y, unsigned char c, char color)
 {
 
     if(current_running->gfx_window == NULL)
@@ -241,7 +241,7 @@ plotLine(x0, y0, x1, y1)
 
 void __gfx_draw_line(int x0, int y0, int x1, int y1, unsigned char color)  
 {  
-    int dx, dy, p, x, y, sx, sy, error;
+    int dx, dy, sx, sy, error;
 	int t1 = x1-x0;
 	int t2 = y1-y0;
     dx= ABS(t1);

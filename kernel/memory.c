@@ -2,7 +2,7 @@
  * @file memory.c
  * @author Joe Bayer (joexbayer)
  * @brief A primitiv memory allocation program and virtual memory functions.
- * @version 0.1
+ * @version 0.2
  * @date 2022-06-02
  * 
  * @copyright Copyright (c) 2022
@@ -46,7 +46,7 @@
 #define VMEM_START_ADDRESS 0x400000
 #define VMEM_TOTAL_PAGES ((VMEM_MAX_ADDRESS-VMEM_START_ADDRESS) / PAGE_SIZE)
 
-struct virtual_memory_alloctor {
+struct virtual_memory_allocator {
 	int used_pages;
 	bitmap_t pages;
 
@@ -62,7 +62,6 @@ uint32_t* kernel_page_dir = NULL;
 /* Dynamic Memory */
 static mutex_t mem_lock;
 struct mem_chunk chunks[CHUNKS_SIZE]; /* TODO: convert to bitmap */
-static struct hashmap memmory_hasmap;
 uint16_t chunks_used = 0;
 static uint32_t memory_permanent_ptr = PERMANENT_KERNEL_MEMORY_START;
 
@@ -401,13 +400,13 @@ void cleanup_process_paging(struct pcb* pcb)
 	int size = pcb->data_size;
 	int i = 0;
 	while(size > 4096){
-		uint32_t data_page = (uint32_t)((uint32_t*)(pcb->page_dir[DIRECTORY_INDEX(0x1000000)] & ~PAGE_MASK))[TABLE_INDEX(0x1000000+(i*4096))]& ~PAGE_MASK;
+		uint32_t data_page = (uint32_t)((uint32_t*)(pcb->page_dir[DIRECTORY_INDEX(0x1000000)] & ~PAGE_MASK))[TABLE_INDEX((0x1000000+(i*4096)))]& ~PAGE_MASK;
 		memory_free_page((void*) data_page);
 		size -= 4096;
 		i++;
 	}
 
-	uint32_t data_page = (uint32_t)((uint32_t*)(pcb->page_dir[DIRECTORY_INDEX(0x1000000)] & ~PAGE_MASK))[TABLE_INDEX(0x1000000+(i*4096))]& ~PAGE_MASK;
+	uint32_t data_page = (uint32_t)((uint32_t*)(pcb->page_dir[DIRECTORY_INDEX(0x1000000)] & ~PAGE_MASK))[TABLE_INDEX((0x1000000+(i*4096)))]& ~PAGE_MASK;
 	memory_free_page((void*) data_page);
 
 	uint32_t stack_table = (uint32_t)pcb->page_dir[DIRECTORY_INDEX(0xEFFFFFF0)] & ~PAGE_MASK;

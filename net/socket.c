@@ -17,6 +17,8 @@
 #include <util.h>
 #include <timer.h>
 
+#include <serial.h>
+
 #define MAX_NUMBER_OF_SOCKETS 128
 #define DYNAMIC_PORT_START 49152
 #define NUMBER_OF_DYMANIC_PORTS 16383

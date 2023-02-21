@@ -16,6 +16,7 @@
 #include <terminal.h>
 #include <memory.h>
 #include <util.h>
+#include <serial.h>
 
 #include <net/dns.h>
 

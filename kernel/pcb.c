@@ -178,7 +178,7 @@ void Genesis()
 
 void system_info()
 {
-	static const char* SIZES[] = { "B", "kB", "MB", "GB" };
+	//static const char* SIZES[] = { "B", "kB", "MB", "GB" };
 	int memory_info = 106;
 	struct gfx_window* window = gfx_new_window(225, 375);
 	while(1)

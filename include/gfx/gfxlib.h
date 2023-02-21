@@ -13,7 +13,7 @@ enum GFX_LINE_ATTRIBUTES {
 void gfx_line(int x, int y, int length, int option, int color);
 
 int __gfx_draw_rectangle(int x, int y, int width, int height, char color);
-int __gfx_draw_char(int x, int y, char c, char color);
+int __gfx_draw_char(int x, int y, unsigned char c, char color);
 int __gfx_draw_text(int x, int y, char* str, char color);
 int __gfx_draw_format_text(int x, int y, char color, char* fmt, ...);
 

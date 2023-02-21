@@ -203,7 +203,7 @@ socket.o: net/socket.c include/net/socket.h include/util.h \
  include/gfx/window.h include/gfx/component.h include/terminal.h \
  include/bitmap.h include/net/ethernet.h include/net/arp.h \
  include/net/ipv4.h include/net/icmp.h include/net/udp.h include/timer.h \
- include/rtc.h
+ include/rtc.h include/serial.h
 tcp.o: net/tcp.c include/net/tcp.h include/stdint.h include/net/socket.h \
  include/util.h include/sync.h include/net/skb.h include/net/netdev.h \
  include/pci.h include/memory.h include/pcb.h include/windowmanager.h \

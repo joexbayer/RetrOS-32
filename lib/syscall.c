@@ -57,12 +57,12 @@ int get_current_time(struct time* time)
 }
 int gfx_draw_syscall(int option, void* data)
 {
-    return invoke_syscall(SYSCALL_GFX_DRAW, option, data, 0);
+    return invoke_syscall(SYSCALL_GFX_DRAW, option, (int)data, 0);
 }
 
 int gfx_set_title(char* title)
 {
-    return invoke_syscall(SYSCALL_GFX_SET_TITLE, title, 0, 0);
+    return invoke_syscall(SYSCALL_GFX_SET_TITLE, (int)title, 0, 0);
 }
 
 int open(char* name)

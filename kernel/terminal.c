@@ -16,8 +16,6 @@
 #include <pcb.h>
 #include <terminal.h>
 
-static const char newline = '\n';
-
 /**
  * Writes out terminal buffer to screen.
  */
