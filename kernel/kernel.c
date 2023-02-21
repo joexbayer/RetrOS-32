@@ -85,6 +85,11 @@ void _main(uint32_t magic)
 	add_system_call(SYSCALL_GFX_GET_TIME,  (syscall_t)&get_current_time);
 	add_system_call(SYSCALL_GFX_DRAW, (syscall_t)&gfx_syscall_hook);
 	add_system_call(SYSCALL_GFX_SET_TITLE, (syscall_t)&__gfx_set_title);
+
+	add_system_call(SYSCALL_OPEN, (syscall_t)&fs_open);
+	add_system_call(SYSCALL_READ, (syscall_t)&fs_read);
+	add_system_call(SYSCALL_WRITE, (syscall_t)&fs_write);
+
 	
 
 	dbgprintf("[KERNEL] TEXT: %d\n", _code_end-_code);

@@ -173,14 +173,14 @@ int fs_create(char* name)
 	dbgprintf("[FS] Creating new file %s, inode: %d.\n", name, inode->inode);
 	
 	return 0;
-}
+} 
 
-int fs_read(char* buf, inode_t i)
+int fs_read(inode_t i, char* buf, int size)
 {
 	struct inode* inode = inode_get(i, &superblock);
 	inode->pos = 0; /* Should not set pos = 0*/
 	
-	int ret = inode_read(buf, inode->size, inode, &superblock);
+	int ret = inode_read(buf, size, inode, &superblock);
 	return ret;
 }
 

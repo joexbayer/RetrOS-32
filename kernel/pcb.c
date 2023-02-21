@@ -416,7 +416,7 @@ int create_process(char* program)
 		return 0;
 
 	char buf[MAX_FILE_SIZE];
-	int read = fs_read((char* )buf, inode);
+	int read = fs_read(inode, (char* )buf, MAX_FILE_SIZE);
 	fs_close(inode);
 	dbgprintf("[INIT PROCESS] Reading %s from disk (%d bytes)\n", program, read);
 

@@ -113,7 +113,7 @@ void exec_cmd()
 		inode_t inode = fs_open(name);
 
 		char buf[512];
-		fs_read(buf, inode);
+		fs_read(inode, buf, 512);
 		twritef("%s\n", buf);
 		fs_close(inode);
 		return;

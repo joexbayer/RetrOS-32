@@ -108,12 +108,12 @@ int inode_add_directory_entry(struct directory_entry* entry, struct inode* inode
  */
 int inode_read(char* buf, int size, struct inode* inode, struct superblock* sb)
 {
-	int left = size;
+	int left = size > inode->size ? inode->size : size;
 	int new_pos = inode->pos % BLOCK_SIZE;
 	int block = (inode->pos) / BLOCK_SIZE;
 	int progress = 0;
 
-	if(size > MAX_FILE_SIZE || size > inode->size || (size + inode->pos) > inode->size)
+	if(size > MAX_FILE_SIZE)
 		return -1;
 
 	acquire(&inode->lock);
@@ -125,6 +125,7 @@ int inode_read(char* buf, int size, struct inode* inode, struct superblock* sb)
 		inode->pos += to_read;
 		left -= to_read;
 		progress += to_read;
+
 	}
 
 	/* Read entire blocks while possible. */
@@ -144,7 +145,7 @@ int inode_read(char* buf, int size, struct inode* inode, struct superblock* sb)
 	block = (inode->pos) / BLOCK_SIZE;
 	read_block_offset(&buf[progress], left, inode->pos % BLOCK_SIZE, sb->blocks_start+inode->blocks[block]);
 	inode->pos += size;
-
+inode_read_done:
 	release(&inode->lock);
 	return inode->size > size ? size : inode->size;
 }

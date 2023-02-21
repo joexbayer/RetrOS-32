@@ -207,7 +207,7 @@ int main(int argc, char const *argv[])
     testprintf(write_ret == strlen(test_text)+1, "write test2.txt file.");
 
     char buffer[2048];
-    int read_ret = fs_read(buffer, open_inode);
+    int read_ret = fs_read(open_inode, buffer, 2048);
     testprintf(read_ret == strlen(test_text)+1, "Read test2.txt file.");
 
     int mem_ret = memcmp(buffer, test_text, strlen(test_text)+1);
@@ -231,7 +231,7 @@ int main(int argc, char const *argv[])
     testprintf(small_write == SMALL_BUFFER_SIZE, "Wrote bytes to large_file.txt");
 
     char small_read_buffer[SMALL_BUFFER_SIZE];
-    int small_read = fs_read(small_read_buffer, large_inode);
+    int small_read = fs_read(large_inode, small_read_buffer, SMALL_BUFFER_SIZE);
     testprintf(small_read == SMALL_BUFFER_SIZE, "Read bytes from large_file.txt");
     
     int small_mem_ret = memcmp(small_read_buffer, small_buffer, SMALL_BUFFER_SIZE);
@@ -252,7 +252,7 @@ int main(int argc, char const *argv[])
     testprintf(large_write == LARGE_BUFFER_SIZE, "Wrote bytes to extra_large_file.txt");
 
     char* large_read_buffer = malloc(LARGE_BUFFER_SIZE);
-    int large_read = fs_read(large_read_buffer, large_inode);
+    int large_read = fs_read(large_inode, large_read_buffer, LARGE_BUFFER_SIZE);
     testprintf(large_read == LARGE_BUFFER_SIZE, "Read bytes from extra_large_file.txt");
 
     int large_mem_ret = memcmp(large_read_buffer, large_buffer, LARGE_BUFFER_SIZE);
