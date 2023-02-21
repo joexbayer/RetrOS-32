@@ -42,19 +42,29 @@
  * Start 	0x0100000 (Permanent start)
  */
 
+#define VMEM_MAX_ADDRESS 0x1600000
+#define VMEM_START_ADDRESS 0x400000
+#define VMEM_TOTAL_PAGES ((VMEM_MAX_ADDRESS-VMEM_START_ADDRESS) / PAGE_SIZE)
+
+struct virtual_memory_alloctor {
+	int used_pages;
+	bitmap_t pages;
+
+	mutex_t lock;
+
+	int (*alloc)(struct virtual_memory_allocator*);
+	int (*free)(struct virtual_memory_allocator*, int page);
+} vmem;
 
 /* Virtual Memory*/
-#define TOTAL_PAGES ((PAGE_MEM_END-PAGE_MEM_START) / PAGE_SIZE)
 uint32_t* kernel_page_dir = NULL;
-static bitmap_t page_bitmap;
-static int used_pages = 0;
 
 /* Dynamic Memory */
 static mutex_t mem_lock;
 struct mem_chunk chunks[CHUNKS_SIZE]; /* TODO: convert to bitmap */
 static struct hashmap memmory_hasmap;
 uint16_t chunks_used = 0;
-static uint32_t memory_permanent_ptr = PERMANENT_MEM_START;
+static uint32_t memory_permanent_ptr = PERMANENT_KERNEL_MEMORY_START;
 
 static int memory_process_used = 0;
 
@@ -73,31 +83,6 @@ inline int _check_chunks(int i, int chunks_needed)
 	return 1;
 }
 
-void memory_total_usage()
-{
-	//twritef("\nTotal Memory Usage:\n\n");
-	//twritef("Permanent: %d/%d (%d% )\n", memory_permanent_ptr-PERMANENT_MEM_START, PERMANENT_MEM_END-PERMANENT_MEM_START, ((memory_permanent_ptr-PERMANENT_MEM_START)/(PERMANENT_MEM_END-PERMANENT_MEM_START))*100);
-	//twritef("Dynamic: %d/%d (%d% )\n", (chunks_used*MEM_CHUNK), CHUNKS_SIZE*MEM_CHUNK, ((chunks_used*MEM_CHUNK)/(CHUNKS_SIZE*MEM_CHUNK))*100);
-	//twritef("Pages: %d/%d (%d% )\n", used_pages, TOTAL_PAGES, (used_pages/TOTAL_PAGES)*100);
-}
-
-int memory_get_usage(char* name)
-{
-	return hashmap_get(&memmory_hasmap, name);
-}
-
-void memory_register_alloc(char* name, int size)
-{
-		int current = hashmap_get(&memmory_hasmap, name);
-		if(current == -1){
-			hashmap_put(&memmory_hasmap, name, size);
-			return;
-		}
-
-		hashmap_add(&memmory_hasmap, name, size);
-}
-
-
 int memory_dynamic_usage()
 {
 	return chunks_used; 
@@ -110,12 +95,12 @@ int memory_dynamic_total()
 
 int memory_permanent_usage()
 {
-	return (memory_permanent_ptr-PERMANENT_MEM_START)/MEM_CHUNK;
+	return (memory_permanent_ptr-PERMANENT_KERNEL_MEMORY_START)/MEM_CHUNK;
 }
 
 int memory_permanent_total()
 {
-	return (PERMANENT_MEM_END-PERMANENT_MEM_START)/MEM_CHUNK;
+	return (PERMANENT_MEM_END-PERMANENT_KERNEL_MEMORY_START)/MEM_CHUNK;
 }
 
 int memory_process_total()
@@ -146,7 +131,7 @@ void* palloc(int size)
 }
 
 
-void* __alloc_internal(int size)
+static void* __kalloc_internal(int size)
 {
 	if(size == 0) return NULL;
 	acquire(&mem_lock);
@@ -191,7 +176,7 @@ void* __alloc_internal(int size)
  */
 void* kalloc(int size)
 {
-	void* ret = __alloc_internal(size);
+	void* ret = __kalloc_internal(size);
 	if(ret == NULL)
 		return NULL;
 	
@@ -244,21 +229,19 @@ void kfree(void* ptr)
 void init_memory()
 {
 	mutex_init(&mem_lock);
-
-	uint32_t mem_position = MEM_START;
+	uint32_t kmemory_start = KERNEL_MEMORY_START;
 	for (int i = 0; i < CHUNKS_SIZE; i++)
 	{
 		chunks[i].size = MEM_CHUNK;
-		chunks[i].from = (uint32_t*) mem_position;
+		chunks[i].from = (uint32_t*) kmemory_start;
 		chunks[i].chunks_used = 0;
 		chunks[i].status = FREE;
 
-		mem_position += MEM_CHUNK;
+		kmemory_start += MEM_CHUNK;
 	}
+	/* TODO: set alloc and free */
 
-	dbgprintf("Mem data size: %d\n", sizeof(struct mem_chunk)*CHUNKS_SIZE);
-
-	dbgprintf("[MEM] Memory initilized.\n");
+	dbgprintf("[MEMORY] Memory initilized.\n");
 }
 
 #define MEMORY_PROCESS_SIZE 500*1024
@@ -353,36 +336,36 @@ void* calloc(int size, int val)
 
 void memory_free_page(void* addr)
 {
-	if((uint32_t)addr > PAGE_MEM_END ||  (uint32_t)addr < PAGE_MEM_START)
+	if((uint32_t)addr > VMEM_MAX_ADDRESS ||  (uint32_t)addr < VMEM_START_ADDRESS)
 		return;
 
-	int bit = (((uint32_t) addr) - PAGE_MEM_START) / PAGE_SIZE;
-	if(bit < 0 || bit > TOTAL_PAGES)
+	int bit = (((uint32_t) addr) - VMEM_START_ADDRESS) / PAGE_SIZE;
+	if(bit < 0 || bit > (VMEM_TOTAL_PAGES))
 		return;
 	
-	unset_bitmap(page_bitmap, bit);
-	dbgprintf("[MEMORY] Free page %d at 0x%x\n", bit, addr);
+	unset_bitmap(vmem.pages, bit);
+	dbgprintf("VIRTUAL MEMORY] Free page %d at 0x%x\n", bit, addr);
 }
 
 uint32_t* memory_alloc_page()
 {
-	int bit = get_free_bitmap(page_bitmap, TOTAL_PAGES);
-	uint32_t* paddr = (uint32_t*) (PAGE_MEM_START + (bit * PAGE_SIZE));
+	int bit = get_free_bitmap(vmem.pages, VMEM_TOTAL_PAGES);
+	uint32_t* paddr = (uint32_t*) (PAGE_KERNEL_MEMORY_START + (bit * PAGE_SIZE));
 	memset(paddr, 0, PAGE_SIZE);
-	used_pages++;
+	vmem.used_pages++;
 
-	dbgprintf("[MEMORY] Allocated page %d at 0x%x\n", bit, paddr);
+	dbgprintf("[VIRTUAL MEMORY] Allocated page %d at 0x%x\n", bit, paddr);
 	return paddr;
 }
 
 int memory_pages_total()
 {
-	return TOTAL_PAGES;
+	return VMEM_TOTAL_PAGES;
 }
 
 int memory_pages_usage()
 {
-	return used_pages;
+	return vmem.used_pages;
 }
 
 
@@ -500,7 +483,6 @@ void init_process_paging(struct pcb* pcb, char* data, int size)
 	
 	directory_set(process_directory, 0x1000000, process_data_table, permissions); 
 
-
 	/* Map the process stack to a page */
 	uint32_t* process_stack_page = memory_alloc_page();
 	memset(process_stack_page, 0, PAGE_SIZE);
@@ -527,8 +509,9 @@ void init_process_paging(struct pcb* pcb, char* data, int size)
 
 void init_paging()
 {
-	page_bitmap = create_bitmap(TOTAL_PAGES);
-	dbgprintf("[PAGIN] %d free pagable pages.\n", TOTAL_PAGES);
+	vmem.pages = create_bitmap(VMEM_TOTAL_PAGES);
+	mutex_init(&vmem.lock);
+	dbgprintf("[PAGIN] %d free pagable pages.\n", VMEM_TOTAL_PAGES);
 
 
 	kernel_page_dir = memory_alloc_page();

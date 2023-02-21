@@ -28,5 +28,7 @@ int gfx_syscall_hook(int option, void* data)
         break;
     }
 
+    gfx_commit();
+
     return 0;
 }
