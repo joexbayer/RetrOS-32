@@ -203,7 +203,7 @@ int main(int argc, char const *argv[])
     testprintf(size == 0, "File test2.txt is empty.");
 
     char* test_text = "This is a short test string";
-    int write_ret = fs_write(test_text, strlen(test_text)+1, open_inode);
+    int write_ret = fs_write(open_inode, test_text, strlen(test_text)+1);
     testprintf(write_ret == strlen(test_text)+1, "write test2.txt file.");
 
     char buffer[2048];
@@ -227,7 +227,7 @@ int main(int argc, char const *argv[])
     char small_buffer[SMALL_BUFFER_SIZE];
     for (size_t i = 0; i < SMALL_BUFFER_SIZE; i++) small_buffer[i] = i % 111;
     
-    int small_write = fs_write(small_buffer, SMALL_BUFFER_SIZE, large_inode);
+    int small_write = fs_write(large_inode, small_buffer, SMALL_BUFFER_SIZE);
     testprintf(small_write == SMALL_BUFFER_SIZE, "Wrote bytes to large_file.txt");
 
     char small_read_buffer[SMALL_BUFFER_SIZE];
@@ -248,7 +248,7 @@ int main(int argc, char const *argv[])
     char* large_buffer = malloc(LARGE_BUFFER_SIZE);
     for (short i = 0; i < LARGE_BUFFER_SIZE; i++) large_buffer[i] = i % 111;
 
-    int large_write = fs_write(large_buffer, LARGE_BUFFER_SIZE, large_inode);
+    int large_write = fs_write(large_inode, large_buffer, LARGE_BUFFER_SIZE);
     testprintf(large_write == LARGE_BUFFER_SIZE, "Wrote bytes to extra_large_file.txt");
 
     char* large_read_buffer = malloc(LARGE_BUFFER_SIZE);

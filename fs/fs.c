@@ -178,13 +178,32 @@ int fs_create(char* name)
 int fs_read(inode_t i, char* buf, int size)
 {
 	struct inode* inode = inode_get(i, &superblock);
-	inode->pos = 0; /* Should not set pos = 0*/
-	
 	int ret = inode_read(buf, size, inode, &superblock);
+	
 	return ret;
 }
 
-int fs_write(void* buf, int size, inode_t i)
+/**
+ * @brief Sets position attribute of inode
+ * Cannot set posision past a files size.
+ * @param i inode
+ * @param pos position to set
+ * @param opt UNUSED
+ * @return int 
+ */
+int fs_seek(inode_t i, int pos, int opt)
+{
+	struct inode* inode = inode_get(i, &superblock);
+	
+	if(pos > inode->size)
+		return -1;
+	
+	inode->pos = pos;
+	return 0;
+}
+
+
+int fs_write(inode_t i, void* buf, int size)
 {
 	char* buffer = (char*) buf;
 	struct inode* inode = inode_get(i, &superblock);
