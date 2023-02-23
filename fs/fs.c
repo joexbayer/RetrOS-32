@@ -57,6 +57,17 @@ int init_fs()
 	return 0;
 }
 
+inode_t fs_get_root()
+{
+	return root_dir;
+}
+
+inode_t fs_get_current_dir()
+{
+	return current_dir;
+}
+
+
 int fs_get_size()
 {
 	return superblock.size;

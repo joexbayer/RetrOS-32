@@ -18,6 +18,9 @@ int fs_create(char* name);
 
 int fs_size(inode_t i);
 
+inode_t fs_get_current_dir();
+inode_t fs_get_root();
+
 void fs_stats();
 
 #endif /* __FS_H */
