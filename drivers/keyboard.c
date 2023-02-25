@@ -113,7 +113,11 @@ static void kb_callback()
 		return;
 
 	char c = kbdus[scancode];
-	kb_add_char( __shift_pressed ? c+('A'-'a') : c);
+  if(c == '7' && __shift_pressed){
+    kb_add_char('/');
+  } else {
+	  kb_add_char( __shift_pressed ? c+('A'-'a') : c);
+  }
 	__keyboard_presses++;
 
 }

@@ -25,7 +25,7 @@ bin:
 	@mkdir -p bin
 
 fs_test: bin fs_test.c
-	@$(CC) fs_test.c ../bin/bitmap.o ../fs/bin/fs.o ../fs/bin/inode.o -I ../include/  -O2 -m32 -Wall -g --no-builtin -o ./bin/fs_test.o
+	@$(CC) fs_test.c ../bin/bitmap.o ../fs/bin/fs.o ../fs/bin/path.o ../fs/bin/inode.o -I ../include/  -O2 -m32 -Wall -g --no-builtin -o ./bin/fs_test.o
 
 clean:
 	rm -f ./bin/*

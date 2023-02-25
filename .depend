@@ -38,14 +38,17 @@ vesa.o: drivers/vesa.c include/vesa.h include/stdint.h include/vbe.h \
  include/colors.h include/util.h include/font8.h include/stdarg.h
 fs.o: fs/fs.c include/fs/fs.h include/fs/inode.h include/stdint.h \
  include/rtc.h include/sync.h include/fs/superblock.h include/bitmap.h \
- include/fs/fs_error.h include/fs/directory.h include/memory.h \
- include/pcb.h include/util.h include/windowmanager.h include/colors.h \
- include/gfx/window.h include/gfx/component.h include/terminal.h \
- include/diskdev.h include/ata.h include/serial.h
+ include/fs/fs_error.h include/fs/path.h include/fs/directory.h \
+ include/memory.h include/pcb.h include/util.h include/windowmanager.h \
+ include/colors.h include/gfx/window.h include/gfx/component.h \
+ include/terminal.h include/diskdev.h include/ata.h include/serial.h
 inode.o: fs/inode.c include/fs/inode.h include/stdint.h include/rtc.h \
  include/sync.h include/fs/superblock.h include/bitmap.h \
  include/fs/directory.h include/serial.h include/util.h include/diskdev.h \
  include/ata.h
+path.o: fs/path.c include/fs/path.h include/stdint.h include/fs/inode.h \
+ include/rtc.h include/sync.h include/fs/superblock.h include/bitmap.h \
+ include/fs/directory.h include/fs/fs.h include/util.h
 api.o: graphics/api.c include/gfx/api.h include/gfx/gfxlib.h \
  include/lib/graphics.h
 button.o: graphics/button.c include/gfx/button.h

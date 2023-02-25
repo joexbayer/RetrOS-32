@@ -39,14 +39,14 @@ endif
 
 OUTPUTDIR = ../bin/
 
-NETOBJS = fs.o inode.o
+FSOBJS = path.o fs.o inode.o
 
 .PHONY: all new fs clean bindir
 all: new
 
 new: bindir fs
 
-fs: ${NETOBJS}
+fs: ${FSOBJS}
 	@$(LD) -o ${OUTPUTDIR}fs.o $(addprefix ./bin/,$^) $(LDFLAGS) -r
 
 .depend: **/*.[cSh]

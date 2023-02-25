@@ -25,13 +25,25 @@ static void __inode_sync(struct inode* inode, struct superblock* sb)
 
 static int __inode_cache_insert(struct inode* inode, struct superblock* sb)
 {
-	for (int i = 0; i < 10; i++)
+	int i;
+	int lowest_nlink = 9999;
+	int lowest_cache_entry = 0;
+
+	/* Check if there is a free cache slot and find cache with lowest nlink */
+	for (i = 0; i < 10; i++){
 		if(__inode_cache[i].type == 0){
 			dbgprintf("[FS] Caching inode %d.\n", inode->inode);
 			memcpy(&__inode_cache[i], inode, sizeof(struct inode));
 			return i;
 		}
-	for (int i = 0; i < 10; i++)
+		if(__inode_cache[i].nlink < lowest_nlink){
+			lowest_nlink = __inode_cache[i].nlink;
+			lowest_cache_entry = i;
+		}
+	}
+
+	/* if no free slot check if any file has been closed. */
+	for (i = 0; i < 10; i++)
 		if(__inode_cache[i].nlink == 0){
 			__inode_sync(&__inode_cache[i], sb);
 			dbgprintf("[FS] Saving inode %d to disk..\n", __inode_cache[i].inode);
@@ -40,8 +52,12 @@ static int __inode_cache_insert(struct inode* inode, struct superblock* sb)
 			return i;
 	}
 
-
-	return -1;
+	/* if all else fails, evict the inode with least nlinks */
+	__inode_sync(&__inode_cache[lowest_cache_entry], sb);
+	dbgprintf("[FS] Saving inode %d to disk..\n", __inode_cache[lowest_cache_entry].inode);
+	dbgprintf("[FS] Caching inode %d.\n", inode->inode);
+	memcpy(&__inode_cache[lowest_cache_entry], inode, sizeof(struct inode));
+	return i;
 }
 
 void inodes_sync(struct superblock* sb)

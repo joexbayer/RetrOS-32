@@ -207,6 +207,7 @@ int main(int argc, char const *argv[])
     testprintf(write_ret == strlen(test_text)+1, "write test2.txt file.");
 
     char buffer[2048];
+    fs_seek(open_inode, 0, 0);
     int read_ret = fs_read(open_inode, buffer, 2048);
     testprintf(read_ret == strlen(test_text)+1, "Read test2.txt file.");
 
@@ -231,6 +232,7 @@ int main(int argc, char const *argv[])
     testprintf(small_write == SMALL_BUFFER_SIZE, "Wrote bytes to large_file.txt");
 
     char small_read_buffer[SMALL_BUFFER_SIZE];
+    fs_seek(large_inode, 0, 0);
     int small_read = fs_read(large_inode, small_read_buffer, SMALL_BUFFER_SIZE);
     testprintf(small_read == SMALL_BUFFER_SIZE, "Read bytes from large_file.txt");
     
@@ -252,6 +254,7 @@ int main(int argc, char const *argv[])
     testprintf(large_write == LARGE_BUFFER_SIZE, "Wrote bytes to extra_large_file.txt");
 
     char* large_read_buffer = malloc(LARGE_BUFFER_SIZE);
+    fs_seek(large_inode, 0, 0);
     int large_read = fs_read(large_inode, large_read_buffer, LARGE_BUFFER_SIZE);
     testprintf(large_read == LARGE_BUFFER_SIZE, "Read bytes from extra_large_file.txt");
 

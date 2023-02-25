@@ -2,8 +2,8 @@
 #define __PATH_H
 
 #include <stdint.h>
-#include <inode.h>
+#include <fs/inode.h>
 
-
+inode_t inode_from_path(char* path);
 
 #endif /* __PATH_H */

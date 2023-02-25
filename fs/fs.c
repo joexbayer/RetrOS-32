@@ -1,6 +1,7 @@
 #include <fs/fs.h>
 #include <fs/fs_error.h>
 #include <fs/superblock.h>
+#include <fs/path.h>
 #include <fs/inode.h>
 #include <fs/directory.h>
 #include <memory.h>
@@ -59,12 +60,12 @@ int init_fs()
 
 inode_t fs_get_root()
 {
-	return root_dir;
+	return root_dir->inode;
 }
 
 inode_t fs_get_current_dir()
 {
-	return current_dir;
+	return current_dir->inode;
 }
 
 
@@ -231,18 +232,19 @@ void fs_close(inode_t inode)
 	inode_disk->nlink--;
 }
 
-inode_t fs_open(char* name)
+inode_t fs_open_from_directory(char* name, inode_t i)
 {
 	struct directory_entry entry;
-	current_dir->pos = 0;
+	struct inode* inode = inode_get(i, &superblock);
+	inode->pos = 0;
 	int size = 0;
 
 	if(strlen(name)+1 > FS_DIRECTORY_NAME_SIZE)
 		return -FS_ERR_NAME_SIZE;
 
-	while (size < current_dir->size)
+	while (size < inode->size)
 	{
-		int ret = inode_read((char*) &entry, sizeof(struct directory_entry), current_dir, &superblock);
+		int ret = inode_read((char*) &entry, sizeof(struct directory_entry), inode, &superblock);
 		int mem_ret = memcmp((void*)entry.name, (void*)name, strlen(entry.name));
 		if(mem_ret == 0)
 			goto fs_open_done;
@@ -254,7 +256,7 @@ inode_t fs_open(char* name)
 fs_open_done:
 	dbgprintf("[FS] Opened file %s inode: %d\n", name, entry.inode);
 
-	struct inode* inode = inode_get(entry.inode, &superblock);
+	inode = inode_get(entry.inode, &superblock);
 	if(inode == NULL)
 		return -FS_ERR_FILE_MISSING;
 
@@ -263,6 +265,11 @@ fs_open_done:
 
 	
 	return entry.inode;
+}
+
+inode_t fs_open(char* name)
+{
+	return inode_from_path(name);
 }
 
 int fs_size(inode_t i)
@@ -323,6 +330,8 @@ int fs_mkdir(char* name)
 
 	return 0;
 }
+
+
 
 void ls(char* path)
 {
