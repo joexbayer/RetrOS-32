@@ -8,6 +8,9 @@
  * @copyright Copyright (c) 2022
  * 
  */
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdarg.h>
 #include <lib/syscall.h>
@@ -122,3 +125,7 @@ int printf(char* fmt, ...)
 	written += x_offset;
 	return written;
 }
+
+#ifdef __cplusplus
+}
+#endif

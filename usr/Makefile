@@ -24,7 +24,7 @@ endif
 
 OUTPUTDIR = ./bin/
 
-USROBJS = bin/counter.o bin/clock.o
+USROBJS = bin/counter.o bin/clock.o bin/hello.o
 COMMON = ../bin/syscall.o ../bin/util.o ../bin/printf.o ../bin/graphics.o
 
 .PHONY: all new programs
@@ -32,17 +32,24 @@ all: new
 
 new: bindir programs
 
-programs: bin/entry.o ${USROBJS} 
+programs: bin/crt0.o ${USROBJS} 
 	@echo [USR] All user programs created and linked!
 
-bin/%.o: %.c bin/entry.o
+bin/%.o: %.c bin/crt0.o
 	@$(CC) -o $@ -c $< $(CCFLAGS)
-	@$(LD) -o $(basename $@) $@ ./bin/entry.o $(COMMON) $(LDFLAGS) -T ./utils/linker.ld
+	@$(LD) -o $(basename $@) ./bin/crt0.o $@ $(COMMON) $(LDFLAGS) -T ./utils/linker.ld
 	@echo [USR] Compiling $(basename $@)
 
 bin/%.o: */%.s
 	@echo [USR] Compiling dependency $<
 	@$(AS) -o $@ -c $< $(ASFLAGS)
+
+# C++ compiling
+bin/%.o: %.c++ bin/crt0.o ./bin/crti.o ./bin/crtn.o
+	@g++ -o $@ -c $< -ffreestanding -O1 -Wall -Wextra -fno-exceptions -fno-rtti -I ./../include/ -m32 -fno-pie -nostdlib
+	@$(LD) -o $(basename $@) ./bin/crt0.o $@ ../bin/printf.o ../bin/util.o ../bin/syscall.o $(LDFLAGS) -T ./utils/linker.ld
+	@echo [USR] Compiling C++ $(basename $@)
+
 
 .depend: **/*.[cSh]
 	@$(CC) $(CCFLAGS) -MM -MG **/*.[cS] > $@

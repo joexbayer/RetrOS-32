@@ -7,6 +7,7 @@ struct pcb;
 #include <windowmanager.h>
 #include <gfx/window.h>
 #include <memory.h>
+#include <fs/inode.h>
 #include <bitmap.h>
 
 #define MAX_NUM_OF_PCBS 24

@@ -8,6 +8,11 @@
  * @copyright Copyright (c) 2022
  * 
  */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <syscall_helper.h>
 #include <lib/syscall.h>
 #include <stdint.h>
@@ -79,3 +84,7 @@ int read(int fd, void* buffer, int size)
 {
     return invoke_syscall(SYSCALL_READ, fd, (int)buffer, size);
 }
+
+#ifdef __cplusplus
+}
+#endif

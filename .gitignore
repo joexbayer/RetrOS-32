@@ -63,6 +63,8 @@ filesystem.image
 *.idb
 *.pdb
 
+.depend
+
 # Kernel Module Compile Results
 *.mod*
 .tmp_versions/
