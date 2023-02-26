@@ -122,12 +122,13 @@ int inode_add_directory_entry(struct directory_entry* entry, struct inode* inode
  * @param sb superblock of fs
  * @return int amount of bytes (< 0 on error.)
  */
-int inode_read(char* buf, int size, struct inode* inode, struct superblock* sb)
+int inode_read(void* buf, int size, struct inode* inode, struct superblock* sb)
 {
 	int left = size > inode->size ? inode->size : size;
 	int new_pos = inode->pos % BLOCK_SIZE;
 	int block = (inode->pos) / BLOCK_SIZE;
 	int progress = 0;
+	char* buffer = (char*)buf;
 
 	if(size > MAX_FILE_SIZE)
 		return -1;
@@ -137,7 +138,7 @@ int inode_read(char* buf, int size, struct inode* inode, struct superblock* sb)
 	/* If we will read past a block "border", only read the missing part of current block. */   
 	if(new_pos != 0 && new_pos + size > BLOCK_SIZE){
 		int to_read = BLOCK_SIZE - new_pos;
-		read_block_offset(&buf[progress], to_read, new_pos, sb->blocks_start+inode->blocks[block]);
+		read_block_offset(&buffer[progress], to_read, new_pos, sb->blocks_start+inode->blocks[block]);
 		inode->pos += to_read;
 		left -= to_read;
 		progress += to_read;
@@ -152,14 +153,14 @@ int inode_read(char* buf, int size, struct inode* inode, struct superblock* sb)
 			release(&inode->lock);
 			return -2;
 		}
-		read_block_offset(&buf[progress], BLOCK_SIZE, 0, sb->blocks_start+inode->blocks[block]);
+		read_block_offset(&buffer[progress], BLOCK_SIZE, 0, sb->blocks_start+inode->blocks[block]);
 		left -= BLOCK_SIZE;
 		inode->pos += BLOCK_SIZE;
 		progress += BLOCK_SIZE;
 	}
 
 	block = (inode->pos) / BLOCK_SIZE;
-	read_block_offset(&buf[progress], left, inode->pos % BLOCK_SIZE, sb->blocks_start+inode->blocks[block]);
+	read_block_offset(&buffer[progress], left, inode->pos % BLOCK_SIZE, sb->blocks_start+inode->blocks[block]);
 	inode->pos += size;
 inode_read_done:
 	release(&inode->lock);
@@ -175,13 +176,14 @@ inode_read_done:
  * @param sb superblock of fs
  * @return int amount of bytes written.
  */
-int inode_write(char* buf, int size, struct inode* inode, struct superblock* sb)
+int inode_write(void* buf, int size, struct inode* inode, struct superblock* sb)
 {
 
 	int original_size = size;
 	int new_pos = inode->pos % BLOCK_SIZE;
 	int progress = 0;
 	int block = (inode->pos) / BLOCK_SIZE;
+	char* buffer = (char*)buf;
 
 	if((size + inode->pos) > MAX_FILE_SIZE || block > NDIRECT)
 		return -1; /* TODO: FILE OUT OF SPACE ERROR. */
@@ -194,7 +196,7 @@ int inode_write(char* buf, int size, struct inode* inode, struct superblock* sb)
 	/* If we will write past a block "border", only write the missing part of current block. */    
 	if(new_pos != 0 && new_pos + size > BLOCK_SIZE){
 		int to_write = BLOCK_SIZE - new_pos;
-		write_block_offset(&buf[progress], BLOCK_SIZE - new_pos, new_pos, sb->blocks_start+inode->blocks[block]);
+		write_block_offset(&buffer[progress], BLOCK_SIZE - new_pos, new_pos, sb->blocks_start+inode->blocks[block]);
 		inode->pos += to_write;
 		size -= to_write;
 		progress += to_write;
@@ -208,7 +210,7 @@ int inode_write(char* buf, int size, struct inode* inode, struct superblock* sb)
 	/* While size is greater than block size keep writing blocks */
 	while (size > BLOCK_SIZE)
 	{
-		write_block(&buf[progress], sb->blocks_start+inode->blocks[block]);
+		write_block(&buffer[progress], sb->blocks_start+inode->blocks[block]);
 		inode->pos += BLOCK_SIZE;
 		size -= BLOCK_SIZE;
 		progress += BLOCK_SIZE;
@@ -218,7 +220,7 @@ int inode_write(char* buf, int size, struct inode* inode, struct superblock* sb)
 			inode->blocks[block] = new_block(sb);
 	}
 
-	write_block_offset(&buf[progress], size, inode->pos % BLOCK_SIZE, sb->blocks_start+inode->blocks[block]);
+	write_block_offset(&buffer[progress], size, inode->pos % BLOCK_SIZE, sb->blocks_start+inode->blocks[block]);
 	inode->pos += size;
 	inode->size += original_size;
 

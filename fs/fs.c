@@ -187,10 +187,11 @@ int fs_create(char* name)
 	return 0;
 } 
 
-int fs_read(inode_t i, char* buf, int size)
+int fs_read(inode_t i, void* buf, int size)
 {
+	char* buffer = (char*)buf;
 	struct inode* inode = inode_get(i, &superblock);
-	int ret = inode_read(buf, size, inode, &superblock);
+	int ret = inode_read(buffer, size, inode, &superblock);
 	
 	return ret;
 }

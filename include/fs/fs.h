@@ -11,7 +11,7 @@ void mkfs();
 inode_t fs_open(char* name);
 inode_t fs_open_from_directory(char* name, inode_t i);
 void fs_close(inode_t inode);
-int fs_read(inode_t i, char* buf, int size);
+int fs_read(inode_t i, void* buf, int size);
 int fs_write(inode_t i, void* buf, int size);
 int chdir(char* path);
 int fs_mkdir(char* name);
