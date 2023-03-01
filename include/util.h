@@ -37,8 +37,21 @@ uint32_t memcmp(const void* ptr, const void* ptr2, uint32_t len);
 void* memset (void *dest, int val, int len);
 void* memcpy(void *dest, const void *src, int n);
 
-#define CLI() asm ("cli")
-#define STI() asm ("sti")
+#define PANIC()\
+     asm ("cli");\
+     while(1)\
+
+extern int cli_cnt;
+
+#define CLI()\
+    cli_cnt++;\
+    asm ("cli");\
+
+#define STI()\
+    cli_cnt--;\
+    if(cli_cnt == 0){\
+        asm ("sti");\
+    }\
 
 int atoi(char s[]);
 void itoa(int n, char s[]); 

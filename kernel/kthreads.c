@@ -40,7 +40,7 @@ int start(char* name)
     for (int i = 0; i < total_kthreads; i++)
     {
         if(memcmp(name, kthread_table[i].name, strlen(kthread_table[i].name)) == 0){
-            add_pcb(kthread_table[i].entry, kthread_table[i].name);
+            pcb_add_new(kthread_table[i].entry, kthread_table[i].name);
             return 0;
         }
     }

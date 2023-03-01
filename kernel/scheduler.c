@@ -6,21 +6,21 @@
 
 void sleep(int time)
 {
-    current_running->sleep_time = timer_get_tick() + time;
+    current_running->sleep = timer_get_tick() + time;
     current_running->running = SLEEPING;
     yield();
 }
 
 void yield()
 {
-    CLI();
+    //CLI();
     _context_switch();
 }
 
 void exit()
 {
 
-    CLI();
+    //CLI();
     current_running->running = ZOMBIE;
 
     _context_switch();
@@ -63,13 +63,13 @@ void context_switch()
             current_running = next;
             break;
         case NEW:
-            dbgprintf("[Context Switch] Running new PCB %s with page dir: %x: stack: %x kstack: %x\n", current_running->name, current_running->page_dir, current_running->esp, current_running->k_esp);
+            dbgprintf("[Context Switch] Running new PCB %s with page dir: %x: stack: %x kstack: %x\n", current_running->name, current_running->page_dir, current_running->esp, current_running->kesp);
             load_page_directory(current_running->page_dir);
             //tlb_flush_addr(current_running->page_dir);
             start_pcb();
             break; /* Never reached. */
         case SLEEPING:
-            if(timer_get_tick() >= current_running->sleep_time)
+            if(timer_get_tick() >= current_running->sleep)
                 current_running->running = RUNNING;
             else
                 current_running = current_running->next;
@@ -79,7 +79,7 @@ void context_switch()
             break;
         }
     }
-    //dbgprintf("[Context Switch] Switching too PCB %s with page dir: %x, stack: %x, kstack: %x\n", current_running->name, current_running->page_dir, current_running->esp, current_running->k_esp);
+    //dbgprintf("[Context Switch] Switching too PCB %s with page dir: %x, stack: %x, kstack: %x\n", current_running->name, current_running->page_dir, current_running->esp, current_running->kesp);
     load_page_directory(current_running->page_dir);
 
     //tlb_flush_addr(current_running->page_dir);

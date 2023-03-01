@@ -13,6 +13,7 @@
 #include <scheduler.h>
 #include <pcb.h>
 #include <serial.h>
+#include <assert.h>
 
 /* Fucntions defined in kernel_entry.s */
 void spin_lock_asm(int volatile *l);
@@ -65,7 +66,6 @@ void acquire(mutex_t* l)
         pcb_queue_remove(current_running);
         pcb_queue_push(&l->pcb_blocked, current_running, SINGLE_LINKED);
 
-        //dbgprintf("[SYNC] %s blocked trying to acquire 0x%x\n", current_running->name, l);
         block();
         break;
     
@@ -74,7 +74,7 @@ void acquire(mutex_t* l)
         break;
     
     default:
-        dbgprintf("PANIC 2\n");
+        assert(0);
         break;
     }
 
@@ -99,10 +99,11 @@ void release(mutex_t* l)
         unblock(blocked->pid);
 
         //dbgprintf("[SYNC] %s unblocked %s waiting for 0x%x\n", current_running->name, blocked->name, l);
+        STI();
         return;
-    }    
+    }
 
-
+    assert(l->state != UNLOCKED);
     l->state = UNLOCKED;
     STI();
 }

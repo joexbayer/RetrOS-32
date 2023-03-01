@@ -44,7 +44,6 @@ int mouse_event_get(struct mouse* m)
 
 void mouse_handler()
 {
-	CLI();
    uint8_t status = inportb(MOUSE_STATUS);
 	while (status & MOUSE_BBIT) {
 		char mouse_in = inportb(MOUSE_PORT);

@@ -172,8 +172,10 @@ int ata_read(char *buf, uint32_t from, uint32_t numsects)
     for (uint32_t i = 0; i < numsects; i++)
     {
         rc = __ata_read_sector((char*) buf, pos + i);
-        if (rc == -1)
+        if (rc == -1){
+            STI();
             return -1;
+        }
         buf += 512;
     }
 

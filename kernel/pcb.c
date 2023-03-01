@@ -50,7 +50,7 @@ void pcb_queue_push(struct pcb** queue, struct pcb* pcb, int type)
 		if(current == NULL)
 		{
 			(*queue) = pcb;
-			return;
+			break;
 		}
 		while (current->next == NULL)
 			current = current->next;
@@ -78,6 +78,7 @@ void pcb_queue_push(struct pcb** queue, struct pcb* pcb, int type)
 
 struct pcb* pcb_get_new_running()
 {
+	assert(pcb_blocked_queue != NULL);
 	return pcb_running_queue;
 }
 
@@ -93,34 +94,27 @@ void pcb_queue_remove(struct pcb* pcb)
 	pcb->prev = NULL;
 	STI();
 
-	dbgprintf("[QUEUE] Removed %s to a queue\n", pcb->name);
+	dbgprintf("[QUEUE] Removed %s from a queue\n", pcb->name);
 }
 
 struct pcb* pcb_queue_pop(struct pcb** queue, int type)
 {
-	if((*queue)->pid == 0)
-		return NULL;
+	assert((*queue)->pid == 0);
+	struct pcb* current = (*queue);
 
 	CLI();
 
 	switch (type)
 	{
 	case SINGLE_LINKED:
-		;
-		struct pcb* current = (*queue);
-
-		if(current == NULL)
-			return NULL;
+		if(current == NULL){
+			break;
+		}
 
 		(*queue) = (*queue)->next;
 		STI();
 		dbgprintf("[SINGLE QUEUE] Poped %s to a queue\n", current->name);
 		return current;
-	
-	case DOUBLE_LINKED:
-		/* code */
-		break;
-
 	default:
 		break;
 	}
@@ -163,87 +157,6 @@ void Genesis()
 		__gfx_draw_format_text(10, 80, VESA8_COLOR_BLACK, "Total: %d", pcb_count);
 		
 		gfx_commit();
-		/*print_memory_status();
-
-		for (int i = 0; i < MAX_NUM_OF_PCBS; i++){
-			if(pcbs[i].pid == -1 || pcbs[i].window == NULL)
-				continue;
-			
-			draw_window(pcbs[i].window);
-		}*/
-		sleep(200);
-	}
-}
-
-
-void system_info()
-{
-	//static const char* SIZES[] = { "B", "kB", "MB", "GB" };
-	int memory_info = 106;
-	struct gfx_window* window = gfx_new_window(225, 375);
-	while(1)
-	{
-		__gfx_draw_rectangle(0, 0, 225, 375, VESA8_COLOR_LIGHT_GRAY5);
-		
-		__gfx_draw_rectangle(2, 98, 90, 106, VESA8_COLOR_BLACK);
-		__gfx_draw_rectangle(5, 100, 25, 100, VESA8_COLOR_DARK_GREEN);
-
-		__gfx_draw_text(60, 90, "Memory", VESA8_COLOR_BLACK);
-		int mem_dyn = memory_dynamic_usage();
-		__gfx_draw_rectangle(5, 200-mem_dyn/10, 25, mem_dyn/10, VESA8_COLOR_GREEN);
-
-		__gfx_draw_rectangle(34, 100, 25, 100, VESA8_COLOR_DARK_GREEN);
-		int perm_dyn = memory_permanent_usage();
-		__gfx_draw_rectangle(34, 200-perm_dyn/10, 25, perm_dyn/10, VESA8_COLOR_GREEN);
-
-		__gfx_draw_rectangle(63, 100, 25, 100, VESA8_COLOR_DARK_GREEN);
-		__gfx_draw_rectangle(63, 200-(memory_pages_usage()/2.5), 25, memory_pages_usage()/2.5, VESA8_COLOR_GREEN);
-
-		gfx_inner_box(2, 98, 90, 106, 0);	
-
-		/*while (used >= 1024 && div_used < (sizeof SIZES / sizeof *SIZES)) {
-            div_used++;   
-            used /= 1024;
-        }*/
-
-		__gfx_draw_rectangle(96, memory_info-4, 125, 30, VESA8_COLOR_LIGHT_GRAY1);
-		gfx_inner_box(96, memory_info-4, 125, 30, 0);
-
-		__gfx_draw_format_text(100, memory_info, VESA8_COLOR_BLACK, "Dynamic:");
-		__gfx_draw_format_text(100, memory_info+8, VESA8_COLOR_BLACK, "Used      %dkb", mem_dyn);
-		__gfx_draw_format_text(100, memory_info+16, VESA8_COLOR_BLACK, "Free      %dkb", memory_dynamic_total()-mem_dyn);
-		
-		__gfx_draw_rectangle(96, memory_info+30, 125, 28, VESA8_COLOR_LIGHT_GRAY1);
-		gfx_inner_box(96, memory_info+30, 125, 28, 0);	
-
-		__gfx_draw_format_text(100, memory_info+32, VESA8_COLOR_BLACK, "Permanent:");
-		__gfx_draw_format_text(100, memory_info+40, VESA8_COLOR_BLACK, "Used      %dkb", perm_dyn);
-		__gfx_draw_format_text(100, memory_info+48, VESA8_COLOR_BLACK, "Free      %dkb", memory_permanent_total()-perm_dyn);
-
-		__gfx_draw_rectangle(96, memory_info+62, 125, 30, VESA8_COLOR_LIGHT_GRAY1);
-		gfx_inner_box(96, memory_info+62, 125, 30, 0);	
-
-		__gfx_draw_format_text(100, memory_info+64, VESA8_COLOR_BLACK, "Pages:");
-		__gfx_draw_format_text(100, memory_info+64+8, VESA8_COLOR_BLACK, "Used        %s%d", memory_pages_usage() > 99 ? " " : "" ,  memory_pages_usage());
-		__gfx_draw_format_text(100, memory_info+64+18, VESA8_COLOR_BLACK, "Free        %d", memory_pages_total());
-
-
-		__gfx_draw_rectangle(96, memory_info+98, 125, 30, VESA8_COLOR_LIGHT_GRAY1);
-		gfx_inner_box(96, memory_info+98, 125, 30, 0);	
-		__gfx_draw_format_text(100, memory_info+100, VESA8_COLOR_BLACK, "Process:");
-		__gfx_draw_format_text(100, memory_info+100+8, VESA8_COLOR_BLACK, "Used      %dkb", memory_process_usage()/1024);
-		__gfx_draw_format_text(100, memory_info+100+18, VESA8_COLOR_BLACK, "Free       %dmb", memory_process_total()/1024/1024);
-
-		//gfx_outer_box(100, 200, 70, 20, 1);
-		__gfx_draw_format_text(5, 210, VESA8_COLOR_BLACK, "Total:");
-		__gfx_draw_format_text(5, 220, VESA8_COLOR_BLACK, "%dkb/%dmb", (mem_dyn*MEM_CHUNK+perm_dyn*MEM_CHUNK+(memory_pages_usage()*4096)+memory_process_usage())/1024, (0x100000*15)/1024/1024);
-
-
-		for (int i= 0; i < 20; i++)
-			gfx_line(5, 100+(i*5), 85, GFX_LINE_HORIZONTAL, VESA8_COLOR_BLACK);
-
-		gfx_commit();
-
 		sleep(200);
 	}
 }
@@ -342,7 +255,7 @@ int pcb_cleanup(int pid)
 		gfx_destory_window(pcbs[pid].gfx_window);
 
 	pcb_queue_remove(&pcbs[pid]);
-	dbgprintf("[PCB] Cleanup on PID %d stack: 0x%x (original: 0x%x)\n", pid, pcbs[pid].esp, pcbs[pid].org_stack);
+	dbgprintf("[PCB] Cleanup on PID %d stack: 0x%x (original: 0x%x)\n", pid, pcbs[pid].esp, pcbs[pid].stack_ptr);
 
 	struct allocation* iter = pcbs[pid].allocations;
 	while(iter != NULL)
@@ -356,10 +269,10 @@ int pcb_cleanup(int pid)
 	
 	if(pcbs[pid].is_process){
 		cleanup_process_paging(&pcbs[pid]);
-		kfree((void*)pcbs[pid].org_stack);
+		kfree((void*)pcbs[pid].stack_ptr);
 	}
 	else
-		kfree((void*)pcbs[pid].org_stack);
+		kfree((void*)pcbs[pid].stack_ptr);
 
 	memset(&pcbs[pid], 0, sizeof(struct pcb));
 
@@ -393,12 +306,12 @@ int init_pcb(int pid, struct pcb* pcb, void (*entry)(), char* name)
 	/* Stack grows down so we want the upper part of allocated memory.*/ 
 	pcb->ebp = stack+STACK_SIZE-1;
 	pcb->esp = stack+STACK_SIZE-1;
-	pcb->k_esp = pcb->esp;
-	pcb->k_ebp = pcb->k_esp;
+	pcb->kesp = pcb->esp;
+	pcb->kebp = pcb->kesp;
 	pcb->eip = entry;
 	pcb->running = NEW;
 	pcb->pid = pid;
-	pcb->org_stack = stack;
+	pcb->stack_ptr = stack;
 	pcb->allocations = NULL;
 	pcb->used_memory = 0;
 
@@ -407,7 +320,7 @@ int init_pcb(int pid, struct pcb* pcb, void (*entry)(), char* name)
 	return 1;
 }
 
-int create_process(char* program)
+int pcb_create_process(char* program)
 {
 	CLI();
 	/* Load process from disk */
@@ -437,9 +350,9 @@ int create_process(char* program)
 	memcpy(pcb->name, pname, strlen(pname)+1);
 	pcb->esp = 0xEFFFFFF0;
 	pcb->ebp = pcb->esp;
-	pcb->k_esp = (uint32_t) kalloc(STACK_SIZE)+STACK_SIZE-1;
+	pcb->kesp = (uint32_t) kalloc(STACK_SIZE)+STACK_SIZE-1;
 	dbgprintf("[INIT PROCESS] Setup PCB %d for %s\n", i, program);
-	pcb->k_ebp = pcb->k_esp;
+	pcb->kebp = pcb->kesp;
 	//pcb->window = pcbs[2].window;
 	pcb->term = current_running->term;
 	//dbgprintf("[INIT PROCESS] Adding window %s\n", pcb->window->name);
@@ -465,7 +378,7 @@ int create_process(char* program)
  * @param name name of process
  * @return int amount of running processes, -1 on error.
  */
-int add_pcb(void (*entry)(), char* name)
+int pcb_add_new(void (*entry)(), char* name)
 {   
 	CLI();
 	if(MAX_NUM_OF_PCBS == pcb_count)
@@ -477,7 +390,10 @@ int add_pcb(void (*entry)(), char* name)
 			break;
 	
 	int ret = init_pcb(i, &pcbs[i], entry, name);
-	if(!ret) return ret;
+	if(!ret){
+		STI();
+		return ret;
+	}
 
 	pcb_queue_push_running(&pcbs[i]);
 
@@ -500,7 +416,7 @@ void start_pcb()
  * @brief Sets all PCBs state to stopped. Meaning they can be started.
  * Also starts the PCB background process.
  */
-void init_pcbs()
+void pcb_init()
 {   
 
 	/* Stopped processes are eligible to be "replaced." */
@@ -514,14 +430,14 @@ void init_pcbs()
 	pcbs[0].next = &pcbs[0];
 	pcbs[0].prev = &pcbs[0];
 
-	int ret = add_pcb(&Genesis, "Genesis");
+	int ret = pcb_add_new(&Genesis, "Genesis");
 	if(ret < 0) return; // error
 
 	dbgprintf("[PCB] All process control blocks are ready.\n");
 
 }
 
-void start_tasks()
+void pcb_start()
 {
 	start_pcb();
 	/* We will never reach this.*/

@@ -36,13 +36,13 @@ void _main(uint32_t magic)
 
 	kernel_size = _end-_code;
 	init_serial();
-	dbgprintf("VBE INFO:\n");
-	dbgprintf("Height: %d\n", vbe_info->height);
-	dbgprintf("Width: %d\n", vbe_info->width);
-	dbgprintf("Pitch: %d\n", vbe_info->pitch);
-	dbgprintf("Bpp: %d\n", vbe_info->bpp);
-	dbgprintf("Framebuffer: 0x%x\n", vbe_info->framebuffer);
-	dbgprintf("Memory Size: %d (0x%x)\n", vbe_info->width*vbe_info->height*(vbe_info->bpp/8), vbe_info->width*vbe_info->height*(vbe_info->bpp/8));
+	dbgprintf("[VBE] INFO:\n");
+	dbgprintf("[VBE] Height: %d\n", vbe_info->height);
+	dbgprintf("[VBE] Width: %d\n", vbe_info->width);
+	dbgprintf("[VBE] Pitch: %d\n", vbe_info->pitch);
+	dbgprintf("[VBE] Bpp: %d\n", vbe_info->bpp);
+	dbgprintf("[VBE] Framebuffer: 0x%x\n", vbe_info->framebuffer);
+	dbgprintf("[VBE] Memory Size: %d (0x%x)\n", vbe_info->width*vbe_info->height*(vbe_info->bpp/8), vbe_info->width*vbe_info->height*(vbe_info->bpp/8));
 
 	init_memory();
 	init_interrupts();
@@ -50,7 +50,7 @@ void _main(uint32_t magic)
 	CLI();
 	init_keyboard();
 	mouse_init();
-	init_pcbs();
+	pcb_init();
 	ata_ide_init();
 	ipc_msg_box_init();
 	init_wm();
@@ -61,14 +61,12 @@ void _main(uint32_t magic)
 	init_sockets();
 	init_dns();
 
-	CLI();
 	init_fs();
 	
 	register_kthread(&shell_main, "Shell");
 	register_kthread(&networking_main, "Networking");
 	register_kthread(&dhcpd, "dhcpd");
 	register_kthread(&gfx_compositor_main, "wServer");
-	register_kthread(&system_info, "System");
 	register_kthread(&error_main, "Error");
 	register_kthread(&gfx_window_debugger, "Debugger");
 	//start("Debugger");
@@ -110,7 +108,9 @@ void _main(uint32_t magic)
 	STI();
 	init_timer(1);
 
-	start_tasks();
+	dbgprintf("[CLI] %d\n", cli_cnt);
+
+	pcb_start();
 
 	while(1){};
 
