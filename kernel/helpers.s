@@ -92,7 +92,7 @@ _syscall_entry:
 
 .global _context_switch
 _context_switch:
-
+    cli
     pushfl
     pushal
     

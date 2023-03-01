@@ -1,6 +1,5 @@
 #include <net/icmp.h>
 #include <net/skb.h>
-#include <screen.h>
 #include <terminal.h>
 #include <net/dns.h>
 

@@ -12,26 +12,25 @@
 #include <pcb.h>
 #include <serial.h>
 #include <memory.h>
-#include <sync.h>
-#include <timer.h>
-#include <net/netdev.h>
 #include <scheduler.h>
-#include <terminal.h>
 #include <fs/fs.h>
+#include <assert.h>
 
-#include <windowmanager.h>
 #include <gfx/gfxlib.h>
 
 #define STACK_SIZE 0x2000
-
-static const char* status[] = {"stopped ", "running ", "new     ", "blocked ", "sleeping", "zombie"};
+static const char* pcb_status[] = {"stopped ", "running ", "new     ", "blocked ", "sleeping", "zombie"};
 
 static struct pcb pcbs[MAX_NUM_OF_PCBS];
 static int pcb_count = 0;
-
-struct pcb* current_running = &pcbs[0];
 static struct pcb* pcb_running_queue = &pcbs[0];
 static struct pcb* pcb_blocked_queue = NULL;
+
+/**
+ * Current running PCB, used for context aware
+ * functions such as windows drawing to the screen.
+ */
+struct pcb* current_running = &pcbs[0];
 
 /**
  * @brief Push pcb struct at the end of given queue
@@ -39,92 +38,74 @@ static struct pcb* pcb_blocked_queue = NULL;
  * @param queue 
  * @param pcb 
  */
-void pcb_queue_push(struct pcb** queue, struct pcb* pcb, int type)
+void pcb_queue_push_single(struct pcb** queue, struct pcb* pcb)
 {
+	assert(*queue != NULL);
 	CLI();
-	switch (type)
+	struct pcb* current = (*queue);
+	if(current == NULL)
 	{
-	case SINGLE_LINKED:
-		;
-		struct pcb* current = (*queue);
-		if(current == NULL)
-		{
-			(*queue) = pcb;
-			break;
-		}
-		while (current->next == NULL)
-			current = current->next;
-		current->next = pcb;
-		pcb->next = NULL;
-		dbgprintf("[SINGLE QUEUE] Added %s to a queue\n", pcb->name);
-		break;
-	
-	case DOUBLE_LINKED:
-		;
+		(*queue) = pcb;
+		return;
+	}
+	while (current->next == NULL)
+		current = current->next;
+	current->next = pcb;
+	pcb->next = NULL;
+	STI();
+	dbgprintf("[SINGLE QUEUE] Added %s to a queue\n", pcb->name);
+}
+
+void pcb_queue_add(struct pcb** queue, struct pcb* pcb)
+{
+	CRITICAL_SECTION({
+
 		struct pcb* prev = (*queue)->prev;
 		(*queue)->prev = pcb;
 		pcb->next = (*queue);
 		prev->next = pcb;
 		pcb->prev = prev;
 
-		dbgprintf("[DOUBLE QUEUE] Added %s to a queue\n", pcb->name);
-
-	default:
-		break;
-	}
-
-	STI();
+	});
 }
 
-struct pcb* pcb_get_new_running()
-{
-	assert(pcb_blocked_queue != NULL);
-	return pcb_running_queue;
+void pcb_queue_insert_after(struct pcb *node, struct pcb *new_node) {
+	
+    new_node->prev = node;
+    new_node->next = node->next;
+    if (node->next != NULL) {
+        node->next->prev = new_node;
+    }
+    node->next = new_node;
 }
-
 
 void pcb_queue_remove(struct pcb* pcb)
 {
-	CLI();
-	struct pcb* prev = pcb->prev;
-	prev->next = pcb->next;
-	pcb->next->prev = prev;
+	CRITICAL_SECTION({
 
-	pcb->next = NULL;
-	pcb->prev = NULL;
-	STI();
+		struct pcb* prev = pcb->prev;
+		prev->next = pcb->next;
+		pcb->next->prev = prev;
 
-	dbgprintf("[QUEUE] Removed %s from a queue\n", pcb->name);
+		pcb->next = NULL;
+		pcb->prev = NULL;
+		
+	});
 }
 
-struct pcb* pcb_queue_pop(struct pcb** queue, int type)
-{
-	assert((*queue)->pid == 0);
-	struct pcb* current = (*queue);
-
-	CLI();
-
-	switch (type)
-	{
-	case SINGLE_LINKED:
-		if(current == NULL){
-			break;
-		}
-
-		(*queue) = (*queue)->next;
-		STI();
-		dbgprintf("[SINGLE QUEUE] Poped %s to a queue\n", current->name);
-		return current;
-	default:
-		break;
-	}
-
-	STI();
-
-	return NULL;
+struct pcb* pcb_queue_pop(struct pcb **head) {
+    if (*head == NULL) {
+        return NULL;
+    }
+    struct pcb *front = *head;
+    *head = front->next;
+    if (*head != NULL) {
+        (*head)->prev = NULL;
+    }
+    front->next = NULL;
+    front->prev = NULL;
+    return front;
 }
-
-
 
 /**
  * @brief Wrapper function to push to running queue
@@ -133,8 +114,14 @@ struct pcb* pcb_queue_pop(struct pcb** queue, int type)
  */
 void pcb_queue_push_running(struct pcb* pcb)
 {
-	dbgprintf("[QUEUE] Added %s to a running queue\n", pcb->name);
-	pcb_queue_push(&pcb_running_queue, pcb, DOUBLE_LINKED);
+	dbgprintf("[QUEUE] Added %s to the running queue\n", pcb->name);
+	pcb_queue_add(&pcb_running_queue, pcb);
+}
+
+struct pcb* pcb_get_new_running()
+{
+	assert(pcb_running_queue != NULL);
+	return pcb_running_queue;
 }
 
 void Genesis()
@@ -208,7 +195,7 @@ void print_pcb_status()
 		//__gfx_draw_format_text(10, 10+done_list_count*8, VESA8_COLOR_BLACK, " %d  0x%x  %s  %s  %s\n", pcbs[largest].pid, pcbs[largest].used_memory, status[pcbs[largest].running], pcbs[largest].is_process == 1 ? "Process" : "kthread", pcbs[largest].name);
 
 		__gfx_draw_format_text(10, 10+done_list_count*8, VESA8_COLOR_BLACK, "%s", pcbs[largest].name);
-		__gfx_draw_format_text(10 + 15*8, 10+done_list_count*8, VESA8_COLOR_BLACK, "%s",status[pcbs[largest].running]);
+		__gfx_draw_format_text(10 + 15*8, 10+done_list_count*8, VESA8_COLOR_BLACK, "%s", pcb_status[pcbs[largest].running]);
 		__gfx_draw_format_text(10+15*8+10*8, 10+done_list_count*8, VESA8_COLOR_BLACK, "%d", pcbs[largest].used_memory);
 		__gfx_draw_format_text(10+15*8+10*8 + 10*8, 10+done_list_count*8, VESA8_COLOR_BLACK, "0x%x", pcbs[largest].esp);
 		__gfx_draw_format_text(10+15*8+10*8+10*8+11*8, 10+done_list_count*8, VESA8_COLOR_BLACK, "%d", pcbs[largest].pid);
@@ -223,7 +210,7 @@ void pcb_set_blocked(int pid)
 	pcbs[pid].running = BLOCKED;
 
 	pcb_queue_remove(&pcbs[pid]);
-	pcb_queue_push(&pcb_blocked_queue, &pcbs[pid], SINGLE_LINKED);
+	pcb_queue_push_single(&pcb_blocked_queue, &pcbs[pid]);
 
 	pcbs[pid].blocked_count++;
 }
@@ -242,12 +229,12 @@ void pcb_set_running(int pid)
  * @param pid id of the process.
  * @return int index of pcb, -1 on error.
  */
-int pcb_cleanup(int pid)
+int pcb_cleanup_routine(int pid)
 {
+	ASSERT_CRITICAL();
+
 	if(pid < 0 || pid > MAX_NUM_OF_PCBS)
 		return -1;
-
-	CLI();
 
 	dbgprintf("[PCB] Cleaning zombie process %s\n", pcbs[pid].name);
 
@@ -269,18 +256,13 @@ int pcb_cleanup(int pid)
 	
 	if(pcbs[pid].is_process){
 		cleanup_process_paging(&pcbs[pid]);
-		kfree((void*)pcbs[pid].stack_ptr);
 	}
-	else
-		kfree((void*)pcbs[pid].stack_ptr);
+	kfree((void*)pcbs[pid].stack_ptr);
 
 	memset(&pcbs[pid], 0, sizeof(struct pcb));
 
 	pcbs[pid].running = STOPPED;
 	pcbs[pid].pid = -1;
-	pcbs[pid].window = NULL;
-	
-	STI();
 
 	return pid;
 }
@@ -294,7 +276,7 @@ int pcb_cleanup(int pid)
  * @param name name of process.
  * @return int 1 on success -1 on error.
  */
-int init_pcb(int pid, struct pcb* pcb, void (*entry)(), char* name)
+int pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 {
 	uint32_t stack = (uint32_t) kalloc(STACK_SIZE);
 	if((void*)stack == NULL)
@@ -317,6 +299,8 @@ int init_pcb(int pid, struct pcb* pcb, void (*entry)(), char* name)
 
 	memcpy(pcb->name, name, strlen(name)+1);
 
+	dbgprintf("[INIT KTHREAD] Created new kernel thread!\n");
+
 	return 1;
 }
 
@@ -338,6 +322,8 @@ int pcb_create_process(char* program)
 	for(i = 0; i < MAX_NUM_OF_PCBS; i++)
 		if(pcbs[i].running == STOPPED)
 			break;
+		
+	assert(pcbs[i].running == STOPPED);
 	
 	struct pcb* pcb = &pcbs[i];
 
@@ -353,9 +339,7 @@ int pcb_create_process(char* program)
 	pcb->kesp = (uint32_t) kalloc(STACK_SIZE)+STACK_SIZE-1;
 	dbgprintf("[INIT PROCESS] Setup PCB %d for %s\n", i, program);
 	pcb->kebp = pcb->kesp;
-	//pcb->window = pcbs[2].window;
 	pcb->term = current_running->term;
-	//dbgprintf("[INIT PROCESS] Adding window %s\n", pcb->window->name);
 	pcb->is_process = 1;
 
 	/* Memory map data */
@@ -378,7 +362,7 @@ int pcb_create_process(char* program)
  * @param name name of process
  * @return int amount of running processes, -1 on error.
  */
-int pcb_add_new(void (*entry)(), char* name)
+int pcb_create_kthread(void (*entry)(), char* name)
 {   
 	CLI();
 	if(MAX_NUM_OF_PCBS == pcb_count)
@@ -389,7 +373,7 @@ int pcb_add_new(void (*entry)(), char* name)
 		if(pcbs[i].running == STOPPED)
 			break;
 	
-	int ret = init_pcb(i, &pcbs[i], entry, name);
+	int ret = pcb_init_kthread(i, &pcbs[i], entry, name);
 	if(!ret){
 		STI();
 		return ret;
@@ -424,13 +408,12 @@ void pcb_init()
 	{
 		pcbs[i].running = STOPPED;
 		pcbs[i].pid = -1;
-		pcbs[i].window = NULL;
 	}
 	current_running = &pcbs[0];
 	pcbs[0].next = &pcbs[0];
 	pcbs[0].prev = &pcbs[0];
 
-	int ret = pcb_add_new(&Genesis, "Genesis");
+	int ret = pcb_create_kthread(&Genesis, "Genesis");
 	if(ret < 0) return; // error
 
 	dbgprintf("[PCB] All process control blocks are ready.\n");

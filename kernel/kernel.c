@@ -53,9 +53,8 @@ void _main(uint32_t magic)
 	pcb_init();
 	ata_ide_init();
 	ipc_msg_box_init();
-	init_wm();
-
 	init_pci();
+
 	init_sk_buffers();
 	init_arp();
 	init_sockets();
@@ -69,13 +68,11 @@ void _main(uint32_t magic)
 	register_kthread(&gfx_compositor_main, "wServer");
 	register_kthread(&error_main, "Error");
 	register_kthread(&gfx_window_debugger, "Debugger");
-	//start("Debugger");
-	//start("Error");
-
+	
 	start("Shell");
 	start("wServer");
 
-	add_system_call(SYSCALL_SCRPUT, (syscall_t)&scrput);
+	#pragma GCC diagnostic ignored "-Wcast-function-type"
 	add_system_call(SYSCALL_PRTPUT, (syscall_t)&terminal_putchar);
 	add_system_call(SYSCALL_EXIT, (syscall_t)&exit);
 	add_system_call(SYSCALL_SLEEP, (syscall_t)&sleep);
@@ -87,7 +84,7 @@ void _main(uint32_t magic)
 	add_system_call(SYSCALL_OPEN, (syscall_t)&fs_open);
 	add_system_call(SYSCALL_READ, (syscall_t)&fs_read);
 	add_system_call(SYSCALL_WRITE, (syscall_t)&fs_write);
-
+	#pragma GCC diagnostic pop
 	
 
 	dbgprintf("[KERNEL] TEXT: %d\n", _code_end-_code);
@@ -98,7 +95,6 @@ void _main(uint32_t magic)
 	dbgprintf("[KERNEL] Kernel reaching too: 0x%x\n", _end-_code);
 
 	load_page_directory(kernel_page_dir);
-    //scrprintf(0, 10, "Kernal page: %x", kernel_page_dir);
 	enable_paging();
 
 	dbgprintf("[KERNEL] Enabled paging!\n");

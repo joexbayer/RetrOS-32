@@ -10,7 +10,6 @@
  */
 
 #include <timer.h>
-#include <screen.h>
 #include <serial.h>
 #include <interrupts.h>
 #include <scheduler.h>

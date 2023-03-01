@@ -30,6 +30,8 @@ void serial_write(char* str)
 		serial_put(str[i]);
 }
 
+#define _KDEBUG
+
 /**
  * Writes the given string with formats to screen on give location.
  * @param int x coordinate
@@ -40,10 +42,11 @@ void serial_write(char* str)
  */
 int32_t dbgprintf(char* fmt, ...)
 {
+	int written = 0;
+	#ifdef _KDEBUG
 	CLI();
 	va_list args;
 
-	int written = 0;
 	char str[MAX_FMT_STR_SIZE];
 	int num = 0;
 
@@ -96,6 +99,7 @@ int32_t dbgprintf(char* fmt, ...)
         fmt++;
     }
 	STI();
+	#endif
 	return written;
 }
 

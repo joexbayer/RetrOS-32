@@ -19,7 +19,6 @@
 #include <rtc.h>
 #include <timer.h>
 #include <colors.h>
-#include <screen.h>
 #include <mouse.h>
 #include <gfx/component.h>
 #include <sync.h>

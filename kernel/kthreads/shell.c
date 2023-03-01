@@ -10,7 +10,6 @@
  */
 #include <pci.h>
 #include <keyboard.h>
-#include <screen.h>
 #include <terminal.h>
 #include <scheduler.h>
 #include <pcb.h>
@@ -63,9 +62,6 @@ void reset_shell()
 	shell_buffer_length = 0;
 	__gfx_draw_text(0, SHELL_POSITION, shell_name, VESA8_COLOR_LIGHT_GREEN);
 	shell_column += 1;
-
-	//screen_set_cursor(shell_column, SHELL_POSITION);
-	//shell_clear();
 }
 
 void exec_cmd()
@@ -84,7 +80,6 @@ void exec_cmd()
 	}
 
 	if(strncmp("clear", shell_buffer, strlen("clear"))){
-		scr_clear();
 		return;
 	}
 
@@ -220,7 +215,6 @@ void shell_put(char c)
 		gfx_commit();
 		shell_buffer[shell_buffer_length] = 0;
 		shell_buffer_length--;
-		//screen_set_cursor(shell_column-1, SHELL_POSITION);
 		return;
 	}
 
@@ -232,7 +226,6 @@ void shell_put(char c)
 	gfx_commit();
 	shell_buffer[shell_buffer_length] = uc;
 	shell_buffer_length++;
-	screen_set_cursor(shell_column, SHELL_POSITION);
 	shell_column++;
 }
 

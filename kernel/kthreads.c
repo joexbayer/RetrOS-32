@@ -10,7 +10,6 @@
  */
 #include <kthreads.h>
 #include <terminal.h>
-#include <screen.h>
 #include <pcb.h>
 
 #define MAX_KTHREADS 10
@@ -40,7 +39,7 @@ int start(char* name)
     for (int i = 0; i < total_kthreads; i++)
     {
         if(memcmp(name, kthread_table[i].name, strlen(kthread_table[i].name)) == 0){
-            pcb_add_new(kthread_table[i].entry, kthread_table[i].name);
+            pcb_create_kthread(kthread_table[i].entry, kthread_table[i].name);
             return 0;
         }
     }

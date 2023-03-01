@@ -9,7 +9,6 @@
  * 
  */
 
-#include <screen.h>
 #include <terminal.h>
 #include <scheduler.h>
 #include <serial.h>

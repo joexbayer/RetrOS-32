@@ -11,7 +11,6 @@
  */
 
 #include <keyboard.h>
-#include <screen.h>
 #include <serial.h>
 #include <interrupts.h>
 #include <util.h>

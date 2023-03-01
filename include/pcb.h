@@ -4,11 +4,8 @@
 struct pcb;
 
 #include <util.h>
-#include <windowmanager.h>
 #include <gfx/window.h>
 #include <memory.h>
-#include <fs/inode.h>
-#include <bitmap.h>
 
 #define MAX_NUM_OF_PCBS 24
 #define pcb_max_name_length 25
@@ -65,7 +62,7 @@ extern struct pcb* current_running;
 void pcb_init();
 void pcb_start();
 void start_pcb();
-int pcb_add_new( void (*entry)(), char* name);
+int pcb_create_kthread( void (*entry)(), char* name);
 void print_pcb_status();
 int pcb_create_process(char* program);
 
@@ -74,10 +71,10 @@ void pcb_set_blocked(int pid);
 
 void pcb_queue_push_running(struct pcb* pcb);
 void pcb_queue_remove(struct pcb* pcb);
-void pcb_queue_push(struct pcb** queue, struct pcb* pcb, int type);
-struct pcb* pcb_queue_pop(struct pcb** queue, int type);
+void pcb_queue_push_single(struct pcb** queue, struct pcb* pcb);
+struct pcb* pcb_queue_pop(struct pcb **head);
 
-int pcb_cleanup(int pid);
+int pcb_cleanup_routine(int pid);
 
 struct pcb* pcb_get_new_running();
 

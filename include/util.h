@@ -53,6 +53,15 @@ extern int cli_cnt;
         asm ("sti");\
     }\
 
+#define CRITICAL_SECTION(code_block) \
+    do { \
+        CLI(); \
+        code_block \
+        STI(); \
+    } while (0)
+
+#define ASSERT_CRITICAL() assert(cli_cnt > 0)
+
 int atoi(char s[]);
 void itoa(int n, char s[]); 
 void itohex(uint32_t n, char s[]);

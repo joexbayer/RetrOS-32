@@ -9,7 +9,6 @@
  * 
  */
 #include <e1000.h>
-#include <screen.h>
 #include <interrupts.h>
 #include <pci.h>
 #include <net/netdev.h>
@@ -141,7 +140,6 @@ int e1000_receive(char* buffer, uint32_t size)
 	int tail = E1000_DEVICE_SET(E1000_RDT);
 	if(!(rx_desc_list[next].status & E1000_RXD_STAT_DD)) /* Descriptor Done */
 	{
-		scrprintf(12, 13, "E1000 INTERRUPT ERROR 0x%x, %x, %d, %d", rx_desc_list[next].status, errors++, tail, next);
 		return -1;
 	}
 

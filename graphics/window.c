@@ -120,7 +120,7 @@ int gfx_destory_window(struct gfx_window* w)
     gfx_composition_remove_window(w);
 
     free(w->inner);
-    w->owner->window = NULL;
+    w->owner->gfx_window = NULL;
     kfree(w);
 
     STI();

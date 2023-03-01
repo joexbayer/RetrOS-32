@@ -3,6 +3,7 @@
 #include <pcb.h>
 #include <timer.h>
 #include <serial.h>
+#include <assert.h>
 
 void sleep(int time)
 {
@@ -14,15 +15,15 @@ void sleep(int time)
 void yield()
 {
     //CLI();
-    _context_switch();
+
+        _context_switch();
+
 }
 
 void exit()
 {
 
-    //CLI();
     current_running->running = ZOMBIE;
-
     _context_switch();
 }
 
@@ -45,6 +46,8 @@ void unblock(int pid)
 
 void context_switch()
 {   
+    CLI();
+
     current_running = current_running->next;
     if(current_running == NULL)
             current_running = pcb_get_new_running();
@@ -59,13 +62,14 @@ void context_switch()
         case ZOMBIE:
             ;
             struct pcb* next = current_running->next;
-            pcb_cleanup(current_running->pid);
+            pcb_cleanup_routine(current_running->pid);
             current_running = next;
             break;
         case NEW:
             dbgprintf("[Context Switch] Running new PCB %s with page dir: %x: stack: %x kstack: %x\n", current_running->name, current_running->page_dir, current_running->esp, current_running->kesp);
             load_page_directory(current_running->page_dir);
             //tlb_flush_addr(current_running->page_dir);
+            STI();
             start_pcb();
             break; /* Never reached. */
         case SLEEPING:
@@ -81,6 +85,8 @@ void context_switch()
     }
     //dbgprintf("[Context Switch] Switching too PCB %s with page dir: %x, stack: %x, kstack: %x\n", current_running->name, current_running->page_dir, current_running->esp, current_running->kesp);
     load_page_directory(current_running->page_dir);
+
+    STI();
 
     //tlb_flush_addr(current_running->page_dir);
 }

@@ -1,4 +1,4 @@
-/**
+/** DEPRECATED
  * @file screen.c
  * @author Joe Bayer (joexbayer)
  * @brief Handles drawing to the screen, mainly in VGA_MEMORY

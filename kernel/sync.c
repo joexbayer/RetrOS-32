@@ -64,7 +64,7 @@ void acquire(mutex_t* l)
     {
     case LOCKED:
         pcb_queue_remove(current_running);
-        pcb_queue_push(&l->pcb_blocked, current_running, SINGLE_LINKED);
+        pcb_queue_push_single(&l->pcb_blocked, current_running);
 
         block();
         break;
@@ -93,17 +93,15 @@ void release(mutex_t* l)
     //dbgprintf("[SYNC] %s released 0x%x\n", current_running->name, l);
 
     CLI();
-    struct pcb* blocked = pcb_queue_pop(&l->pcb_blocked, SINGLE_LINKED);
+    struct pcb* blocked = pcb_queue_pop(&l->pcb_blocked);
     if(blocked != NULL){
         pcb_queue_push_running(blocked);
         unblock(blocked->pid);
-
-        //dbgprintf("[SYNC] %s unblocked %s waiting for 0x%x\n", current_running->name, blocked->name, l);
         STI();
         return;
     }
 
-    assert(l->state != UNLOCKED);
+    //assert(l->state != UNLOCKED);
     l->state = UNLOCKED;
     STI();
 }
