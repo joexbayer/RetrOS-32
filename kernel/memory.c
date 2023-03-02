@@ -10,15 +10,9 @@
  */
 
 #include <memory.h>
-#include <screen.h>
 #include <serial.h>
-#include <rtc.h>
 #include <sync.h>
-#include <diskdev.h>
-#include <hashmap.h>
 #include <vbe.h>
-#include <terminal.h>
-
 #include <bitmap.h>
 
 /**
@@ -42,10 +36,16 @@
  * Start 	0x0100000 (Permanent start)
  */
 
+/* prototypes */
+void init_memory();
+void* kalloc(int size);
+void kfree(void* ptr);
+/* ... */
+
+/* Virtual Memory*/
 #define VMEM_MAX_ADDRESS 0x1600000
 #define VMEM_START_ADDRESS 0x400000
 #define VMEM_TOTAL_PAGES ((VMEM_MAX_ADDRESS-VMEM_START_ADDRESS) / PAGE_SIZE)
-
 struct virtual_memory_allocator {
 	int used_pages;
 	bitmap_t pages;
@@ -55,72 +55,20 @@ struct virtual_memory_allocator {
 	int (*alloc)(struct virtual_memory_allocator*);
 	int (*free)(struct virtual_memory_allocator*, int page);
 } vmem;
-
-/* Virtual Memory*/
 uint32_t* kernel_page_dir = NULL;
 
-/* Dynamic Memory */
-static mutex_t mem_lock;
-struct mem_chunk chunks[CHUNKS_SIZE]; /* TODO: convert to bitmap */
-uint16_t chunks_used = 0;
-static uint32_t memory_permanent_ptr = PERMANENT_KERNEL_MEMORY_START;
-
-static int memory_process_used = 0;
-
-/* prototypes */
-void init_memory();
-void* kalloc(int size);
-void kfree(void* ptr);
-
-/* Helper functions */
-inline int _check_chunks(int i, int chunks_needed)
-{
-	for (int j = 0; j < chunks_needed; j++)
-		if(chunks[i+j].status != FREE)
-			return -1;
-
-	return 1;
-}
-
-int memory_dynamic_usage()
-{
-	return chunks_used; 
-}
-
-int memory_dynamic_total()
-{
-	return CHUNKS_SIZE; 
-}
-
-int memory_permanent_usage()
-{
-	return (memory_permanent_ptr-PERMANENT_KERNEL_MEMORY_START)/MEM_CHUNK;
-}
-
-int memory_permanent_total()
-{
-	return (PERMANENT_MEM_END-PERMANENT_KERNEL_MEMORY_START)/MEM_CHUNK;
-}
-
-int memory_process_total()
-{
-	return 0x100000*12;
-}
-int memory_process_usage()
-{
-	return memory_process_used;
-}
-
-/* implementation */
-
 /**
- * @brief Permanent allocation (no free)
- * 
+ * @brief Permanent memory allocation scheme for memory that wont be freed.
+ * Mainly by the windowservers framebuffer, and E1000's buffers.
  */
+static uint32_t memory_permanent_ptr = PERMANENT_KERNEL_MEMORY_START;
 void* palloc(int size)
 {
-	if(memory_permanent_ptr + size > PERMANENT_MEM_END){
-		dbgprintf("[WARNING] Out of permanent memory!\n");
+	if(size <= 0)
+		return NULL;
+
+	if(memory_permanent_ptr + size > PMEM_END_ADDRESS){
+		dbgprintf("[WARNING] Not enough permanent memory!\n");
 		return NULL;
 	}
 	uint32_t new = memory_permanent_ptr + size;
@@ -130,94 +78,88 @@ void* palloc(int size)
 }
 
 
-static void* __kalloc_internal(int size)
+/* Dynamic kernel memory */
+#define BLOCK_SIZE 512
+#define BLOCKS_PER_BYTE 8
+#define BITMAP_INDEX(addr) ((addr - KERNEL_MEMORY_START) / BLOCK_SIZE / BLOCKS_PER_BYTE)
+#define BITMAP_OFFSET(addr) ((addr - KERNEL_MEMORY_START) / BLOCK_SIZE % BLOCKS_PER_BYTE)
+
+/* need to add static bitmap as, bitmap_t uses kalloc */
+static uint8_t __kmemory_bitmap[(KERNEL_MEMORY_END - KERNEL_MEMORY_START) / BLOCK_SIZE / BLOCKS_PER_BYTE];
+static mutex_t __kmemory_lock;
+
+void kernel_memory_init()
 {
-	if(size == 0) return NULL;
-	acquire(&mem_lock);
-
-	int chunks_needed = 0;
-	while(chunks_needed*MEM_CHUNK < size)
-		chunks_needed++;
-
-
-	if(!chunks_needed) chunks_needed = 1;
-	for (int i = 0; i < CHUNKS_SIZE; i++)
-	{
-		if(chunks[i].status == FREE)
-		{	
-			int ret = _check_chunks(i, chunks_needed);
-			if(!ret) break;
-			
-			/* Found enough continious chunks for size. */
-			for (int j = 0; j < chunks_needed; j++)
-			{
-				chunks[i+j].status = USED;
-			}
-			
-			chunks[i].chunks_used = chunks_needed;
-			chunks_used += chunks_needed;
-
-			release(&mem_lock);
-			return chunks[i].from;
-		}	
-	}
-
-	release(&mem_lock);
-	return NULL;
+	mutex_init(&__kmemory_lock);
 }
 
 /**
  * @brief Allocates sequential chunks with fixed size 4Kb each.
  * Will allocate multiple chunks if needed.
  * 
- * @param uint16_t size, how much memory is needed (Best if 4Kb aligned.).
+ * @param int size, how much memory is needed (Best if 4Kb aligned.).
  * @return void* to memory location. NULL if not enough continious chunks.
  */
 void* kalloc(int size)
 {
-	void* ret = __kalloc_internal(size);
-	if(ret == NULL)
-		return NULL;
-	
-	dbgprintf("[MEMORY] %s Allocating %d bytes of data (%d/%d)\n", current_running->name, size, (chunks_used*MEM_CHUNK), MEM_CHUNK*CHUNKS_SIZE);
-	//memory_register_alloc(current_running->name, size);
+	acquire(&__kmemory_lock);
 
-	return ret;
-}
-/**
- * @brief Will free all chunks associated with chunk pointed to by ptr. 
- * 
- * @param void* ptr, pointer to memory to free.
- * @return void
- */
-void kfree(void* ptr)
-{
-	if(ptr == NULL) return;
+    int num_blocks = (size + sizeof(int) + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
-	acquire(&mem_lock);
-	for (int i = 0; i < CHUNKS_SIZE; i++)
-	{
-		if(chunks[i].from == ptr)
-		{
-			if(chunks[i].status != USED) 
-			{
-				release(&mem_lock);
-				return; /* Tried to free memory not used. */
-			}
-			
-			int used = chunks[i].chunks_used;
-			for (int j = 0; j < used; j++)
-			{
-				chunks[i+j].status = FREE;
-				chunks[i+j].chunks_used = 0;
-			}
-			chunks_used -= used;
+    // Find a contiguous free region of memory
+    int free_blocks = 0;
+    for (int i = 0; i < (KERNEL_MEMORY_END - KERNEL_MEMORY_START) / BLOCK_SIZE; i++) {
 
-			release(&mem_lock);
-			return;
+		/* look for continious memory */
+        if (!(__kmemory_bitmap[BITMAP_INDEX(KERNEL_MEMORY_START + i * BLOCK_SIZE)] & (1 << BITMAP_OFFSET(KERNEL_MEMORY_START + i * BLOCK_SIZE)))) {
+            free_blocks++;
+
+            if (free_blocks == num_blocks) {
+                // Mark the blocks as used in the bitmap
+                for (int j = i - num_blocks + 1; j <= i; j++) {
+                    __kmemory_bitmap[BITMAP_INDEX(KERNEL_MEMORY_START + j * BLOCK_SIZE)] |= (1 << BITMAP_OFFSET(KERNEL_MEMORY_START + j * BLOCK_SIZE));
+                }
+
+                // Write the size of the allocated block to the metadata block
+                int* metadata = (int*) (KERNEL_MEMORY_START + (i - num_blocks + 1) * BLOCK_SIZE);
+                *metadata = num_blocks;
+
+                // Return a pointer to the allocated memory block
+				dbgprintf("[MEMORY] Allocated %d blocks of data\n", num_blocks);
+				release(&__kmemory_lock);
+                return (void*)KERNEL_MEMORY_START + (i - num_blocks + 1) * BLOCK_SIZE + sizeof(int);
+            }
+        } else {
+			/* if we found a block that is allocated, reset our search.  */
+			free_blocks = 0;
 		}
-	}
-	release(&mem_lock);	
+    }
+    // No contiguous free region of memory was found
+	release(&__kmemory_lock);
+    return NULL;
+}
+
+void kfree(void* ptr) {
+    if (!ptr) {
+        return;
+    }
+	
+	acquire(&__kmemory_lock);
+
+    // Calculate the index of the block in the memory region
+    int block_index = (((uint32_t)ptr) - KERNEL_MEMORY_START) / BLOCK_SIZE;
+
+    // Read the size of the allocated block from the metadata block
+    int* metadata = (int*) (KERNEL_MEMORY_START + block_index * BLOCK_SIZE);
+    int num_blocks = *metadata;
+	dbgprintf("[MEMORY] freeing %d blocks of data\n", num_blocks);
+
+    // Mark the blocks as free in the bitmap
+    for (int i = 0; i < num_blocks; i++) {
+        __kmemory_bitmap[BITMAP_INDEX(KERNEL_MEMORY_START + (block_index + i) * BLOCK_SIZE)] &= ~(1 << BITMAP_OFFSET(KERNEL_MEMORY_START + (block_index + i) * BLOCK_SIZE));
+    }
+
+	release(&__kmemory_lock);
 }
 
 /**
@@ -227,24 +169,12 @@ void kfree(void* ptr)
  */
 void init_memory()
 {
-	mutex_init(&mem_lock);
-	uint32_t kmemory_start = KERNEL_MEMORY_START;
-	for (int i = 0; i < CHUNKS_SIZE; i++)
-	{
-		chunks[i].size = MEM_CHUNK;
-		chunks[i].from = (uint32_t*) kmemory_start;
-		chunks[i].chunks_used = 0;
-		chunks[i].status = FREE;
-
-		kmemory_start += MEM_CHUNK;
-	}
-	/* TODO: set alloc and free */
-
-	dbgprintf("[MEMORY] Memory initilized.\n");
+	kernel_memory_init();
 }
 
-#define MEMORY_PROCESS_SIZE 500*1024
 
+static int memory_process_used = 0;
+#define MEMORY_PROCESS_SIZE 500*1024
 void free(void* ptr)
 {
 	if((int)ptr == current_running->allocations->address){
@@ -423,18 +353,8 @@ void cleanup_process_paging(struct pcb* pcb)
 
 	memory_free_page((void*) dynamic_mem);
 	memory_free_page((void*) directory);
-	/* Only cleanup pages above 1 to protect kernel table at 0 
-	for (int i = 0; i < 1024; i++)
-	{
-		uint32_t* table = (uint32_t*) pcb->page_dir[i];
-		for (int j = 0; j < 1024; j++)
-			if(table[j] != 0)
-				memory_free_page((void*)table[j]);
 
-		memory_free_page(table);
-	}
-
-	memory_free_page(pcb->page_dir);*/
+	memory_free_page(pcb->page_dir);
 }
 
 
