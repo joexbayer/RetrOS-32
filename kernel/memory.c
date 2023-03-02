@@ -94,30 +94,40 @@ void kernel_memory_init()
 }
 
 /**
- * @brief Allocates sequential chunks with fixed size 4Kb each.
- * Will allocate multiple chunks if needed.
+ * @brief Allocates sequential chunks of fixed size (4KB each) from a region of kernel memory.
  * 
- * @param int size, how much memory is needed (Best if 4Kb aligned.).
- * @return void* to memory location. NULL if not enough continious chunks.
+ * @param size The amount of memory to allocate, in bytes. It is recommended that this value be 4KB-aligned.
+ * @return A void pointer to the allocated memory block, or NULL if no contiguous region of memory was found.
+ *
+ * This function acquires a lock to ensure thread safety, and then searches the bitmap of kernel memory for a
+ * contiguous region of free blocks that is large enough to accommodate the requested memory size. If such a region
+ * is found, the function marks the corresponding blocks as used in the bitmap, writes the size of the allocated
+ * block to a metadata block, and returns a pointer to the allocated memory block. If no contiguous region of memory
+ * is found, the function returns NULL.
  */
 void* kalloc(int size)
 {
 	acquire(&__kmemory_lock);
 
     int num_blocks = (size + sizeof(int) + BLOCK_SIZE - 1) / BLOCK_SIZE;
+	int total_blocks = (KERNEL_MEMORY_END - KERNEL_MEMORY_START) / BLOCK_SIZE;
 
     // Find a contiguous free region of memory
     int free_blocks = 0;
-    for (int i = 0; i < (KERNEL_MEMORY_END - KERNEL_MEMORY_START) / BLOCK_SIZE; i++) {
+    for (int i = 0; i < total_blocks; i++) {
 
 		/* look for continious memory */
-        if (!(__kmemory_bitmap[BITMAP_INDEX(KERNEL_MEMORY_START + i * BLOCK_SIZE)] & (1 << BITMAP_OFFSET(KERNEL_MEMORY_START + i * BLOCK_SIZE)))) {
+		uint32_t index = BITMAP_INDEX(KERNEL_MEMORY_START + i * BLOCK_SIZE);
+		uint32_t offset = BITMAP_OFFSET(KERNEL_MEMORY_START + i * BLOCK_SIZE);
+        if (!(__kmemory_bitmap[index] & (1 << offset))) {
             free_blocks++;
 
             if (free_blocks == num_blocks) {
                 // Mark the blocks as used in the bitmap
                 for (int j = i - num_blocks + 1; j <= i; j++) {
-                    __kmemory_bitmap[BITMAP_INDEX(KERNEL_MEMORY_START + j * BLOCK_SIZE)] |= (1 << BITMAP_OFFSET(KERNEL_MEMORY_START + j * BLOCK_SIZE));
+					index = BITMAP_INDEX(KERNEL_MEMORY_START + j * BLOCK_SIZE);
+					offset = BITMAP_OFFSET(KERNEL_MEMORY_START + j * BLOCK_SIZE);
+                    __kmemory_bitmap[index] |= (1 << offset);
                 }
 
                 // Write the size of the allocated block to the metadata block
@@ -156,7 +166,9 @@ void kfree(void* ptr) {
 
     // Mark the blocks as free in the bitmap
     for (int i = 0; i < num_blocks; i++) {
-        __kmemory_bitmap[BITMAP_INDEX(KERNEL_MEMORY_START + (block_index + i) * BLOCK_SIZE)] &= ~(1 << BITMAP_OFFSET(KERNEL_MEMORY_START + (block_index + i) * BLOCK_SIZE));
+		uint32_t index = BITMAP_INDEX(KERNEL_MEMORY_START + (block_index + i) * BLOCK_SIZE);
+		uint32_t offset = BITMAP_OFFSET(KERNEL_MEMORY_START + (block_index + i) * BLOCK_SIZE);
+        __kmemory_bitmap[index] &= ~(1 << offset);
     }
 
 	release(&__kmemory_lock);
