@@ -51,6 +51,7 @@ enum virtual_memory_constants {
 struct allocation {
   int address;
   int size;
+  int* allocations;
   struct allocation* next;
 };
 
@@ -65,14 +66,6 @@ void kfree(void* ptr);
 void driver_mmap(uint32_t addr, int size);
 void flush_tlb_entry(uint32_t vaddr);
 void init_process_paging(struct pcb* pcb, char* data, int size);
-
-int memory_permanent_usage();
-int memory_permanent_total();
-int memory_dynamic_total();
-int memory_dynamic_usage();
-
-int memory_pages_total();
-int memory_pages_usage();
 
 void load_page_directory();
 void enable_paging();

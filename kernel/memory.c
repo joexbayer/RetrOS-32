@@ -213,7 +213,10 @@ void free(void* ptr)
 }
 
 void* malloc(int size)
-{
+{	
+	/* For rewrite with pages. */
+	int num_pages = (size + PAGE_SIZE - 1) / PAGE_SIZE;
+
 	if(current_running->allocations == NULL){
 		struct allocation* allocation = kalloc(sizeof(struct allocation));
 		allocation->address = 0x400000 + MEMORY_PROCESS_SIZE*current_running->pid;
