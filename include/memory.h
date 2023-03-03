@@ -47,9 +47,9 @@ enum virtual_memory_constants {
 };
 
 struct allocation {
+  int* bits;
   int address;
   int size;
-  int* allocations;
   struct allocation* next;
 };
 
