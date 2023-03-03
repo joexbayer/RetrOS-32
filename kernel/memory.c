@@ -79,13 +79,15 @@ void* palloc(int size)
 
 
 /* Dynamic kernel memory */
-#define BLOCK_SIZE 512
-#define BLOCKS_PER_BYTE 8
-#define BITMAP_INDEX(addr) ((addr - KERNEL_MEMORY_START) / BLOCK_SIZE / BLOCKS_PER_BYTE)
-#define BITMAP_OFFSET(addr) ((addr - KERNEL_MEMORY_START) / BLOCK_SIZE % BLOCKS_PER_BYTE)
+#define KERNEL_MEMORY_START 	0x300000
+#define KERNEL_MEMORY_END	0x400000
+#define KMEM_BLOCK_SIZE 	512
+#define KMEM_BLOCKS_PER_BYTE 	8
+#define KMEM_BITMAP_INDEX(addr) ((addr - KERNEL_MEMORY_START) / KMEM_BLOCK_SIZE / KMEM_BLOCKS_PER_BYTE)
+#define KMEM_BITMAP_OFFSET(addr) ((addr - KERNEL_MEMORY_START) / KMEM_BLOCK_SIZE % KMEM_BLOCKS_PER_BYTE)
 
 /* need to add static bitmap as, bitmap_t uses kalloc */
-static uint8_t __kmemory_bitmap[(KERNEL_MEMORY_END - KERNEL_MEMORY_START) / BLOCK_SIZE / BLOCKS_PER_BYTE];
+static uint8_t __kmemory_bitmap[(KERNEL_MEMORY_END - KERNEL_MEMORY_START) / KMEM_BLOCK_SIZE / KMEM_BLOCKS_PER_BYTE];
 static mutex_t __kmemory_lock;
 
 void kernel_memory_init()
@@ -109,67 +111,67 @@ void* kalloc(int size)
 {
 	acquire(&__kmemory_lock);
 
-    int num_blocks = (size + sizeof(int) + BLOCK_SIZE - 1) / BLOCK_SIZE;
-	int total_blocks = (KERNEL_MEMORY_END - KERNEL_MEMORY_START) / BLOCK_SIZE;
+	int num_blocks = (size + sizeof(int) + KMEM_BLOCK_SIZE - 1) / KMEM_BLOCK_SIZE;
+	int total_blocks = (KERNEL_MEMORY_END - KERNEL_MEMORY_START) / KMEM_BLOCK_SIZE;
 
-    // Find a contiguous free region of memory
-    int free_blocks = 0;
-    for (int i = 0; i < total_blocks; i++) {
+	// Find a contiguous free region of memory
+	int free_blocks = 0;
+	for (int i = 0; i < total_blocks; i++) {
 
 		/* look for continious memory */
-		uint32_t index = BITMAP_INDEX(KERNEL_MEMORY_START + i * BLOCK_SIZE);
-		uint32_t offset = BITMAP_OFFSET(KERNEL_MEMORY_START + i * BLOCK_SIZE);
-        if (!(__kmemory_bitmap[index] & (1 << offset))) {
-            free_blocks++;
+		uint32_t index = KMEM_BITMAP_INDEX(KERNEL_MEMORY_START + i * KMEM_BLOCK_SIZE);
+		uint32_t offset = KMEM_BITMAP_OFFSET(KERNEL_MEMORY_START + i * KMEM_BLOCK_SIZE);
+		if (!(__kmemory_bitmap[index] & (1 << offset))) {
+			free_blocks++;
 
-            if (free_blocks == num_blocks) {
-                // Mark the blocks as used in the bitmap
-                for (int j = i - num_blocks + 1; j <= i; j++) {
-					index = BITMAP_INDEX(KERNEL_MEMORY_START + j * BLOCK_SIZE);
-					offset = BITMAP_OFFSET(KERNEL_MEMORY_START + j * BLOCK_SIZE);
-                    __kmemory_bitmap[index] |= (1 << offset);
-                }
+			if (free_blocks == num_blocks) {
+				// Mark the blocks as used in the bitmap
+				for (int j = i - num_blocks + 1; j <= i; j++) {
+					index = KMEM_BITMAP_INDEX(KERNEL_MEMORY_START + j * KMEM_BLOCK_SIZE);
+					offset = KMEM_BITMAP_OFFSET(KERNEL_MEMORY_START + j * KMEM_BLOCK_SIZE);
+					__kmemory_bitmap[index] |= (1 << offset);
+				}
 
-                // Write the size of the allocated block to the metadata block
-                int* metadata = (int*) (KERNEL_MEMORY_START + (i - num_blocks + 1) * BLOCK_SIZE);
-                *metadata = num_blocks;
+				// Write the size of the allocated block to the metadata block
+				int* metadata = (int*) (KERNEL_MEMORY_START + (i - num_blocks + 1) * KMEM_BLOCK_SIZE);
+				*metadata = num_blocks;
 
-                // Return a pointer to the allocated memory block
+				// Return a pointer to the allocated memory block
 				dbgprintf("[MEMORY] Allocated %d blocks of data\n", num_blocks);
 				release(&__kmemory_lock);
-                return (void*)KERNEL_MEMORY_START + (i - num_blocks + 1) * BLOCK_SIZE + sizeof(int);
-            }
-        } else {
+				return (void*)KERNEL_MEMORY_START + (i - num_blocks + 1) * KMEM_BLOCK_SIZE + sizeof(int);
+			}
+		} else {
 			/* if we found a block that is allocated, reset our search.  */
 			free_blocks = 0;
 		}
-    }
-    // No contiguous free region of memory was found
+	}
+	// No contiguous free region of memory was found
 	release(&__kmemory_lock);
-    return NULL;
+	return NULL;
 }
 
 void kfree(void* ptr) {
-    if (!ptr) {
-        return;
-    }
+	if (!ptr) {
+		return;
+	}
 	
 	acquire(&__kmemory_lock);
 
-    // Calculate the index of the block in the memory region
-    int block_index = (((uint32_t)ptr) - KERNEL_MEMORY_START) / BLOCK_SIZE;
+	// Calculate the index of the block in the memory region
+	int block_index = (((uint32_t)ptr) - KERNEL_MEMORY_START) / KMEM_BLOCK_SIZE;
 
-    // Read the size of the allocated block from the metadata block
-    int* metadata = (int*) (KERNEL_MEMORY_START + block_index * BLOCK_SIZE);
-    int num_blocks = *metadata;
+	// Read the size of the allocated block from the metadata block
+	int* metadata = (int*) (KERNEL_MEMORY_START + block_index * KMEM_BLOCK_SIZE);
+	int num_blocks = *metadata;
 	dbgprintf("[MEMORY] freeing %d blocks of data\n", num_blocks);
 
-    // Mark the blocks as free in the bitmap
-    for (int i = 0; i < num_blocks; i++) {
-		uint32_t index = BITMAP_INDEX(KERNEL_MEMORY_START + (block_index + i) * BLOCK_SIZE);
-		uint32_t offset = BITMAP_OFFSET(KERNEL_MEMORY_START + (block_index + i) * BLOCK_SIZE);
-        __kmemory_bitmap[index] &= ~(1 << offset);
-    }
+	// Mark the blocks as free in the bitmap
+	for (int i = 0; i < num_blocks; i++) {
+		uint32_t index = KMEM_BITMAP_INDEX(KERNEL_MEMORY_START + (block_index + i) * KMEM_BLOCK_SIZE);
+		uint32_t offset = KMEM_BITMAP_OFFSET(KERNEL_MEMORY_START + (block_index + i) * KMEM_BLOCK_SIZE);
+		__kmemory_bitmap[index] &= ~(1 << offset);
+	}
 
 	release(&__kmemory_lock);
 }
@@ -321,7 +323,7 @@ static inline void table_set(uint32_t* page_table, uint32_t vaddr, uint32_t padd
 
 static inline void directory_set(uint32_t* directory, uint32_t vaddr, uint32_t* table, int access)
 {
-  	directory[DIRECTORY_INDEX(vaddr)] = (((uint32_t) table) & ~PAGE_MASK) | access;
+	  directory[DIRECTORY_INDEX(vaddr)] = (((uint32_t) table) & ~PAGE_MASK) | access;
 }
 
 void driver_mmap(uint32_t addr, int size)
