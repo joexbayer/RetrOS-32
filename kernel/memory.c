@@ -14,6 +14,7 @@
 #include <sync.h>
 #include <vbe.h>
 #include <bitmap.h>
+#include <assert.h>
 
 /**
  * Individual Process Memory Map:
@@ -123,7 +124,7 @@ void memory_free_page(void* addr)
 
 
 /* Dynamic kernel memory */
-#define KERNEL_MEMORY_START 	0x200000
+#define KERNEL_MEMORY_START 	0x300000
 #define KERNEL_MEMORY_END	0x400000
 #define KMEM_BLOCK_SIZE 	512
 #define KMEM_BLOCKS_PER_BYTE 	8
@@ -133,23 +134,19 @@ void memory_free_page(void* addr)
 /* need to add static bitmap as, bitmap_t uses kalloc */
 static uint8_t __kmemory_bitmap[(KERNEL_MEMORY_END - KERNEL_MEMORY_START) / KMEM_BLOCK_SIZE / KMEM_BLOCKS_PER_BYTE];
 static mutex_t __kmemory_lock;
-
-void kernel_memory_init()
-{
-	mutex_init(&__kmemory_lock);
-}
+static uint32_t __kmemory_used = 0;
 
 /**
  * @brief Allocates sequential chunks of fixed size (4KB each) from a region of kernel memory.
  * 
- * @param size The amount of memory to allocate, in bytes. It is recommended that this value be 4KB-aligned.
- * @return A void pointer to the allocated memory block, or NULL if no contiguous region of memory was found.
- *
  * This function acquires a lock to ensure thread safety, and then searches the bitmap of kernel memory for a
  * contiguous region of free blocks that is large enough to accommodate the requested memory size. If such a region
  * is found, the function marks the corresponding blocks as used in the bitmap, writes the size of the allocated
  * block to a metadata block, and returns a pointer to the allocated memory block. If no contiguous region of memory
  * is found, the function returns NULL.
+ * 
+ * @param size The amount of memory to allocate, in bytes. It is recommended that this value be 4KB-aligned.
+ * @return A void pointer to the allocated memory block, or NULL if no contiguous region of memory was found.
  */
 void* kalloc(int size)
 {
@@ -181,7 +178,10 @@ void* kalloc(int size)
 				*metadata = num_blocks;
 
 				// Return a pointer to the allocated memory block
-				dbgprintf("[MEMORY] Allocated %d blocks of data\n", num_blocks);
+				dbgprintf("[MEMORY] %s allocated %d blocks of data\n", current_running->name, num_blocks);
+				__kmemory_used += num_blocks*KMEM_BLOCK_SIZE;
+				current_running->kallocs++;
+
 				release(&__kmemory_lock);
 				return (void*)(KERNEL_MEMORY_START + (i - num_blocks + 1) * KMEM_BLOCK_SIZE + sizeof(int));
 			}
@@ -195,6 +195,18 @@ void* kalloc(int size)
 	return NULL;
 }
 
+/**
+ * @brief Frees a previously allocated block of memory.
+ *
+ * This function releases a previously allocated block of memory for future use. It uses the metadata
+ * block to determine the number of blocks to free, then clears the corresponding bits in the bitmap
+ * to mark them as free. If the input pointer is NULL, the function simply returns without performing
+ * any action.
+ *
+ * @param ptr A pointer to the start of the memory block to free.
+ *
+ * @return None.
+ */
 void kfree(void* ptr) {
 	if (!ptr) {
 		return;
@@ -208,7 +220,7 @@ void kfree(void* ptr) {
 	// Read the size of the allocated block from the metadata block
 	int* metadata = (int*) (KERNEL_MEMORY_START + block_index * KMEM_BLOCK_SIZE);
 	int num_blocks = *metadata;
-	dbgprintf("[MEMORY] freeing %d blocks of data\n", num_blocks);
+	dbgprintf("[MEMORY] %s freeing %d blocks of data\n", current_running->name, num_blocks);
 
 	// Mark the blocks as free in the bitmap
 	for (int i = 0; i < num_blocks; i++) {
@@ -220,17 +232,18 @@ void kfree(void* ptr) {
 	release(&__kmemory_lock);
 }
 
-/**
- * @brief Initializes all memory chunks and sets them to be free.
- * 
- * @return void
- */
-void init_memory()
-{
-	kernel_memory_init();
-}
-
 #define VMEM_HEAP 0xE0000000
+void vmem_free_allocation(struct allocation* allocation)
+{
+	int num_pages = (allocation->size + PAGE_SIZE - 1) / PAGE_SIZE;
+	for (int i = 0; i < num_pages; i++)
+	{
+		memory_free_page((void*) (VMEM_START_ADDRESS + (allocation->bits[i] * PAGE_SIZE)));
+	}
+
+	kfree(allocation->bits);
+	kfree(allocation);
+}
 
 static int memory_process_used = 0;
 #define MEMORY_PROCESS_SIZE 500*1024
@@ -242,14 +255,7 @@ void free(void* ptr)
 		current_running->used_memory -= old->size;
 		memory_process_used -= old->size;
 		
-		int num_pages = (old->size + PAGE_SIZE - 1) / PAGE_SIZE;
-		for (int i = 0; i < num_pages; i++)
-		{
-			memory_free_page((void*) (VMEM_START_ADDRESS + (old->bits[i] * PAGE_SIZE)));
-		}
-	
-		kfree(old->bits);
-		kfree(old);
+		vmem_free_allocation(old);
 		return;
 	}
 
@@ -262,15 +268,7 @@ void free(void* ptr)
 			current_running->used_memory -= save->size;
 			memory_process_used -= save->size;
 
-
-			int num_pages = (save->size + PAGE_SIZE - 1) / PAGE_SIZE;
-			for (int i = 0; i < num_pages; i++)
-			{
-				memory_free_page((void*) (VMEM_START_ADDRESS + (save->bits[i] * PAGE_SIZE)));
-			}
-		
-			kfree(save->bits);
-			kfree(save);
+			vmem_free_allocation(save);
 			return;
 		}
 	}
@@ -363,20 +361,38 @@ void* calloc(int size, int val)
 
 
 /* per process memory allocator total 512kb with minimum of 128 bytes per allocation. */
+#define VMEM_MANAGER_START 0x200000
+#define VMEM_MANAGER_END 0x300000
+#define VMEM_MANAGER_PAGES ((VMEM_MANAGER_END-VMEM_MANAGER_START) / PAGE_SIZE)
+static bitmap_t __vmem_manager_bitmap;
 
-
-/*  PAGIN / VIRTUAL MEMORY SECTION */
-int memory_pages_total()
+static uint32_t* __vmem_manager_alloc()
 {
-	return VMEM_TOTAL_PAGES;
+	int bit = get_free_bitmap(__vmem_manager_bitmap, VMEM_MANAGER_PAGES);
+	if(bit == -1)
+		return NULL;
+
+	uint32_t* paddr = (uint32_t*) (VMEM_MANAGER_START + (bit * PAGE_SIZE));
+	memset(paddr, 0, PAGE_SIZE);
+
+	dbgprintf("[VMEM MANAGER] Allocated page %d at 0x%x\n", bit, paddr);
+	return paddr;
 }
 
-int memory_pages_usage()
+static void __vmem_manager_free(void* addr)
 {
-	return vmem.used_pages;
+	if((uint32_t)addr > VMEM_MANAGER_END  ||  (uint32_t)addr < VMEM_MANAGER_START)
+		return;
+
+	int bit = (((uint32_t) addr) - VMEM_MANAGER_START) / PAGE_SIZE;
+	if(bit < 0 || bit > (VMEM_MANAGER_PAGES))
+		return;
+	
+	unset_bitmap(__vmem_manager_bitmap, bit);
+	dbgprintf("VMEM MANAGER] Free page %d at 0x%x\n", bit, addr);
 }
 
-void driver_mmap(uint32_t addr, int size)
+void mmap_driver_region(uint32_t addr, int size)
 {
 	int permissions = PRESENT | READ_WRITE;
 	uint32_t* kernel_page_table_e1000 = memory_alloc_page();
@@ -391,6 +407,8 @@ void driver_mmap(uint32_t addr, int size)
 
 void cleanup_process_paging(struct pcb* pcb)
 {
+	dbgprintf("[Memory] Cleaning up pages from pcb.\n");
+
 	uint32_t directory = (uint32_t)pcb->page_dir;
 	uint32_t data_table = (uint32_t)pcb->page_dir[DIRECTORY_INDEX(0x1000000)] & ~PAGE_MASK;
 
@@ -429,9 +447,6 @@ void cleanup_process_paging(struct pcb* pcb)
 		kfree(old->bits);
 		kfree(old);
 	}
-	
-
-	dbgprintf("[Memory] Cleaning up pages from pcb.\n");
 
 	memory_free_page((void*) stack_page);
 	memory_free_page((void*) stack_table);
@@ -439,9 +454,8 @@ void cleanup_process_paging(struct pcb* pcb)
 	memory_free_page((void*) data_table);
 
 	memory_free_page((void*) heap_table);
-	memory_free_page((void*) directory);
-
-	memory_free_page(pcb->page_dir);
+	__vmem_manager_free((void*) directory);
+	dbgprintf("[Memory] Cleaning up pages from pcb [DONE].\n");
 }
 
 
@@ -465,7 +479,7 @@ void init_process_paging(struct pcb* pcb, char* data, int size)
 	int permissions = PRESENT | READ_WRITE | USER;
 
 	/* Allocate directory and tables for data and stack */
-	uint32_t* process_directory = memory_alloc_page();
+	uint32_t* process_directory = __vmem_manager_alloc();
 	uint32_t* process_data_table = memory_alloc_page();
 	uint32_t* process_stack_table = memory_alloc_page();
 
@@ -509,19 +523,63 @@ void init_process_paging(struct pcb* pcb, char* data, int size)
 	directory_set(process_directory, 0xEFFFFFF0, process_stack_table, permissions);
 
 	process_directory[0] = kernel_page_dir[0];
+	//process_directory[1] = kernel_page_dir[1]; // HACK: FIX ME
 
 	dbgprintf("[INIT PROCESS] Paging done.\n");
 	pcb->page_dir = (uint32_t*)process_directory;
 }
 
+static void _kernel_memory_test()
+{
+    void* ptr = kalloc(1024);
+    assert(ptr != NULL);
+    memset(ptr, 0xAA, 1024);
+
+    void* ptr2 = kalloc(2048);
+    assert(ptr2 != NULL);
+
+    memset(ptr2, 0xBB, 2048);
+
+    kfree(ptr);
+
+    void* ptr3 = kalloc(512);
+    assert(ptr3 != NULL);
+    memset(ptr3, 0xCC, 512);
+
+    kfree(ptr2);
+
+    void* ptr4 = kalloc(4096);
+    assert(ptr4 != NULL);
+
+    memset(ptr4, 0xDD, 4096);
+
+    kfree(ptr3);
+    kfree(ptr4);
+
+	ptr = kalloc(1024);
+    assert(ptr != NULL);
+
+	memset(ptr, 0xAA, 1024);
+
+    kfree(ptr);
+
+    ptr2 = kalloc(1024);
+    assert(ptr2 != NULL);
+    assert(ptr2 == ptr);
+
+    memset(ptr2, 0xBB, 1024);
+    kfree(ptr2);
+}
+
+
 void init_paging()
 {
 	vmem.pages = create_bitmap(VMEM_TOTAL_PAGES);
+	__vmem_manager_bitmap = create_bitmap(VMEM_MANAGER_PAGES);
 	mutex_init(&vmem.lock);
 	dbgprintf("[PAGIN] %d free pagable pages.\n", VMEM_TOTAL_PAGES);
 
-
-	kernel_page_dir = memory_alloc_page();
+	kernel_page_dir = __vmem_manager_alloc();
 	uint32_t* kernel_page_table = memory_alloc_page();
 	int permissions = PRESENT | READ_WRITE;
 	for (int addr = 0; addr < 0x400000; addr += PAGE_SIZE)
@@ -555,4 +613,20 @@ void init_paging()
 	directory_set(kernel_page_dir, 0, kernel_page_table, permissions);
 
 	directory_set(kernel_page_dir, vbe_info->framebuffer, kernel_page_table_vesa, permissions); 
+}
+
+void kernel_memory_init()
+{
+	mutex_init(&__kmemory_lock);
+	//_kernel_memory_test();
+}
+
+/**
+ * @brief Initializes all memory chunks and sets them to be free.
+ * 
+ * @return void
+ */
+void init_memory()
+{
+	kernel_memory_init();
 }

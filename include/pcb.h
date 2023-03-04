@@ -45,6 +45,9 @@ struct pcb {
     uint32_t* page_dir;
     uint32_t data_size;
 
+    /* stats */
+    int kallocs;
+
     char name[pcb_max_name_length];
 
     struct gfx_window* gfx_window;

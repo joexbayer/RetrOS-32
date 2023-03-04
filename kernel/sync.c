@@ -79,6 +79,8 @@ void acquire(mutex_t* l)
     }
 
     //dbgprintf("[SYNC] %s acquired 0x%x\n", current_running->name, l);
+
+    assert(l->state == LOCKED);
     STI();
 }
 
@@ -97,6 +99,8 @@ void release(mutex_t* l)
     if(blocked != NULL){
         pcb_queue_push_running(blocked);
         unblock(blocked->pid);
+
+        assert(l->state == LOCKED);
         STI();
         return;
     }

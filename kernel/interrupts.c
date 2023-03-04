@@ -15,6 +15,7 @@
 #include <io.h>
 #include <scheduler.h>
 #include <kthreads.h>
+#include <assert.h>
 
 //TEMP
 #include <memory.h>
@@ -31,11 +32,10 @@ static void (*irqs[ISR_LINES])(struct registers*) = {
 
 void page_fault_interrupt(unsigned long cr2, unsigned long err)
 {
-	dbgprintf("Page fault: 0x%x (Stack: 0x%x) %d (%s)\n", cr2, current_running->stack_ptr, err, current_running->name);
-	dbgprintf("Page: %x, process: %s\n", kernel_page_dir[DIRECTORY_INDEX(cr2)], current_running->name);
 	CLI();
+	dbgprintf("Page fault: 0x%x (Stack: 0x%x) %d (%s)\n", cr2, current_running->stack_ptr, err, current_running->name);
+	dbgprintf("Page: %x, process: %s\n", current_running->page_dir[DIRECTORY_INDEX(cr2)], current_running->name);
 	current_running->running = ZOMBIE;
-	start("Error");
 	yield();
 }
 /**

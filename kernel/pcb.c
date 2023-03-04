@@ -238,19 +238,12 @@ int pcb_cleanup_routine(int pid)
 
 	dbgprintf("[PCB] Cleaning zombie process %s\n", pcbs[pid].name);
 
-	if(pcbs[pid].gfx_window != NULL)
+	if(pcbs[pid].gfx_window != NULL){
 		gfx_destory_window(pcbs[pid].gfx_window);
+	}
 
 	pcb_queue_remove(&pcbs[pid]);
 	dbgprintf("[PCB] Cleanup on PID %d stack: 0x%x (original: 0x%x)\n", pid, pcbs[pid].esp, pcbs[pid].stack_ptr);
-
-	struct allocation* iter = pcbs[pid].allocations;
-	while(iter != NULL)
-	{
-		struct allocation* next = iter->next;
-		kfree(iter);
-		iter = next;
-	}
 	
 	pcb_count--;
 	
@@ -259,7 +252,7 @@ int pcb_cleanup_routine(int pid)
 	}
 	kfree((void*)pcbs[pid].stack_ptr);
 
-	memset(&pcbs[pid], 0, sizeof(struct pcb));
+	//memset(&pcbs[pid], 0, sizeof(struct pcb));
 
 	pcbs[pid].running = STOPPED;
 	pcbs[pid].pid = -1;
@@ -296,6 +289,9 @@ int pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 	pcb->stack_ptr = stack;
 	pcb->allocations = NULL;
 	pcb->used_memory = 0;
+	pcb->kallocs = 0;
+	pcb->page_dir = kernel_page_dir;
+	pcb->is_process = 0;
 
 	memcpy(pcb->name, name, strlen(name)+1);
 
@@ -330,17 +326,18 @@ int pcb_create_process(char* program)
 	char* pname = "program";
 
 	pcb->eip = (void (*)()) 0x1000000; /* External programs start */
-	pcb->running = NEW;
 	pcb->pid = i;
 	pcb->data_size = read;
 	memcpy(pcb->name, pname, strlen(pname)+1);
 	pcb->esp = 0xEFFFFFF0;
 	pcb->ebp = pcb->esp;
-	pcb->kesp = (uint32_t) kalloc(STACK_SIZE)+STACK_SIZE-1;
+	pcb->stack_ptr = (uint32_t) kalloc(STACK_SIZE);
+	pcb->kesp = pcb->stack_ptr+STACK_SIZE-1;
 	dbgprintf("[INIT PROCESS] Setup PCB %d for %s\n", i, program);
 	pcb->kebp = pcb->kesp;
 	pcb->term = current_running->term;
 	pcb->is_process = 1;
+	pcb->kallocs = 0;
 
 	/* Memory map data */
 	init_process_paging(pcb, buf, read);
@@ -350,6 +347,7 @@ int pcb_create_process(char* program)
 	pcb_count++;
 	STI();
 	dbgprintf("[INIT PROCESS] Created new process!\n");
+	pcb->running = NEW;
 	/* Run */
 	return i;
 }
@@ -380,9 +378,6 @@ int pcb_create_kthread(void (*entry)(), char* name)
 	}
 
 	pcb_queue_push_running(&pcbs[i]);
-
-	pcbs[i].page_dir = kernel_page_dir;
-	pcbs[i].is_process = 0;
 
 	pcb_count++;
 	dbgprintf("Added %s\n", name);

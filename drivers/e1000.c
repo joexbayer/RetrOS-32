@@ -210,7 +210,7 @@ void e1000_attach(struct pci_device* dev)
 	
     e1000 = (volatile uint32_t *)dev->base;
 
-	driver_mmap((uint32_t) e1000, 5);
+	mmap_driver_region((uint32_t) e1000, 5);
 
     pci_enable_device_busmaster(dev->bus, dev->slot, dev->function);
 

@@ -119,7 +119,7 @@ int gfx_destory_window(struct gfx_window* w)
     
     gfx_composition_remove_window(w);
 
-    free(w->inner);
+    kfree(w->inner);
     w->owner->gfx_window = NULL;
     kfree(w);
 
@@ -142,7 +142,6 @@ struct gfx_window* gfx_new_window(int width, int height)
     /* if a userspace program wants a window they will need to allocate inner themself. */
     w->inner = kalloc(width*height);
     memset(w->inner, VESA8_COLOR_LIGHT_GRAY3, width*height);
-    malloc(1000);
 
     w->click = &gfx_default_click;
     w->mousedown = &gfx_default_mouse_down;
