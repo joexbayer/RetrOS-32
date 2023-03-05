@@ -76,6 +76,11 @@ static inline void vmem_add_table(uint32_t* directory, uint32_t vaddr, uint32_t*
 	directory[DIRECTORY_INDEX(vaddr)] = (((uint32_t) table) & ~PAGE_MASK) | vmem_default_permissions;
 }
 
+/**
+ * Allocates a page of virtual memory from the given virtual memory allocator.
+ * @param struct virtual_memory_allocator* vmem: pointer to virtual memory allocator
+ * @return pointer to the allocated page or NULL if no free pages are available.
+ */
 static uint32_t* vmem_alloc(struct virtual_memory_allocator* vmem)
 {
 	int bit = get_free_bitmap(vmem->pages, vmem->total_pages);
@@ -89,6 +94,12 @@ static uint32_t* vmem_alloc(struct virtual_memory_allocator* vmem)
 	return paddr;
 }
 
+/**
+ * Frees the virtual memory page at the given address in the given virtual memory allocator.
+ * @param struct virtual_memory_allocator* vmem: pointer to virtual memory allocator
+ * @param void* addr: pointer to the address of the virtual memory page to be freed
+ * @return void 
+ */
 static void vmem_free(struct virtual_memory_allocator* vmem, void* addr)
 {
 	if((uint32_t)addr > vmem->end  ||  (uint32_t)addr < vmem->start)

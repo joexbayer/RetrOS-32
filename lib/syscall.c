@@ -19,8 +19,6 @@ extern "C" {
 #include <util.h>
 #include <rtc.h>
 
-int malloc();
-
 int invoke_syscall(int i, int arg1, int arg2, int arg3)
 {
     int ret;
@@ -83,6 +81,16 @@ int write(int fd, void* buffer, int size)
 int read(int fd, void* buffer, int size)
 {
     return invoke_syscall(SYSCALL_READ, fd, (int)buffer, size);
+}
+
+void* malloc(int size)
+{
+    return (void*)invoke_syscall(SYSCALL_MALLOC, size, 0, 0);
+}
+
+void free(void* ptr)
+{
+    return invoke_syscall(SYSCALL_MALLOC, (int)ptr, 0, 0);
 }
 
 #ifdef __cplusplus

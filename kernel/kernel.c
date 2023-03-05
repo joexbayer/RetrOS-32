@@ -31,7 +31,7 @@
 /* This functions always needs to be on top? */
 void kernel(uint32_t magic) 
 {
-
+	CLI();
 	vbe_info = (struct vbe_mode_info_structure*) magic;
 
 	kernel_size = _end-_code;
@@ -46,7 +46,6 @@ void kernel(uint32_t magic)
 
 	init_memory();
 	init_interrupts();
-	CLI();
 	init_keyboard();
 	mouse_init();
 	pcb_init();
@@ -79,6 +78,10 @@ void kernel(uint32_t magic)
 	add_system_call(SYSCALL_GFX_GET_TIME,  (syscall_t)&get_current_time);
 	add_system_call(SYSCALL_GFX_DRAW, (syscall_t)&gfx_syscall_hook);
 	add_system_call(SYSCALL_GFX_SET_TITLE, (syscall_t)&__gfx_set_title);
+
+
+	add_system_call(SYSCALL_FREE, (syscall_t)&free);
+	add_system_call(SYSCALL_MALLOC, (syscall_t)&malloc);
 
 	add_system_call(SYSCALL_OPEN, (syscall_t)&fs_open);
 	add_system_call(SYSCALL_READ, (syscall_t)&fs_read);

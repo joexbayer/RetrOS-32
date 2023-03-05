@@ -10,7 +10,7 @@ _start:
     pushl %esp
     pushl %eax
     cli
-    call _main
+    call kernel
 
 .section .bss
 .align 16

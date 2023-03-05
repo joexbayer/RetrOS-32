@@ -11,19 +11,13 @@ struct pcb;
 #define pcb_max_name_length 25
 
 /* TODO: Move to new file */
-enum {
+enum pcb_states {
     STOPPED,
     RUNNING,
     NEW,
     BLOCKED,
     SLEEPING,
     ZOMBIE
-};
-
-/* Should be in list.h? */
-enum {
-    SINGLE_LINKED,
-    DOUBLE_LINKED
 };
 
 struct pcb {
