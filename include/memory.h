@@ -12,12 +12,19 @@ enum {
 	FREE
 };
 
-#define PERMANENT_KERNEL_MEMORY_START 0x100000
 #define PMEM_END_ADDRESS 	0x200000
-#define PAGE_KERNEL_MEMORY_START      0x200000
-#define PAGE_MEM_END        0x300000
-#define MEM_CHUNK 			    0x400
-#define CHUNKS_SIZE (MEM_END-KERNEL_MEMORY_START)/MEM_CHUNK
+
+#define VMEM_MAX_ADDRESS 0x1600000
+#define VMEM_START_ADDRESS 0x400000
+#define VMEM_TOTAL_PAGES ((VMEM_MAX_ADDRESS-VMEM_START_ADDRESS) / PAGE_SIZE)
+
+#define VMEM_MANAGER_START 0x200000
+#define VMEM_MANAGER_END 0x300000
+#define VMEM_MANAGER_PAGES ((VMEM_MANAGER_END-VMEM_MANAGER_START) / PAGE_SIZE)
+
+#define VMEM_STACK 0xEFFFFFF0
+#define VMEM_HEAP 0xE0000000
+#define VMEM_DATA 0x1000000
 
 
 extern uint32_t* kernel_page_dir;
@@ -48,7 +55,7 @@ enum virtual_memory_constants {
 
 struct allocation {
   int* bits;
-  int address;
+  uint32_t* address;
   int size;
   struct allocation* next;
 };
@@ -57,28 +64,29 @@ struct allocation {
 #define DIRECTORY_INDEX(vaddr) ((vaddr >> PAGE_DIRECTORY_BITS) & PAGE_TABLE_MASK)
 
 void init_memory();
+void kmem_init();
+void vmem_init();
+
 void* kalloc(int size);
-void print_memory_status();
 void kfree(void* ptr);
-
-void mmap_driver_region(uint32_t addr, int size);
-void flush_tlb_entry(uint32_t vaddr);
-void init_process_paging(struct pcb* pcb, char* data, int size);
-
-void load_page_directory();
-void enable_paging();
-
-void init_paging();
-void cleanup_process_paging(struct pcb* pcb);
-
-int memory_get_usage(char* name);
-void memory_total_usage();
 
 void* palloc(int size);
 
-int memory_process_usage();
-int memory_process_total();
 void* malloc(int size);
 void free(void* ptr);
+
+/* Assembly helper functions */
+void flush_tlb_entry(uint32_t vaddr);
+void load_page_directory();
+void enable_paging();
+
+/* Virtual memory API */
+void vmem_map_driver_region(uint32_t addr, int size);
+void vmem_init_kernel();
+void vmem_cleanup_process(struct pcb* pcb);
+void vmem_init_process(struct pcb* pcb, char* data, int size);
+
+void vmem_free_allocation(struct allocation* allocation);
+int vmem_continious_allocation_map(struct allocation* allocation, uint32_t* address, int num);
 
 #endif

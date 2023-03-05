@@ -248,7 +248,7 @@ int pcb_cleanup_routine(int pid)
 	pcb_count--;
 	
 	if(pcbs[pid].is_process){
-		cleanup_process_paging(&pcbs[pid]);
+		vmem_cleanup_process(&pcbs[pid]);
 	}
 	kfree((void*)pcbs[pid].stack_ptr);
 
@@ -272,6 +272,7 @@ int pcb_cleanup_routine(int pid)
 int pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 {
 	uint32_t stack = (uint32_t) kalloc(STACK_SIZE);
+	memset((void*)stack, 0, STACK_SIZE);
 	if((void*)stack == NULL)
 	{
 		dbgprintf("[PCB] STACK == NULL");
@@ -332,6 +333,7 @@ int pcb_create_process(char* program)
 	pcb->esp = 0xEFFFFFF0;
 	pcb->ebp = pcb->esp;
 	pcb->stack_ptr = (uint32_t) kalloc(STACK_SIZE);
+	memset((void*)pcb->stack_ptr, 0, STACK_SIZE);
 	pcb->kesp = pcb->stack_ptr+STACK_SIZE-1;
 	dbgprintf("[INIT PROCESS] Setup PCB %d for %s\n", i, program);
 	pcb->kebp = pcb->kesp;
@@ -340,7 +342,7 @@ int pcb_create_process(char* program)
 	pcb->kallocs = 0;
 
 	/* Memory map data */
-	init_process_paging(pcb, buf, read);
+	vmem_init_process(pcb, buf, read);
 
 	pcb_queue_push_running(pcb);
 

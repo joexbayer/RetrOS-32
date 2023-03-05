@@ -40,7 +40,7 @@ void serial_write(char* str)
  * @param ... variable parameters
  * @return number of bytes written
  */
-int32_t dbgprintf(char* fmt, ...)
+int32_t serial_printf(char* fmt, ...)
 {
 	int written = 0;
 	#ifdef _KDEBUG
@@ -71,7 +71,7 @@ int32_t dbgprintf(char* fmt, ...)
 						bytes[1] = (num >> 16) & 0xFF;
 						bytes[2] = (num >> 8) & 0xFF;
 						bytes[3] = num & 0xFF;
-						dbgprintf("%d.%d.%d.%d", bytes[3], bytes[2], bytes[1], bytes[0]);
+						serial_printf("%d.%d.%d.%d", bytes[3], bytes[2], bytes[1], bytes[0]);
 						break;
 					case 'x':
 					case 'X': ;
@@ -122,5 +122,5 @@ void init_serial()
 
     outportb(PORT + 4, 0x0F);
 
-	dbgprintf("[%s] Serial debugging activated %d!\n", "Serial", 20);
+	serial_printf("[%s] Serial debugging activated %d!\n", "Serial", 20);
 }

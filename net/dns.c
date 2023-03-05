@@ -12,6 +12,7 @@
 #include <net/dhcp.h>
 #include <net/socket.h>
 #include <sync.h>
+#include <serial.h>
 
 #include <terminal.h>
 

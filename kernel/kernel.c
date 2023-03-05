@@ -29,7 +29,7 @@
 #include <gfx/api.h>
 
 /* This functions always needs to be on top? */
-void _main(uint32_t magic) 
+void kernel(uint32_t magic) 
 {
 
 	vbe_info = (struct vbe_mode_info_structure*) magic;
@@ -46,7 +46,6 @@ void _main(uint32_t magic)
 
 	init_memory();
 	init_interrupts();
-	init_paging();
 	CLI();
 	init_keyboard();
 	mouse_init();

@@ -1,5 +1,5 @@
 OUTPUT_FORMAT("binary")
-ENTRY(_start)
+ENTRY(kernel)
 SECTIONS
 {
     . = 0x10000;

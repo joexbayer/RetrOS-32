@@ -64,3 +64,62 @@ isr_entry:
     add $8, %esp
 	
 	iret
+
+syscall_return_value:
+  .long	0
+.global _syscall_entry
+_syscall_entry:
+    cli
+    push $0
+	push $48
+    pusha
+
+	pushl	%edx	/* Arg 3 */
+    pushl	%ecx	/* Arg 2 */
+    pushl	%ebx	/* Arg 1 */
+    pushl	%eax	/* Syscall number */
+
+    call system_call
+    movl	%eax, (syscall_return_value)
+	
+    popl	%edx	/* Arg 3 */
+    popl	%ecx	/* Arg 2 */
+    popl	%ebx	/* Arg 1 */
+    popl	%eax	/* Syscall number */
+    
+    popa    
+    
+    movl	(syscall_return_value), %eax
+
+    add $8, %esp
+    iret
+
+page_fault_save:
+  .long	0
+page_fault_error:
+  .long	0
+.global _page_fault_entry
+_page_fault_entry:
+    cli
+
+    movl	%eax, (page_fault_save)
+    popl	%eax
+    /* Get error code */
+    movl	%eax, (page_fault_error)
+    movl	(page_fault_save), %eax
+
+    pusha
+
+    /* Push error code, and then contents of cr2 */
+    movl	(page_fault_error), %eax
+    pushl	%eax
+    movl	%cr2, %eax
+    pushl	%eax
+
+    call page_fault_interrupt
+
+    addl	$8, %esp
+    
+    popa    
+
+    iret

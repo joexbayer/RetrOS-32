@@ -15,30 +15,6 @@
 #include <serial.h>
 #include <assert.h>
 
-/* Fucntions defined in kernel_entry.s */
-void spin_lock_asm(int volatile *l);
-void spin_unlock_asm(int volatile *l);
-
-/**
- * @brief Locks the given spinlock variable l.
- * 
- * @param l lock variable
- */
-void spin_lock(int volatile *l)
-{
-    spin_lock_asm(l);
-}
-
-/**
- * @brief Unlocks the given spinlock variable l.
- * 
- * @param l lock variable. 
- */
-void spin_unlock(int volatile *l)
-{
-    spin_unlock_asm(l);
-}
-
 /**
  * @brief Initializes the given lock. Most importantly it sets the blocked list.
  * 

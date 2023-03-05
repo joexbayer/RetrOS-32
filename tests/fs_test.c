@@ -95,6 +95,11 @@ int disk_size()
     return DISKSIZE;
 }
 
+uint32_t serial_printf(char* fmt, ...)
+{
+    return 1;
+}
+
 
 void kfree(void* ptr)
 {

@@ -57,6 +57,11 @@ int32_t dbgprintf(char* fmt, ...)
     return 0;
 }
 
+uint32_t serial_printf(char* fmt, ...)
+{
+    return 1;
+}
+
 void* kalloc(int size){
     return malloc(size);
 }
