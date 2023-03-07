@@ -2,6 +2,7 @@
 #define ATA_H
 
 #include <stdint.h>
+#include <pci.h>
 
 #define ATA_PRIMARY_IRQ 14
 #define ATA_SECONDARY_IRQ 15
@@ -64,7 +65,7 @@ struct ide_device {
    unsigned char  model[ATA_IDE_MODEL_LENGTH];   // Model in string.
 };
 
-void ata_ide_init();
+void ata_ide_init(struct pci_device* dev);
 
 #endif /* ATA_H */
 

@@ -11,6 +11,7 @@
 
 #include <pci.h>
 #include <e1000.h>
+#include <ata.h>
 #include <terminal.h>
 #include <serial.h>
 #include <io.h>
@@ -39,6 +40,7 @@ static const char* pci_classes[] =
 
 struct pci_driver registered_drivers[] = {
     {(uint16_t)E1000_VENDOR_ID, (uint16_t)E1000_DEVICE_ID, &e1000_attach},
+    {0x8086, 0x7010, &ata_ide_init},
     {0, 0, 0}
 };
 
@@ -119,7 +121,7 @@ int pci_register_device(uint32_t bus, uint32_t slot, uint32_t function, uint16_t
 
 }
 
-void init_pci()
+void pci_init()
 {
     int devices_found = 0;
     for(uint32_t bus = 0; bus < 256; bus++)
@@ -137,7 +139,8 @@ void init_pci()
                     uint32_t base = pci_get_device_base32(bus, slot, function);
 
 					int driver_index = pci_register_device(bus, slot, function, vendor, device, class, irq, base);
-                    dbgprintf("[PCI DEVICE] ID: 0x%x, %s\n", 
+                    dbgprintf("DEVICE: Vendor: 0x%x, Device: 0x%x - %s\n", 
+                        vendor,
                         device,
                         class < 0x11 ? pci_classes[class] : pci_classes[0]
                     );

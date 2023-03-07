@@ -183,8 +183,7 @@ int ata_read(char *buf, uint32_t from, uint32_t numsects)
     return rc;
 }
 
-
-void ata_ide_init()
+void ata_ide_init(struct pci_device* dev)
 {
 	interrupt_install_handler(ATA_PRIMARY_IRQ, &ata_primary);
 	interrupt_install_handler(ATA_SECONDARY_IRQ, &ata_secondary);
