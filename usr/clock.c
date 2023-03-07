@@ -24,6 +24,12 @@ int main()
     gfx_create_window(110, 140);
     gfx_set_title("Clock");
 
+    void* test = malloc(0x100);
+    void* test2 = malloc(0x100);
+    void* test3 = malloc(0x100);
+    free(test2);
+    void* test4 = malloc(0x50);
+
     printf("Clock started\n");
     while (1)
     {

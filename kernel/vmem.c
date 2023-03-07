@@ -86,9 +86,9 @@ static uint32_t* vmem_alloc(struct virtual_memory_allocator* vmem)
 	int bit = get_free_bitmap(vmem->pages, vmem->total_pages);
 	if(bit == -1)
 		return NULL;
-
+		
 	uint32_t* paddr = (uint32_t*) (vmem->start + (bit * PAGE_SIZE));
-	memset(paddr, 0, PAGE_SIZE);
+	//memset(paddr, 0, PAGE_SIZE);
 
 	dbgprintf("[VMEM MANAGER] Allocated page %d at 0x%x\n", bit, paddr);
 	return paddr;
@@ -115,6 +115,7 @@ static void vmem_free(struct virtual_memory_allocator* vmem, void* addr)
 
 int vmem_continious_allocation_map(struct allocation* allocation, uint32_t* address, int num)
 {
+
 	uint32_t* heap_table = vmem_get_page_table(VMEM_HEAP);
 	for (int i = 0; i < num; i++)
 	{
@@ -123,15 +124,17 @@ int vmem_continious_allocation_map(struct allocation* allocation, uint32_t* addr
 			2. Map it to virtual heap
 			3. add it to bits
 		*/
-		uint32_t* paddr = vmem_default->ops->alloc(vmem_default);
-		if(paddr == NULL){
+		uint32_t paddr = vmem_default->ops->alloc(vmem_default);
+		if(paddr == 0){
 			/* TODO: cleanup allocated pages */
 			return -1;
 		}
-		int bit = ((uint32_t)paddr - VMEM_START_ADDRESS)/PAGE_SIZE;
+		int bit = (paddr - VMEM_START_ADDRESS)/PAGE_SIZE;
 		allocation->bits[i] = bit;
-		vmem_map(heap_table, (uint32_t)allocation->address+(i*PAGE_SIZE), (uint32_t)paddr);
+		dbgprintf("Allocating %d continious blocks on heap 0x%x.\n", num, heap_table);
+		vmem_map(heap_table, (uint32_t)allocation->address+(i*PAGE_SIZE), paddr);
 	}
+
 
 	return 0;
 }
@@ -155,11 +158,11 @@ void vmem_init_process(struct pcb* pcb, char* data, int size)
 	/* Allocate directory and tables for data and stack */
 	uint32_t* process_directory = vmem_manager->ops->alloc(vmem_manager);
 	dbgprintf("[INIT PROCESS] Directory: 0x%x\n", process_directory);
-	uint32_t* process_data_table = vmem_default->ops->alloc(vmem_default);;
+	uint32_t* process_data_table = vmem_manager->ops->alloc(vmem_manager);
 	dbgprintf("[INIT PROCESS] Data: 	0x%x\n", process_data_table);
-	uint32_t* process_stack_table = vmem_default->ops->alloc(vmem_default);;
+	uint32_t* process_stack_table = vmem_manager->ops->alloc(vmem_manager);
 	dbgprintf("[INIT PROCESS] Stack:	0x%x\n", process_stack_table);
-	uint32_t* process_heap_table = vmem_default->ops->alloc(vmem_default);;
+	uint32_t* process_heap_table = vmem_manager->ops->alloc(vmem_manager);
 	dbgprintf("[INIT PROCESS] Heap: 	0x%x\n", process_heap_table);
 
 	/* Map the process data to a page */

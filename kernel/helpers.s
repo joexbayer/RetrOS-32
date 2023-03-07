@@ -13,8 +13,12 @@ tlb_flush_addr:
 load_page_directory:
     push %ebp
     mov %esp, %ebp
-    mov 8(%esp), %eax
+    pushl %eax
+
+    mov 12(%esp), %eax
     mov %eax, %cr3
+
+    popl %eax
     mov %ebp, %esp
     pop %ebp
     ret

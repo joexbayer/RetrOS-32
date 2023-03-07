@@ -31,6 +31,7 @@ void free(void* ptr)
 		current_running->used_memory -= old->size;
 		memory_process_used -= old->size;
 		
+		dbgprintf("[1] Free %d bytes of data from 0x%x\n", old->size, old->address);
 		vmem_free_allocation(old);
 		return;
 	}
@@ -44,6 +45,7 @@ void free(void* ptr)
 			current_running->used_memory -= save->size;
 			memory_process_used -= save->size;
 
+			dbgprintf("[2] Free %d bytes of data from 0x%x\n", save->size, save->address);
 			vmem_free_allocation(save);
 			return;
 		}
@@ -52,6 +54,7 @@ void free(void* ptr)
 
 void* malloc(int size)
 {	
+	assert(size > 0);
 	/* For rewrite with pages. */
 	int ret;
 	int num_pages = (size + PAGE_SIZE - 1) / PAGE_SIZE;
@@ -62,6 +65,7 @@ void* malloc(int size)
 	if(current_running->allocations == NULL){
 		
 		allocation->address = (uint32_t*) VMEM_HEAP;
+		allocation->size = size;
 
 		vmem_continious_allocation_map(allocation, allocation->address, num_pages);
 		
@@ -71,6 +75,7 @@ void* malloc(int size)
 		current_running->used_memory += size;
 		
 		memory_process_used += size;
+		dbgprintf("[1] Allocated %d bytes of data to 0x%x\n", size, allocation->address);
 		return (void*) allocation->address;
 	}
 
@@ -89,17 +94,19 @@ void* malloc(int size)
 
 			current_running->used_memory += size;
 			memory_process_used += size;
+			dbgprintf("[2] Allocated %d bytes of data to 0x%x\n", size, allocation->address);
 			return (void*) allocation->address;
 		}
 		iter = iter->next;
 	}
 
-	allocation->address = iter->address+iter->size;
+	allocation->address = (uint32_t*)((uint32_t)(iter->address)+iter->size);
 	vmem_continious_allocation_map(allocation, allocation->address, num_pages);
 	allocation->next = NULL;
 
 	iter->next = allocation;
 	memory_process_used += size;
+	dbgprintf("[3] Allocated %d bytes of data to 0x%x\n", size, allocation->address);
 	return (void*) allocation->address;
 }
 

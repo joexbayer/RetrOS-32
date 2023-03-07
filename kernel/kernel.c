@@ -49,7 +49,6 @@ void kernel(uint32_t magic)
 	init_keyboard();
 	mouse_init();
 	pcb_init();
-	//ata_ide_init();
 	ipc_msg_box_init();
 	pci_init();
 

@@ -90,7 +90,7 @@ void* malloc(int size)
 
 void free(void* ptr)
 {
-    return invoke_syscall(SYSCALL_MALLOC, (int)ptr, 0, 0);
+    invoke_syscall(SYSCALL_FREE, (int)ptr, 0, 0);
 }
 
 #ifdef __cplusplus
