@@ -139,5 +139,5 @@ void mouse_init()
 	mouse_write(0xF4);
 	mouse_read();
 
-    isr_install(12+32, &mouse_handler);
+    interrupt_install_handler(12+32, &mouse_handler);
 }

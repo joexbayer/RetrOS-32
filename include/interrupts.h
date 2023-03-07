@@ -71,7 +71,7 @@ int system_call(int index, int arg1, int arg2, int arg3);
 void _page_fault_entry(void);
 
 void isr_handler(struct registers regs);
-void isr_install(int i, void (*handler)());
+void interrupt_install_handler(int i, void (*handler)());
 void idt_flush(uint32_t idt);
 void EOI(int irq);
 

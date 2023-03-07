@@ -29,6 +29,38 @@ static void (*irqs[ISR_LINES])(struct registers*) = {
 	isr40, isr41, isr42, isr43, isr44, isr45, isr46, isr47
 };
 
+static const char* __exceptions_names[32] = {
+    "Divide by zero",
+    "Debug",
+    "NMI",
+    "Breakpoint",
+    "Overflow",
+    "OOB",
+    "Invalid opcode",
+    "No coprocessor",
+    "Double fault",
+    "Coprocessor segment overrun",
+    "Bad TSS",
+    "Segment not present",
+    "Stack fault",
+    "General protection fault",
+    "Page fault",
+    "Unrecognized interrupt",
+    "Coprocessor fault",
+    "Alignment check",
+    "Machine check",
+    "RESERVED",
+    "RESERVED",
+    "RESERVED",
+    "RESERVED",
+    "RESERVED",
+    "RESERVED",
+    "RESERVED",
+    "RESERVED",
+    "RESERVED",
+    "RESERVED",
+    "RESERVED"
+};
 
 void page_fault_interrupt(unsigned long cr2, unsigned long err)
 {
@@ -44,7 +76,7 @@ void page_fault_interrupt(unsigned long cr2, unsigned long err)
  * @param i IRQ line
  * @param handler function pointer to handler.
  */
-void isr_install(int i, void (*handler)()) {
+void interrupt_install_handler(int i, void (*handler)()) {
 	handlers[i] = handler;
 }
 
@@ -56,9 +88,20 @@ void EOI(int irq)
 	outportb(PIC1, 0x20); /* Master */
 }
 
+static void __interrupt_exception_handler(int i)
+{
+	dbgprintf("[exception] %d %s\n", i, __exceptions_names[i]);
+	assert(0);
+}
+
 /* Main interrupt handler, calls interrupt specific hanlder if installed. */
 void isr_handler(struct registers regs)
 {
+	if(regs.int_no < 32){
+		__interrupt_exception_handler(regs.int_no);
+		UNREACHABLE();
+	}
+
 	if (handlers[regs.int_no] != 0)
 	{
 		isr_t handler = handlers[regs.int_no];

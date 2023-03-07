@@ -10,4 +10,8 @@
         PANIC();\
     }\
 
+#define UNREACHABLE()\
+        dbgprintf("Unreachable was reached: file %s, line %d\n", __FILE__, __LINE__); \
+        PANIC();\
+
 #endif // ! __ASSERT_H

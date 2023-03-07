@@ -186,8 +186,8 @@ int ata_read(char *buf, uint32_t from, uint32_t numsects)
 
 void ata_ide_init()
 {
-	isr_install(ATA_PRIMARY_IRQ, &ata_primary);
-	isr_install(ATA_SECONDARY_IRQ, &ata_secondary);
+	interrupt_install_handler(ATA_PRIMARY_IRQ, &ata_primary);
+	interrupt_install_handler(ATA_SECONDARY_IRQ, &ata_secondary);
 
 	ata_driver_data = kalloc(512);
 
