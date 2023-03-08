@@ -42,22 +42,10 @@ struct virtual_memory_allocator {
 	mutex_t lock;
 };
 
-struct virtual_memory_allocator __vmem_default = {
-	.start = VMEM_START_ADDRESS,
-	.end = VMEM_MAX_ADDRESS,
-	.ops = &vmem_default_ops,
-	.total_pages = VMEM_TOTAL_PAGES,
-	.used_pages = 0
-};
+struct virtual_memory_allocator __vmem_default;
 struct virtual_memory_allocator* vmem_default = &__vmem_default;
 
-struct virtual_memory_allocator __vmem_manager = {
-	.start = VMEM_MANAGER_START,
-	.end = VMEM_MANAGER_END,
-	.ops = &vmem_default_ops,
-	.total_pages = VMEM_MANAGER_PAGES,
-	.used_pages = 0
-};
+struct virtual_memory_allocator __vmem_manager;
 struct virtual_memory_allocator* vmem_manager = &__vmem_manager;
 
 /* HELPER FUNCTIONS */
@@ -242,11 +230,11 @@ void vmem_cleanup_process(struct pcb* pcb)
 	}
 
 	vmem_default->ops->free(vmem_default, (void*) stack_page);
-	vmem_default->ops->free(vmem_default, (void*) stack_table);
+	vmem_manager->ops->free(vmem_default, (void*) stack_table);
 
-	vmem_default->ops->free(vmem_default, (void*) data_table);
+	vmem_manager->ops->free(vmem_default, (void*) data_table);
 
-	vmem_default->ops->free(vmem_default, (void*) heap_table);
+	vmem_manager->ops->free(vmem_default, (void*) heap_table);
 	vmem_manager->ops->free(vmem_default, (void*) directory);
 	dbgprintf("[Memory] Cleaning up pages from pcb [DONE].\n");
 }
@@ -287,10 +275,17 @@ void vmem_init_kernel()
 	vmem_add_table(kernel_page_dir, vbe_info->framebuffer, kernel_page_table_vesa); 
 }
 
-void vmem_init_allocator(struct virtual_memory_allocator* allocator)
+int vmem_allocator_create(struct virtual_memory_allocator* allocator, int from, int to)
 {
+	allocator->start = from;
+	allocator->end = to;
+	allocator->total_pages = (to-from)/PAGE_SIZE;
+	allocator->ops = &vmem_default_ops;
+	allocator->used_pages = 0;
 	allocator->pages = create_bitmap(allocator->total_pages);
 	mutex_init(&allocator->lock);
+
+	return 0;
 }
 
 void vmem_map_driver_region(uint32_t addr, int size)
@@ -307,8 +302,8 @@ void vmem_map_driver_region(uint32_t addr, int size)
 
 void vmem_init()
 {
-	vmem_init_allocator(vmem_default);
-	vmem_init_allocator(vmem_manager);
+	vmem_allocator_create(vmem_default, VMEM_START_ADDRESS, VMEM_MAX_ADDRESS);
+	vmem_allocator_create(vmem_manager, VMEM_MANAGER_START, VMEM_MANAGER_END);
 
 	dbgprintf("[VIRTUAL MEMORY] %d free pagable pages.\n", VMEM_TOTAL_PAGES);
 	dbgprintf("[VIRTUAL MEMORY] %d free pagable management pages.\n", VMEM_MANAGER_PAGES);
