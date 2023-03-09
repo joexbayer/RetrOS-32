@@ -23,4 +23,12 @@ void mutex_init(mutex_t* l);
 void acquire(mutex_t* l);
 void release(mutex_t* l);
 
+/* Assuming that obj has a lock, acquire it and run the code before releasing. */
+#define LOCK(obj, code_block) \
+    acquire(&obj->lock); \
+    do { \
+        code_block \
+    } while (0);\
+    release(&obj->lock); \
+
 #endif

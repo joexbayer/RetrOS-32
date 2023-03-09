@@ -81,10 +81,9 @@ void* malloc(int size)
 
 	struct allocation* iter = current_running->allocations;
 	while(iter->next != NULL){
-		if(iter->next->address - (iter->address+iter->size) >= size){
+		if((uint32_t)(iter->next->address) - ((uint32_t)(iter->address)+iter->size) >= size){
 			/* Found spot for allocation */
-			allocation->address = iter->address+iter->size;
-			allocation->next = NULL;
+			allocation->address = (uint32_t)(iter->address)+iter->size;
 
 			struct allocation* next = iter->next;
 			iter->next = allocation;

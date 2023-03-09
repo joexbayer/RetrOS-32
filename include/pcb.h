@@ -68,7 +68,7 @@ void pcb_set_blocked(int pid);
 
 void pcb_queue_push_running(struct pcb* pcb);
 void pcb_queue_remove(struct pcb* pcb);
-void pcb_queue_push_single(struct pcb** queue, struct pcb* pcb);
+void pcb_queue_push(struct pcb** queue, struct pcb* pcb);
 struct pcb* pcb_queue_pop(struct pcb **head);
 
 int pcb_cleanup_routine(int pid);

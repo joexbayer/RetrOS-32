@@ -71,14 +71,22 @@ static inline void vmem_add_table(uint32_t* directory, uint32_t vaddr, uint32_t*
  */
 static uint32_t* vmem_alloc(struct virtual_memory_allocator* vmem)
 {
-	int bit = get_free_bitmap(vmem->pages, vmem->total_pages);
-	if(bit == -1)
-		return NULL;
-		
-	uint32_t* paddr = (uint32_t*) (vmem->start + (bit * PAGE_SIZE));
-	//memset(paddr, 0, PAGE_SIZE);
+	uint32_t* paddr = NULL;
+	
+	LOCK(vmem, {
 
-	dbgprintf("[VMEM MANAGER] Allocated page %d at 0x%x\n", bit, paddr);
+		int bit = get_free_bitmap(vmem->pages, vmem->total_pages);
+		if(bit == -1){
+			break;
+		}
+			
+		paddr = (uint32_t*) (vmem->start + (bit * PAGE_SIZE));
+		//memset(paddr, 0, PAGE_SIZE);
+
+		dbgprintf("[VMEM MANAGER] Allocated page %d at 0x%x\n", bit, paddr);
+
+	});
+
 	return paddr;
 }
 
@@ -90,15 +98,19 @@ static uint32_t* vmem_alloc(struct virtual_memory_allocator* vmem)
  */
 static void vmem_free(struct virtual_memory_allocator* vmem, void* addr)
 {
-	if((uint32_t)addr > vmem->end  ||  (uint32_t)addr < vmem->start)
-		return;
+	LOCK(vmem, {
 
-	int bit = (((uint32_t) addr) - vmem->start) / PAGE_SIZE;
-	if(bit < 0 || bit > (vmem->total_pages))
-		return;
-	
-	unset_bitmap(vmem->pages, bit);
-	dbgprintf("VMEM MANAGER] Free page %d at 0x%x\n", bit, addr);
+		if((uint32_t)addr > vmem->end  ||  (uint32_t)addr < vmem->start)
+			break;
+
+		int bit = (((uint32_t) addr) - vmem->start) / PAGE_SIZE;
+		if(bit < 0 || bit > (vmem->total_pages))
+			break;
+		
+		unset_bitmap(vmem->pages, bit);
+		dbgprintf("VMEM MANAGER] Free page %d at 0x%x\n", bit, addr);
+
+	});
 }
 
 int vmem_continious_allocation_map(struct allocation* allocation, uint32_t* address, int num)

@@ -21,6 +21,23 @@
 #define STACK_SIZE 0x2000
 static const char* pcb_status[] = {"stopped ", "running ", "new     ", "blocked ", "sleeping", "zombie"};
 
+struct pcb_queue;
+
+struct pcb_queue_operations {
+	void (*push)(struct pcb_queue* queue, struct pcb* pcb);
+	void (*add)(struct pcb_queue* queue, struct pcb* pcb);
+	void (*remove)(struct pcb_queue* queue, struct pcb* pcb);
+	struct pcb* (*pop)(struct pcb_queue* queue);
+} pcb_queue_default_ops;
+/* TODO: add default ops */
+
+struct pcb_queue {
+	struct pcb_queue_operations* ops;
+	struct pcb* list;
+	int total;
+};
+
+
 static struct pcb pcbs[MAX_NUM_OF_PCBS];
 static int pcb_count = 0;
 static struct pcb* pcb_running_queue = &pcbs[0];
@@ -38,7 +55,7 @@ struct pcb* current_running = &pcbs[0];
  * @param queue 
  * @param pcb 
  */
-void pcb_queue_push_single(struct pcb** queue, struct pcb* pcb)
+void pcb_queue_push(struct pcb** queue, struct pcb* pcb)
 {
 	assert(*queue != NULL);
 	CLI();
@@ -210,7 +227,7 @@ void pcb_set_blocked(int pid)
 	pcbs[pid].running = BLOCKED;
 
 	pcb_queue_remove(&pcbs[pid]);
-	pcb_queue_push_single(&pcb_blocked_queue, &pcbs[pid]);
+	pcb_queue_push(&pcb_blocked_queue, &pcbs[pid]);
 
 	pcbs[pid].blocked_count++;
 }

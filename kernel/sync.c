@@ -40,7 +40,7 @@ void acquire(mutex_t* l)
     {
     case LOCKED:
         pcb_queue_remove(current_running);
-        pcb_queue_push_single(&l->pcb_blocked, current_running);
+        pcb_queue_push(&l->pcb_blocked, current_running);
 
         block();
         break;
