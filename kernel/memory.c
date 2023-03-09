@@ -126,6 +126,9 @@ void* calloc(int size, int val)
 void init_memory()
 {
 	kmem_init();
+	dbgprintf("Kernel memory initiated\n");
 	vmem_init();
+	dbgprintf("Virtual memory initiated\n");
 	vmem_init_kernel();
+	dbgprintf("Virtual Kernel memory initiated\n");
 }

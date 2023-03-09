@@ -4,6 +4,7 @@
 struct pcb;
 
 #include <util.h>
+#include <sync.h>
 #include <gfx/window.h>
 #include <memory.h>
 
@@ -56,24 +57,52 @@ struct pcb {
 
 extern struct pcb* current_running;
 
+/* Forward declaration */
+struct pcb_queue;
+
+/**
+ * @brief This defines a set of operations for a PCB queue.
+ * The pcb_queue_operations structure defines a set of operations that can be performed
+ * on a PCB queue. These operations include pushing and removing PCBs from the queue,
+ * as well as getting the next PCB to be executed.
+ */
+struct pcb_queue_operations {
+	void (*push)(struct pcb_queue* queue, struct pcb* pcb);
+	void (*add)(struct pcb_queue* queue, struct pcb* pcb);
+	void (*remove)(struct pcb_queue* queue, struct pcb* pcb);
+	struct pcb* (*pop)(struct pcb_queue* queue);
+};
+
+/**
+ * @brief This defines a PCB queue.
+ * The pcb_queue structure defines a PCB queue, which contains a set of operations defined
+ * by the pcb_queue_operations structure. It also contains a pointer to the head of the queue,
+ * a spinlock to protect access to the queue, and a count of the total number of PCBs in the queue.
+ */
+struct pcb_queue {
+	struct pcb_queue_operations* ops;
+	struct pcb* _list;
+	spinlock_t spinlock;
+	int total;
+};
+
+void pcb_queue_attach_ops(struct pcb_queue* q);
+
 void pcb_init();
 void pcb_start();
 void start_pcb();
 int pcb_create_kthread( void (*entry)(), char* name);
-void print_pcb_status();
 int pcb_create_process(char* program);
 
 void pcb_set_running(int pid);
-void pcb_set_blocked(int pid);
 
+void pcb_queue_remove_running(struct pcb* pcb);
 void pcb_queue_push_running(struct pcb* pcb);
-void pcb_queue_remove(struct pcb* pcb);
-void pcb_queue_push(struct pcb** queue, struct pcb* pcb);
-struct pcb* pcb_queue_pop(struct pcb **head);
 
 int pcb_cleanup_routine(int pid);
 
 struct pcb* pcb_get_new_running();
+struct pcb_queue* pcb_new_queue();
 
 /* functions in entry.s */
 void _start_pcb();

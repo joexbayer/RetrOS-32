@@ -16,7 +16,7 @@ typedef int volatile spinlock_t;
 
 typedef struct _mutex {
     int state;
-    struct pcb* pcb_blocked;
+    struct pcb_queue* blocked;
 } mutex_t;
 
 void mutex_init(mutex_t* l);
@@ -30,5 +30,12 @@ void release(mutex_t* l);
         code_block \
     } while (0);\
     release(&obj->lock); \
+
+#define SPINLOCK(obj, code_block) \
+    spin_lock(&obj->spinlock); \
+    do { \
+        code_block \
+    } while (0);\
+    spin_unlock(&obj->spinlock); \
 
 #endif

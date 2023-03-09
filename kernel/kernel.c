@@ -46,6 +46,7 @@ void kernel(uint32_t magic)
 
 	init_memory();
 	init_interrupts();
+	gfx_init();
 	init_keyboard();
 	mouse_init();
 	pcb_init();

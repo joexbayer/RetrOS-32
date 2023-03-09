@@ -21,84 +21,125 @@
 #define STACK_SIZE 0x2000
 static const char* pcb_status[] = {"stopped ", "running ", "new     ", "blocked ", "sleeping", "zombie"};
 
-struct pcb_queue;
+/* Prototype functions for pcb queue interface */
+static void pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb);
+static void pcb_queue_add(struct pcb_queue* queue, struct pcb* pcb);
+static void pcb_queue_remove(struct pcb_queue* queue, struct pcb* pcb);
+static struct pcb* pcb_queue_pop(struct pcb_queue* queue);
 
-struct pcb_queue_operations {
-	void (*push)(struct pcb_queue* queue, struct pcb* pcb);
-	void (*add)(struct pcb_queue* queue, struct pcb* pcb);
-	void (*remove)(struct pcb_queue* queue, struct pcb* pcb);
-	struct pcb* (*pop)(struct pcb_queue* queue);
-} pcb_queue_default_ops;
-/* TODO: add default ops */
-
-struct pcb_queue {
-	struct pcb_queue_operations* ops;
-	struct pcb* list;
-	int total;
+/* Setup for default pcb queue operations */
+static struct pcb_queue_operations pcb_queue_default_ops = {
+	.push = &pcb_queue_push,
+	.add = &pcb_queue_add,
+	.remove = &pcb_queue_remove,
+	.pop = &pcb_queue_pop
 };
 
+/* Global running queue */
+struct pcb_queue* running;
 
-static struct pcb pcbs[MAX_NUM_OF_PCBS];
-static int pcb_count = 0;
-static struct pcb* pcb_running_queue = &pcbs[0];
-static struct pcb* pcb_blocked_queue = NULL;
-
-/**
- * Current running PCB, used for context aware
- * functions such as windows drawing to the screen.
- */
-struct pcb* current_running = &pcbs[0];
-
-/**
- * @brief Push pcb struct at the end of given queue
- * 
- * @param queue 
- * @param pcb 
- */
-void pcb_queue_push(struct pcb** queue, struct pcb* pcb)
+/* Helper function to attach default ops */
+void pcb_queue_attach_ops(struct pcb_queue* q)
 {
-	assert(*queue != NULL);
-	CLI();
-	struct pcb* current = (*queue);
-	if(current == NULL)
-	{
-		(*queue) = pcb;
-		return;
-	}
-	while (current->next == NULL)
-		current = current->next;
-	current->next = pcb;
-	pcb->next = NULL;
-	STI();
-	dbgprintf("[SINGLE QUEUE] Added %s to a queue\n", pcb->name);
+	q->ops = &pcb_queue_default_ops;
 }
 
-void pcb_queue_add(struct pcb** queue, struct pcb* pcb)
+/**
+ * @brief Creates a new PCB queue.
+ *
+ * The `pcb_new_queue()` function allocates memory for a new `pcb_queue` structure and initializes its members.
+ * The `_list` member is set to `NULL`, and the queue's operations and spinlock are attached and initialized.
+ *
+ * @return A pointer to the newly created `pcb_queue` structure.
+ */ 
+struct pcb_queue* pcb_new_queue()
 {
-	CRITICAL_SECTION({
+	struct pcb_queue* queue = kalloc(sizeof(struct pcb_queue));
+	queue->_list = NULL;
+	pcb_queue_attach_ops(queue);
+	queue->spinlock = 0;
+	queue->total = 0;
 
-		struct pcb* prev = (*queue)->prev;
-		(*queue)->prev = pcb;
-		pcb->next = (*queue);
+	return queue;
+}
+
+/**
+ * @brief Pushes a PCB onto the PCB queue.
+ *
+ * The `pcb_queue_push()` function adds a PCB to the end of the specified queue. The function takes a pointer to
+ * the `pcb_queue` structure and a pointer to the `pcb` structure to be added as arguments. The function uses
+ * a spinlock to protect the critical section and adds the PCB to the end of the queue by traversing the current
+ * list of PCBs and adding the new PCB to the end.
+ *
+ * @param queue A pointer to the `pcb_queue` structure to add the `pcb` to.
+ * @param pcb A pointer to the `pcb` structure to add to the queue.
+ */
+static void pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb)
+{
+	assert(queue != NULL);
+
+	SPINLOCK(queue, {
+
+		struct pcb* current = queue->_list;
+		if(current == NULL)
+		{
+			queue->_list = pcb;
+			break;
+		}
+		while (current->next == NULL)
+			current = current->next;
+		current->next = pcb;
+		pcb->next = NULL;
+		queue->total++;
+
+	});
+	dbgprintf("Added %s to a queue\n", pcb->name);
+}
+
+/**
+ * @brief Adds a PCB to the PCB queue.
+ *
+ * The `pcb_queue_add()` function adds a PCB to the beginning of the specified queue. The function takes a pointer to
+ * the `pcb_queue` structure and a pointer to the `pcb` structure to be added as arguments. The function uses
+ * a spinlock to protect the critical section and adds the PCB to the beginning of the queue by modifying the pointers
+ * of the existing PCBs in the queue to insert the new PCB at the front.
+ *
+ * @param queue A pointer to the `pcb_queue` structure to add the `pcb` to.
+ * @param pcb A pointer to the `pcb` structure to add to the queue.
+ */
+static void pcb_queue_add(struct pcb_queue* queue, struct pcb* pcb)
+{
+	assert(queue != NULL);
+
+	SPINLOCK(queue, {
+
+		struct pcb* prev = queue->_list->prev;
+		queue->_list->prev = pcb;
+		pcb->next = queue->_list;
 		prev->next = pcb;
 		pcb->prev = prev;
+
+		queue->total++;
 
 	});
 }
 
-void pcb_queue_insert_after(struct pcb *node, struct pcb *new_node) {
-	
-    new_node->prev = node;
-    new_node->next = node->next;
-    if (node->next != NULL) {
-        node->next->prev = new_node;
-    }
-    node->next = new_node;
-}
-
-void pcb_queue_remove(struct pcb* pcb)
+/**
+ * @brief Removes a PCB from the PCB queue.
+ *
+ * The `pcb_queue_remove()` function removes a PCB from the specified queue. The function takes a pointer to the
+ * `pcb_queue` structure and a pointer to the `pcb` structure to be removed as arguments. The function uses a
+ * spinlock to protect the critical section and removes the specified PCB from the queue by modifying the pointers
+ * of the previous and next PCBs in the queue to bypass the removed PCB.
+ *
+ * @param queue A pointer to the `pcb_queue` structure to remove the `pcb` from.
+ * @param pcb A pointer to the `pcb` structure to remove from the queue.
+ */
+static void pcb_queue_remove(struct pcb_queue* queue, struct pcb* pcb)
 {
-	CRITICAL_SECTION({
+	assert(queue != NULL);
+
+	SPINLOCK(queue, {
 
 		struct pcb* prev = pcb->prev;
 		prev->next = pcb->next;
@@ -106,23 +147,53 @@ void pcb_queue_remove(struct pcb* pcb)
 
 		pcb->next = NULL;
 		pcb->prev = NULL;
+
+		queue->total--;
 		
 	});
 }
 
-struct pcb* pcb_queue_pop(struct pcb **head) {
-    if (*head == NULL) {
-        return NULL;
-    }
-    struct pcb *front = *head;
-    *head = front->next;
-    if (*head != NULL) {
-        (*head)->prev = NULL;
-    }
-    front->next = NULL;
-    front->prev = NULL;
+/**
+ * @brief Removes and returns the first PCB in the PCB queue.
+ *
+ * The `pcb_queue_pop()` function removes and returns the first PCB in the specified queue. The function takes a pointer
+ * to the `pcb_queue` structure as an argument. The function uses a spinlock to protect the critical section and removes
+ * the first PCB from the queue by modifying the pointers of the previous and next PCBs in the queue to bypass the
+ * removed PCB. The function returns a pointer to the removed PCB, or `NULL` if the queue is empty.
+ *
+ * @param queue A pointer to the `pcb_queue` structure to remove the first PCB from.
+ * @return A pointer to the first PCB in the queue, or `NULL` if the queue is empty.
+ */
+static struct pcb* pcb_queue_pop(struct pcb_queue* queue)
+{
+    assert(queue != NULL);
+
+	if(queue->_list == NULL)
+		return NULL;
+
+	struct pcb* front = NULL;
+	SPINLOCK(queue, {
+
+		front = queue->_list;
+		queue->_list = front->next;
+		if (queue->_list != NULL) {
+			queue->_list->prev = NULL;
+		}
+		front->next = NULL;
+		front->prev = NULL;
+	});
+
     return front;
 }
+
+static struct pcb pcb_table[MAX_NUM_OF_PCBS];
+static int pcb_count = 0;
+
+/**
+ * Current running PCB, used for context aware
+ * functions such as windows drawing to the screen.
+ */
+struct pcb* current_running = &pcb_table[0];
 
 /**
  * @brief Wrapper function to push to running queue
@@ -131,20 +202,79 @@ struct pcb* pcb_queue_pop(struct pcb **head) {
  */
 void pcb_queue_push_running(struct pcb* pcb)
 {
-	dbgprintf("[QUEUE] Added %s to the running queue\n", pcb->name);
-	pcb_queue_add(&pcb_running_queue, pcb);
+	running->ops->add(running, pcb);
+}
+
+void pcb_queue_remove_running(struct pcb* pcb)
+{
+	running->ops->remove(running, pcb);
 }
 
 struct pcb* pcb_get_new_running()
 {
-	assert(pcb_running_queue != NULL);
-	return pcb_running_queue;
+	assert(running->_list != NULL);
+	return running->_list;
+}
+
+/**
+ * @brief Main function of the PCB background process.
+ * Printing out information about the currently running processes.
+ */
+void print_pcb_status()
+{
+	int done_list[MAX_NUM_OF_PCBS];
+	int done_list_count = 0;
+	
+	__gfx_draw_text(10, 7, "Name           Status    Memory    Stack     PID", VESA8_COLOR_LIGHT_BROWN);
+	gfx_line(10, 7+9, 382, GFX_LINE_HORIZONTAL, VESA8_COLOR_GRAY2);
+	for (int i = 0; i < MAX_NUM_OF_PCBS; i++)
+	{
+		if(pcb_table[i].pid == -1)
+			continue;
+
+		int largest = 0;
+		uint32_t largest_amount = 0;
+		for (int j = 0; j < MAX_NUM_OF_PCBS; j++)
+		{
+			if(pcb_table[j].pid == -1)
+				continue;
+			
+			int found = 0;
+			for (int k = 0; k < done_list_count; k++)
+			{
+				if(done_list[k] == j){
+					found = 1;
+					break;
+				}
+			}
+
+			if(found)
+				continue;;
+			
+
+			if(pcb_table[j].ebp-pcb_table[j].esp >= largest_amount){
+				largest_amount = pcb_table[j].ebp-pcb_table[j].esp;
+				largest = j;
+			}
+		}
+
+		done_list[done_list_count] = largest;
+		done_list_count++;
+		//__gfx_draw_format_text(10, 10+done_list_count*8, VESA8_COLOR_BLACK, " %d  0x%x  %s  %s  %s\n", pcb_table[largest].pid, pcb_table[largest].used_memory, status[pcb_table[largest].running], pcb_table[largest].is_process == 1 ? "Process" : "kthread", pcb_table[largest].name);
+
+		__gfx_draw_format_text(10, 10+done_list_count*8, VESA8_COLOR_BLACK, "%s", pcb_table[largest].name);
+		__gfx_draw_format_text(10 + 15*8, 10+done_list_count*8, VESA8_COLOR_BLACK, "%s", pcb_status[pcb_table[largest].running]);
+		__gfx_draw_format_text(10+15*8+10*8, 10+done_list_count*8, VESA8_COLOR_BLACK, "%d", pcb_table[largest].used_memory);
+		__gfx_draw_format_text(10+15*8+10*8 + 10*8, 10+done_list_count*8, VESA8_COLOR_BLACK, "0x%x", pcb_table[largest].esp);
+		__gfx_draw_format_text(10+15*8+10*8+10*8+11*8, 10+done_list_count*8, VESA8_COLOR_BLACK, "%d", pcb_table[largest].pid);
+	}
 }
 
 void Genesis()
 {
 	dbgprintf("[GEN] Genesis running!\n");
 	struct gfx_window* window = gfx_new_window(400, 100);
+	
 	while(1)
 	{
 		__gfx_draw_rectangle(0, 0, 400, 100, VESA8_COLOR_LIGHT_GRAY5);
@@ -165,79 +295,12 @@ void Genesis()
 	}
 }
 
-/**
- * @brief Main function of the PCB background process.
- * Printing out information about the currently running processes.
- */
-void print_pcb_status()
-{
-	int done_list[MAX_NUM_OF_PCBS];
-	int done_list_count = 0;
-	
-	__gfx_draw_text(10, 7, "Name           Status    Memory    Stack     PID", VESA8_COLOR_LIGHT_BROWN);
-	gfx_line(10, 7+9, 382, GFX_LINE_HORIZONTAL, VESA8_COLOR_GRAY2);
-	for (int i = 0; i < MAX_NUM_OF_PCBS; i++)
-	{
-		if(pcbs[i].pid == -1)
-			continue;
-
-		int largest = 0;
-		uint32_t largest_amount = 0;
-		for (int j = 0; j < MAX_NUM_OF_PCBS; j++)
-		{
-			if(pcbs[j].pid == -1)
-				continue;
-			
-			int found = 0;
-			for (int k = 0; k < done_list_count; k++)
-			{
-				if(done_list[k] == j){
-					found = 1;
-					break;
-				}
-			}
-
-			if(found)
-				continue;;
-			
-
-			if(pcbs[j].ebp-pcbs[j].esp >= largest_amount){
-				largest_amount = pcbs[j].ebp-pcbs[j].esp;
-				largest = j;
-			}
-		}
-
-		done_list[done_list_count] = largest;
-		done_list_count++;
-		//__gfx_draw_format_text(10, 10+done_list_count*8, VESA8_COLOR_BLACK, " %d  0x%x  %s  %s  %s\n", pcbs[largest].pid, pcbs[largest].used_memory, status[pcbs[largest].running], pcbs[largest].is_process == 1 ? "Process" : "kthread", pcbs[largest].name);
-
-		__gfx_draw_format_text(10, 10+done_list_count*8, VESA8_COLOR_BLACK, "%s", pcbs[largest].name);
-		__gfx_draw_format_text(10 + 15*8, 10+done_list_count*8, VESA8_COLOR_BLACK, "%s", pcb_status[pcbs[largest].running]);
-		__gfx_draw_format_text(10+15*8+10*8, 10+done_list_count*8, VESA8_COLOR_BLACK, "%d", pcbs[largest].used_memory);
-		__gfx_draw_format_text(10+15*8+10*8 + 10*8, 10+done_list_count*8, VESA8_COLOR_BLACK, "0x%x", pcbs[largest].esp);
-		__gfx_draw_format_text(10+15*8+10*8+10*8+11*8, 10+done_list_count*8, VESA8_COLOR_BLACK, "%d", pcbs[largest].pid);
-	}
-}
-
-void pcb_set_blocked(int pid)
-{
-	if(pid < 0 || pid > MAX_NUM_OF_PCBS)
-		return;
-
-	pcbs[pid].running = BLOCKED;
-
-	pcb_queue_remove(&pcbs[pid]);
-	pcb_queue_push(&pcb_blocked_queue, &pcbs[pid]);
-
-	pcbs[pid].blocked_count++;
-}
-
 void pcb_set_running(int pid)
 {
 	if(pid < 0 || pid > MAX_NUM_OF_PCBS)
 		return;
 
-	pcbs[pid].running = RUNNING;
+	pcb_table[pid].running = RUNNING;
 }
 
 /**
@@ -253,26 +316,27 @@ int pcb_cleanup_routine(int pid)
 	if(pid < 0 || pid > MAX_NUM_OF_PCBS)
 		return -1;
 
-	dbgprintf("[PCB] Cleaning zombie process %s\n", pcbs[pid].name);
+	dbgprintf("[PCB] Cleaning zombie process %s\n", pcb_table[pid].name);
 
-	if(pcbs[pid].gfx_window != NULL){
-		gfx_destory_window(pcbs[pid].gfx_window);
+	if(pcb_table[pid].gfx_window != NULL){
+		gfx_destory_window(pcb_table[pid].gfx_window);
 	}
 
-	pcb_queue_remove(&pcbs[pid]);
-	dbgprintf("[PCB] Cleanup on PID %d stack: 0x%x (original: 0x%x)\n", pid, pcbs[pid].esp, pcbs[pid].stack_ptr);
+	running->ops->remove(running, &pcb_table[pid]);
+
+	dbgprintf("[PCB] Cleanup on PID %d stack: 0x%x (original: 0x%x)\n", pid, pcb_table[pid].esp, pcb_table[pid].stack_ptr);
 	
 	pcb_count--;
 	
-	if(pcbs[pid].is_process){
-		vmem_cleanup_process(&pcbs[pid]);
+	if(pcb_table[pid].is_process){
+		vmem_cleanup_process(&pcb_table[pid]);
 	}
-	kfree((void*)pcbs[pid].stack_ptr);
+	kfree((void*)pcb_table[pid].stack_ptr);
 
-	//memset(&pcbs[pid], 0, sizeof(struct pcb));
+	//memset(&pcb_table[pid], 0, sizeof(struct pcb));
 
-	pcbs[pid].running = STOPPED;
-	pcbs[pid].pid = -1;
+	pcb_table[pid].running = STOPPED;
+	pcb_table[pid].pid = -1;
 
 	return pid;
 }
@@ -334,12 +398,12 @@ int pcb_create_process(char* program)
 	/* Create stack and pcb */
 	 int i; /* Find a pcb is that is "free" */
 	for(i = 0; i < MAX_NUM_OF_PCBS; i++)
-		if(pcbs[i].running == STOPPED)
+		if(pcb_table[i].running == STOPPED)
 			break;
 		
-	assert(pcbs[i].running == STOPPED);
+	assert(pcb_table[i].running == STOPPED);
 	
-	struct pcb* pcb = &pcbs[i];
+	struct pcb* pcb = &pcb_table[i];
 
 	char* pname = "program";
 
@@ -361,7 +425,7 @@ int pcb_create_process(char* program)
 	/* Memory map data */
 	vmem_init_process(pcb, buf, read);
 
-	pcb_queue_push_running(pcb);
+	running->ops->add(running, pcb);
 
 	pcb_count++;
 	STI();
@@ -387,16 +451,16 @@ int pcb_create_kthread(void (*entry)(), char* name)
 
 	int i; /* Find a pcb is that is "free" */
 	for(i = 0; i < MAX_NUM_OF_PCBS; i++)
-		if(pcbs[i].running == STOPPED)
+		if(pcb_table[i].running == STOPPED)
 			break;
 	
-	int ret = pcb_init_kthread(i, &pcbs[i], entry, name);
+	int ret = pcb_init_kthread(i, &pcb_table[i], entry, name);
 	if(!ret){
 		STI();
 		return ret;
 	}
 
-	pcb_queue_push_running(&pcbs[i]);
+	running->ops->add(running, &pcb_table[i]);
 
 	pcb_count++;
 	dbgprintf("Added %s\n", name);
@@ -420,12 +484,15 @@ void pcb_init()
 	/* Stopped processes are eligible to be "replaced." */
 	for (int i = 0; i < MAX_NUM_OF_PCBS; i++)
 	{
-		pcbs[i].running = STOPPED;
-		pcbs[i].pid = -1;
+		pcb_table[i].running = STOPPED;
+		pcb_table[i].pid = -1;
 	}
-	current_running = &pcbs[0];
-	pcbs[0].next = &pcbs[0];
-	pcbs[0].prev = &pcbs[0];
+	current_running = &pcb_table[0];
+	pcb_table[0].next = &pcb_table[0];
+	pcb_table[0].prev = &pcb_table[0];
+
+	running = pcb_new_queue();
+	running->_list = current_running;
 
 	int ret = pcb_create_kthread(&Genesis, "Genesis");
 	if(ret < 0) return; // error

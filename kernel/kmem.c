@@ -17,7 +17,7 @@
 /* Dynamic kernel memory */
 #define KERNEL_MEMORY_START 	0x300000
 #define KERNEL_MEMORY_END		0x400000
-#define KMEM_BLOCK_SIZE 		256
+#define KMEM_BLOCK_SIZE 		512
 #define KMEM_BLOCKS_PER_BYTE 	8
 
 #define KMEM_BITMAP_INDEX(addr) ((addr - KERNEL_MEMORY_START) / KMEM_BLOCK_SIZE / KMEM_BLOCKS_PER_BYTE)
@@ -158,5 +158,7 @@ void* palloc(int size)
 
 void kmem_init()
 {
-	mutex_init(&__kmemory_lock);
+	__kmemory_lock.blocked = palloc(sizeof(struct pcb_queue));
+    pcb_queue_attach_ops(__kmemory_lock.blocked);
+    __kmemory_lock.state = UNLOCKED;
 }

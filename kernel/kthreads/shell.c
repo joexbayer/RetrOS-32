@@ -83,12 +83,6 @@ void exec_cmd()
 		return;
 	}
 
-	if(strncmp("block", shell_buffer, strlen("block"))){
-		int id = atoi(shell_buffer+strlen("block")+1);
-		pcb_set_blocked(id);
-		return;
-	}
-
 	if(strncmp("unblock", shell_buffer, strlen("unblock"))){
 		int id = atoi(shell_buffer+strlen("unblock")+1);
 		pcb_set_running(id);
@@ -240,7 +234,8 @@ void shell_main()
 	memset(term.textbuffer, 0, TERMINAL_BUFFER_SIZE);
 	struct gfx_window* window = gfx_new_window(400, SHELL_HEIGHT);
 
-		__gfx_draw_rectangle(0,0, 400, SHELL_HEIGHT, 0);
+	dbgprintf("Shell: window 0x%x\n", window);
+	__gfx_draw_rectangle(0,0, 400, SHELL_HEIGHT, 0);
 
 
 	terminal_attach(&term);

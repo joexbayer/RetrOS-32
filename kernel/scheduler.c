@@ -34,11 +34,6 @@ void block()
     _context_switch();
 }
 
-void explicit_block(int pid)
-{
-    pcb_set_blocked(pid);
-}
-
 void unblock(int pid)
 {
     pcb_set_running(pid);

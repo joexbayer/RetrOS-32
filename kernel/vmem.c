@@ -124,7 +124,7 @@ int vmem_continious_allocation_map(struct allocation* allocation, uint32_t* addr
 			2. Map it to virtual heap
 			3. add it to bits
 		*/
-		uint32_t paddr = vmem_default->ops->alloc(vmem_default);
+		uint32_t paddr = (uint32_t)vmem_default->ops->alloc(vmem_default);
 		if(paddr == 0){
 			/* TODO: cleanup allocated pages */
 			return -1;
@@ -296,6 +296,8 @@ int vmem_allocator_create(struct virtual_memory_allocator* allocator, int from, 
 	allocator->used_pages = 0;
 	allocator->pages = create_bitmap(allocator->total_pages);
 	mutex_init(&allocator->lock);
+	dbgprintf("Created new allocator\n");
+
 
 	return 0;
 }

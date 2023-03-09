@@ -24,10 +24,7 @@
 #include <sync.h>
 
 static struct gfx_window* order;
-static mutex_t order_lock = {
-    .pcb_blocked = NULL,
-    .state = UNLOCKED
-};
+static mutex_t order_lock;
 
 static uint8_t* gfx_composition_buffer;
 
@@ -195,6 +192,11 @@ void gfx_window_debugger()
     }
 }
 
+void gfx_init()
+{
+    mutex_init(&order_lock);
+}
+
 /**
  * @brief Main window server kthread entry function
  * Allocates a second framebuffer that will be memcpy'd to the VGA framebuffer.
@@ -207,7 +209,6 @@ void gfx_window_debugger()
 void gfx_compositor_main()
 {
     int buffer_size = vbe_info->width*vbe_info->height*(vbe_info->bpp/8)+1;
-    mutex_init(&order_lock);
 
     dbgprintf("[WSERVER] %d bytes allocated for composition buffer.\n", buffer_size);
     gfx_composition_buffer = (uint8_t*) palloc(buffer_size);

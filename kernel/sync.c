@@ -15,6 +15,14 @@
 #include <serial.h>
 #include <assert.h>
 
+void spin_lock(spinlock_t* lock) {
+    while (__sync_lock_test_and_set(lock, 1));
+}
+
+void spin_unlock(spinlock_t* lock) {
+    __sync_lock_release(lock);
+}
+
 /**
  * @brief Initializes the given lock. Most importantly it sets the blocked list.
  * 
@@ -22,7 +30,7 @@
  */
 void mutex_init(mutex_t* l)
 {
-    l->pcb_blocked = NULL;
+    l->blocked = pcb_new_queue();
     l->state = UNLOCKED;
 }
 
@@ -35,12 +43,12 @@ void mutex_init(mutex_t* l)
 void acquire(mutex_t* l)
 {
     CLI();
-
     switch (l->state)
     {
     case LOCKED:
-        pcb_queue_remove(current_running);
-        pcb_queue_push(&l->pcb_blocked, current_running);
+        pcb_queue_remove_running(current_running);
+
+        l->blocked->ops->push(l->blocked, current_running);
 
         block();
         break;
@@ -54,8 +62,6 @@ void acquire(mutex_t* l)
         break;
     }
 
-    //dbgprintf("[SYNC] %s acquired 0x%x\n", current_running->name, l);
-
     assert(l->state == LOCKED);
     STI();
 }
@@ -68,10 +74,8 @@ void acquire(mutex_t* l)
 void release(mutex_t* l)
 {
 
-    //dbgprintf("[SYNC] %s released 0x%x\n", current_running->name, l);
-
     CLI();
-    struct pcb* blocked = pcb_queue_pop(&l->pcb_blocked);
+    struct pcb* blocked = l->blocked->ops->pop(l->blocked);
     if(blocked != NULL){
         pcb_queue_push_running(blocked);
         unblock(blocked->pid);
@@ -80,7 +84,6 @@ void release(mutex_t* l)
         STI();
         return;
     }
-
     //assert(l->state != UNLOCKED);
     l->state = UNLOCKED;
     STI();
