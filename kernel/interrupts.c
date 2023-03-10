@@ -91,15 +91,15 @@ void EOI(int irq)
 static void __interrupt_exception_handler(int i)
 {
 	dbgprintf("[exception] %d %s (%s)\n", i, __exceptions_names[i], current_running->name);
-	assert(0);
+	if(i == 0) return;
+	UNREACHABLE();
 }
 
 /* Main interrupt handler, calls interrupt specific hanlder if installed. */
 void isr_handler(struct registers regs)
 {
 	if(regs.int_no < 32){
-		__interrupt_exception_handler(regs.int_no);
-		UNREACHABLE();
+		return __interrupt_exception_handler(regs.int_no);
 	}
 
 	if (handlers[regs.int_no] != 0)

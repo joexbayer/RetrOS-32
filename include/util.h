@@ -37,12 +37,13 @@ uint32_t memcmp(const void* ptr, const void* ptr2, uint32_t len);
 void* memset (void *dest, int val, int len);
 void* memcpy(void *dest, const void *src, int n);
 
+#define HLT() asm ("hlt")
+
 #define PANIC()\
      asm ("cli");\
      while(1)\
 
 extern int cli_cnt;
-
 #define CLI()\
     cli_cnt++;\
     asm ("cli");\

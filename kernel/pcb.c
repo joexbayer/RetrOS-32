@@ -270,6 +270,13 @@ void print_pcb_status()
 	}
 }
 
+void idletask(){
+	while(1){
+		HLT();
+		yield();
+	};
+}
+
 void Genesis()
 {
 	dbgprintf("[GEN] Genesis running!\n");
@@ -390,10 +397,10 @@ int pcb_create_process(char* program)
 	if(inode == 0)
 		return 0;
 
+	dbgprintf("[INIT PROCESS] Reading %s from disk\n", program);
 	char buf[MAX_FILE_SIZE];
 	int read = fs_read(inode, (char* )buf, MAX_FILE_SIZE);
 	fs_close(inode);
-	dbgprintf("[INIT PROCESS] Reading %s from disk (%d bytes)\n", program, read);
 
 	/* Create stack and pcb */
 	 int i; /* Find a pcb is that is "free" */
@@ -495,6 +502,9 @@ void pcb_init()
 	running->_list = current_running;
 
 	int ret = pcb_create_kthread(&Genesis, "Genesis");
+	if(ret < 0) return; // error
+
+	ret = pcb_create_kthread(&idletask, "IdleTask");
 	if(ret < 0) return; // error
 
 	dbgprintf("[PCB] All process control blocks are ready.\n");
