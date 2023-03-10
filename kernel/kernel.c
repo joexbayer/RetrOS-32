@@ -23,6 +23,7 @@
 #include <vbe.h>
 #include <mouse.h>
 #include <ipc.h>
+#include <assert.h>
 
 #include <gfx/window.h>
 #include <gfx/composition.h>
@@ -61,14 +62,14 @@ void kernel(uint32_t magic)
 	init_fs();
 	
 	register_kthread(&shell_main, "Shell");
+	register_kthread(&Genesis, "Genesis");
 	register_kthread(&networking_main, "Networking");
 	register_kthread(&dhcpd, "dhcpd");
 	register_kthread(&gfx_compositor_main, "wServer");
 	register_kthread(&error_main, "Error");
 	register_kthread(&gfx_window_debugger, "Debugger");
-	
-	start("Shell");
-	start("wServer");
+	register_kthread(&idletask, "Idle");
+	register_kthread(&dummytask, "Dummy");
 
 	#pragma GCC diagnostic ignored "-Wcast-function-type"
 	add_system_call(SYSCALL_PRTPUT, (syscall_t)&terminal_putchar);
@@ -103,13 +104,21 @@ void kernel(uint32_t magic)
 	
 	vesa_init();
 
+	//start("Shell");
+	start("Idle");
+	start("wServer");
+	start("Genesis");
+	start("Dummy");
+	start("Dummy");
+	start("Dummy");
+	start("Shell");
+
 	STI();
 	init_timer(1);
 
 	dbgprintf("[CLI] %d\n", cli_cnt);
 
 	pcb_start();
-
-	while(1){};
-
+	
+	UNREACHABLE();
 }

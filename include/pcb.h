@@ -108,5 +108,9 @@ struct pcb_queue* pcb_new_queue();
 void _start_pcb();
 void _context_switch();
 
+void idletask();
+void dummytask();
+void Genesis();
+
 
 #endif

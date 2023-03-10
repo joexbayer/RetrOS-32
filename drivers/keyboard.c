@@ -73,15 +73,15 @@ static uint8_t __shift_pressed = 0;
 
 char kb_get_char()
 {
-	acquire(&kb_lock);
+	//acquire(&kb_lock);
 	if(kb_buffer_tail == kb_buffer_head || !current_running->gfx_window->in_focus){
-		release(&kb_lock);
+		//release(&kb_lock);
 		return -1;
 	}
 	
 	char c = kb_buffer[kb_buffer_tail];
 	kb_buffer_tail = (kb_buffer_tail + 1) % KB_BUFFER_SIZE;
-	release(&kb_lock);
+	//release(&kb_lock);
 	return c;
 }
 

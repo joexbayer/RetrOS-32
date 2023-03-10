@@ -78,13 +78,13 @@ ISR_NO_ERR 46
 ISR_NO_ERR 47
 
 isr_entry:
-    pusha
+    pushal
 
 	push %eax
     call isr_handler
 	pop %eax
 
-    popa
+    popal
     add $8, %esp
 	
 	iret
@@ -96,7 +96,7 @@ _syscall_entry:
     cli
     push $0
 	push $48
-    pusha
+    pushal
 
 	pushl	%edx	/* Arg 3 */
     pushl	%ecx	/* Arg 2 */
@@ -111,7 +111,7 @@ _syscall_entry:
     popl	%ebx	/* Arg 1 */
     popl	%eax	/* Syscall number */
     
-    popa    
+    popal 
     
     movl	(syscall_return_value), %eax
 
@@ -132,7 +132,7 @@ _page_fault_entry:
     movl	%eax, (page_fault_error)
     movl	(page_fault_save), %eax
 
-    pusha
+    pushal
 
     /* Push error code, and then contents of cr2 */
     movl	(page_fault_error), %eax
@@ -144,6 +144,6 @@ _page_fault_entry:
 
     addl	$8, %esp
     
-    popa    
+    popal    
 
     iret

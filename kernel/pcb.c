@@ -122,6 +122,7 @@ static void pcb_queue_add(struct pcb_queue* queue, struct pcb* pcb)
 		queue->total++;
 
 	});
+	dbgprintf("New pcb added to a queue\n");
 }
 
 /**
@@ -274,6 +275,17 @@ void idletask(){
 	while(1){
 		HLT();
 		//yield();
+	};
+}
+
+void dummytask(){
+	while(1){
+		int j = 0;
+		for (int i = 0; i < 900000000; i++)
+		{
+			j = (j + 2) % 10000;
+		}
+		j = 50;		
 	};
 }
 
@@ -463,15 +475,11 @@ int pcb_create_kthread(void (*entry)(), char* name)
 			break;
 	
 	int ret = pcb_init_kthread(i, &pcb_table[i], entry, name);
-	if(!ret){
-		STI();
-		return ret;
-	}
 
 	running->ops->add(running, &pcb_table[i]);
 
 	pcb_count++;
-	dbgprintf("Added %s\n", name);
+	dbgprintf("Added %s, PID: %d, Stack: 0x%x\n", name, i, pcb_table[i].kesp);
 	STI();
 	return i;
 }
@@ -495,18 +503,17 @@ void pcb_init()
 		pcb_table[i].running = STOPPED;
 		pcb_table[i].pid = -1;
 	}
+
+	running = pcb_new_queue();
+
+	//int ret = pcb_create_kthread(&Genesis, "Genesis");
+	//if(ret < 0) return; // error
+
 	current_running = &pcb_table[0];
 	pcb_table[0].next = &pcb_table[0];
 	pcb_table[0].prev = &pcb_table[0];
 
-	running = pcb_new_queue();
 	running->_list = current_running;
-
-	int ret = pcb_create_kthread(&Genesis, "Genesis");
-	if(ret < 0) return; // error
-
-	ret = pcb_create_kthread(&idletask, "IdleTask");
-	if(ret < 0) return; // error
 
 	dbgprintf("[PCB] All process control blocks are ready.\n");
 

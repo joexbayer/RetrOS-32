@@ -225,9 +225,10 @@ void gfx_compositor_main()
         CLI();
         int test = rdtsc();
         int mouse_ret = mouse_event_get(&m);
+        int window_ret = gfx_check_changes(order);
 
         /* Main composition loop */
-        if(gfx_check_changes(order)){
+        if(window_ret){
             memset(gfx_composition_buffer, VESA8_COLOR_DARK_TURQUOISE, buffer_size);
             /* Draw windows in reversed order */
             //acquire(&order_lock);
@@ -255,8 +256,9 @@ void gfx_compositor_main()
 
         sleep(2);
 
+        if(mouse_ret || window_ret)
+            memcpy((uint8_t*)vbe_info->framebuffer, gfx_composition_buffer, buffer_size-1);
         /* Copy buffer over to framebuffer. */
-        memcpy((uint8_t*)vbe_info->framebuffer, gfx_composition_buffer, buffer_size-1);
 
         if(mouse_ret){
             gfx_mouse_event(m.x, m.y, m.flags);
