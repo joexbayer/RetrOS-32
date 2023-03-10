@@ -91,8 +91,7 @@ void EOI(int irq)
 static void __interrupt_exception_handler(int i)
 {
 	dbgprintf("[exception] %d %s (%s)\n", i, __exceptions_names[i], current_running->name);
-	if(i == 0) return;
-	UNREACHABLE();
+	PANIC();
 }
 
 /* Main interrupt handler, calls interrupt specific hanlder if installed. */

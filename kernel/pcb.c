@@ -273,7 +273,7 @@ void print_pcb_status()
 void idletask(){
 	while(1){
 		HLT();
-		yield();
+		//yield();
 	};
 }
 
@@ -398,8 +398,8 @@ int pcb_create_process(char* program)
 		return 0;
 
 	dbgprintf("[INIT PROCESS] Reading %s from disk\n", program);
-	char buf[MAX_FILE_SIZE];
-	int read = fs_read(inode, (char* )buf, MAX_FILE_SIZE);
+	char* buf = kalloc(MAX_FILE_SIZE);
+	int read = fs_read(inode, buf, MAX_FILE_SIZE);
 	fs_close(inode);
 
 	/* Create stack and pcb */
@@ -436,6 +436,7 @@ int pcb_create_process(char* program)
 
 	pcb_count++;
 	STI();
+	kfree(buf);
 	dbgprintf("[INIT PROCESS] Created new process!\n");
 	pcb->running = NEW;
 	/* Run */
