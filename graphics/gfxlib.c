@@ -9,12 +9,14 @@
  * 
  */
 #include <gfx/gfxlib.h>
+#include <gfx/events.h>
 #include <pcb.h>
 #include <font8.h>
 #include <vbe.h>
 #include <stdarg.h>
 #include <vesa.h>
-
+#include <serial.h>
+#include <scheduler.h>
 
 int gfx_get_window_width()
 {
@@ -38,6 +40,40 @@ int gfx_window_reize(int width, int height)
 
     STI();
 	return 0;
+}
+
+int gfx_push_event(struct gfx_window* w, struct gfx_event* e)
+{
+	dbgprintf("Pushing event\n");
+
+	memcpy(&w->events.list[w->events.head], e, sizeof(*e));
+	w->events.head = (w->events.head + 1) % GFX_MAX_EVENTS;
+
+	if(w->owner->running == BLOCKED)
+		w->owner->running = RUNNING;
+
+	return 0;
+}
+
+int gfx_event_loop(struct gfx_event* event)
+{
+	/**
+	 * The gfx event loop is PCB specific,
+	 * checks if there is an event if true return.
+	 * Else block.
+	 */
+
+	while(1)
+	{
+		if(current_running->gfx_window->events.tail == current_running->gfx_window->events.head){
+			block();
+			continue;	
+		}
+	
+		memcpy(event, &current_running->gfx_window->events.list[current_running->gfx_window->events.tail], sizeof(struct gfx_event));
+		current_running->gfx_window->events.tail = (current_running->gfx_window->events.tail + 1) % GFX_MAX_EVENTS;
+		return 0;
+	}
 }
 
 /**

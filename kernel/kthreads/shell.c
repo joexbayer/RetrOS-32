@@ -27,6 +27,7 @@
 #include <diskdev.h>
 
 #include <gfx/gfxlib.h>
+#include <gfx/events.h>
 
 #define SHELL_HEIGHT 275
 #define SHELL_POSITION SHELL_HEIGHT-12
@@ -244,11 +245,19 @@ void shell_main()
 	//sleep(2);
 	while(1)
 	{
-		char c = kb_get_char();
-		if(c == -1)
-			continue;
-		shell_put(c);
-		c_test++;
+		struct gfx_event event;
+		gfx_event_loop(&event);
+
+		switch (event.event)
+		{
+		case GFX_EVENT_KEYBOARD:
+			if(event.data == -1)
+				break;
+			shell_put(event.data);
+			c_test++;
+		default:
+			break;
+		}
 	}
 	
 	exit();

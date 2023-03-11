@@ -1,6 +1,9 @@
 #ifndef __GFXLIB_H
 #define __GFXLIB_H
 
+#include <gfx/events.h>
+#include <gfx/window.h>
+
 enum GFX_LINE_ATTRIBUTES {
     GFX_LINE_INNER_VERTICAL,
     GFX_LINE_INNER_HORIZONTAL,
@@ -9,6 +12,9 @@ enum GFX_LINE_ATTRIBUTES {
     GFX_LINE_VERTICAL,
     GFX_LINE_HORIZONTAL
 };
+
+int gfx_event_loop(struct gfx_event* event);
+int gfx_push_event(struct gfx_window* w, struct gfx_event* e);
 
 void gfx_line(int x, int y, int length, int option, int color);
 

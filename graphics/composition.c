@@ -12,6 +12,8 @@
 #include <vbe.h>
 #include <gfx/window.h>
 #include <gfx/gfxlib.h>
+#include <gfx/events.h>
+#include <keyboard.h>
 #include <scheduler.h>
 #include <util.h>
 #include <memory.h>
@@ -226,6 +228,16 @@ void gfx_compositor_main()
         int test = rdtsc();
         int mouse_ret = mouse_event_get(&m);
         int window_ret = gfx_check_changes(order);
+        
+        
+        char key = kb_get_char();
+        if(key != -1){
+            struct gfx_event e = {
+                .data = key,
+                .event = GFX_EVENT_KEYBOARD
+            };
+            gfx_push_event(order, &e);
+        }
 
         /* Main composition loop */
         if(window_ret){

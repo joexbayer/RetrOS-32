@@ -107,10 +107,10 @@ void kernel(uint32_t magic)
 	//start("Shell");
 	start("Idle");
 	start("wServer");
-	start("Genesis");
+	//start("Genesis");
 	start("Dummy");
-	start("Dummy");
-	start("Dummy");
+	//start("Dummy");
+	//start("Dummy");
 	start("Shell");
 
 	STI();

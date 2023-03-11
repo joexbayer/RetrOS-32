@@ -157,6 +157,9 @@ struct gfx_window* gfx_new_window(int width, int height)
     current_running->gfx_window = w;
     w->changed = 1;
 
+    w->events.head = 0;
+    w->events.tail = 0;
+
     w->is_moving.state = GFX_WINDOW_STATIC;
     /* Window can just use the name of the owner? */
     memcpy(w->name, current_running->name, strlen(current_running->name));

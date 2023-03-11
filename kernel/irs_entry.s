@@ -96,6 +96,7 @@ _syscall_entry:
     cli
     push $0
 	push $48
+    pushfl
     pushal
 
 	pushl	%edx	/* Arg 3 */
@@ -112,6 +113,7 @@ _syscall_entry:
     popl	%eax	/* Syscall number */
     
     popal 
+    popfl
     
     movl	(syscall_return_value), %eax
 

@@ -2,6 +2,7 @@
 #define __WINDOW_H
 
 #include <stdint.h>
+#include <gfx/events.h>
 struct gfx_window;
 #include <gfx/component.h>
 #include <terminal.h>
@@ -11,6 +12,7 @@ struct gfx_window;
 #define GFX_MAX_WINDOW_NAME_SIZE 20
 #define GFX_WINDOW_BG_COLOR VESA8_COLOR_LIGHT_GRAY3
 #define GFX_WINDOW_TITLE_HEIGHT 12
+#define GFX_MAX_EVENTS 10
 
 enum window_states {
     GFX_WINDOW_MOVING,
@@ -32,6 +34,12 @@ struct gfx_window {
     void (*mousedown)(struct gfx_window*, int x, int y);
     void (*mouseup)(struct gfx_window*, int x, int y);
 
+    struct {
+        struct gfx_event list[GFX_MAX_EVENTS];
+        uint8_t head;
+        uint8_t tail;
+    } events;
+
     /* Pointer to inner memory where applications draw. */
     uint8_t* inner;
 
@@ -39,7 +47,7 @@ struct gfx_window {
         char state;
         uint16_t x;
         uint16_t y;
-    } is_moving;
+    } is_moving;     
 
     struct pcb* owner;
 

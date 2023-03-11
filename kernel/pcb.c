@@ -35,8 +35,10 @@ static struct pcb_queue_operations pcb_queue_default_ops = {
 	.pop = &pcb_queue_pop
 };
 
-/* Global running queue */
+/* Global running and blocked queue */
 struct pcb_queue* running;
+struct pcb_queue* blocked;
+
 
 /* Helper function to attach default ops */
 void pcb_queue_attach_ops(struct pcb_queue* q)
@@ -489,6 +491,8 @@ void start_pcb()
 	current_running->running = RUNNING;
 	dbgprintf("[START PCB] Starting pcb!\n");
 	_start_pcb(); /* asm function */
+	
+	UNREACHABLE();
 }
 /**
  * @brief Sets all PCBs state to stopped. Meaning they can be started.
@@ -505,6 +509,7 @@ void pcb_init()
 	}
 
 	running = pcb_new_queue();
+	blocked = pcb_new_queue();
 
 	//int ret = pcb_create_kthread(&Genesis, "Genesis");
 	//if(ret < 0) return; // error
