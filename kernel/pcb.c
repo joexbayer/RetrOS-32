@@ -16,7 +16,7 @@
 #include <fs/fs.h>
 #include <assert.h>
 
-#include <gfx/gfxlib.h>
+//#include <gfx/gfxlib.h>
 
 #define STACK_SIZE 0x2000
 static const char* pcb_status[] = {"stopped ", "running ", "new     ", "blocked ", "sleeping", "zombie"};
@@ -222,7 +222,6 @@ struct pcb* pcb_get_new_running()
 /**
  * @brief Main function of the PCB background process.
  * Printing out information about the currently running processes.
- */
 void print_pcb_status()
 {
 	int done_list[MAX_NUM_OF_PCBS];
@@ -273,24 +272,6 @@ void print_pcb_status()
 	}
 }
 
-void idletask(){
-	while(1){
-		HLT();
-		//yield();
-	};
-}
-
-void dummytask(){
-	while(1){
-		int j = 0;
-		for (int i = 0; i < 900000000; i++)
-		{
-			j = (j + 2) % 10000;
-		}
-		j = 50;		
-	};
-}
-
 void Genesis()
 {
 	dbgprintf("[GEN] Genesis running!\n");
@@ -314,6 +295,25 @@ void Genesis()
 		gfx_commit();
 		sleep(200);
 	}
+} */
+
+
+void Genesis()
+{
+	while (1);
+}
+
+void idletask(){
+	while(1){
+		HLT();
+		//yield();
+	};
+}
+
+void dummytask(){
+	while(1){
+		
+	};
 }
 
 void pcb_set_running(int pid)

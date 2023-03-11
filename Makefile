@@ -150,6 +150,8 @@ clean:
 	rm -f filesystem.image
 	rm -f filesystem.test
 
+test: clean compile fs_test
+
 bindir:
 	@mkdir -p bin
 

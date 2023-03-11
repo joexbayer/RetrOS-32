@@ -48,8 +48,37 @@ struct idt_ptr
 } __attribute__((packed));
 
 extern void isr0(struct registers*);
-
-
+extern void isr1(struct registers*);
+extern void isr2(struct registers*);
+extern void isr3(struct registers*);
+extern void isr4(struct registers*);
+extern void isr5(struct registers*);
+extern void isr6(struct registers*);
+extern void isr7(struct registers*);
+extern void isr8(struct registers*);
+extern void isr9(struct registers*);
+extern void isr10(struct registers*);
+extern void isr11(struct registers*);
+extern void isr12(struct registers*);
+extern void isr13(struct registers*);
+extern void isr14(struct registers*);
+extern void isr15(struct registers*);
+extern void isr16(struct registers*);
+extern void isr17(struct registers*);
+extern void isr18(struct registers*);
+extern void isr19(struct registers*);
+extern void isr20(struct registers*);
+extern void isr21(struct registers*);
+extern void isr22(struct registers*);
+extern void isr23(struct registers*);
+extern void isr24(struct registers*);
+extern void isr25(struct registers*);
+extern void isr26(struct registers*);
+extern void isr27(struct registers*);
+extern void isr28(struct registers*);
+extern void isr29(struct registers*);
+extern void isr30(struct registers*);
+extern void isr31(struct registers*);
 extern void isr32(struct registers*);
 extern void isr33(struct registers*);
 extern void isr34(struct registers*);

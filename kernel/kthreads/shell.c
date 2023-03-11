@@ -122,11 +122,6 @@ void exec_cmd()
 		fs_create(filename);
 		return;
 	}
-
-	if(strncmp("ps", shell_buffer, strlen("ps"))){
-		print_pcb_status();
-		return;
-	}
 	
 	if(strncmp("netinfo", shell_buffer, strlen("netinfo"))){
 		networking_print_status();

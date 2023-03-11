@@ -37,6 +37,8 @@ void kernel(uint32_t magic)
 
 	kernel_size = _end-_code;
 	init_serial();
+	init_memory();
+
 	dbgprintf("[VBE] INFO:\n");
 	dbgprintf("[VBE] Height: %d\n", vbe_info->height);
 	dbgprintf("[VBE] Width: %d\n", vbe_info->width);
@@ -44,8 +46,8 @@ void kernel(uint32_t magic)
 	dbgprintf("[VBE] Bpp: %d\n", vbe_info->bpp);
 	dbgprintf("[VBE] Framebuffer: 0x%x\n", vbe_info->framebuffer);
 	dbgprintf("[VBE] Memory Size: %d (0x%x)\n", vbe_info->width*vbe_info->height*(vbe_info->bpp/8), vbe_info->width*vbe_info->height*(vbe_info->bpp/8));
+	//vmem_map_driver_region(vbe_info->framebuffer, (vbe_info->width*vbe_info->height*(vbe_info->bpp/8))+1);
 
-	init_memory();
 	init_interrupts();
 	gfx_init();
 	init_keyboard();
