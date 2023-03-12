@@ -153,6 +153,11 @@ int add_userspace_program(struct superblock* sb, struct inode* current_dir, char
     printf("[MKFS] Attaching %s (%s) to the filesystem!\n", program, path_buf);
 
     FILE* file = fopen(path_buf, "r");
+    if(file == NULL){
+        printf("[MKFS] File %s not found!\n", program);
+        return -1;
+    }
+
     fseek(file, 0L, SEEK_END);
     int fs_size = ftell(file);
     rewind(file);
@@ -269,7 +274,7 @@ int main(int argc, char* argv[])
 
     add_userspace_program(&superblock, bin, "counter");
     add_userspace_program(&superblock, bin, "clock");
-    add_userspace_program(&superblock, bin, "hello");
+    add_userspace_program(&superblock, bin, "textedit");
 
     inodes_sync(&superblock);
 

@@ -109,14 +109,10 @@ void vesa_put_char(uint8_t* buffer, unsigned char c, int x, int y, int color)
 
 void vesa_put_char16(uint8_t* buffer, unsigned char c, int x, int y, int color)
 {
-    for (int row = 0; row < 2; row++) {
-        for (int col = 0; col < 2; col++) {
-            for (int l = 0; l < 8; l++) {
-                for (int i = 8; i >= 0; i--) {
-                    if (font8x8_basic[c][row*8+l] & (1 << i)) {
-                        putpixel(buffer, (x)+(col*8)+i, (y)+(row*8)+l, color, vbe_info->pitch);
-                    }
-                }
+    for (int l = 0; l < 16; l++) {
+        for (int i = 15; i >= 0; i--) {
+            if (font8x8_basic[c][l/2] & (1 << (i/2))) {
+                putpixel(buffer, (x)+i,  (y)+l, color, vbe_info->pitch);
             }
         }
     }

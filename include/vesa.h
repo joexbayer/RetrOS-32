@@ -8,6 +8,7 @@
 #define PIXELS_PER_ICON 16
 
 void vesa_put_char(uint8_t* buffer, unsigned char c, int x, int y, int color);
+void vesa_put_char16(uint8_t* buffer, unsigned char c, int x, int y, int color);
 void vesa_put_icon(uint8_t* buffer, int x, int y);
 void vesa_write_str(uint8_t* buffer, int x, int y, const char* data, int color);
 void vesa_fill(uint8_t* buffer, unsigned char color);

@@ -24,7 +24,7 @@ endif
 
 OUTPUTDIR = ./bin/
 
-USROBJS = bin/counter.o bin/clock.o bin/hello.o
+USROBJS = bin/counter.o bin/clock.o bin/textedit.o
 COMMON = ../bin/syscall.o ../bin/util.o ../bin/printf.o ../bin/graphics.o
 
 .PHONY: all new programs
@@ -45,8 +45,8 @@ bin/%.o: */%.s
 	@$(AS) -o $@ -c $< $(ASFLAGS)
 
 # C++ compiling
-bin/%.o: %.c++ bin/crt0.o ./bin/crti.o ./bin/crtn.o
-	@g++ -o $@ -c $< -ffreestanding -O1 -Wall -Wextra -fno-exceptions -fno-rtti -I ./../include/ -m32 -fno-pie -nostdlib
+bin/%.o: %.cpp bin/crt0.o ./bin/crti.o ./bin/crtn.o
+	@g++ -o $@ -c $< $(CCFLAGS) -fno-exceptions -fno-rtti
 	@$(LD) -o $(basename $@) ./bin/crt0.o $@ $(COMMON) $(LDFLAGS) -T ./utils/linker.ld
 	@echo [USR] Compiling C++ $(basename $@)
 

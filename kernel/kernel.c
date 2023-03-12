@@ -111,7 +111,7 @@ void kernel(uint32_t magic)
 	start("Dummy");
 	start("Dummy");
 	start("Dummy");
-	//start("Shell");
+	start("Shell");
 
 	STI();
 	init_timer(1);

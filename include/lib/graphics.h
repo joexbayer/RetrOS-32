@@ -6,6 +6,10 @@
  * 
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gfx/events.h>
 
 enum gfx_lib_api_options {
@@ -53,6 +57,10 @@ int gfx_draw_rectangle(int x, int y, int width, int height, unsigned char color)
 int gfx_draw_circle(int x, int y, int r, unsigned char color);
 int gfx_draw_line(int x0, int y0, int x1, int y1, unsigned char color);
 int gfx_get_event(struct gfx_event*);
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* __GRAPHICS_H */
