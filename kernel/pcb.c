@@ -310,9 +310,14 @@ void idletask(){
 	};
 }
 
+
 void dummytask(){
 	while(1){
-		
+		char j = 0;
+		for (int i = 0; i < 99999999; i++)
+		{
+			j = (j+1) % 10;
+		}
 	};
 }
 
@@ -333,6 +338,7 @@ void pcb_set_running(int pid)
 int pcb_cleanup_routine(int pid)
 {
 	ASSERT_CRITICAL();
+	assert(pid != current_running->pid);
 
 	if(pid < 0 || pid > MAX_NUM_OF_PCBS)
 		return -1;

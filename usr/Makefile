@@ -47,7 +47,7 @@ bin/%.o: */%.s
 # C++ compiling
 bin/%.o: %.c++ bin/crt0.o ./bin/crti.o ./bin/crtn.o
 	@g++ -o $@ -c $< -ffreestanding -O1 -Wall -Wextra -fno-exceptions -fno-rtti -I ./../include/ -m32 -fno-pie -nostdlib
-	@$(LD) -o $(basename $@) ./bin/crt0.o $@ ../bin/printf.o ../bin/util.o ../bin/syscall.o $(LDFLAGS) -T ./utils/linker.ld
+	@$(LD) -o $(basename $@) ./bin/crt0.o $@ $(COMMON) $(LDFLAGS) -T ./utils/linker.ld
 	@echo [USR] Compiling C++ $(basename $@)
 
 

@@ -109,7 +109,9 @@ set_a20:
     jnz     set_a20
 
     movb    $0xd1,%al               # 0xd1 -> port 0x64
-    outb    %al,$0x64                                                                                
+    outb    %al,$0x64
+
+    ret                                                                                
 
 set_video_mode:
     # movb $0x00, %ah

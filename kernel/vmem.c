@@ -203,7 +203,13 @@ void vmem_cleanup_process(struct pcb* pcb)
 	dbgprintf("[Memory] Cleaning up pages from pcb.\n");
 
 	uint32_t directory = (uint32_t)pcb->page_dir;
+
+	/**
+	 * Free all data pages, first get correct data table then
+	 * free all pages based on the size of pcb.
+	 */
 	uint32_t data_table = (uint32_t)pcb->page_dir[DIRECTORY_INDEX(VMEM_DATA)] & ~PAGE_MASK;
+	assert(data_table != 0);
 
 	int size = pcb->data_size;
 	int i = 0;
@@ -213,13 +219,23 @@ void vmem_cleanup_process(struct pcb* pcb)
 		size -= 4096;
 		i++;
 	}
-
 	uint32_t data_page = (uint32_t)((uint32_t*)(pcb->page_dir[DIRECTORY_INDEX(VMEM_DATA)] & ~PAGE_MASK))[TABLE_INDEX((0x1000000+(i*4096)))]& ~PAGE_MASK;
+	
 	vmem_default->ops->free(vmem_default, (void*) data_page);
+	vmem_manager->ops->free(vmem_default, (void*) data_table);
 
+	/**
+	 * Free all stack pages (currently only 1)
+	 */
 	uint32_t stack_table = (uint32_t)pcb->page_dir[DIRECTORY_INDEX(VMEM_STACK)] & ~PAGE_MASK;
 	uint32_t stack_page = (uint32_t)((uint32_t*)(pcb->page_dir[DIRECTORY_INDEX(VMEM_STACK)] & ~PAGE_MASK))[TABLE_INDEX(0xEFFFFFF0)]& ~PAGE_MASK;
+	
+	vmem_default->ops->free(vmem_default, (void*) stack_page);
+	vmem_manager->ops->free(vmem_default, (void*) stack_table);
 
+	/**
+	 * Free all heap allocated memory.
+	 */
 	uint32_t heap_table = (uint32_t)pcb->page_dir[DIRECTORY_INDEX(VMEM_HEAP)] & ~PAGE_MASK;
 	
 	/* Free all malloc allocation */
@@ -240,13 +256,11 @@ void vmem_cleanup_process(struct pcb* pcb)
 		kfree(old->bits);
 		kfree(old);
 	}
-
-	vmem_default->ops->free(vmem_default, (void*) stack_page);
-	vmem_manager->ops->free(vmem_default, (void*) stack_table);
-
-	vmem_manager->ops->free(vmem_default, (void*) data_table);
-
 	vmem_manager->ops->free(vmem_default, (void*) heap_table);
+	
+	/**
+	 * Lastly free directory.
+	 */
 	vmem_manager->ops->free(vmem_default, (void*) directory);
 	dbgprintf("[Memory] Cleaning up pages from pcb [DONE].\n");
 }

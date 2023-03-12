@@ -1,36 +1,34 @@
 #include <lib/printf.h>
+#include <lib/graphics.h>
 
-class Object {  
+class Editor {  
 public:  
-	Object();
-
-	~Object() {
-		printf("Deconstruct object\n");
+	Editor() {
+		x = 0;
+		y = 0;
+		textBuffer = (char*) malloc(1000);
 	}
 
-	void insert(int i)    
-	{    
-		id = i;     
-	}    
-	void display()    
-	{    
-		print("Display test\n");    
+	~Editor() {
+		free(textBuffer);
 	}
+
+	void Save();
+	void Open();
+
+	void EditorLoop()
+	{
+
+	}
+
 private:
-	int id;
+	int fd;
+	char* textBuffer;
+	int x, y;
 };
 
-Object::Object() {
-		printf("Construct object\n");
-	}
-
 int main(void) {  
-    Object s1; 
-    Object s2;
-    s1.insert(201);    
-    s2.insert(202);    
-    s1.display();    
-    s2.display();
+    Editor s1;
 
 	printf("Done\n");
 	return 0;

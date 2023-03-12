@@ -69,7 +69,6 @@ void kernel(uint32_t magic)
 	register_kthread(&dhcpd, "dhcpd");
 	register_kthread(&gfx_compositor_main, "wServer");
 	register_kthread(&error_main, "Error");
-	register_kthread(&gfx_window_debugger, "Debugger");
 	register_kthread(&idletask, "Idle");
 	register_kthread(&dummytask, "Dummy");
 
@@ -106,14 +105,13 @@ void kernel(uint32_t magic)
 	
 	vesa_init();
 
-	//start("Shell");
 	start("Idle");
 	start("wServer");
 	//start("Genesis");
 	start("Dummy");
-	//start("Dummy");
-	//start("Dummy");
-	start("Shell");
+	start("Dummy");
+	start("Dummy");
+	//start("Shell");
 
 	STI();
 	init_timer(1);

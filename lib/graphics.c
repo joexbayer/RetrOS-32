@@ -3,6 +3,10 @@
 #include <util.h>
 #include <stdarg.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int gfx_draw_char(int x, int y, char data, unsigned char color)
 {
     struct gfx_char c = {
@@ -78,6 +82,11 @@ int gfx_draw_text(int x, int y, char* text, unsigned char color)
     }
     
     return 0;
+}
+
+int gfx_get_event(struct gfx_event* event)
+{
+	return gfx_draw_syscall(GFX_EVEN_LOOP_OPT, event);
 }
 
 #define GFX_MAX_FMT 50
@@ -157,3 +166,7 @@ int gfx_draw_format_text(int x, int y, char color, char* fmt, ...)
 	written += x_offset;
 	return written;
 }
+
+#ifdef __cplusplus
+}
+#endif

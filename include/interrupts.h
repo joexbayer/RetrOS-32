@@ -47,6 +47,12 @@ struct idt_ptr
    uint32_t base;                // The address of the first element in our idt_entry_t array.
 } __attribute__((packed));
 
+
+#define EOI(irq) \
+	if (irq >= 0x28) \
+		outportb(PIC2, 0x20); /* Slave */\
+	outportb(PIC1, 0x20); /* Master */
+
 extern void isr0(struct registers*);
 extern void isr1(struct registers*);
 extern void isr2(struct registers*);
@@ -102,7 +108,6 @@ void _page_fault_entry(void);
 void isr_handler(struct registers regs);
 void interrupt_install_handler(int i, void (*handler)());
 void idt_flush(uint32_t idt);
-void EOI(int irq);
 
 
 #endif // !INTERRUPTS_H

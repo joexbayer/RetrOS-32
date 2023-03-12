@@ -6,13 +6,16 @@
  * 
  */
 
+#include <gfx/events.h>
+
 enum gfx_lib_api_options {
     GFX_DRAW_CHAR_OPT,
     GFX_DRAW_TEXT_OPT,
     GFX_PUT_CHAR_OPT,
     GFX_DRAW_RECTANGLE_OPT,
     GFX_DRAW_CIRCLE_OPT,
-    GFX_DRAW_LINE_OPT
+    GFX_DRAW_LINE_OPT,
+    GFX_EVEN_LOOP_OPT
 };
 
 struct gfx_rectangle {
@@ -49,6 +52,7 @@ int gfx_draw_char(int x, int y, char data, unsigned char color);
 int gfx_draw_rectangle(int x, int y, int width, int height, unsigned char color);
 int gfx_draw_circle(int x, int y, int r, unsigned char color);
 int gfx_draw_line(int x0, int y0, int x1, int y1, unsigned char color);
+int gfx_get_event(struct gfx_event*);
 
 
 #endif /* __GRAPHICS_H */

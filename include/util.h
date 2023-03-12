@@ -17,14 +17,6 @@ extern float cos_12[12];
 extern float cos_60[60];
 extern float sin_60[60];
 
-/* From linux kernel. */
-#define offsetof(st, m) \
-    ((int)((char *)&((st *)0)->m - (char *)0))
-#define container_of(ptr, type, member) ({         \
-    const typeof( ((type *)0)->member ) *__mptr = (ptr); \
-    (type *)( (char *)__mptr - offsetof(type,member) );})
-
-
 struct coordiante {
     int x;
     int y;
@@ -36,6 +28,23 @@ uint32_t strncmp(const char* str, const char* str2, uint32_t len);
 uint32_t memcmp(const void* ptr, const void* ptr2, uint32_t len);
 void* memset (void *dest, int val, int len);
 void* memcpy(void *dest, const void *src, int n);
+
+int parse_arguments(const char *input_string, char *tokens[]);
+
+int atoi(char s[]);
+void itoa(int n, char s[]); 
+void itohex(uint32_t n, char s[]);
+
+int isdigit(char c);
+int rand(void);
+
+
+/* From linux kernel. */
+#define offsetof(st, m) \
+    ((int)((char *)&((st *)0)->m - (char *)0))
+#define container_of(ptr, type, member) ({         \
+    const typeof( ((type *)0)->member ) *__mptr = (ptr); \
+    (type *)( (char *)__mptr - offsetof(type,member) );})
 
 #define HLT() asm ("hlt")
 
@@ -62,13 +71,6 @@ extern int cli_cnt;
     } while (0)
 
 #define ASSERT_CRITICAL() assert(cli_cnt > 0)
-
-int atoi(char s[]);
-void itoa(int n, char s[]); 
-void itohex(uint32_t n, char s[]);
-
-int isdigit(char c);
-int rand(void);
 
 unsigned long long rdtsc(void);
 #endif

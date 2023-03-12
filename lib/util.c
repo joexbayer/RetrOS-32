@@ -20,8 +20,6 @@ float sin_12[] = {
 -1.0,-0.8660254037844386,-0.49999999999999994,0.0,0.49999999999999994,0.8660254037844386,1.0,0.8660254037844387,0.49999999999999994,1.2246467991473532e-16,-0.5000000000000001,-0.8660254037844385,
 };
 
-int kernel_size = 0;
-
 int strlen(const char* str) 
 {
 	int len = 0;
@@ -46,6 +44,47 @@ inline inline uint32_t memcmp(const void* ptr, const void* ptr2, uint32_t len)
 	}
 
 	return 0;
+}
+
+#define MAX_ARGS 10
+int parse_arguments(const char *input_string, char *tokens[]) {
+    int num_tokens = 0;  // Number of arguments
+    int token_start = -1;  // Index of start of current token
+    int token_end = -1;  // Index of end of current token
+
+    // Tokenize input string using space as delimiter
+    for (int i = 0; input_string[i] != '\0'; i++) {
+        char c = input_string[i];
+
+        if (c == ' ' || c == '\n') {
+            // End of token, add to tokens array
+            if (token_start != -1) {
+                token_end = i - 1;
+                int token_length = token_end - token_start + 1;
+
+                // Copy characters from input string to token string
+                for (int j = 0; j < token_length; j++) {
+                    tokens[num_tokens][j] = input_string[token_start + j];
+                }
+                tokens[num_tokens][token_length] = '\0';
+                
+                num_tokens++;
+                token_start = -1;
+            }
+        } else {
+            // Start of new token
+            if (token_start == -1) {
+                token_start = i;
+            }
+        }
+
+        // Maximum number of arguments reached, break loop
+        if (num_tokens == MAX_ARGS) {
+            break;
+        }
+    }
+
+    return num_tokens;
 }
 
 /* TODO: Move some functions into own files. */
@@ -188,6 +227,8 @@ int rand(void)  // RAND_MAX assumed to be 32767
     next = next * 1103515245 + 12345;
     return (unsigned int) (next / 65536) % 32768;
 }
+
+int kernel_size = 0;
 
 unsigned long long rdtsc(void)
 {

@@ -61,14 +61,6 @@ void interrupt_install_handler(int i, void (*handler)()) {
 	handlers[i] = handler;
 }
 
-void EOI(int irq)
-{
-	if (irq >= 0x28)
-		outportb(PIC2, 0x20); /* Slave */	
-	
-	outportb(PIC1, 0x20); /* Master */
-}
-
 static void __interrupt_exception_handler(int i)
 {
 	dbgprintf("[exception] %d %s (%s)\n", i, __exceptions_names[i], current_running->name);
@@ -109,15 +101,11 @@ static void init_idt()
 	memset(&idt_entries, 0, sizeof(struct idt_entry)*256);
 
 	/* Set all ISR_LINES to go to ISR0 */
-	for (int i = 0; i < 32; i++)
+	for (int i = 0; i < 48; i++)
 	{ 
 		idt_set_gate(i, (uint32_t) irqs[i] , 0x08, 0x8E);
 	}
-
-	for (int i = 32; i < 48; i++)
-	{
-		idt_set_gate(i, (uint32_t) irqs[i] , 0x08, 0x8E); // PIT timer
-	}
+	
 	idt_set_gate(48, (uint32_t)&_syscall_entry, 0x08, 0x8E);
 	idt_set_gate(14, (uint32_t)&_page_fault_entry, 0x08, 0x8E);
 

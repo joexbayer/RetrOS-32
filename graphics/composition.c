@@ -24,6 +24,7 @@
 #include <mouse.h>
 #include <gfx/component.h>
 #include <sync.h>
+#include <assert.h>
 
 static struct gfx_window* order;
 static mutex_t order_lock;
@@ -55,11 +56,17 @@ void gfx_recursive_draw(struct gfx_window* w)
 /**
  * @brief Push a window to the front of "order" list.
  * Changing its z-axis position in the framebuffer.
+ * 
+ * Assuming w is NOT already the first element.
  * @param w 
  */
 void gfx_order_push_front(struct gfx_window* w)
 {
     acquire(&order_lock);
+
+    assert(w != order);
+
+    /* remove w from order list */
     for (struct gfx_window* i = order; i != NULL; i = i->next)
     {
         if(i->next == w){
@@ -68,6 +75,7 @@ void gfx_order_push_front(struct gfx_window* w)
         }
     }
     
+    /* Replace order with w, pushing old order back. */
     order->in_focus = 0;
     struct gfx_window* save = order;
     order = w;
@@ -154,8 +162,12 @@ void gfx_mouse_event(int x, int y, char flags)
                 gfx_mouse_state = 1;
                 i->mousedown(i, x, y);
 
-                if(i != order)
+                /* If clicked window is not in front, push it. */
+                if(i != order){
                     gfx_order_push_front(i);
+                }
+
+                /* TODO: push mouse gfx event to window */
 
             } else if(!(flags & 1) && gfx_mouse_state == 1) {
                 /* If mouse state is "down" send click event */
@@ -169,29 +181,6 @@ void gfx_mouse_event(int x, int y, char flags)
         }
     
     /* No window was clicked. */
-}
-
-/**
- * @brief Sample kthread to debug windows
- */
-void gfx_window_debugger()
-{
-    gfx_new_window(300, 300);
-    while (1)
-    {
-        int prog = 0;
-        __gfx_draw_rectangle(0, 0, 300, 300, GFX_WINDOW_BG_COLOR);
-        for (struct gfx_window* i = order; i != NULL; i = i->next)
-        {
-            __gfx_draw_format_text(5, 5+prog*64, VESA8_COLOR_BLACK, "%s", i->owner->name);
-            __gfx_draw_format_text(5, 5+prog*64+8, VESA8_COLOR_BLACK, " - Inner: 0x%x (%d bytes)", i->inner, i->inner_height*i->inner_width);
-            __gfx_draw_format_text(5, 5+prog*64+16, VESA8_COLOR_BLACK, " - Location: 0x%x", i);
-            
-            prog++;
-        }
-        sleep(1000);
-        
-    }
 }
 
 void gfx_init()
@@ -215,6 +204,7 @@ void gfx_compositor_main()
     dbgprintf("[WSERVER] %d bytes allocated for composition buffer.\n", buffer_size);
     gfx_composition_buffer = (uint8_t*) palloc(buffer_size);
 
+    /* Main composition loop */
     while(1)
     {
         
@@ -226,8 +216,8 @@ void gfx_compositor_main()
          */
         CLI();
         int test = rdtsc();
-        int mouse_ret = mouse_event_get(&m);
-        int window_ret = gfx_check_changes(order);
+        int mouse_changed = mouse_event_get(&m);
+        int window_changed = gfx_check_changes(order);
         
         
         char key = kb_get_char();
@@ -239,12 +229,11 @@ void gfx_compositor_main()
             gfx_push_event(order, &e);
         }
 
-        /* Main composition loop */
-        if(window_ret){
+        if(window_changed){
             memset(gfx_composition_buffer, VESA8_COLOR_DARK_TURQUOISE, buffer_size);
             /* Draw windows in reversed order */
             //acquire(&order_lock);
-            gfx_recursive_draw(order);  
+            gfx_recursive_draw(order);
             //release(&order_lock);
         }
 
@@ -268,11 +257,11 @@ void gfx_compositor_main()
 
         sleep(2);
 
-        if(mouse_ret || window_ret)
+        if(mouse_changed || window_changed)
             memcpy((uint8_t*)vbe_info->framebuffer, gfx_composition_buffer, buffer_size-1);
         /* Copy buffer over to framebuffer. */
 
-        if(mouse_ret){
+        if(mouse_changed){
             gfx_mouse_event(m.x, m.y, m.flags);
         }
         vesa_put_icon16((uint8_t*)vbe_info->framebuffer, m.x, m.y);

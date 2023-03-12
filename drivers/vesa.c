@@ -107,6 +107,21 @@ void vesa_put_char(uint8_t* buffer, unsigned char c, int x, int y, int color)
     }
 }
 
+void vesa_put_char16(uint8_t* buffer, unsigned char c, int x, int y, int color)
+{
+    for (int row = 0; row < 2; row++) {
+        for (int col = 0; col < 2; col++) {
+            for (int l = 0; l < 8; l++) {
+                for (int i = 8; i >= 0; i--) {
+                    if (font8x8_basic[c][row*8+l] & (1 << i)) {
+                        putpixel(buffer, (x)+(col*8)+i, (y)+(row*8)+l, color, vbe_info->pitch);
+                    }
+                }
+            }
+        }
+    }
+}
+
 /*
     Possible icons colors prefix:
     18, 
@@ -118,8 +133,6 @@ void vesa_put_icon32(uint8_t* buffer, int x, int y)
         for (int i = 0; i < 32; i++) {
             if (test_icon32[l][i] != 0x0) {
                 putpixel(buffer, (x)+i,  (y)+l, vesa_icon_color_map[test_icon32[l][i]], vbe_info->pitch);
-            } else {
-                //putpixel((x)+i,  (y)+l, VESA_BG_COLOR);
             }
         }
     }
