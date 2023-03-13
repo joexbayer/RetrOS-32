@@ -188,6 +188,21 @@ void gfx_init()
     mutex_init(&order_lock);
 }
 
+uint8_t edim1_to_vga(uint8_t color) {
+    // Extract the red, green, and blue components of the color
+    uint8_t r = (color >> 5) & 0x7;
+    uint8_t g = (color >> 2) & 0x7;
+    uint8_t b = color & 0x3;
+
+    // Scale the color components to the range 0-63
+    r = r * 63 / 7;
+    g = g * 63 / 7;
+    b = b * 63 / 3;
+
+    // Combine the color components into a single byte
+    return (r << 5) | (g << 2) | b;
+}
+
 /**
  * @brief Main window server kthread entry function
  * Allocates a second framebuffer that will be memcpy'd to the VGA framebuffer.
@@ -230,7 +245,8 @@ void gfx_compositor_main()
         }
 
         if(window_changed){
-            memset(gfx_composition_buffer, VESA8_COLOR_DARK_TURQUOISE, buffer_size);
+            
+            memset(gfx_composition_buffer, 41, buffer_size);
             for (int i = 0; i < 320; i++)
             {
                 for (int j = 0; j < 240; j++)
@@ -246,21 +262,21 @@ void gfx_compositor_main()
             //release(&order_lock);
         }
 
-        vesa_fillrect(gfx_composition_buffer, 0, 480-25, 640, 25, VESA8_COLOR_LIGHT_GRAY3);
-        vesa_line_horizontal(gfx_composition_buffer, 0, 480-25, 640, VESA8_COLOR_LIGHT_GRAY1); 
-        vesa_line_horizontal(gfx_composition_buffer, 0, 480-26, 640, VESA8_COLOR_LIGHT_GRAY1);
+        vesa_fillrect(gfx_composition_buffer, 0, 480-25, 640, 25, COLOR_GRAY_DEFAULT);
+        vesa_line_horizontal(gfx_composition_buffer, 0, 480-25, 640, COLOR_GRAY_LIGHT); 
+        vesa_line_horizontal(gfx_composition_buffer, 0, 480-26, 640, COLOR_GRAY_LIGHT);
 
         vesa_inner_box(gfx_composition_buffer, 638-80, 480-22, 80, 19);
         vesa_put_icon32(gfx_composition_buffer, 10, 10);
 
         struct time time;
         get_current_time(&time);
-        vesa_printf(gfx_composition_buffer, 638-65, 480-16, VESA8_COLOR_BLACK, "%d:%d %s", time.hour > 12 ? time.hour-12 : time.hour, time.minute, time.hour > 12 ? "PM" : "AM");
+        vesa_printf(gfx_composition_buffer, 638-65, 480-16, COLOR_BLACK, "%d:%d %s", time.hour > 12 ? time.hour-12 : time.hour, time.minute, time.hour > 12 ? "PM" : "AM");
 
-        vesa_printf(gfx_composition_buffer, 8, 480-16, VESA8_COLOR_DARK_BLUE, "%d", (rdtsc() - test)-100000);
+        vesa_printf(gfx_composition_buffer, 8, 480-16, COLOR_DARK_BLUE, "%d", (rdtsc() - test)-100000);
 
 
-        vesa_printf(gfx_composition_buffer, 100, 480-16, VESA8_COLOR_DARK_BLUE, "%d", (timer_get_tick()*10) % 1000);
+        vesa_printf(gfx_composition_buffer, 100, 480-16, COLOR_DARK_BLUE, "%d", (timer_get_tick()*10) % 1000);
 
         STI();
 

@@ -10,7 +10,7 @@ public:
 		m_y = 0;
 		textBuffer = (char*) malloc((c_width/8)*(c_height/8));
 		gfx_create_window(c_width, c_height);
-		gfx_draw_rectangle(0, 0, c_width, c_height, VESA8_COLOR_WHITE);
+		gfx_draw_rectangle(0, 0, c_width, c_height, COLOR_WHITE);
 		gfx_set_title("Editor");
 	}
 
@@ -36,8 +36,8 @@ public:
 	void putChar(char c) {
 		textBuffer[m_y*(c_width/8) + m_x] = c;
 
-		gfx_draw_rectangle(m_x*8, m_y*8, 8, 8, VESA8_COLOR_WHITE);
-		gfx_draw_char(m_x*8, m_y*8, c, VESA8_COLOR_BLACK);
+		gfx_draw_rectangle(m_x*8, m_y*8, 8, 8, COLOR_WHITE);
+		gfx_draw_char(m_x*8, m_y*8, c, COLOR_BLACK);
 
 		m_x++;
 		if(m_x > c_width/8){
@@ -45,7 +45,7 @@ public:
 			m_y++;
 		}
 
-		gfx_draw_char(m_x*8, m_y*8, '_', VESA8_COLOR_BLACK);
+		gfx_draw_char(m_x*8, m_y*8, '_', COLOR_BLACK);
 	}
 
 	void EditorLoop()
@@ -60,16 +60,16 @@ public:
 				switch (event.data)
 				{
 				case '\n':
-					gfx_draw_rectangle(m_x*8, m_y*8, 8, 8, VESA8_COLOR_WHITE);
+					gfx_draw_rectangle(m_x*8, m_y*8, 8, 8, COLOR_WHITE);
 					m_x = 0;
 					m_y++;
-					gfx_draw_char(m_x*8, m_y*8, '_', VESA8_COLOR_BLACK);
+					gfx_draw_char(m_x*8, m_y*8, '_', COLOR_BLACK);
 					break;
 				case '\b':
-					gfx_draw_rectangle(m_x*8, m_y*8, 8, 8, VESA8_COLOR_WHITE);
+					gfx_draw_rectangle(m_x*8, m_y*8, 8, 8, COLOR_WHITE);
 					m_x--;
-					gfx_draw_rectangle(m_x*8, m_y*8, 8, 8, VESA8_COLOR_WHITE);
-					gfx_draw_char(m_x*8, m_y*8, '_', VESA8_COLOR_BLACK);
+					gfx_draw_rectangle(m_x*8, m_y*8, 8, 8, COLOR_WHITE);
+					gfx_draw_char(m_x*8, m_y*8, '_', COLOR_BLACK);
 					break;
 				default:
 					putChar(event.data);

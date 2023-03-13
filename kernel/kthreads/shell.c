@@ -52,7 +52,7 @@ static struct terminal term  = {
  */
 void shell_clear()
 {
-	__gfx_draw_rectangle(0, SHELL_POSITION, SHELL_HEIGHT, 8, VESA8_COLOR_BLACK);
+	__gfx_draw_rectangle(0, SHELL_POSITION, SHELL_HEIGHT, 8, COLOR_BLACK);
 }
 
 void reset_shell()
@@ -61,7 +61,7 @@ void reset_shell()
 	memset(&shell_buffer, 0, SHELL_MAX_SIZE);
 	shell_column = strlen(shell_name)+1;
 	shell_buffer_length = 0;
-	__gfx_draw_text(0, SHELL_POSITION, shell_name, VESA8_COLOR_LIGHT_GREEN);
+	__gfx_draw_text(0, SHELL_POSITION, shell_name, COLOR_GREEN);
 	shell_column += 1;
 }
 
@@ -182,7 +182,7 @@ void exec_cmd()
  * 
  * @param c character to put to screen.
  */
-void shell_put(char c)
+void shell_put(unsigned char c)
 {
 	unsigned char uc = c;
 	if(uc == newline)
@@ -201,7 +201,7 @@ void shell_put(char c)
 		if(shell_buffer_length < 1)
 			return;
 		shell_column -= 1;
-		__gfx_draw_rectangle(shell_column*8, SHELL_POSITION, 8, 8, VESA8_COLOR_BLACK);
+		__gfx_draw_rectangle(shell_column*8, SHELL_POSITION, 8, 8, COLOR_BLACK);
 		gfx_commit();
 		shell_buffer[shell_buffer_length] = 0;
 		shell_buffer_length--;
@@ -212,7 +212,7 @@ void shell_put(char c)
 	{
 		return;
 	}
-	__gfx_draw_char(shell_column*8, SHELL_POSITION, uc, VESA8_COLOR_WHITE);
+	__gfx_draw_char(shell_column*8, SHELL_POSITION, uc, COLOR_WHITE);
 	gfx_commit();
 	shell_buffer[shell_buffer_length] = uc;
 	shell_buffer_length++;

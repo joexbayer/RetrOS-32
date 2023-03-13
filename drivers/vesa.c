@@ -344,7 +344,7 @@ uint8_t edmi_to_vga(uint8_t edim1_pixel)
 }
 
 
-#define VESA_BG_COLOR VESA8_COLOR_DARK_TURQUOISE
+#define VESA_BG_COLOR COLOR_DARK_CYAN
 
 /* http://www.piclist.com/tecHREF/datafile/charset/extractor/charset_extractor.html */
 
@@ -402,7 +402,7 @@ void vesa_put_icon16(uint8_t* buffer, int x, int y)
 
         for (int i = 0; i < 16; i++) {
             if (cursor[l][i] != 0x0) {
-                putpixel(buffer, (x)+i,  (y)+l, vesa_icon_color_map[cursor[l][i]], vbe_info->pitch);
+                putpixel(buffer, (x)+i,  (y)+l, cursor[l][i], vbe_info->pitch);
             } else {
                 //putpixel((x)+i,  (y)+l, VESA_BG_COLOR);
             }
@@ -423,13 +423,13 @@ void vesa_write_str(uint8_t* buffer, int x, int y, const char* data, int color)
 
 void vesa_inner_box(uint8_t* buffer, int x, int y, int w, int h)
 {
-    vesa_fillrect(buffer, x, y, w, h, VESA8_COLOR_LIGHT_GRAY3);
+    vesa_fillrect(buffer, x, y, w, h, COLOR_GRAY_DEFAULT);
 
-    vesa_line_horizontal(buffer, x, y, w, VESA8_COLOR_DARK_GRAY2);
-    vesa_line_horizontal(buffer, x, y+h, w, VESA8_COLOR_LIGHT_GRAY1);
+    vesa_line_horizontal(buffer, x, y, w, COLOR_GRAY_DARK);
+    vesa_line_horizontal(buffer, x, y+h, w, COLOR_GRAY_LIGHT);
 
-    vesa_line_vertical(buffer, x, y, h, VESA8_COLOR_DARK_GRAY2);
-    vesa_line_vertical(buffer, x+w, y, h, VESA8_COLOR_LIGHT_GRAY1);
+    vesa_line_vertical(buffer, x, y, h, COLOR_GRAY_DARK);
+    vesa_line_vertical(buffer, x+w, y, h, COLOR_GRAY_LIGHT);
 }
 
 void vesa_fill(uint8_t* buffer, unsigned char color)
@@ -527,9 +527,4 @@ int vesa_printf(uint8_t* buffer, int32_t x, int32_t y, int color, char* fmt, ...
 
 void vesa_init()
 {
-    vesa_icon_color_map[0xFF] = VESA8_COLOR_LIGHT_GRAY2;
-    vesa_icon_color_map[0x92] = VESA8_COLOR_DARK_GRAY1;
-    vesa_icon_color_map[0xdb] = VESA8_COLOR_GRAY1;
-    vesa_icon_color_map[0xFC] = 43; // 67
-    vesa_icon_color_map[0x02] = 1;
 }

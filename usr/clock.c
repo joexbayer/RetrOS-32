@@ -11,6 +11,7 @@
  */
 #include <lib/printf.h>
 #include <lib/graphics.h>
+#include <colors.h>
 #include <rtc.h>
 #include <util.h>
 
@@ -29,13 +30,13 @@ int main()
     {
         get_current_time(&current_time);
         
-        gfx_draw_rectangle(0, 0, 110, 140, 28);
+        gfx_draw_rectangle(0, 0, 110, 140, COLOR_GRAY_DEFAULT);
 
         int angle_id = (0.5 * (current_time.hour%12 * 60 + current_time.minute) / 6);
 
 		gfx_draw_line(55, 55, 55 + (50*sin_60[angle_id])/1.5, 55+ (50*cos_60[angle_id])/1.5, 0);
 		gfx_draw_line(55, 55, 55 + (50*sin_60[current_time.minute])/1.1, 55+ (50*cos_60[current_time.minute])/1.1, 0);
-		gfx_draw_line(55, 55, 55 + (50*sin_60[current_time.second])/1.1, 55+ (50*cos_60[current_time.second])/1.1, 12);
+		gfx_draw_line(55, 55, 55 + (50*sin_60[current_time.second])/1.1, 55+ (50*cos_60[current_time.second])/1.1, COLOR_RED);
 
         gfx_draw_circle(55, 55, 50, 0);
 

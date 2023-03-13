@@ -19,7 +19,7 @@ void vesa_init();
 
 void vesa_put_pixel(uint8_t* buffer, int x,int y, unsigned char color);
 
-inline void putpixel(uint8_t* buffer, int x,int y, char color, int pitch) {
+inline void putpixel(uint8_t* buffer, int x,int y, unsigned char color, int pitch) {
 
     uint8_t* pixel_offset = (uint8_t*) (y * pitch + (x * (vbe_info->bpp/8)) + buffer);
     *pixel_offset = color;

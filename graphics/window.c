@@ -29,18 +29,18 @@ void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
     vesa_fillrect(buffer, window->x, window->y, window->width, window->height, GFX_WINDOW_BG_COLOR);
 
     /* contour colors */
-    vesa_line_vertical(buffer,window->x, window->y, window->height, VESA8_COLOR_LIGHT_GRAY1);
-    vesa_line_vertical(buffer,window->x+window->width, window->y, window->height, VESA8_COLOR_DARK_GRAY2);
+    vesa_line_vertical(buffer,window->x, window->y, window->height, COLOR_GRAY_LIGHT);
+    vesa_line_vertical(buffer,window->x+window->width, window->y, window->height, COLOR_GRAY_DARK);
 
-    vesa_line_horizontal(buffer,window->x, window->y, window->width, VESA8_COLOR_LIGHT_GRAY1);
-    vesa_line_horizontal(buffer,window->x, window->y+window->height, window->width, VESA8_COLOR_DARK_GRAY2);
+    vesa_line_horizontal(buffer,window->x, window->y, window->width, COLOR_GRAY_LIGHT);
+    vesa_line_horizontal(buffer,window->x, window->y+window->height, window->width, COLOR_GRAY_DARK);
 
     /* header color */
-    vesa_fillrect(buffer, window->x+2, window->y+2, window->width-4, GFX_WINDOW_TITLE_HEIGHT, window->in_focus ? VESA8_COLOR_DARK_BLUE : VESA8_COLOR_DARK_GRAY1);
+    vesa_fillrect(buffer, window->x+2, window->y+2, window->width-4, GFX_WINDOW_TITLE_HEIGHT, window->in_focus ? 1 : COLOR_GRAY_DARK);
     vesa_fillrect(buffer, window->x+2+window->width-GFX_WINDOW_TITLE_HEIGHT-4,  window->y+2, GFX_WINDOW_TITLE_HEIGHT-1, GFX_WINDOW_TITLE_HEIGHT-1, GFX_WINDOW_BG_COLOR);
-    vesa_put_char(buffer, 'X', window->x+2+window->width-GFX_WINDOW_TITLE_HEIGHT-2,  window->y+4, VESA8_COLOR_BLACK);
+    vesa_put_char(buffer, 'X', window->x+2+window->width-GFX_WINDOW_TITLE_HEIGHT-2,  window->y+4, COLOR_BLACK);
 
-    vesa_write_str(buffer, window->x+4, window->y+4, window->name, VESA8_COLOR_WHITE);
+    vesa_write_str(buffer, window->x+4, window->y+4, window->name, COLOR_WHITE);
 
     /* Copy inner window framebuffer to given buffer with relativ pitch. */
     if(window->inner != NULL){
@@ -141,7 +141,7 @@ struct gfx_window* gfx_new_window(int width, int height)
     struct gfx_window* w = (struct gfx_window*) kalloc(sizeof(struct gfx_window));
     /* if a userspace program wants a window they will need to allocate inner themself. */
     w->inner = kalloc(width*height);
-    memset(w->inner, VESA8_COLOR_LIGHT_GRAY3, width*height);
+    memset(w->inner, COLOR_GRAY_DEFAULT, width*height);
 
     w->click = &gfx_default_click;
     w->mousedown = &gfx_default_mouse_down;

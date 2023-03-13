@@ -86,7 +86,7 @@ int gfx_event_loop(struct gfx_event* event)
  * @param color
  * @return int 0 on success, less than 0 on error
  */
-int __gfx_draw_rectangle(int x, int y, int width, int height, char color)
+int __gfx_draw_rectangle(int x, int y, int width, int height, unsigned char color)
 {
     if(current_running->gfx_window == NULL)
         return -1;
@@ -114,7 +114,7 @@ int __gfx_draw_rectangle(int x, int y, int width, int height, char color)
  * @param color 
  * @return int 0 on success, less than 0 on error.
  */
-int __gfx_draw_char(int x, int y, unsigned char c, char color)
+int __gfx_draw_char(int x, int y, unsigned char c, unsigned char color)
 {
 
     if(current_running->gfx_window == NULL)
@@ -153,7 +153,7 @@ void gfx_commit()
  * @param color 
  * @return int 0 on success, less than 0 on error.
  */
-int __gfx_draw_text(int x, int y, char* str, char color)
+int __gfx_draw_text(int x, int y, char* str, unsigned char color)
 {
     if(current_running->gfx_window == NULL)
         return -1;
@@ -179,29 +179,29 @@ void gfx_line(int x, int y, int length, int option, int color)
 	{
 	case GFX_LINE_INNER_VERTICAL:
 		for (int i = y; i < (y+length); i++){
-			putpixel(current_running->gfx_window->inner, i, x, VESA8_COLOR_LIGHT_GRAY4, current_running->gfx_window->height-18);
-			putpixel(current_running->gfx_window->inner, i, x+1, VESA8_COLOR_GRAY4, current_running->gfx_window->height-18);
+			putpixel(current_running->gfx_window->inner, i, x, COLOR_GRAY_LIGHT, current_running->gfx_window->height-18);
+			putpixel(current_running->gfx_window->inner, i, x+1, COLOR_GRAY_DARK, current_running->gfx_window->height-18);
 		}
 		break;
 	
 	case GFX_LINE_INNER_HORIZONTAL:
 		for (int i = x; i < (x+length); i++){
-			putpixel(current_running->gfx_window->inner, y+1, i, VESA8_COLOR_LIGHT_GRAY4, current_running->gfx_window->height-18);
-			putpixel(current_running->gfx_window->inner, y, i, VESA8_COLOR_GRAY4, current_running->gfx_window->height-18);
+			putpixel(current_running->gfx_window->inner, y+1, i, COLOR_GRAY_LIGHT, current_running->gfx_window->height-18);
+			putpixel(current_running->gfx_window->inner, y, i, COLOR_GRAY_DARK, current_running->gfx_window->height-18);
 		}
 		break;
 
 	case GFX_LINE_OUTER_VERTICAL:
 		for (int i = y; i < (y+length); i++){
-			putpixel(current_running->gfx_window->inner, i, x, VESA8_COLOR_GRAY4, current_running->gfx_window->height-18);
-			putpixel(current_running->gfx_window->inner, i, x+1, VESA8_COLOR_LIGHT_GRAY4, current_running->gfx_window->height-18);
+			putpixel(current_running->gfx_window->inner, i, x, COLOR_GRAY_DARK, current_running->gfx_window->height-18);
+			putpixel(current_running->gfx_window->inner, i, x+1, COLOR_GRAY_LIGHT, current_running->gfx_window->height-18);
 		}
 		break;
 
 	case GFX_LINE_OUTER_HORIZONTAL:
 		for (int i = x; i < (x+length); i++){
-			putpixel(current_running->gfx_window->inner, y+1, i, VESA8_COLOR_GRAY4, current_running->gfx_window->height-18);
-			putpixel(current_running->gfx_window->inner, y, i, VESA8_COLOR_LIGHT_GRAY4, current_running->gfx_window->height-18);
+			putpixel(current_running->gfx_window->inner, y+1, i, COLOR_GRAY_DARK, current_running->gfx_window->height-18);
+			putpixel(current_running->gfx_window->inner, y, i, COLOR_GRAY_LIGHT, current_running->gfx_window->height-18);
 		}
 		break;
 
@@ -226,13 +226,13 @@ void gfx_inner_box(int x, int y, int w, int h, int fill)
 {	
 	//CLI();
 	if(fill)
-    	__gfx_draw_rectangle(x, y, w, h, VESA8_COLOR_LIGHT_GRAY3);
+    	__gfx_draw_rectangle(x, y, w, h, COLOR_GRAY_DEFAULT);
 
-    gfx_line(x, y, w, GFX_LINE_HORIZONTAL, VESA8_COLOR_DARK_GRAY2);
-    gfx_line(x, y+h, w, GFX_LINE_HORIZONTAL, VESA8_COLOR_LIGHT_GRAY1);
+    gfx_line(x, y, w, GFX_LINE_HORIZONTAL, COLOR_GRAY_DARK);
+    gfx_line(x, y+h, w, GFX_LINE_HORIZONTAL, COLOR_GRAY_LIGHT);
 
-    gfx_line(x, y, h,GFX_LINE_VERTICAL, VESA8_COLOR_DARK_GRAY2);
-    gfx_line(x+w, y, h, GFX_LINE_VERTICAL, VESA8_COLOR_LIGHT_GRAY1);
+    gfx_line(x, y, h,GFX_LINE_VERTICAL, COLOR_GRAY_DARK);
+    gfx_line(x+w, y, h, GFX_LINE_VERTICAL, COLOR_GRAY_LIGHT);
 
 	//STI();
 }
@@ -356,13 +356,13 @@ void gfx_outer_box(int x, int y, int w, int h, int fill)
 {
 	//CLI();
 	if(fill)
-    	__gfx_draw_rectangle(x, y, w, h, VESA8_COLOR_LIGHT_GRAY3);
+    	__gfx_draw_rectangle(x, y, w, h, COLOR_GRAY_DEFAULT);
 
-    gfx_line(x, y, w, GFX_LINE_HORIZONTAL, VESA8_COLOR_LIGHT_GRAY1);
-    gfx_line(x, y+h, w, GFX_LINE_HORIZONTAL,VESA8_COLOR_DARK_GRAY2);
+    gfx_line(x, y, w, GFX_LINE_HORIZONTAL, COLOR_GRAY_LIGHT);
+    gfx_line(x, y+h, w, GFX_LINE_HORIZONTAL,COLOR_GRAY_DARK);
 
-    gfx_line(x, y, h, GFX_LINE_VERTICAL,VESA8_COLOR_LIGHT_GRAY1);
-    gfx_line(x+w, y, h,GFX_LINE_VERTICAL, VESA8_COLOR_DARK_GRAY2);
+    gfx_line(x, y, h, GFX_LINE_VERTICAL,COLOR_GRAY_LIGHT);
+    gfx_line(x+w, y, h,GFX_LINE_VERTICAL, COLOR_GRAY_DARK);
 
 	//STI();
 }
@@ -370,12 +370,12 @@ void gfx_outer_box(int x, int y, int w, int h, int fill)
 void gfx_button(int x, int y, int w, int h, char* text)
 {
 	gfx_outer_box(x, y, w, h, 0);
-	__gfx_draw_text(x+2, y+2, text, VESA8_COLOR_BLACK);
+	__gfx_draw_text(x+2, y+2, text, COLOR_BLACK);
 }
 
 
 #define GFX_MAX_FMT 50
-int __gfx_draw_format_text(int x, int y, char color, char* fmt, ...)
+int __gfx_draw_format_text(int x, int y, unsigned char color, char* fmt, ...)
 {
 	va_list args;
 
