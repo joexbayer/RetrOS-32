@@ -48,6 +48,31 @@ void kernel(uint32_t magic)
 	dbgprintf("[VBE] Memory Size: %d (0x%x)\n", vbe_info->width*vbe_info->height*(vbe_info->bpp/8), vbe_info->width*vbe_info->height*(vbe_info->bpp/8));
 	//vmem_map_driver_region(vbe_info->framebuffer, (vbe_info->width*vbe_info->height*(vbe_info->bpp/8))+1);
 
+	// Set the color palette for EDIM1 (RRRGGGBB format)
+	for (int i = 0; i < 256; i++) {
+		// Calculate the red, green, and blue components of the color
+		int r = (i >> 5) & 0x7;  // Bits 5-7 are the red component
+		int g = (i >> 2) & 0x7;  // Bits 2-4 are the green component
+		uint8_t b = i & 0x3;         // Bits 0-1 are the blue component
+		
+		// Scale the color components to 0-255 range
+		r = r * 255 / 3;
+		g = g * 255 / 3;
+		b = b * 255 / 7;
+
+		int color = (r << 5) | (g << 2) | b;
+
+		
+		// Set the index of the color in the palette
+		outportb(0x3C8, i);
+		
+		// Set the color value (in RRRGGGBB format)
+		outportb(0x3C9, (color >> 16) & 0xFF); // Red component
+		outportb(0x3C9, (color >> 8) & 0xFF);  // Green component
+		outportb(0x3C9, color & 0xFF);         // Blue component
+	}
+
+
 	init_interrupts();
 	gfx_init();
 	init_keyboard();

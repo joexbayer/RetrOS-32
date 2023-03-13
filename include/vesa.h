@@ -13,6 +13,8 @@ void vesa_put_icon(uint8_t* buffer, int x, int y);
 void vesa_write_str(uint8_t* buffer, int x, int y, const char* data, int color);
 void vesa_fill(uint8_t* buffer, unsigned char color);
 
+extern uint8_t forman[76800];
+
 void vesa_init();
 
 void vesa_put_pixel(uint8_t* buffer, int x,int y, unsigned char color);

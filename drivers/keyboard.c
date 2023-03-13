@@ -85,8 +85,66 @@ char kb_get_char()
 	return c;
 }
 
+int scale_r = 64;
+int scale_g = 36;
+int scale_b = 64;
+void change_palette(char c)
+{
+  switch (c)
+  {
+  case 'h':
+    scale_r++;
+    break;
+  case 'j':
+    scale_g++;
+    break;
+  case 'k':
+    scale_b++;
+    break;
+  case 'H':
+    scale_r--;
+    break;
+  case 'J':
+    scale_g--;
+    break;
+  case 'K':
+    scale_b--;
+    break;
+  default:
+    return;
+    break;
+  }
+
+  for (int i = 0; i < 256; i++) {
+		// Calculate the red, green, and blue components of the color
+		int r = (i >> 5) & 0x7;  // Bits 5-7 are the red component
+		int g = (i >> 2) & 0x7;  // Bits 2-4 are the green component
+		int b = i & 0x3;         // Bits 0-1 are the blue component
+		
+		// Scale the color components to 0-255 range
+		r = r * scale_r;
+		g = g * scale_g;
+		b = b * scale_b;
+
+		int color = (r << 5) | (g << 2) | b;
+		
+		// Set the index of the color in the palette
+		outportb(0x3C8, i);
+		
+		// Set the color value (in RRRGGGBB format)
+		outportb(0x3C9, r); // Red component
+		outportb(0x3C9, g);  // Green component
+		outportb(0x3C9, b);         // Blue component
+	}
+
+  dbgprintf("COLOR: %d, %d, %d\n", scale_r, scale_g, scale_b);
+}
+
+static int test = 1;
 void kb_add_char(char c)
 {
+  change_palette(c);
+
 	kb_buffer[kb_buffer_head] = c;
 	kb_buffer_head = (kb_buffer_head + 1) % KB_BUFFER_SIZE;
 }

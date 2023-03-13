@@ -44,7 +44,7 @@ int gfx_window_reize(int width, int height)
 
 int gfx_push_event(struct gfx_window* w, struct gfx_event* e)
 {
-	dbgprintf("Pushing event\n");
+	//dbgprintf("Pushing event\n");
 
 	memcpy(&w->events.list[w->events.head], e, sizeof(*e));
 	w->events.head = (w->events.head + 1) % GFX_MAX_EVENTS;

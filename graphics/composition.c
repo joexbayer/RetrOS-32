@@ -231,6 +231,15 @@ void gfx_compositor_main()
 
         if(window_changed){
             memset(gfx_composition_buffer, VESA8_COLOR_DARK_TURQUOISE, buffer_size);
+            for (int i = 0; i < 320; i++)
+            {
+                for (int j = 0; j < 240; j++)
+                {
+                    putpixel(gfx_composition_buffer, i, j, forman[j*320 + i], vbe_info->pitch);
+                }
+                
+            }
+            
             /* Draw windows in reversed order */
             //acquire(&order_lock);
             gfx_recursive_draw(order);
