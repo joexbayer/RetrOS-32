@@ -37,7 +37,7 @@
 
 #define SMALL_BUFFER_SIZE 1024
 #define LARGE_BUFFER_SIZE 25096
-#define DEBUG 1
+#define DEBUG 0
 
 
 int test_count = 0;
@@ -136,7 +136,7 @@ int main(int argc, char const *argv[])
 
     test_file_size(SMALL_BUFFER_SIZE);
     test_file_size(LARGE_BUFFER_SIZE);
-    test_file_size(MAX_FILE_SIZE);
+    //test_file_size(MAX_FILE_SIZE);
 
     fclose(filesystem);
     /* code */

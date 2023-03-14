@@ -17,7 +17,7 @@
 #include <fs/directory.h>
 
 
-#define DEBUG 1
+#define DEBUG 0
 #define DISKSIZE 1000000
 
 extern FILE* filesystem;

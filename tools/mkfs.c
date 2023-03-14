@@ -275,6 +275,7 @@ int main(int argc, char* argv[])
     add_userspace_program(&superblock, bin, "counter");
     add_userspace_program(&superblock, bin, "clock");
     add_userspace_program(&superblock, bin, "textedit");
+    add_userspace_program(&superblock, bin, "display");
 
     inodes_sync(&superblock);
 
