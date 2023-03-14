@@ -8,7 +8,7 @@
 #define FS_FILE 1
 #define FS_DIRECTORY 2
 
-#define MAX_FILE_SIZE 4096*2
+#define MAX_FILE_SIZE 4096*10
 #define NDIRECT MAX_FILE_SIZE / 512
 
 typedef uint16_t inode_t;
@@ -18,7 +18,7 @@ struct inode {
     uint8_t type;
     uint8_t nlink;          // Number of processes using this inode
     uint16_t size;            // Size of file (bytes)
-    uint8_t blocks[NDIRECT];   // Data block addresses
+    uint16_t blocks[NDIRECT];   // Data block addresses
     uint16_t pos;
 
     mutex_t lock;

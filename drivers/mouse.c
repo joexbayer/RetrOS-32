@@ -16,7 +16,7 @@
 #include <serial.h>
 #include <util.h>
 
-#include <vesa.h>
+#include <vbe.h>
 #include <colors.h>
 #include <gfx/composition.h>
 

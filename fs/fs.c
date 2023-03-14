@@ -124,7 +124,7 @@ void mkfs()
 
 	dbgprintf("[FS]: Creating Filesystem with size: %d (%d total)\n", superblock.nblocks*BLOCK_SIZE, superblock.size);
 	dbgprintf("[FS]: With a total of %d inodes (%d blocks)\n", superblock.ninodes, superblock.ninodes / INODES_PER_BLOCK);
-	dbgprintf("[FS]: And total of %d block\n", superblock.nblocks);
+	dbgprintf("[FS]: And total of %d blocks\n", superblock.nblocks);
 	dbgprintf("[FS]: Max file size: %d bytes\n", NDIRECT*BLOCK_SIZE);
 
 	inode_t root_inode = alloc_inode(&superblock, FS_DIRECTORY);

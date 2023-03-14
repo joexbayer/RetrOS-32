@@ -8,7 +8,7 @@
  * @copyright Copyright (c) 2023
  * 
  */
-#include <vesa.h>
+#include <vbe.h>
 #include <vbe.h>
 #include <gfx/window.h>
 #include <gfx/gfxlib.h>

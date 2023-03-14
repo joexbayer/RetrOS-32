@@ -55,28 +55,7 @@ void kernel(uint32_t magic)
 	dbgprintf("[VBE] Memory Size: %d (0x%x)\n", vbe_info->width*vbe_info->height*(vbe_info->bpp/8), vbe_info->width*vbe_info->height*(vbe_info->bpp/8));
 	//vmem_map_driver_region(vbe_info->framebuffer, (vbe_info->width*vbe_info->height*(vbe_info->bpp/8))+1);
 
-	// Set the color palette for EDIM1 (RRRGGGBB format)
-	for (int i = 0; i < 256; i++) {
-		// Extract the red, green, and blue components of the color
-		int r = (i >> 5) & 0x7;
-		int g = (i >> 2) & 0x7;
-		int b = i & 0x3;
-		
-		// Scale the color components to the range 0-255
-		r = r * 63 / 7;
-		g = g * 63 / 7;
-		b = b * 63 / 3;
-		
-		// Set the index of the color in the palette
-		outportb(0x3C8, i);
-		
-		// Set the color value (in RRRGGGBB format)
-		outportb(0x3C9, (unsigned char)r);
-		outportb(0x3C9, (unsigned char)g);
-		outportb(0x3C9, (unsigned char)b);
-	}
-	
-
+	vga_set_palette();
 
 	init_interrupts();
 	gfx_init();

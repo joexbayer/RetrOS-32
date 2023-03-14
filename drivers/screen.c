@@ -15,7 +15,7 @@
 #include <stdarg.h>
 #include <io.h>
 #include <serial.h>
-#include <vesa.h>
+#include <vbe.h>
 #include <gfx/gfxlib.h>
 
 #define MAX_FMT_STR_SIZE 50

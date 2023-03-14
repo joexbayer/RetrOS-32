@@ -19,7 +19,7 @@
 #include <pcb.h>
 
 #include <vbe.h>
-#include <vesa.h>
+#include <vbe.h>
 
 #define KB_IRQ		33 /* Default is 1, 33 after mapped. */
 #define KB_BUFFER_SIZE 255

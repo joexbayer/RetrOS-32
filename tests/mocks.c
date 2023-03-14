@@ -17,8 +17,8 @@
 #include <fs/directory.h>
 
 
-#define DEBUG 0
-#define DISKSIZE 200000
+#define DEBUG 1
+#define DISKSIZE 1000000
 
 extern FILE* filesystem;
 
@@ -70,6 +70,12 @@ int disk_size()
 
 uint32_t serial_printf(char* fmt, ...)
 {
+    if(DEBUG) {
+            va_list argptr;
+            va_start(argptr, fmt);
+            vfprintf(stderr, fmt, argptr);
+            va_end(argptr);
+        }
     return 1;
 }
 
@@ -80,16 +86,6 @@ void kfree(void* ptr)
 }
 
 /* Functions needed for inode and bitmap to work. */
-int32_t dbgprintf(char* fmt, ...)
-{
-    if(DEBUG) {
-        va_list argptr;
-        va_start(argptr, fmt);
-        vfprintf(stderr, fmt, argptr);
-        va_end(argptr);
-    };
-    return 0;
-}
 
 /* Functions needed for inode and bitmap to work. */
 int32_t twriteln(char* fmt, ...)

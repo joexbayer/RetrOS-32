@@ -14,7 +14,7 @@
 #include <font8.h>
 #include <vbe.h>
 #include <stdarg.h>
-#include <vesa.h>
+#include <vbe.h>
 #include <serial.h>
 #include <scheduler.h>
 

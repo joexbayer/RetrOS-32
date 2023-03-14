@@ -15,7 +15,7 @@
 #include <gfx/gfxlib.h>
 #include <colors.h>
 #include <serial.h>
-#include <vesa.h>
+#include <vbe.h>
 
 /**
  * @brief Draw given window to a frambuffer.

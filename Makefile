@@ -57,7 +57,7 @@ KERNELOBJ = bin/kcrt0.o bin/kernel.o bin/terminal.o bin/helpers.o bin/pci.o \
 			bin/keyboard.o bin/pcb.o bin/memory.o bin/vmem.o bin/kmem.o bin/e1000.o \
 			bin/sync.o bin/kthreads.o bin/ata.o bin/bitmap.o bin/rtc.o \
 			bin/diskdev.o bin/scheduler.o \
-			bin/serial.o bin/io.o bin/syscalls.o bin/list.o bin/hashmap.o bin/vesa.o\
+			bin/serial.o bin/io.o bin/syscalls.o bin/list.o bin/hashmap.o bin/vbe.o\
 			bin/mouse.o bin/ipc.o ${PROGRAMOBJ} ${GFXOBJ} bin/font8.o bin/net.o bin/fs.o
 
 BOOTOBJ = bin/bootloader.o

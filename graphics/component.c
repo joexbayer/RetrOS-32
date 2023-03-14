@@ -1,5 +1,5 @@
 #include <gfx/component.h>
-#include <vesa.h>
+#include <vbe.h>
 
 int gfx_point_in_rectangle(int x1, int y1, int x2, int y2, int x, int y)
 {

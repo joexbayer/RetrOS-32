@@ -1,9 +1,10 @@
-#include <vesa.h>
+#include <vbe.h>
 #include <colors.h>
 #include <util.h>
 #include <font8.h>
 #include <stdarg.h>
 
+#include <io.h>
 struct vbe_mode_info_structure* vbe_info;
 
 uint8_t forman[] = {
@@ -323,28 +324,33 @@ uint8_t test_icon32[32][32] = {
 ,{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}
 };
 
-uint8_t vesa_icon_color_map[256];
-
-
-uint8_t edmi_to_vga(uint8_t edim1_pixel)
-{
-    uint8_t r = (edim1_pixel >> 5) & 0x07;
-    uint8_t g = (edim1_pixel >> 2) & 0x07;
-    uint8_t b = (edim1_pixel >> 0) & 0x03;
-
-    // Convert the R, G, and B components to VGA format (assuming a simple conversion)
-    uint8_t vga_r = r * 255 / 7;
-    uint8_t vga_g = g * 255 / 7;
-    uint8_t vga_b = b * 255 / 3;
-
-    // Combine the R, G, and B components into a single VGA pixel value
-    uint8_t vga_pixel = (vga_r & 0xE0) | ((vga_g >> 3) & 0x1C) | (vga_b >> 6);
-    
-    return vga_pixel;
-}
-
-
 #define VESA_BG_COLOR COLOR_DARK_CYAN
+
+void vga_set_palette()
+{
+    /* Currently only supports EDIM1 (RRRGGGBB) palette. */
+
+	for (int i = 0; i < 256; i++) {
+		/* Extract the red, green, and blue components of the color */
+		int r = (i >> 5) & 0x7;
+		int g = (i >> 2) & 0x7;
+		int b = i & 0x3;
+		
+		/* Scale the color components to the range 0-255 */
+		r = r * 63 / 7;
+		g = g * 63 / 7;
+		b = b * 63 / 3;
+		
+		/* Set the index of the color in the palette */
+		outportb(0x3C8, i);
+		
+		/* Set the color value (in RRRGGGBB format) */
+		outportb(0x3C9, (unsigned char)r);
+		outportb(0x3C9, (unsigned char)g);
+		outportb(0x3C9, (unsigned char)b);
+	}
+    
+}
 
 /* http://www.piclist.com/tecHREF/datafile/charset/extractor/charset_extractor.html */
 
