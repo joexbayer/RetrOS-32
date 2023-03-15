@@ -158,11 +158,18 @@ void exec_cmd()
 	}
 
 	if(strncmp("run", shell_buffer, strlen("run"))){
-		char* name = shell_buffer+strlen("run")+1;
-		name[strlen(name)-1] = 0;
-		int pid = pcb_create_process(name);
+		
+		dbgprintf("Command: %s\n", shell_buffer);
+		/* Allocate space for 5 args */
+		char** argv = (char**)kalloc(5 * sizeof(char*));
+		for (int i = 0; i < 5; i++) {
+			argv[i] = (char*)kalloc(100);
+		}
+		
+		int args = parse_arguments(shell_buffer, argv);
+		int pid = pcb_create_process(argv[1], args-1, &argv[1]);
 		if(pid == 0)
-			twritef("%s does not exist\n", name);
+			twritef("%s does not exist\n", argv[1]);
 
 		return;
 	}

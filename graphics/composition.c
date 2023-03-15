@@ -9,7 +9,6 @@
  * 
  */
 #include <vbe.h>
-#include <vbe.h>
 #include <gfx/window.h>
 #include <gfx/gfxlib.h>
 #include <gfx/events.h>

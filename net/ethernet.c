@@ -14,10 +14,9 @@
 int ethernet_add_header(struct sk_buff* skb, uint32_t ip)
 {
     skb->len += ETHER_HDR_LENGTH;
-    struct ethernet_header e_hdr;
-
-    e_hdr.ethertype = skb->proto;
-    e_hdr.ethertype = htons(e_hdr.ethertype);
+    struct ethernet_header e_hdr = {
+        .ethertype = htons(skb->proto)
+    };
 
     int ret = arp_find_entry(ip, (uint8_t*)&e_hdr.dmac);
     if(ret <= 0)

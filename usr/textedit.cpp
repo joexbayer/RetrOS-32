@@ -89,7 +89,13 @@ private:
 	const int c_height = 240;
 };
 
-int main(void) {  
+int main(int argc, char** argv) {
+	for (int i = 0; i < argc; i++)
+	{
+		printf("argv: %s\n", argv[i]);
+	}
+	
+
     Editor s1;
 	s1.Open("/home");
 	s1.EditorLoop();

@@ -46,14 +46,14 @@ inline inline uint32_t memcmp(const void* ptr, const void* ptr2, uint32_t len)
 	return 0;
 }
 
-#define MAX_ARGS 10
+#define MAX_ARGS 5
 int parse_arguments(const char *input_string, char *tokens[]) {
     int num_tokens = 0;  // Number of arguments
     int token_start = -1;  // Index of start of current token
     int token_end = -1;  // Index of end of current token
-
+    int i;
     // Tokenize input string using space as delimiter
-    for (int i = 0; input_string[i] != '\0'; i++) {
+    for (i = 0; input_string[i] != '\0'; i++) {
         char c = input_string[i];
 
         if (c == ' ' || c == '\n') {
@@ -83,7 +83,21 @@ int parse_arguments(const char *input_string, char *tokens[]) {
             break;
         }
     }
-
+    
+    if (token_start != -1) {
+        token_end = i - 1;
+        int token_length = token_end - token_start + 1;
+    
+        // Copy characters from input string to token string
+        for (int j = 0; j < token_length; j++) {
+            tokens[num_tokens][j] = input_string[token_start + j];
+        }
+        tokens[num_tokens][token_length] = '\0';
+    
+        num_tokens++;
+    }
+    
+    
     return num_tokens;
 }
 

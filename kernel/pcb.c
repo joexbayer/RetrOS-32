@@ -351,6 +351,12 @@ int pcb_cleanup_routine(int pid)
 
 	running->ops->remove(running, &pcb_table[pid]);
 
+	/**
+	 * TODO: cleanup argv
+	 * args = args;
+	 * pcb->argv = argv;
+	 */
+
 	dbgprintf("[PCB] Cleanup on PID %d stack: 0x%x (original: 0x%x)\n", pid, pcb_table[pid].esp, pcb_table[pid].stack_ptr);
 	
 	pcb_count--;
@@ -409,7 +415,7 @@ int pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 	return 1;
 }
 
-int pcb_create_process(char* program)
+int pcb_create_process(char* program, int args, char** argv)
 {
 	CLI();
 	/* Load process from disk */
@@ -448,6 +454,8 @@ int pcb_create_process(char* program)
 	pcb->term = current_running->term;
 	pcb->is_process = 1;
 	pcb->kallocs = 0;
+	pcb->args = args;
+	pcb->argv = argv;
 
 	/* Memory map data */
 	vmem_init_process(pcb, buf, read);

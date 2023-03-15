@@ -70,7 +70,9 @@ skip:
 _start_pcb:
     movl current_running, %eax
     movl 4(%eax), %esp
-    movl 0(%eax), %ebp  
+    movl 0(%eax), %ebp
+    movl 152(%eax), %ebx
+    movl 156(%eax), %ecx
     sti
     pushl 8(%eax)
     # jmp *8(%eax)

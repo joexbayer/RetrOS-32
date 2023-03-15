@@ -29,6 +29,8 @@ struct pcb {
     uint32_t kebp;
     uint32_t is_process;
     uint32_t fpu[32];
+    int args;
+    char** argv;
     /* DO NOT NOT CHANGE ABOVE.*/
     uint8_t running;
     int16_t pid;
@@ -92,7 +94,7 @@ void pcb_init();
 void pcb_start();
 void start_pcb();
 int pcb_create_kthread( void (*entry)(), char* name);
-int pcb_create_process(char* program);
+int pcb_create_process(char* program, int args, char** argv);
 
 void pcb_set_running(int pid);
 
