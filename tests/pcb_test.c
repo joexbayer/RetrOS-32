@@ -8,6 +8,6 @@ int kernel_size = 50000;
 
 int main(int argc, char const *argv[])
 {
-    pcb_init();
+    init_pcbs();
     return 0;
 }

@@ -121,7 +121,7 @@ int pci_register_device(uint32_t bus, uint32_t slot, uint32_t function, uint16_t
 
 }
 
-void pci_init()
+void init_pci()
 {
     int devices_found = 0;
     for(uint32_t bus = 0; bus < 256; bus++)

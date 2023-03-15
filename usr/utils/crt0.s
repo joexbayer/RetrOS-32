@@ -1,6 +1,7 @@
 .code32
 .global _start
 _start:
+    /* Push argc and argv */ 
     pushl %ecx
     pushl %ebx
     call main

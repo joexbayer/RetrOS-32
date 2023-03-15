@@ -66,7 +66,7 @@ int gfx_event_loop(struct gfx_event* event)
 	while(1)
 	{
 		if(current_running->gfx_window->events.tail == current_running->gfx_window->events.head){
-			block();
+			kernel_block();
 			continue;	
 		}
 	

@@ -7,11 +7,6 @@
 extern char _code[], _end[], _code_end[], _ro_s[], _ro_e[], _data_s[], _data_e[], _bss_s[], _bss_e[];
 extern int kernel_size;
 
-enum {
-	USED,
-	FREE
-};
-
 #define PMEM_END_ADDRESS 	  0x200000
 
 #define VMEM_MAX_ADDRESS    0x1600000
@@ -28,14 +23,6 @@ enum {
 
 
 extern uint32_t* kernel_page_dir;
-
-struct mem_chunk
-{
-	uint16_t size;
-	uint32_t* from;
-	uint16_t chunks_used; /* Used when freeing */
-	uint8_t status;
-};
 
 enum virtual_memory_constants {
   /* Main permission bits. */
@@ -59,9 +46,6 @@ struct allocation {
   int size;
   struct allocation* next;
 };
-
-#define TABLE_INDEX(vaddr) ((vaddr >> PAGE_TABLE_BITS) & PAGE_TABLE_MASK)
-#define DIRECTORY_INDEX(vaddr) ((vaddr >> PAGE_DIRECTORY_BITS) & PAGE_TABLE_MASK)
 
 void init_memory();
 void kmem_init();

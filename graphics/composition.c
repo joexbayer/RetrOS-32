@@ -279,7 +279,7 @@ void gfx_compositor_main()
 
         STI();
 
-        sleep(2);
+        kernel_sleep(2);
 
         if(mouse_changed || window_changed)
             memcpy((uint8_t*)vbe_info->framebuffer, gfx_composition_buffer, buffer_size-1);

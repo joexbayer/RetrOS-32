@@ -115,6 +115,8 @@ void gfx_default_mouse_up(struct gfx_window* window, int x, int y)
 
 int gfx_destory_window(struct gfx_window* w)
 {
+    if(w == NULL) return -1;
+
     CLI();
     
     gfx_composition_remove_window(w);
