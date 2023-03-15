@@ -14,24 +14,20 @@
 #include <bitmap.h>
 #include <assert.h>
 #include <vbe.h>
-
-#define TABLE_INDEX(vaddr) ((vaddr >> PAGE_TABLE_BITS) & PAGE_TABLE_MASK)
-#define DIRECTORY_INDEX(vaddr) ((vaddr >> PAGE_DIRECTORY_BITS) & PAGE_TABLE_MASK)
-static const int vmem_default_permissions = PRESENT | READ_WRITE | USER;
-
 struct virtual_memory_allocator;
 
-static uint32_t* __vmem_alloc(struct virtual_memory_allocator* vmem);
-static void __vmem_free(struct virtual_memory_allocator* vmem, void* addr);
+static uint32_t* vmem_alloc(struct virtual_memory_allocator* vmem);
+static void vmem_free(struct virtual_memory_allocator* vmem, void* addr);
 
 uint32_t* kernel_page_dir = NULL;
 
+static int vmem_default_permissions = PRESENT | READ_WRITE | USER;
 struct virtual_memory_operations {
 	uint32_t* (*alloc)(struct virtual_memory_allocator* vmem);
 	void (*free)(struct virtual_memory_allocator* vmem, void* page);
 } vmem_default_ops = {
-	.alloc = &__vmem_alloc,
-	.free = &__vmem_free
+	.alloc = &vmem_alloc,
+	.free = &vmem_free
 };
 
 struct virtual_memory_allocator {
@@ -73,18 +69,21 @@ static inline void vmem_add_table(uint32_t* directory, uint32_t vaddr, uint32_t*
  * @param struct virtual_memory_allocator* vmem: pointer to virtual memory allocator
  * @return pointer to the allocated page or NULL if no free pages are available.
  */
-static uint32_t* __vmem_alloc(struct virtual_memory_allocator* vmem)
+static uint32_t* vmem_alloc(struct virtual_memory_allocator* vmem)
 {
 	uint32_t* paddr = NULL;
 	
 	LOCK(vmem, {
 
 		int bit = get_free_bitmap(vmem->pages, vmem->total_pages);
-		if(bit == -1) break;
+		if(bit == -1){
+			break;
+		}
 			
 		paddr = (uint32_t*) (vmem->start + (bit * PAGE_SIZE));
+		//memset(paddr, 0, PAGE_SIZE);
 
-		dbgprintf("Allocated page %d at 0x%x\n", bit, paddr);
+		dbgprintf("[VMEM MANAGER] Allocated page %d at 0x%x\n", bit, paddr);
 
 	});
 
@@ -97,7 +96,7 @@ static uint32_t* __vmem_alloc(struct virtual_memory_allocator* vmem)
  * @param void* addr: pointer to the address of the virtual memory page to be freed
  * @return void 
  */
-static void __vmem_free(struct virtual_memory_allocator* vmem, void* addr)
+static void vmem_free(struct virtual_memory_allocator* vmem, void* addr)
 {
 	LOCK(vmem, {
 
@@ -302,7 +301,7 @@ void vmem_init_kernel()
 	vmem_add_table(kernel_page_dir, vbe_info->framebuffer, kernel_page_table_vesa); 
 }
 
-int __vmem_allocator_create(struct virtual_memory_allocator* allocator, int from, int to)
+int vmem_allocator_create(struct virtual_memory_allocator* allocator, int from, int to)
 {
 	allocator->start = from;
 	allocator->end = to;
@@ -331,8 +330,8 @@ void vmem_map_driver_region(uint32_t addr, int size)
 
 void vmem_init()
 {
-	__vmem_allocator_create(vmem_default, VMEM_START_ADDRESS, VMEM_MAX_ADDRESS);
-	__vmem_allocator_create(vmem_manager, VMEM_MANAGER_START, VMEM_MANAGER_END);
+	vmem_allocator_create(vmem_default, VMEM_START_ADDRESS, VMEM_MAX_ADDRESS);
+	vmem_allocator_create(vmem_manager, VMEM_MANAGER_START, VMEM_MANAGER_END);
 
 	dbgprintf("[VIRTUAL MEMORY] %d free pagable pages.\n", VMEM_TOTAL_PAGES);
 	dbgprintf("[VIRTUAL MEMORY] %d free pagable management pages.\n", VMEM_MANAGER_PAGES);

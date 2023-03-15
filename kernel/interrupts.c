@@ -47,8 +47,9 @@ void page_fault_interrupt(unsigned long cr2, unsigned long err)
 {
 	CLI();
 	dbgprintf("Page fault: 0x%x (Stack: 0x%x) %d (%s)\n", cr2, current_running->stack_ptr, err, current_running->name);
+	dbgprintf("Page: %x, process: %s\n", current_running->page_dir[DIRECTORY_INDEX(cr2)], current_running->name);
 	current_running->running = ZOMBIE;
-	kernel_yield();
+	yield();
 }
 /**
  * @brief Given a IRQ line, it assigns a handler to it. 
@@ -70,8 +71,7 @@ static void __interrupt_exception_handler(int i)
 void isr_handler(struct registers regs)
 {
 	if(regs.int_no < 32){
-		__interrupt_exception_handler(regs.int_no);
-		return;
+		return __interrupt_exception_handler(regs.int_no);
 	}
 
 	if (handlers[regs.int_no] != 0)

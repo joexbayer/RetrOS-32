@@ -50,7 +50,7 @@ void acquire(mutex_t* l)
 
         l->blocked->ops->push(l->blocked, current_running);
 
-        kernel_block();
+        block();
         break;
     
     case UNLOCKED:
@@ -78,7 +78,7 @@ void release(mutex_t* l)
     struct pcb* blocked = l->blocked->ops->pop(l->blocked);
     if(blocked != NULL){
         pcb_queue_push_running(blocked);
-        kernel_unblock(blocked->pid);
+        unblock(blocked->pid);
 
         assert(l->state == LOCKED);
         STI();

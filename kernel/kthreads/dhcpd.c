@@ -254,11 +254,11 @@ void dhcpd()
     
     close(dhcp_socket);
     
-    kernel_exit();
+    exit();
 
 dhcp_error:
     dhcp_state.state = DHCP_FAILED;
     close(dhcp_socket);
-    kernel_exit();
+    exit();
     while(1);
 }

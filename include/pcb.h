@@ -90,7 +90,7 @@ struct pcb_queue {
 
 void pcb_queue_attach_ops(struct pcb_queue* q);
 
-void init_pcbs();
+void pcb_init();
 void pcb_start();
 void start_pcb();
 int pcb_create_kthread( void (*entry)(), char* name);

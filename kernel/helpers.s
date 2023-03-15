@@ -3,7 +3,6 @@
 
 .global tlb_flush_addr
 .text
-/* Flush the TLB of the addr given as a argument */
 tlb_flush_addr:
   movl 4(%esp), %eax
   invlpg (%eax)
@@ -11,7 +10,6 @@ tlb_flush_addr:
 
 .text
 .globl load_page_directory
-/* Load the page directory passed as argument */
 load_page_directory:
     push %ebp
     mov %esp, %ebp
@@ -27,7 +25,6 @@ load_page_directory:
 
 .text
 .globl enable_paging
-/* Enabales paging */
 enable_paging:
     push %ebp
     mov %esp, %ebp
@@ -39,7 +36,6 @@ enable_paging:
     ret
 
 .global _context_switch
-/* Entry and Exit for context_switch() function */
 _context_switch:
     cli
     pushfl
@@ -48,14 +44,12 @@ _context_switch:
     movl current_running, %eax
 
     fnsave 24(%eax)
+
     movl %esp, 4(%eax)
     movl %ebp, 0(%eax)
-
-    /* check if process or kthread */
     cmpl $0, 20(%eax)
     je	skip
     
-    /* use kernel stack for processes */
     movl 12(%eax), %esp
     movl 16(%eax), %ebp
 
@@ -63,7 +57,6 @@ skip:
     call context_switch
     movl current_running, %eax
 
-    /* Restore context */
     movl 0(%eax), %ebp
     movl 4(%eax), %esp
     frstor 24(%eax)
@@ -74,7 +67,6 @@ skip:
     ret
 
 .global _start_pcb
-/* Kick starts a PCB by pushing the entry address and returning */
 _start_pcb:
     movl current_running, %eax
     movl 4(%eax), %esp
