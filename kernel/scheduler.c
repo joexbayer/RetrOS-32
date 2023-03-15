@@ -9,18 +9,15 @@ void sleep(int time)
 {
     current_running->sleep = timer_get_tick() + time;
     current_running->running = SLEEPING;
-    yield();
+    kernel_yield();
 }
 
-void yield()
+void kernel_yield()
 {
-    //CLI();
-
-        _context_switch();
-
+    _context_switch();
 }
 
-void exit()
+void kernel_exit()
 {
 
     current_running->running = ZOMBIE;

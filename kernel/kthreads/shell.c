@@ -262,5 +262,5 @@ void shell_main()
 		}
 	}
 	
-	exit();
+	kernel_exit();
 }

@@ -11,6 +11,6 @@ void error_main()
     gfx_commit();
     while(1)
     {
-        yield();
+        kernel_yield();
     }
 }

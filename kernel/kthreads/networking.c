@@ -147,7 +147,7 @@ void networking_main()
     {
         struct sk_buff* skb = next_skb();
         if(skb == NULL){
-            yield();
+            kernel_yield();
             continue;
         }
         skb->stage = IN_PROGRESS;
