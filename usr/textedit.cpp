@@ -3,15 +3,13 @@
 #include <gfx/events.h>
 #include <colors.h>
 
-class Editor {  
+class Editor : public Window {  
 public:  
-	Editor() {
+	Editor() : Window(280, 240, "Editor") {
 		m_x = 0;
 		m_y = 0;
 		textBuffer = (char*) malloc((c_width/8)*(c_height/8));
-		gfx_create_window(c_width, c_height);
 		gfx_draw_rectangle(0, 0, c_width, c_height, COLOR_WHITE);
-		gfx_set_title("Editor");
 	}
 
 	~Editor() {
@@ -35,9 +33,25 @@ public:
 
 	void putChar(char c) {
 		textBuffer[m_y*(c_width/8) + m_x] = c;
-
-		gfx_draw_rectangle(m_x*8, m_y*8, 8, 8, COLOR_WHITE);
-		gfx_draw_char(m_x*8, m_y*8, c, COLOR_BLACK);
+		switch (c)
+		{
+		case '\n':
+			gfx_draw_rectangle(m_x*8, m_y*8, 8, 8, COLOR_WHITE);
+			m_x = 0;
+			m_y++;
+			gfx_draw_char(m_x*8, m_y*8, '_', COLOR_BLACK);
+			return;
+		case '\b':
+			gfx_draw_rectangle(m_x*8, m_y*8, 8, 8, COLOR_WHITE);
+			m_x--;
+			gfx_draw_rectangle(m_x*8, m_y*8, 8, 8, COLOR_WHITE);
+			gfx_draw_char(m_x*8, m_y*8, '_', COLOR_BLACK);
+			return;
+		default:
+			gfx_draw_rectangle(m_x*8, m_y*8, 8, 8, COLOR_WHITE);
+			gfx_draw_char(m_x*8, m_y*8, c, COLOR_BLACK);
+			break;
+		}
 
 		m_x++;
 		if(m_x > c_width/8){
@@ -57,24 +71,7 @@ public:
 			switch (event.event)
 			{
 			case GFX_EVENT_KEYBOARD:
-				switch (event.data)
-				{
-				case '\n':
-					gfx_draw_rectangle(m_x*8, m_y*8, 8, 8, COLOR_WHITE);
-					m_x = 0;
-					m_y++;
-					gfx_draw_char(m_x*8, m_y*8, '_', COLOR_BLACK);
-					break;
-				case '\b':
-					gfx_draw_rectangle(m_x*8, m_y*8, 8, 8, COLOR_WHITE);
-					m_x--;
-					gfx_draw_rectangle(m_x*8, m_y*8, 8, 8, COLOR_WHITE);
-					gfx_draw_char(m_x*8, m_y*8, '_', COLOR_BLACK);
-					break;
-				default:
-					putChar(event.data);
-					break;
-				}
+				putChar(event.data);
 				break;
 			default:
 				break;

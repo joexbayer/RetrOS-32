@@ -10,6 +10,30 @@
 extern "C" {
 #endif
 
+#ifdef __cplusplus
+#include <lib/syscall.h>
+/**
+ * Base class for a simple window.
+ * Creates a window and sets title.
+ * More to come..,
+ */
+class Window {
+public:
+	Window(int width, int height, char* name) {
+		gfx_create_window(width, height);
+		gfx_set_title(name);
+	}
+	
+	void setTitle(char* name){
+		gfx_set_title(name);
+	}
+
+private:
+	
+};
+
+#endif
+
 #include <gfx/events.h>
 
 enum gfx_lib_api_options {

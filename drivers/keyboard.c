@@ -112,6 +112,7 @@ static void kb_callback()
 		return;
 
 	char c = kbdus[scancode];
+  dbgprintf("Pressed %c (%d)\n", c, c);
   if(c == '7' && __shift_pressed){
     kb_add_char('/');
   } else {

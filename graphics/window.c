@@ -138,8 +138,10 @@ int gfx_destory_window(struct gfx_window* w)
  */
 struct gfx_window* gfx_new_window(int width, int height)
 {
+    if(current_running->gfx_window != NULL)
+        return current_running->gfx_window;
+
     struct gfx_window* w = (struct gfx_window*) kalloc(sizeof(struct gfx_window));
-    /* if a userspace program wants a window they will need to allocate inner themself. */
     w->inner = kalloc(width*height);
     memset(w->inner, COLOR_GRAY_DEFAULT, width*height);
 

@@ -3,11 +3,10 @@
 #include <gfx/events.h>
 #include <colors.h>
 
-class DisplayViewer {  
+class DisplayViewer : public Window {  
 public:  
-	DisplayViewer() {
+	DisplayViewer() : Window(140, 140, "DisplayViewer") {
 		m_color = 1;
-		gfx_create_window(c_width, c_height);
 		UpdateColor();
 	}
 
@@ -15,7 +14,6 @@ public:
 		gfx_draw_rectangle(0, 0, c_width, c_height, COLOR_GRAY_DEFAULT);
 		gfx_draw_rectangle(5, 5, c_width-7, c_height-20, m_color);
 		gfx_draw_format_text(5, c_height-12, COLOR_BLACK, "Color: 0x%x", m_color);
-		gfx_set_title("DisplayViewer");
 		m_color++;
 	}
 	void Run()
