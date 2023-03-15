@@ -43,7 +43,7 @@ int time_get_difference(struct time* t1, struct time* t2)
 }
 
 /* http://www.jamesmolloy.co.uk/tutorial_html/5.-IRQs%20and%20the%20PIT.html */
-void init_timer(uint32_t frequency)
+void init_pit(uint32_t frequency)
 {
 	// Firstly, register our timer callback.
 	interrupt_install_handler(PIT_IRQ, &timer_callback);

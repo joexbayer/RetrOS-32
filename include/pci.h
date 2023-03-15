@@ -50,7 +50,7 @@ struct pci_driver {
 uint16_t pci_read_word(uint16_t bus, uint16_t slot, uint16_t func, uint16_t offset);
 uint8_t pci_find_device(uint16_t find_vendor, uint16_t find_device);
 void pci_enable_device_busmaster(uint16_t bus, uint16_t slot, uint16_t function);
-void pci_init();
+void init_pci();
 
 void list_pci_devices();
 

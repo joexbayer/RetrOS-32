@@ -61,9 +61,9 @@ void kernel(uint32_t magic)
 	gfx_init();
 	init_keyboard();
 	mouse_init();
-	pcb_init();
+	init_pcbs();
 	ipc_msg_box_init();
-	pci_init();
+	init_pci();
 
 	init_sk_buffers();
 	init_arp();
@@ -123,7 +123,7 @@ void kernel(uint32_t magic)
 	start("Shell");
 
 	STI();
-	init_timer(1);
+	init_pit(1);
 
 	dbgprintf("[CLI] %d\n", cli_cnt);
 

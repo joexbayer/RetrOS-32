@@ -512,7 +512,7 @@ void start_pcb()
  * @brief Sets all PCBs state to stopped. Meaning they can be started.
  * Also starts the PCB background process.
  */
-void pcb_init()
+void init_pcbs()
 {   
 
 	/* Stopped processes are eligible to be "replaced." */
