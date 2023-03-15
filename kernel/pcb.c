@@ -338,36 +338,29 @@ void pcb_set_running(int pid)
 int pcb_cleanup_routine(int pid)
 {
 	ASSERT_CRITICAL();
-	assert(pid != current_running->pid);
+	assert(pid != current_running->pid && !(pid < 0 || pid > MAX_NUM_OF_PCBS));
 
-	if(pid < 0 || pid > MAX_NUM_OF_PCBS)
-		return -1;
-
-	dbgprintf("[PCB] Cleaning zombie process %s\n", pcb_table[pid].name);
-
-	if(pcb_table[pid].gfx_window != NULL){
-		gfx_destory_window(pcb_table[pid].gfx_window);
-	}
+	gfx_destory_window(pcb_table[pid].gfx_window);
 
 	running->ops->remove(running, &pcb_table[pid]);
 
-	/**
-	 * TODO: cleanup argv
-	 * args = args;
-	 * pcb->argv = argv;
-	 */
+	/* Free potential arguments */
+	if(pcb_table[pid].argv != NULL){
+		for (int i = 0; i < 5 /* Change to MAX_ARGS */; i++)
+			kfree(pcb_table[pid].argv[i]);
+		kfree(pcb_table[pid].argv);
+	}	
 
 	dbgprintf("[PCB] Cleanup on PID %d stack: 0x%x (original: 0x%x)\n", pid, pcb_table[pid].esp, pcb_table[pid].stack_ptr);
-	
-	pcb_count--;
 	
 	if(pcb_table[pid].is_process){
 		vmem_cleanup_process(&pcb_table[pid]);
 	}
 	kfree((void*)pcb_table[pid].stack_ptr);
 
-	//memset(&pcb_table[pid], 0, sizeof(struct pcb));
+	pcb_count--;
 
+	memset(&pcb_table[pid], 0, sizeof(struct pcb));
 	pcb_table[pid].running = STOPPED;
 	pcb_table[pid].pid = -1;
 
@@ -407,6 +400,8 @@ int pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 	pcb->kallocs = 0;
 	pcb->page_dir = kernel_page_dir;
 	pcb->is_process = 0;
+	pcb->args = 0;
+	pcb->argv = NULL;
 
 	memcpy(pcb->name, name, strlen(name)+1);
 
