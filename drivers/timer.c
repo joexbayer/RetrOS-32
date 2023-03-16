@@ -25,7 +25,7 @@ static void timer_callback()
 	if(current_running != NULL)
 	{
 		EOI(32);
-		yield();
+		kernel_yield();
 	}
 }
 

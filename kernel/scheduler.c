@@ -5,7 +5,7 @@
 #include <serial.h>
 #include <assert.h>
 
-void sleep(int time)
+void kernel_sleep(int time)
 {
     current_running->sleep = timer_get_tick() + time;
     current_running->running = SLEEPING;

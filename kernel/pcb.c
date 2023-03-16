@@ -22,17 +22,17 @@
 static const char* pcb_status[] = {"stopped ", "running ", "new     ", "blocked ", "sleeping", "zombie"};
 
 /* Prototype functions for pcb queue interface */
-static void pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb);
-static void pcb_queue_add(struct pcb_queue* queue, struct pcb* pcb);
-static void pcb_queue_remove(struct pcb_queue* queue, struct pcb* pcb);
-static struct pcb* pcb_queue_pop(struct pcb_queue* queue);
+static void __pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb);
+static void __pcb_queue_add(struct pcb_queue* queue, struct pcb* pcb);
+static void __pcb_queue_remove(struct pcb_queue* queue, struct pcb* pcb);
+static struct pcb* __pcb_queue_pop(struct pcb_queue* queue);
 
 /* Setup for default pcb queue operations */
 static struct pcb_queue_operations pcb_queue_default_ops = {
-	.push = &pcb_queue_push,
-	.add = &pcb_queue_add,
-	.remove = &pcb_queue_remove,
-	.pop = &pcb_queue_pop
+	.push = &__pcb_queue_push,
+	.add = &__pcb_queue_add,
+	.remove = &__pcb_queue_remove,
+	.pop = &__pcb_queue_pop
 };
 
 /* Global running and blocked queue */
@@ -68,7 +68,7 @@ struct pcb_queue* pcb_new_queue()
 /**
  * @brief Pushes a PCB onto the PCB queue.
  *
- * The `pcb_queue_push()` function adds a PCB to the end of the specified queue. The function takes a pointer to
+ * The `__pcb_queue_push()` function adds a PCB to the end of the specified queue. The function takes a pointer to
  * the `pcb_queue` structure and a pointer to the `pcb` structure to be added as arguments. The function uses
  * a spinlock to protect the critical section and adds the PCB to the end of the queue by traversing the current
  * list of PCBs and adding the new PCB to the end.
@@ -76,7 +76,7 @@ struct pcb_queue* pcb_new_queue()
  * @param queue A pointer to the `pcb_queue` structure to add the `pcb` to.
  * @param pcb A pointer to the `pcb` structure to add to the queue.
  */
-static void pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb)
+static void __pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb)
 {
 	assert(queue != NULL);
 
@@ -101,7 +101,7 @@ static void pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb)
 /**
  * @brief Adds a PCB to the PCB queue.
  *
- * The `pcb_queue_add()` function adds a PCB to the beginning of the specified queue. The function takes a pointer to
+ * The `__pcb_queue_add()` function adds a PCB to the beginning of the specified queue. The function takes a pointer to
  * the `pcb_queue` structure and a pointer to the `pcb` structure to be added as arguments. The function uses
  * a spinlock to protect the critical section and adds the PCB to the beginning of the queue by modifying the pointers
  * of the existing PCBs in the queue to insert the new PCB at the front.
@@ -109,7 +109,7 @@ static void pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb)
  * @param queue A pointer to the `pcb_queue` structure to add the `pcb` to.
  * @param pcb A pointer to the `pcb` structure to add to the queue.
  */
-static void pcb_queue_add(struct pcb_queue* queue, struct pcb* pcb)
+static void __pcb_queue_add(struct pcb_queue* queue, struct pcb* pcb)
 {
 	assert(queue != NULL);
 
@@ -130,7 +130,7 @@ static void pcb_queue_add(struct pcb_queue* queue, struct pcb* pcb)
 /**
  * @brief Removes a PCB from the PCB queue.
  *
- * The `pcb_queue_remove()` function removes a PCB from the specified queue. The function takes a pointer to the
+ * The `__pcb_queue_remove()` function removes a PCB from the specified queue. The function takes a pointer to the
  * `pcb_queue` structure and a pointer to the `pcb` structure to be removed as arguments. The function uses a
  * spinlock to protect the critical section and removes the specified PCB from the queue by modifying the pointers
  * of the previous and next PCBs in the queue to bypass the removed PCB.
@@ -138,7 +138,7 @@ static void pcb_queue_add(struct pcb_queue* queue, struct pcb* pcb)
  * @param queue A pointer to the `pcb_queue` structure to remove the `pcb` from.
  * @param pcb A pointer to the `pcb` structure to remove from the queue.
  */
-static void pcb_queue_remove(struct pcb_queue* queue, struct pcb* pcb)
+static void __pcb_queue_remove(struct pcb_queue* queue, struct pcb* pcb)
 {
 	assert(queue != NULL);
 
@@ -159,7 +159,7 @@ static void pcb_queue_remove(struct pcb_queue* queue, struct pcb* pcb)
 /**
  * @brief Removes and returns the first PCB in the PCB queue.
  *
- * The `pcb_queue_pop()` function removes and returns the first PCB in the specified queue. The function takes a pointer
+ * The `__pcb_queue_pop()` function removes and returns the first PCB in the specified queue. The function takes a pointer
  * to the `pcb_queue` structure as an argument. The function uses a spinlock to protect the critical section and removes
  * the first PCB from the queue by modifying the pointers of the previous and next PCBs in the queue to bypass the
  * removed PCB. The function returns a pointer to the removed PCB, or `NULL` if the queue is empty.
@@ -167,7 +167,7 @@ static void pcb_queue_remove(struct pcb_queue* queue, struct pcb* pcb)
  * @param queue A pointer to the `pcb_queue` structure to remove the first PCB from.
  * @return A pointer to the first PCB in the queue, or `NULL` if the queue is empty.
  */
-static struct pcb* pcb_queue_pop(struct pcb_queue* queue)
+static struct pcb* __pcb_queue_pop(struct pcb_queue* queue)
 {
     assert(queue != NULL);
 

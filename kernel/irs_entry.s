@@ -94,8 +94,6 @@ syscall_return_value:
 .global _syscall_entry
 _syscall_entry:
     cli
-    push $0
-	push $48
     pushfl
     pushal
 
@@ -117,7 +115,6 @@ _syscall_entry:
     
     movl	(syscall_return_value), %eax
 
-    add $8, %esp
     iret
 
 page_fault_save:

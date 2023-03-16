@@ -28,9 +28,11 @@ load_page_directory:
 enable_paging:
     push %ebp
     mov %esp, %ebp
+
     mov %cr0, %eax
     or $0x80000000, %eax
     mov %eax, %cr0
+    
     mov %ebp, %esp
     pop %ebp
     ret
@@ -44,6 +46,7 @@ _context_switch:
     movl current_running, %eax
 
     fnsave 24(%eax)
+    fwait
 
     movl %esp, 4(%eax)
     movl %ebp, 0(%eax)
