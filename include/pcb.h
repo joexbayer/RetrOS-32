@@ -7,6 +7,7 @@ struct pcb;
 #include <sync.h>
 #include <gfx/window.h>
 #include <memory.h>
+#include <fs/inode.h>
 
 #define MAX_NUM_OF_PCBS 24
 #define pcb_max_name_length 25
@@ -50,12 +51,14 @@ struct pcb {
     struct gfx_window* gfx_window;
     struct terminal* term;
 
+    inode_t current_directory;
+
     struct allocation* allocations;
     int used_memory;
 
     struct pcb *next;
     struct pcb *prev;
-}__attribute__((packed));
+}__attribute__((__packed__));
 
 extern struct pcb* current_running;
 

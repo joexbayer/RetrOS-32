@@ -88,7 +88,7 @@ kernel: $(KERNELOBJ)
 # For assembling and compiling all .c and .s files.
 bin/%.o: */%.c
 	@$(ECHO) [KERNEL]     Compiling $<
-	@$(CC) -o $@ -c $< $(CCFLAGS)
+	$(CC) -o $@ -c $< $(CCFLAGS)
 
 bin/%.o: */*/%.c
 	@$(ECHO) [PROGRAM]    Compiling $<

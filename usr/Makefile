@@ -24,7 +24,7 @@ endif
 
 OUTPUTDIR = ./bin/
 
-USROBJS = bin/counter.o bin/clock.o bin/textedit.o bin/display.o
+USROBJS = bin/counter.o bin/clock.o bin/edit.o bin/display.o
 COMMON = ../bin/syscall.o ../bin/util.o ../bin/printf.o ../bin/graphics.o
 
 .PHONY: all new programs
@@ -36,7 +36,7 @@ programs: bin/crt0.o ${USROBJS}
 	@echo [USR] All user programs created and linked!
 
 bin/%.o: %.c bin/crt0.o
-	@$(CC) -o $@ -c $< $(CCFLAGS)
+	$(CC) -o $@ -c $< $(CCFLAGS)
 	@$(LD) -o $(basename $@) ./bin/crt0.o $@ $(COMMON) $(LDFLAGS) -T ./utils/linker.ld
 	@echo [USR] Compiling $(basename $@)
 

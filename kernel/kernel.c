@@ -45,13 +45,6 @@ void kernel(uint32_t magic)
 	dbgprintf("[VBE] Width: %d\n", vbe_info->width);
 	dbgprintf("[VBE] Pitch: %d\n", vbe_info->pitch);
 	dbgprintf("[VBE] Bpp: %d\n", vbe_info->bpp);
-	dbgprintf("[VBE] red_mask: %d\n", vbe_info->red_mask);
-	dbgprintf("[VBE] red_position: %d\n", vbe_info->red_position);
-	dbgprintf("[VBE] green_mask: %d\n", vbe_info->green_mask);
-	dbgprintf("[VBE] green_position: %d\n", vbe_info->green_position);
-	dbgprintf("[VBE] blue_mask: %d\n", vbe_info->blue_mask);
-	dbgprintf("[VBE] blue_position: %d\n", vbe_info->blue_position);
-	dbgprintf("[VBE] Framebuffer: 0x%x\n", vbe_info->framebuffer);
 	dbgprintf("[VBE] Memory Size: %d (0x%x)\n", vbe_info->width*vbe_info->height*(vbe_info->bpp/8), vbe_info->width*vbe_info->height*(vbe_info->bpp/8));
 	//vmem_map_driver_region(vbe_info->framebuffer, (vbe_info->width*vbe_info->height*(vbe_info->bpp/8))+1);
 

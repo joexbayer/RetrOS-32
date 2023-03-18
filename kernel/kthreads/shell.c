@@ -146,14 +146,14 @@ void exec_cmd()
 	if(strncmp("cd", shell_buffer, strlen("cd"))){
 		char* name = shell_buffer+strlen("cd")+1;
 		name[strlen(name)-1] = 0;
-		chdir(name);
+		current_running->current_directory = chdir(name);
 		return;
 	}
 
 	if(strncmp("mkdir", shell_buffer, strlen("mkdir"))){
 		char* name = shell_buffer+strlen("mkdir")+1;
 		name[strlen(name)-1] = 0;
-		fs_mkdir(name);
+		fs_mkdir(name, current_running->current_directory);
 		return;
 	}
 

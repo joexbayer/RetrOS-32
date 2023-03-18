@@ -350,16 +350,15 @@ int pcb_cleanup_routine(int pid)
 			kfree(pcb_table[pid].argv[i]);
 		kfree(pcb_table[pid].argv);
 	}	
-
-	dbgprintf("[PCB] Cleanup on PID %d stack: 0x%x (original: 0x%x)\n", pid, pcb_table[pid].esp, pcb_table[pid].stack_ptr);
 	
 	if(pcb_table[pid].is_process){
-		vmem_cleanup_process(&pcb_table[pid]);
+		//vmem_cleanup_process(&pcb_table[pid]);
 	}
 	kfree((void*)pcb_table[pid].stack_ptr);
 
 	pcb_count--;
 
+	dbgprintf("[PCB] Cleanup on PID %d stack: 0x%x (original: 0x%x)\n", pid, pcb_table[pid].esp, pcb_table[pid].stack_ptr);
 	memset(&pcb_table[pid], 0, sizeof(struct pcb));
 	pcb_table[pid].running = STOPPED;
 	pcb_table[pid].pid = -1;
@@ -402,6 +401,7 @@ int pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 	pcb->is_process = 0;
 	pcb->args = 0;
 	pcb->argv = NULL;
+	pcb->current_directory = fs_get_root();
 
 	memcpy(pcb->name, name, strlen(name)+1);
 
@@ -451,6 +451,7 @@ int pcb_create_process(char* program, int args, char** argv)
 	pcb->kallocs = 0;
 	pcb->args = args;
 	pcb->argv = argv;
+	pcb->current_directory = fs_get_root();
 
 	/* Memory map data */
 	vmem_init_process(pcb, buf, read);

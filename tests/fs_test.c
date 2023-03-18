@@ -52,6 +52,13 @@ void testprintf(int test,  const char* test_str)
     }
 }
 
+struct pcb {
+    inode_t current_directory;
+} cur = {
+    .current_directory = 1
+};
+extern struct pcb* current_running = &cur;
+
 
 /* Mock functions */
 FILE* filesystem = NULL;
@@ -88,7 +95,6 @@ void test_file_size(int size)
     free(large_buffer);
     free(large_read_buffer);
     fs_close(large_inode);
-
 }
 
 int main(int argc, char const *argv[])
@@ -98,15 +104,14 @@ int main(int argc, char const *argv[])
     init_fs();
     testprintf(1, "Created filesystem.");
 
+    current_running->current_directory = fs_get_root();
+    printf("ROOT: %d\n", current_running->current_directory);
+
     int create_test = fs_create("test.txt");
     testprintf(create_test == 0, "Created test.txt file.");
 
-    fs_mkdir("testdir");
+    fs_mkdir("testdir", fs_get_root());
     testprintf(1, "Created test directory.");
-
-    chdir("testdir");
-    testprintf(1, "Changed directory to test");
-
 
     int create_test2 = fs_create("test2.txt");
     testprintf(create_test2 == 0, "Created test2.txt file in test directory.");

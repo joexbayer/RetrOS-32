@@ -55,7 +55,7 @@ void context_switch()
             ;
             struct pcb* next = current_running;
             current_running = current_running->next;
-            //pcb_cleanup_routine(next->pid);
+            pcb_cleanup_routine(next->pid);
             break;
         case NEW:
             dbgprintf("[Context Switch] Running new PCB %s with page dir: %x: stack: %x kstack: %x\n", current_running->name, current_running->page_dir, current_running->esp, current_running->kesp);

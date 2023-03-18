@@ -2,6 +2,7 @@
 #include <fs/directory.h>
 #include <fs/fs.h>
 #include <util.h>
+#include <serial.h>
 
 static int path_next_iter(char* path, char* next)
 {
@@ -35,9 +36,11 @@ static inode_t inode_from_path_recursise(inode_t inode, char* path)
         inode_t next = fs_open_from_directory(next_iter, inode);
         if(next <= 0)
             return next;
-        
-        /* continue search in next */
-        return inode_from_path_recursise(next, &path[ret]);
+
+        /* continue search in next TODO: close next */
+        inode_t result = inode_from_path_recursise(next, &path[ret]);
+        fs_close(next);
+        return result;
         
         break;
     default:
@@ -51,7 +54,14 @@ inode_t inode_from_path(char* path)
 {
     char next_iter[20];
     int index = 0;
+
+#ifdef __FS_TEST
+    inode_t dir = 1;
+#else
     inode_t dir = fs_get_current_dir();
+#endif
+
+    dbgprintf("Looking for %s (%d)\n", path, dir);
 
     switch (path[0])
     {
@@ -74,7 +84,8 @@ inode_t inode_from_path(char* path)
     inode_t next = fs_open_from_directory(next_iter, dir);
     if(next <= 0)
         return next;
-    
+
     inode_t final = inode_from_path_recursise(next, &path[ret]);
+    fs_close(next);
     return final;
 }   

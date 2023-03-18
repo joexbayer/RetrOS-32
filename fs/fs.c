@@ -9,6 +9,7 @@
 #include <terminal.h>
 #include <bitmap.h>
 #include <serial.h>
+#include <pcb.h>
 
 #include <util.h>
 #include <rtc.h>
@@ -65,7 +66,7 @@ inode_t fs_get_root()
 
 inode_t fs_get_current_dir()
 {
-	return current_dir->inode;
+	return current_running->current_directory;
 }
 
 
@@ -157,11 +158,11 @@ void mkfs()
 	root_dir = root;
 	current_dir = root;
 
-	__inode_add_dir(&back, current_dir, &superblock);
-	__inode_add_dir(&self, current_dir, &superblock);
-	__inode_add_dir(&home, current_dir, &superblock);
+	__inode_add_dir(&back, root_dir, &superblock);
+	__inode_add_dir(&self, root_dir, &superblock);
+	__inode_add_dir(&home, root_dir, &superblock);
 
-	current_dir->pos = 0;
+	root_dir->pos = 0;
 }
 
 int fs_create(char* name)
@@ -279,7 +280,7 @@ int fs_size(inode_t i)
 	return inode->size;
 }
 
-int chdir(char* path)
+inode_t chdir(char* path)
 {
 	inode_t ret = fs_open(path);
 	struct inode* inode = inode_get(ret, &superblock);
@@ -291,10 +292,10 @@ int chdir(char* path)
 
 	current_dir = inode;
 
-	return 0;
+	return inode->inode;
 }
 
-int fs_mkdir(char* name)
+int fs_mkdir(char* name, inode_t current)
 {
 	if(strlen(name)+1 > FS_DIRECTORY_NAME_SIZE)
 		return -FS_ERR_NAME_SIZE;
@@ -305,6 +306,7 @@ int fs_mkdir(char* name)
 	}
 
 	struct inode* inode = inode_get(inode_index, &superblock);
+	struct inode* current_dir = inode_get(current, &superblock);
 	if(inode == NULL)
 		return -FS_ERR_INODE_MISSING;
 
@@ -337,6 +339,7 @@ int fs_mkdir(char* name)
 void ls(char* path)
 {
 	struct directory_entry entry;
+	struct inode* current_dir = inode_get(fs_get_current_dir(), &superblock);
 	int size = 0;
 
 	current_dir->pos = 0;
