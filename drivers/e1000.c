@@ -11,6 +11,7 @@
 #include <e1000.h>
 #include <interrupts.h>
 #include <pci.h>
+#include <net/net.h>
 #include <net/netdev.h>
 #include <memory.h>
 #include <serial.h>
@@ -21,18 +22,18 @@
 #define TX_BUFF_SIZE (sizeof(struct e1000_tx_desc) * TX_SIZE)
 #define RX_BUFF_SIZE (sizeof(struct e1000_rx_desc) * RX_SIZE)
 
-volatile uint32_t *e1000;
+static volatile uint32_t *e1000;
 #define E1000_DEVICE_SET(offset) (e1000[offset >> 2])
 #define E1000_DEVICE_GET(offset) E1000_DEVICE_SET(offset)
 
 uint8_t mac[6] = {0x52, 0x54, 0x00, 0x12, 0x34, 0x56};
 
 /* Allocate space for transmit and recieve buffers. */
-struct e1000_tx_desc tx_desc_list[TX_SIZE];
-char* tx_buf[TX_SIZE];
+static struct e1000_tx_desc tx_desc_list[TX_SIZE];
+static char* tx_buf[TX_SIZE];
 
-struct e1000_rx_desc rx_desc_list[RX_SIZE];
-char* rx_buf[RX_SIZE];
+static struct e1000_rx_desc rx_desc_list[RX_SIZE];
+static char* rx_buf[RX_SIZE];
 
 static int interrupts = 0;
 
@@ -200,7 +201,7 @@ int e1000_transmit(char* buffer, uint32_t size)
 void e1000_callback()
 {
 	interrupts++;
-	net_packet_handler();
+	net_incoming_packet_handler();
 
 	E1000_DEVICE_GET(E1000_ICR);
 }

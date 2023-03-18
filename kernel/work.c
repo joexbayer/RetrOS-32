@@ -46,6 +46,7 @@ void worker_thread()
     while (1) {
 
         while (queue.head == NULL) {
+            /* Should block */
             kernel_yield();
         }
 

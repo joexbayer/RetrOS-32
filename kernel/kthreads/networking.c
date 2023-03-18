@@ -9,11 +9,11 @@
  * 
  */
 
-#include <terminal.h>
 #include <scheduler.h>
 #include <serial.h>
 
 #include <net/netdev.h>
+#include <net/net.h>
 #include <net/packet.h>
 #include <net/skb.h>
 #include <net/ethernet.h>
@@ -21,48 +21,39 @@
 #include <net/icmp.h>
 #include <net/socket.h>
 #include <net/dhcp.h>
-#include <windowmanager.h>
 
-
-#define MAX_PACKET_SIZE 0x900
-
+#define MAX_PACKET_SIZE 0x600
 static uint16_t packets = 0;
 
-int add_queue(uint8_t* buffer, uint16_t size);
-int get_next_queue();
+struct network_manager {
+    int state;
 
-void networking_print_status()
+    struct skb_queue* skb_tx_queue;
+    struct skb_queue* skb_rx_queue;
+} netd;
+
+void net_incoming_packet_handler()
 {
-    /*twriteln("DHCP");
-    int state = dhcp_get_state();
-    if(state != DHCP_SUCCESS){
-        twritef(" (%s)      \n", dhcp_state_names[state]);
-        twritef(" IP:  %s\n", "N/A");
-        twritef(" DNS: %s\n", "N/A");
-        twritef(" GW:  %s\n", "N/A");
-    } else {
-        int ip = dhcp_get_ip();
-        twritef(" IP:  %i     \n", ip);
-
-        int dns = dhcp_get_dns();
-        twritef(" DNS: %i     \n", dns);
-        
-        int gw = dhcp_get_gw();
-        twritef(" GW:  %i     \n", gw);
+    struct sk_buff* skb = skb_new();
+    skb->len = netdev_recieve(skb->data, MAX_PACKET_SIZE);
+    if(skb->len <= 0) {
+        dbgprintf("Received an empty packet.\n");
+        skb_free(skb);
+        return;
     }
 
-    twritef(" MAC: %x:%x:%x:%x:%x:%x\n", current_netdev.mac[0], current_netdev.mac[1], current_netdev.mac[2], current_netdev.mac[3], current_netdev.mac[4], current_netdev.mac[5]);
-    twritef(" Packets: %d\n", packets);
-    twritef(" Sockets: %d\n", get_total_sockets());*/
-
+    netd.skb_rx_queue->ops->add(netd.skb_rx_queue, skb);
+    packets++;
 }
 
-void list_net_devices()
+void net_send_skb(struct sk_buff* skb)
 {
-
+    /* Validate SKB */
+    netd.skb_tx_queue->ops->add(netd.skb_tx_queue, skb);
+    packets++;
 }
 
-void net_handle_send(struct sk_buff* skb)
+static void __net_transmit_skb(struct sk_buff* skb)
 {
     int read = netdev_transmit(skb->head, skb->len);
     if(read <= 0){
@@ -74,33 +65,21 @@ void net_handle_send(struct sk_buff* skb)
 int net_drop_packet(struct sk_buff* skb)
 {
     current_netdev.dropped++;
-    FREE_SKB(skb);
+    
+    skb_free(skb);
 
     return 0;
 }
 
-void net_packet_handler()
-{
-    struct sk_buff* skb = get_skb();
-    ALLOCATE_SKB(skb);
-    skb->action = RECIEVE;
-
-    int read = netdev_recieve(skb->data, MAX_PACKET_SIZE);
-    if(read <= 0) {
-        FREE_SKB(skb);
-        return;
-    }
-    skb->len = read;
-    packets++;
-}
-
 int net_handle_recieve(struct sk_buff* skb)
 {
-    int ret = ethernet_parse(skb);
-    if(ret <= 0)
+    int ret;
+
+    if(!ethernet_parse(skb))
         return net_drop_packet(skb);
 
     switch(skb->hdr.eth->ethertype){
+        /* Ethernet type is IP */
         case IP:
             if(!ip_parse(skb))
                 return net_drop_packet(skb);
@@ -119,6 +98,7 @@ int net_handle_recieve(struct sk_buff* skb)
             }
             break;
 
+        /* Ethernet type is ARP */
         case ARP:
             if(!arp_parse(skb))
                 return net_drop_packet(skb);
@@ -131,7 +111,7 @@ int net_handle_recieve(struct sk_buff* skb)
             return net_drop_packet(skb);
     }
 
-    FREE_SKB(skb);
+    skb_free(skb);
 
     return 1;
 }
@@ -142,28 +122,26 @@ int net_handle_recieve(struct sk_buff* skb)
  */
 void networking_main()
 {
-    //attach_window(NULL);
+    /* Maybe move these out into a init function */
+    netd.skb_rx_queue = skb_new_queue();
+    netd.skb_tx_queue = skb_new_queue();
+
     while(1)
     {
-        struct sk_buff* skb = next_skb();
-        if(skb == NULL){
-            kernel_yield();
-            continue;
-        }
-        skb->stage = IN_PROGRESS;
+        /**
+         * @brief Query RX and TX queue for packets.
+         */
 
-        switch (skb->action)
+        if(SKB_QUEUE_READY(netd.skb_tx_queue))
         {
-        case RECIEVE:
-            net_handle_recieve(skb);
-            break;
-        case SEND:
-            net_handle_send(skb);
-            break;
-        default:
-            break;
+            struct sk_buff* skb = netd.skb_tx_queue->ops->remove(netd.skb_tx_queue);
+            __net_transmit_skb(skb);
+            skb_free(skb);
         }
 
-        FREE_SKB(skb);
+        if(SKB_QUEUE_READY(netd.skb_rx_queue))
+        {
+            /* Let a work handle the parsing */
+        }
     }
 }

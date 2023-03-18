@@ -50,6 +50,34 @@ struct sk_buff {
 
 #define MAX_SKBUFFERS 0x200
 
+/* new SKB api */
+struct skb_queue;
+struct skb_queue_operations {
+	/*Adds a new network packet to the end of the packet queue.*/
+	int (*add)(struct skb_queue* skb_queue, struct sk_buff* skb);
+	/*Removes and returns the first network packet from the packet queue.*/
+	struct sk_buff* (*remove)(struct skb_queue* skb_queue);
+};
+struct skb_queue {
+	mutex_t lock;
+	struct sk_buff* _head;
+	struct sk_buff* _tail;
+
+	struct skb_queue_operations* ops;
+
+	int size; /***/
+};
+
+#define SKB_QUEUE_READY(queue) queue->size > 0
+
+struct skb_queue* skb_new_queue();
+void skb_free_queue(struct skb_queue* queue);
+
+struct sk_buff* skb_new();
+void skb_free(struct sk_buff* skb);
+
+
+
 void init_sk_buffers();
 struct sk_buff* get_skb();
 struct sk_buff* next_skb();
@@ -59,15 +87,13 @@ struct sk_buff* next_skb();
     memset((skb)->data, 0, 0x600);       \
     (skb)->head = skb->data;            \
     (skb)->tail = skb->head;            \
-    (skb)->end = skb->head+0xFFF;       \
-    (skb)->len = 0;                     \
-    (skb)->stage = NEW_SKB;
+    (skb)->end = skb->head+0x600;       \
+    (skb)->len = 0;
 
 #define FREE_SKB(skb)           \
     if((skb)->head != NULL)     \
         kfree((skb)->head);      \
     (skb)->len = -1;            \
-    (skb)->stage = UNUSED;      \
     (skb)->head = NULL;
 
 #include <net/ethernet.h>

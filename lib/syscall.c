@@ -93,6 +93,11 @@ void free(void* ptr)
     invoke_syscall(SYSCALL_FREE, (int)ptr, 0, 0);
 }
 
+int close(int fd)
+{
+    invoke_syscall(SYSCALL_CLOSE, fd, 0, 0);
+}
+
 #ifdef __cplusplus
 }
 #endif

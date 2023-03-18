@@ -16,7 +16,8 @@ enum {
     SYSCALL_READ,
     SYSCALL_WRITE,
     SYSCALL_MALLOC,
-    SYSCALL_FREE
+    SYSCALL_FREE,
+    SYSCALL_CLOSE
 };
 
 #endif /* __SYSCALL_HELPER_H */

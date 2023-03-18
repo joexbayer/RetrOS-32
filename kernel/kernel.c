@@ -93,6 +93,7 @@ void kernel(uint32_t magic)
 	add_system_call(SYSCALL_OPEN, (syscall_t)&fs_open);
 	add_system_call(SYSCALL_READ, (syscall_t)&fs_read);
 	add_system_call(SYSCALL_WRITE, (syscall_t)&fs_write);
+	add_system_call(SYSCALL_CLOSE, (syscall_t)&fs_close);
 	#pragma GCC diagnostic pop
 	
 

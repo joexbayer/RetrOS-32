@@ -9,7 +9,6 @@
  * 
  */
 #include <net/ethernet.h>
-#include <terminal.h>
 
 int ethernet_add_header(struct sk_buff* skb, uint32_t ip)
 {

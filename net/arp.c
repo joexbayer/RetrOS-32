@@ -11,24 +11,23 @@
 
 #include <net/arp.h>
 #include <net/dhcp.h>
+#include <net/net.h>
 #include <terminal.h>
 #include <serial.h>
 
 #define MAX_ARP_ENTRIES 25
 
-struct arp_entry arp_entries[MAX_ARP_ENTRIES];
+static struct arp_entry arp_entry_table[MAX_ARP_ENTRIES];
 
 void init_arp()
 {
 	for (int i = 0; i < MAX_ARP_ENTRIES; i++)
-	{
-		arp_entries[i].sip = 0;
-	}
+		arp_entry_table[i].sip = 0;
 
+	/*  Add broadcast arp entry */
 	uint8_t broadcast_mac[6] = {255, 255, 255, 255, 255, 255};
-	
-	memcpy(&arp_entries[0].smac, &broadcast_mac, 6);
-	arp_entries[0].sip = BROADCAST_IP;
+	memcpy(&arp_entry_table[0].smac, &broadcast_mac, 6);
+	arp_entry_table[0].sip = BROADCAST_IP;
 }
 
 /**
@@ -40,18 +39,14 @@ void init_arp()
 int arp_add_entry(struct arp_content* arp)
 {
 	/* Check if ARP entry already exists. */
-	for (int i = 0; i < MAX_ARP_ENTRIES; i++){
-		int ret = memcmp((uint8_t*)&arp->smac, (uint8_t*)&arp_entries[i].smac, 6);
-		if(ret == 0)
-			return 1;
-	}
-
 	for (int i = 0; i < MAX_ARP_ENTRIES; i++)
-	{
-		if(arp_entries[i].sip == 0)
-		{
-			memcpy((uint8_t*)&arp_entries[i].smac, (uint8_t*)&arp->smac, 6);
-			arp_entries[i].sip = arp->sip;
+		if(memcmp((uint8_t*)&arp->smac, (uint8_t*)&arp_entry_table[i].smac, 6))
+			return 1;
+
+	for (int i = 0; i < MAX_ARP_ENTRIES; i++){
+		if(arp_entry_table[i].sip == 0){
+			memcpy((uint8_t*)&arp_entry_table[i].smac, (uint8_t*)&arp->smac, 6);
+			arp_entry_table[i].sip = arp->sip;
 			dbgprintf("Added APR entry.\n");
 			return 1;
 		}
@@ -71,8 +66,8 @@ int arp_add_entry(struct arp_content* arp)
 int arp_find_entry(uint32_t ip, uint8_t* mac)
 {
 	for (int i = 0; i < MAX_ARP_ENTRIES; i++){
-		if(arp_entries[i].sip == ip){
-			memcpy(mac, arp_entries[i].smac, 6);
+		if(arp_entry_table[i].sip == ip){
+			memcpy(mac, arp_entry_table[i].smac, 6);
 			return 1;
 		}
 	}
@@ -86,8 +81,10 @@ int arp_find_entry(uint32_t ip, uint8_t* mac)
  * @param hdr ARP header
  * @param skb buffer to send.
  */
-void __arp_send(struct arp_content* content, struct arp_header* hdr, struct sk_buff* skb)
+void __arp_send(struct arp_content* content, struct arp_header* hdr)
 {
+	struct sk_buff* skb = skb_new();
+
 	skb->proto = ARP;
 	int ret = ethernet_add_header(skb, content->dip);
 	if(ret <= 0){
@@ -105,8 +102,8 @@ void __arp_send(struct arp_content* content, struct arp_header* hdr, struct sk_b
 	skb->data += sizeof(struct arp_content);
 	skb->len += sizeof(struct arp_content);
 
-	skb->stage = NEW_SKB;
-	skb->action = SEND;
+	net_send_skb(skb);
+	
 }
 
 /**
@@ -119,10 +116,6 @@ void arp_respond(struct arp_content* content)
 	if(dhcp_get_ip() == -1)
 		return;
 
-	struct sk_buff* skb = get_skb();
-    ALLOCATE_SKB(skb);
-    skb->stage = IN_PROGRESS;
-
 	struct arp_header a_hdr;
 	ARP_FILL_HEADER(a_hdr, ARP_REPLY);
 
@@ -131,7 +124,7 @@ void arp_respond(struct arp_content* content)
 	content->dip = content->sip;
 	content->sip = dhcp_get_ip();
 
-	__arp_send(content, &a_hdr, skb);
+	__arp_send(content, &a_hdr);
 }
 
 /**
@@ -142,10 +135,6 @@ void arp_request()
 {
 	if(dhcp_get_ip() == -1)
 		return;
-
-	struct sk_buff* skb = get_skb();
-    ALLOCATE_SKB(skb);
-    skb->stage = IN_PROGRESS;
 
 	struct arp_header a_hdr;
 	struct arp_content a_content;
@@ -159,7 +148,7 @@ void arp_request()
 	a_content.sip = dhcp_get_ip();
 	memcpy(a_content.dmac, broadcast_mac, 6);
 
-	__arp_send(&a_content, &a_hdr, skb);
+	__arp_send(&a_content, &a_hdr);
 }
 
 /**

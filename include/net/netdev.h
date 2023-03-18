@@ -6,8 +6,6 @@
 
 #define MAX_NETDEV_NAME_SIZE 10
 
-extern struct netdev current_netdev;  
-
 /**
  * @brief Main struct that keeps track of the network, especially its stats and read / write functions.
  * 
@@ -26,6 +24,7 @@ struct netdev {
     int32_t (*read)(char* buffer, uint32_t size);
     int32_t (*write)(char* buffer, uint32_t size);
 };
+extern struct netdev current_netdev;  
 
 /**
  * @brief Attaches adriver to the current network device. Also attaches functions for reading and writing.
@@ -43,13 +42,6 @@ void netdev_attach_driver(
     char* name,
     uint8_t* mac
 );
-
-void netdev_set_macaddr(uint16_t* mac);
-void netdev_print_status();
-
-/* TODO: add to own headerfile. */
-void networking_print_status();
-void net_packet_handler();
 
 int netdev_recieve(void* buffer, uint32_t size);
 int netdev_transmit(void* buffer, uint32_t size);

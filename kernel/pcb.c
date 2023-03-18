@@ -316,7 +316,8 @@ void dummytask(){
 		char j = 0;
 		for (int i = 0; i < 99999999; i++)
 		{
-			j = (j+1) % 10;
+			j = (j+100) % 1000;
+			
 		}
 	};
 }
@@ -337,6 +338,8 @@ void pcb_set_running(int pid)
  */
 int pcb_cleanup_routine(int pid)
 {
+	return -1;
+
 	ASSERT_CRITICAL();
 	assert(pid != current_running->pid && !(pid < 0 || pid > MAX_NUM_OF_PCBS));
 
@@ -352,7 +355,7 @@ int pcb_cleanup_routine(int pid)
 	}	
 	
 	if(pcb_table[pid].is_process){
-		//vmem_cleanup_process(&pcb_table[pid]);
+		vmem_cleanup_process(&pcb_table[pid]);
 	}
 	kfree((void*)pcb_table[pid].stack_ptr);
 

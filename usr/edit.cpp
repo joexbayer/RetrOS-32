@@ -14,6 +14,7 @@ public:
 
 	~Editor() {
 		free(textBuffer);
+		close(m_fd);
 	}
 
 	void Save();

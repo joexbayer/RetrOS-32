@@ -19,6 +19,7 @@ int gfx_set_title(char* title);
 int open(char* name);
 int write(int fd, void* buffer, int size);
 int read(int fd, void* buffer, int size);
+int close(int fd);
 
 void* malloc(int size);
 void free(void* ptr);
