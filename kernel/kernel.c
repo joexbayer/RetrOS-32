@@ -25,6 +25,7 @@
 #include <ipc.h>
 #include <assert.h>
 #include <io.h>
+#include <work.h>
 
 #include <gfx/window.h>
 #include <gfx/composition.h>
@@ -57,6 +58,7 @@ void kernel(uint32_t magic)
 	init_pcbs();
 	ipc_msg_box_init();
 	init_pci();
+	init_worker();
 
 	init_sk_buffers();
 	init_arp();
@@ -67,12 +69,13 @@ void kernel(uint32_t magic)
 	
 	register_kthread(&shell_main, "Shell");
 	register_kthread(&Genesis, "Genesis");
-	register_kthread(&networking_main, "Networking");
+	register_kthread(&networking_main, "netd");
 	register_kthread(&dhcpd, "dhcpd");
-	register_kthread(&gfx_compositor_main, "wServer");
+	register_kthread(&gfx_compositor_main, "wind");
 	register_kthread(&error_main, "Error");
 	register_kthread(&idletask, "Idle");
 	register_kthread(&dummytask, "Dummy");
+	register_kthread(&worker_thread, "workd");
 
 	#pragma GCC diagnostic ignored "-Wcast-function-type"
 	add_system_call(SYSCALL_PRTPUT, (syscall_t)&terminal_putchar);
@@ -108,10 +111,9 @@ void kernel(uint32_t magic)
 	vesa_init();
 
 	start("Idle");
-	start("wServer");
+	start("workd");
+	start("wind");
 	//start("Genesis");
-	start("Dummy");
-	start("Dummy");
 	start("Dummy");
 	start("Shell");
 
