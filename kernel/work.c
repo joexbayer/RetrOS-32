@@ -31,34 +31,21 @@ static struct work_queue queue = {
     .size = 0
 };
 
-void work_queue_add_critical(void (*work_fn)(void*), void* arg)
+void work_queue_add(void (*work_fn)(void*), void* arg)
 {
     struct work* work = get_new_work();
+    if(work == NULL){
+        dbgprintf("Out of works\n");
+        return;
+    }
+
     work->work_fn = work_fn;
     work->arg = arg;
     work->next = NULL;
 
     dbgprintf("Adding work 0x%x\n", work);
 
-    ASSERT_CRITICAL();
-
-    if (queue.head == NULL) {
-        queue.head = work;
-        queue.tail = work;
-    } else {
-        queue.head->next = work;
-        queue.tail = work;
-    }
-}
-
-void work_queue_add(void (*work_fn)(void*), void* arg)
-{
-    struct work* work = get_new_work();
-    work->work_fn = work_fn;
-    work->arg = arg;
-    work->next = NULL;
-
-    LOCK((&queue), {
+    CRITICAL_SECTION({
         if (queue.head == NULL) {
             queue.head = work;
             queue.tail = work;
@@ -67,12 +54,6 @@ void work_queue_add(void (*work_fn)(void*), void* arg)
             queue.tail = work;
         }
     });
-    dbgprintf("Adding work 0x%x\n", work_fn);
-}
-
-void worker_test(int a)
-{
-    dbgprintf("Worker test (0x%x): 0x%x\n", &worker_test, a);
 }
 
 void init_worker()

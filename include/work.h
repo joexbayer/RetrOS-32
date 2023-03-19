@@ -19,10 +19,6 @@ struct work_queue {
 };
 
 void work_queue_add(void (*work_fn)(void*), void* arg);
-void work_queue_add_critical(void (*work_fn)(void*), void* arg);
 void worker_thread();
 void init_worker();
-
-void worker_test(int a);
-
 #endif /* C344935F_66B9_4B70_A26F_D6BCDAF73498 */
