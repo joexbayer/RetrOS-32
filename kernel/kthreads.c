@@ -45,8 +45,6 @@ int start(char* name)
     }
 
     return -1;
-
-    
 }
 
 void empty();

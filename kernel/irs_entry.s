@@ -78,15 +78,15 @@ ISR_NO_ERR 46
 ISR_NO_ERR 47
 
 isr_entry:
-    pushal
+  pushal
 
-	push %eax
-    call isr_handler
-	pop %eax
+  push %eax
+  call isr_handler
+  pop %eax
 
-    popal
-    add $8, %esp
-	
+  popal
+  add $8, %esp
+
 	iret
 
 syscall_return_value:
@@ -97,7 +97,7 @@ _syscall_entry:
     pushfl
     pushal
 
-	pushl	%edx	/* Arg 3 */
+	  pushl	%edx	/* Arg 3 */
     pushl	%ecx	/* Arg 2 */
     pushl	%ebx	/* Arg 1 */
     pushl	%eax	/* Syscall number */

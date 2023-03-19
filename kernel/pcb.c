@@ -15,11 +15,14 @@
 #include <scheduler.h>
 #include <fs/fs.h>
 #include <assert.h>
+#include <kthreads.h>
 
 //#include <gfx/gfxlib.h>
 
 #define STACK_SIZE 0x2000
 static const char* pcb_status[] = {"stopped ", "running ", "new     ", "blocked ", "sleeping", "zombie"};
+static struct pcb pcb_table[MAX_NUM_OF_PCBS];
+static int pcb_count = 0;
 
 /* Prototype functions for pcb queue interface */
 static void __pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb);
@@ -188,10 +191,6 @@ static struct pcb* __pcb_queue_pop(struct pcb_queue* queue)
 
     return front;
 }
-
-static struct pcb pcb_table[MAX_NUM_OF_PCBS];
-static int pcb_count = 0;
-
 /**
  * Current running PCB, used for context aware
  * functions such as windows drawing to the screen.
@@ -312,14 +311,14 @@ void idletask(){
 
 
 void dummytask(){
-	while(1){
-		char j = 0;
-		for (int i = 0; i < 99999999; i++)
-		{
-			j = (j+100) % 1000;
-			
-		}
-	};
+	int j = 0;
+	for (int i = 0; i < 699999999; i++)
+	{
+		j = (j+100) % 1000;	
+	}
+
+	kernel_exit();
+	UNREACHABLE();
 }
 
 void pcb_set_running(int pid)
@@ -330,6 +329,14 @@ void pcb_set_running(int pid)
 	pcb_table[pid].running = RUNNING;
 }
 
+
+void pcb_dbg_print(struct pcb* pcb)
+{
+	dbgprintf("\n###### PCB ######\npid: %d\nname: %s\nesp: 0x%x\nebp: 0x%x\nkesp: 0x%x\nkebp: 0x%x\neip: 0x%x\nstate: %s\nstack limit: 0x%x\nstack size: 0x%x (0x%x - 0x%x)\nPage Directory: 0x%x\n",
+		pcb->pid, pcb->name, pcb->esp, pcb->ebp, pcb->kesp, pcb->kebp, pcb->eip, pcb_status[pcb->running], pcb->stack_ptr, (int)((pcb->stack_ptr+STACK_SIZE-1) - pcb->esp), (pcb->stack_ptr+STACK_SIZE-1), pcb->esp,  pcb->page_dir
+	);
+}
+
 /**
  * @brief Sets the process with given pid to stopped. Also frees the process's stack.
  * 
@@ -338,33 +345,36 @@ void pcb_set_running(int pid)
  */
 int pcb_cleanup_routine(int pid)
 {
-	return -1;
-
-	ASSERT_CRITICAL();
 	assert(pid != current_running->pid && !(pid < 0 || pid > MAX_NUM_OF_PCBS));
+
+	dbgprintf("[PCB] Cleanup on PID %d stack: 0x%x (original: 0x%x)\n", pid, pcb_table[pid].esp, pcb_table[pid].stack_ptr+STACK_SIZE-1);
 
 	gfx_destory_window(pcb_table[pid].gfx_window);
 
-	running->ops->remove(running, &pcb_table[pid]);
+	//running->ops->remove(running, &pcb_table[pid]);
 
 	/* Free potential arguments */
 	if(pcb_table[pid].argv != NULL){
 		for (int i = 0; i < 5 /* Change to MAX_ARGS */; i++)
 			kfree(pcb_table[pid].argv[i]);
 		kfree(pcb_table[pid].argv);
-	}	
+	}
 	
 	if(pcb_table[pid].is_process){
 		vmem_cleanup_process(&pcb_table[pid]);
 	}
+	dbgprintf("[PCB] Freeing stack (0x%x)\n", pcb_table[pid].stack_ptr+STACK_SIZE-1);
 	kfree((void*)pcb_table[pid].stack_ptr);
 
 	pcb_count--;
 
-	dbgprintf("[PCB] Cleanup on PID %d stack: 0x%x (original: 0x%x)\n", pid, pcb_table[pid].esp, pcb_table[pid].stack_ptr);
-	memset(&pcb_table[pid], 0, sizeof(struct pcb));
-	pcb_table[pid].running = STOPPED;
-	pcb_table[pid].pid = -1;
+	CRITICAL_SECTION({
+		memset(&pcb_table[pid], 0, sizeof(struct pcb));
+		pcb_table[pid].running = STOPPED;
+		pcb_table[pid].pid = -1;
+	});
+
+	dbgprintf("[PCB] Cleanup on PID %d [DONE]\n", pid);
 
 	return pid;
 }
@@ -380,6 +390,7 @@ int pcb_cleanup_routine(int pid)
  */
 int pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 {
+	dbgprintf("Initiating new kernel thread!\n");
 	uint32_t stack = (uint32_t) kalloc(STACK_SIZE);
 	memset((void*)stack, 0, STACK_SIZE);
 	if((void*)stack == NULL)
@@ -408,7 +419,7 @@ int pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 
 	memcpy(pcb->name, name, strlen(name)+1);
 
-	dbgprintf("[INIT KTHREAD] Created new kernel thread!\n");
+	dbgprintf("Initiated new kernel thread!\n");
 
 	return 1;
 }
@@ -481,8 +492,10 @@ int pcb_create_process(char* program, int args, char** argv)
 int pcb_create_kthread(void (*entry)(), char* name)
 {   
 	CLI();
-	if(MAX_NUM_OF_PCBS == pcb_count)
+	if(MAX_NUM_OF_PCBS == pcb_count){
+		dbgprintf("All PCBs are in use!\n");
 		return -1;
+	}
 
 	int i; /* Find a pcb is that is "free" */
 	for(i = 0; i < MAX_NUM_OF_PCBS; i++)

@@ -90,7 +90,7 @@ void* kalloc(int size)
 
     void* ptr = (void*)(KERNEL_MEMORY_START + start_block * KMEM_BLOCK_SIZE + sizeof(int));
 
-    //dbgprintf("[MEMORY] %s allocated %d blocks of data\n", current_running->name, num_blocks);
+    dbgprintf("[MEMORY] %s allocated %d blocks of data\n", current_running->name, num_blocks);
     __kmemory_used += num_blocks * KMEM_BLOCK_SIZE;
     current_running->kallocs++;
 
@@ -123,7 +123,7 @@ void kfree(void* ptr) {
 	// Read the size of the allocated block from the metadata block
 	int* metadata = (int*) (KERNEL_MEMORY_START + block_index * KMEM_BLOCK_SIZE);
 	int num_blocks = *metadata;
-	//dbgprintf("[MEMORY] %s freeing %d blocks of data\n", current_running->name, num_blocks);
+	dbgprintf("[MEMORY] %s freeing %d blocks of data\n", current_running->name, num_blocks);
 
 	// Mark the blocks as free in the bitmap
 	for (int i = 0; i < num_blocks; i++) {
@@ -155,8 +155,6 @@ void* palloc(int size)
 
 	return (void*) new;
 }
-
-void kmem_run_tests();
 
 void kmem_init()
 {

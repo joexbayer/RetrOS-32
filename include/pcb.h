@@ -9,7 +9,7 @@ struct pcb;
 #include <memory.h>
 #include <fs/inode.h>
 
-#define MAX_NUM_OF_PCBS 24
+#define MAX_NUM_OF_PCBS 64
 #define pcb_max_name_length 25
 
 /* TODO: Move to new file */
@@ -19,7 +19,8 @@ enum pcb_states {
     NEW,
     BLOCKED,
     SLEEPING,
-    ZOMBIE
+    ZOMBIE,
+    CLEANING
 };
 
 struct pcb {
@@ -100,6 +101,8 @@ int pcb_create_kthread( void (*entry)(), char* name);
 int pcb_create_process(char* program, int args, char** argv);
 
 void pcb_set_running(int pid);
+
+void pcb_dbg_print(struct pcb* pcb);
 
 void pcb_queue_remove_running(struct pcb* pcb);
 void pcb_queue_push_running(struct pcb* pcb);

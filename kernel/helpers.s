@@ -40,13 +40,13 @@ enable_paging:
 .global _context_switch
 _context_switch:
     cli
+    addl $1, cli_cnt
     pushfl
     pushal
     
     movl current_running, %eax
 
     fnsave 24(%eax)
-    fwait
 
     movl %esp, 4(%eax)
     movl %ebp, 0(%eax)
@@ -67,6 +67,7 @@ skip:
     popfl
 
     sti
+    subl $1, cli_cnt
     ret
 
 .global _start_pcb
@@ -76,8 +77,9 @@ _start_pcb:
     movl 0(%eax), %ebp
     movl 152(%eax), %ebx
     movl 156(%eax), %ecx
-    sti
     pushl 8(%eax)
+    sti
+    subl $1, cli_cnt
     # jmp *8(%eax)
     ret
 

@@ -117,8 +117,7 @@ void kernel(uint32_t magic)
 	//start("Genesis");
 	start("Dummy");
 	start("Shell");
-
-	STI();
+	
 	init_pit(1);
 
 	dbgprintf("[CLI] %d\n", cli_cnt);

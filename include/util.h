@@ -52,6 +52,8 @@ int rand(void);
      asm ("cli");\
      while(1)\
 
+#define GET_ESP() asm ("esp");
+
 extern int cli_cnt;
 #define CLI()\
     cli_cnt++;\

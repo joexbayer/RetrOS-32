@@ -7,6 +7,7 @@ struct work {
     void (*work_fn)(void*);
     void* arg;
     struct work* next;
+    int in_use;
 };
 
 struct work_queue {
@@ -18,6 +19,7 @@ struct work_queue {
 };
 
 void work_queue_add(void (*work_fn)(void*), void* arg);
+void work_queue_add_critical(void (*work_fn)(void*), void* arg);
 void worker_thread();
 void init_worker();
 

@@ -32,6 +32,7 @@ void mutex_init(mutex_t* l)
 {
     l->blocked = pcb_new_queue();
     l->state = UNLOCKED;
+    dbgprintf("Lock 0x%x initiated by %s\n", l, current_running->name);
 }
 
 
@@ -46,8 +47,8 @@ void acquire(mutex_t* l)
     switch (l->state)
     {
     case LOCKED:
+        dbgprintf("Locking 0x%x (%d: %s )\n", l, current_running->pid, current_running->name);
         pcb_queue_remove_running(current_running);
-
         l->blocked->ops->push(l->blocked, current_running);
 
         block();
