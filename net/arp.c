@@ -36,7 +36,7 @@ void init_arp()
  * @param arp ARP content packet.
  * @return int 
  */
-int arp_add_entry(struct arp_content* arp)
+int net_arp_add_entry(struct arp_content* arp)
 {
 	/* Check if ARP entry already exists. */
 	for (int i = 0; i < MAX_ARP_ENTRIES; i++)
@@ -63,7 +63,7 @@ int arp_add_entry(struct arp_content* arp)
  * @param mac buffer to copy MAC into.
  * @return int 
  */
-int arp_find_entry(uint32_t ip, uint8_t* mac)
+int net_arp_find_entry(uint32_t ip, uint8_t* mac)
 {
 	for (int i = 0; i < MAX_ARP_ENTRIES; i++){
 		if(arp_entry_table[i].sip == ip){
@@ -71,7 +71,7 @@ int arp_find_entry(uint32_t ip, uint8_t* mac)
 			return 1;
 		}
 	}
-	return 0;
+	return -1;
 }
 
 /**
@@ -81,12 +81,12 @@ int arp_find_entry(uint32_t ip, uint8_t* mac)
  * @param hdr ARP header
  * @param skb buffer to send.
  */
-void __arp_send(struct arp_content* content, struct arp_header* hdr)
+static void __net_arp_send(struct arp_content* content, struct arp_header* hdr)
 {
 	struct sk_buff* skb = skb_new();
 
 	skb->proto = ARP;
-	int ret = ethernet_add_header(skb, content->dip);
+	int ret = net_ethernet_add_header(skb, content->dip);
 	if(ret <= 0){
 		return;
 	}
@@ -111,7 +111,7 @@ void __arp_send(struct arp_content* content, struct arp_header* hdr)
  * 
  * @param content APR request content.
  */
-void arp_respond(struct arp_content* content)
+void net_arp_respond(struct arp_content* content)
 {
 	if(dhcp_get_ip() == -1)
 		return;
@@ -124,14 +124,14 @@ void arp_respond(struct arp_content* content)
 	content->dip = content->sip;
 	content->sip = dhcp_get_ip();
 
-	__arp_send(content, &a_hdr);
+	__net_arp_send(content, &a_hdr);
 }
 
 /**
  * @brief Create a ARP request packet and send it.
  * 
  */
-void arp_request()
+void net_net_arp_request()
 {
 	if(dhcp_get_ip() == -1)
 		return;
@@ -148,7 +148,7 @@ void arp_request()
 	a_content.sip = dhcp_get_ip();
 	memcpy(a_content.dmac, broadcast_mac, 6);
 
-	__arp_send(&a_content, &a_hdr);
+	__net_arp_send(&a_content, &a_hdr);
 }
 
 /**
@@ -165,7 +165,7 @@ uint8_t arp_parse(struct sk_buff* skb)
 	ARP_NTOHS(a_hdr);
 
 	if(a_hdr->hwtype != ARP_ETHERNET || a_hdr->protype != ARP_IPV4){	
-		return 0;
+		return -1;
 	}
 
 	struct arp_content* arp_content = (struct arp_content*) skb->data;
@@ -175,11 +175,11 @@ uint8_t arp_parse(struct sk_buff* skb)
 	{
 	case ARP_REQUEST:
 
-		arp_add_entry(arp_content);
-		arp_respond(arp_content);
+		net_arp_add_entry(arp_content);
+		net_arp_respond(arp_content);
 		break;
 	case ARP_REPLY:
-		arp_add_entry(arp_content);
+		net_arp_add_entry(arp_content);
 		/* Signal ARP reply was recieved, check for waiting SKBs*/
 		break;
 	
@@ -187,5 +187,5 @@ uint8_t arp_parse(struct sk_buff* skb)
 		break;
 	}
 
-	return 1;
+	return 0;
 }

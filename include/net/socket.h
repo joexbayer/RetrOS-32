@@ -3,6 +3,7 @@
 
 #include <util.h>
 #include <sync.h>
+#include <net/skb.h>
 
 /* forward declare struct sock*/
 struct sock;
@@ -28,7 +29,7 @@ struct sock;
 
 #define BUFFERS_PER_SOCKET 15
 
-typedef uint8_t socket_t;
+typedef uint16_t socket_t;
 typedef uint32_t socklen_t;
 typedef uint16_t sa_family_t;
 
@@ -47,29 +48,27 @@ struct sockaddr {
 	sa_family_t	sa_family;	/* address family, AF_xxx	*/
 	char		sa_data[14];	/* 14 bytes of protocol address	*/
 };
+
 struct sock {
+    socket_t socket;
+
     int type;
     int protocol;
     int domain;
 
-    mutex_t sock_lock;
-
-    socket_t socket;
+    mutex_t lock;
 
     uint16_t bound_port;
     uint16_t bound_ip;
 
+    struct skb_queue* skb_queue;
     struct sockaddr_in recv_addr;
-
-    char* buffers[BUFFERS_PER_SOCKET][2048];
-    uint16_t buffer_lens[BUFFERS_PER_SOCKET];
-    uint8_t last_read_buffer;
-    uint8_t next_write_buffer;
 
     /* if tcp socket */
     struct tcp_connection tcp_conn;
 };
 
+/* These are the userspace api, should be kernel_x  */
 int bind(int socket, const struct sockaddr *address, socklen_t address_len);
 int accept(int socket, struct sockaddr *address, socklen_t *address_len);
 int connect(int socket, const struct sockaddr *address, socklen_t address_len);

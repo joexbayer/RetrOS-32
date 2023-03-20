@@ -26,7 +26,7 @@ struct icmp {
     (pkt)->id = ntohs((pkt)->id); \
     (pkt)->sequence = ntohs((pkt)->sequence);
 
-int icmp_parse(struct sk_buff* skb);
+int net_icmp_parse(struct sk_buff* skb);
 void ping(char* hostname);
 
 #endif /* ICMP_H */

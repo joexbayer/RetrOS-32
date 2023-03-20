@@ -21,38 +21,6 @@
 #include <serial.h>
 
 /**
- * @brief Helper function to send IP packet, attaching ethernet header
- * and setting skb to be sent.
- * 
- * @param ihdr ip header for packet, needs to be configured before this function.
- * @param skb socket buffer to modify.
- * @param dip Destination IP address.
- * 
- * @returns int
- */
-int __ip_send(struct ip_header* ihdr, struct sk_buff* skb, uint32_t dip)
-{
-    if(ihdr->version == 0)
-        return 0;
-
-    skb->proto = IP;
-
-    uint32_t next_hop = route(dip);
-	int ret = ethernet_add_header(skb, next_hop);
-	if(ret <= 0){
-		dbgprintf("[IP] Error adding ethernet header\n");
-		return 0;
-	}
-
-    /* Add IP header to packet */
-    memcpy(skb->data, ihdr, sizeof(struct ip_header));
-    skb->len += ihdr->ihl * 4;
-    skb->data += ihdr->ihl * 4;
-
-    return 1;
-}
-
-/**
  * @brief Creates and attaches IP header to SKB
  * 
  * @param skb skb to modify
@@ -61,21 +29,39 @@ int __ip_send(struct ip_header* ihdr, struct sk_buff* skb, uint32_t dip)
  * @param length length of message.
  * @return int 
  */
-int ip_add_header(struct sk_buff* skb, uint32_t ip, uint8_t proto, uint32_t length)
+int net_ipv4_add_header(struct sk_buff* skb, uint32_t ip, uint8_t proto, uint32_t length)
 {
-    struct ip_header hdr;
-    IP_HEADER_CREATE(hdr, proto, length);
-
-    /* Set IPs */
-    hdr.saddr = dhcp_get_ip(); /* TODO */
-    hdr.daddr = ip;
-
+    struct ip_header hdr = {
+        .version = IPV4,
+        .ihl = 0x05,
+        .tos = 0,
+        .len = length+hdr.ihl*4,
+        .frag_offset = 0x4000,
+        .ttl = 64,
+        .proto = proto,
+        .saddr = dhcp_get_ip(),
+        .daddr = ip,
+        .csum = 0
+    };
     IP_HTONL(&hdr);
-
-    hdr.csum = 0;
     hdr.csum = checksum(&hdr, hdr.ihl * 4, 0);
 
-    return __ip_send(&hdr, skb, ip);
+    skb->proto = IP;
+
+    /* Add ethernet header */
+    uint32_t next_hop = route(ip);
+	int ret = net_ethernet_add_header(skb, next_hop);
+	if(ret < 0){
+		dbgprintf("Error adding ethernet header\n");
+		return ret;
+	}
+
+    /* Add IP header to packet */
+    memcpy(skb->data, &hdr, sizeof(struct ip_header));
+    skb->len += hdr.ihl * 4;
+    skb->data += hdr.ihl * 4;
+
+    return 0;
 }
 
 /**
@@ -84,43 +70,44 @@ int ip_add_header(struct sk_buff* skb, uint32_t ip, uint8_t proto, uint32_t leng
  * @param skb skb packet to parse
  * @return int 
  */
-int ip_parse(struct sk_buff* skb)
+int net_ipv4_parse(struct sk_buff* skb)
 {
     struct ip_header* hdr = (struct ip_header* ) skb->data;
+    int hdr_len = hdr->ihl*4;
     skb->hdr.ip = hdr;
 
     /**
      * @brief Calculate checksum of IP packet
      * and validate that it is correct.
      */
-    uint16_t csum = checksum(hdr, hdr->ihl * 4, 0);
+    uint16_t csum = checksum(hdr, hdr_len, 0);
     if(0 != csum){
-        dbgprintf("[IP] Checksum failed (IPv4)\n");
-        return 0;
+        dbgprintf("Checksum failed (IPv4)\n");
+        return -1;
     }
 
     IP_NTOHL(hdr);
-    skb->data = skb->data+(skb->hdr.ip->ihl*4);
+    skb->data = skb->data+hdr_len;
 
     if(BROADCAST_IP != ntohl(skb->hdr.ip->daddr) && ntohl(skb->hdr.ip->daddr) != (uint32_t)dhcp_get_ip()){
-        dbgprintf("[IP] IP mismatch: %d %d\n", skb->hdr.ip->daddr, dhcp_get_ip());
-        return 0; /* Currently only accept broadcast packets. */
+        dbgprintf("IP mismatch: %d %d\n", skb->hdr.ip->daddr, dhcp_get_ip());
+        return -1; /* Currently only accept broadcast packets. */
     }
 
     char mac[6];
-    int arp = arp_find_entry(hdr->saddr, (uint8_t*)&mac);
-    if(arp == 0)
-    {
-        struct arp_content content;
-        content.sip = hdr->saddr;
+    int arp = net_arp_find_entry(hdr->saddr, (uint8_t*)&mac);
+    if(arp < 0){
+        struct arp_content content = {
+            .sip = hdr->saddr
+        };
 
         struct ethernet_header* ehdr= (struct ethernet_header*) skb->head;
         memcpy(&content.smac, ehdr->smac, 6);
 
-        arp_add_entry(&content);
+        net_arp_add_entry(&content);
     }
 
     dbgprintf("[IPv%d] from %i, len: %d, id: %d\n", hdr->version, hdr->saddr, hdr->len, hdr->id);
 
-    return 1;
+    return 0;
 }

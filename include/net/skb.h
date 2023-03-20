@@ -7,22 +7,9 @@
 #include <net/utils.h>
 #include <util.h>
 
-enum sk_stage {
-    UNUSED,
-	NEW_SKB,
-	IN_PROGRESS,
-	DONE
-};
-
-enum sk_action {
-    SEND,
-    RECIEVE
-};
-
 struct sk_buff {
 
     struct sk_buff* next;
-
     struct netdev* netdevice;
 
     struct {
@@ -43,14 +30,8 @@ struct sk_buff {
     uint8_t* tail;
     uint8_t* data;
     uint8_t* end;
-
-    uint8_t stage;
-    uint8_t action;
 };
 
-#define MAX_SKBUFFERS 0x200
-
-/* new SKB api */
 struct skb_queue;
 struct skb_queue_operations {
 	/*Adds a new network packet to the end of the packet queue.*/
@@ -75,12 +56,6 @@ void skb_free_queue(struct skb_queue* queue);
 
 struct sk_buff* skb_new();
 void skb_free(struct sk_buff* skb);
-
-
-
-void init_sk_buffers();
-struct sk_buff* get_skb();
-struct sk_buff* next_skb();
 
 #define ALLOCATE_SKB(skb)               \
     (skb)->data = kalloc(0x600);         \

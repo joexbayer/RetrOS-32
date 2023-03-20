@@ -60,7 +60,6 @@ void kernel(uint32_t magic)
 	init_pci();
 	init_worker();
 
-	init_sk_buffers();
 	init_arp();
 	init_sockets();
 	init_dns();

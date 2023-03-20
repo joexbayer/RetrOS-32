@@ -52,12 +52,12 @@ struct arp_entry
 }__attribute__((packed));
 
 uint8_t arp_parse(struct sk_buff* skb);
-int arp_find_entry(uint32_t ip, uint8_t* mac);
+int net_arp_find_entry(uint32_t ip, uint8_t* mac);
 void init_arp();
 
 /* For testing. */
-void arp_request();
-int arp_add_entry(struct arp_content* arp);
+void net_net_arp_request();
+int net_arp_add_entry(struct arp_content* arp);
 
 #define ARP_FILL_HEADER(header, type) \
     header.opcode = type; \

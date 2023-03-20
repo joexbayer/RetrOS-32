@@ -1,21 +1,14 @@
 #include <net/icmp.h>
+#include <net/net.h>
+#include <serial.h>
 #include <net/skb.h>
-#include <terminal.h>
 #include <net/dns.h>
 
-
-void icmp_print(struct sk_buff* skb)
+void net_icmp_handle(struct sk_buff* skb)
 {
-    //twritef("Ping reply from %i: icmp_seq= %d ttl=64\n", skb->hdr.ip->saddr, skb->hdr.icmp->sequence/256);
-}
-
-void icmp_handle(struct sk_buff* skb)
-{
-    // ICMP reply setup
-    icmp_print(skb);
-
     if(skb->hdr.icmp->type != ICMP_V4_ECHO)
         return;
+    dbgprintf("Ping reply from %i: icmp_seq= %d ttl=64\n", skb->hdr.ip->saddr, skb->hdr.icmp->sequence/256);
 
     skb->hdr.icmp->type = ICMP_REPLY;
     skb->hdr.icmp->csum = 0;
@@ -24,42 +17,42 @@ void icmp_handle(struct sk_buff* skb)
     struct icmp response;
     memcpy(&response, &skb->hdr.icmp, sizeof(struct icmp));
 
-    struct sk_buff* skb_new = get_skb();
-    ALLOCATE_SKB(skb_new);
-    skb_new->stage = IN_PROGRESS;
+    struct sk_buff* _skb = skb_new();
 
-    if(ip_add_header(skb_new, skb->hdr.ip->saddr, ICMPV4, sizeof(struct icmp)) <= 0)
+    if(net_ipv4_add_header(_skb, skb->hdr.ip->saddr, ICMPV4, sizeof(struct icmp)) < 0){
+        skb_free(_skb);
 	    return;
+    }
 
-    memcpy(skb_new->data, &response, sizeof(struct icmp));
+    memcpy(_skb->data, &response, sizeof(struct icmp));
 
-	skb_new->len += sizeof(struct icmp);
-	skb_new->data += sizeof(struct icmp);
+	_skb->len += sizeof(struct icmp);
+	_skb->data += sizeof(struct icmp);
 	
-	skb_new->stage = NEW_SKB;
-	skb_new->action = SEND;
+	net_send_skb(_skb);
 }  
 
-int icmp_response()
+int net_icmp_response()
 {
     return 1;
 }
 
-int icmp_request(uint32_t ip)
+int net_icmp_request(uint32_t ip)
 {
-    struct sk_buff* skb = get_skb();
-    ALLOCATE_SKB(skb);
-    skb->stage = IN_PROGRESS;
+    struct sk_buff* skb = skb_new();
 
-    struct icmp ping;
-    ping.type = ICMP_V4_ECHO;
-    ping.code = 0;
-    ping.id = 0;
-    ping.sequence = 0;
-    ping.csum = 0;
+    struct icmp ping = {
+        .type = ICMP_V4_ECHO,
+        .code = 0,
+        .id = 0,
+        .sequence = 0,
+        .csum = 0
+    };
 
-    if(ip_add_header(skb, ip, ICMPV4, sizeof(struct icmp)) <= 0)
+    if(net_ipv4_add_header(skb, ip, ICMPV4, sizeof(struct icmp)) < 0){
+        skb_free(skb);
 		return -1;
+    }
 
     ICMP_NTOHS(&ping);
     ping.csum = checksum(&ping, sizeof(struct icmp), 0);
@@ -69,10 +62,9 @@ int icmp_request(uint32_t ip)
 	skb->len += sizeof(struct icmp);
 	skb->data += sizeof(struct icmp);
 	
-	skb->stage = NEW_SKB;
-	skb->action = SEND;
+	net_send_skb(skb);
 
-    return 1;
+    return 0;
 }
 
 void ping(char* hostname)
@@ -87,10 +79,10 @@ void ping(char* hostname)
         ip = htonl(ip_to_int(hostname));
     }
 
-    icmp_request(htonl(ip));
+    net_icmp_request(htonl(ip));
 }
 
-int icmp_parse(struct sk_buff* skb)
+int net_icmp_parse(struct sk_buff* skb)
 {
     struct icmp* icmp_hdr = (struct icmp * ) skb->data;
     skb->hdr.icmp = icmp_hdr;
@@ -99,12 +91,9 @@ int icmp_parse(struct sk_buff* skb)
     // calculate checksum, should be 0.
     uint16_t csum_icmp = checksum(icmp_hdr, skb->len, 0);
     if( 0 != csum_icmp){
-        return 0;
+        return -1;
     }
-
     ICMP_HTONS(icmp_hdr);
 
-    icmp_handle(skb);
-
-    return 1;
+    return 0;
 }

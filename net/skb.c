@@ -14,8 +14,6 @@
 #include <sync.h>
 #include <assert.h>
 
-static struct sk_buff sk_buffers[MAX_SKBUFFERS]; /* depricated */
-
 static int __skb_queue_add(struct skb_queue* skb_queue, struct sk_buff* skb);
 static struct sk_buff* __skb_queue_remove(struct skb_queue* skb_queue);
 struct skb_queue_operations skb_queue_ops = {
@@ -111,50 +109,3 @@ struct sk_buff* skb_new()
 
 	return new;
 }
-
-
-static mutex_t skb_mutex;
-void init_sk_buffers()
-{
-	mutex_init(&skb_mutex);
-
-	for (uint16_t i = 0; i < MAX_SKBUFFERS; i++)
-	{
-		sk_buffers[i].stage = UNUSED;
-		sk_buffers[i].netdevice = &current_netdev;
-	}
-	dbgprintf("[sk_buff] Total size of buffers %d\n", sizeof(struct sk_buff)*MAX_SKBUFFERS);
-}
-
-struct sk_buff* next_skb()
-{
-	acquire(&skb_mutex);
-
-	int16_t i;
-	for (i = 0; i < MAX_SKBUFFERS; i++)
-		if(sk_buffers[i].stage == NEW_SKB){
-			release(&skb_mutex);
-			//STI();
-			return &sk_buffers[i];
-		}
-	
-	release(&skb_mutex);
-
-	return NULL;
-}
-
-struct sk_buff* get_skb()
-{
-	acquire(&skb_mutex);
-	
-	int16_t i;
-	for (i = 0; i < MAX_SKBUFFERS; i++)
-		if(sk_buffers[i].stage == UNUSED){
-			release(&skb_mutex);
-			return &sk_buffers[i];
-		}
-
-	release(&skb_mutex);
-	return NULL;
-}
-

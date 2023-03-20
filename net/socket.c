@@ -243,16 +243,11 @@ int sendto(int socket, const void *message, int length, int flags, const struct 
     if(socket_table[socket]->bound_port == 0)
         __socket_bind(socket, __get_free_port(), INADDR_ANY);
 
-    /* Get new SKB for packet. */
-	struct sk_buff* skb = get_skb();
-    ALLOCATE_SKB(skb);
-    skb->stage = IN_PROGRESS;
-
     /* Forward packet to specified protocol. */
     switch (socket_table[socket]->type)
     {
     case SOCK_DGRAM:
-        if(udp_send(skb, (char*) message, BROADCAST_IP, addr->sin_addr.s_addr, ntohs(socket_table[socket]->bound_port), ntohs(addr->sin_port), length) <= 0)
+        if(net_udp_send((char*) message, BROADCAST_IP, addr->sin_addr.s_addr, ntohs(socket_table[socket]->bound_port), ntohs(addr->sin_port), length) <= 0)
             return 0;
         break;
 

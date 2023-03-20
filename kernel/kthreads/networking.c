@@ -65,9 +65,7 @@ static void __net_transmit_skb(struct sk_buff* skb)
 int net_drop_packet(struct sk_buff* skb)
 {
     current_netdev.dropped++;
-    
     skb_free(skb);
-
     return 0;
 }
 
@@ -75,23 +73,21 @@ int net_handle_recieve(struct sk_buff* skb)
 {
     int ret;
 
-    if(!ethernet_parse(skb))
-        return net_drop_packet(skb);
-
+    if(net_ethernet_parse(skb) < 0) return net_drop_packet(skb);
     switch(skb->hdr.eth->ethertype){
         /* Ethernet type is IP */
         case IP:
-            if(!ip_parse(skb))
-                return net_drop_packet(skb);
-            
+            if(net_ipv4_parse(skb) < 0) return net_drop_packet(skb);
             switch (skb->hdr.ip->proto)
             {
             case UDP:
-                ret = udp_parse(skb);
+                ret = net_udp_parse(skb);
                 break;
             
             case ICMPV4:
-                ret = icmp_parse(skb);
+                if(net_icmp_parse(skb) < 0) return net_drop_packet(skb);
+                net_icmp_handle(skb);
+                skb_free(skb);
                 break;
             default:
                 return net_drop_packet(skb);
@@ -100,18 +96,15 @@ int net_handle_recieve(struct sk_buff* skb)
 
         /* Ethernet type is ARP */
         case ARP:
-            if(!arp_parse(skb))
-                return net_drop_packet(skb);
-
+            if(arp_parse(skb) < 0) return net_drop_packet(skb);
             // send arp response.
             dbgprintf("Recieved ARP packet.\n");
+            skb_free(skb);
             break;
 
         default:
             return net_drop_packet(skb);
     }
-
-    skb_free(skb);
 
     return 1;
 }
