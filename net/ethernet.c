@@ -9,6 +9,7 @@
  * 
  */
 #include <net/ethernet.h>
+#include <serial.h>
 
 int net_ethernet_add_header(struct sk_buff* skb, uint32_t ip)
 {
@@ -23,7 +24,9 @@ int net_ethernet_add_header(struct sk_buff* skb, uint32_t ip)
     memcpy(&e_hdr.smac, current_netdev.mac, 6);
     memcpy(skb->data, &e_hdr, ETHER_HDR_LENGTH);
     skb->data += ETHER_HDR_LENGTH;
-    
+
+    dbgprintf("Added Ethernet header\n");
+
     return 0;
 }
 

@@ -19,10 +19,6 @@
 
 #include <serial.h>
 
-#define MAX_NUMBER_OF_SOCKETS 128
-#define DYNAMIC_PORT_START 49152
-#define NUMBER_OF_DYMANIC_PORTS 16383
-
 static struct sock** socket_table;
 static int total_sockets;
 static bitmap_t port_map;
@@ -43,67 +39,36 @@ static bitmap_t socket_map;
  * 
  */
 
-inline static uint16_t __get_free_port()
+inline static unsigned short __get_free_port()
 {
     return ntohs(get_free_bitmap(port_map, NUMBER_OF_DYMANIC_PORTS) + DYNAMIC_PORT_START);
 }
 
-inline static void __socket_bind(int socket, uint16_t port, uint32_t ip)
+void net_sock_bind(struct sock* socket, unsigned short port, unsigned int ip)
 {
-    socket_table[socket]->bound_ip = ip;
-    /* if given port is 0 chose a random one. */
-    socket_table[socket]->bound_port = port == 0 ? __get_free_port() : port;
+    socket->bound_ip = ip;
+    socket->bound_port = port == 0 ? __get_free_port() : port;
 }
 
 
-/**
- * @brief Adds a packets buffer to the sockets buffer, also confirms its lenght.
- * 
- * @param buffer Buffer to copy into sock.
- * @param len Length of buffer.
- * @param socket_index Index of socket to add buffer too.
- * @return int 
- */
-static int __sock_add_packet(char* buffer, uint16_t len, int socket_index)
+static int __sock_add_skb(struct sock* socket, struct sk_buff* skb)
 {
-    acquire(&socket_table[socket_index]->sock_lock);
-
-    int next = socket_table[socket_index]->next_write_buffer;
-    if(socket_table[socket_index]->buffer_lens[next] > 0){
-        release(&socket_table[socket_index]->sock_lock);
-        dbgprintf("[SOCKET] next was not empty! %d\n", socket_table[socket_index]->buffer_lens[next]);
-        return -1; /* TODO: Something is wrong if next is already filled... */
-    
-    }
-
-    /* If a free buffer exist add packet to buffer. */
-    memcpy(socket_table[socket_index]->buffers[next], buffer, len);
-    socket_table[socket_index]->buffer_lens[next] = len;
-
-    socket_table[socket_index]->next_write_buffer = (socket_table[socket_index]->next_write_buffer + 1) % BUFFERS_PER_SOCKET;
-
-    release(&socket_table[socket_index]->sock_lock);
-    return 1;
+    LOCK(socket, {
+        /* The queue itself is already spinlock protected */
+        socket->skb_queue->ops->add(socket->skb_queue, skb);
+    });
+    return 0;
 }
 
-inline static int __sock_read_packet(int index, char* buffer)
+int net_sock_read_skb(struct sock* socket, char* buffer)
 {
-    acquire(&socket_table[index]->sock_lock);
+    int read = -1;
+    struct sk_buff* skb = socket->skb_queue->ops->remove(socket->skb_queue);
+    if(skb == NULL) return read;
+    read = skb->data_len;
+    memcpy(buffer, skb->data, read);
+    skb_free(skb);
 
-    /* If no packet is avaiable return -1 */
-    int next = socket_table[index]->last_read_buffer;
-    if(socket_table[index]->buffer_lens[next] <= 0){
-        release(&socket_table[index]->sock_lock);
-        return -1;
-    }
-    
-    /* Copy packet over to given buffer and move to next. */
-    int read = socket_table[index]->buffer_lens[next];
-    memcpy(buffer, socket_table[index]->buffers[next], read);
-    socket_table[index]->buffer_lens[next] = 0;
-    socket_table[index]->last_read_buffer = (socket_table[index]->last_read_buffer + 1) % BUFFERS_PER_SOCKET;
-
-    release(&socket_table[index]->sock_lock);
     return read;
 }
 
@@ -111,82 +76,6 @@ inline static int __sock_read_packet(int index, char* buffer)
 int get_total_sockets()
 {
     return total_sockets;
-}
-
-/**
- * @brief Binds a IP and Port to a socket, mainly used for the server side.
- * 
- * @param socket socket to bind
- * @param address Address to bind
- * @param address_len lenght of bind.
- * @return int 
- */
-int bind(int socket, const struct sockaddr *address, socklen_t address_len)
-{
-    if(socket < 0 || socket > total_sockets)
-        return -1;
-    
-    /*Cast sockaddr back to sockaddr_in. Cast originally to comply with linux implementation.*/
-    struct sockaddr_in* addr = (struct sockaddr_in*) address;
-
-    __socket_bind(socket, addr->sin_port, addr->sin_addr.s_addr);
-
-    return 1;
-}
-
-
-/**
- * @brief Reads data from socket and creates a sockaddr of sender. 
- * Mainly used for UDP.
- * @param socket Socket to read from
- * @param buffer Buffer to store message.
- * @param length length of buffer.
- * @param flags Flags..
- * @param address sockaddr of sender.
- * @param address_len length of address.
- * @return int 
- */ 
-int recvfrom(int socket, void *buffer, int length, int flags, struct sockaddr *address, socklen_t *address_len)
-{
-    /* */
-    return 0;
-}
-
-/**
- * @brief Simple recieve on socket without sockaddr.
- * 
- * @param socket Socket to read from
- * @param buffer Buffer to copy data into
- * @param length Max length to copy.
- * @param flags flags..
- * @return int 
- */
-int recv(int socket, void *buffer, int length, int flags)
-{
-    int read = -1;
-    while(read == -1) /* TODO: Block, instead of spinning. */
-    {
-        read = __sock_read_packet(socket, buffer);
-    }
-
-    return read;
-}
-
-int recv_timeout(int socket, void *buffer, int length, int flags, int timeout)
-{
-    int time_start = get_time();
-
-    int read = -1;
-    while(read == -1) /* TODO: Block, instead of spinning. */
-    {
-        if(get_time() - time_start > timeout+3)
-            return 0;
-
-        read = __sock_read_packet(socket, buffer);
-    }
-
-    return read;
-
 }
 
 struct sock* sock_find_listen_tcp(uint16_t d_port)
@@ -221,71 +110,27 @@ struct sock* sock_find_net_tcp(uint16_t s_port, uint16_t d_port)
     return _sk;
 }
 
-/**
- * @brief Sends data to reciever defined by sockaddr.
- * 
- * @param socket Socket used to send.
- * @param message buffer to send.
- * @param length length of message
- * @param flags flags..
- * @param dest_addr sockaddr defining reciever.
- * @param dest_len lenght of dest_addr.
- * @return int 
- */
-int sendto(int socket, const void *message, int length, int flags, const struct sockaddr *dest_addr, socklen_t dest_len)
-{
-    /* Flags are ignored... for now. */
-    if(socket < 0 || socket > total_sockets)
-        return -1;
 
-    /* Cast sockaddr back to sockaddr_in. Cast originally to comply with linux implementation.*/
-    struct sockaddr_in* addr = (struct sockaddr_in*) dest_addr;
-    if(socket_table[socket]->bound_port == 0)
-        __socket_bind(socket, __get_free_port(), INADDR_ANY);
-
-    /* Forward packet to specified protocol. */
-    switch (socket_table[socket]->type)
-    {
-    case SOCK_DGRAM:
-        if(net_udp_send((char*) message, BROADCAST_IP, addr->sin_addr.s_addr, ntohs(socket_table[socket]->bound_port), ntohs(addr->sin_port), length) <= 0)
-            return 0;
-        break;
-
-    case SOCK_STREAM:
-        /* TODO */
-        break;
-
-    default:
-        return -1;
-    }
-
-    return length;
-}
-
-
-/**
- * @brief Interface for UDP to add packet to socket if it exists.
- * @todo: Instead of passing IP and Port, pass socketaddr
- * @param ip Destination ip
- * @param port Desination port
- * @param buffer buffer to copy over to socket.
- * @param len lenght of buffer.
- * @return int 
- */
-int udp_deliver_packet(uint32_t ip, uint16_t port, char* buffer, uint16_t len) 
+int net_socket_add_skb(struct sk_buff* skb, unsigned short port) 
 {   
     /* Interate over sockets and add packet if socket exists with matching port and IP */
-    for (int i = 0; i < total_sockets; i++)
-        if(socket_table[i]->bound_port == htons(port) && (socket_table[i]->bound_ip == ip || socket_table[i]->bound_ip == INADDR_ANY))
-            return __sock_add_packet(buffer, len, i);
+    for (int i = 0; i < total_sockets; i++){
+        if(socket_table[i] == NULL)
+            continue;
 
+        if(socket_table[i]->bound_port == htons(port) && (socket_table[i]->bound_ip == skb->hdr.ip->daddr || socket_table[i]->bound_ip == INADDR_ANY)) {
+            return __sock_add_skb(socket_table[i], skb);
+        }
+    }
     return -1;
 }
 
-void close(socket_t socket)
+void kernel_sock_close(struct sock* socket)
 {
-    kfree((void*) socket_table[socket]);
-    unset_bitmap(socket_map, (int) socket);
+    dbgprintf("Closing socket...\n");
+    skb_free_queue(socket->skb_queue);
+    kfree((void*) socket);
+    unset_bitmap(socket_map, (int)socket->socket);
     total_sockets--;
 }
 
@@ -297,7 +142,7 @@ void close(socket_t socket)
  * @param protocol Protocol (UDP / TCP)
  * @return socket_t 
  */
-socket_t socket(int domain, int type, int protocol)
+struct sock* kernel_socket(int domain, int type, int protocol)
 {
     //int current = get_free_bitmap(socket_map, MAX_NUMBER_OF_SOCKETS);
     int current = get_free_bitmap(socket_map, MAX_NUMBER_OF_SOCKETS);
@@ -309,26 +154,23 @@ socket_t socket(int domain, int type, int protocol)
     socket_table[current]->type = type;
     socket_table[current]->socket = current;
     socket_table[current]->bound_port = 0;
-    socket_table[current]->last_read_buffer = 0;
-    socket_table[current]->next_write_buffer = 0;
 
-    for (int i = 0; i < BUFFERS_PER_SOCKET; i++)
-    {
-        socket_table[current]->buffer_lens[i] = 0;
-    }
-    
+    socket_table[current]->skb_queue = skb_new_queue();
 
-    mutex_init(&(socket_table[current]->sock_lock));
+    mutex_init(&(socket_table[current]->lock));
 
     total_sockets++;
-    return (socket_t) current;
+
+    dbgprintf("Created new sock\n");
+
+    return socket_table[current];
 }
 
-int accept(int socket, struct sockaddr *address, socklen_t *address_len)
+int kernel_accept(struct sock* socket, struct sockaddr *address, socklen_t *address_len)
 {
 
     /* accept: only is valid in a TCP connection context. */
-    if(!tcp_is_listening(socket_table[socket]))
+    if(!tcp_is_listening(socket))
         return -1;
     
 
@@ -337,18 +179,18 @@ int accept(int socket, struct sockaddr *address, socklen_t *address_len)
     return -1;
 }
 
-int connect(int socket, const struct sockaddr *address, socklen_t address_len)
+int kernel_connect(struct sock* socket, const struct sockaddr *address, socklen_t address_len)
 {
     
     return -1;
 }
 
-int listen(int socket, int backlog)
+int kernel_listen(struct sock* socket, int backlog)
 {
-    return tcp_set_listening(socket_table[socket], backlog);
+    return tcp_set_listening(socket, backlog);
 }
 
-int send(int socket, const void *message, int length, int flags)
+int kernel_send(struct sock* socket, const void *message, int length, int flags)
 {
     return -1;
 }

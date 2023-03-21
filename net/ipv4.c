@@ -61,6 +61,8 @@ int net_ipv4_add_header(struct sk_buff* skb, uint32_t ip, uint8_t proto, uint32_
     skb->len += hdr.ihl * 4;
     skb->data += hdr.ihl * 4;
 
+    dbgprintf("Added IPv4 header.\n");
+
     return 0;
 }
 

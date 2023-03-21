@@ -11,15 +11,15 @@
 #include <net/dns.h>
 #include <net/dhcp.h>
 #include <net/socket.h>
+#include <net/net.h>
 #include <sync.h>
 #include <serial.h>
 
-#include <terminal.h>
-
 #include <util.h>
 
+#define DNS_PORT 53
+
 static struct dns_cache __dns_cache[DNS_CACHE_ENTRIES];
-//static socket_t __dns_socket;
 static mutex_t __dns_mutex;
 
 void init_dns();
@@ -34,7 +34,6 @@ void init_dns()
     }
 
     mutex_init(&__dns_mutex);
-
 }
 
 static void __dns_name_compresion(uint8_t* request, char* host) 
@@ -74,14 +73,14 @@ int gethostname(char* hostname)
 {
 
     if(dhcp_get_state() == DHCP_STOPPED){
-        //twriteln("[DNS] Unable to resolve hostname. No IP.");
+        dbgprintf("[DNS] Unable to resolve hostname. No IP.");
         return -1;
     }
 
     /* Check for cache first. */
     for (int i = 0; i < DNS_CACHE_ENTRIES; i++)
         if(memcmp((uint8_t*) &__dns_cache[i].name,(uint8_t*) hostname, strlen(hostname)) == 0){
-            //twritef("[DNS] (%s at %i) (cache)\n", hostname, __dns_cache[i].ip);
+            dbgprintf("[DNS] (%s at %i) (cache)\n", hostname, __dns_cache[i].ip);
             return __dns_cache[i].ip;
         }
 
@@ -90,7 +89,7 @@ int gethostname(char* hostname)
     memcpy(hostname_save, hostname, strlen(hostname)+1);
     //acquire(&__dns_mutex);
 
-    socket_t __dns_socket = socket(AF_INET, SOCK_DGRAM, 0);
+    struct sock* __dns_socket = kernel_socket(AF_INET, SOCK_DGRAM, 0);
 
     uint8_t buf[2048]; /* Can be replaced with alloc. */
     struct dns_header* request;
@@ -109,16 +108,16 @@ int gethostname(char* hostname)
 
     struct sockaddr_in dest;
     dest.sin_family = AF_INET;
-    dest.sin_port = htons(53);
+    dest.sin_port = htons(DNS_PORT);
     dest.sin_addr.s_addr = htonl(dhcp_get_dns());
 
     int question_size = sizeof(struct dns_header) + (strlen((const char*)question)+1) + sizeof(struct dns_question);
  
-    sendto(__dns_socket, (char*)buf, question_size, 0, (struct sockaddr*)&dest, sizeof(dest));
-    int ret = recv(__dns_socket, buf, 2048, 0);
+    kernel_sendto(__dns_socket, (char*)buf, question_size, 0, (struct sockaddr*)&dest, sizeof(dest));
+    int ret = kernel_recv(__dns_socket, buf, 2048, 0);
     if(ret <= 0){
-        //release(&__dns_mutex);
-        close(__dns_socket);
+        dbgprintf("Failed DNS lookup\n");
+        kernel_sock_close(__dns_socket);
         return 0;
     }
     
@@ -157,7 +156,7 @@ int gethostname(char* hostname)
         {
             dbgprintf("[DNS] Unable to resolve hostname.");
             //release(&__dns_mutex);
-            close(__dns_socket);
+            kernel_sock_close(__dns_socket);
             return -1;
         }
 
@@ -165,7 +164,7 @@ int gethostname(char* hostname)
 
         __dns_add_cache(hostname_save, result);
 
-        close(__dns_socket);
+        kernel_sock_close(__dns_socket);
 
         //release(&__dns_mutex);
 

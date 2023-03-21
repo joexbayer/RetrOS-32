@@ -10,18 +10,19 @@
  */
 
 #include <net/dhcp.h>
-#include <scheduler.h>
+#include <net/net.h>
 #include <net/socket.h>
 #include <net/ipv4.h>
-#include <terminal.h>
+#include <net/dns.h>
+
+#include <scheduler.h>
 #include <memory.h>
 #include <util.h>
 #include <serial.h>
 
-#include <net/dns.h>
 
 static struct dhcp_state dhcp_state;
-char* dhcp_state_names[4] = {"FAILED", "SUCCESS", "PENDING", "Not Running"};
+char* dhcp_state_names[4] = {"FAILED", "SUCCESS", "PENDING", "STOPPED"};
 
 /**
  * @brief Adds a option the options part of the DHCP struct.
@@ -59,7 +60,6 @@ static int __dhcp_add_option(struct dhcp* dhcp, int offset, uint8_t opcode, uint
 
 static int __dhcp_get_option(struct dhcp* dhcp, uint8_t opcode)
 {
-    //twritef("Default: %x\n", dhcp->dhcp_cookie);
     int offset = 0;
     uint8_t* ptr = (uint8_t*) &(dhcp->dhcp_options[0]);
 
@@ -75,20 +75,13 @@ static int __dhcp_get_option(struct dhcp* dhcp, uint8_t opcode)
             switch (opsz)
             {
             case 1:
-                return *ptr;
-                break;
-            
+                return *ptr;            
             case 2:
                 return *((uint16_t*) ptr);
-                break;
-            
             case 4:
                 return *((uint32_t*) ptr);;
-                break;
-            
             default:
                 return -1;
-                break;
             }
         }
         
@@ -96,7 +89,7 @@ static int __dhcp_get_option(struct dhcp* dhcp, uint8_t opcode)
         offset += opsz + 2;
     }
 
-    return 0;
+    return -1;
 }
 
 /**
@@ -105,26 +98,24 @@ static int __dhcp_get_option(struct dhcp* dhcp, uint8_t opcode)
  * @param socket Socket to send with.
  * @return int 
  */
-static int __dhcp_send_discovery(socket_t socket)
+static int __dhcp_send_discovery(struct sock* socket)
 {
     int optoff = 0;
     int opt1 = 1;
     int opt0 = 0;
+    struct sockaddr_in addr;
     struct dhcp dhcp_disc;
+
     DHCP_DISCOVERY((&dhcp_disc));
 
     optoff += __dhcp_add_option(&dhcp_disc, optoff,  53, 1, (uint8_t *) &opt1);
     optoff += __dhcp_add_option(&dhcp_disc, optoff, 255, 0, (uint8_t *) &opt0);
 
-    //twritef("%d %d\n", optoff, sizeof(dhcp_disc));
-
-    struct sockaddr_in addr;
     addr.sin_port = htons(DHCP_DEST_PORT);
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = BROADCAST_IP;
-    int ret = sendto(socket, &dhcp_disc, sizeof(dhcp_disc), 0, (struct sockaddr*) &addr, 0);
 
-    return ret;
+    return kernel_sendto(socket, &dhcp_disc, sizeof(dhcp_disc), 0, (struct sockaddr*) &addr, 0);
 }
 
 /**
@@ -133,11 +124,12 @@ static int __dhcp_send_discovery(socket_t socket)
  * @param socket Socker to send with.
  * @return int 
  */
-static int __dhcp_send_request(socket_t socket)
+static int __dhcp_send_request(struct sock* socket)
 {
     int optoff = 0;
     int opt3 = 3;
     int opt0 = 0;
+    struct sockaddr_in addr;
     struct dhcp dhcp_req;
     DHCP_REQUEST((&dhcp_req), dhcp_state.gateway, dhcp_state.ip);
 
@@ -146,14 +138,11 @@ static int __dhcp_send_request(socket_t socket)
     optoff  += __dhcp_add_option(&dhcp_req, optoff, 54,  4, (uint8_t *) &dhcp_state.gateway);
     optoff  += __dhcp_add_option(&dhcp_req, optoff, 255, 0, (uint8_t *) &opt0);
 
-    struct sockaddr_in addr;
     addr.sin_port = htons(DHCP_DEST_PORT);
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = BROADCAST_IP;
 
-    int ret = sendto(socket, &dhcp_req, sizeof(dhcp_req), 0, (struct sockaddr*) &addr, 0);
-
-    return ret;
+    return kernel_sendto(socket, &dhcp_req, sizeof(dhcp_req), 0, (struct sockaddr*) &addr, 0);
 }
 
 /**
@@ -173,7 +162,7 @@ static void __dhcp_handle_offer(struct dhcp* offer)
     dhcp_state.gateway = server_ip;
     dhcp_state.state = DHCP_SUCCESS;
 
-    //twriteln("[DHCP] Recieved IP.");
+    dbgprintf("[DHCP] Recieved IP.\n");
 }
 
 int dhcp_get_state()
@@ -208,57 +197,63 @@ void dhcpd()
     if(dhcp_state.state == DHCP_SUCCESS)
         return;
 
+    dbgprintf("DHCPD\n");
+
     int ret;
     /* Create and bind DHCP socket to DHCP_SOURCE_PORT and INADDR_ANY. */
-    socket_t dhcp_socket = socket(AF_INET, SOCK_DGRAM, 0);
+    struct sock* dhcp_socket = kernel_socket(AF_INET, SOCK_DGRAM, 0);
+    struct sockaddr_in dest_addr;
+
     dhcp_state.state = DHCP_PENDING;
 
-    struct sockaddr_in dest_addr;
     dest_addr.sin_addr.s_addr = INADDR_ANY;
     dest_addr.sin_port = htons(DHCP_SOURCE_PORT);
     dest_addr.sin_family = AF_INET;
 
-    if(bind(dhcp_socket, (struct sockaddr*) &dest_addr, sizeof(dest_addr)) < 0)
+    if(kernel_bind(dhcp_socket, (struct sockaddr*) &dest_addr, sizeof(dest_addr)) < 0)
         goto dhcp_error;
-
 
     /* Send first discovery packet */
+    dbgprintf("Sending discovery...\n");
     ret = __dhcp_send_discovery(dhcp_socket);
-    if(ret <= 0)
+    if(ret < 0)
         goto dhcp_error;
 
-    
     char buffer[2048];
-    int read = recv_timeout(dhcp_socket, &buffer, 2048, 0, 2);
-    while(read <= 0){
+    int read = kernel_recv_timeout(dhcp_socket, &buffer, 2048, 0, 300);
+    while(read < 0){
         __dhcp_send_discovery(dhcp_socket);
-        read = recv_timeout(dhcp_socket, &buffer, 2048, 0, 2);
+        read = kernel_recv_timeout(dhcp_socket, &buffer, 2048, 0, 300);
     }
 
+     dbgprintf("DHCPD\n");
     struct dhcp* offer = (struct dhcp*) &buffer;
     __dhcp_handle_offer(offer);
 
+    dbgprintf("Received offer...\n");
+
     /* Send request after offer was recieved.*/
     ret = __dhcp_send_request(dhcp_socket);
-    if(ret <= 0)
+    if(ret < 0)
         goto dhcp_error;
 
-    read = recv_timeout(dhcp_socket, &buffer, 2048, 0, 2);
+    dbgprintf("Sending request...\n");
+    read = kernel_recv(dhcp_socket, &buffer, 2048, 0);
     while(read <= 0){
         __dhcp_send_request(dhcp_socket);
-        read = recv_timeout(dhcp_socket, &buffer, 2048, 0, 2);
+        read = kernel_recv(dhcp_socket, &buffer, 2048, 0);
     }
-    //twriteln("DHCP done!");
 
     dbgprintf("[DHCP] IP: %i\n[DHCP] GW: %i\n[DHCP] DNS: %i\n[DHCP] State: %s\n", dhcp_state.ip, dhcp_state.gateway, dhcp_state.dns);
     
-    close(dhcp_socket);
+    kernel_sock_close(dhcp_socket);
     
     kernel_exit();
 
 dhcp_error:
+    dbgprintf("DCHP ERROR\n");
     dhcp_state.state = DHCP_FAILED;
-    close(dhcp_socket);
+    kernel_sock_close(dhcp_socket);
     kernel_exit();
     while(1);
 }

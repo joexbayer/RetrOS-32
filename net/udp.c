@@ -13,13 +13,16 @@
 #include <net/ipv4.h>
 #include <net/net.h>
 #include <net/socket.h>
+#include <assert.h>
 
 #include <serial.h>
 
 
 int net_udp_send(char* data, uint32_t sip, uint32_t dip, uint16_t sport, uint16_t dport, uint32_t length)
 {
+	dbgprintf("Preparing to send UDP packet\n");
 	struct sk_buff* skb = skb_new();
+	assert(skb != NULL);
 
 	struct udp_header hdr = {
 		.destport = dport,
@@ -44,6 +47,8 @@ int net_udp_send(char* data, uint32_t sip, uint32_t dip, uint16_t sport, uint16_
 	skb->len += sizeof(struct udp_header) + length;
 	skb->data += sizeof(struct udp_header) + length;
 	
+	dbgprintf("Sending UDP packet.\n");
+
 	net_send_skb(skb);
 	return 0;
 }
@@ -63,14 +68,14 @@ int net_udp_parse(struct sk_buff* skb){
 	UDP_NTOHS(hdr);
 
 	int payload_size = skb->hdr.udp->udp_length-sizeof(struct udp_header);
+	skb->data_len = payload_size;
 
-	int ret = udp_deliver_packet(skb->hdr.ip->daddr, skb->hdr.udp->destport, (char*)skb->data, payload_size);
-	if(ret <= 0){
-		
-		dbgprintf("[UDP][Warning] socket buffer full!! %d\n", ret);
+	int ret = net_socket_add_skb(skb, skb->hdr.udp->destport);
+	if(ret < 0){
+		dbgprintf("Unable to deliver skb to socket: %d\n", ret);
 	}
 		
 	dbgprintf("PORT %d -> %d, len: %d.\n", hdr->srcport, hdr->destport, hdr->udp_length);
 
-    return 0;
+    return ret;
 }

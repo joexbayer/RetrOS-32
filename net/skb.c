@@ -24,8 +24,10 @@ struct skb_queue_operations skb_queue_ops = {
 
 void skb_free_queue(struct skb_queue* queue)
 {
-	assert(queue->size == 0);
-	free(queue);
+	if(queue->size != 0){
+		dbgprintf("Warning: freed empty queue!\n");
+	}
+	kfree(queue);
 }
 
 struct skb_queue* skb_new_queue()
@@ -53,7 +55,7 @@ struct skb_queue* skb_new_queue()
 static int __skb_queue_add(struct skb_queue* skb_queue, struct sk_buff* skb)
 {
 	LOCK(skb_queue, {
-		if(skb_queue->_tail == NULL){
+		if(skb_queue->_head == NULL || skb_queue->_tail == NULL){
 			skb_queue->_head = skb;
 			skb_queue->_tail = skb;
 			break;
@@ -95,7 +97,7 @@ static struct sk_buff* __skb_queue_remove(struct skb_queue* skb_queue)
 void skb_free(struct sk_buff* skb)
 {
 	FREE_SKB(skb);
-	free(skb);
+	kfree(skb);
 }
 
 struct sk_buff* skb_new()

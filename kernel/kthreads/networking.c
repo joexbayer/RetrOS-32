@@ -11,6 +11,7 @@
 
 #include <scheduler.h>
 #include <serial.h>
+#include <assert.h>
 
 #include <net/netdev.h>
 #include <net/net.h>
@@ -44,6 +45,7 @@ void net_incoming_packet_handler()
 
     netd.skb_rx_queue->ops->add(netd.skb_rx_queue, skb);
     packets++;
+    dbgprintf("New packet incoming...\n");
 }
 
 void net_send_skb(struct sk_buff* skb)
@@ -51,10 +53,12 @@ void net_send_skb(struct sk_buff* skb)
     /* Validate SKB */
     netd.skb_tx_queue->ops->add(netd.skb_tx_queue, skb);
     packets++;
+    dbgprintf("Added SKB to TX queue\n");
 }
 
 static void __net_transmit_skb(struct sk_buff* skb)
 {
+    dbgprintf("Transmitting packet\n");
     int read = netdev_transmit(skb->head, skb->len);
     if(read <= 0){
         dbgprintf("Error sending packet\n");
@@ -71,8 +75,7 @@ int net_drop_packet(struct sk_buff* skb)
 
 int net_handle_recieve(struct sk_buff* skb)
 {
-    int ret;
-
+    dbgprintf("Parsing new packet\n");
     if(net_ethernet_parse(skb) < 0) return net_drop_packet(skb);
     switch(skb->hdr.eth->ethertype){
         /* Ethernet type is IP */
@@ -81,7 +84,7 @@ int net_handle_recieve(struct sk_buff* skb)
             switch (skb->hdr.ip->proto)
             {
             case UDP:
-                ret = net_udp_parse(skb);
+                if(net_udp_parse(skb) < 0) return net_drop_packet(skb);
                 break;
             
             case ICMPV4:
@@ -105,7 +108,6 @@ int net_handle_recieve(struct sk_buff* skb)
         default:
             return net_drop_packet(skb);
     }
-
     return 1;
 }
 
@@ -127,14 +129,19 @@ void networking_main()
 
         if(SKB_QUEUE_READY(netd.skb_tx_queue))
         {
+            dbgprintf("Sending new SKB from TX queue\n");
             struct sk_buff* skb = netd.skb_tx_queue->ops->remove(netd.skb_tx_queue);
+            assert(skb != NULL);
             __net_transmit_skb(skb);
             skb_free(skb);
         }
 
         if(SKB_QUEUE_READY(netd.skb_rx_queue))
         {
-            /* Let a work handle the parsing */
+            dbgprintf("Receiving new SKB from RX queue\n");
+            struct sk_buff* skb = netd.skb_rx_queue->ops->remove(netd.skb_rx_queue);
+            assert(skb != NULL);
+            net_handle_recieve(skb);
         }
     }
 }

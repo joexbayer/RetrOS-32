@@ -38,9 +38,10 @@ void init_arp()
  */
 int net_arp_add_entry(struct arp_content* arp)
 {
+	dbgprintf("Adding %i to arp entries\n", arp->sip);
 	/* Check if ARP entry already exists. */
 	for (int i = 0; i < MAX_ARP_ENTRIES; i++)
-		if(memcmp((uint8_t*)&arp->smac, (uint8_t*)&arp_entry_table[i].smac, 6))
+		if(memcmp((uint8_t*)&arp->smac, (uint8_t*)&arp_entry_table[i].smac, 6) == 0)
 			return 1;
 
 	for (int i = 0; i < MAX_ARP_ENTRIES; i++){
@@ -71,6 +72,7 @@ int net_arp_find_entry(uint32_t ip, uint8_t* mac)
 			return 1;
 		}
 	}
+	dbgprintf("Warning: Could not find arp for %i\n", ip);
 	return -1;
 }
 
