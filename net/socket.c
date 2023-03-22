@@ -92,7 +92,7 @@ struct sock* sock_find_listen_tcp(uint16_t d_port)
     return NULL;
     
 }
-struct sock* sock_find_net_tcp(uint16_t s_port, uint16_t d_port)
+struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip)
 {
     struct sock* _sk = NULL; /* save listen socket incase no established connection is found. */
     for (int i = 0; i < MAX_NUMBER_OF_SOCKETS; i++)
@@ -103,7 +103,7 @@ struct sock* sock_find_net_tcp(uint16_t s_port, uint16_t d_port)
         if(socket_table[i]->bound_port == d_port &&  socket_table[i]->tcp_conn.state == TCP_LISTEN)
             _sk = socket_table[i];
 
-        if(socket_table[i]->bound_port == d_port &&  socket_table[i]->recv_addr.sin_port == s_port && socket_table[i]->tcp_conn.state == TCP_ESTABLISHED)
+        if(socket_table[i]->bound_port == d_port &&  socket_table[i]->recv_addr.sin_port == s_port && socket_table[i]->tcp_conn.state == TCP_ESTABLISHED && socket_table[i]->recv_addr.sin_addr.s_addr == ip)
             return socket_table[i];
     }
 

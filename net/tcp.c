@@ -58,26 +58,40 @@ int tcp_recv_syn(struct sock* sock, struct sk_buff* skb)
 
 int tcp_parse(struct sk_buff* skb)
 {
+		/* Look if there is an active TCP connection, if not look for accept. */
+
 		struct tcp_header* hdr = (struct tcp_header* ) skb->data;
-		struct sock* sk = sock_find_net_tcp(hdr->source, hdr->dest);
 		skb->hdr.tcp = hdr;
 
+		struct sock* sk = net_sock_find_tcp(hdr->source, hdr->dest, skb->hdr.ip->saddr);
 		if(sk == NULL){
 			dbgprintf("[TCP] No socket found for TCP packet while parsing.\n");
 			return -1;
 		}
 
-		if(hdr->syn == 1 && hdr->ack == 0){
-			return tcp_recv_syn(sk, skb);
-		}
-
-		if(hdr->syn == 1 && hdr->ack == 1){
-			/* SYN / ACK (Only relvant for "connect" )*/
-			return -1;
-		}
-
-		if(hdr->syn == 0 && hdr->ack == 1){
-			return tcp_recv_ack(sk, skb);
+		switch (sk->tcp_conn.state)
+		{
+		case TCP_LISTEN:
+			if(hdr->syn == 1 && hdr->ack == 0){
+				return tcp_recv_syn(sk, skb);
+			}
+			break;
+		
+		case TCP_SYN_SENT:
+			if(hdr->syn == 1 && hdr->ack == 1){
+				/* SYN / ACK (Only relvant for "connect" )*/
+				return -1;
+			}
+			break;
+		
+		case TCP_ESTABLISHED:
+			if(hdr->syn == 0 && hdr->ack == 1){
+				return tcp_recv_ack(sk, skb);
+			}
+			break;
+		
+		default:
+			break;
 		}
 		
 		return -1;

@@ -15,6 +15,11 @@ struct tcp_connection {
 	uint32_t* last_data_recv;
 	uint32_t* last_ack_recv;
 
+	/* This identifies a TCP connection. */
+	uint16_t dport;
+	uint16_t sport;
+	uint32_t sip;
+
 	uint16_t backlog;
 };
 
