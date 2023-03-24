@@ -118,7 +118,7 @@ _To compile the kernel and its needed programs you simply need to run *make* and
   
    Native:
    ```sh
-   make compile
+   make iso
    ```
    Docker:
    ```sh
@@ -129,25 +129,14 @@ _To compile the kernel and its needed programs you simply need to run *make* and
    make qemu
    ```
 #### Windows
-  For Windows you have 2 options:
-    Build using WSL (need to intall build-essentials packages)
-    or Docker
+  Using Docker
 
 1. Clone the repo
    ```sh
    git clone https://github.com/joexbayer/NETOS.git
    ```
-2. Compile the kernel / OS
-  
-   WSL:
-   ```sh
-   ./make.cmd compile
-   ```
-   Docker:
-   ```sh
-   docker-compose up
-   ```
-3. Launch QEMU
+
+2. Launch QEMU
    ```sh
    ./make.cmd run
    ```
