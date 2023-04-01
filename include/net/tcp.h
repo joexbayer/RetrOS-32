@@ -29,6 +29,7 @@ struct tcp_connection {
 
 /* TCP STATES */
 enum {
+	TCP_CREATED,
 	TCP_CLOSED,
 	TCP_LISTEN,
 	TCP_SYN_RCVD,
@@ -43,21 +44,30 @@ enum {
 	TCP_LAST_ACK
 };
 
+#define TCP_HTONS(hdr) \
+    (hdr)->source = htons((hdr)->source); \
+	(hdr)->dest = htons((hdr)->dest); \
+	(hdr)->seq = htonl((hdr)->seq); \
+	(hdr)->ack_seq = htonl((hdr)->ack_seq);\
+	(hdr)->window = htons((hdr)->window); \
+	(hdr)->check = htons((hdr)->check); \
+	(hdr)->urg_ptr = htons((hdr)->urg_ptr); \
+
 struct tcp_header
   {
     uint16_t source;
     uint16_t dest;
     uint32_t seq;
     uint32_t ack_seq;
-    uint16_t doff:4;
     uint16_t res1:4;
-    uint16_t res2:2;
-    uint16_t urg:1;
-    uint16_t ack:1;
-    uint16_t psh:1;
-    uint16_t rst:1;
-    uint16_t syn:1;
+    uint16_t doff:4;
     uint16_t fin:1;
+    uint16_t syn:1;
+    uint16_t rst:1;
+    uint16_t psh:1;
+    uint16_t ack:1;
+    uint16_t urg:1;
+    uint16_t res2:2;
 
     uint16_t window;
     uint16_t check;
@@ -67,5 +77,7 @@ struct tcp_header
 
 int tcp_is_listening(struct sock* sock);
 int tcp_set_listening(struct sock* sock, int backlog);
+int tcp_register_connection(struct sock* sock, uint16_t dst_port, uint16_t src_port);
+int tcp_connect(struct sock* sock);
 
 #endif

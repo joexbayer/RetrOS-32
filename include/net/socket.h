@@ -23,7 +23,7 @@ struct sock {
     struct sockaddr_in recv_addr;
 
     /* if tcp socket */
-    struct tcp_connection tcp_conn;
+    struct tcp_connection* tcp;
 };
 
 #include <net/tcp.h>

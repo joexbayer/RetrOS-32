@@ -24,7 +24,7 @@
  * @brief Creates and attaches IP header to SKB
  * 
  * @param skb skb to modify
- * @param ip destination IP
+ * @param ip destination IP (in host byte order)
  * @param proto TCP / UDP
  * @param length length of message.
  * @return int 

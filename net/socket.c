@@ -16,6 +16,7 @@
 #include <bitmap.h>
 #include <util.h>
 #include <timer.h>
+#include <assert.h>
 
 #include <serial.h>
 
@@ -82,10 +83,10 @@ struct sock* sock_find_listen_tcp(uint16_t d_port)
 {
     for (int i = 0; i < MAX_NUMBER_OF_SOCKETS; i++)
     {   
-        if(socket_table[i] == NULL)
+        if(socket_table[i] == NULL || socket_table[i]->tcp == NULL)
             continue;
 
-        if(socket_table[i]->bound_port == d_port &&  socket_table[i]->tcp_conn.state == TCP_LISTEN)
+        if(socket_table[i]->bound_port == d_port &&  socket_table[i]->tcp->state == TCP_LISTEN)
             return socket_table[i];
     }
 
@@ -97,13 +98,13 @@ struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip)
     struct sock* _sk = NULL; /* save listen socket incase no established connection is found. */
     for (int i = 0; i < MAX_NUMBER_OF_SOCKETS; i++)
     {
-        if(socket_table[i] == NULL)
+        if(socket_table[i] == NULL || socket_table[i]->tcp == NULL)
             continue;
         
-        if(socket_table[i]->bound_port == d_port &&  socket_table[i]->tcp_conn.state == TCP_LISTEN)
+        if(socket_table[i]->bound_port == d_port &&  socket_table[i]->tcp->state == TCP_LISTEN)
             _sk = socket_table[i];
 
-        if(socket_table[i]->bound_port == d_port &&  socket_table[i]->recv_addr.sin_port == s_port && socket_table[i]->tcp_conn.state == TCP_ESTABLISHED && socket_table[i]->recv_addr.sin_addr.s_addr == ip)
+        if(socket_table[i]->bound_port == d_port &&  socket_table[i]->recv_addr.sin_port == s_port && socket_table[i]->tcp->state == TCP_ESTABLISHED && socket_table[i]->recv_addr.sin_addr.s_addr == ip)
             return socket_table[i];
     }
 
@@ -181,7 +182,20 @@ int kernel_accept(struct sock* socket, struct sockaddr *address, socklen_t *addr
 
 int kernel_connect(struct sock* socket, const struct sockaddr *address, socklen_t address_len)
 {
-    
+    /* Cast sockaddr back to sockaddr_in. Cast originally to comply with linux implementation.*/
+    struct sockaddr_in* addr = (struct sockaddr_in*) address;
+    if(socket->bound_port == 0)
+        net_sock_bind(socket, 0, INADDR_ANY);
+
+    assert(socket->tcp == NULL);
+    tcp_register_connection(socket, addr->sin_port, socket->bound_port);
+
+    struct sockaddr_in* sptr = &socket->recv_addr;
+    memcpy(sptr, addr, sizeof(struct sockaddr_in));
+
+    tcp_connect(socket);
+    /* block or spin */
+
     return -1;
 }
 

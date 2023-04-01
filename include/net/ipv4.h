@@ -21,6 +21,7 @@ struct ip_header {
 #define IPV4 0x04
 #define ICMPV4 0x01
 #define UDP 0x11
+#define TCP 0x06
 
 #define BROADCAST_IP 4294967295
 
