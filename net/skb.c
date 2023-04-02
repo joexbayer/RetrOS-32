@@ -111,3 +111,19 @@ struct sk_buff* skb_new()
 
 	return new;
 }
+
+/**
+ * @brief Consumes the current skb, making the original pointer invalid but preserving data pointer.
+ * Assures exclusive access to sk buffer.
+ * @param skb skb to consume
+ * @return struct sk_buff* new skb
+ */
+struct sk_buff* skb_consume(struct sk_buff* skb)
+{
+	struct sk_buff* new = (struct sk_buff*) kalloc(sizeof(struct sk_buff));
+
+	memcpy(new, skb, sizeof(struct sk_buff));
+	kfree(skb);
+
+	return new;
+}

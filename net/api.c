@@ -1,6 +1,8 @@
 #include <net/net.h>
+#include <net/tcp.h>
 #include <net/socket.h>
 #include <serial.h>
+#include <assert.h>
 
 /**
  * @brief Binds a IP and Port to a socket, mainly used for the server side.
@@ -76,6 +78,31 @@ int kernel_recv_timeout(struct sock* socket, void *buffer, int length, int flags
 
 }
 
+int kernel_connect(struct sock* socket, const struct sockaddr *address, socklen_t address_len)
+{
+    /* Cast sockaddr back to sockaddr_in. Cast originally to comply with linux implementation.*/
+    struct sockaddr_in* addr = (struct sockaddr_in*) address;
+    if(socket->bound_port == 0)
+        net_sock_bind(socket, 0, INADDR_ANY);
+
+    assert(socket->tcp == NULL);
+    tcp_register_connection(socket, addr->sin_port, socket->bound_port);
+
+    struct sockaddr_in* sptr = &socket->recv_addr;
+    memcpy(sptr, addr, sizeof(struct sockaddr_in));
+
+    socket->tcp->state = TCP_SYN_SENT;
+    tcp_connect(socket);
+
+    dbgprintf(" [%d] Connecting...\n", socket);
+    /* block or spin */
+    while(!net_sock_is_established(socket));
+
+    dbgprintf(" [%d] succesfully connected!\n", socket);
+
+    return -1;
+}
+
 /**
  * @brief Sends data to reciever defined by sockaddr.
  * 
@@ -114,5 +141,44 @@ int kernel_sendto(struct sock* socket, const void *message, int length, int flag
         return -1;
     }
 
+    return length;
+}
+
+int kernel_accept(struct sock* socket, struct sockaddr *address, socklen_t *address_len)
+{
+
+    /* accept: only is valid in a TCP connection context. */
+    if(!tcp_is_listening(socket))
+        return -1;
+    
+
+    /* Create new TCP socket? */
+
+    return -1;
+}
+
+int kernel_listen(struct sock* socket, int backlog)
+{
+    return tcp_set_listening(socket, backlog);
+}
+
+int kernel_send(struct sock* socket, void *message, int length, int flags)
+{
+    /* for the time being, only send messages under 1500 bytes */
+    if(length > 1500){
+        return -1;
+    }
+
+    dbgprintf(" [%d] Preparing to send %d bytes\n",  socket->socket, length);
+
+    while(!net_sock_is_established(socket));
+    
+    dbgprintf(" [%d] Sending %d bytes\n", socket->socket, length);
+    socket->tcp->state = TCP_WAIT_ACK;
+    tcp_send_segment(socket, message, length, 1);
+
+    while(socket->tcp->state == TCP_WAIT_ACK);
+
+    /* Split into smaller "messages" of needed. */
     return length;
 }

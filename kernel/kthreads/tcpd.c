@@ -25,11 +25,15 @@ void tcpd()
     struct sock* tcp_socket = kernel_socket(AF_INET, SOCK_DGRAM, 0);
     struct sockaddr_in dest_addr;
 
-    dest_addr.sin_addr.s_addr = htonl(ip_to_int("172.217.21.174"));
-    dest_addr.sin_port = htons(80);
+    dest_addr.sin_addr.s_addr = htonl(ip_to_int("45.79.112.203"));
+    dest_addr.sin_port = htons(4242);
     dest_addr.sin_family = AF_INET;
 
     kernel_connect(tcp_socket, (struct sockaddr*) &dest_addr, sizeof(dest_addr));
+
+    char* test = "Hello world!";
+
+    ret = kernel_send(tcp_socket, test, strlen(test), 0);
 
     while(1);
 }

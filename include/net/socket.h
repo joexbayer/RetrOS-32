@@ -39,6 +39,8 @@ void init_sockets();
 int net_socket_add_skb(struct sk_buff*,  unsigned short port);
 int get_total_sockets();
 
+int net_sock_is_established(struct sock* sk);
+
 struct sock* sock_find_listen_tcp(uint16_t d_port);
 struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip);
 

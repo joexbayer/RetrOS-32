@@ -79,6 +79,12 @@ int get_total_sockets()
     return total_sockets;
 }
 
+int net_sock_is_established(struct sock* sk)
+{
+    assert(sk->tcp != NULL);
+    return sk->tcp->state == TCP_ESTABLISHED;
+}
+
 struct sock* sock_find_listen_tcp(uint16_t d_port)
 {
     for (int i = 0; i < MAX_NUMBER_OF_SOCKETS; i++){   
@@ -102,7 +108,8 @@ struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip)
         if(socket_table[i]->bound_port == d_port &&  socket_table[i]->tcp->state == TCP_LISTEN)
             _sk = socket_table[i];
 
-        if(socket_table[i]->bound_port == d_port &&  socket_table[i]->recv_addr.sin_port == s_port && socket_table[i]->tcp->state == TCP_ESTABLISHED && socket_table[i]->recv_addr.sin_addr.s_addr == ip)
+        dbgprintf("dport: %d - %d. sport: %d - %d. IP: %i - %i\n", socket_table[i]->bound_port, d_port, socket_table[i]->recv_addr.sin_port, s_port, socket_table[i]->recv_addr.sin_addr.s_addr, ip);
+        if(socket_table[i]->bound_port == d_port &&  socket_table[i]->recv_addr.sin_port == s_port && socket_table[i]->tcp->state != TCP_LISTEN && socket_table[i]->recv_addr.sin_addr.s_addr == ip)
             return socket_table[i];
     }
 
@@ -163,48 +170,6 @@ struct sock* kernel_socket(int domain, int type, int protocol)
     dbgprintf("Created new sock\n");
 
     return socket_table[current];
-}
-
-int kernel_accept(struct sock* socket, struct sockaddr *address, socklen_t *address_len)
-{
-
-    /* accept: only is valid in a TCP connection context. */
-    if(!tcp_is_listening(socket))
-        return -1;
-    
-
-    /* Create new TCP socket? */
-
-    return -1;
-}
-
-int kernel_connect(struct sock* socket, const struct sockaddr *address, socklen_t address_len)
-{
-    /* Cast sockaddr back to sockaddr_in. Cast originally to comply with linux implementation.*/
-    struct sockaddr_in* addr = (struct sockaddr_in*) address;
-    if(socket->bound_port == 0)
-        net_sock_bind(socket, 0, INADDR_ANY);
-
-    assert(socket->tcp == NULL);
-    tcp_register_connection(socket, addr->sin_port, socket->bound_port);
-
-    struct sockaddr_in* sptr = &socket->recv_addr;
-    memcpy(sptr, addr, sizeof(struct sockaddr_in));
-
-    tcp_connect(socket);
-    /* block or spin */
-
-    return -1;
-}
-
-int kernel_listen(struct sock* socket, int backlog)
-{
-    return tcp_set_listening(socket, backlog);
-}
-
-int kernel_send(struct sock* socket, const void *message, int length, int flags)
-{
-    return -1;
 }
 
 void init_sockets()

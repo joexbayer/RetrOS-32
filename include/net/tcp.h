@@ -6,6 +6,8 @@
 struct tcp_connection {
 	uint8_t state;
 
+	uint32_t sequence;
+
 	uint32_t retransmits;
 	uint32_t tcpi_snd_mss;
 	uint32_t tcpi_rcv_mss;
@@ -32,6 +34,7 @@ enum {
 	TCP_CREATED,
 	TCP_CLOSED,
 	TCP_LISTEN,
+	TCP_WAIT_ACK,
 	TCP_SYN_RCVD,
 	TCP_SYN_SENT,
 	/* Between SYN_SENT and ESTABLISHED a new socket is created. */
@@ -77,5 +80,6 @@ int tcp_is_listening(struct sock* sock);
 int tcp_set_listening(struct sock* sock, int backlog);
 int tcp_register_connection(struct sock* sock, uint16_t dst_port, uint16_t src_port);
 int tcp_connect(struct sock* sock);
+int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t push);
 
 #endif
