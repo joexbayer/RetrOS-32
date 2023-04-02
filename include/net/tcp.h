@@ -45,8 +45,6 @@ enum {
 };
 
 #define TCP_HTONS(hdr) \
-    (hdr)->source = htons((hdr)->source); \
-	(hdr)->dest = htons((hdr)->dest); \
 	(hdr)->seq = htonl((hdr)->seq); \
 	(hdr)->ack_seq = htonl((hdr)->ack_seq);\
 	(hdr)->window = htons((hdr)->window); \

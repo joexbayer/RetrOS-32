@@ -81,8 +81,7 @@ int get_total_sockets()
 
 struct sock* sock_find_listen_tcp(uint16_t d_port)
 {
-    for (int i = 0; i < MAX_NUMBER_OF_SOCKETS; i++)
-    {   
+    for (int i = 0; i < MAX_NUMBER_OF_SOCKETS; i++){   
         if(socket_table[i] == NULL || socket_table[i]->tcp == NULL)
             continue;
 
@@ -96,8 +95,7 @@ struct sock* sock_find_listen_tcp(uint16_t d_port)
 struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip)
 {
     struct sock* _sk = NULL; /* save listen socket incase no established connection is found. */
-    for (int i = 0; i < MAX_NUMBER_OF_SOCKETS; i++)
-    {
+    for (int i = 0; i < MAX_NUMBER_OF_SOCKETS; i++){
         if(socket_table[i] == NULL || socket_table[i]->tcp == NULL)
             continue;
         

@@ -26,8 +26,7 @@ void terminal_commit()
 
 	int x = 0, y = 0;
 	__gfx_draw_rectangle(0, 0, gfx_get_window_width(), gfx_get_window_height(), COLOR_BLACK);
-	for (int i = 0; i < current_running->term->head; i++)
-	{
+	for (int i = 0; i < current_running->term->head; i++){
 		if(current_running->term->textbuffer[i] == '\n'){
 			x = 0;
 			y++;
@@ -106,8 +105,7 @@ int32_t twritef(char* fmt, ...)
 	va_start(args, fmt);
 
 	while (*fmt != '\0') {
-		switch (*fmt)
-		{
+		switch (*fmt){
 			case '%':
 				memset(str, 0, MAX_FMT_STR_SIZE);
 				switch (*(fmt+1))

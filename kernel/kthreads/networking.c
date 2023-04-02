@@ -81,8 +81,7 @@ int net_handle_recieve(struct sk_buff* skb)
         /* Ethernet type is IP */
         case IP:
             if(net_ipv4_parse(skb) < 0) return net_drop_packet(skb);
-            switch (skb->hdr.ip->proto)
-            {
+            switch (skb->hdr.ip->proto){
             case UDP:
                 if(net_udp_parse(skb) < 0) return net_drop_packet(skb);
                 break;
@@ -121,14 +120,11 @@ void networking_main()
     netd.skb_rx_queue = skb_new_queue();
     netd.skb_tx_queue = skb_new_queue();
 
-    while(1)
-    {
+    while(1){
         /**
          * @brief Query RX and TX queue for packets.
          */
-
-        if(SKB_QUEUE_READY(netd.skb_tx_queue))
-        {
+        if(SKB_QUEUE_READY(netd.skb_tx_queue)){
             dbgprintf("Sending new SKB from TX queue\n");
             struct sk_buff* skb = netd.skb_tx_queue->ops->remove(netd.skb_tx_queue);
             assert(skb != NULL);
@@ -136,8 +132,7 @@ void networking_main()
             skb_free(skb);
         }
 
-        if(SKB_QUEUE_READY(netd.skb_rx_queue))
-        {
+        if(SKB_QUEUE_READY(netd.skb_rx_queue)){
             dbgprintf("Receiving new SKB from RX queue\n");
             struct sk_buff* skb = netd.skb_rx_queue->ops->remove(netd.skb_rx_queue);
             assert(skb != NULL);

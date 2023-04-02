@@ -28,8 +28,7 @@ int gethostname(char* hostname);
 void init_dns()
 {
     /* Set DNS cache to be "empty". */
-    for (int i = 0; i < DNS_CACHE_ENTRIES; i++)
-    {
+    for (int i = 0; i < DNS_CACHE_ENTRIES; i++){
         __dns_cache[i].ip = 0;
     }
 
@@ -41,13 +40,10 @@ static void __dns_name_compresion(uint8_t* request, char* host)
     int lock = 0;
     host[strlen(host)] = '.';
 
-    for(int i = 0 ; i < strlen(host); i++) 
-    {
-        if(host[i]=='.') 
-        {
+    for(int i = 0 ; i < strlen(host); i++) {
+        if(host[i]=='.') {
             *request++ = i-lock;
-            for(;lock<i;lock++) 
-            {
+            for(;lock<i;lock++) {
                 *request++=host[lock];
             }
             lock++; //or lock=i+1;
@@ -58,8 +54,7 @@ static void __dns_name_compresion(uint8_t* request, char* host)
 
 static void __dns_add_cache(char* hostname, uint32_t ip)
 {
-    for (int i = 0; i < DNS_CACHE_ENTRIES; i++)
-    {
+    for (int i = 0; i < DNS_CACHE_ENTRIES; i++){
         if(__dns_cache[i].ip == 0){
             memcpy(__dns_cache[i].name, hostname, strlen(hostname));
             __dns_cache[i].ip = ip;
@@ -125,8 +120,7 @@ int gethostname(char* hostname)
     int last_length = 0;
 
     struct dns_header* dns = (struct dns_header*) &buf;
-    for (int i = 0; i < dns->ans_count; i++)
-    {
+    for (int i = 0; i < dns->ans_count; i++){
         int next = (sizeof(struct dns_answer)*i) + last_length;
         answer = (struct dns_answer*) &buf[question_size+next];
         last_length = ntohs(answer->data_len);
@@ -135,8 +129,7 @@ int gethostname(char* hostname)
             continue;
 
         uint32_t result;
-        switch (ntohs(answer->data_len))
-        {
+        switch (ntohs(answer->data_len)){
         case 4:
             result = *((uint32_t*) &buf[question_size+12+next]);
             break;
@@ -152,8 +145,7 @@ int gethostname(char* hostname)
         dbgprintf("[DNS]: %x ttl\n", ntohl(answer->ttl));
         dbgprintf("[DNS]: %x len\n", ntohs(answer->data_len));
 
-        if(result <= 0)
-        {
+        if(result <= 0){
             dbgprintf("[DNS] Unable to resolve hostname.");
             //release(&__dns_mutex);
             kernel_sock_close(__dns_socket);

@@ -28,6 +28,44 @@ inline int tcp_set_listening(struct sock* sock, int backlog)
 	return 1;
 }
 
+uint16_t tcp_calculate_checksum(uint32_t src_ip, uint32_t dest_ip, unsigned short *data, int size)
+{
+    register unsigned long sum = 0;
+    unsigned short tcpLen = 20;
+    struct tcp_header *tcphdrp = (struct tcphdr*)(data);
+    //add the pseudo header 
+    //the source ip
+    sum += (src_ip>>16)&0xFFFF;
+    sum += (src_ip)&0xFFFF;
+    //the dest ip
+    sum += (dest_ip>>16)&0xFFFF;
+    sum += (dest_ip)&0xFFFF;
+    //protocol and reserved: 6
+    sum += htons(TCP);
+    //the length
+    sum += htons(tcpLen);
+ 
+    //add the IP payload
+    //initialize checksum to 0
+    tcphdrp->check = 0;
+    while (tcpLen > 1) {
+        sum += * data++;
+        tcpLen -= 2;
+    }
+    //if any bytes left, pad the bytes and add
+    if(tcpLen > 0) {
+        //printf("+++++++++++padding, %dn", tcpLen);
+        sum += ((*data)&htons(0xFF00));
+    }
+      //Fold 32-bit sum to 16 bits: add carrier to result
+      while (sum>>16) {
+          sum = (sum & 0xffff) + (sum >> 16);
+      }
+      sum = ~sum;
+    //set computation result
+	return sum;
+}
+
 int tcp_connect(struct sock* sock)
 {
 	struct sk_buff* skb = skb_new();
@@ -48,6 +86,9 @@ int tcp_connect(struct sock* sock)
 		return -1;
 	}
 	TCP_HTONS(&hdr);
+
+	hdr.check = tcp_calculate_checksum(dhcp_get_ip(), sock->recv_addr.sin_addr.s_addr, &hdr, 0);
+	//hdr.check = htons(hdr.check);
 
 	memcpy(skb->data, &hdr, sizeof(struct tcp_header));
 
@@ -96,45 +137,44 @@ int tcp_parse(struct sk_buff* skb)
 {
 		/* Look if there is an active TCP connection, if not look for accept. */
 
-		struct tcp_header* hdr = (struct tcp_header* ) skb->data;
-		skb->hdr.tcp = hdr;
+	struct tcp_header* hdr = (struct tcp_header* ) skb->data;
+	skb->hdr.tcp = hdr;
 
-		struct sock* sk = net_sock_find_tcp(hdr->source, hdr->dest, skb->hdr.ip->saddr);
-		if(sk == NULL){
-			dbgprintf("[TCP] No socket found for TCP packet while parsing.\n");
-			return -1;
-		}
-
-		switch (sk->tcp->state)
-		{
-		case TCP_LISTEN:
-			if(hdr->syn == 1 && hdr->ack == 0){
-				return tcp_recv_syn(sk, skb);
-			}
-			break;
-		
-		case TCP_SYN_RCVD:
-			if(hdr->syn == 1 && hdr->ack == 1){
-				/* Handle syn / ack */
-			}
-			break;
-		
-		case TCP_SYN_SENT:
-			if(hdr->syn == 0 && hdr->ack == 1){
-				return tcp_recv_ack(sk, skb);
-			}
-			break;
-		
-		case TCP_ESTABLISHED:
-			/* recv data */
-			return tcp_send_ack(0, 0, 0);
-			break;
-		
-		default:
-			break;
-		}
-		
+	struct sock* sk = net_sock_find_tcp(hdr->source, hdr->dest, skb->hdr.ip->saddr);
+	if(sk == NULL){
+		dbgprintf("[TCP] No socket found for TCP packet while parsing.\n");
 		return -1;
+	}
+
+	switch (sk->tcp->state){
+	case TCP_LISTEN:
+		if(hdr->syn == 1 && hdr->ack == 0){
+			return tcp_recv_syn(sk, skb);
+		}
+		break;
+	
+	case TCP_SYN_RCVD:
+		if(hdr->syn == 1 && hdr->ack == 1){
+			/* Handle syn / ack */
+		}
+		break;
+	
+	case TCP_SYN_SENT:
+		if(hdr->syn == 0 && hdr->ack == 1){
+			return tcp_recv_ack(sk, skb);
+		}
+		break;
+	
+	case TCP_ESTABLISHED:
+		/* recv data */
+		return tcp_send_ack(0, 0, 0);
+		break;
+	
+	default:
+		break;
+	}
+	
+	return -1;
 }
 
 void tcp_connection_update()

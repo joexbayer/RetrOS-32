@@ -15,6 +15,7 @@ void kernel_sleep(int time)
 
 void kernel_yield()
 {
+    current_running->yields++;
     _context_switch();
 }
 
@@ -42,10 +43,8 @@ void context_switch()
     ASSERT_CRITICAL();
 
     current_running = current_running->next;
-    while(current_running->running != RUNNING)
-    {
-        switch (current_running->running)
-        {
+    while(current_running->running != RUNNING){
+        switch (current_running->running){
         case STOPPED:
             current_running = current_running->next;
             break;
@@ -53,8 +52,6 @@ void context_switch()
             ;
             struct pcb* old = current_running;
             current_running = current_running->next;
-        	
-            pcb_queue_remove_running(old);
             old->running = CLEANING;
 
             work_queue_add(&pcb_cleanup_routine, (void*)old->pid);

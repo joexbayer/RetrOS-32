@@ -173,8 +173,7 @@ uint8_t arp_parse(struct sk_buff* skb)
 	struct arp_content* arp_content = (struct arp_content*) skb->data;
 	ARPC_NTOHL(arp_content);
 
-	switch (a_hdr->opcode)
-	{
+	switch (a_hdr->opcode){
 	case ARP_REQUEST:
 
 		net_arp_add_entry(arp_content);

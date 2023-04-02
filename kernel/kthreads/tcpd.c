@@ -25,8 +25,8 @@ void tcpd()
     struct sock* tcp_socket = kernel_socket(AF_INET, SOCK_DGRAM, 0);
     struct sockaddr_in dest_addr;
 
-    dest_addr.sin_addr.s_addr = htonl(ip_to_int("127.0.0.1"));
-    dest_addr.sin_port = htons(8080);
+    dest_addr.sin_addr.s_addr = htonl(ip_to_int("172.217.21.174"));
+    dest_addr.sin_port = htons(80);
     dest_addr.sin_family = AF_INET;
 
     kernel_connect(tcp_socket, (struct sockaddr*) &dest_addr, sizeof(dest_addr));

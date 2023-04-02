@@ -86,8 +86,7 @@ static void __pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb)
 	SPINLOCK(queue, {
 
 		struct pcb* current = queue->_list;
-		if(current == NULL)
-		{
+		if(current == NULL){
 			queue->_list = pcb;
 			break;
 		}
@@ -312,8 +311,7 @@ void idletask(){
 
 void dummytask(){
 	int j = 0;
-	for (int i = 0; i < 699999999; i++)
-	{
+	for (int i = 0; i < 699999999; i++){
 		j = (j+100) % 1000;	
 	}
 
@@ -351,7 +349,7 @@ int pcb_cleanup_routine(int pid)
 
 	gfx_destory_window(pcb_table[pid].gfx_window);
 
-	//running->ops->remove(running, &pcb_table[pid]);
+	running->ops->remove(running, &pcb_table[pid]);
 
 	/* Free potential arguments */
 	if(pcb_table[pid].argv != NULL){
@@ -393,8 +391,7 @@ int pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 	dbgprintf("Initiating new kernel thread!\n");
 	uint32_t stack = (uint32_t) kalloc(STACK_SIZE);
 	memset((void*)stack, 0, STACK_SIZE);
-	if((void*)stack == NULL)
-	{
+	if((void*)stack == NULL){
 		dbgprintf("[PCB] STACK == NULL");
 		return -1;
 	}
@@ -416,6 +413,7 @@ int pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 	pcb->args = 0;
 	pcb->argv = NULL;
 	pcb->current_directory = fs_get_root();
+	pcb->yields = 0;
 
 	memcpy(pcb->name, name, strlen(name)+1);
 
@@ -438,7 +436,7 @@ int pcb_create_process(char* program, int args, char** argv)
 	fs_close(inode);
 
 	/* Create stack and pcb */
-	 int i; /* Find a pcb is that is "free" */
+	int i; /* Find a pcb is that is "free" */
 	for(i = 0; i < MAX_NUM_OF_PCBS; i++)
 		if(pcb_table[i].running == STOPPED)
 			break;
@@ -466,6 +464,7 @@ int pcb_create_process(char* program, int args, char** argv)
 	pcb->args = args;
 	pcb->argv = argv;
 	pcb->current_directory = fs_get_root();
+	pcb->yields = 0;
 
 	/* Memory map data */
 	vmem_init_process(pcb, buf, read);
@@ -528,8 +527,7 @@ void init_pcbs()
 {   
 
 	/* Stopped processes are eligible to be "replaced." */
-	for (int i = 0; i < MAX_NUM_OF_PCBS; i++)
-	{
+	for (int i = 0; i < MAX_NUM_OF_PCBS; i++){
 		pcb_table[i].running = STOPPED;
 		pcb_table[i].pid = -1;
 	}

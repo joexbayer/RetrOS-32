@@ -46,6 +46,7 @@ struct pcb {
 
     /* stats */
     int kallocs;
+    int yields;
 
     char name[pcb_max_name_length];
 

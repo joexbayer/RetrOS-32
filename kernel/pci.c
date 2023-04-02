@@ -124,12 +124,9 @@ int pci_register_device(uint32_t bus, uint32_t slot, uint32_t function, uint16_t
 void init_pci()
 {
     int devices_found = 0;
-    for(uint32_t bus = 0; bus < 256; bus++)
-    {
-        for(uint32_t slot = 0; slot < 32; slot++)
-        {
-            for(uint32_t function = 0; function < 8; function++)
-            {
+    for(uint32_t bus = 0; bus < 256; bus++){
+        for(uint32_t slot = 0; slot < 32; slot++){
+            for(uint32_t function = 0; function < 8; function++){
                     uint16_t vendor = pci_read_word(bus, slot, function, 0);
                     if(vendor == 0xffff) continue;
 
@@ -148,10 +145,8 @@ void init_pci()
                     devices_found++;
 
                     int i = 0;
-                    for (struct pci_driver driver = registered_drivers[i]; driver.vendor != 0; driver = registered_drivers[i])
-                    {
-                        if(driver.vendor == vendor && driver.device == device)
-                        {
+                    for (struct pci_driver driver = registered_drivers[i]; driver.vendor != 0; driver = registered_drivers[i]){
+                        if(driver.vendor == vendor && driver.device == device){
                             driver.attach(&_pci_devices[driver_index]);
                         }
                         i++;
@@ -165,27 +160,22 @@ void init_pci()
 
 void list_pci_devices()
 {
-    for (int i = 0; i < _pci_devices_size; i++)
-    {
+    for (int i = 0; i < _pci_devices_size; i++){
         
     }   
 }
 
 uint8_t pci_find_device(uint16_t find_vendor, uint16_t find_device)
 {
-    for(uint32_t bus = 0; bus < 256; bus++)
-    {
-        for(uint32_t slot = 0; slot < 32; slot++)
-        {
-            for(uint32_t function = 0; function < 8; function++)
-            {
+    for(uint32_t bus = 0; bus < 256; bus++){
+        for(uint32_t slot = 0; slot < 32; slot++){
+            for(uint32_t function = 0; function < 8; function++){
                     uint16_t vendor = pci_read_word(bus, slot, function, 0);
                     if(vendor == 0xffff) continue;
                    	if(vendor != find_vendor) continue;
 
                     uint16_t device = pci_read_word(bus, slot, function, 2);
-					if(device == find_device)
-					{
+					if(device == find_device){
 						return 1;
 					}
             }

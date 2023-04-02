@@ -28,7 +28,8 @@ static uint8_t __kmemory_bitmap[(KERNEL_MEMORY_END - KERNEL_MEMORY_START) / KMEM
 static mutex_t __kmemory_lock;
 static uint32_t __kmemory_used = 0;
 
-static inline int __kmemory_find_blocks(int num_blocks, int total_blocks) {
+static inline int __kmemory_find_blocks(int num_blocks, int total_blocks)
+{
     int free_blocks = 0;
     for (int i = 0; i < total_blocks; i++) {
         uint32_t index = KMEM_BITMAP_INDEX(KERNEL_MEMORY_START + i * KMEM_BLOCK_SIZE);
@@ -45,7 +46,8 @@ static inline int __kmemory_find_blocks(int num_blocks, int total_blocks) {
     return -1;  // No free block found
 }
 
-static inline void __kmemory_mark_blocks(int start_block, int num_blocks) {
+static inline void __kmemory_mark_blocks(int start_block, int num_blocks)
+{
     for (int i = start_block; i < start_block + num_blocks; i++) {
         uint32_t index = KMEM_BITMAP_INDEX(KERNEL_MEMORY_START + i * KMEM_BLOCK_SIZE);
         uint32_t offset = KMEM_BITMAP_OFFSET(KERNEL_MEMORY_START + i * KMEM_BLOCK_SIZE);
@@ -53,7 +55,8 @@ static inline void __kmemory_mark_blocks(int start_block, int num_blocks) {
     }
 }
 
-static inline void __kmemory_write_metadata(int start_block, int num_blocks) {
+static inline void __kmemory_write_metadata(int start_block, int num_blocks)
+{
     int* metadata = (int*) (KERNEL_MEMORY_START + start_block * KMEM_BLOCK_SIZE);
     *metadata = num_blocks;
 }
@@ -110,10 +113,10 @@ void* kalloc(int size)
  *
  * @return None.
  */
-void kfree(void* ptr) {
-	if (!ptr) {
+void kfree(void* ptr)
+{
+	if (!ptr)
 		return;
-	}
 	
 	acquire(&__kmemory_lock);
 

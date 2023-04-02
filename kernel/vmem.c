@@ -117,8 +117,7 @@ int vmem_continious_allocation_map(struct allocation* allocation, uint32_t* addr
 {
 
 	uint32_t* heap_table = vmem_get_page_table(VMEM_HEAP);
-	for (int i = 0; i < num; i++)
-	{
+	for (int i = 0; i < num; i++){
 		/*
 			1. Allocate a page
 			2. Map it to virtual heap
@@ -143,8 +142,7 @@ int vmem_continious_allocation_map(struct allocation* allocation, uint32_t* addr
 void vmem_free_allocation(struct allocation* allocation)
 {
 	int num_pages = (allocation->size + PAGE_SIZE - 1) / PAGE_SIZE;
-	for (int i = 0; i < num_pages; i++)
-	{
+	for (int i = 0; i < num_pages; i++){
 		vmem_default->ops->free(vmem_default, (void*) (VMEM_START_ADDRESS + (allocation->bits[i] * PAGE_SIZE)));
 	}
 
@@ -167,8 +165,7 @@ void vmem_init_process(struct pcb* pcb, char* data, int size)
 
 	/* Map the process data to a page */
 	int i = 0;
-	while (size > PAGE_SIZE)
-	{
+	while (size > PAGE_SIZE){
 		uint32_t* process_data_page = vmem_default->ops->alloc(vmem_default);;
 		memcpy(process_data_page, &data[i*PAGE_SIZE], PAGE_SIZE);
 		vmem_map(process_data_table, VMEM_DATA+(i*PAGE_SIZE), (uint32_t) process_data_page);
@@ -240,8 +237,7 @@ void vmem_cleanup_process(struct pcb* pcb)
 	
 	/* Free all malloc allocation */
 	struct allocation* iter = pcb->allocations;
-	while(iter != NULL)
-	{
+	while(iter != NULL){
 		struct allocation* old = iter;
 		iter = iter->next;
 
@@ -280,8 +276,7 @@ void vmem_init_kernel()
 	vmem_add_table(kernel_page_dir, start, kernel_heap_memory_table);
 	dbgprintf("[INIT KERNEL] Heap (Kthreads): 	0x%x\n", kernel_heap_memory_table);
 
-	for (int i = 1; i < 7; i++)
-	{
+	for (int i = 1; i < 7; i++){
 		uint32_t* kernel_page_table_memory = vmem_default->ops->alloc(vmem_default);;
 		for (int addr = 0x400000*i; addr < 0x400000*(i+1); addr += PAGE_SIZE)
 			vmem_map(kernel_page_table_memory, addr, addr);

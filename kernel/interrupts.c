@@ -58,7 +58,8 @@ void page_fault_interrupt(unsigned long cr2, unsigned long err)
  * @param i IRQ line
  * @param handler function pointer to handler.
  */
-void interrupt_install_handler(int i, void (*handler)()) {
+void interrupt_install_handler(int i, void (*handler)())
+{
 	handlers[i] = handler;
 }
 
@@ -103,8 +104,7 @@ static void init_idt()
 	memset(&idt_entries, 0, sizeof(struct idt_entry)*256);
 
 	/* Set all ISR_LINES to go to ISR0 */
-	for (int i = 0; i < 48; i++)
-	{ 
+	for (int i = 0; i < 48; i++){ 
 		idt_set_gate(i, (uint32_t) irqs[i] , 0x08, 0x8E);
 	}
 	

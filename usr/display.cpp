@@ -18,8 +18,7 @@ public:
 	}
 	void Run()
 	{
-		while (1)
-		{
+		while (1){
 			struct gfx_event event;
 			gfx_get_event(&event);
 

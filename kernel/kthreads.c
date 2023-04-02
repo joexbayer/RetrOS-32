@@ -36,8 +36,7 @@ int register_kthread(void (*f)(), char* name)
 
 int start(char* name)
 {
-    for (int i = 0; i < total_kthreads; i++)
-    {
+    for (int i = 0; i < total_kthreads; i++){
         if(memcmp(name, kthread_table[i].name, strlen(kthread_table[i].name)) == 0){
             pcb_create_kthread(kthread_table[i].entry, kthread_table[i].name);
             return 0;

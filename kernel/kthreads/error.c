@@ -9,8 +9,7 @@ void error_main()
     __gfx_draw_text(5, 5, "Page Fault", COLOR_BRIGHT_RED);
     __gfx_draw_text(5, 15, "Process has been killed.", COLOR_BRIGHT_RED);
     gfx_commit();
-    while(1)
-    {
+    while(1){
         kernel_yield();
     }
 }

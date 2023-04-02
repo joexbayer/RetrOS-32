@@ -51,8 +51,7 @@ int kernel_recvfrom(struct sock* socket, void *buffer, int length, int flags, st
 int kernel_recv(struct sock* socket, void *buffer, int length, int flags)
 {
     int read = -1;
-    while(read == -1) /* TODO: Block, instead of spinning. */
-    {
+    while(read == -1){
         read = net_sock_read_skb(socket, buffer);
     }
 
@@ -66,8 +65,7 @@ int kernel_recv_timeout(struct sock* socket, void *buffer, int length, int flags
     int time_start = get_time();
 
     int read = -1;
-    while(read == -1) /* TODO: Block, instead of spinning. */
-    {
+    while(read == -1){
         if(get_time() - time_start > timeout+3)
             return 0;
 
@@ -102,8 +100,7 @@ int kernel_sendto(struct sock* socket, const void *message, int length, int flag
 
     dbgprintf("Socket %d sending %d\n", socket->socket, length);
     /* Forward packet to specified protocol. */
-    switch (socket->type)
-    {
+    switch (socket->type){
     case SOCK_DGRAM:
         if(net_udp_send((char*) message, BROADCAST_IP, addr->sin_addr.s_addr, ntohs(socket->bound_port), ntohs(addr->sin_port), length) <= 0)
             return 0;
