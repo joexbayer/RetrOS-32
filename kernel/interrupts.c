@@ -74,11 +74,11 @@ static void __interrupt_exception_handler(int i)
 void isr_handler(struct registers regs)
 {
 	if(regs.int_no < 32){
-		return __interrupt_exception_handler(regs.int_no);
+		__interrupt_exception_handler(regs.int_no);
+		return;
 	}
 
-	if (handlers[regs.int_no] != 0)
-	{
+	if (handlers[regs.int_no] != 0){
 		isr_t handler = handlers[regs.int_no];
 		handler();
 	}

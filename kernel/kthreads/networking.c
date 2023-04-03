@@ -19,6 +19,7 @@
 #include <net/skb.h>
 #include <net/ethernet.h>
 #include <net/ipv4.h>
+#include <net/tcp.h>
 #include <net/icmp.h>
 #include <net/socket.h>
 #include <net/dhcp.h>

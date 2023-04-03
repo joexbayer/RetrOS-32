@@ -1,7 +1,7 @@
 #include <lib/graphics.h>
 #include <lib/syscall.h>
 #include <util.h>
-#include <stdarg.h>
+#include <args.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -64,7 +64,7 @@ int gfx_draw_rectangle(int x, int y, int width, int height, unsigned char color)
     return 0;
 }
 
-int gfx_draw_text(int x, int y, char* text, unsigned char color)
+int gfx_draw_text(int x, int y, const char* text, unsigned char color)
 {
     struct gfx_char c = {
         .color = color,
@@ -90,7 +90,7 @@ int gfx_get_event(struct gfx_event* event)
 }
 
 #define GFX_MAX_FMT 50
-int gfx_draw_format_text(int x, int y, char color, char* fmt, ...)
+int gfx_draw_format_text(int x, int y, char color, const char* fmt, ...)
 {
 	va_list args;
 

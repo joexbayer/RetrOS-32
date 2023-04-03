@@ -11,7 +11,7 @@ extern "C"
 void print_write(const char* data, int size);
 void print(const char* data);
 void println(const char* data);
-int printf(char* fmt, ...);
+int printf(const char* fmt, ...);
 
 #ifdef __cplusplus
 }

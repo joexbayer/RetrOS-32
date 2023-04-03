@@ -52,7 +52,7 @@ void free(void* ptr)
 	}
 }
 
-void* malloc(int size)
+void* malloc(unsigned int size)
 {	
 	assert(size > 0);
 	/* For rewrite with pages. */

@@ -10,6 +10,7 @@ MAKEFLAGS += --no-print-directory
 UNAME := $(shell uname)
 ifeq ($(UNAME),Linux)
 	CC=gcc
+	CPP=g++
 	AS=as
 	LD=ld
 
@@ -18,6 +19,7 @@ ifeq ($(UNAME),Linux)
 	LDFLAGS += -m elf_i386
 else
 	CC=i386-elf-gcc
+	CPP=i386-elf-g++
 	AS=i386-elf-as
 	LD=i386-elf-ld
 endif
@@ -46,7 +48,7 @@ bin/%.o: */%.s
 
 # C++ compiling
 bin/%.o: %.cpp bin/crt0.o ./bin/crti.o ./bin/crtn.o
-	@g++ -o $@ -c $< $(CCFLAGS) -fno-exceptions -fno-rtti
+	$(CPP) -o $@ -c $< $(CCFLAGS) -fno-exceptions -fno-rtti
 	@$(LD) -o $(basename $@) ./bin/crt0.o $@ $(COMMON) $(LDFLAGS) -T ./utils/linker.ld
 	@echo [USR] Compiling C++ $(basename $@)
 

@@ -1,6 +1,8 @@
 #ifndef SOCKET_H
 #define SOCKET_H
 
+struct sock;
+
 #include <util.h>
 #include <sync.h>
 #include <net/skb.h>

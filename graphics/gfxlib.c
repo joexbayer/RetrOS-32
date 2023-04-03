@@ -13,7 +13,7 @@
 #include <pcb.h>
 #include <font8.h>
 #include <vbe.h>
-#include <stdarg.h>
+#include <args.h>
 #include <vbe.h>
 #include <serial.h>
 #include <scheduler.h>

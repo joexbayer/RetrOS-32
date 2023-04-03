@@ -58,7 +58,7 @@ void kfree(void* ptr);
 
 void* palloc(int size);
 
-void* malloc(int size);
+void* malloc(unsigned int size);
 void free(void* ptr);
 
 /* Assembly helper functions */

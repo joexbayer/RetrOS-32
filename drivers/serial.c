@@ -12,7 +12,7 @@
 #include <serial.h>
 #include <io.h>
 #include <util.h>
-#include <stdarg.h>
+#include <args.h>
 
 #define PORT 0x3f8          // COM1
 #define MAX_FMT_STR_SIZE 50

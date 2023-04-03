@@ -19,7 +19,7 @@ extern "C" {
  */
 class Window {
 public:
-	Window(int width, int height, char* name) {
+	Window(int width, int height, const char* name) {
 		gfx_create_window(width, height);
 		gfx_set_title(name);
 	}
@@ -74,8 +74,8 @@ struct gfx_char {
     unsigned char color;
 };
 
-int gfx_draw_text(int x, int y, char* text, unsigned char color);
-int gfx_draw_format_text(int x, int y, char color, char* fmt, ...);
+int gfx_draw_text(int x, int y, const char* text, unsigned char color);
+int gfx_draw_format_text(int x, int y, char color, const char* fmt, ...);
 int gfx_draw_char(int x, int y, char data, unsigned char color);
 int gfx_draw_rectangle(int x, int y, int width, int height, unsigned char color);
 int gfx_draw_circle(int x, int y, int r, unsigned char color);

@@ -2,7 +2,7 @@
 #include <colors.h>
 #include <util.h>
 #include <font8.h>
-#include <stdarg.h>
+#include <args.h>
 
 #include <io.h>
 struct vbe_mode_info_structure* vbe_info;

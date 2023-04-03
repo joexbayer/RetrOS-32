@@ -131,7 +131,7 @@ iso: compile userspace tools
 filesystem:
 	@dd if=/dev/zero of=filesystem.image bs=512 count=390
 
-compile: bindir $(LIBOBJ) bootblock kernel
+compile: bindir $(LIBOBJ) bootblock kernel userspace
 	@echo "[Compile] Finished."
 	$(TIME-END)
 

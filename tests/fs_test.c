@@ -75,7 +75,7 @@ void test_file_size(int size)
     int create_test2 = fs_create("xlarge_file.txt");
     testprintf(create_test2 == 0, "Created xlarge_file.txt file.");
 
-    int large_inode = fs_open("xlarge_file.txt");
+    int large_inode = fs_open("/xlarge_file.txt");
     testprintf(large_inode > 0, "Opened xlarge_file.txt");
 
     char* large_buffer = malloc(size);
@@ -116,7 +116,7 @@ int main(int argc, char const *argv[])
     int create_test2 = fs_create("test2.txt");
     testprintf(create_test2 == 0, "Created test2.txt file in test directory.");
     
-    inode_t open_inode = fs_open("test2.txt");
+    inode_t open_inode = fs_open("/test2.txt");
     testprintf(open_inode > 0, "Opened test2.txt");
 
     int size = fs_size(open_inode);

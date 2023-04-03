@@ -2,7 +2,7 @@
 #define __SERIAL_H
 
 #include <stdint.h>
-#include <stdarg.h>
+#include <args.h>
 
 #define dbgprintf(a, ...) serial_printf("%s(): " a, __func__, ##__VA_ARGS__)
 

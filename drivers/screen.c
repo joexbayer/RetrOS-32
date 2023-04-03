@@ -12,7 +12,7 @@
 #include <screen.h>
 #include <pcb.h>
 #include <windowmanager.h>
-#include <stdarg.h>
+#include <args.h>
 #include <io.h>
 #include <serial.h>
 #include <vbe.h>

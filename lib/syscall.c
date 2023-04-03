@@ -63,7 +63,7 @@ int gfx_draw_syscall(int option, void* data)
     return invoke_syscall(SYSCALL_GFX_DRAW, option, (int)data, 0);
 }
 
-int gfx_set_title(char* title)
+int gfx_set_title(const char* title)
 {
     return invoke_syscall(SYSCALL_GFX_SET_TITLE, (int)title, 0, 0);
 }
@@ -95,7 +95,7 @@ void free(void* ptr)
 
 int close(int fd)
 {
-    invoke_syscall(SYSCALL_CLOSE, fd, 0, 0);
+    return invoke_syscall(SYSCALL_CLOSE, fd, 0, 0);
 }
 
 #ifdef __cplusplus

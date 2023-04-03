@@ -10,7 +10,7 @@
  */
 
 #include <terminal.h>
-#include <stdarg.h>
+#include <args.h>
 #include <colors.h>
 #include <gfx/gfxlib.h>
 #include <pcb.h>

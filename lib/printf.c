@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-#include <stdarg.h>
+#include <args.h>
 #include <lib/syscall.h>
 #include <util.h>
 
@@ -47,7 +47,7 @@ void println(const char* data)
 
 #define MAX_FMT_STR_SIZE 50
 
-int printf(char* fmt, ...)
+int printf(const char* fmt, ...)
 {
 	va_list args;
 
