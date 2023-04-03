@@ -2,11 +2,14 @@
 #define __TCP_H
 
 #include <stdint.h>
+#include <sync.h>
+#include <rbuffer.h>
 
 struct tcp_connection {
 	uint8_t state;
 
 	uint32_t sequence;
+	uint32_t acknowledgement;
 
 	uint32_t retransmits;
 	uint32_t tcpi_snd_mss;
@@ -14,8 +17,13 @@ struct tcp_connection {
 
 	uint32_t* last_data_sent;
 	uint32_t* last_ack_sent;
-	uint32_t* last_data_recv;
+
 	uint32_t* last_ack_recv;
+	uint32_t* last_data_recv;
+
+	struct ring_buffer* recv_buffer;
+	uint8_t data_ready;
+	uint32_t recvd;
 
 	/* This identifies a TCP connection. */
 	uint16_t dport;
@@ -28,6 +36,7 @@ struct tcp_connection {
 #include <net/socket.h>
 
 #define TCP_MSS        512
+#define TCP_MAX_BUFFER_SIZE 4096*4
 
 /* TCP STATES */
 enum {
@@ -82,5 +91,7 @@ int tcp_register_connection(struct sock* sock, uint16_t dst_port, uint16_t src_p
 int tcp_connect(struct sock* sock);
 int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t push);
 int tcp_parse(struct sk_buff* skb);
+
+int tcp_read(struct sock* sock, uint8_t* buffer, int length);
 
 #endif

@@ -31,9 +31,15 @@ void tcpd()
 
     kernel_connect(tcp_socket, (struct sockaddr*) &dest_addr, sizeof(dest_addr));
 
-    char* test = "Hello world!";
-
+    char* test = "Hello world!\n";
+    dbgprintf(" Sending '%s'\n", test);
     ret = kernel_send(tcp_socket, test, strlen(test), 0);
+
+    char reply[255];
+    ret = kernel_recv(tcp_socket, reply, 255, 0);
+    reply[ret] = 0;
+
+    dbgprintf(" Reply '%s' (%d bytes)\n", reply, ret);
 
     while(1);
 }

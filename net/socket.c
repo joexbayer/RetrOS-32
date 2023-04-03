@@ -85,6 +85,18 @@ int net_sock_is_established(struct sock* sk)
     return sk->tcp->state == TCP_ESTABLISHED;
 }
 
+int net_sock_awaiting_ack(struct sock* sk)
+{
+    assert(sk->tcp != NULL);
+    return sk->tcp->state == TCP_WAIT_ACK;
+}
+
+int net_sock_data_ready(struct sock* sk, int length)
+{
+    assert(sk->tcp != NULL);
+	return sk->tcp->data_ready == 1;
+}
+
 struct sock* sock_find_listen_tcp(uint16_t d_port)
 {
     for (int i = 0; i < MAX_NUMBER_OF_SOCKETS; i++){   
@@ -160,6 +172,7 @@ struct sock* kernel_socket(int domain, int type, int protocol)
     socket_table[current]->type = type;
     socket_table[current]->socket = current;
     socket_table[current]->bound_port = 0;
+    socket_table[current]->tcp = NULL;
 
     socket_table[current]->skb_queue = skb_new_queue();
 

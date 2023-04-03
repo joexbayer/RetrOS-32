@@ -5,6 +5,7 @@
 #include <net/net.h>
 #include <assert.h>
 #include <serial.h>
+#include <rbuffer.h>
 
 int tcp_register_connection(struct sock* sock, uint16_t dst_port, uint16_t src_port)
 {
@@ -14,6 +15,11 @@ int tcp_register_connection(struct sock* sock, uint16_t dst_port, uint16_t src_p
 	sock->tcp->sport = src_port;
 	sock->tcp->state = TCP_CREATED;
 	sock->tcp->sequence = 227728011;
+
+	sock->tcp->recv_buffer = rbuffer_new(TCP_MAX_BUFFER_SIZE);
+	sock->tcp->data_ready = 0;
+	sock->tcp->recvd = 0;
+
 	return 0;
 }
 
@@ -36,35 +42,35 @@ uint16_t tcp_calculate_checksum(uint32_t src_ip, uint32_t dest_ip, unsigned shor
     register unsigned long sum = 0;
     unsigned short tcpLen = size;
     struct tcp_header *tcphdrp = (struct tcp_header*)(data);
-    //add the pseudo header 
-    //the source ip
+
+    /* the source ip */
     sum += (src_ip>>16)&0xFFFF;
     sum += (src_ip)&0xFFFF;
-    //the dest ip
+    /* the dest ip */
     sum += (dest_ip>>16)&0xFFFF;
     sum += (dest_ip)&0xFFFF;
-    //protocol and reserved: 6
+    /* protocol and reserved: 6 */
     sum += htons(TCP);
-    //the length
+    /* the length  */
     sum += htons(tcpLen);
  
-    //add the IP payload
-    //initialize checksum to 0
+    /* add the IP payload */
+    /* initialize checksum to 0 */
     tcphdrp->check = 0;
     while (tcpLen > 1) {
         sum += * data++;
         tcpLen -= 2;
     }
-    //if any bytes left, pad the bytes and add
+    /* if any bytes left, pad the bytes and add */
     if(tcpLen > 0) {
         sum += ((*data)&htons(0xFF00));
     }
-      //Fold 32-bit sum to 16 bits: add carrier to result
+      /* Fold 32-bit sum to 16 bits: add carrier to result */
       while (sum>>16) {
           sum = (sum & 0xffff) + (sum >> 16);
       }
       sum = ~sum;
-    //set computation result
+
 	return sum;
 }
 
@@ -108,7 +114,7 @@ int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t pus
 		.dest = sock->recv_addr.sin_port,
 		.window = 1500,
 		.seq = sock->tcp->sequence,
-		.ack_seq = 0,
+		.ack_seq = sock->tcp->acknowledgement,
 		.doff = 0x05,
 		.ack = 1,
 		.psh = push
@@ -117,6 +123,64 @@ int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t pus
 	sock->tcp->sequence += len;
 
 	__tcp_send(sock, &hdr, skb, data, len);
+	return 0;
+}
+
+int tcp_send_ack(struct sock* sock, struct tcp_header* tcp, int len)
+{
+	struct sk_buff* skb = skb_new();
+	assert(skb != NULL);
+
+	struct tcp_header hdr = {
+		.source = tcp->dest,
+		.dest = tcp->source,
+		.window = 1500,
+		.seq = htonl(tcp->ack_seq),
+		.ack_seq = htonl(tcp->seq)+len,
+		.doff = 0x05,
+		.ack = 1
+	};
+
+	sock->tcp->sequence = htonl(tcp->ack_seq);
+	sock->tcp->acknowledgement = htonl(tcp->seq)+1;
+
+	__tcp_send(sock, &hdr, skb, NULL, 0);
+	return 0;
+}
+
+int tcp_read(struct sock* sock, uint8_t* buffer, int length)
+{
+	dbgprintf(" [TCP] Waiting for data... %d\n", sock);
+	/* Should be blocking */
+	while(!net_sock_data_ready(sock, length));
+
+	int to_read = length > sock->tcp->recvd ? sock->tcp->recvd : length;
+	int ret = sock->tcp->recv_buffer->ops->read(sock->tcp->recv_buffer, buffer, to_read);
+	if(ret != to_read){
+		dbgprintf("[TCP] Read from recv buffer not equal to return value!\n");
+	}
+	sock->tcp->recvd -= to_read;
+
+	dbgprintf("[TCP] Received %d from socket %d\n", to_read, sock);
+
+	return to_read;
+}
+
+int tcp_recv_segment(struct sock* sock, struct tcp_header* tcp, struct sk_buff* skb)
+{
+	/* TODO: if data_ready == 1 wait for it to be cleared. */
+
+	int ret = sock->tcp->recv_buffer->ops->add(sock->tcp->recv_buffer, skb->data, skb->data_len);
+	if(ret < 0){
+		dbgprintf("[TCP] recv ring buffer is full!\n");
+		return ret;
+	}
+	sock->tcp->recvd += skb->data_len;
+	sock->tcp->data_ready = tcp->psh;
+
+	dbgprintf("[TCP] Added segment to socket %d (ready: %d)\n", sock, sock->tcp->data_ready);
+
+	tcp_send_ack(sock, tcp, skb->data_len);
 	return 0;
 }
 
@@ -140,38 +204,19 @@ int tcp_connect(struct sock* sock)
 	return 0;
 }
 
-int tcp_send_ack(struct sock* sock, struct tcp_header* tcp)
-{
-	struct sk_buff* skb = skb_new();
-	assert(skb != NULL);
-
-	struct tcp_header hdr = {
-		.source = tcp->dest,
-		.dest = tcp->source,
-		.window = 1500,
-		.seq = htonl(tcp->ack_seq),
-		.ack_seq = htonl(tcp->seq)+1,
-		.doff = 0x05,
-		.ack = 1
-	};
-
-	sock->tcp->sequence = htonl(tcp->ack_seq);
-
-	__tcp_send(sock, &hdr, skb, NULL, 0);
-	return 0;
-}
-
 int tcp_send_syn(struct sock* sock, uint16_t dst_port, uint16_t src_port)
-{	
+{
 
 	return 0;
 }
 
 int tcp_recv_ack(struct sock* sock, struct tcp_header* tcp)
 {
-	dbgprintf("[TCP] Incoming TCP ack expected %d got %d (%d nbyte order)\n", sock->tcp->sequence, htonl(tcp->ack_seq), tcp->ack_seq);
+	dbgprintf("[TCP] Incoming TCP ack expected %d got %d\n", sock->tcp->sequence, htonl(tcp->ack_seq));
 	if(sock->tcp->sequence == htonl(tcp->ack_seq)){
 		dbgprintf("[TCP] Correct sequence acked\n");
+		sock->tcp->acknowledgement = htonl(tcp->seq)+1;
+		sock->tcp->state = TCP_ESTABLISHED;
 	}
 	
 	return 0;
@@ -206,6 +251,8 @@ int tcp_parse(struct sk_buff* skb)
 
 	struct tcp_header* hdr = (struct tcp_header* ) skb->data;
 	skb->hdr.tcp = hdr;
+	skb->data += hdr->doff*4;
+	skb->data_len = skb->hdr.ip->len - skb->hdr.ip->ihl*4 - hdr->doff*4;
 
 	struct sock* sk = net_sock_find_tcp(hdr->source, hdr->dest, htonl(skb->hdr.ip->saddr));
 	if(sk == NULL){
@@ -230,7 +277,7 @@ int tcp_parse(struct sk_buff* skb)
 	
 	case TCP_SYN_SENT:
 		if(hdr->syn == 1 && hdr->ack == 1){
-			tcp_send_ack(sk, hdr);
+			tcp_send_ack(sk, hdr, 1);
 			sk->tcp->state = TCP_ESTABLISHED;
 
 			dbgprintf("Socket %d set to established\n", sk);
@@ -241,6 +288,12 @@ int tcp_parse(struct sk_buff* skb)
 		if(hdr->syn == 0 && hdr->ack == 1){
 			dbgprintf("Socket %d received ack for %d\n", sk, hdr->ack_seq);
 			tcp_recv_ack(sk, hdr);
+			return 0;
+		}
+	case TCP_ESTABLISHED:
+		if(hdr->syn == 0 && hdr->ack == 1){
+			dbgprintf("Socket %d received data for %d\n", sk, hdr->ack_seq);
+			tcp_recv_segment(sk, hdr, skb);
 			return 0;
 		}
 	default:

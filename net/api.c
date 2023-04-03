@@ -37,7 +37,6 @@ int kernel_bind(struct sock* socket, const struct sockaddr *address, socklen_t a
  */ 
 int kernel_recvfrom(struct sock* socket, void *buffer, int length, int flags, struct sockaddr *address, socklen_t *address_len)
 {
-    /* */
     return 0;
 }
 
@@ -52,13 +51,18 @@ int kernel_recvfrom(struct sock* socket, void *buffer, int length, int flags, st
  */
 int kernel_recv(struct sock* socket, void *buffer, int length, int flags)
 {
+    /* FIXME BADLY */
     int read = -1;
-    while(read == -1){
-        read = net_sock_read_skb(socket, buffer);
+    if(socket->tcp != NULL){
+        read = tcp_read(socket, buffer, length);
+    } else {
+        while(read == -1){
+            read = net_sock_read_skb(socket, buffer);
+        }
+
+        dbgprintf("Socket %d recv %d\n", socket->socket, read);
+
     }
-
-    dbgprintf("Socket %d recv %d\n", socket->socket, read);
-
     return read;
 }
 
@@ -165,19 +169,26 @@ int kernel_listen(struct sock* socket, int backlog)
 int kernel_send(struct sock* socket, void *message, int length, int flags)
 {
     /* for the time being, only send messages under 1500 bytes */
-    if(length > 1500){
+    if(length > 1400){
         return -1;
     }
 
-    dbgprintf(" [%d] Preparing to send %d bytes\n",  socket->socket, length);
-
+    /**
+     * This should not be done by the process calling this function. 
+     * Instead by another process, perhaps the worker thread.
+     * Or simply start a async function. The original thread should simply 
+     * block / spin and be notified when data has been sent.
+     * 
+     * Currently we only accept tiny messages so this is not needed yet...
+     */
     while(!net_sock_is_established(socket));
     
+    /* TODO: if message was bigger than 1400, send 1400 at a time, simple stop and wait. */
     dbgprintf(" [%d] Sending %d bytes\n", socket->socket, length);
     socket->tcp->state = TCP_WAIT_ACK;
     tcp_send_segment(socket, message, length, 1);
 
-    while(socket->tcp->state == TCP_WAIT_ACK);
+    while(net_sock_awaiting_ack(socket));
 
     /* Split into smaller "messages" of needed. */
     return length;
