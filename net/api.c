@@ -52,18 +52,23 @@ int kernel_recvfrom(struct sock* socket, void *buffer, int length, int flags, st
  */
 int kernel_recv(struct sock* socket, void *buffer, int length, int flags)
 {
-    /* FIXME BADLY */
     int read = -1;
-    if(socket->tcp != NULL){
-        read = tcp_read(socket, buffer, length);
-    } else {
+    switch (socket->type){
+    case SOCK_DGRAM:
+        /* TODO: Should not spin/block here */
         while(read == -1){
             read = net_sock_read_skb(socket, buffer);
         }
-
-        dbgprintf("Socket %d recv %d\n", socket->socket, read);
-
+        break;
+    case SOCK_STREAM:
+        read = tcp_read(socket, buffer, length);
+        break;
+    default:
+        dbgprintf("Unknown socket type\n");
+        break;
     }
+    dbgprintf("Socket %d recv %d\n", socket->socket, read);
+
     return read;
 }
 

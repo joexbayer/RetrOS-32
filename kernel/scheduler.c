@@ -24,6 +24,8 @@ void kernel_exit()
     dbgprintf("%s (PID %d) called Exit\n", current_running->name, current_running->pid);
     current_running->running = ZOMBIE;
     _context_switch();
+
+    UNREACHABLE();
 }
 
 void block()

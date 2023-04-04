@@ -22,7 +22,7 @@
 void tcpd()
 {
     int ret;
-    struct sock* socket = kernel_socket(AF_INET, SOCK_DGRAM, 0);
+    struct sock* socket = kernel_socket(AF_INET, SOCK_STREAM, 0);
     struct sockaddr_in dest_addr;
 
     int ip = gethostname("tcpbin.com\0");
@@ -46,5 +46,6 @@ void tcpd()
 
     dbgprintf(" Reply '%s' (%d bytes)\n", reply, ret);
 
-    while(1);
+    kernel_sock_close(socket);
+    kernel_exit();
 }

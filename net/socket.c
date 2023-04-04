@@ -147,6 +147,9 @@ void kernel_sock_close(struct sock* socket)
 {
     dbgprintf("Closing socket...\n");
     skb_free_queue(socket->skb_queue);
+
+    if(socket->type == SOCK_STREAM && socket->tcp != NULL)
+        tcp_free_connection(socket);
     kfree((void*) socket);
     unset_bitmap(socket_map, (int)socket->socket);
     total_sockets--;

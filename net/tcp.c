@@ -23,6 +23,16 @@ int tcp_register_connection(struct sock* sock, uint16_t dst_port, uint16_t src_p
 	return 0;
 }
 
+int tcp_free_connection(struct sock* sock)
+{
+	/* TODO: check for active connections */
+	rbuffer_free(sock->tcp->recv_buffer);
+	kfree(sock->tcp);
+	sock->tcp = NULL;
+
+	return 0;
+}
+
 inline int tcp_is_listening(struct sock* sock)
 {
 	return sock->tcp->state == TCP_LISTEN;

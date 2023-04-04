@@ -87,7 +87,10 @@ struct tcp_header
 
 int tcp_is_listening(struct sock* sock);
 int tcp_set_listening(struct sock* sock, int backlog);
+
 int tcp_register_connection(struct sock* sock, uint16_t dst_port, uint16_t src_port);
+int tcp_free_connection(struct sock* sock);
+
 int tcp_connect(struct sock* sock);
 int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t push);
 int tcp_parse(struct sk_buff* skb);
