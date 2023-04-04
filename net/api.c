@@ -3,6 +3,7 @@
 #include <net/socket.h>
 #include <serial.h>
 #include <assert.h>
+#include <scheduler.h>
 
 /**
  * @brief Binds a IP and Port to a socket, mainly used for the server side.
@@ -100,7 +101,7 @@ int kernel_connect(struct sock* socket, const struct sockaddr *address, socklen_
 
     dbgprintf(" [%d] Connecting...\n", socket);
     /* block or spin */
-    while(!net_sock_is_established(socket));
+    WAIT(!net_sock_is_established(socket));
 
     dbgprintf(" [%d] succesfully connected!\n", socket);
 
@@ -181,14 +182,14 @@ int kernel_send(struct sock* socket, void *message, int length, int flags)
      * 
      * Currently we only accept tiny messages so this is not needed yet...
      */
-    while(!net_sock_is_established(socket));
+    WAIT(!net_sock_is_established(socket));
     
     /* TODO: if message was bigger than 1400, send 1400 at a time, simple stop and wait. */
     dbgprintf(" [%d] Sending %d bytes\n", socket->socket, length);
     socket->tcp->state = TCP_WAIT_ACK;
     tcp_send_segment(socket, message, length, 1);
 
-    while(net_sock_awaiting_ack(socket));
+    WAIT(net_sock_awaiting_ack(socket));
 
     /* Split into smaller "messages" of needed. */
     return length;

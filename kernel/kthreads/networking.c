@@ -12,6 +12,7 @@
 #include <scheduler.h>
 #include <serial.h>
 #include <assert.h>
+#include <kthreads.h>
 
 #include <net/netdev.h>
 #include <net/net.h>
@@ -125,6 +126,8 @@ void networking_main()
     /* Maybe move these out into a init function */
     netd.skb_rx_queue = skb_new_queue();
     netd.skb_tx_queue = skb_new_queue();
+
+    start("dhcpd");
 
     while(1){
         /**

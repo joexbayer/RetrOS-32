@@ -63,7 +63,7 @@ static void __dns_add_cache(char* hostname, uint32_t ip)
     }
 }
 
-
+/* returns -1 on error */
 int gethostname(char* hostname)
 {
 
@@ -113,7 +113,7 @@ int gethostname(char* hostname)
     if(ret <= 0){
         dbgprintf("Failed DNS lookup\n");
         kernel_sock_close(__dns_socket);
-        return 0;
+        return -1;
     }
     
     struct dns_answer* answer;

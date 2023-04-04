@@ -12,6 +12,7 @@
 #include <net/net.h>
 #include <net/socket.h>
 #include <net/ipv4.h>
+#include <net/dns.h>
 
 #include <scheduler.h>
 #include <memory.h>
@@ -21,22 +22,26 @@
 void tcpd()
 {
     int ret;
-    /* Create and bind DHCP socket to DHCP_SOURCE_PORT and INADDR_ANY. */
-    struct sock* tcp_socket = kernel_socket(AF_INET, SOCK_DGRAM, 0);
+    struct sock* socket = kernel_socket(AF_INET, SOCK_DGRAM, 0);
     struct sockaddr_in dest_addr;
 
-    dest_addr.sin_addr.s_addr = htonl(ip_to_int("45.79.112.203"));
+    int ip = gethostname("tcpbin.com\0");
+    if(ip == -1){
+        dbgprintf("Unable to resolve tcpbin.com\n");
+        kernel_exit();
+    }
+
+    dest_addr.sin_addr.s_addr = ip;
     dest_addr.sin_port = htons(4242);
     dest_addr.sin_family = AF_INET;
 
-    kernel_connect(tcp_socket, (struct sockaddr*) &dest_addr, sizeof(dest_addr));
+    kernel_connect(socket, (struct sockaddr*) &dest_addr, sizeof(dest_addr));
 
     char* test = "Hello world!\n";
-    dbgprintf(" Sending '%s'\n", test);
-    ret = kernel_send(tcp_socket, test, strlen(test), 0);
+    ret = kernel_send(socket, test, strlen(test), 0);
 
     char reply[255];
-    ret = kernel_recv(tcp_socket, reply, 255, 0);
+    ret = kernel_recv(socket, reply, 255, 0);
     reply[ret] = 0;
 
     dbgprintf(" Reply '%s' (%d bytes)\n", reply, ret);

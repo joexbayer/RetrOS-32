@@ -16,7 +16,7 @@
 #include <assert.h>
 
 void spin_lock(spinlock_t* lock) {
-    while (__sync_lock_test_and_set(lock, 1));
+    WAIT(__sync_lock_test_and_set(lock, 1));
 }
 
 void spin_unlock(spinlock_t* lock) {

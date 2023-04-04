@@ -34,21 +34,18 @@ struct pcb {
     int args;
     char** argv;
     /* DO NOT NOT CHANGE ABOVE.*/
+    char name[pcb_max_name_length];
     uint8_t running;
     int16_t pid;
     uint16_t sleep;
     uint32_t stack_ptr;
-
-    uint32_t blocked_count;
-
     uint32_t* page_dir;
     uint32_t data_size;
 
     /* stats */
     int kallocs;
     int yields;
-
-    char name[pcb_max_name_length];
+    uint32_t blocked_count;
 
     struct gfx_window* gfx_window;
     struct terminal* term;
@@ -58,6 +55,7 @@ struct pcb {
     struct allocation* allocations;
     int used_memory;
 
+    struct pcb* parent;
     struct pcb *next;
     struct pcb *prev;
 }__attribute__((__packed__));

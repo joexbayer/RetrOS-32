@@ -414,6 +414,7 @@ int pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 	pcb->argv = NULL;
 	pcb->current_directory = fs_get_root();
 	pcb->yields = 0;
+	pcb->parent = current_running;
 
 	memcpy(pcb->name, name, strlen(name)+1);
 
@@ -465,6 +466,7 @@ int pcb_create_process(char* program, int args, char** argv)
 	pcb->argv = argv;
 	pcb->current_directory = fs_get_root();
 	pcb->yields = 0;
+	pcb->parent = current_running;
 
 	/* Memory map data */
 	vmem_init_process(pcb, buf, read);

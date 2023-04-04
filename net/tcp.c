@@ -148,7 +148,7 @@ int tcp_send_ack(struct sock* sock, struct tcp_header* tcp, int len)
 	return 0;
 }
 
-int tcp_read(struct sock* sock, uint8_t* buffer, int length)
+int tcp_read(struct sock* sock, uint8_t* buffer, unsigned int length)
 {
 	dbgprintf(" [TCP] Waiting for data... %d\n", sock);
 	/* Should be blocking */
@@ -290,12 +290,14 @@ int tcp_parse(struct sk_buff* skb)
 			tcp_recv_ack(sk, hdr);
 			return 0;
 		}
+		break;
 	case TCP_ESTABLISHED:
 		if(hdr->syn == 0 && hdr->ack == 1){
 			dbgprintf("Socket %d received data for %d\n", sk, hdr->ack_seq);
 			tcp_recv_segment(sk, hdr, skb);
 			return 0;
 		}
+		break;
 	default:
 		break;
 	}

@@ -114,8 +114,7 @@ void kernel(uint32_t magic)
 	start("Idle");
 	start("workd");
 	start("wind");
-	//start("Genesis");
-	start("Dummy");
+	start("netd");
 	start("Shell");
 	
 	init_pit(1);

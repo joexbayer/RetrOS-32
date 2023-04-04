@@ -8,4 +8,6 @@ void block();
 void unblock(int pid);
 void context_switch();
 
+#define WAIT(pred) while(pred){kernel_yield();}
+
 #endif
