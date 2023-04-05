@@ -50,7 +50,7 @@ void work_queue_add(void (*work_fn)(void*), void* arg)
             queue.head = work;
             queue.tail = work;
         } else {
-            queue.head->next = work;
+            queue.tail->next = work;
             queue.tail = work;
         }
     });
@@ -58,33 +58,38 @@ void work_queue_add(void (*work_fn)(void*), void* arg)
 
 void init_worker()
 {
-    mutex_init(&queue.lock);
     for (int i = 0; i < WORK_POOL_SIZE; i++){
         __work_pool[i].in_use = 0;
     }
 }
 
+static int workers = 0;
+
 void worker_thread()
-{
-    dbgprintf("Starting worker thread...\n");
+{  
+    int my_id = workers++;
+    dbgprintf("[%d] Starting worker thread...\n", my_id);
     while (1) {
 
-        while (queue.head == NULL) {
+        CLI();
+        if(queue.head == NULL) {
             /* Should block */
+            STI();
             kernel_yield();
+            continue;
         }
 
-        struct work* work;
-        LOCK((&queue), {
-            work = queue.head;
-            queue.head = queue.head->next;
+        ASSERT_CRITICAL();
+        struct work* work = queue.head;
+        queue.head = queue.head->next;
 
-            if (queue.head == NULL) {
-                queue.tail = NULL;
-            }
-        });
+        if (queue.head == NULL) {
+            queue.tail = NULL;
+        }
+        
+        STI();
 
-        dbgprintf("Running work... 0x%x (arg: %d)\n", work->work_fn, work->arg);
+        dbgprintf("[%d] Running work... 0x%x (arg: %d)\n", my_id, work->work_fn, work->arg);
         work->work_fn(work->arg);
         work->in_use = 0;
         work->next = NULL;

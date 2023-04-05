@@ -11,7 +11,6 @@ struct work {
 };
 
 struct work_queue {
-    mutex_t lock;
     struct work* head;
     struct work* tail;
 

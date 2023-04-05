@@ -113,6 +113,7 @@ void kernel(uint32_t magic)
 
 	start("Idle");
 	start("workd");
+	start("workd");
 	start("wind");
 	start("netd");
 	start("Shell");
