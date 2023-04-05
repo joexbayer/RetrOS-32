@@ -13,6 +13,7 @@
 #include <serial.h>
 #include <assert.h>
 #include <kthreads.h>
+#include <work.h>
 
 #include <net/netdev.h>
 #include <net/net.h>
@@ -145,7 +146,9 @@ void networking_main()
             dbgprintf("Receiving new SKB from RX queue\n");
             struct sk_buff* skb = netd.skb_rx_queue->ops->remove(netd.skb_rx_queue);
             assert(skb != NULL);
-            net_handle_recieve(skb);
+
+            /* Offload skb parsing to worker thread. */
+            work_queue_add(&net_handle_recieve, (void*)skb);
         }
     }
 }
