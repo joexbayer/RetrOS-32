@@ -6,8 +6,9 @@
 #include <assert.h>
 #include <serial.h>
 #include <rbuffer.h>
+#include <scheduler.h>
 
-int tcp_register_connection(struct sock* sock, uint16_t dst_port, uint16_t src_port)
+int tcp_new_connection(struct sock* sock, uint16_t dst_port, uint16_t src_port)
 {
 	sock->tcp = kalloc(sizeof(struct tcp_connection));
 	memset(sock->tcp, 0, sizeof(struct tcp_connection));
@@ -162,7 +163,7 @@ int tcp_read(struct sock* sock, uint8_t* buffer, unsigned int length)
 {
 	dbgprintf(" [TCP] Waiting for data... %d\n", sock);
 	/* Should be blocking */
-	while(!net_sock_data_ready(sock, length));
+	WAIT(!net_sock_data_ready(sock, length));
 
 	int to_read = length > sock->tcp->recvd ? sock->tcp->recvd : length;
 	int ret = sock->tcp->recv_buffer->ops->read(sock->tcp->recv_buffer, buffer, to_read);

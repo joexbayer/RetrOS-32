@@ -17,6 +17,7 @@
 #include <util.h>
 #include <timer.h>
 #include <assert.h>
+#include <scheduler.h>
 
 #include <serial.h>
 
@@ -64,6 +65,9 @@ static int __sock_add_skb(struct sock* socket, struct sk_buff* skb)
 int net_sock_read_skb(struct sock* socket, char* buffer)
 {
     int read = -1;
+
+    WAIT(!(SKB_QUEUE_READY(socket->skb_queue)));
+
     struct sk_buff* skb = socket->skb_queue->ops->remove(socket->skb_queue);
     if(skb == NULL) return read;
     read = skb->data_len;

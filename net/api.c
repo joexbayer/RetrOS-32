@@ -56,9 +56,7 @@ int kernel_recv(struct sock* socket, void *buffer, int length, int flags)
     switch (socket->type){
     case SOCK_DGRAM:
         /* TODO: Should not spin/block here */
-        while(read == -1){
-            read = net_sock_read_skb(socket, buffer);
-        }
+        read = net_sock_read_skb(socket, buffer);
         break;
     case SOCK_STREAM:
         read = tcp_read(socket, buffer, length);
@@ -96,7 +94,7 @@ int kernel_connect(struct sock* socket, const struct sockaddr *address, socklen_
         net_sock_bind(socket, 0, INADDR_ANY);
 
     assert(socket->tcp == NULL);
-    tcp_register_connection(socket, addr->sin_port, socket->bound_port);
+    tcp_new_connection(socket, addr->sin_port, socket->bound_port);
 
     struct sockaddr_in* sptr = &socket->recv_addr;
     memcpy(sptr, addr, sizeof(struct sockaddr_in));
