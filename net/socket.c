@@ -43,7 +43,7 @@ static bitmap_t socket_map;
 
 inline static unsigned short __get_free_port()
 {
-    return ntohs(get_free_bitmap(port_map, NUMBER_OF_DYMANIC_PORTS) + DYNAMIC_PORT_START);
+    return ntohs(get_free_bitmap(port_map, NET_NUMBER_OF_DYMANIC_PORTS) + NET_DYNAMIC_PORT_START);
 }
 
 void net_sock_bind(struct sock* socket, unsigned short port, unsigned int ip)
@@ -52,7 +52,7 @@ void net_sock_bind(struct sock* socket, unsigned short port, unsigned int ip)
     socket->bound_port = port == 0 ? __get_free_port() : port;
 }
 
-
+/* Currently deprecated */
 static int __sock_add_skb(struct sock* socket, struct sk_buff* skb)
 {
     LOCK(socket, {
@@ -62,17 +62,99 @@ static int __sock_add_skb(struct sock* socket, struct sk_buff* skb)
     return 0;
 }
 
-int net_sock_read_skb(struct sock* socket, char* buffer)
+int net_sock_read(struct sock* sock, uint8_t* buffer, unsigned int length)
+{
+	dbgprintf(" [SOCK] Waiting for data... %d\n", sock);
+	/* Should be blocking */
+	WAIT(!net_sock_data_ready(sock, length));
+
+    int to_read = -1;
+
+    LOCK(sock, {
+        to_read = length > sock->recvd ? sock->recvd : length;
+        int ret = sock->recv_buffer->ops->read(sock->recv_buffer, buffer, to_read);
+        if(ret != to_read){
+            dbgprintf("[SOCK] Read from recv buffer not equal to return value!\n");
+        }
+        sock->recvd -= to_read;
+        
+        if(sock->recvd == 0)
+            sock->data_ready = 0;
+
+        dbgprintf("[SOCK] Received %d from socket %d\n", to_read, sock);
+    });
+
+	return to_read;
+}
+
+static inline int net_sock_add_data_segment(struct sock* sock, struct sk_buff* skb)
+{
+    ASSERT_LOCKED(sock);
+
+    int ret = sock->recv_buffer->ops->add(sock->recv_buffer, skb->data, skb->data_len);
+    if(ret < 0){
+        dbgprintf("[TCP] recv ring buffer is full!\n");
+        return -1;
+    }
+    sock->recvd += skb->data_len;
+    sock->data_ready = sock->tcp == NULL ? 1 : skb->hdr.tcp->psh;
+
+    return 0;
+}
+
+/**
+ * @brief This function adds a new network packet to a socket. 
+ * Function to add new data to the sockets ring buffer. Both used for UDP and TCP sockets,
+ * important to notice: only 1 "packet" can be in the ring buffer at a time. Meaning
+ * either one UDP packet or as many TCP packets till the psh flag is set.
+ * The function returns an error code if the operation fails.
+ * @param sock A pointer to the socket structure to add the new packet to.
+ * @param skb A pointer to the new network packet to be added to the socket's queue.
+ * @return An integer error code. Returns -1 if the operation fails, or 0 if successful.
+ */
+int net_sock_add_data(struct sock* sock, struct sk_buff* skb)
+{
+    int ret = -1;
+    LOCK(sock, {
+        /* if data is ready to be read, we cant add new data, so instead add the skb to the sockets queue.*/
+        if(net_sock_data_ready(sock, NET_MAX_BUFFER_SIZE)){
+            sock->skb_queue->ops->add(sock->skb_queue, skb);
+            dbgprintf("[%d] Adding SKB to socket queue\n", sock->socket);
+            break;
+        }
+
+        /* Add segment to socket */
+        ret = net_sock_add_data_segment(sock, skb);
+
+        /* While there is still data waiting to be added and data ready is 0 */
+        while(!net_sock_data_ready(sock, NET_MAX_BUFFER_SIZE) && SKB_QUEUE_READY(sock->skb_queue)){
+            struct sk_buff* queued_skb = sock->skb_queue->ops->remove(sock->skb_queue);
+            if(queued_skb == NULL) break;
+
+            net_sock_add_data_segment(sock, queued_skb);
+            skb_free(queued_skb);
+        }
+
+        dbgprintf("[TCP] Added segment to socket %d (ready: %d)\n", sock, sock->data_ready);
+    });
+    
+	return ret;
+}
+
+
+int net_sock_read_skb(struct sock* socket)
 {
     int read = -1;
 
-    WAIT(!(SKB_QUEUE_READY(socket->skb_queue)));
+    //WAIT(!(SKB_QUEUE_READY(socket->skb_queue)));
 
     struct sk_buff* skb = socket->skb_queue->ops->remove(socket->skb_queue);
     if(skb == NULL) return read;
-    read = skb->data_len;
-    memcpy(buffer, skb->data, read);
-    skb_free(skb);
+
+    read = net_sock_add_data(socket, skb);
+    if(read >= 0)
+        skb_free(skb);
+    
 
     return read;
 }
@@ -97,13 +179,13 @@ int net_sock_awaiting_ack(struct sock* sk)
 
 int net_sock_data_ready(struct sock* sk, int length)
 {
-    assert(sk->tcp != NULL);
-	return sk->tcp->data_ready == 1;
+    assert(sk != NULL);
+	return sk->data_ready == 1 || sk->recvd >= length;
 }
 
 struct sock* sock_find_listen_tcp(uint16_t d_port)
 {
-    for (int i = 0; i < MAX_NUMBER_OF_SOCKETS; i++){   
+    for (int i = 0; i < NET_NUMBER_OF_SOCKETS; i++){   
         if(socket_table[i] == NULL || socket_table[i]->tcp == NULL)
             continue;
 
@@ -117,14 +199,13 @@ struct sock* sock_find_listen_tcp(uint16_t d_port)
 struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip)
 {
     struct sock* _sk = NULL; /* save listen socket incase no established connection is found. */
-    for (int i = 0; i < MAX_NUMBER_OF_SOCKETS; i++){
+    for (int i = 0; i < NET_NUMBER_OF_SOCKETS; i++){
         if(socket_table[i] == NULL || socket_table[i]->tcp == NULL)
             continue;
         
         if(socket_table[i]->bound_port == d_port &&  socket_table[i]->tcp->state == TCP_LISTEN)
             _sk = socket_table[i];
 
-        dbgprintf("dport: %d - %d. sport: %d - %d. IP: %i - %i\n", socket_table[i]->bound_port, d_port, socket_table[i]->recv_addr.sin_port, s_port, socket_table[i]->recv_addr.sin_addr.s_addr, ip);
         if(socket_table[i]->bound_port == d_port &&  socket_table[i]->recv_addr.sin_port == s_port && socket_table[i]->tcp->state != TCP_LISTEN && socket_table[i]->recv_addr.sin_addr.s_addr == ip)
             return socket_table[i];
     }
@@ -133,27 +214,34 @@ struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip)
 }
 
 
-int net_socket_add_skb(struct sk_buff* skb, unsigned short port) 
+struct sock* net_socket_find_udp(uint32_t ip, uint16_t port) 
 {   
     /* Interate over sockets and add packet if socket exists with matching port and IP */
-    for (int i = 0; i < total_sockets; i++){
+    for (int i = 0; i < NET_NUMBER_OF_SOCKETS; i++){
         if(socket_table[i] == NULL)
             continue;
 
-        if(socket_table[i]->bound_port == htons(port) && (socket_table[i]->bound_ip == skb->hdr.ip->daddr || socket_table[i]->bound_ip == INADDR_ANY)) {
-            return __sock_add_skb(socket_table[i], skb);
+        if(socket_table[i]->bound_port == htons(port) && (socket_table[i]->bound_ip == ip || socket_table[i]->bound_ip == INADDR_ANY)) {
+            return socket_table[i];
         }
     }
-    return -1;
+    return NULL;
 }
 
 void kernel_sock_close(struct sock* socket)
 {
     dbgprintf("Closing socket...\n");
+
+    while(SKB_QUEUE_READY(socket->skb_queue)){
+        struct sk_buff* skb = socket->skb_queue->ops->remove(socket->skb_queue);
+        skb_free(skb);
+    }
     skb_free_queue(socket->skb_queue);
+    rbuffer_free(socket->recv_buffer);
 
     if(socket->type == SOCK_STREAM && socket->tcp != NULL)
         tcp_free_connection(socket);
+
     kfree((void*) socket);
     unset_bitmap(socket_map, (int)socket->socket);
     total_sockets--;
@@ -169,8 +257,8 @@ void kernel_sock_close(struct sock* socket)
  */
 struct sock* kernel_socket(int domain, int type, int protocol)
 {
-    //int current = get_free_bitmap(socket_map, MAX_NUMBER_OF_SOCKETS);
-    int current = get_free_bitmap(socket_map, MAX_NUMBER_OF_SOCKETS);
+    //int current = get_free_bitmap(socket_map, NET_NUMBER_OF_SOCKETS);
+    int current = get_free_bitmap(socket_map, NET_NUMBER_OF_SOCKETS);
 
     socket_table[current] = kalloc(sizeof(struct sock)); /* Allocate space for a socket. Needs to be freed. */
     memset(socket_table[current], 0, sizeof(struct sock));
@@ -180,6 +268,10 @@ struct sock* kernel_socket(int domain, int type, int protocol)
     socket_table[current]->socket = current;
     socket_table[current]->bound_port = 0;
     socket_table[current]->tcp = NULL;
+
+    socket_table[current]->recv_buffer = rbuffer_new(NET_MAX_BUFFER_SIZE);
+	socket_table[current]->data_ready = 0;
+	socket_table[current]->recvd = 0;
 
     socket_table[current]->skb_queue = skb_new_queue();
 
@@ -194,8 +286,8 @@ struct sock* kernel_socket(int domain, int type, int protocol)
 
 void init_sockets()
 {
-    socket_table = (struct sock**) kalloc(MAX_NUMBER_OF_SOCKETS * sizeof(void*));
-    port_map = create_bitmap(NUMBER_OF_DYMANIC_PORTS);
-    socket_map = create_bitmap(MAX_NUMBER_OF_SOCKETS);
+    socket_table = (struct sock**) kalloc(NET_NUMBER_OF_SOCKETS * sizeof(void*));
+    port_map = create_bitmap(NET_NUMBER_OF_DYMANIC_PORTS);
+    socket_map = create_bitmap(NET_NUMBER_OF_SOCKETS);
     total_sockets = 0;
 }

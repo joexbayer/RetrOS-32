@@ -2,6 +2,7 @@
 #define __ASSERT_H
 
 #include <serial.h>
+#include <sync.h>
 #include <util.h>
 
 #define assert(expr) \
@@ -14,4 +15,5 @@
         dbgprintf("Unreachable was reached: file %s, line %d\n", __FILE__, __LINE__); \
         PANIC();\
 
+#define ASSERT_LOCKED(obj) assert((obj->lock.state) == LOCKED);
 #endif // ! __ASSERT_H

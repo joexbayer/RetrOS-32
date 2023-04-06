@@ -17,17 +17,12 @@ int tcp_new_connection(struct sock* sock, uint16_t dst_port, uint16_t src_port)
 	sock->tcp->state = TCP_CREATED;
 	sock->tcp->sequence = 227728011;
 
-	sock->tcp->recv_buffer = rbuffer_new(TCP_MAX_BUFFER_SIZE);
-	sock->tcp->data_ready = 0;
-	sock->tcp->recvd = 0;
-
 	return 0;
 }
 
 int tcp_free_connection(struct sock* sock)
 {
 	/* TODO: check for active connections */
-	rbuffer_free(sock->tcp->recv_buffer);
 	kfree(sock->tcp);
 	sock->tcp = NULL;
 
@@ -159,10 +154,12 @@ int tcp_send_ack(struct sock* sock, struct tcp_header* tcp, int len)
 	return 0;
 }
 
+/* Currently deprecated */
 int tcp_read(struct sock* sock, uint8_t* buffer, unsigned int length)
 {
+	/*
 	dbgprintf(" [TCP] Waiting for data... %d\n", sock);
-	/* Should be blocking */
+	// Should be blocking 
 	WAIT(!net_sock_data_ready(sock, length));
 
 	int to_read = length > sock->tcp->recvd ? sock->tcp->recvd : length;
@@ -175,11 +172,15 @@ int tcp_read(struct sock* sock, uint8_t* buffer, unsigned int length)
 	dbgprintf("[TCP] Received %d from socket %d\n", to_read, sock);
 
 	return to_read;
+	*/
+
+	return -1;
 }
 
+/* Currently deprecated */
 int tcp_recv_segment(struct sock* sock, struct tcp_header* tcp, struct sk_buff* skb)
 {
-	/* TODO: if data_ready == 1 wait for it to be cleared. */
+	/* TODO: if data_ready == 1 wait for it to be cleared. 
 
 	int ret = sock->tcp->recv_buffer->ops->add(sock->tcp->recv_buffer, skb->data, skb->data_len);
 	if(ret < 0){
@@ -193,6 +194,9 @@ int tcp_recv_segment(struct sock* sock, struct tcp_header* tcp, struct sk_buff* 
 
 	tcp_send_ack(sock, tcp, skb->data_len);
 	return 0;
+	*/
+
+	return -1;
 }
 
 
@@ -305,7 +309,13 @@ int tcp_parse(struct sk_buff* skb)
 	case TCP_ESTABLISHED:
 		if(hdr->syn == 0 && hdr->ack == 1){
 			dbgprintf("Socket %d received data for %d\n", sk, hdr->ack_seq);
-			tcp_recv_segment(sk, hdr, skb);
+			//tcp_recv_segment(sk, hdr, skb);
+
+			/* Check if correct packet is in order. */
+			int ret = net_sock_add_data(sk, skb);
+			tcp_send_ack(sk, hdr, skb->data_len);
+			if(ret == 0)
+				skb_free(skb);
 			return 0;
 		}
 		break;

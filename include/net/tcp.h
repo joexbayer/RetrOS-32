@@ -21,10 +21,6 @@ struct tcp_connection {
 	uint32_t* last_ack_recv;
 	uint32_t* last_data_recv;
 
-	struct ring_buffer* recv_buffer;
-	uint8_t data_ready;
-	uint32_t recvd;
-
 	/* This identifies a TCP connection. */
 	uint16_t dport;
 	uint16_t sport;
@@ -36,7 +32,6 @@ struct tcp_connection {
 #include <net/socket.h>
 
 #define TCP_MSS        512
-#define TCP_MAX_BUFFER_SIZE 4096*4
 
 /* TCP STATES */
 enum {

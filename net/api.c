@@ -15,7 +15,7 @@
  */
 int kernel_bind(struct sock* socket, const struct sockaddr *address, socklen_t address_len)
 {
-    if(socket->socket > MAX_NUMBER_OF_SOCKETS)
+    if(socket->socket > NET_NUMBER_OF_SOCKETS)
         return -1;
     
     /*Cast sockaddr back to sockaddr_in. Cast originally to comply with linux implementation.*/
@@ -55,16 +55,17 @@ int kernel_recv(struct sock* socket, void *buffer, int length, int flags)
     int read = -1;
     switch (socket->type){
     case SOCK_DGRAM:
-        /* TODO: Should not spin/block here */
-        read = net_sock_read_skb(socket, buffer);
         break;
     case SOCK_STREAM:
-        read = tcp_read(socket, buffer, length);
         break;
     default:
         dbgprintf("Unknown socket type\n");
         break;
     }
+
+    dbgprintf(" %d reading from socket ...\n");
+    read = net_sock_read(socket, buffer, length);
+
     dbgprintf("Socket %d recv %d\n", socket->socket, read);
 
     return read;
@@ -79,7 +80,6 @@ int kernel_recv_timeout(struct sock* socket, void *buffer, int length, int flags
         if(get_time() - time_start > timeout+3)
             return 0;
 
-        read = net_sock_read_skb(socket, buffer);
     }
 
     return read;
@@ -125,7 +125,7 @@ int kernel_connect(struct sock* socket, const struct sockaddr *address, socklen_
 int kernel_sendto(struct sock* socket, const void *message, int length, int flags, const struct sockaddr *dest_addr, socklen_t dest_len)
 {
     /* Flags are ignored... for now. */
-    if(socket->socket > MAX_NUMBER_OF_SOCKETS)
+    if(socket->socket > NET_NUMBER_OF_SOCKETS)
         return -1;
 
     /* Cast sockaddr back to sockaddr_in. Cast originally to comply with linux implementation.*/

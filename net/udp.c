@@ -70,12 +70,17 @@ int net_udp_parse(struct sk_buff* skb){
 	int payload_size = skb->hdr.udp->udp_length-sizeof(struct udp_header);
 	skb->data_len = payload_size;
 
-	int ret = net_socket_add_skb(skb, skb->hdr.udp->destport);
-	if(ret < 0){
-		dbgprintf("Unable to deliver skb to socket: %d\n", ret);
+	struct sock* sk = net_socket_find_udp(skb->hdr.ip->daddr, skb->hdr.udp->destport);
+	if(sk == NULL){
+		dbgprintf("Unable to find UDP socket\n");
+		return -1;
 	}
+
+	int ret = net_sock_add_data(sk, skb);
+	if(ret == 0)
+		skb_free(skb);
 		
 	dbgprintf("PORT %d -> %d, len: %d.\n", hdr->srcport, hdr->destport, hdr->udp_length);
 
-    return ret;
+    return 0;
 }

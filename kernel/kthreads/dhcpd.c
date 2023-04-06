@@ -219,10 +219,10 @@ void dhcpd()
         goto dhcp_error;
 
     char buffer[2048];
-    int read = kernel_recv_timeout(dhcp_socket, &buffer, 2048, 0, 300);
+    int read = kernel_recv(dhcp_socket, &buffer, 2048, 0);
     while(read < 0){
         __dhcp_send_discovery(dhcp_socket);
-        read = kernel_recv_timeout(dhcp_socket, &buffer, 2048, 0, 300);
+        read = kernel_recv(dhcp_socket, &buffer, 2048, 0);
     }
 
      dbgprintf("DHCPD\n");
