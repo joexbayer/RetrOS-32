@@ -66,7 +66,7 @@ void gfx_default_click(struct gfx_window* window, int x, int y)
 
     if(gfx_point_in_rectangle(window->x+2+window->width-GFX_WINDOW_TITLE_HEIGHT-4,  window->y+2, window->x+2+window->width-GFX_WINDOW_TITLE_HEIGHT-4+GFX_WINDOW_TITLE_HEIGHT-1, window->y+2+GFX_WINDOW_TITLE_HEIGHT-1, x, y)){
         dbgprintf("[GFX WINDOW] Clicked %s exit button\n", window->name);
-        window->owner->running = ZOMBIE;
+        window->owner->state = ZOMBIE;
         return; 
     }
     if(gfx_point_in_rectangle(window->x+2, window->y+2, window->x+window->width-4, window->y+GFX_WINDOW_TITLE_HEIGHT, x, y)){

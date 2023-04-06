@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <syscalls.h>
+#include <io.h>
 
 #define ISR_LINES	49
 #define PIC1		0x20		/* IO base address for master PIC */

@@ -23,6 +23,8 @@ int tcp_new_connection(struct sock* sock, uint16_t dst_port, uint16_t src_port)
 int tcp_free_connection(struct sock* sock)
 {
 	/* TODO: check for active connections */
+	tcp_close_connection(sock);
+	return;
 	kfree(sock->tcp);
 	sock->tcp = NULL;
 
@@ -253,9 +255,37 @@ int tcp_recv_syn(struct sock* sock, struct sk_buff* skb)
 	return 1;
 }
 
-int tcp_send_fin(struct sock* sock, struct tcp_header* tcp)
+int tcp_send_fin(struct sock* sock)
 {
-	/* send fin (ack?) */
+	struct sk_buff* skb = skb_new();
+	assert(skb != NULL);
+
+	struct tcp_header hdr = {
+		.source = sock->bound_port,
+		.dest = sock->recv_addr.sin_port,
+		.window = 1500,
+		.seq = sock->tcp->sequence,
+		.ack_seq = sock->tcp->acknowledgement,
+		.doff = 0x05,
+		.ack = 1,
+		.fin = 1
+	};
+
+	sock->tcp->sequence += 1;
+
+	__tcp_send(sock, &hdr, skb, NULL, 0);
+	return 0;
+}
+
+int tcp_close_connection(struct sock* sock)
+{
+	sock->tcp->state = TCP_FIN_WAIT;
+	tcp_send_fin(sock);
+
+	WAIT(!net_sock_awaiting_ack(sock));
+
+	WAIT(!(sock->tcp->state == TCP_CLOSED));
+
 	return 0;
 }
 
@@ -275,7 +305,7 @@ int tcp_parse(struct sk_buff* skb)
 		return -1;
 	}
 
-	dbgprintf("[TCP] Incoming TCP packet: %d syn, %d ack, %d (%d)\n", hdr->syn, hdr->ack, hdr->seq, htonl(hdr->seq));
+	dbgprintf("[TCP] Incoming TCP packet: %d syn, %d ack, %d fin\n", hdr->syn, hdr->ack, hdr->fin);
 
 	switch (sk->tcp->state){
 	case TCP_LISTEN:
@@ -318,6 +348,14 @@ int tcp_parse(struct sk_buff* skb)
 				skb_free(skb);
 			return 0;
 		}
+		break;
+	case TCP_FIN_WAIT:
+		if(hdr->fin == 1 && hdr->ack == 1){
+			/* Connection succesfully closed */
+			tcp_send_ack(sk, hdr, 1);
+			sk->tcp->state = TCP_CLOSED;
+		}
+		skb_free(skb);
 		break;
 	default:
 		break;

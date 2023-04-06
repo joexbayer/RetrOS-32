@@ -16,7 +16,7 @@ struct pcb;
 enum pcb_states {
     STOPPED,
     RUNNING,
-    NEW,
+    PCB_NEW,
     BLOCKED,
     SLEEPING,
     ZOMBIE,
@@ -35,7 +35,7 @@ struct pcb {
     char** argv;
     /* DO NOT NOT CHANGE ABOVE.*/
     char name[pcb_max_name_length];
-    uint8_t running;
+    uint8_t state;
     int16_t pid;
     uint16_t sleep;
     uint32_t stack_ptr;

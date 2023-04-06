@@ -43,7 +43,7 @@ enum {
 	TCP_SYN_SENT,
 	/* Between SYN_SENT and ESTABLISHED a new socket is created. */
 	TCP_ESTABLISHED,
-	TCP_FIN_WAIT_1,
+	TCP_FIN_WAIT,
 	TCP_FIN_WAIT_2,
 	TCP_CLOSING,
 	TCP_TIME_WAIT,
@@ -91,5 +91,7 @@ int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t pus
 int tcp_parse(struct sk_buff* skb);
 
 int tcp_read(struct sock* sock, uint8_t* buffer, unsigned int length);
+
+int tcp_close_connection(struct sock* sock);
 
 #endif

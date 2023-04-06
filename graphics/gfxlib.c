@@ -49,8 +49,8 @@ int gfx_push_event(struct gfx_window* w, struct gfx_event* e)
 	memcpy(&w->events.list[w->events.head], e, sizeof(*e));
 	w->events.head = (w->events.head + 1) % GFX_MAX_EVENTS;
 
-	if(w->owner->running == BLOCKED)
-		w->owner->running = RUNNING;
+	if(w->owner->state == BLOCKED)
+		w->owner->state = RUNNING;
 
 	return 0;
 }
