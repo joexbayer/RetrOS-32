@@ -326,29 +326,26 @@ uint8_t test_icon32[32][32] = {
 
 #define VESA_BG_COLOR COLOR_DARK_CYAN
 
+#define PALETTE_MASK 0x3C6
+#define PALETTE_READ 0x3C7
+#define PALETTE_WRITE 0x3C8
+#define PALETTE_DATA 0x3C9
+
 void vga_set_palette()
 {
     /* Currently only supports EDIM1 (RRRGGGBB) palette. */
+    outportb(PALETTE_MASK, 0xFF);
+    outportb(PALETTE_WRITE, 0);
+    for (uint8_t i = 0; i < 255; i++) {
+        outportb(PALETTE_DATA, (((i >> 5) & 0x7) * (256 / 8)) / 4);
+        outportb(PALETTE_DATA, (((i >> 2) & 0x7) * (256 / 8)) / 4);
+        outportb(PALETTE_DATA, (((i >> 0) & 0x3) * (256 / 4)) / 4);
+    }
 
-	for (int i = 0; i < 256; i++) {
-		/* Extract the red, green, and blue components of the color */
-		int r = (i >> 5) & 0x7;
-		int g = (i >> 2) & 0x7;
-		int b = i & 0x3;
-		
-		/* Scale the color components to the range 0-255 */
-		r = r * 63 / 7;
-		g = g * 63 / 7;
-		b = b * 63 / 3;
-		
-		/* Set the index of the color in the palette */
-		outportb(0x3C8, i);
-		
-		/* Set the color value (in RRRGGGBB format) */
-		outportb(0x3C9, (unsigned char)r);
-		outportb(0x3C9, (unsigned char)g);
-		outportb(0x3C9, (unsigned char)b);
-	}
+    // set color 255 = white
+    outportb(PALETTE_DATA, 0x3F);
+    outportb(PALETTE_DATA, 0x3F);
+    outportb(PALETTE_DATA, 0x3F);
     
 }
 

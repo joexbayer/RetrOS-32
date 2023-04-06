@@ -36,7 +36,7 @@ void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
     vesa_line_horizontal(buffer,window->x, window->y+window->height, window->width, COLOR_GRAY_DARK);
 
     /* header color */
-    vesa_fillrect(buffer, window->x+2, window->y+2, window->width-4, GFX_WINDOW_TITLE_HEIGHT, window->in_focus ? 1 : COLOR_GRAY_DARK);
+    vesa_fillrect(buffer, window->x+2, window->y+2, window->width-4, GFX_WINDOW_TITLE_HEIGHT, window->in_focus ? 0x2 : COLOR_GRAY_DARK);
     vesa_fillrect(buffer, window->x+2+window->width-GFX_WINDOW_TITLE_HEIGHT-4,  window->y+2, GFX_WINDOW_TITLE_HEIGHT-1, GFX_WINDOW_TITLE_HEIGHT-1, GFX_WINDOW_BG_COLOR);
     vesa_put_char(buffer, 'X', window->x+2+window->width-GFX_WINDOW_TITLE_HEIGHT-2,  window->y+4, COLOR_BLACK);
 
