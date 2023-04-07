@@ -52,7 +52,8 @@ void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
     }
 
     vesa_fillrect(buffer, window->x+8, window->y, strlen(window->name)*8, 8, background_color);
-    vesa_write_str(buffer, window->x+8, window->y, window->name, text_color);
+    vesa_write_str(buffer, window->x+8, window->y, window->name, COLOR_WHITE);
+
     vesa_fillrect(buffer,  window->x+window->width-16,  window->y, 8, 8, background_color);
     vesa_put_char(buffer, 'X', window->x+window->width-16,  window->y, text_color);
 

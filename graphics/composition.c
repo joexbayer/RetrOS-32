@@ -202,6 +202,8 @@ uint8_t edim1_to_vga(uint8_t color) {
     return (r << 5) | (g << 2) | b;
 }
 
+#define TIME_PREFIX(unit) unit < 10 ? "0" : ""
+
 /**
  * @brief Main window server kthread entry function
  * Allocates a second framebuffer that will be memcpy'd to the VGA framebuffer.
@@ -232,6 +234,8 @@ void gfx_compositor_main()
         int test = rdtsc();
         int mouse_changed = mouse_event_get(&m);
         int window_changed = gfx_check_changes(order);
+        struct time time;
+        get_current_time(&time);
         
         
         char key = kb_get_char();
@@ -246,7 +250,27 @@ void gfx_compositor_main()
         if(window_changed){
             
             memset(gfx_composition_buffer, COLOR_BLACK/*41*/, buffer_size);
-            for (int i = 0; i < 320; i++)
+
+            for (int i = 0; i < (vbe_info->width/8) - 2; i++){
+                vesa_put_box(gfx_composition_buffer, 80, 8+(i*8), 0, COLOR_WHITE);
+                vesa_put_box(gfx_composition_buffer, 0, 8+(i*8), vbe_info->height-8, COLOR_WHITE);
+            }
+
+            for (int i = 0; i < (vbe_info->height/8)-2; i++){
+                vesa_put_box(gfx_composition_buffer, 2, 0, 8+(i*8), COLOR_WHITE);
+                vesa_put_box(gfx_composition_buffer, 2, vbe_info->width-8, 8+(i*8), COLOR_WHITE);
+            }
+
+            vesa_put_box(gfx_composition_buffer, 82, 0, 0, COLOR_WHITE);
+            vesa_put_box(gfx_composition_buffer, 85, vbe_info->width-8, 0, COLOR_WHITE);
+
+            /* bottom left and right corners*/
+            vesa_put_box(gfx_composition_buffer, 20, 0, vbe_info->height-8, COLOR_WHITE);
+            vesa_put_box(gfx_composition_buffer, 24, vbe_info->width-8, vbe_info->height-8, COLOR_WHITE);
+
+            vesa_fillrect(gfx_composition_buffer, 8, 0, strlen("NETOS")*8, 8, COLOR_BLACK);
+            vesa_write_str(gfx_composition_buffer, 8, 0, "NETOS", COLOR_YELLOW);
+            /*for (int i = 0; i < 320; i++)
             {
                 for (int j = 0; j < 240; j++)
                 {
@@ -255,7 +279,7 @@ void gfx_compositor_main()
                 
             }
 
-            /*for (int i = 0; i < 480/8; i++)
+            for (int i = 0; i < 480/8; i++)
             {
                 vesa_put_box(gfx_composition_buffer, i, 0, i*8, COLOR_WHITE);
                 vesa_printf(gfx_composition_buffer, 10, i*8, COLOR_WHITE, "%d", i);
@@ -273,6 +297,10 @@ void gfx_compositor_main()
             gfx_recursive_draw(order);
             //release(&order_lock);
         }
+
+        vesa_fillrect(gfx_composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 0, strlen("00:00:00 00/00/00")*8, 8, COLOR_BLACK);
+        vesa_printf(gfx_composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 0 , COLOR_YELLOW, "%s%d:%s%d:%s%d %s%d/%s%d/%d", TIME_PREFIX(time.hour), time.hour, TIME_PREFIX(time.minute), time.minute, TIME_PREFIX(time.second), time.second, TIME_PREFIX(time.day), time.day, TIME_PREFIX(time.month), time.month, time.year);
+
 
         /*vesa_fillrect(gfx_composition_buffer, 0, 480-25, 640, 25, COLOR_GRAY_DEFAULT);
         vesa_line_horizontal(gfx_composition_buffer, 0, 480-25, 640, COLOR_GRAY_LIGHT); 
@@ -294,7 +322,7 @@ void gfx_compositor_main()
 
         kernel_sleep(2);
 
-        if(mouse_changed || window_changed)
+        //if(mouse_changed || window_changed)
             memcpy((uint8_t*)vbe_info->framebuffer, gfx_composition_buffer, buffer_size-1);
         /* Copy buffer over to framebuffer. */
 
