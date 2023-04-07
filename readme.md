@@ -79,10 +79,12 @@
 
 ### Built With
 
-This section should list any major frameworks/libraries used to bootstrap your project. Leave any add-ons/plugins for the acknowledgements section. Here are a few examples.
+This project is built with C & Assembly for the kernel, utilities and build system. C++ for userspace applications and Make for compilation.
+Docker used for crossplatform compilation.
 
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
-![C](https://img.shields.io/badge/c-%2300599C.svg?style=for-the-badge&logo=c&logoColor=white)
+![](https://img.shields.io/badge/C-00599C?style=for-the-badge&logo=c&logoColor=white)
+![](https://img.shields.io/badge/C%2B%2B-00599C?style=for-the-badge&logo=c%2B%2B&logoColor=white)
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -92,20 +94,17 @@ This section should list any major frameworks/libraries used to bootstrap your p
 <!-- GETTING STARTED -->
 ## Getting Started
 
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
-
 ### Prerequisites
 
-Only need Docker to compile the .iso file and QEMU for emulation.<br>
+Crossplatform: Docker to compile the .iso file and QEMU for emulation.<br>
 For native compilation you will need:
- * i386-elf-gcc and i386-elf-ld for MacOS.
+ * i386-elf-gcc, i386-elf-ld and i386-elf-g++ for MacOS.
  * build-essential and gcc-multilib for Linux / WSL (ubuntu)
 
 
 ### Installation
 
-_To compile the kernel and its needed programs you simply need to run *make* and *make qemu* to open QEMU_
+_To compile the kernel and its needed programs you simply need to run *make iso* and *make qemu* to open QEMU_
 
 #### MacOS / Linux
 
@@ -116,10 +115,6 @@ _To compile the kernel and its needed programs you simply need to run *make* and
    ```
 2. Compile the kernel / OS
   
-   Native:
-   ```sh
-   make iso
-   ```
    Docker:
    ```sh
    sudo docker-compose up
@@ -129,14 +124,14 @@ _To compile the kernel and its needed programs you simply need to run *make* and
    make qemu
    ```
 #### Windows
-  Using Docker
+  Using Docker (can also compile in WSL)
 
 1. Clone the repo
    ```sh
    git clone https://github.com/joexbayer/NETOS.git
    ```
 
-2. Launch QEMU
+2. Compile and Launch QEMU
    ```sh
    ./make.cmd run
    ```
