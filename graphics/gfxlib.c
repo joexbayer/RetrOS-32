@@ -20,12 +20,12 @@
 
 int gfx_get_window_width()
 {
-    return current_running->gfx_window->width;
+    return current_running->gfx_window->inner_width;
 }
 
 int gfx_get_window_height()
 {
-    return current_running->gfx_window->height;
+    return current_running->gfx_window->inner_height;
 }
 
 int gfx_window_reize(int width, int height)
@@ -42,12 +42,15 @@ int gfx_window_reize(int width, int height)
 	return 0;
 }
 
+static int test = 0;
 int gfx_push_event(struct gfx_window* w, struct gfx_event* e)
 {
 	//dbgprintf("Pushing event\n");
 
 	memcpy(&w->events.list[w->events.head], e, sizeof(*e));
 	w->events.head = (w->events.head + 1) % GFX_MAX_EVENTS;
+
+	test--;
 
 	if(w->owner->state == BLOCKED)
 		w->owner->state = RUNNING;
@@ -91,20 +94,19 @@ int __gfx_draw_rectangle(int x, int y, int width, int height, unsigned char colo
     if(current_running->gfx_window == NULL)
         return -1;
 
-    if(x < 0 || y < 0 || x+width > current_running->gfx_window->width || y+height > current_running->gfx_window->height)
+    if(x < 0 || y < 0 || x+width > current_running->gfx_window->inner_width || y+height > current_running->gfx_window->inner_height)
         return -2;
 
     //CLI();
     int i, j;
     for (j = y; j < (y+height); j++)
         for (i = x; i < (x+width); i++)
-            putpixel(current_running->gfx_window->inner, j, i, color, current_running->gfx_window->height-18);
+            putpixel(current_running->gfx_window->inner, j, i, color, current_running->gfx_window->inner_height);
     //STI();
 
     //current_running->gfx_window->changed = 1;
     return 0;
 }
-
 /**
  * @brief Draws a character to the framebuffer of currently running process.
  * 
@@ -125,9 +127,9 @@ int __gfx_draw_char(int x, int y, unsigned char c, unsigned char color)
         for (int i = 8; i >= 0; i--) {
             if (font8x8_basic[c][l] & (1 << i)) {
 
-                if((x)+i < 0 || (y)+l < 0 || (x)+i > current_running->gfx_window->width || (y)+l > current_running->gfx_window->height)
+                if((x)+i < 0 || (y)+l < 0 || (x)+i > current_running->gfx_window->inner_width || (y)+l > current_running->gfx_window->inner_height)
                     continue;
-                putpixel(current_running->gfx_window->inner, (y)+l, (x)+i, color, current_running->gfx_window->height-18);
+                putpixel(current_running->gfx_window->inner, (y)+l, (x)+i, color, current_running->gfx_window->inner_height);
             }
         }
     }
@@ -179,40 +181,40 @@ void gfx_line(int x, int y, int length, int option, int color)
 	{
 	case GFX_LINE_INNER_VERTICAL:
 		for (int i = y; i < (y+length); i++){
-			putpixel(current_running->gfx_window->inner, i, x, COLOR_GRAY_LIGHT, current_running->gfx_window->height-18);
-			putpixel(current_running->gfx_window->inner, i, x+1, COLOR_GRAY_DARK, current_running->gfx_window->height-18);
+			putpixel(current_running->gfx_window->inner, i, x, COLOR_GRAY_LIGHT, current_running->gfx_window->inner_height);
+			putpixel(current_running->gfx_window->inner, i, x+1, COLOR_GRAY_DARK, current_running->gfx_window->inner_height);
 		}
 		break;
 	
 	case GFX_LINE_INNER_HORIZONTAL:
 		for (int i = x; i < (x+length); i++){
-			putpixel(current_running->gfx_window->inner, y+1, i, COLOR_GRAY_LIGHT, current_running->gfx_window->height-18);
-			putpixel(current_running->gfx_window->inner, y, i, COLOR_GRAY_DARK, current_running->gfx_window->height-18);
+			putpixel(current_running->gfx_window->inner, y+1, i, COLOR_GRAY_LIGHT, current_running->gfx_window->inner_height);
+			putpixel(current_running->gfx_window->inner, y, i, COLOR_GRAY_DARK, current_running->gfx_window->inner_height);
 		}
 		break;
 
 	case GFX_LINE_OUTER_VERTICAL:
 		for (int i = y; i < (y+length); i++){
-			putpixel(current_running->gfx_window->inner, i, x, COLOR_GRAY_DARK, current_running->gfx_window->height-18);
-			putpixel(current_running->gfx_window->inner, i, x+1, COLOR_GRAY_LIGHT, current_running->gfx_window->height-18);
+			putpixel(current_running->gfx_window->inner, i, x, COLOR_GRAY_DARK, current_running->gfx_window->inner_height);
+			putpixel(current_running->gfx_window->inner, i, x+1, COLOR_GRAY_LIGHT, current_running->gfx_window->inner_height);
 		}
 		break;
 
 	case GFX_LINE_OUTER_HORIZONTAL:
 		for (int i = x; i < (x+length); i++){
-			putpixel(current_running->gfx_window->inner, y+1, i, COLOR_GRAY_DARK, current_running->gfx_window->height-18);
-			putpixel(current_running->gfx_window->inner, y, i, COLOR_GRAY_LIGHT, current_running->gfx_window->height-18);
+			putpixel(current_running->gfx_window->inner, y+1, i, COLOR_GRAY_DARK, current_running->gfx_window->inner_height);
+			putpixel(current_running->gfx_window->inner, y, i, COLOR_GRAY_LIGHT, current_running->gfx_window->inner_height);
 		}
 		break;
 
 	case GFX_LINE_VERTICAL:
 		for (int i = y; i < (y+length); i++)
-			putpixel(current_running->gfx_window->inner, i, x, color, current_running->gfx_window->height-18);
+			putpixel(current_running->gfx_window->inner, i, x, color, current_running->gfx_window->inner_height);
 		break;
 
 	case GFX_LINE_HORIZONTAL:
 		for (int i = x; i < (x+length); i++)
-        	putpixel(current_running->gfx_window->inner, y, i, color, current_running->gfx_window->height-18);
+        	putpixel(current_running->gfx_window->inner, y, i, color, current_running->gfx_window->inner_height);
 		break;
 
 
@@ -289,7 +291,7 @@ void __gfx_draw_line(int x0, int y0, int x1, int y1, unsigned char color)
 
     while(1)  
     {  
-		putpixel(current_running->gfx_window->inner, x0, y0, color, current_running->gfx_window->height-18); 
+		putpixel(current_running->gfx_window->inner, x0, y0, color, current_running->gfx_window->inner_height); 
 		if (x0 == x1 && y0 == y1) break;
         int e2 = 2*error;
 
@@ -311,14 +313,14 @@ void __gfx_draw_line(int x0, int y0, int x1, int y1, unsigned char color)
 
 void __gfx_draw_circle_helper(int xc, int yc, int x, int y, unsigned char color)
 {
-    putpixel(current_running->gfx_window->inner, xc+x, yc+y, color, current_running->gfx_window->height-18);
-    putpixel(current_running->gfx_window->inner, xc-x, yc+y, color, current_running->gfx_window->height-18);
-    putpixel(current_running->gfx_window->inner, xc+x, yc-y, color, current_running->gfx_window->height-18);
-    putpixel(current_running->gfx_window->inner, xc-x, yc-y, color, current_running->gfx_window->height-18);
-    putpixel(current_running->gfx_window->inner, xc+y, yc+x, color, current_running->gfx_window->height-18);
-    putpixel(current_running->gfx_window->inner, xc-y, yc+x, color, current_running->gfx_window->height-18);
-    putpixel(current_running->gfx_window->inner, xc+y, yc-x, color, current_running->gfx_window->height-18);
-    putpixel(current_running->gfx_window->inner, xc-y, yc-x, color, current_running->gfx_window->height-18);
+    putpixel(current_running->gfx_window->inner, xc+x, yc+y, color, current_running->gfx_window->inner_height);
+    putpixel(current_running->gfx_window->inner, xc-x, yc+y, color, current_running->gfx_window->inner_height);
+    putpixel(current_running->gfx_window->inner, xc+x, yc-y, color, current_running->gfx_window->inner_height);
+    putpixel(current_running->gfx_window->inner, xc-x, yc-y, color, current_running->gfx_window->inner_height);
+    putpixel(current_running->gfx_window->inner, xc+y, yc+x, color, current_running->gfx_window->inner_height);
+    putpixel(current_running->gfx_window->inner, xc-y, yc+x, color, current_running->gfx_window->inner_height);
+    putpixel(current_running->gfx_window->inner, xc+y, yc-x, color, current_running->gfx_window->inner_height);
+    putpixel(current_running->gfx_window->inner, xc-y, yc-x, color, current_running->gfx_window->inner_height);
 }
  
 // using Bresenham's algorithm

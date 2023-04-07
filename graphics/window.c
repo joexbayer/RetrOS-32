@@ -25,28 +25,50 @@
  */
 void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
 {
+    int background_color = COLOR_BLACK;
+    int text_color = window->in_focus ? 0xF : 0x3;
     /* Draw main frame of window with title bar and borders */
-    vesa_fillrect(buffer, window->x, window->y, window->width, window->height, GFX_WINDOW_BG_COLOR);
+    vesa_fillrect(buffer, window->x, window->y, window->width, window->height, background_color);
 
     /* contour colors */
-    vesa_line_vertical(buffer,window->x, window->y, window->height, COLOR_GRAY_LIGHT);
-    vesa_line_vertical(buffer,window->x+window->width, window->y, window->height, COLOR_GRAY_DARK);
+    //vesa_line_vertical(buffer,window->x, window->y, window->height, COLOR_GRAY_LIGHT);
+    //vesa_line_vertical(buffer,window->x+window->width, window->y, window->height, COLOR_GRAY_DARK);
 
-    vesa_line_horizontal(buffer,window->x, window->y, window->width, COLOR_GRAY_LIGHT);
-    vesa_line_horizontal(buffer,window->x, window->y+window->height, window->width, COLOR_GRAY_DARK);
+    //vesa_line_horizontal(buffer,window->x, window->y, window->width, COLOR_GRAY_LIGHT);
+    //vesa_line_horizontal(buffer,window->x, window->y+window->height, window->width, COLOR_GRAY_DARK);
 
     /* header color */
-    vesa_fillrect(buffer, window->x+2, window->y+2, window->width-4, GFX_WINDOW_TITLE_HEIGHT, window->in_focus ? 0x2 : COLOR_GRAY_DARK);
-    vesa_fillrect(buffer, window->x+2+window->width-GFX_WINDOW_TITLE_HEIGHT-4,  window->y+2, GFX_WINDOW_TITLE_HEIGHT-1, GFX_WINDOW_TITLE_HEIGHT-1, GFX_WINDOW_BG_COLOR);
-    vesa_put_char(buffer, 'X', window->x+2+window->width-GFX_WINDOW_TITLE_HEIGHT-2,  window->y+4, COLOR_BLACK);
+    //vesa_fillrect(buffer, window->x+2, window->y+2, window->width-4, GFX_WINDOW_TITLE_HEIGHT, window->in_focus ? 0x2 : COLOR_GRAY_DARK);
+    //vesa_fillrect(buffer, window->x+2+window->width-GFX_WINDOW_TITLE_HEIGHT-4,  window->y+2, GFX_WINDOW_TITLE_HEIGHT-1, GFX_WINDOW_TITLE_HEIGHT-1, GFX_WINDOW_BG_COLOR);
 
-    vesa_write_str(buffer, window->x+4, window->y+4, window->name, COLOR_WHITE);
+    for (int i = 0; i < (window->width/8) - 2; i++){
+        vesa_put_box(buffer, 80, window->x+8+(i*8), window->y, text_color);
+        vesa_put_box(buffer, 0, window->x+8+(i*8), window->y+window->height-8, text_color);
+    }
 
+    for (int i = 0; i < (window->height/8) - 1; i++){
+        vesa_put_box(buffer, 2, window->x, window->y+8+(i*8), text_color);
+        vesa_put_box(buffer, 2, window->x+window->width-8, window->y+8+(i*8), text_color);
+    }
+
+    vesa_fillrect(buffer, window->x+8, window->y, strlen(window->name)*8, 8, background_color);
+    vesa_write_str(buffer, window->x+8, window->y, window->name, text_color);
+    vesa_fillrect(buffer,  window->x+window->width-16,  window->y, 8, 8, background_color);
+    vesa_put_char(buffer, 'X', window->x+window->width-16,  window->y, text_color);
+
+    /* Top left and right corners*/
+    vesa_put_box(buffer, 82, window->x, window->y, text_color);
+    vesa_put_box(buffer, 85, window->x+window->width-8, window->y, text_color);
+
+    /* bottom left and right corners*/
+    vesa_put_box(buffer, 20, window->x, window->y+window->height-8, text_color);
+    vesa_put_box(buffer, 24, window->x+window->width-8, window->y+window->height-8, text_color);
+    
     /* Copy inner window framebuffer to given buffer with relativ pitch. */
     if(window->inner != NULL){
         int i, j, c = 0;
-        for (j = window->x+2; j < (window->x+window->width-2); j++)
-            for (i = window->y+16; i < (window->y+window->height-2); i++)
+        for (j = window->x+8; j < (window->x+8+window->inner_width); j++)
+            for (i = window->y+8; i < (window->y+8+window->inner_height); i++)
                 /* FIXME: Because of the j, i order we use height as pitch in gfxlib. */
                 putpixel(buffer, j, i, window->inner[c++], vbe_info->pitch);
     }
@@ -64,12 +86,12 @@ void gfx_default_click(struct gfx_window* window, int x, int y)
 {
     dbgprintf("[GFX WINDOW] Clicked %s\n", window->name);
 
-    if(gfx_point_in_rectangle(window->x+2+window->width-GFX_WINDOW_TITLE_HEIGHT-4,  window->y+2, window->x+2+window->width-GFX_WINDOW_TITLE_HEIGHT-4+GFX_WINDOW_TITLE_HEIGHT-1, window->y+2+GFX_WINDOW_TITLE_HEIGHT-1, x, y)){
+    if(gfx_point_in_rectangle(window->x+window->width-16,  window->y, window->x+window->width-8, window->y+8, x, y)){
         dbgprintf("[GFX WINDOW] Clicked %s exit button\n", window->name);
         window->owner->state = ZOMBIE;
         return; 
     }
-    if(gfx_point_in_rectangle(window->x+2, window->y+2, window->x+window->width-4, window->y+GFX_WINDOW_TITLE_HEIGHT, x, y)){
+    if(gfx_point_in_rectangle(window->x, window->y, window->x+window->width, window->y+8, x, y)){
         dbgprintf("[GFX WINDOW] Clicked %s title\n", window->name);
     }
 }
@@ -97,7 +119,7 @@ void gfx_default_hover(struct gfx_window* window, int x, int y)
 
 void gfx_default_mouse_down(struct gfx_window* window, int x, int y)
 {
-    if(gfx_point_in_rectangle(window->x+2, window->y+2, window->x+window->width-4, window->y+GFX_WINDOW_TITLE_HEIGHT, x, y)){
+    if(gfx_point_in_rectangle(window->x, window->y, window->x+window->width, window->y+10, x, y)){
         window->is_moving.state = GFX_WINDOW_MOVING;
         window->is_moving.x = x;
         window->is_moving.y = y;
@@ -106,7 +128,7 @@ void gfx_default_mouse_down(struct gfx_window* window, int x, int y)
 
 void gfx_default_mouse_up(struct gfx_window* window, int x, int y)
 {
-    if(gfx_point_in_rectangle(window->x+2, window->y+2, window->x+window->width-4, window->y+GFX_WINDOW_TITLE_HEIGHT, x, y)){
+    if(gfx_point_in_rectangle(window->x, window->y, window->x+window->width, window->y+10, x, y)){
         window->is_moving.state = GFX_WINDOW_STATIC;
         window->is_moving.x = x;
         window->is_moving.y = y;
@@ -145,7 +167,7 @@ struct gfx_window* gfx_new_window(int width, int height)
 
     struct gfx_window* w = (struct gfx_window*) kalloc(sizeof(struct gfx_window));
     w->inner = kalloc(width*height);
-    memset(w->inner, COLOR_GRAY_DEFAULT, width*height);
+    memset(w->inner, 0, width*height);
 
     w->click = &gfx_default_click;
     w->mousedown = &gfx_default_mouse_down;
@@ -153,8 +175,8 @@ struct gfx_window* gfx_new_window(int width, int height)
     w->hover = &gfx_default_hover;
     w->inner_height = height;
     w->inner_width = width;
-    w->width = width + 4;
-    w->height = height + 14;
+    w->width = width + 16;
+    w->height = height + 16;
     w->x = 10;
     w->y = 10;
     w->owner = current_running;

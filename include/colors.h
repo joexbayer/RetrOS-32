@@ -102,6 +102,9 @@
 #define COLOR_DARK_CYAN        0x06
 #define COLOR_DARK_WHITE       0x07
 
+#define COLOR_DARK_YELLOw		0xb0
+#define COLOR_LIGHT_YELLOw		0xb1
+
 
 
 

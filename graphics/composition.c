@@ -245,15 +245,28 @@ void gfx_compositor_main()
 
         if(window_changed){
             
-            memset(gfx_composition_buffer, 41, buffer_size);
+            memset(gfx_composition_buffer, COLOR_BLACK/*41*/, buffer_size);
             for (int i = 0; i < 320; i++)
             {
                 for (int j = 0; j < 240; j++)
                 {
-                    putpixel(gfx_composition_buffer, i, j, forman[j*320 + i], vbe_info->pitch);
+                    //putpixel(gfx_composition_buffer, i, j, forman[j*320 + i], vbe_info->pitch);
                 }
                 
             }
+
+            /*for (int i = 0; i < 480/8; i++)
+            {
+                vesa_put_box(gfx_composition_buffer, i, 0, i*8, COLOR_WHITE);
+                vesa_printf(gfx_composition_buffer, 10, i*8, COLOR_WHITE, "%d", i);
+            }
+
+            for (int i = 0; i < 128-(480/8); i++)
+            {
+                vesa_put_box(gfx_composition_buffer, (480/8)+i, 30, i*8, COLOR_WHITE);
+                vesa_printf(gfx_composition_buffer, 40, i*8, COLOR_WHITE, "%d", (480/8)+i);
+            }*/
+            
             
             /* Draw windows in reversed order */
             //acquire(&order_lock);
@@ -261,12 +274,12 @@ void gfx_compositor_main()
             //release(&order_lock);
         }
 
-        vesa_fillrect(gfx_composition_buffer, 0, 480-25, 640, 25, COLOR_GRAY_DEFAULT);
+        /*vesa_fillrect(gfx_composition_buffer, 0, 480-25, 640, 25, COLOR_GRAY_DEFAULT);
         vesa_line_horizontal(gfx_composition_buffer, 0, 480-25, 640, COLOR_GRAY_LIGHT); 
         vesa_line_horizontal(gfx_composition_buffer, 0, 480-26, 640, COLOR_GRAY_LIGHT);
 
         vesa_inner_box(gfx_composition_buffer, 638-80, 480-22, 80, 19);
-        vesa_put_icon32(gfx_composition_buffer, 10, 10);
+        //vesa_put_icon32(gfx_composition_buffer, 10, 10);
 
         struct time time;
         get_current_time(&time);
@@ -275,7 +288,7 @@ void gfx_compositor_main()
         vesa_printf(gfx_composition_buffer, 8, 480-16, COLOR_DARK_BLUE, "%d", (rdtsc() - test)-100000);
 
 
-        vesa_printf(gfx_composition_buffer, 100, 480-16, COLOR_DARK_BLUE, "%d", (timer_get_tick()*10) % 1000);
+        vesa_printf(gfx_composition_buffer, 100, 480-16, COLOR_DARK_BLUE, "%d", (timer_get_tick()*10) % 1000);*/
 
         STI();
 

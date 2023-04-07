@@ -29,19 +29,19 @@ int main()
     while (1)
     {
         get_current_time(&current_time);
-        
-        gfx_draw_rectangle(0, 0, 110, 140, COLOR_GRAY_DEFAULT);
+
+        gfx_draw_rectangle(0, 0, 110, 140, COLOR_BLACK);
 
         int angle_id = (0.5 * (current_time.hour%12 * 60 + current_time.minute) / 6);
 
-		gfx_draw_line(55, 55, 55 + (50*sin_60[angle_id])/1.5, 55+ (50*cos_60[angle_id])/1.5, 0);
-		gfx_draw_line(55, 55, 55 + (50*sin_60[current_time.minute])/1.1, 55+ (50*cos_60[current_time.minute])/1.1, 0);
+		gfx_draw_line(55, 55, 55 + (50*sin_60[angle_id])/1.5, 55+ (50*cos_60[angle_id])/1.5, COLOR_WHITE);
+		gfx_draw_line(55, 55, 55 + (50*sin_60[current_time.minute])/1.1, 55+ (50*cos_60[current_time.minute])/1.1, COLOR_WHITE);
 		gfx_draw_line(55, 55, 55 + (50*sin_60[current_time.second])/1.1, 55+ (50*cos_60[current_time.second])/1.1, COLOR_RED);
 
-        gfx_draw_circle(55, 55, 50, 0);
+        gfx_draw_circle(55, 55, 50, COLOR_WHITE);
 
-        gfx_draw_format_text(center_x(5), 112, 0, "%s%d:%s%d", current_time.hour > 9 ? "" : "0", current_time.hour, current_time.minute > 9 ? "" : "0", current_time.minute);
-        gfx_draw_format_text(center_x(6), 124, 0, "%d. %s", current_time.day, months[current_time.month]);
+        gfx_draw_format_text(center_x(5), 112, COLOR_WHITE, "%s%d:%s%d", current_time.hour > 9 ? "" : "0", current_time.hour, current_time.minute > 9 ? "" : "0", current_time.minute);
+        gfx_draw_format_text(center_x(6), 124, COLOR_WHITE, "%d. %s", current_time.day, months[current_time.month]);
 
         sleep(100);
     }

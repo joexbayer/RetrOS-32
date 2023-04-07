@@ -90,7 +90,7 @@ int gfx_get_event(struct gfx_event* event)
 }
 
 #define GFX_MAX_FMT 50
-int gfx_draw_format_text(int x, int y, char color, const char* fmt, ...)
+int gfx_draw_format_text(int x, int y, unsigned char color, const char* fmt, ...)
 {
 	va_list args;
 

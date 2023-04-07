@@ -231,7 +231,7 @@ void shell_main()
 
 	memset(term.textbuffer, 0, TERMINAL_BUFFER_SIZE);
 	struct gfx_window* window = gfx_new_window(400, SHELL_HEIGHT);
-
+	
 	dbgprintf("Shell: window 0x%x\n", window);
 	__gfx_draw_rectangle(0,0, 400, SHELL_HEIGHT, 0);
 

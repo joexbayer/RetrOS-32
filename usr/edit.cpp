@@ -9,7 +9,6 @@ public:
 		m_x = 0;
 		m_y = 0;
 		textBuffer = (char*) malloc((c_width/8)*(c_height/8));
-		gfx_draw_rectangle(0, 0, c_width, c_height, COLOR_WHITE);
 	}
 
 	~Editor() {
@@ -65,21 +64,21 @@ void Editor::EditorLoop()
 void Editor::putChar(char c)
 {
 	textBuffer[m_y*(c_width/8) + m_x] = c;
-	gfx_draw_rectangle(m_x*8, m_y*8, 8, 8, COLOR_WHITE);
+	gfx_draw_rectangle(m_x*8, m_y*8, 8, 8, COLOR_BLACK);
 
 	switch (c){
 	case '\n':
 		m_x = 0;
 		m_y++;
-		gfx_draw_char(m_x*8, m_y*8, '_', COLOR_BLACK);
+		gfx_draw_char(m_x*8, m_y*8, '_', COLOR_WHITE);
 		return;
 	case '\b':
 		m_x--;
-		gfx_draw_rectangle(m_x*8, m_y*8, 8, 8, COLOR_WHITE);
-		gfx_draw_char(m_x*8, m_y*8, '_', COLOR_BLACK);
+		gfx_draw_rectangle(m_x*8, m_y*8, 8, 8, COLOR_BLACK);
+		gfx_draw_char(m_x*8, m_y*8, '_', COLOR_WHITE);
 		return;
 	default:
-		gfx_draw_char(m_x*8, m_y*8, c, COLOR_BLACK);
+		gfx_draw_char(m_x*8, m_y*8, c, COLOR_WHITE);
 		break;
 	}
 
@@ -89,7 +88,7 @@ void Editor::putChar(char c)
 		m_y++;
 	}
 
-	gfx_draw_char(m_x*8, m_y*8, '_', COLOR_BLACK);
+	gfx_draw_char(m_x*8, m_y*8, '_', COLOR_WHITE);
 }
 
 int main(int argc, char** argv)

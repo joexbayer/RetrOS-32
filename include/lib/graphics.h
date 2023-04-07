@@ -75,7 +75,7 @@ struct gfx_char {
 };
 
 int gfx_draw_text(int x, int y, const char* text, unsigned char color);
-int gfx_draw_format_text(int x, int y, char color, const char* fmt, ...);
+int gfx_draw_format_text(int x, int y, unsigned char color, const char* fmt, ...);
 int gfx_draw_char(int x, int y, char data, unsigned char color);
 int gfx_draw_rectangle(int x, int y, int width, int height, unsigned char color);
 int gfx_draw_circle(int x, int y, int r, unsigned char color);

@@ -361,6 +361,17 @@ void vesa_put_pixel(uint8_t* buffer, int x,int y, unsigned char color)
     putpixel(buffer, x , y, color, vbe_info->pitch);
 }
 
+void vesa_put_box(uint8_t* buffer, unsigned char c, int x, int y, int color) 
+{
+    for (int l = 0; l < 8; l++) {
+        for (int i = 8; i >= 0; i--) {
+            if (font8x8_box[c][l] & (1 << i)) {
+                putpixel(buffer, (x)+i,  (y)+l, color, vbe_info->pitch);
+            }
+        }
+    }
+}
+
 void vesa_put_char(uint8_t* buffer, unsigned char c, int x, int y, int color) 
 {
     for (int l = 0; l < 8; l++) {
