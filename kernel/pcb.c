@@ -304,7 +304,7 @@ void Genesis()
 void idletask(){
 	while(1){
 		HLT();
-		//yield();
+		kernel_yield();
 	};
 }
 

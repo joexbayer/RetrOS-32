@@ -115,7 +115,7 @@ void kernel(uint32_t magic)
 	start("workd");
 	start("workd");
 	start("wind");
-	start("netd");
+	//start("netd");
 	start("Shell");
 	
 	init_pit(1);
