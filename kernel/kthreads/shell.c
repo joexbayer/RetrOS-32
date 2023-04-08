@@ -69,13 +69,12 @@ void ps()
 {
 	int ret;
 	int line = 0;
-	twritef("  PID  STACK    MEMORY  STATE     NAME\n");
-	for (int i = 0; i < MAX_NUM_OF_PCBS; i++)
-	{
+	twritef("  PID  STACK       TYPE     STATE     NAME\n");
+	for (int i = 0; i < MAX_NUM_OF_PCBS; i++){
 		struct pcb_info info;
 		ret = pcb_get_info(i, &info);
 		if(ret < 0) continue;
-		twritef("   %d   0x%x %d       %s  %s\n", info.pid, info.stack, info.used_memory, pcb_status[info.state], info.name);
+		twritef("   %d   0x%s%x  %s  %s  %s\n", info.pid, info.is_process ? "" : "00", info.stack, info.is_process ? "process" : "kthread", pcb_status[info.state], info.name);
 	}
 	
 }

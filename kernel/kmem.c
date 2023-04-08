@@ -162,6 +162,11 @@ void* palloc(int size)
 void kmem_init()
 {
 	__kmemory_lock.blocked = palloc(sizeof(struct pcb_queue));
+    __kmemory_lock.blocked->_list = NULL;
+    __kmemory_lock.blocked->spinlock = 0;
+	__kmemory_lock.blocked->total = 0;
     pcb_queue_attach_ops(__kmemory_lock.blocked);
+    
     __kmemory_lock.state = UNLOCKED;
+    dbgprintf("Lock 0x%x initiated by %s\n", &__kmemory_lock, current_running->name);
 }

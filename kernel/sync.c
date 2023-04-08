@@ -46,7 +46,7 @@ void acquire(mutex_t* l)
     CLI();
     switch (l->state){
     case LOCKED:
-        dbgprintf("Locking 0x%x (%d: %s )\n", l, current_running->pid, current_running->name);
+        dbgprintf("Locking 0x%x (%d: %s)\n", l, current_running->pid, current_running->name);
         pcb_queue_remove_running(current_running);
         l->blocked->ops->push(l->blocked, current_running);
 

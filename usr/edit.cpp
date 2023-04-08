@@ -9,6 +9,7 @@ public:
 		m_x = 0;
 		m_y = 0;
 		textBuffer = (char*) malloc((c_width/8)*(c_height/8));
+		gfx_draw_rectangle(0, 0, c_width, c_height, COLOR_WHITE);
 	}
 
 	~Editor() {

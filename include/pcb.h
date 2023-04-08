@@ -65,6 +65,7 @@ struct pcb_info {
     uint8_t state;
     uint32_t stack;
     uint32_t used_memory;
+    uint8_t is_process;
     char name[PCB_MAX_NAME_LENGTH];
 };
 

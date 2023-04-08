@@ -6,6 +6,7 @@
 #define MAX_BLOCKED 20
 
 enum {
+    UNDEFINED,
     LOCKED,
     UNLOCKED
 };

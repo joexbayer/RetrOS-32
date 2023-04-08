@@ -220,8 +220,8 @@ int pcb_get_info(int pid, struct pcb_info* info)
 	info->stack = pcb_table[pid].esp;
 	info->state = pcb_table[pid].state;
 	info->used_memory = pcb_table[pid].used_memory;
-	memcpy(info->name, pcb_table[pid].name, strlen(pcb_table[pid].name));
-	info->name[strlen(pcb_table[pid].name)+1] = 0;
+	info->is_process = pcb_table[pid].is_process;
+	memcpy(info->name, pcb_table[pid].name, PCB_MAX_NAME_LENGTH);
 
 	return 0;
 }

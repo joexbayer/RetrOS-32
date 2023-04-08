@@ -75,6 +75,7 @@ int net_sock_read(struct sock* sock, uint8_t* buffer, unsigned int length)
         int ret = sock->recv_buffer->ops->read(sock->recv_buffer, buffer, to_read);
         if(ret != to_read){
             dbgprintf("[SOCK] Read from recv buffer not equal to return value!\n");
+            break;
         }
         sock->recvd -= to_read;
         
@@ -141,7 +142,7 @@ int net_sock_add_data(struct sock* sock, struct sk_buff* skb)
 	return ret;
 }
 
-
+/* deprecated */
 int net_sock_read_skb(struct sock* socket)
 {
     int read = -1;
