@@ -28,7 +28,14 @@
 static struct gfx_window* order;
 static mutex_t order_lock;
 
-static uint8_t* gfx_composition_buffer;
+static struct window_server {
+    uint8_t background_color;
+    uint8_t sleep_time;
+    uint8_t* composition_buffer;
+} wind = {
+    .background_color = COLOR_BLACK,
+    .sleep_time = 2
+};
 
 /* Mouse globals */
 static char gfx_mouse_state = 0;
@@ -49,7 +56,7 @@ void gfx_recursive_draw(struct gfx_window* w)
     if(w->next != NULL)
         gfx_recursive_draw(w->next);
     
-    gfx_draw_window(gfx_composition_buffer, w);
+    gfx_draw_window(wind.composition_buffer, w);
 }
 
 /**
@@ -202,7 +209,10 @@ uint8_t edim1_to_vga(uint8_t color) {
     return (r << 5) | (g << 2) | b;
 }
 
-#define TIME_PREFIX(unit) unit < 10 ? "0" : ""
+void __gfx_change_background(uint8_t color)
+{
+    wind.background_color = color;
+}
 
 /**
  * @brief Main window server kthread entry function
@@ -213,12 +223,13 @@ uint8_t edim1_to_vga(uint8_t color) {
  * 
  * In current state its still very slow.
  */
+#define TIME_PREFIX(unit) unit < 10 ? "0" : ""
 void gfx_compositor_main()
 {
     int buffer_size = vbe_info->width*vbe_info->height*(vbe_info->bpp/8)+1;
 
     dbgprintf("[WSERVER] %d bytes allocated for composition buffer.\n", buffer_size);
-    gfx_composition_buffer = (uint8_t*) palloc(buffer_size);
+    wind.composition_buffer = (uint8_t*) palloc(buffer_size);
 
     /* Main composition loop */
     while(1)
@@ -249,47 +260,27 @@ void gfx_compositor_main()
 
         if(window_changed){
             
-            memset(gfx_composition_buffer, COLOR_BLACK/*41*/, buffer_size);
+            memset(wind.composition_buffer, wind.background_color/*41*/, buffer_size);
 
             for (int i = 0; i < (vbe_info->width/8) - 2; i++){
-                vesa_put_box(gfx_composition_buffer, 80, 8+(i*8), 0, COLOR_WHITE);
-                vesa_put_box(gfx_composition_buffer, 0, 8+(i*8), vbe_info->height-8, COLOR_WHITE);
+                vesa_put_box(wind.composition_buffer, 80, 8+(i*8), 0, COLOR_WHITE);
+                vesa_put_box(wind.composition_buffer, 0, 8+(i*8), vbe_info->height-8, COLOR_WHITE);
             }
 
             for (int i = 0; i < (vbe_info->height/8)-2; i++){
-                vesa_put_box(gfx_composition_buffer, 2, 0, 8+(i*8), COLOR_WHITE);
-                vesa_put_box(gfx_composition_buffer, 2, vbe_info->width-8, 8+(i*8), COLOR_WHITE);
+                vesa_put_box(wind.composition_buffer, 2, 0, 8+(i*8), COLOR_WHITE);
+                vesa_put_box(wind.composition_buffer, 2, vbe_info->width-8, 8+(i*8), COLOR_WHITE);
             }
 
-            vesa_put_box(gfx_composition_buffer, 82, 0, 0, COLOR_WHITE);
-            vesa_put_box(gfx_composition_buffer, 85, vbe_info->width-8, 0, COLOR_WHITE);
+            vesa_put_box(wind.composition_buffer, 82, 0, 0, COLOR_WHITE);
+            vesa_put_box(wind.composition_buffer, 85, vbe_info->width-8, 0, COLOR_WHITE);
 
             /* bottom left and right corners*/
-            vesa_put_box(gfx_composition_buffer, 20, 0, vbe_info->height-8, COLOR_WHITE);
-            vesa_put_box(gfx_composition_buffer, 24, vbe_info->width-8, vbe_info->height-8, COLOR_WHITE);
+            vesa_put_box(wind.composition_buffer, 20, 0, vbe_info->height-8, COLOR_WHITE);
+            vesa_put_box(wind.composition_buffer, 24, vbe_info->width-8, vbe_info->height-8, COLOR_WHITE);
 
-            vesa_fillrect(gfx_composition_buffer, 8, 0, strlen("NETOS")*8, 8, COLOR_BLACK);
-            vesa_write_str(gfx_composition_buffer, 8, 0, "NETOS", COLOR_YELLOW);
-            /*for (int i = 0; i < 320; i++)
-            {
-                for (int j = 0; j < 240; j++)
-                {
-                    //putpixel(gfx_composition_buffer, i, j, forman[j*320 + i], vbe_info->pitch);
-                }
-                
-            }
-
-            for (int i = 0; i < 480/8; i++)
-            {
-                vesa_put_box(gfx_composition_buffer, i, 0, i*8, COLOR_WHITE);
-                vesa_printf(gfx_composition_buffer, 10, i*8, COLOR_WHITE, "%d", i);
-            }
-
-            for (int i = 0; i < 128-(480/8); i++)
-            {
-                vesa_put_box(gfx_composition_buffer, (480/8)+i, 30, i*8, COLOR_WHITE);
-                vesa_printf(gfx_composition_buffer, 40, i*8, COLOR_WHITE, "%d", (480/8)+i);
-            }*/
+            vesa_fillrect(wind.composition_buffer, 8, 0, strlen("NETOS")*8, 8, wind.background_color);
+            vesa_write_str(wind.composition_buffer, 8, 0, "NETOS", COLOR_YELLOW);
             
             
             /* Draw windows in reversed order */
@@ -298,32 +289,16 @@ void gfx_compositor_main()
             //release(&order_lock);
         }
 
-        vesa_fillrect(gfx_composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 0, strlen("00:00:00 00/00/00")*8, 8, COLOR_BLACK);
-        vesa_printf(gfx_composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 0 , COLOR_YELLOW, "%s%d:%s%d:%s%d %s%d/%s%d/%d", TIME_PREFIX(time.hour), time.hour, TIME_PREFIX(time.minute), time.minute, TIME_PREFIX(time.second), time.second, TIME_PREFIX(time.day), time.day, TIME_PREFIX(time.month), time.month, time.year);
+        vesa_fillrect(wind.composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 0, strlen("00:00:00 00/00/00")*8, 8, wind.background_color);
+        vesa_printf(wind.composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 0 , COLOR_YELLOW, "%s%d:%s%d:%s%d %s%d/%s%d/%d", TIME_PREFIX(time.hour), time.hour, TIME_PREFIX(time.minute), time.minute, TIME_PREFIX(time.second), time.second, TIME_PREFIX(time.day), time.day, TIME_PREFIX(time.month), time.month, time.year);
 
-
-        /*vesa_fillrect(gfx_composition_buffer, 0, 480-25, 640, 25, COLOR_GRAY_DEFAULT);
-        vesa_line_horizontal(gfx_composition_buffer, 0, 480-25, 640, COLOR_GRAY_LIGHT); 
-        vesa_line_horizontal(gfx_composition_buffer, 0, 480-26, 640, COLOR_GRAY_LIGHT);
-
-        vesa_inner_box(gfx_composition_buffer, 638-80, 480-22, 80, 19);
-        //vesa_put_icon32(gfx_composition_buffer, 10, 10);
-
-        struct time time;
-        get_current_time(&time);
-        vesa_printf(gfx_composition_buffer, 638-65, 480-16, COLOR_BLACK, "%d:%d %s", time.hour > 12 ? time.hour-12 : time.hour, time.minute, time.hour > 12 ? "PM" : "AM");
-
-        vesa_printf(gfx_composition_buffer, 8, 480-16, COLOR_DARK_BLUE, "%d", (rdtsc() - test)-100000);
-
-
-        vesa_printf(gfx_composition_buffer, 100, 480-16, COLOR_DARK_BLUE, "%d", (timer_get_tick()*10) % 1000);*/
 
         STI();
 
         kernel_sleep(2);
 
         //if(mouse_changed || window_changed)
-            memcpy((uint8_t*)vbe_info->framebuffer, gfx_composition_buffer, buffer_size-1);
+            memcpy((uint8_t*)vbe_info->framebuffer, wind.composition_buffer, buffer_size-1);
         /* Copy buffer over to framebuffer. */
 
         if(mouse_changed){

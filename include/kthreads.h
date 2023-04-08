@@ -9,6 +9,7 @@ void networking_main();
 void dhcpd();
 void error_main();
 void tcpd();
+void image_viewer();
 
 int start(char* name);
 int register_kthread(void (*f)(), char* name);

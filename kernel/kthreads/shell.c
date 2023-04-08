@@ -65,6 +65,21 @@ void reset_shell()
 	shell_column += 1;
 }
 
+void ps()
+{
+	int ret;
+	int line = 0;
+	twritef("  PID  STACK    MEMORY  STATE     NAME\n");
+	for (int i = 0; i < MAX_NUM_OF_PCBS; i++)
+	{
+		struct pcb_info info;
+		ret = pcb_get_info(i, &info);
+		if(ret < 0) continue;
+		twritef("   %d   0x%x %d       %s  %s\n", info.pid, info.stack, info.used_memory, pcb_status[info.state], info.name);
+	}
+	
+}
+
 void exec_cmd()
 {
 	twritef("Kernel > %s", shell_buffer);
@@ -95,6 +110,11 @@ void exec_cmd()
 		hostname[strlen(hostname)-1] = 0;
 		int ret = gethostname(hostname);
 		twritef("%s IN (A) %i\n", hostname, ret);
+		return;
+	}
+
+	if(strncmp("ps", shell_buffer, strlen("ps"))){
+		ps();
 		return;
 	}
 
@@ -227,12 +247,12 @@ int c_test = 0;
 
 void shell_main()
 {
-	dbgprintf("Shell is running!\n");
+	dbgprintf("shell is running!\n");
 
 	memset(term.textbuffer, 0, TERMINAL_BUFFER_SIZE);
 	struct gfx_window* window = gfx_new_window(400, SHELL_HEIGHT);
 	
-	dbgprintf("Shell: window 0x%x\n", window);
+	dbgprintf("shell: window 0x%x\n", window);
 	__gfx_draw_rectangle(0,0, 400, SHELL_HEIGHT, 0);
 
 

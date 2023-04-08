@@ -10,7 +10,7 @@ struct pcb;
 #include <fs/inode.h>
 
 #define MAX_NUM_OF_PCBS 64
-#define pcb_max_name_length 25
+#define PCB_MAX_NAME_LENGTH 25
 
 /* TODO: Move to new file */
 enum pcb_states {
@@ -34,7 +34,7 @@ struct pcb {
     int args;
     char** argv;
     /* DO NOT NOT CHANGE ABOVE.*/
-    char name[pcb_max_name_length];
+    char name[PCB_MAX_NAME_LENGTH];
     uint8_t state;
     int16_t pid;
     uint16_t sleep;
@@ -60,6 +60,15 @@ struct pcb {
     struct pcb *prev;
 }__attribute__((__packed__));
 
+struct pcb_info {
+    uint8_t pid;
+    uint8_t state;
+    uint32_t stack;
+    uint32_t used_memory;
+    char name[PCB_MAX_NAME_LENGTH];
+};
+
+extern const char* pcb_status[];
 extern struct pcb* current_running;
 
 /* Forward declaration */
@@ -107,6 +116,8 @@ void pcb_queue_remove_running(struct pcb* pcb);
 void pcb_queue_push_running(struct pcb* pcb);
 
 int pcb_cleanup_routine(int pid);
+
+int pcb_get_info(int pid, struct pcb_info* info);
 
 struct pcb* pcb_get_new_running();
 struct pcb_queue* pcb_new_queue();

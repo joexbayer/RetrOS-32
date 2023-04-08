@@ -20,7 +20,7 @@
 //#include <gfx/gfxlib.h>
 
 #define STACK_SIZE 0x2000
-static const char* pcb_status[] = {"stopped ", "running ", "new     ", "blocked ", "sleeping", "zombie"};
+const char* pcb_status[] = {"stopped ", "running ", "new     ", "blocked ", "sleeping", "zombie"};
 static struct pcb pcb_table[MAX_NUM_OF_PCBS];
 static int pcb_count = 0;
 
@@ -209,6 +209,21 @@ void pcb_queue_push_running(struct pcb* pcb)
 void pcb_queue_remove_running(struct pcb* pcb)
 {
 	running->ops->remove(running, pcb);
+}
+
+int pcb_get_info(int pid, struct pcb_info* info)
+{
+	if(pid < 0 || pid > MAX_NUM_OF_PCBS || pcb_table[pid].state == STOPPED)
+		return -1;
+
+	info->pid = pid;
+	info->stack = pcb_table[pid].esp;
+	info->state = pcb_table[pid].state;
+	info->used_memory = pcb_table[pid].used_memory;
+	memcpy(info->name, pcb_table[pid].name, strlen(pcb_table[pid].name));
+	info->name[strlen(pcb_table[pid].name)+1] = 0;
+
+	return 0;
 }
 
 struct pcb* pcb_get_new_running()

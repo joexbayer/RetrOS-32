@@ -171,7 +171,16 @@ struct gfx_window* gfx_new_window(int width, int height)
         return current_running->gfx_window;
 
     struct gfx_window* w = (struct gfx_window*) kalloc(sizeof(struct gfx_window));
+    if(w == NULL){
+        dbgprintf("window is NULL\n");
+        return NULL;
+    }
+
     w->inner = kalloc(width*height);
+    if(w->inner == NULL){
+        dbgprintf("Inner window is NULL\n");
+        return NULL;
+    }
     memset(w->inner, 0, width*height);
 
     w->click = &gfx_default_click;

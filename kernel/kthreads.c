@@ -12,11 +12,11 @@
 #include <terminal.h>
 #include <pcb.h>
 
-#define MAX_KTHREADS 10
+#define MAX_KTHREADS 64
 static int total_kthreads = 0;
 
 struct kthread {
-    char name[pcb_max_name_length];
+    char name[PCB_MAX_NAME_LENGTH];
     void (*entry)();
 };
 
@@ -24,7 +24,7 @@ struct kthread kthread_table[MAX_KTHREADS];
 
 int register_kthread(void (*f)(), char* name)
 {
-    if(strlen(name)+1 > pcb_max_name_length)
+    if(strlen(name)+1 > PCB_MAX_NAME_LENGTH)
         return -1;
 
     kthread_table[total_kthreads].entry = f;

@@ -66,16 +66,17 @@ void kernel(uint32_t magic)
 
 	init_fs();
 	
-	register_kthread(&shell_main, "Shell");
+	register_kthread(&shell_main, "shell");
 	register_kthread(&Genesis, "Genesis");
 	register_kthread(&networking_main, "netd");
 	register_kthread(&dhcpd, "dhcpd");
 	register_kthread(&gfx_compositor_main, "wind");
 	register_kthread(&error_main, "Error");
-	register_kthread(&idletask, "Idle");
+	register_kthread(&idletask, "idled");
 	register_kthread(&dummytask, "Dummy");
 	register_kthread(&worker_thread, "workd");
 	register_kthread(&tcpd, "tcpd");
+	register_kthread(&image_viewer, "image");
 
 	#pragma GCC diagnostic ignored "-Wcast-function-type"
 	add_system_call(SYSCALL_PRTPUT, (syscall_t)&terminal_putchar);
@@ -111,12 +112,12 @@ void kernel(uint32_t magic)
 	
 	vesa_init();
 
-	start("Idle");
+	start("idled");
 	start("workd");
 	start("workd");
 	start("wind");
 	//start("netd");
-	start("Shell");
+	start("shell");
 	
 	init_pit(1);
 
