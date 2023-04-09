@@ -52,7 +52,7 @@
 #define COLOR_GRAY_DARK 0x49
 #define COLOR_GRAY_DEFAULT 0x92 //144
 #define COLOR_GRAY_LIGHT 0xdb
-
+/*
 #define COLOR_GRAY_0 73
 #define COLOR_GRAY_1 73
 #define COLOR_GRAY_2 73
@@ -104,6 +104,30 @@
 
 #define COLOR_DARK_YELLOw		0xb0
 #define COLOR_LIGHT_YELLOw		0xb1
+*/
+
+#define COLOR_BG 0x20 /* 0x24*/
+#define COLOR_DARK_RED 0xc4
+#define COLOR_DARK_GREEN 0x90
+#define COLOR_DARK_YELLOW 0xd0
+#define COLOR_DARK_BLUE 0x52
+#define COLOR_DARK_PURPLE 0xae
+#define COLOR_DARK_AQUA 0x71
+#define COLOR_DARK_GRAY 0xb2
+
+#define COLOR_LIGHT_GRAY 0x91
+#define COLOR_LIGHT_RED 0xe8
+#define COLOR_LIGHT_GREEN 0xb4
+#define COLOR_LIGHT_YELLOW 0xf4
+#define COLOR_LIGHT_BLUE 0x96
+#define COLOR_LIGHT_PURPLE 0xd2
+#define COLOR_LIGHT_AQUA 0x95
+#define COLOR_LIGHT_FG 0xfb /* 0xdb */
+#define COLOR_DARK_BG 0x04
+#define COLOR_DARK_BG2 0x24
+#define COLOR_DARK_BG3 0x49
+#define COLOR_DARK_ORANGE 0xcc
+#define COLOR_LIGHT_ORANGE 0xec
 
 
 

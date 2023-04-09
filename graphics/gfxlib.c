@@ -367,7 +367,7 @@ void gfx_outer_box(int x, int y, int w, int h, int fill)
 void gfx_button(int x, int y, int w, int h, char* text)
 {
 	gfx_outer_box(x, y, w, h, 0);
-	kernel_gfx_draw_text(x+2, y+2, text, COLOR_BLACK);
+	kernel_gfx_draw_text(x+2, y+2, text, COLOR_BG);
 }
 
 

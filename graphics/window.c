@@ -25,21 +25,10 @@
  */
 void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
 {
-    int background_color = window->color.header;
-    int text_color = window->in_focus ? window->color.border : 0x3;
+    int background_color = window->in_focus ? window->color.border : COLOR_DARK_BLUE;
+    int text_color = window->in_focus ? window->color.border : COLOR_DARK_BLUE;
     /* Draw main frame of window with title bar and borders */
-    vesa_fillrect(buffer, window->x+8, window->y, window->width-16, 8, background_color);
-
-    /* contour colors */
-    //vesa_line_vertical(buffer,window->x, window->y, window->height, COLOR_GRAY_LIGHT);
-    //vesa_line_vertical(buffer,window->x+window->width, window->y, window->height, COLOR_GRAY_DARK);
-
-    //vesa_line_horizontal(buffer,window->x, window->y, window->width, COLOR_GRAY_LIGHT);
-    //vesa_line_horizontal(buffer,window->x, window->y+window->height, window->width, COLOR_GRAY_DARK);
-
-    /* header color */
-    //vesa_fillrect(buffer, window->x+2, window->y+2, window->width-4, GFX_WINDOW_TITLE_HEIGHT, window->in_focus ? 0x2 : COLOR_GRAY_DARK);
-    //vesa_fillrect(buffer, window->x+2+window->width-GFX_WINDOW_TITLE_HEIGHT-4,  window->y+2, GFX_WINDOW_TITLE_HEIGHT-1, GFX_WINDOW_TITLE_HEIGHT-1, GFX_WINDOW_BG_COLOR);
+    vesa_fillrect(buffer, window->x+8, window->y, window->width-16, 8, COLOR_BG);
 
 
     /* Copy inner window framebuffer to given buffer with relativ pitch. */
@@ -63,10 +52,10 @@ void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
         vesa_put_box(buffer, 2, window->x-3+window->width-8, window->y+(i*8), text_color);
     }
 
-    vesa_fillrect(buffer, window->x+8+4, window->y, strlen(window->name)*8, 7, background_color);
+    vesa_fillrect(buffer, window->x+8, window->y, strlen(window->name)*8 + 4, 8, background_color);
     vesa_write_str(buffer, window->x+8+4, window->y, window->name, window->color.text);
 
-    vesa_fillrect(buffer,  window->x+window->width-20,  window->y, 8, 7, background_color);
+    vesa_fillrect(buffer,  window->x+window->width-22,  window->y, 12, 8, background_color);
     vesa_put_char(buffer, 'X', window->x+window->width-20,  window->y, window->color.text);
 
     /* Top left and right corners*/
@@ -204,9 +193,9 @@ struct gfx_window* gfx_new_window(int width, int height)
     w->owner = current_running;
     current_running->gfx_window = w;
     w->changed = 1;
-    w->color.border = 0xF;
-    w->color.header = COLOR_BLACK;
-    w->color.text = COLOR_WHITE;
+    w->color.border = COLOR_LIGHT_BLUE;
+    w->color.header = COLOR_BG;
+    w->color.text = COLOR_BG;
     
     w->events.head = 0;
     w->events.tail = 0;

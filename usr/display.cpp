@@ -11,9 +11,9 @@ public:
 	}
 
 	void UpdateColor(){
-		gfx_draw_rectangle(0, 0, c_width, c_height, COLOR_BLACK);
+		gfx_draw_rectangle(0, 0, c_width, c_height, COLOR_BG);
 		gfx_draw_rectangle(5, 5, c_width-5-8, c_height-20, m_color);
-		gfx_draw_format_text(5, c_height-12, COLOR_WHITE, "Color: 0x%x", m_color);
+		gfx_draw_format_text(5, c_height-12, COLOR_LIGHT_FG, "Color: 0x%x", m_color);
 		m_color++;
 	}
 	void Run()

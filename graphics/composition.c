@@ -33,7 +33,7 @@ static struct window_server {
     uint8_t sleep_time;
     uint8_t* composition_buffer;
 } wind = {
-    .background_color = COLOR_BLACK,
+    .background_color = COLOR_BG,
     .sleep_time = 2
 };
 
@@ -162,7 +162,7 @@ void gfx_composition_add_window(struct gfx_window* w)
 void gfx_mouse_event(int x, int y, char flags)
 {
     for (struct gfx_window* i = order; i != NULL; i = i->next)
-        if(gfx_point_in_rectangle(i->x, i->y, i->x+i->width, i->y+i->height, x, y)){
+        if(gfx_point_in_rectangle(i->x, i->y, i->x+i->inner_width, i->y+i->height-8, x, y)){
             /* on click when left mouse down */
             if(flags & 1 && gfx_mouse_state == 0){
                 gfx_mouse_state = 1;
@@ -230,10 +230,10 @@ void gfx_compositor_main()
 
     dbgprintf("[WSERVER] %d bytes allocated for composition buffer.\n", buffer_size);
     wind.composition_buffer = (uint8_t*) palloc(buffer_size);
+    wind.background_color = COLOR_BG;
 
     /* Main composition loop */
-    while(1)
-    {
+    while(1){
         
         /**
          * Problem with interrupts from mouse?
@@ -263,24 +263,24 @@ void gfx_compositor_main()
             memset(wind.composition_buffer, wind.background_color/*41*/, buffer_size);
 
             for (int i = 0; i < (vbe_info->width/8) - 2; i++){
-                vesa_put_box(wind.composition_buffer, 80, 8+(i*8), 0, COLOR_WHITE);
-                vesa_put_box(wind.composition_buffer, 0, 8+(i*8), vbe_info->height-8, COLOR_WHITE);
+                vesa_put_box(wind.composition_buffer, 80, 8+(i*8), 0, COLOR_LIGHT_FG);
+                vesa_put_box(wind.composition_buffer, 0, 8+(i*8), vbe_info->height-8, COLOR_LIGHT_FG);
             }
 
             for (int i = 0; i < (vbe_info->height/8)-2; i++){
-                vesa_put_box(wind.composition_buffer, 2, 0, 8+(i*8), COLOR_WHITE);
-                vesa_put_box(wind.composition_buffer, 2, vbe_info->width-8, 8+(i*8), COLOR_WHITE);
+                vesa_put_box(wind.composition_buffer, 2, 0, 8+(i*8), COLOR_LIGHT_FG);
+                vesa_put_box(wind.composition_buffer, 2, vbe_info->width-8, 8+(i*8), COLOR_LIGHT_FG);
             }
 
-            vesa_put_box(wind.composition_buffer, 82, 0, 0, COLOR_WHITE);
-            vesa_put_box(wind.composition_buffer, 85, vbe_info->width-8, 0, COLOR_WHITE);
+            vesa_put_box(wind.composition_buffer, 82, 0, 0, COLOR_LIGHT_FG);
+            vesa_put_box(wind.composition_buffer, 85, vbe_info->width-8, 0, COLOR_LIGHT_FG);
 
             /* bottom left and right corners*/
-            vesa_put_box(wind.composition_buffer, 20, 0, vbe_info->height-8, COLOR_WHITE);
-            vesa_put_box(wind.composition_buffer, 24, vbe_info->width-8, vbe_info->height-8, COLOR_WHITE);
+            vesa_put_box(wind.composition_buffer, 20, 0, vbe_info->height-8, COLOR_LIGHT_FG);
+            vesa_put_box(wind.composition_buffer, 24, vbe_info->width-8, vbe_info->height-8, COLOR_LIGHT_FG);
 
             vesa_fillrect(wind.composition_buffer, 8, 0, strlen("NETOS")*8, 8, wind.background_color);
-            vesa_write_str(wind.composition_buffer, 8, 0, "NETOS", COLOR_YELLOW);
+            vesa_write_str(wind.composition_buffer, 8, 0, "NETOS", COLOR_LIGHT_FG);
             
             
             /* Draw windows in reversed order */
@@ -290,7 +290,7 @@ void gfx_compositor_main()
         }
 
         vesa_fillrect(wind.composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 0, strlen("00:00:00 00/00/00")*8, 8, wind.background_color);
-        vesa_printf(wind.composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 0 , COLOR_YELLOW, "%s%d:%s%d:%s%d %s%d/%s%d/%d", TIME_PREFIX(time.hour), time.hour, TIME_PREFIX(time.minute), time.minute, TIME_PREFIX(time.second), time.second, TIME_PREFIX(time.day), time.day, TIME_PREFIX(time.month), time.month, time.year);
+        vesa_printf(wind.composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 0 , COLOR_LIGHT_FG, "%s%d:%s%d:%s%d %s%d/%s%d/%d", TIME_PREFIX(time.hour), time.hour, TIME_PREFIX(time.minute), time.minute, TIME_PREFIX(time.second), time.second, TIME_PREFIX(time.day), time.day, TIME_PREFIX(time.month), time.month, time.year);
 
 
         STI();
