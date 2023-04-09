@@ -50,7 +50,7 @@ endif
 # ---------------- Objects to compile ----------------
 PROGRAMOBJ = bin/shell.o bin/networking.o bin/dhcpd.o bin/error.o bin/tcpd.o bin/image.o
 
-GFXOBJ = bin/window.o bin/component.o bin/composition.o bin/gfxlib.o bin/api.o
+GFXOBJ = bin/window.o bin/component.o bin/composition.o bin/gfxlib.o bin/api.o bin/theme.o
 
 KERNELOBJ = bin/kcrt0.o bin/kernel.o bin/terminal.o bin/helpers.o bin/pci.o \
 			bin/util.o bin/interrupts.o bin/irs_entry.o bin/timer.o \
@@ -105,7 +105,6 @@ bin/build: ./tools/build.c
 bin/mkfs: bin/fs.o bin/bitmap.o ./tools/mkfs.c
 	@gcc tools/mkfs.c bin/bitmap.o fs/bin/inode.o -I include/  -O2 -m32 -Wall -g --no-builtin -o ./bin/mkfs
 	@echo [BUILD]      Compiling $<
-	@./bin/mkfs
 
 tools: bin/build bin/mkfs
 
@@ -124,6 +123,7 @@ userspace:
 iso: compile tests userspace tools
 	@echo [BUILD]      Building ISO file and attaching filesystem.
 	@rm -f boot.iso
+	@./bin/mkfs
 	@./bin/build
 	$(TIME-END)
 

@@ -10,7 +10,7 @@ struct gfx_window;
 #include <colors.h>
 
 #define GFX_MAX_WINDOW_NAME_SIZE 20
-#define GFX_WINDOW_BG_COLOR COLOR_GRAY_DEFAULT
+#define GFX_WINDOW_BG_COLOR COLOR_BOX_GRAY_DEFAULT
 #define GFX_WINDOW_TITLE_HEIGHT 12
 #define GFX_MAX_EVENTS 10
 

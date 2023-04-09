@@ -3,35 +3,44 @@
 #include <gfx/events.h>
 #include <colors.h>
 
+#define PIXELS_PER_BLOCK 16
+#define WIDTH (16*PIXELS_PER_BLOCK)
+#define HEIGHT ((255/16) * PIXELS_PER_BLOCK) + 32
+
 class DisplayViewer : public Window {  
 public:  
-	DisplayViewer() : Window(140, 140, "DisplayViewer") {
-		m_color = 1;
-		UpdateColor();
+	DisplayViewer() : Window(WIDTH, HEIGHT, "DisplayViewer") {
+		int x = 0, y = 0;
+		for (int i = 0; i < 255; i++){
+			gfx_draw_rectangle(x*PIXELS_PER_BLOCK, y*PIXELS_PER_BLOCK, PIXELS_PER_BLOCK, PIXELS_PER_BLOCK, i);
+			x++;
+			if(x == 16){
+				x = 0;
+				y++;
+			}
+		}
+		
 	}
 
-	void UpdateColor(){
-		gfx_draw_rectangle(0, 0, c_width, c_height, COLOR_BG);
-		gfx_draw_rectangle(5, 5, c_width-5-8, c_height-20, m_color);
-		gfx_draw_format_text(5, c_height-12, COLOR_LIGHT_FG, "Color: 0x%x", m_color);
-		m_color++;
-	}
 	void Run()
 	{
 		while (1){
 			struct gfx_event event;
 			gfx_get_event(&event);
+			unsigned char color;
 
-			UpdateColor();
+			switch (event.event){
+			case GFX_EVENT_MOUSE:
+				color = ((event.data2/PIXELS_PER_BLOCK)*16) + (event.data/PIXELS_PER_BLOCK);
+
+				gfx_draw_rectangle(0, HEIGHT-16, WIDTH, PIXELS_PER_BLOCK, color);
+				gfx_draw_format_text(0, HEIGHT-12, COLOR_WHITE, "Color: %d (0x%x)", color, color);
+				break;
+			default:
+				break;
+			}
 		}
 	}
-
-private:
-	int m_color;
-
-	/* Size is based on the fact that our filesystem can only handle 8kb files */
-	const int c_width = 140;
-	const int c_height = 140;
 };
 
 int main(void) {  

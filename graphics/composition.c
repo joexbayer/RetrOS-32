@@ -12,6 +12,7 @@
 #include <gfx/window.h>
 #include <gfx/gfxlib.h>
 #include <gfx/events.h>
+#include <gfx/theme.h>
 #include <keyboard.h>
 #include <scheduler.h>
 #include <util.h>
@@ -29,11 +30,9 @@ static struct gfx_window* order;
 static mutex_t order_lock;
 
 static struct window_server {
-    uint8_t background_color;
     uint8_t sleep_time;
     uint8_t* composition_buffer;
 } wind = {
-    .background_color = COLOR_BG,
     .sleep_time = 2
 };
 
@@ -162,7 +161,7 @@ void gfx_composition_add_window(struct gfx_window* w)
 void gfx_mouse_event(int x, int y, char flags)
 {
     for (struct gfx_window* i = order; i != NULL; i = i->next)
-        if(gfx_point_in_rectangle(i->x, i->y, i->x+i->inner_width, i->y+i->height-8, x, y)){
+        if(gfx_point_in_rectangle(i->x, i->y, i->x+i->inner_width, i->y+i->inner_height, x, y)){
             /* on click when left mouse down */
             if(flags & 1 && gfx_mouse_state == 0){
                 gfx_mouse_state = 1;
@@ -180,6 +179,13 @@ void gfx_mouse_event(int x, int y, char flags)
                 gfx_mouse_state = 0;
                 i->click(i, x, y);
                 i->mouseup(i, x, y);
+
+                struct gfx_event e = {
+                    .data = x - (i->x+8),
+                    .data2 = y - (i->y+8),
+                    .event = GFX_EVENT_MOUSE
+                };
+                gfx_push_event(order, &e);
             }
 
             i->hover(i, x, y);
@@ -192,26 +198,6 @@ void gfx_mouse_event(int x, int y, char flags)
 void gfx_init()
 {
     mutex_init(&order_lock);
-}
-
-uint8_t edim1_to_vga(uint8_t color) {
-    // Extract the red, green, and blue components of the color
-    uint8_t r = (color >> 5) & 0x7;
-    uint8_t g = (color >> 2) & 0x7;
-    uint8_t b = color & 0x3;
-
-    // Scale the color components to the range 0-63
-    r = r * 63 / 7;
-    g = g * 63 / 7;
-    b = b * 63 / 3;
-
-    // Combine the color components into a single byte
-    return (r << 5) | (g << 2) | b;
-}
-
-void kernel_gfx_change_background(uint8_t color)
-{
-    wind.background_color = color;
 }
 
 /**
@@ -230,10 +216,10 @@ void gfx_compositor_main()
 
     dbgprintf("[WSERVER] %d bytes allocated for composition buffer.\n", buffer_size);
     wind.composition_buffer = (uint8_t*) palloc(buffer_size);
-    wind.background_color = COLOR_BG;
 
     /* Main composition loop */
     while(1){
+        struct gfx_theme* theme = kernel_gfx_current_theme();
         
         /**
          * Problem with interrupts from mouse?
@@ -260,27 +246,27 @@ void gfx_compositor_main()
 
         if(window_changed){
             
-            memset(wind.composition_buffer, wind.background_color/*41*/, buffer_size);
+            memset(wind.composition_buffer, theme->os.background/*41*/, buffer_size);
 
             for (int i = 0; i < (vbe_info->width/8) - 2; i++){
-                vesa_put_box(wind.composition_buffer, 80, 8+(i*8), 0, COLOR_LIGHT_FG);
-                vesa_put_box(wind.composition_buffer, 0, 8+(i*8), vbe_info->height-8, COLOR_LIGHT_FG);
+                vesa_put_box(wind.composition_buffer, 80, 8+(i*8), 0, theme->os.foreground);
+                vesa_put_box(wind.composition_buffer, 0, 8+(i*8), vbe_info->height-8, theme->os.foreground);
             }
 
             for (int i = 0; i < (vbe_info->height/8)-2; i++){
-                vesa_put_box(wind.composition_buffer, 2, 0, 8+(i*8), COLOR_LIGHT_FG);
-                vesa_put_box(wind.composition_buffer, 2, vbe_info->width-8, 8+(i*8), COLOR_LIGHT_FG);
+                vesa_put_box(wind.composition_buffer, 2, 0, 8+(i*8), theme->os.foreground);
+                vesa_put_box(wind.composition_buffer, 2, vbe_info->width-8, 8+(i*8), theme->os.foreground);
             }
 
-            vesa_put_box(wind.composition_buffer, 82, 0, 0, COLOR_LIGHT_FG);
-            vesa_put_box(wind.composition_buffer, 85, vbe_info->width-8, 0, COLOR_LIGHT_FG);
+            vesa_put_box(wind.composition_buffer, 82, 0, 0, theme->os.foreground);
+            vesa_put_box(wind.composition_buffer, 85, vbe_info->width-8, 0, theme->os.foreground);
 
             /* bottom left and right corners*/
-            vesa_put_box(wind.composition_buffer, 20, 0, vbe_info->height-8, COLOR_LIGHT_FG);
-            vesa_put_box(wind.composition_buffer, 24, vbe_info->width-8, vbe_info->height-8, COLOR_LIGHT_FG);
+            vesa_put_box(wind.composition_buffer, 20, 0, vbe_info->height-8, theme->os.foreground);
+            vesa_put_box(wind.composition_buffer, 24, vbe_info->width-8, vbe_info->height-8, theme->os.foreground);
 
-            vesa_fillrect(wind.composition_buffer, 8, 0, strlen("NETOS")*8, 8, wind.background_color);
-            vesa_write_str(wind.composition_buffer, 8, 0, "NETOS", COLOR_LIGHT_FG);
+            vesa_fillrect(wind.composition_buffer, 8, 0, strlen("NETOS")*8, 8, theme->os.foreground);
+            vesa_write_str(wind.composition_buffer, 8, 0, "NETOS",  theme->os.text);
             
             
             /* Draw windows in reversed order */
@@ -289,8 +275,8 @@ void gfx_compositor_main()
             //release(&order_lock);
         }
 
-        vesa_fillrect(wind.composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 0, strlen("00:00:00 00/00/00")*8, 8, wind.background_color);
-        vesa_printf(wind.composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 0 , COLOR_LIGHT_FG, "%s%d:%s%d:%s%d %s%d/%s%d/%d", TIME_PREFIX(time.hour), time.hour, TIME_PREFIX(time.minute), time.minute, TIME_PREFIX(time.second), time.second, TIME_PREFIX(time.day), time.day, TIME_PREFIX(time.month), time.month, time.year);
+        vesa_fillrect(wind.composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 0, strlen("00:00:00 00/00/00")*8, 8, theme->os.foreground);
+        vesa_printf(wind.composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 0 ,  theme->os.text, "%s%d:%s%d:%s%d %s%d/%s%d/%d", TIME_PREFIX(time.hour), time.hour, TIME_PREFIX(time.minute), time.minute, TIME_PREFIX(time.second), time.second, TIME_PREFIX(time.day), time.day, TIME_PREFIX(time.month), time.month, time.year);
 
 
         STI();

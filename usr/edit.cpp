@@ -9,7 +9,7 @@ public:
 		m_x = 0;
 		m_y = 0;
 		textBuffer = (char*) malloc((c_width/8)*(c_height/8));
-		gfx_draw_rectangle(0, 0, c_width, c_height, COLOR_LIGHT_FG);
+		gfx_draw_rectangle(0, 0, c_width, c_height, COLOR_BOX_LIGHT_FG);
 	}
 
 	~Editor() {
@@ -51,8 +51,7 @@ void Editor::EditorLoop()
 	while (1){
 		struct gfx_event event;
 		gfx_get_event(&event);
-		switch (event.event)
-		{
+		switch (event.event){
 		case GFX_EVENT_KEYBOARD:
 			putChar(event.data);
 			break;
@@ -65,21 +64,21 @@ void Editor::EditorLoop()
 void Editor::putChar(char c)
 {
 	textBuffer[m_y*(c_width/8) + m_x] = c;
-	gfx_draw_rectangle(m_x*8, m_y*8, 8, 8, COLOR_LIGHT_FG);
+	gfx_draw_rectangle(m_x*8, m_y*8, 8, 8, COLOR_BOX_LIGHT_FG);
 
 	switch (c){
 	case '\n':
 		m_x = 0;
 		m_y++;
-		gfx_draw_char(m_x*8, m_y*8, '_', COLOR_BG);
+		gfx_draw_char(m_x*8, m_y*8, '_', COLOR_BOX_BG);
 		return;
 	case '\b':
 		m_x--;
-		gfx_draw_rectangle(m_x*8, m_y*8, 8, 8, COLOR_LIGHT_FG);
-		gfx_draw_char(m_x*8, m_y*8, '_', COLOR_BG);
+		gfx_draw_rectangle(m_x*8, m_y*8, 8, 8, COLOR_BOX_LIGHT_FG);
+		gfx_draw_char(m_x*8, m_y*8, '_', COLOR_BOX_BG);
 		return;
 	default:
-		gfx_draw_char(m_x*8, m_y*8, c, COLOR_BG);
+		gfx_draw_char(m_x*8, m_y*8, c, COLOR_BOX_BG);
 		break;
 	}
 
@@ -89,7 +88,7 @@ void Editor::putChar(char c)
 		m_y++;
 	}
 
-	gfx_draw_char(m_x*8, m_y*8, '_', COLOR_BG);
+	gfx_draw_char(m_x*8, m_y*8, '_', COLOR_BOX_BG);
 }
 
 int main(int argc, char** argv)

@@ -12,6 +12,7 @@
 #include <util.h>
 #include <gfx/component.h>
 #include <gfx/composition.h>
+#include <gfx/theme.h>
 #include <gfx/gfxlib.h>
 #include <colors.h>
 #include <serial.h>
@@ -25,10 +26,12 @@
  */
 void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
 {
-    int background_color = window->in_focus ? window->color.border : COLOR_DARK_BLUE;
-    int text_color = window->in_focus ? window->color.border : COLOR_DARK_BLUE;
+
+    struct gfx_theme* theme = kernel_gfx_current_theme();
+
+    int background_color = window->in_focus ? window->color.border == 0 ? theme->window.border : window->color.border : COLOR_BOX_DARK_BLUE;
     /* Draw main frame of window with title bar and borders */
-    vesa_fillrect(buffer, window->x+8, window->y, window->width-16, 8, COLOR_BG);
+    vesa_fillrect(buffer, window->x+8, window->y, window->width-16, 8, COLOR_BOX_BG);
 
 
     /* Copy inner window framebuffer to given buffer with relativ pitch. */
@@ -41,30 +44,22 @@ void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
     }
 
     for (int i = 0; i < (window->width/8) - 2; i++){
-        vesa_put_box(buffer, 80, window->x+8+(i*8), window->y-4, text_color);
-        vesa_put_box(buffer, 80, window->x+8+(i*8), window->y+2, text_color);
-        vesa_put_box(buffer, 80, window->x+8+(i*8), window->y-2, text_color);
-        vesa_put_box(buffer, 0, window->x+8+(i*8), window->y-4+window->height-8, text_color);
+        vesa_put_box(buffer, 80, window->x+8+(i*8), window->y-4, background_color);
+        vesa_put_box(buffer, 80, window->x+8+(i*8), window->y+2, background_color);
+        vesa_put_box(buffer, 80, window->x+8+(i*8), window->y-2, background_color);
+        vesa_put_box(buffer, 0, window->x+8+(i*8), window->y-4+window->height-8, background_color);
     }
 
     for (int i = 0; i < (window->height/8) - 1; i++){
-        vesa_put_box(buffer, 2, window->x+4, window->y+(i*8), text_color);
-        vesa_put_box(buffer, 2, window->x-3+window->width-8, window->y+(i*8), text_color);
+        vesa_put_box(buffer, 2, window->x+4, window->y+(i*8), background_color);
+        vesa_put_box(buffer, 2, window->x-3+window->width-8, window->y+(i*8), background_color);
     }
 
     vesa_fillrect(buffer, window->x+8, window->y, strlen(window->name)*8 + 4, 8, background_color);
-    vesa_write_str(buffer, window->x+8+4, window->y, window->name, window->color.text);
+    vesa_write_str(buffer, window->x+8+4, window->y, window->name, window->color.text == 0 ? theme->window.text : window->color.text);
 
-    vesa_fillrect(buffer,  window->x+window->width-22,  window->y, 12, 8, background_color);
-    vesa_put_char(buffer, 'X', window->x+window->width-20,  window->y, window->color.text);
-
-    /* Top left and right corners*/
-    //vesa_put_box(buffer, 82, window->x, window->y, text_color);
-    //vesa_put_box(buffer, 85, window->x+window->width-8, window->y, text_color);
-
-    /* bottom left and right corners*/
-    //vesa_put_box(buffer, 20, window->x, window->y+window->height-8, text_color);
-    //vesa_put_box(buffer, 24, window->x+window->width-8, window->y+window->height-8, text_color);
+    vesa_fillrect(buffer,  window->x+window->width-28,  window->y, strlen("[X]")*8 - 2, 8, background_color);
+    vesa_write_str(buffer, window->x+window->width-28,  window->y, "[X]", window->color.text == 0 ? theme->window.text : window->color.text);
     
     window->changed = 0;
 }   
@@ -193,9 +188,9 @@ struct gfx_window* gfx_new_window(int width, int height)
     w->owner = current_running;
     current_running->gfx_window = w;
     w->changed = 1;
-    w->color.border = COLOR_LIGHT_BLUE;
-    w->color.header = COLOR_BG;
-    w->color.text = COLOR_BG;
+    w->color.border = 0;
+    w->color.header = 0;
+    w->color.text = 0;
     
     w->events.head = 0;
     w->events.tail = 0;

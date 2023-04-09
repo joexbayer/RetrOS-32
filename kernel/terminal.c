@@ -15,6 +15,7 @@
 #include <gfx/gfxlib.h>
 #include <pcb.h>
 #include <terminal.h>
+#include <gfx/theme.h>
 
 /**
  * Writes out terminal buffer to screen.
@@ -24,8 +25,9 @@ void terminal_commit()
 	if(current_running->term == NULL)
 		return;
 
+	struct gfx_theme* theme = kernel_gfx_current_theme();
 	int x = 0, y = 0;
-	kernel_gfx_draw_rectangle(0, 0, gfx_get_window_width(), gfx_get_window_height(), COLOR_BG);
+	kernel_gfx_draw_rectangle(0, 0, gfx_get_window_width(), gfx_get_window_height(), theme->os.background);
 	for (int i = 0; i < current_running->term->head; i++){
 		if(current_running->term->textbuffer[i] == '\n'){
 			x = 0;
@@ -33,7 +35,7 @@ void terminal_commit()
 			continue;
 		}
 
-		kernel_gfx_draw_char(x*8, y*8, current_running->term->textbuffer[i], COLOR_LIGHT_AQUA);
+		kernel_gfx_draw_char(x*8, y*8, current_running->term->textbuffer[i], COLOR_BOX_LIGHT_AQUA);
 		x++;
 	}
 }

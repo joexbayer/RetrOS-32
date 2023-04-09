@@ -76,12 +76,12 @@ int init_window(struct text_window* w, int x, int y, int width, int height)
 {
     w->x = x;
     w->y = y;
-    w->color = VGA_COLOR_LIGHT_GREY;
+    w->color = VGA_COLOR_BOX_LIGHT_GREY;
     memcpy(w->name, "WINDOW", strlen("WINDOW"));
     w->visable = 1;
     w->width = width;
     w->height = height;
-    w->state.color = VGA_COLOR_LIGHT_GREY;
+    w->state.color = VGA_COLOR_BOX_LIGHT_GREY;
     w->state.column = 0;
     //w->state.row = 300-20;
 
@@ -102,7 +102,7 @@ int window_split_horizontal(struct text_window_binary_tree* wbt)
 
     init_window(left, left->x, left->y, l_width, left->height);
     init_window(right, l_width+2, left->y, l_width, left->height);
-    right->color = VGA_COLOR_GREEN;
+    right->color = VGA_COLOR_BOX_GREEN;
     return 0;
 }
 
@@ -120,11 +120,11 @@ int attach_window(struct text_window* w)
 		root.value->height = USABLE_HEIGHT-2;
 		root.value->width = USABLE_WIDTH-2;
 		root.value->visable = 1;
-		root.value->color = VGA_COLOR_LIGHT_GREY;
+		root.value->color = VGA_COLOR_BOX_LIGHT_GREY;
 		memcpy(root.value->name, "WINDOW", strlen("WINDOW"));
 		root.value->x = 1;
 		root.value->y = 1;
-		root.value->state.color = VGA_COLOR_LIGHT_GREY;
+		root.value->state.color = VGA_COLOR_BOX_LIGHT_GREY;
 		root.value->state.column = 0;
 		root.value->state.row = USABLE_HEIGHT-1;
 		return 1;
