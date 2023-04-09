@@ -40,6 +40,12 @@ struct gfx_window {
         uint8_t tail;
     } events;
 
+    struct {
+        uint8_t border;
+        uint8_t header;
+        uint8_t text;
+    } color;
+
     /* Pointer to inner memory where applications draw. */
     uint8_t* inner;
 
@@ -52,7 +58,6 @@ struct gfx_window {
     struct pcb* owner;
 
     uint8_t in_focus;
-    uint8_t color;
 
     char changed;
 };

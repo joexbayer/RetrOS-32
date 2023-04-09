@@ -52,7 +52,7 @@ static struct terminal term  = {
  */
 void shell_clear()
 {
-	__gfx_draw_rectangle(0, SHELL_POSITION, SHELL_HEIGHT, 8, COLOR_BLACK);
+	kernel_gfx_draw_rectangle(0, SHELL_POSITION, SHELL_HEIGHT, 8, COLOR_BLACK);
 }
 
 void reset_shell()
@@ -61,7 +61,7 @@ void reset_shell()
 	memset(&shell_buffer, 0, SHELL_MAX_SIZE);
 	shell_column = strlen(shell_name)+1;
 	shell_buffer_length = 0;
-	__gfx_draw_text(0, SHELL_POSITION, shell_name, COLOR_GREEN);
+	kernel_gfx_draw_text(0, SHELL_POSITION, shell_name, COLOR_GREEN);
 	shell_column += 1;
 }
 
@@ -222,7 +222,7 @@ void shell_put(unsigned char c)
 		if(shell_buffer_length < 1)
 			return;
 		shell_column -= 1;
-		__gfx_draw_rectangle(shell_column*8, SHELL_POSITION, 8, 8, COLOR_BLACK);
+		kernel_gfx_draw_rectangle(shell_column*8, SHELL_POSITION, 8, 8, COLOR_BLACK);
 		gfx_commit();
 		shell_buffer[shell_buffer_length] = 0;
 		shell_buffer_length--;
@@ -233,7 +233,7 @@ void shell_put(unsigned char c)
 	{
 		return;
 	}
-	__gfx_draw_char(shell_column*8, SHELL_POSITION, uc, COLOR_WHITE);
+	kernel_gfx_draw_char(shell_column*8, SHELL_POSITION, uc, COLOR_WHITE);
 	gfx_commit();
 	shell_buffer[shell_buffer_length] = uc;
 	shell_buffer_length++;
@@ -252,11 +252,11 @@ void shell_main()
 	struct gfx_window* window = gfx_new_window(400, SHELL_HEIGHT);
 	
 	dbgprintf("shell: window 0x%x\n", window);
-	__gfx_draw_rectangle(0,0, 400, SHELL_HEIGHT, 0);
+	kernel_gfx_draw_rectangle(0,0, 400, SHELL_HEIGHT, 0);
 
 
 	terminal_attach(&term);
-	//__gfx_draw_text(0, 0, "Terminal!", VESA8_COLOR_LIGHT_GREEN);
+	//kernel_gfx_draw_text(0, 0, "Terminal!", VESA8_COLOR_LIGHT_GREEN);
 	reset_shell();
 	//sleep(2);
 	while(1)

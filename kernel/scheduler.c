@@ -56,7 +56,7 @@ void context_switch()
             current_running = current_running->next;
             old->state = CLEANING;
 
-            work_queue_add(&pcb_cleanup_routine, (void*)old->pid);
+            work_queue_add(&pcb_cleanup_routine, (void*)old->pid, NULL);
             dbgprintf("Adding work to clean up PID %d\n", old->pid);
             break;
         case PCB_NEW:

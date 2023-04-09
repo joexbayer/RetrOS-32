@@ -1,8 +1,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -10,6 +10,7 @@
 
 #include <time.h>
 #include <sync.h>
+#include <mocks.h>
 
 #include <fs/fs.h>
 #include <fs/inode.h>
@@ -20,7 +21,27 @@
 #define DEBUG 0
 #define DISKSIZE 1000000
 
-extern FILE* filesystem;
+struct pcb __current_running = {
+
+};
+struct pcb* current_running = &__current_running;
+
+int failed = 0;
+void testprintf(int test,  const char* test_str)
+{
+    if(test)
+        fprintf(stderr, "TEST [ " GREEN "OK" RESET " ] %s\n", test_str);
+    else {
+        fprintf(stderr, "TEST [ " RED "FAILED" RESET " ] %s\n", test_str);
+        failed++;
+    }
+}
+
+
+void pcb_queue_attach_ops()
+{
+	
+}
 
 int get_current_time(struct time* time_s){
     time_t t = time(NULL);
@@ -79,11 +100,12 @@ uint32_t serial_printf(char* fmt, ...)
     return 1;
 }
 
-
+#ifndef __MEM_TEST
 void kfree(void* ptr)
 {
     free(ptr);
 }
+#endif
 
 /* Functions needed for inode and bitmap to work. */
 
@@ -111,10 +133,14 @@ int32_t twritef(char* fmt, ...)
     return 0;
 }
 
+#ifndef __MEM_TEST
 void* kalloc(int size){
     return malloc(size);
 }
+#endif
 
+#ifdef __FS_TEST
+extern FILE* filesystem;
 /* Functions simulating the disk device read / write functions. */
 int read_block(char* buf, int block)
 {
@@ -149,3 +175,5 @@ int read_block_offset(char* usr_buf, int size, int offset, int block)
 
     return 1;   
 }
+
+#endif

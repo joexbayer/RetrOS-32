@@ -209,7 +209,7 @@ uint8_t edim1_to_vga(uint8_t color) {
     return (r << 5) | (g << 2) | b;
 }
 
-void __gfx_change_background(uint8_t color)
+void kernel_gfx_change_background(uint8_t color)
 {
     wind.background_color = color;
 }

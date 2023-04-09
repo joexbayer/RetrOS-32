@@ -25,7 +25,7 @@ void terminal_commit()
 		return;
 
 	int x = 0, y = 0;
-	__gfx_draw_rectangle(0, 0, gfx_get_window_width(), gfx_get_window_height(), COLOR_BLACK);
+	kernel_gfx_draw_rectangle(0, 0, gfx_get_window_width(), gfx_get_window_height(), COLOR_BLACK);
 	for (int i = 0; i < current_running->term->head; i++){
 		if(current_running->term->textbuffer[i] == '\n'){
 			x = 0;
@@ -33,7 +33,7 @@ void terminal_commit()
 			continue;
 		}
 
-		__gfx_draw_char(x*8, y*8, current_running->term->textbuffer[i], COLOR_GREEN);
+		kernel_gfx_draw_char(x*8, y*8, current_running->term->textbuffer[i], COLOR_GREEN);
 		x++;
 	}
 }

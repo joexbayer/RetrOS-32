@@ -85,7 +85,7 @@ void kernel(uint32_t magic)
 	add_system_call(SYSCALL_GFX_WINDOW, (syscall_t)&gfx_new_window);
 	add_system_call(SYSCALL_GFX_GET_TIME,  (syscall_t)&get_current_time);
 	add_system_call(SYSCALL_GFX_DRAW, (syscall_t)&gfx_syscall_hook);
-	add_system_call(SYSCALL_GFX_SET_TITLE, (syscall_t)&__gfx_set_title);
+	add_system_call(SYSCALL_GFX_SET_TITLE, (syscall_t)&kernel_gfx_set_title);
 
 
 	add_system_call(SYSCALL_FREE, (syscall_t)&free);

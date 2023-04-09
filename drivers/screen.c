@@ -81,7 +81,7 @@ void scrput(int x, int y, unsigned char c, uint8_t color)
 	//VGA_MEMORY[index] = vga_entry(c, color);
 
 	//vesa_put_char(c, x , y);
-	//__gfx_draw_char(x*8, y, c, color);
+	//kernel_gfx_draw_char(x*8, y, c, color);
 }
 
 /**

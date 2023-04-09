@@ -25,8 +25,8 @@
  */
 void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
 {
-    int background_color = COLOR_BLACK;
-    int text_color = window->in_focus ? 0xF : 0x3;
+    int background_color = window->color.header;
+    int text_color = window->in_focus ? window->color.border : 0x3;
     /* Draw main frame of window with title bar and borders */
     vesa_fillrect(buffer, window->x+8, window->y, window->width-16, 8, background_color);
 
@@ -64,10 +64,10 @@ void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
     }
 
     vesa_fillrect(buffer, window->x+8+4, window->y, strlen(window->name)*8, 7, background_color);
-    vesa_write_str(buffer, window->x+8+4, window->y, window->name, COLOR_WHITE);
+    vesa_write_str(buffer, window->x+8+4, window->y, window->name, window->color.text);
 
     vesa_fillrect(buffer,  window->x+window->width-20,  window->y, 8, 7, background_color);
-    vesa_put_char(buffer, 'X', window->x+window->width-20,  window->y, COLOR_WHITE);
+    vesa_put_char(buffer, 'X', window->x+window->width-20,  window->y, window->color.text);
 
     /* Top left and right corners*/
     //vesa_put_box(buffer, 82, window->x, window->y, text_color);
@@ -140,6 +140,14 @@ void gfx_default_mouse_up(struct gfx_window* window, int x, int y)
     }
 }
 
+int kernel_gfx_window_border_color(uint8_t color)
+{
+    if(current_running->gfx_window == NULL) return -1;
+    current_running->gfx_window->color.border = color;
+
+    return 0;
+}
+
 int gfx_destory_window(struct gfx_window* w)
 {
     if(w == NULL) return -1;
@@ -196,6 +204,9 @@ struct gfx_window* gfx_new_window(int width, int height)
     w->owner = current_running;
     current_running->gfx_window = w;
     w->changed = 1;
+    w->color.border = 0xF;
+    w->color.header = COLOR_BLACK;
+    w->color.text = COLOR_WHITE;
     
     w->events.head = 0;
     w->events.tail = 0;

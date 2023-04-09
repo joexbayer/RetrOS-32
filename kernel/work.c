@@ -8,6 +8,7 @@
 /* Limits amount of works in queue and eliminates the need for kalloc */
 #define WORK_POOL_SIZE 25
 static struct work __work_pool[WORK_POOL_SIZE];
+static int works_in_queue = 0;
 
 static struct work* get_new_work() {
     struct work* new = NULL;
@@ -31,7 +32,15 @@ static struct work_queue queue = {
     .size = 0
 };
 
-void work_queue_add(void (*work_fn)(void*), void* arg)
+/**
+ * @brief Adds new work which will call function work_fn and call the call back with the
+ * return value of work_fn
+ * 
+ * @param work_fn function the worker will call
+ * @param arg argument to work_fn
+ * @param callback with return value of work_fn
+ */
+void work_queue_add(int (*work_fn)(void*), void* arg, void(*callback)(int))
 {
     struct work* work = get_new_work();
     if(work == NULL){
@@ -41,6 +50,8 @@ void work_queue_add(void (*work_fn)(void*), void* arg)
 
     work->work_fn = work_fn;
     work->arg = arg;
+    work->state = WORK_WAITING;
+    work->callback = callback;
     work->next = NULL;
 
     dbgprintf("Adding work 0x%x\n", work);
@@ -53,6 +64,7 @@ void work_queue_add(void (*work_fn)(void*), void* arg)
             queue.tail->next = work;
             queue.tail = work;
         }
+        works_in_queue++;
     });
 }
 
@@ -82,6 +94,7 @@ void worker_thread()
         ASSERT_CRITICAL();
         struct work* work = queue.head;
         queue.head = queue.head->next;
+        works_in_queue--;
 
         if (queue.head == NULL) {
             queue.tail = NULL;
@@ -89,8 +102,12 @@ void worker_thread()
         
         STI();
 
+        work->state = WORK_STARTED;
         dbgprintf("[%d] Running work... 0x%x (arg: %d)\n", my_id, work->work_fn, work->arg);
-        work->work_fn(work->arg);
+        int ret = work->work_fn(work->arg);
+        if(work->callback != NULL){
+            work->callback(ret);
+        }
         work->in_use = 0;
         work->next = NULL;
     }

@@ -148,7 +148,7 @@ void networking_main()
             assert(skb != NULL);
 
             /* Offload skb parsing to worker thread. */
-            work_queue_add(&net_handle_recieve, (void*)skb);
+            work_queue_add(&net_handle_recieve, (void*)skb, NULL);
         }
     }
 }

@@ -66,7 +66,7 @@ LIBOBJ = bin/printf.o bin/syscall.o bin/graphics.o
 
 # ---------------- Makefile rules ----------------
 
-.PHONY: all new image clean boot net kernel grub time
+.PHONY: all new image clean boot net kernel grub time tests
 all: iso
 	$(TIME-END)
 
@@ -102,16 +102,15 @@ bin/build: ./tools/build.c
 	@gcc ./tools/build.c -o ./bin/build
 	@echo [BUILD]      Compiling $<
 
-bin/mkfs: fs_test bin/fs.o bin/bitmap.o ./tools/mkfs.c
+bin/mkfs: bin/fs.o bin/bitmap.o ./tools/mkfs.c
 	@gcc tools/mkfs.c bin/bitmap.o fs/bin/inode.o -I include/  -O2 -m32 -Wall -g --no-builtin -o ./bin/mkfs
 	@echo [BUILD]      Compiling $<
 	@./bin/mkfs
 
 tools: bin/build bin/mkfs
 
-fs_test: bin/fs.o
+tests: compile
 	make -C tests/
-	./tests/bin/fs_test.o
 
 bin/net.o: ./net/*.c
 	@make -C ./net/
@@ -122,7 +121,7 @@ bin/fs.o: ./fs/*.c
 userspace:
 	@make -C ./usr/
 
-iso: compile userspace tools
+iso: compile tests userspace tools
 	@echo [BUILD]      Building ISO file and attaching filesystem.
 	@rm -f boot.iso
 	@./bin/build
@@ -150,7 +149,7 @@ clean:
 	rm -f filesystem.image
 	rm -f filesystem.test
 
-test: clean compile fs_test
+test: clean compile tests
 
 bindir:
 	@mkdir -p bin

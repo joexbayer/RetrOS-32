@@ -25,7 +25,7 @@
 
 /* need to add static bitmap as, bitmap_t uses kalloc */
 static uint8_t __kmemory_bitmap[(KERNEL_MEMORY_END - KERNEL_MEMORY_START) / KMEM_BLOCK_SIZE / KMEM_BLOCKS_PER_BYTE];
-static mutex_t __kmemory_lock;
+static spinlock_t __kmemory_lock = 0;
 static uint32_t __kmemory_used = 0;
 
 static inline int __kmemory_find_blocks(int num_blocks, int total_blocks)
@@ -76,7 +76,7 @@ static inline void __kmemory_write_metadata(int start_block, int num_blocks)
  */
 void* kalloc(int size)
 {
-	acquire(&__kmemory_lock);
+	spin_lock(&__kmemory_lock);
 
     int num_blocks = (size + sizeof(int) + KMEM_BLOCK_SIZE - 1) / KMEM_BLOCK_SIZE;
     int total_blocks = (KERNEL_MEMORY_END - KERNEL_MEMORY_START) / KMEM_BLOCK_SIZE;
@@ -84,7 +84,7 @@ void* kalloc(int size)
     int start_block = __kmemory_find_blocks(num_blocks, total_blocks);
     if (start_block == -1) {
         // No contiguous free region of memory was found
-        release(&__kmemory_lock);
+        spin_unlock(&__kmemory_lock);
         return NULL;
     }
 
@@ -97,7 +97,7 @@ void* kalloc(int size)
     __kmemory_used += num_blocks * KMEM_BLOCK_SIZE;
     current_running->kallocs++;
 
-    release(&__kmemory_lock);
+    spin_unlock(&__kmemory_lock);
     return ptr;
 }
 
@@ -118,7 +118,7 @@ void kfree(void* ptr)
 	if (!ptr)
 		return;
 	
-	acquire(&__kmemory_lock);
+	spin_lock(&__kmemory_lock);
 
 	// Calculate the index of the block in the memory region
 	int block_index = (((uint32_t)ptr) - KERNEL_MEMORY_START) / KMEM_BLOCK_SIZE;
@@ -135,7 +135,7 @@ void kfree(void* ptr)
 		__kmemory_bitmap[index] &= ~(1 << offset);
 	}
 
-	release(&__kmemory_lock);
+	spin_unlock(&__kmemory_lock);
 }
 
 /**
@@ -161,12 +161,6 @@ void* palloc(int size)
 
 void kmem_init()
 {
-	__kmemory_lock.blocked = palloc(sizeof(struct pcb_queue));
-    __kmemory_lock.blocked->_list = NULL;
-    __kmemory_lock.blocked->spinlock = 0;
-	__kmemory_lock.blocked->total = 0;
-    pcb_queue_attach_ops(__kmemory_lock.blocked);
-    
-    __kmemory_lock.state = UNLOCKED;
+	__kmemory_lock = 0;
     dbgprintf("Lock 0x%x initiated by %s\n", &__kmemory_lock, current_running->name);
 }
