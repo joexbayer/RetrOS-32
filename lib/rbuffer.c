@@ -77,13 +77,14 @@ static int __ring_buffer_add(struct ring_buffer *buffer, unsigned char *data, in
             /* The data doesn't wrap around the buffer */
             memcpy(buffer->buffer + buffer->end, data, length);
             buffer->end += length;
-        } else {
-            /* The data wraps around the buffer */
-            int first_length = buffer->size - buffer->end;
-            memcpy(buffer->buffer + buffer->end, data, first_length);
-            memcpy(buffer->buffer, data + first_length, length - first_length);
-            buffer->end = length - first_length;
-        }
+            break;
+        } 
+        /* The data wraps around the buffer */
+        int first_length = buffer->size - buffer->end;
+        memcpy(buffer->buffer + buffer->end, data, first_length);
+        memcpy(buffer->buffer, data + first_length, length - first_length);
+        buffer->end = length - first_length;
+        
     });
 
 	return length;

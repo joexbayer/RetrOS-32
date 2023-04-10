@@ -15,16 +15,16 @@
 #define MAX_KTHREADS 64
 static int total_kthreads = 0;
 
-struct kthread {
+static struct kthread {
     char name[PCB_MAX_NAME_LENGTH];
     void (*entry)();
 };
 
-struct kthread kthread_table[MAX_KTHREADS];
+static struct kthread kthread_table[MAX_KTHREADS];
 
 int register_kthread(void (*f)(), char* name)
 {
-    if(strlen(name)+1 > PCB_MAX_NAME_LENGTH)
+    if(strlen(name)+1 > PCB_MAX_NAME_LENGTH || total_kthreads == MAX_KTHREADS)
         return -1;
 
     kthread_table[total_kthreads].entry = f;

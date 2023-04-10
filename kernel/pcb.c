@@ -90,7 +90,7 @@ static void __pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb)
 			queue->_list = pcb;
 			break;
 		}
-		while (current->next == NULL)
+		while (current->next != NULL)
 			current = current->next;
 		current->next = pcb;
 		pcb->next = NULL;
@@ -231,85 +231,6 @@ struct pcb* pcb_get_new_running()
 	assert(running->_list != NULL);
 	return running->_list;
 }
-
-/**
- * @brief Main function of the PCB background process.
- * Printing out information about the currently running processes.
-void print_pcb_status()
-{
-	int done_list[MAX_NUM_OF_PCBS];
-	int done_list_count = 0;
-	
-	kernel_gfx_draw_text(10, 7, "Name           Status    Memory    Stack     PID", VESA8_COLOR_BOX_LIGHT_BROWN);
-	gfx_line(10, 7+9, 382, GFX_LINE_HORIZONTAL, VESA8_COLOR_BOX_GRAY2);
-	for (int i = 0; i < MAX_NUM_OF_PCBS; i++)
-	{
-		if(pcb_table[i].pid == -1)
-			continue;
-
-		int largest = 0;
-		uint32_t largest_amount = 0;
-		for (int j = 0; j < MAX_NUM_OF_PCBS; j++)
-		{
-			if(pcb_table[j].pid == -1)
-				continue;
-			
-			int found = 0;
-			for (int k = 0; k < done_list_count; k++)
-			{
-				if(done_list[k] == j){
-					found = 1;
-					break;
-				}
-			}
-
-			if(found)
-				continue;;
-			
-
-			if(pcb_table[j].ebp-pcb_table[j].esp >= largest_amount){
-				largest_amount = pcb_table[j].ebp-pcb_table[j].esp;
-				largest = j;
-			}
-		}
-
-		done_list[done_list_count] = largest;
-		done_list_count++;
-		//kernel_gfx_draw_format_text(10, 10+done_list_count*8, VESA8_COLOR_BOX_BLACK, " %d  0x%x  %s  %s  %s\n", pcb_table[largest].pid, pcb_table[largest].used_memory, status[pcb_table[largest].state], pcb_table[largest].is_process == 1 ? "Process" : "kthread", pcb_table[largest].name);
-
-		kernel_gfx_draw_format_text(10, 10+done_list_count*8, VESA8_COLOR_BOX_BLACK, "%s", pcb_table[largest].name);
-		kernel_gfx_draw_format_text(10 + 15*8, 10+done_list_count*8, VESA8_COLOR_BOX_BLACK, "%s", pcb_status[pcb_table[largest].state]);
-		kernel_gfx_draw_format_text(10+15*8+10*8, 10+done_list_count*8, VESA8_COLOR_BOX_BLACK, "%d", pcb_table[largest].used_memory);
-		kernel_gfx_draw_format_text(10+15*8+10*8 + 10*8, 10+done_list_count*8, VESA8_COLOR_BOX_BLACK, "0x%x", pcb_table[largest].esp);
-		kernel_gfx_draw_format_text(10+15*8+10*8+10*8+11*8, 10+done_list_count*8, VESA8_COLOR_BOX_BLACK, "%d", pcb_table[largest].pid);
-	}
-}
-
-void Genesis()
-{
-	dbgprintf("[GEN] Genesis running!\n");
-	struct gfx_window* window = gfx_new_window(400, 100);
-	
-	while(1)
-	{
-		kernel_gfx_draw_rectangle(0, 0, 400, 100, VESA8_COLOR_BOX_LIGHT_GRAY5);
-		kernel_gfx_draw_rectangle(3, 3, 395, 66, VESA8_COLOR_BOX_LIGHT_GRAY1);
-
-		gfx_line(2, 2, 66, GFX_LINE_OUTER_VERTICAL, VESA8_COLOR_BOX_BLUE);
-		gfx_line(3, 2, 396, GFX_LINE_INNER_HORIZONTAL, VESA8_COLOR_BOX_BLUE);
-
-		gfx_line(396, 2, 66, GFX_LINE_INNER_VERTICAL, VESA8_COLOR_BOX_BLUE);
-		gfx_line(2, 68, 396, GFX_LINE_OUTER_HORIZONTAL, VESA8_COLOR_BOX_BLUE);
-
-		print_pcb_status();
-
-		kernel_gfx_draw_format_text(10, 80, VESA8_COLOR_BOX_BLACK, "Total: %d", pcb_count);
-		
-		gfx_commit();
-		sleep(200);
-	}
-} */
-
 
 void Genesis()
 {

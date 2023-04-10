@@ -11,7 +11,7 @@ class DisplayViewer : public Window {
 public:  
 	DisplayViewer() : Window(WIDTH, HEIGHT, "DisplayViewer") {
 		int x = 0, y = 0;
-		for (int i = 0; i < 255; i++){
+		for (int i = 0; i < 256; i++){
 			gfx_draw_rectangle(x*PIXELS_PER_BLOCK, y*PIXELS_PER_BLOCK, PIXELS_PER_BLOCK, PIXELS_PER_BLOCK, i);
 			x++;
 			if(x == 16){

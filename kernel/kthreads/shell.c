@@ -190,8 +190,13 @@ void exec_cmd()
 		
 		int args = parse_arguments(shell_buffer, argv);
 		int pid = pcb_create_process(argv[1], args-1, &argv[1]);
-		if(pid == 0)
+		if(pid == 0){
+			for (int i = 0; i < 5; i++) {
+				kfree(argv[i]);
+			}
+			kfree(argv);
 			twritef("%s does not exist\n", argv[1]);
+		}
 
 		return;
 	}

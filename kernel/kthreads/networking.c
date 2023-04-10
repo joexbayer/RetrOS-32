@@ -27,14 +27,22 @@
 #include <net/dhcp.h>
 
 #define MAX_PACKET_SIZE 0x600
-static uint16_t packets = 0;
 
-struct network_manager {
+enum NETD_STATES {
+    NETD_UNINITIALIZED,
+    NETD_STARTED
+};
+
+static struct network_manager {
     int state;
 
+    uint16_t packets;
     struct skb_queue* skb_tx_queue;
     struct skb_queue* skb_rx_queue;
-} netd;
+} netd = {
+    .state = NETD_UNINITIALIZED,
+    .packets = 0
+};
 
 void net_incoming_packet_handler()
 {
@@ -47,7 +55,7 @@ void net_incoming_packet_handler()
     }
 
     netd.skb_rx_queue->ops->add(netd.skb_rx_queue, skb);
-    packets++;
+    netd.packets++;
     dbgprintf("New packet incoming...\n");
 }
 
@@ -55,7 +63,7 @@ void net_send_skb(struct sk_buff* skb)
 {
     /* Validate SKB */
     netd.skb_tx_queue->ops->add(netd.skb_tx_queue, skb);
-    packets++;
+    netd.packets++;
     dbgprintf("Added SKB to TX queue\n");
 }
 
@@ -66,7 +74,7 @@ static void __net_transmit_skb(struct sk_buff* skb)
     if(read <= 0){
         dbgprintf("Error sending packet\n");
     }
-    packets++;
+    netd.packets++;
 }
 
 int net_drop_packet(struct sk_buff* skb)
@@ -124,15 +132,16 @@ int net_handle_recieve(struct sk_buff* skb)
  */
 void networking_main()
 {
-    /* Maybe move these out into a init function */
-    netd.skb_rx_queue = skb_new_queue();
-    netd.skb_tx_queue = skb_new_queue();
+    if(netd.state == NETD_UNINITIALIZED){
+        netd.skb_rx_queue = skb_new_queue();
+        netd.skb_tx_queue = skb_new_queue();
+    }
 
     start("dhcpd");
 
     while(1){
         /**
-         * @brief Query RX and TX queue for packets.
+         * @brief Query RX and TX queue for netd.packets.
          */
         if(SKB_QUEUE_READY(netd.skb_tx_queue)){
             dbgprintf("Sending new SKB from TX queue\n");

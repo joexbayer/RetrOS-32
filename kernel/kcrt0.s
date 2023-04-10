@@ -8,7 +8,7 @@ _start:
     finit
 
     movl $stack, %esp
-    /* Use the number 0xDEADBEEF to check we can use that high addresses. */
+
     pushl %esp
     pushl %eax
     cli
