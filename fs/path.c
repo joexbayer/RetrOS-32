@@ -70,7 +70,8 @@ inode_t inode_from_path(char* path)
         dir = fs_get_root();
         break;
     case '.':
-        index = 2;
+        if(path[1] == '/')
+            index = 2;  
         break;
     default:
         break;

@@ -2,6 +2,7 @@
 #define KTHREADS_H
 
 #include <stdint.h>
+#include <errors.h>
 
 /* kthreads functions: FIXME */
 void shell_main();
@@ -11,7 +12,7 @@ void error_main();
 void tcpd();
 void image_viewer();
 
-int start(char* name);
-int register_kthread(void (*f)(), char* name);
+error_t start(char* name);
+error_t register_kthread(void (*f)(), char* name);
 
 #endif /* KTHREADS_H */

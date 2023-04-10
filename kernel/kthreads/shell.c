@@ -45,7 +45,8 @@ static char* shell_name = "Kernel >";
 
 static struct terminal term  = {
 	.head = 0,
-	.tail = 0
+	.tail = 0,
+	.lines = 0
 };
 
 /*
@@ -87,6 +88,11 @@ void exec_cmd()
 
 	if(strncmp("lspci", shell_buffer, strlen("lspci"))){
 		list_pci_devices();
+		return;
+	}
+
+	if(strncmp("scroll", shell_buffer, strlen("scroll"))){
+		termin_scroll(current_running->term);
 		return;
 	}
 
@@ -190,7 +196,7 @@ void exec_cmd()
 		
 		int args = parse_arguments(shell_buffer, argv);
 		int pid = pcb_create_process(argv[1], args-1, &argv[1]);
-		if(pid == 0){
+		if(pid < 0){
 			for (int i = 0; i < 5; i++) {
 				kfree(argv[i]);
 			}
@@ -201,7 +207,7 @@ void exec_cmd()
 		return;
 	}
 	int r = start(shell_buffer);
-	if(r == -1)
+	if(r < 0)
 		twritef("Unknown command: %s\n", shell_buffer);
 	else
 		twriteln("Started process.");

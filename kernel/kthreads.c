@@ -22,10 +22,10 @@ static struct kthread {
 
 static struct kthread kthread_table[MAX_KTHREADS];
 
-int register_kthread(void (*f)(), char* name)
+error_t register_kthread(void (*f)(), char* name)
 {
     if(strlen(name)+1 > PCB_MAX_NAME_LENGTH || total_kthreads == MAX_KTHREADS)
-        return -1;
+        return -ERROR_KTHREAD_CREATE;
 
     kthread_table[total_kthreads].entry = f;
     memcpy(kthread_table[total_kthreads].name, name, strlen(name)+1);
@@ -34,7 +34,7 @@ int register_kthread(void (*f)(), char* name)
     return 0;
 }
 
-int start(char* name)
+error_t start(char* name)
 {
     for (int i = 0; i < total_kthreads; i++){
         if(memcmp(name, kthread_table[i].name, strlen(kthread_table[i].name)) == 0){
@@ -43,7 +43,7 @@ int start(char* name)
         }
     }
 
-    return -1;
+    return -ERROR_KTHREAD_START;
 }
 
 void empty();

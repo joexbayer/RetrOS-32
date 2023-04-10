@@ -28,14 +28,14 @@ void terminal_commit()
 	struct gfx_theme* theme = kernel_gfx_current_theme();
 	int x = 0, y = 0;
 	kernel_gfx_draw_rectangle(0, 0, gfx_get_window_width(), gfx_get_window_height(), theme->os.background);
-	for (int i = 0; i < current_running->term->head; i++){
+	for (int i = current_running->term->tail; i < current_running->term->head; i++){
 		if(current_running->term->textbuffer[i] == '\n'){
 			x = 0;
 			y++;
 			continue;
 		}
 
-		kernel_gfx_draw_char(x*8, y*8, current_running->term->textbuffer[i], COLOR_BOX_LIGHT_AQUA);
+		kernel_gfx_draw_char(x*8, y*8, current_running->term->textbuffer[i], COLOR_BOX_LIGHT_FG);
 		x++;
 	}
 }
@@ -43,6 +43,17 @@ void terminal_commit()
 void terminal_attach(struct terminal* term)
 {
 	current_running->term = term;
+}
+
+void termin_scroll(struct terminal* term)
+{
+	if(term->tail == term->head)
+		return;
+		
+	while(term->textbuffer[term->tail] != '\n' && term->head != term->tail){
+		term->tail++;
+	}
+	term->tail++;
 }
 
 /**
@@ -54,8 +65,15 @@ void terminal_putchar(char c)
 {
 	if(current_running->term == NULL || current_running->term->head < 0 || current_running->term->head > TERMINAL_BUFFER_SIZE)
 		return;
-
+	
 	//unsigned char uc = c;	
+	if(c == '\n'){
+		if((gfx_get_window_height()/8) -1 == current_running->term->lines)
+			termin_scroll(current_running->term);
+		else
+			current_running->term->lines++;
+	}
+
 	current_running->term->textbuffer[current_running->term->head] = c;
 	current_running->term->head++;
 	gfx_commit();

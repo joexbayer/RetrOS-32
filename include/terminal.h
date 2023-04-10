@@ -8,6 +8,7 @@ struct terminal {
     char textbuffer[TERMINAL_BUFFER_SIZE];
     int tail;
     int head;
+    int lines;
 };
 
 void twrite(const char* data);
@@ -20,6 +21,8 @@ int32_t twritef(char* fmt, ...);
 void terminal_commit();
 
 void terminal_attach(struct terminal* term);
+
+void termin_scroll(struct terminal* term);
 
 
 void twriteln(const char* data);

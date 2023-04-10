@@ -211,10 +211,10 @@ void pcb_queue_remove_running(struct pcb* pcb)
 	running->ops->remove(running, pcb);
 }
 
-int pcb_get_info(int pid, struct pcb_info* info)
+error_t pcb_get_info(int pid, struct pcb_info* info)
 {
 	if(pid < 0 || pid > MAX_NUM_OF_PCBS || pcb_table[pid].state == STOPPED)
-		return -1;
+		return -ERROR_INDEX;
 
 	info->pid = pid;
 	info->stack = pcb_table[pid].esp;
@@ -322,15 +322,15 @@ int pcb_cleanup_routine(int pid)
  * @param name name of process.
  * @return int 1 on success -1 on error.
  */
-int pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
+error_t pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 {
 	dbgprintf("Initiating new kernel thread!\n");
 	uint32_t stack = (uint32_t) kalloc(STACK_SIZE);
-	memset((void*)stack, 0, STACK_SIZE);
 	if((void*)stack == NULL){
 		dbgprintf("[PCB] STACK == NULL");
-		return -1;
+		return -ERROR_ALLOC;
 	}
+	memset((void*)stack, 0, STACK_SIZE);
 
 	/* Stack grows down so we want the upper part of allocated memory.*/ 
 	pcb->ebp = stack+STACK_SIZE-1;
@@ -359,13 +359,13 @@ int pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 	return 1;
 }
 
-int pcb_create_process(char* program, int args, char** argv)
+error_t pcb_create_process(char* program, int args, char** argv)
 {
 	CLI();
 	/* Load process from disk */
 	inode_t inode = fs_open(program);
 	if(inode == 0)
-		return 0;
+		return -ERROR_FILE_NOT_FOUND;
 
 	dbgprintf("[INIT PROCESS] Reading %s from disk\n", program);
 	char* buf = kalloc(MAX_FILE_SIZE);
@@ -426,12 +426,12 @@ int pcb_create_process(char* program, int args, char** argv)
  * @param name name of process
  * @return int amount of running processes, -1 on error.
  */
-int pcb_create_kthread(void (*entry)(), char* name)
+error_t pcb_create_kthread(void (*entry)(), char* name)
 {   
 	CLI();
 	if(MAX_NUM_OF_PCBS == pcb_count){
 		dbgprintf("All PCBs are in use!\n");
-		return -1;
+		return -ERROR_PCB_FULL;
 	}
 
 	int i; /* Find a pcb is that is "free" */
@@ -440,6 +440,7 @@ int pcb_create_kthread(void (*entry)(), char* name)
 			break;
 	
 	int ret = pcb_init_kthread(i, &pcb_table[i], entry, name);
+	assert(ret);
 
 	running->ops->add(running, &pcb_table[i]);
 
