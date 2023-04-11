@@ -1,10 +1,3 @@
-/*  Bootloader...
- *
- *   Inspiried by stage0.s in tetris-os by JDH
- *   His video: https://www.youtube.com/watch?v=FaILnmUYS_U&t=647s
- *   Github: https://github.com/jdah/tetris-os
- */
-
 .code16
 .org 0
 .text
@@ -14,7 +7,7 @@ _start:
     jmp main
 
 main:
-
+    cli
     mov %cs, %ax
     mov %ax, %ds
     mov %ax, %es
@@ -33,11 +26,11 @@ main:
     # mov $0x0, %ah
     # int $0x16
 
-    /*
-        Using int 13h with 42 Extended Reac Sectors from Drive, to read inn sectors.
-        The loop will run 15 times, each time reading 0x0040 (64) * 512 bytes = 0x8000 (32768) bytes
-        Loading in a total of around 500Kb staying inside of the ram we have.
-        Making sure to increase to the next segment if needed.
+    /**
+     * Using int 13h with 42 Extended Reac Sectors from Drive, to read inn sectors.
+     * The loop will run 15 times, each time reading 0x0040 (64) * 512 bytes = 0x8000 (32768) bytes
+     * Loading in a total of around 500Kb staying inside of the ram we have.
+     * Making sure to increase to the next segment if needed.
      */
     movw $15, %cx /* Set cx 15 as loop variable meaning it will loop 15 times. */
     movb drive_num, %dl
@@ -64,12 +57,6 @@ reading_same_segment:
     loop read_loop
 
 continue:
-
-    /* Setting video mode to 80x50 */
-    # movw $0x1112, %ax
-    # xor %bl, %bl
-    # int $0x10
-  
     call set_video_mode
 
     /* enable A20 line */
@@ -82,9 +69,6 @@ continue:
     /* Setup GDT for 32 land */
     jmp setup_gdt
 setup_gdt:
-
-    
-    cli
 
     lgdt gdtp
 
@@ -114,10 +98,6 @@ set_a20:
     ret                                                                                
 
 set_video_mode:
-    # movb $0x00, %ah
-    # movb $0x10, %al
-    # int $0x10
-
     mov $0x4F02, %ax	
     mov $0x4101, %bx
     int $0x10 
@@ -189,11 +169,11 @@ gdtp:
     .word gdt_end - gdt_start - 1
     .long gdt_start
 
-/*
-    Setup descriptor for the flat memory layout
-    Giving us access to all the memory.
-    https://en.wikipedia.org/wiki/Global_Descriptor_Table
-*/
+/**
+ * Setup descriptor for the flat memory layout
+ * Giving us access to all the memory.
+ * https://en.wikipedia.org/wiki/Global_Descriptor_Table
+ */
 .align 16
 gdt_start:
 gdt_null:
