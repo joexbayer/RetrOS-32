@@ -5,11 +5,16 @@
 
 class Editor : public Window {  
 public:  
-	Editor() : Window(280, 240, "Editor") {
+	Editor() : Window(288, 248, "Editor") {
 		m_x = 0;
 		m_y = 0;
-		textBuffer = (char*) malloc((c_width/8)*(c_height/8));
-		gfx_draw_rectangle(0, 0, c_width, c_height, COLOR_BOX_LIGHT_FG);
+		textBuffer = (unsigned char*) malloc((c_width/8)*(c_height/8));
+		gfx_draw_rectangle(0, 0, 288, 248, COLOR_BOX_LIGHT_FG);
+		gfx_draw_line(0, 17, 248, 17, 0xff);
+		for (int i = 0; i < 248; i++){
+			gfx_draw_format_text(0, i*8, 0xff, "%s%d ", i < 10 ? " " : "", i);
+		}
+		
 	}
 
 	~Editor() {
@@ -19,12 +24,12 @@ public:
 
 	void Save();
 	void Open(char* path);
-	void putChar(char c);
+	void putChar(unsigned char c);
 	void EditorLoop();
 
 private:
 	int m_fd = -1;
-	char* textBuffer;
+	unsigned char* textBuffer;
 	int m_x, m_y;
 
 	/* Size is based on the fact that our filesystem can only handle 8kb files */
@@ -61,34 +66,43 @@ void Editor::EditorLoop()
 	}
 }
 
-void Editor::putChar(char c)
+void Editor::putChar(unsigned char c)
 {
 	textBuffer[m_y*(c_width/8) + m_x] = c;
-	gfx_draw_rectangle(m_x*8, m_y*8, 8, 8, COLOR_BOX_LIGHT_FG);
+	gfx_draw_rectangle(24 + m_x*8, m_y*8, 8, 8, COLOR_BOX_LIGHT_FG);
 
 	switch (c){
 	case '\n':
 		m_x = 0;
 		m_y++;
-		gfx_draw_char(m_x*8, m_y*8, '_', COLOR_BOX_BG);
+		gfx_draw_char(24 + m_x*8, m_y*8, '_', COLOR_BOX_BG);
 		return;
 	case '\b':
+		if(m_x == 0) return;
 		m_x--;
-		gfx_draw_rectangle(m_x*8, m_y*8, 8, 8, COLOR_BOX_LIGHT_FG);
-		gfx_draw_char(m_x*8, m_y*8, '_', COLOR_BOX_BG);
+		gfx_draw_rectangle(24 + m_x*8, m_y*8, 8, 8, COLOR_BOX_LIGHT_FG);
+		gfx_draw_char(24 + m_x*8, m_y*8, '_', COLOR_BOX_BG);
+		return;
+	case 254:
+		if(m_x == 0 || m_y == 0) return;
+		gfx_draw_rectangle(24 + m_x*8, m_y*8, 8, 8, COLOR_BOX_LIGHT_FG);
+		gfx_draw_char(24 + m_x*8, m_y*8, textBuffer[m_y*(c_width/8) + m_x], COLOR_BOX_LIGHT_FG);
+
+		m_y--;
+		gfx_draw_char(24 + m_x*8, m_y*8, '_', COLOR_BOX_BG);
 		return;
 	default:
-		gfx_draw_char(m_x*8, m_y*8, c, COLOR_BOX_BG);
+		gfx_draw_char(24 + m_x*8, m_y*8, c, COLOR_BOX_BG);
 		break;
 	}
 
 	m_x++;
-	if(m_x > c_width/8){
+	if(m_x > (c_width/8) + 8){
 		m_x = 0;
 		m_y++;
 	}
 
-	gfx_draw_char(m_x*8, m_y*8, '_', COLOR_BOX_BG);
+	gfx_draw_char(24 + m_x*8, m_y*8, '_', COLOR_BOX_BG);
 }
 
 int main(int argc, char** argv)

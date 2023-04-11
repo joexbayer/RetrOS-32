@@ -25,9 +25,14 @@
 #define KB_BUFFER_SIZE 255
 
 static mutex_t kb_lock;
-static char kb_buffer[KB_BUFFER_SIZE];
+static unsigned char kb_buffer[KB_BUFFER_SIZE];
 static int kb_buffer_head = 0;
 static int kb_buffer_tail = 0;
+
+#define ARROW_UP 254
+#define ARROW_DOWN 253
+#define ARROW_LEFT 252
+#define ARROW_RIGHT 251
 
 static unsigned char kbdus[128] =
 {
@@ -51,15 +56,15 @@ static unsigned char kbdus[128] =
     0,	/* 69 - Num lock*/
     0,	/* Scroll Lock */
     0,	/* Home key */
-    0,	/* Up Arrow */
+    ARROW_UP,	/* Up Arrow */
     0,	/* Page Up */
   '-',
-    0,	/* Left Arrow */
+    ARROW_LEFT,	/* Left Arrow */
     0,
-    0,	/* Right Arrow */
+    ARROW_RIGHT,	/* Right Arrow */
   '+',
     0,	/* 79 - End key*/
-    0,	/* Down Arrow */
+    ARROW_DOWN,	/* Down Arrow */
     0,	/* Page Down */
     0,	/* Insert Key */
     0,	/* Delete Key */
@@ -71,7 +76,7 @@ static unsigned char kbdus[128] =
 static int __keyboard_presses = 0;
 static uint8_t __shift_pressed = 0;
 
-char kb_get_char()
+unsigned char kb_get_char()
 {
 	//acquire(&kb_lock);
 	if(kb_buffer_tail == kb_buffer_head || !current_running->gfx_window->in_focus){
@@ -79,13 +84,13 @@ char kb_get_char()
 		return -1;
 	}
 	
-	char c = kb_buffer[kb_buffer_tail];
+	unsigned char c = kb_buffer[kb_buffer_tail];
 	kb_buffer_tail = (kb_buffer_tail + 1) % KB_BUFFER_SIZE;
 	//release(&kb_lock);
 	return c;
 }
 
-void kb_add_char(char c)
+void kb_add_char(unsigned char c)
 {
 	kb_buffer[kb_buffer_head] = c;
 	kb_buffer_head = (kb_buffer_head + 1) % KB_BUFFER_SIZE;
@@ -111,10 +116,11 @@ static void kb_callback()
 	if(scancode & 0x80)
 		return;
 
-	char c = kbdus[scancode];
+	unsigned char c = kbdus[scancode];
   if(c == '7' && __shift_pressed){
     kb_add_char('/');
   } else {
+    dbgprintf("Pressed %d\n", c);
 	  kb_add_char( __shift_pressed ? c+('A'-'a') : c);
   }
 	__keyboard_presses++;

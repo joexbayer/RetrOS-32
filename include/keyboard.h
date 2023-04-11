@@ -4,6 +4,6 @@
 #include <stdint.h>
 
 void init_keyboard();
-char kb_get_char();
+unsigned char kb_get_char();
 
 #endif
