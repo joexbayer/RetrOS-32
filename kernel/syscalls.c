@@ -1,5 +1,5 @@
 #include <syscalls.h>
-#include <interrupts.h>
+#include <arch/interrupts.h>
 #include <assert.h>
 
 syscall_t syscall[255];

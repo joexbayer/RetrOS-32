@@ -80,6 +80,15 @@ ISR_NO_ERR 47
 isr_entry:
   pushal
 
+  /* mov %ds, %ax 
+  push %eax            
+
+  /* mov $0x10, %ax
+  mov %ax, %ds
+  mov %ax, %es
+  mov %ax, %fs
+  mov %ax, %gs*/
+
   push %eax
   call isr_handler
   pop %eax

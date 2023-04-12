@@ -11,10 +11,10 @@
 
 #include <timer.h>
 #include <serial.h>
-#include <interrupts.h>
+#include <arch/interrupts.h>
 #include <scheduler.h>
 #include <pcb.h>
-#include <io.h>
+#include <arch/io.h>
 
 #define PIT_IRQ		32
 

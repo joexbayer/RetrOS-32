@@ -12,10 +12,10 @@
 
 #include <keyboard.h>
 #include <serial.h>
-#include <interrupts.h>
+#include <arch/interrupts.h>
 #include <util.h>
 #include <sync.h>
-#include <io.h>
+#include <arch/io.h>
 #include <pcb.h>
 
 #include <vbe.h>

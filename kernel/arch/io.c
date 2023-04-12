@@ -1,4 +1,4 @@
-#include <io.h>
+#include <arch/io.h>
 /* IN and OUT for ports. */ 
 uint8_t inportb(uint16_t p)
 {

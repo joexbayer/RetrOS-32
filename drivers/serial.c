@@ -10,7 +10,7 @@
  */
 
 #include <serial.h>
-#include <io.h>
+#include <arch/io.h>
 #include <util.h>
 #include <args.h>
 

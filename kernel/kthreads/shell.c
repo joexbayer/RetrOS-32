@@ -15,7 +15,7 @@
 #include <pcb.h>
 #include <rtc.h>
 #include <kthreads.h>
-#include <io.h>
+#include <arch/io.h>
 
 #include <windowmanager.h>
 #include <net/dns.h>

@@ -9,7 +9,7 @@
  * 
  */
 #include <e1000.h>
-#include <interrupts.h>
+#include <arch/interrupts.h>
 #include <pci.h>
 #include <net/net.h>
 #include <net/netdev.h>

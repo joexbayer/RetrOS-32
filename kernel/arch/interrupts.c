@@ -9,7 +9,7 @@
  * @copyright Copyright (c) 2022
  * 
  */
-#include <interrupts.h>
+#include <arch/interrupts.h>
 #include <pcb.h>
 #include <serial.h>
 #include <scheduler.h>

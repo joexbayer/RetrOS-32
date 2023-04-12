@@ -23,6 +23,25 @@ load_page_directory:
     pop %ebp
     ret
 
+.global gdt_flush
+gdt_flush:
+    mov 4(%esp), %eax
+    lgdt (%eax)
+
+    mov $0x10, %ax
+    mov %ax, %ds
+    mov %ax, %es
+    mov %ax, %fs
+    mov %ax, %gs
+    mov %ax, %ss
+    ret
+
+.global tss_flush
+tss_flush:
+   mov $0x2B, %ax
+   ltr %ax
+   ret 
+
 .text
 .globl enable_paging
 enable_paging:
@@ -77,11 +96,32 @@ _start_pcb:
     movl 0(%eax), %ebp
     movl 152(%eax), %ebx
     movl 156(%eax), %ecx
-    pushl 8(%eax)
+    movl 8(%eax), %edx
+    subl $1, cli_cnt
+
+    /*pushl 8(%eax)
     sti
     subl $1, cli_cnt
     # jmp *8(%eax)
-    ret
+    ret */
+
+    mov $0x10, %ax
+    mov %ax, %ds
+    mov %ax, %es
+    mov %ax, %fs
+    mov %ax, %gs
+                
+    mov %esp, %eax
+    pushl $0x10
+    pushl %eax
+    pushf
+    pop %eax
+    or $0x200, %eax
+    push %eax 
+    pushl $0x08
+
+    pushl %edx
+    iret
 
 .section .text
 .align 4

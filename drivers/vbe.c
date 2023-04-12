@@ -4,7 +4,7 @@
 #include <font8.h>
 #include <args.h>
 
-#include <io.h>
+#include <arch/io.h>
 struct vbe_mode_info_structure* vbe_info;
 
 uint8_t forman[] = {

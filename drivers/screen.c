@@ -13,7 +13,7 @@
 #include <pcb.h>
 #include <windowmanager.h>
 #include <args.h>
-#include <io.h>
+#include <arch/io.h>
 #include <serial.h>
 #include <vbe.h>
 #include <gfx/gfxlib.h>

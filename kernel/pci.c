@@ -14,7 +14,7 @@
 #include <ata.h>
 #include <terminal.h>
 #include <serial.h>
-#include <io.h>
+#include <arch/io.h>
 
 static const char* pci_classes[] =
 {

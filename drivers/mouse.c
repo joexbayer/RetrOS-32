@@ -10,9 +10,9 @@
  */
 
 #include <stdint.h>
-#include <interrupts.h>
+#include <arch/interrupts.h>
 #include <mouse.h>
-#include <io.h>
+#include <arch/io.h>
 #include <serial.h>
 #include <util.h>
 

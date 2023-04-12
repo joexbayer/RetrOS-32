@@ -11,9 +11,9 @@
  */
 
 #include <ata.h>
-#include <interrupts.h>
+#include <arch/interrupts.h>
 #include <memory.h>
-#include <io.h>
+#include <arch/io.h>
 #include <diskdev.h>
 #include <util.h>
 

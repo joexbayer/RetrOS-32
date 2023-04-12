@@ -3,7 +3,7 @@
 #include <pci.h>
 #include <terminal.h>
 #include <keyboard.h>
-#include <interrupts.h>
+#include <arch/interrupts.h>
 #include <timer.h>
 #include <screen.h>
 #include <pcb.h>
@@ -24,8 +24,9 @@
 #include <mouse.h>
 #include <ipc.h>
 #include <assert.h>
-#include <io.h>
+#include <arch/io.h>
 #include <work.h>
+#include <arch/gdt.h>
 
 #include <gfx/window.h>
 #include <gfx/composition.h>
@@ -106,7 +107,8 @@ void kernel(uint32_t magic)
 	dbgprintf("[KERNEL] Kernel reaching too: 0x%x\n", _end-_code);
 
 	load_page_directory(kernel_page_dir);
-	enable_paging();
+	init_gdt();
+	//enable_paging();
 
 	dbgprintf("[KERNEL] Enabled paging!\n");
 	
