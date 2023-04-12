@@ -112,8 +112,17 @@ void exec_cmd()
 		return;
 	}
 
-	if(strncmp("theme", shell_buffer, strlen("theme"))){
-		int id = atoi(shell_buffer+strlen("theme")+1);
+	if(strncmp("ths", shell_buffer, strlen("ths"))){
+		int total_themes = gfx_total_themes();
+		for (int i = 0; i < total_themes; i++){
+			twritef("%d) %s\n", i, kernel_gfx_get_theme(i)->name);
+		}
+		
+		return;
+	}
+
+	if(strncmp("th", shell_buffer, strlen("th"))){
+		int id = atoi(shell_buffer+strlen("th")+1);
 		kernel_gfx_set_theme(id);
 		return;
 	}
