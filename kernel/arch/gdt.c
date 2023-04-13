@@ -58,33 +58,19 @@ void init_gdt()
 {
    struct point gdt_p;
    create_segment(
-        gdt + KERNEL_CODE,      /* gdt entry */
-        0,                      /* memory start address */
-        0xfffff,                /* size (4 GB) */
-        CODE_SEGMENT,           /* type = code segment */
-        0,                      /* highest privilege level */
-        MEMORY);                /* is not a system segment */
+        gdt + KERNEL_CODE, 0, 0xfffff, CODE_SEGMENT, 0,MEMORY);
 
     /* Data segment for the kernel (contains kernel stack) */
-    create_segment(gdt + KERNEL_DATA, 0, 0xfffff, DATA_SEGMENT,
-                   0, /* highest privilege level */
-                   MEMORY);
+    create_segment(gdt + KERNEL_DATA, 0, 0xfffff, DATA_SEGMENT,0, /* highest privilege level */MEMORY);
 
     /* Code segment for processes */
-    create_segment(gdt + PROCESS_CODE, 0, 0xfffff, CODE_SEGMENT,
-                   3, /* lowest privilege level */
-                   MEMORY);
+    create_segment(gdt + PROCESS_CODE, 0, 0xfffff, CODE_SEGMENT,3, /* lowest privilege level */MEMORY);
 
     /* Data segment for processes (contains user stack) */
-    create_segment(gdt + PROCESS_DATA, 0, 0xfffff, DATA_SEGMENT,
-                   3, /* lowest privilege level */
-                   MEMORY);
+    create_segment(gdt + PROCESS_DATA, 0, 0xfffff, DATA_SEGMENT,3, /* lowest privilege level */MEMORY);
 
     /* Insert pointer to the global TSS */
-    create_segment(gdt + TSS_INDEX, (uint32_t)&tss,
-                   TSS_SIZE, TSS_SEGMENT,
-                   0,       /* highest privilege level */
-                   SYSTEM); /* is a system segment */
+    create_segment(gdt + TSS_INDEX, (uint32_t)&tss,TSS_SIZE, TSS_SEGMENT, 0,/* highest privilege level */SYSTEM); /* is a system segment */
 
     /*
      * Load the GDTR register with a pointer to the gdt, and the
@@ -94,16 +80,6 @@ void init_gdt()
     gdt_p.base = (uint32_t)gdt;
 
     asm volatile ("lgdt %0" : : "m" (gdt_p));
-
-    /* Reload the Segment registers to refresh the hidden portions */
-    asm volatile ("pushl %ds");
-    asm volatile ("popl %ds");
-
-    asm volatile ("pushl %es");
-    asm volatile ("popl %es");
-
-    asm volatile ("pushl %ss");
-    asm volatile ("popl %ss");
 
    //gdt_flush((uint32_t)&gdt_ptr);
    //tss_flush();

@@ -80,8 +80,7 @@ ISR_NO_ERR 46
 ISR_NO_ERR 47
 
 isr_entry:
-  cli
-  pushal
+  /*pushal
   
   pushl %ds
   
@@ -103,21 +102,26 @@ isr_entry:
 
   popl	%ds
 
-  add $8, %esp
+  add $8, %esp*/
 
-  /*
+
   pushal
 
-  push %eax
+  pushl %ds
+  mov $16, %ax
+  mov %ax, %ds
+  mov %ax, %es
+  mov %ax, %fs
+  mov %ax, %gs
+
   call isr_handler
-  pop %eax
+
+  popl	%ds
 
   popal
   add $8, %esp
 
   iret
-  */
-	iret
 
 syscall_return_value:
   .long	0
