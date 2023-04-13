@@ -6,6 +6,9 @@
 #include <assert.h>
 #include <work.h>
 
+#include <arch/gdt.h>
+#include <arch/tss.h>
+
 void kernel_sleep(int time)
 {
     current_running->sleep = timer_get_tick() + time;
@@ -14,7 +17,8 @@ void kernel_sleep(int time)
 }
 
 void kernel_yield()
-{
+{   
+    dbgprintf("Hi\n");
     current_running->yields++;
     _context_switch();
 }
@@ -44,6 +48,8 @@ void context_switch()
 {
     ASSERT_CRITICAL();
 
+    dbgprintf("Hi\n");
+
     current_running = current_running->next;
     while(current_running->state != RUNNING){
         switch (current_running->state){
@@ -62,7 +68,11 @@ void context_switch()
         case PCB_NEW:
             dbgprintf("[Context Switch] Running new PCB %s (PID %d) with page dir: %x: stack: %x kstack: %x\n", current_running->name, current_running->pid, current_running->page_dir, current_running->esp, current_running->kesp);
             load_page_directory(current_running->page_dir);
+            pcb_dbg_print(current_running);
 
+            //tss.esp_0 = (uint32_t)current_running->stack_ptr;
+            //tss.ss_0 = KERNEL_DS;
+            load_data_segments(KERNEL_DS);
             start_pcb();
             break; /* Never reached. */
         case SLEEPING:
@@ -76,6 +86,6 @@ void context_switch()
             break;
         }
     }
-    //dbgprintf("[Context Switch] Switching too PCB %s with page dir: %x, stack: %x, kstack: %x\n", current_running->name, current_running->page_dir, current_running->esp, current_running->kesp);
+    dbgprintf("[Context Switch] Switching too PCB %s with page dir: %x, stack: %x, kstack: %x\n", current_running->name, current_running->page_dir, current_running->esp, current_running->kesp);
     load_page_directory(current_running->page_dir);
 }

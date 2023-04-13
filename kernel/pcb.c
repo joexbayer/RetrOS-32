@@ -9,6 +9,7 @@
  * 
  */
 
+#include <arch/gdt.h>
 #include <pcb.h>
 #include <serial.h>
 #include <memory.h>
@@ -238,9 +239,10 @@ void Genesis()
 }
 
 void idletask(){
+	dbgprintf("Hello world!\n");
 	while(1){
+		dbgprintf("Hello world!\n");
 		HLT();
-		kernel_yield();
 	};
 }
 
@@ -266,8 +268,8 @@ void pcb_set_running(int pid)
 
 void pcb_dbg_print(struct pcb* pcb)
 {
-	dbgprintf("\n###### PCB ######\npid: %d\nname: %s\nesp: 0x%x\nebp: 0x%x\nkesp: 0x%x\nkebp: 0x%x\neip: 0x%x\nstate: %s\nstack limit: 0x%x\nstack size: 0x%x (0x%x - 0x%x)\nPage Directory: 0x%x\n",
-		pcb->pid, pcb->name, pcb->esp, pcb->ebp, pcb->kesp, pcb->kebp, pcb->eip, pcb_status[pcb->state], pcb->stack_ptr, (int)((pcb->stack_ptr+STACK_SIZE-1) - pcb->esp), (pcb->stack_ptr+STACK_SIZE-1), pcb->esp,  pcb->page_dir
+	dbgprintf("\n###### PCB ######\npid: %d\nname: %s\nesp: 0x%x\nebp: 0x%x\nkesp: 0x%x\nkebp: 0x%x\neip: 0x%x\nstate: %s\nstack limit: 0x%x\nstack size: 0x%x (0x%x - 0x%x)\nPage Directory: 0x%x\nCS: %d\nDS:%d\n",
+		pcb->pid, pcb->name, pcb->esp, pcb->ebp, pcb->kesp, pcb->kebp, pcb->eip, pcb_status[pcb->state], pcb->stack_ptr, (int)((pcb->stack_ptr+STACK_SIZE-1) - pcb->esp), (pcb->stack_ptr+STACK_SIZE-1), pcb->esp,  pcb->page_dir, pcb->cs, pcb->ds
 	);
 }
 
@@ -351,6 +353,8 @@ error_t pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 	pcb->current_directory = fs_get_root();
 	pcb->yields = 0;
 	pcb->parent = current_running;
+	pcb->cs = KERNEL_CS;
+	pcb->ds = KERNEL_DS;
 
 	memcpy(pcb->name, name, strlen(name)+1);
 
@@ -403,6 +407,8 @@ error_t pcb_create_process(char* program, int args, char** argv)
 	pcb->current_directory = fs_get_root();
 	pcb->yields = 0;
 	pcb->parent = current_running;
+	pcb->cs = PROCESS_CS;
+	pcb->ds = PROCESS_DS;
 
 	/* Memory map data */
 	vmem_init_process(pcb, buf, read);
@@ -454,6 +460,7 @@ void start_pcb()
 {   
 	current_running->state = RUNNING;
 	dbgprintf("[START PCB] Starting pcb!\n");
+	pcb_dbg_print(current_running);
 	_start_pcb(); /* asm function */
 	
 	UNREACHABLE();

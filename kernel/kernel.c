@@ -108,6 +108,7 @@ void kernel(uint32_t magic)
 
 	load_page_directory(kernel_page_dir);
 	init_gdt();
+	init_tss();
 	//enable_paging();
 
 	dbgprintf("[KERNEL] Enabled paging!\n");
@@ -115,10 +116,10 @@ void kernel(uint32_t magic)
 	vesa_init();
 
 	start("idled");
-	start("workd");
-	start("workd");
+	//start("workd");
+	//start("workd");
 	start("wind");
-	start("netd");
+	//start("netd");
 	start("shell");
 	
 	init_pit(1);

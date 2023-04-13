@@ -1,3 +1,7 @@
+#include <arch/gdt.h>
+
+INIT_EFLAGS = ((0 << 12) | (1 << 9))
+
 .code32
 .section .text.prologue
 
@@ -22,25 +26,6 @@ load_page_directory:
     mov %ebp, %esp
     pop %ebp
     ret
-
-.global gdt_flush
-gdt_flush:
-    mov 4(%esp), %eax
-    lgdt (%eax)
-
-    mov $0x10, %ax
-    mov %ax, %ds
-    mov %ax, %es
-    mov %ax, %fs
-    mov %ax, %gs
-    mov %ax, %ss
-    ret
-
-.global tss_flush
-tss_flush:
-   mov $0x2B, %ax
-   ltr %ax
-   ret 
 
 .text
 .globl enable_paging
@@ -93,34 +78,15 @@ skip:
 _start_pcb:
     movl current_running, %eax
     movl 4(%eax), %esp
-    movl 0(%eax), %ebp
-    movl 152(%eax), %ebx
-    movl 156(%eax), %ecx
-    movl 8(%eax), %edx
-    subl $1, cli_cnt
-
-    /*pushl 8(%eax)
-    sti
-    subl $1, cli_cnt
-    # jmp *8(%eax)
-    ret */
-
-    mov $0x10, %ax
-    mov %ax, %ds
-    mov %ax, %es
-    mov %ax, %fs
-    mov %ax, %gs
-                
-    mov %esp, %eax
-    pushl $0x10
-    pushl %eax
+    
+    # pushl	160(%eax)
+    # pushl	4(%eax)
     pushf
-    pop %eax
-    or $0x200, %eax
-    push %eax 
-    pushl $0x08
-
-    pushl %edx
+    pushl	164(%eax)
+    pushl	8(%eax)
+    subl $1, cli_cnt
+    movw	160(%eax),%ds
+    movw	160(%eax),%es
     iret
 
 .section .text

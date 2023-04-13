@@ -3,6 +3,8 @@
 	http://www.jamesmolloy.co.uk/tutorial_html/4.-The%20GDT%20and%20IDT.html
 */
 
+#include <arch/gdt.h>
+
 .code32
 .global idt_flush
 idt_flush:
@@ -78,16 +80,33 @@ ISR_NO_ERR 46
 ISR_NO_ERR 47
 
 isr_entry:
+  cli
   pushal
-
-  /* mov %ds, %ax 
-  push %eax            
-
-  /* mov $0x10, %ax
+  
+  pushl %ds
+  
+  mov $16, %ax
   mov %ax, %ds
   mov %ax, %es
   mov %ax, %fs
-  mov %ax, %gs*/
+  mov %ax, %gs
+  
+  call isr_handler
+
+  pop %eax
+  mov %ax, %ds
+  mov %ax, %es
+  mov %ax, %fs
+  mov %ax, %gs
+
+  popal
+
+  popl	%ds
+
+  add $8, %esp
+
+  /*
+  pushal
 
   push %eax
   call isr_handler
@@ -96,6 +115,8 @@ isr_entry:
   popal
   add $8, %esp
 
+  iret
+  */
 	iret
 
 syscall_return_value:
@@ -106,10 +127,16 @@ _syscall_entry:
     pushfl
     pushal
 
+    pushl	%ds
+
 	  pushl	%edx	/* Arg 3 */
     pushl	%ecx	/* Arg 2 */
     pushl	%ebx	/* Arg 1 */
     pushl	%eax	/* Syscall number */
+
+    pushl	$16
+    call	load_data_segments
+    addl	$4, %esp
 
     call system_call
     movl	%eax, (syscall_return_value)
@@ -119,6 +146,8 @@ _syscall_entry:
     popl	%ebx	/* Arg 1 */
     popl	%eax	/* Syscall number */
     
+    popl	%ds
+
     popal 
     popfl
     

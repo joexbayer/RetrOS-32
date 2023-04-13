@@ -34,6 +34,8 @@ struct pcb {
     uint32_t fpu[32];
     int args;
     char** argv;
+    uint32_t ds;            /* Data segment selector */
+    uint32_t cs;            /* Code segment selector */
     /* DO NOT NOT CHANGE ABOVE.*/
     char name[PCB_MAX_NAME_LENGTH];
     uint8_t state;

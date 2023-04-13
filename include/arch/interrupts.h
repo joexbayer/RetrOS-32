@@ -25,6 +25,7 @@ struct registers
 
 
 void init_interrupts();
+void load_data_segments(int seg);
 void _syscall_entry(void);
 void page_fault_interrupt(unsigned long cr2, unsigned long err);
 

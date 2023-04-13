@@ -69,9 +69,16 @@ static void __interrupt_exception_handler(int i)
 	PANIC();
 }
 
+void load_data_segments(int seg)
+{
+    asm volatile ("movw %%ax, %%ds \n\t" "movw %% ax, %%es " : : "a" (seg));
+}
+
 /* Main interrupt handler, calls interrupt specific hanlder if installed. */
 void isr_handler(struct registers regs)
 {
+	asm ("cli");
+	dbgprintf("Interrupt %d\n", regs.int_no);
 	if(regs.int_no < 32){
 		__interrupt_exception_handler(regs.int_no);
 		return;
@@ -81,7 +88,9 @@ void isr_handler(struct registers regs)
 		isr_t handler = handlers[regs.int_no];
 		handler();
 	}
-	EOI(regs.int_no);
+
+	if(regs.int_no != 32)
+		EOI(regs.int_no);
 }
 
 static void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags)
