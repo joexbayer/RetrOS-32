@@ -104,7 +104,6 @@ isr_entry:
 
   add $8, %esp*/
 
-
   pushal
 
   pushl %ds

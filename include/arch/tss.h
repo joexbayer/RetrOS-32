@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 struct tss_entry {
-    uint32_t backlink;
+    uint32_t prev_tss;
     uint32_t esp_0;
     uint16_t ss_0;
     uint16_t pad0;

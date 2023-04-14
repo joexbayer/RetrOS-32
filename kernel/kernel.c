@@ -109,18 +109,20 @@ void kernel(uint32_t magic)
 	load_page_directory(kernel_page_dir);
 	init_gdt();
 	init_tss();
-	//enable_paging();
+	enable_paging();
 
 	dbgprintf("[KERNEL] Enabled paging!\n");
 	
 	vesa_init();
 
 	start("idled");
-	//start("workd");
+	start("workd");
 	//start("workd");
 	start("wind");
-	//start("netd");
+	start("netd");
 	start("shell");
+	
+	//pcb_create_process("/bin/clock", 0, NULL);
 	
 	init_pit(1);
 

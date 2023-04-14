@@ -21,12 +21,10 @@
 static int tick = 0;
 static void timer_callback()
 {
-	dbgprintf("Timer!\n");
 	tick++;
 	if(current_running != NULL)
 	{
 		EOI(32);
-		dbgprintf("Timer!\n");
 		kernel_yield();
 	}
 }

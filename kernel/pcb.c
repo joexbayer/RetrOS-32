@@ -241,7 +241,6 @@ void Genesis()
 void idletask(){
 	dbgprintf("Hello world!\n");
 	while(1){
-		dbgprintf("Hello world!\n");
 		HLT();
 	};
 }

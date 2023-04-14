@@ -1,86 +1,59 @@
 #include <arch/gdt.h>
 #include <arch/tss.h>
 
-struct gdt_ptr {
-   uint16_t limit;               /*  The upper 16 bits of all selector limits. */
-   uint32_t base;                /*  The address of the first gdt_entry_t struct. */
-}__attribute__((packed));
+#define KERNEL_PRIVILEGE 0
+#define PROCESSS_PRIVILEGE 3
+#define FLUSH_GDT() asm volatile ("lgdt %0" : : "m" (gdt_addr))
 
+static struct gdt_segment gdt[7];
+struct tss_entry tss;
 
-struct gdt_entry gdt_entries[5];
-struct gdt_ptr   gdt_ptr;
-
-
-void create_segment(struct segment *entry,    /* GDT entry */
-                    uint32_t base,              /* segment start address */
-                    uint32_t limit,             /* segment size */
-                    char type,                  /* segment type (OS system-,
-                                                   code-, data-, stack segment) */
-                    char privilege,             /* descriptor privilege level */
-                    char system /* system bit (0: system segm.) */)
+static struct gdt_address
 {
-    entry->limit_low = (uint16_t)limit;
-    entry->limit_high = (uint8_t)(limit >> 16);
-    entry->base_low = (uint16_t)base;
-    entry->base_mid = (uint8_t)(base >> 16);
-    entry->base_high = (uint8_t)(base >> 24);
-    /* Byte 5 [0:3] = type
-     * Byte 5 [4]   = system
-     * Byte 5 [5:6] = privilege level
-     * Byte 5 [7]   = 1 (always present) */
-    entry->access = type | system << 4 | privilege << 5 | 1 << 7;
-    /* Byte 6 [0:3] = limit_high
-     * Byte 6 [4]   = 0 (not avilable for use by system software)
-     * Byte 6 [5]   = 0 (reserved)
-     * Byte 6 [6]   = 1 (D/B bit)
-     * Byte 6 [7]   = 1 (length of limit is in pages) */
-    entry->limit_high |= 1 << 7 | 1 << 6;
+   uint16_t limit;
+   uint32_t base;
+} __attribute__ ((packed)) gdt_addr = {
+   .limit = 7 * 8 - 1
+};
+
+void gdt_set_segment(struct gdt_segment *segment, uint32_t base, uint32_t limit, char type, char privilege, char system)
+{
+   segment->limit_low = (uint16_t)limit;
+   segment->limit_high = (uint8_t)(limit >> 16);
+   segment->base_low = (uint16_t)base;
+   segment->base_mid = (uint8_t)(base >> 16);
+   segment->base_high = (uint8_t)(base >> 24);
+   /* Byte 5 [0:3] = type
+   * Byte 5 [4]   = system
+   * Byte 5 [5:6] = privilege level
+   * Byte 5 [7]   = 1 (always present) */
+   segment->access = type | system << 4 | privilege << 5 | 1 << 7;
+   /* Byte 6 [0:3] = limit_high
+   * Byte 6 [4]   = 0 (not avilable for use by system software)
+   * Byte 6 [5]   = 0 (reserved)
+   * Byte 6 [6]   = 1 (D/B bit)
+   * Byte 6 [7]   = 1 (length of limit is in pages) */
+   segment->limit_high |= 1 << 7 | 1 << 6;
 }
 
-/*  Set the value of one GDT entry. */
-void gdt_set_gate(uint32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran)
-{
-   gdt_entries[num].base_low    = (base & 0xFFFF);
-   gdt_entries[num].base_middle = (base >> 16) & 0xFF;
-   gdt_entries[num].base_high   = (base >> 24) & 0xFF;
-
-   gdt_entries[num].limit_low   = (limit & 0xFFFF);
-   gdt_entries[num].granularity = (limit >> 16) & 0x0F;
-
-   gdt_entries[num].granularity |= gran & 0xF0;
-   gdt_entries[num].access      = access;
-} 
-
-static struct segment gdt[7];
-struct tss_entry tss;
 
 void init_gdt()
 {
-   struct point gdt_p;
-   create_segment(
-        gdt + KERNEL_CODE, 0, 0xfffff, CODE_SEGMENT, 0,MEMORY);
+   gdt_addr.base = (uint32_t) gdt;
+
+   gdt_set_segment(gdt + KERNEL_CODE, 0, 0xfffff, CODE_SEGMENT, KERNEL_PRIVILEGE, MEMORY);
 
     /* Data segment for the kernel (contains kernel stack) */
-    create_segment(gdt + KERNEL_DATA, 0, 0xfffff, DATA_SEGMENT,0, /* highest privilege level */MEMORY);
+    gdt_set_segment(gdt + KERNEL_DATA, 0, 0xfffff, DATA_SEGMENT, KERNEL_PRIVILEGE, MEMORY);
 
     /* Code segment for processes */
-    create_segment(gdt + PROCESS_CODE, 0, 0xfffff, CODE_SEGMENT,3, /* lowest privilege level */MEMORY);
+    gdt_set_segment(gdt + PROCESS_CODE, 0, 0xfffff, CODE_SEGMENT, PROCESSS_PRIVILEGE, MEMORY);
 
     /* Data segment for processes (contains user stack) */
-    create_segment(gdt + PROCESS_DATA, 0, 0xfffff, DATA_SEGMENT,3, /* lowest privilege level */MEMORY);
+    gdt_set_segment(gdt + PROCESS_DATA, 0, 0xfffff, DATA_SEGMENT, PROCESSS_PRIVILEGE, MEMORY);
 
     /* Insert pointer to the global TSS */
-    create_segment(gdt + TSS_INDEX, (uint32_t)&tss,TSS_SIZE, TSS_SEGMENT, 0,/* highest privilege level */SYSTEM); /* is a system segment */
+    gdt_set_segment(gdt + TSS_INDEX, (uint32_t)&tss,TSS_SIZE, TSS_SEGMENT, KERNEL_PRIVILEGE, SYSTEM); /* is a system segment */
 
-    /*
-     * Load the GDTR register with a pointer to the gdt, and the
-     * size of the gdt
-     */
-    gdt_p.limit = 7 * 8 - 1;
-    gdt_p.base = (uint32_t)gdt;
-
-    asm volatile ("lgdt %0" : : "m" (gdt_p));
-
-   //gdt_flush((uint32_t)&gdt_ptr);
-   //tss_flush();
+   FLUSH_GDT();
 }

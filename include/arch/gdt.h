@@ -7,22 +7,7 @@ void init_gdt();
 
 extern struct tss_entry tss;
 
-struct point {
-    uint16_t limit;
-    uint32_t base;
-} __attribute__ ((packed));
-
-struct gdt_entry
-{
-   uint16_t limit_low;           /*  The lower 16 bits of the limit. */
-   uint16_t base_low;            /*  The lower 16 bits of the base. */
-   uint8_t  base_middle;         /*  The next 8 bits of the base. */
-   uint8_t  access;              /*  Access flags, determine what ring this segment can be used in. */
-   uint8_t  granularity;
-   uint8_t  base_high;           /*  The last 8 bits of the base. */
-} __attribute__((packed));
-
-struct segment {
+struct gdt_segment {
     uint16_t limit_low;
     uint16_t base_low;
     uint8_t base_mid;
@@ -46,12 +31,12 @@ enum {
    PROCESS_DS = PROCESS_DATA << 3,
    KERNEL_TSS = TSS_INDEX << 3,
 
-   /* Segment descriptor types (used in create_segment) */
+   /* Segment descriptor types (used in gdt_set_segment) */
    CODE_SEGMENT = 0x0A,
    DATA_SEGMENT = 0x02,
    TSS_SEGMENT = 0x09,
 
-   /* Used to set the system bit in create_segment() */
+   /* Used to set the system bit in gdt_set_segment() */
    MEMORY = 1,
    SYSTEM = 0,
 

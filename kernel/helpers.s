@@ -77,10 +77,13 @@ skip:
 .global _start_pcb
 _start_pcb:
     movl current_running, %eax
-    movl 4(%eax), %esp
+    movl 12(%eax), %esp
     
-    # pushl	160(%eax)
-    # pushl	4(%eax)
+    cmpl $0, 20(%eax)
+    je _start_pcb_skip
+    pushl	160(%eax)
+    pushl	4(%eax)
+_start_pcb_skip:
     pushf
     pushl	164(%eax)
     pushl	8(%eax)
