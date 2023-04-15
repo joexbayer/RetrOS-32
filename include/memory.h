@@ -21,24 +21,22 @@ extern int kernel_size;
 #define VMEM_HEAP           0xE0000000
 #define VMEM_DATA           0x1000000
 
+#define SUPERVISOR          0
+#define PRESENT             1
+#define READ_WRITE          2
+#define USER                4
+
+#define WRITE_THROUGH       8
+#define ACCESSED            32
+
+#define PAGE_DIRECTORY_BITS 22
+#define PAGE_TABLE_BITS     12
+#define PAGE_TABLE_MASK     0x000003ff
+#define PAGE_SIZE           0x1000
+#define PAGE_MASK           0xfff
+
 extern uint32_t* kernel_page_dir;
 
-enum virtual_memory_constants {
-  /* Main permission bits. */
-  PRESENT = 1,
-  READ_WRITE = 2,
-  USER = 4,
-  SUPERVISOR = 0,
-
-  WRITE_THROUGH = 8,
-  ACCESSED = 32,
-
-  PAGE_DIRECTORY_BITS = 22,
-  PAGE_TABLE_BITS = 12,
-  PAGE_TABLE_MASK = 0x000003ff,
-  PAGE_SIZE = 0x1000,
-  PAGE_MASK = 0xfff,
-};
 
 struct allocation {
   int* bits;

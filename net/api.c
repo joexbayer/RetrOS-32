@@ -4,6 +4,7 @@
 #include <serial.h>
 #include <assert.h>
 #include <scheduler.h>
+#include <errors.h>
 
 /**
  * @brief Binds a IP and Port to a socket, mainly used for the server side.
@@ -13,10 +14,10 @@
  * @param address_len lenght of bind.
  * @return int 
  */
-int kernel_bind(struct sock* socket, const struct sockaddr *address, socklen_t address_len)
+error_t kernel_bind(struct sock* socket, const struct sockaddr *address, socklen_t address_len)
 {
     if(socket->socket > NET_NUMBER_OF_SOCKETS)
-        return -1;
+        return -ERROR_INVALID_SOCKET;
     
     /*Cast sockaddr back to sockaddr_in. Cast originally to comply with linux implementation.*/
     struct sockaddr_in* addr = (struct sockaddr_in*) address;
@@ -36,7 +37,7 @@ int kernel_bind(struct sock* socket, const struct sockaddr *address, socklen_t a
  * @param address_len length of address.
  * @return int 
  */ 
-int kernel_recvfrom(struct sock* socket, void *buffer, int length, int flags, struct sockaddr *address, socklen_t *address_len)
+error_t kernel_recvfrom(struct sock* socket, void *buffer, int length, int flags, struct sockaddr *address, socklen_t *address_len)
 {
     return 0;
 }
@@ -50,7 +51,7 @@ int kernel_recvfrom(struct sock* socket, void *buffer, int length, int flags, st
  * @param flags flags..
  * @return int 
  */
-int kernel_recv(struct sock* socket, void *buffer, int length, int flags)
+error_t kernel_recv(struct sock* socket, void *buffer, int length, int flags)
 {
     int read = -1;
     switch (socket->type){
@@ -71,7 +72,7 @@ int kernel_recv(struct sock* socket, void *buffer, int length, int flags)
     return read;
 }
 
-int kernel_recv_timeout(struct sock* socket, void *buffer, int length, int flags, int timeout)
+error_t kernel_recv_timeout(struct sock* socket, void *buffer, int length, int flags, int timeout)
 {
     int time_start = get_time();
 
@@ -86,7 +87,7 @@ int kernel_recv_timeout(struct sock* socket, void *buffer, int length, int flags
 
 }
 
-int kernel_connect(struct sock* socket, const struct sockaddr *address, socklen_t address_len)
+error_t kernel_connect(struct sock* socket, const struct sockaddr *address, socklen_t address_len)
 {
     /* Cast sockaddr back to sockaddr_in. Cast originally to comply with linux implementation.*/
     struct sockaddr_in* addr = (struct sockaddr_in*) address;
@@ -108,7 +109,7 @@ int kernel_connect(struct sock* socket, const struct sockaddr *address, socklen_
 
     dbgprintf(" [%d] succesfully connected!\n", socket);
 
-    return -1;
+    return 0;
 }
 
 /**
@@ -122,11 +123,11 @@ int kernel_connect(struct sock* socket, const struct sockaddr *address, socklen_
  * @param dest_len lenght of dest_addr.
  * @return int 
  */
-int kernel_sendto(struct sock* socket, const void *message, int length, int flags, const struct sockaddr *dest_addr, socklen_t dest_len)
+error_t kernel_sendto(struct sock* socket, const void *message, int length, int flags, const struct sockaddr *dest_addr, socklen_t dest_len)
 {
     /* Flags are ignored... for now. */
     if(socket->socket > NET_NUMBER_OF_SOCKETS)
-        return -1;
+        return -ERROR_INVALID_SOCKET;
 
     /* Cast sockaddr back to sockaddr_in. Cast originally to comply with linux implementation.*/
     struct sockaddr_in* addr = (struct sockaddr_in*) dest_addr;
@@ -146,13 +147,13 @@ int kernel_sendto(struct sock* socket, const void *message, int length, int flag
         break;
 
     default:
-        return -1;
+        return -ERROR_INVALID_SOCKET_TYPE;
     }
 
     return length;
 }
 
-int kernel_accept(struct sock* socket, struct sockaddr *address, socklen_t *address_len)
+error_t kernel_accept(struct sock* socket, struct sockaddr *address, socklen_t *address_len)
 {
 
     /* accept: only is valid in a TCP connection context. */
@@ -162,7 +163,7 @@ int kernel_accept(struct sock* socket, struct sockaddr *address, socklen_t *addr
 
     /* Create new TCP socket? */
 
-    return -1;
+    return 0;
 }
 
 int kernel_listen(struct sock* socket, int backlog)
@@ -170,11 +171,11 @@ int kernel_listen(struct sock* socket, int backlog)
     return tcp_set_listening(socket, backlog);
 }
 
-int kernel_send(struct sock* socket, void *message, int length, int flags)
+error_t kernel_send(struct sock* socket, void *message, int length, int flags)
 {
     /* for the time being, only send messages under 1500 bytes */
     if(length > 1400){
-        return -1;
+        return -ERROR_MSS_SIZE;
     }
 
     /**

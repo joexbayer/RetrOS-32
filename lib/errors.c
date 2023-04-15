@@ -8,7 +8,12 @@ static char* error_string[] = {
     "File not found.",
     "No more free PCBs.",
     "Unable to create kernel thread.",
-    "Unable to start kernel thread."
+    "Unable to start kernel thread.",
+    "Invalid socket.",
+    "Invalid socket type.",
+    "Invalid size of packet (probably too high).",
+    "Ring buffer full.",
+    "Ring buffer empty"
 
 };
 

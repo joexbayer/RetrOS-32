@@ -352,8 +352,8 @@ error_t pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 	pcb->current_directory = fs_get_root();
 	pcb->yields = 0;
 	pcb->parent = current_running;
-	pcb->cs = KERNEL_CS;
-	pcb->ds = KERNEL_DS;
+	pcb->cs = GDT_KERNEL_CS;
+	pcb->ds = GDT_KERNEL_DS;
 
 	memcpy(pcb->name, name, strlen(name)+1);
 
@@ -406,8 +406,8 @@ error_t pcb_create_process(char* program, int args, char** argv)
 	pcb->current_directory = fs_get_root();
 	pcb->yields = 0;
 	pcb->parent = current_running;
-	pcb->cs = PROCESS_CS | 3;
-    pcb->ds = PROCESS_DS | 3;
+	pcb->cs = GDT_PROCESS_CS | PROCESSS_PRIVILEGE;
+    pcb->ds = GDT_PROCESS_DS | PROCESSS_PRIVILEGE;
 
 	/* Memory map data */
 	vmem_init_process(pcb, buf, read);

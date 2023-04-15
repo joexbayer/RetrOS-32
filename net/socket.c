@@ -18,6 +18,7 @@
 #include <timer.h>
 #include <assert.h>
 #include <scheduler.h>
+#include <errors.h>
 
 #include <serial.h>
 
@@ -62,7 +63,7 @@ static int __sock_add_skb(struct sock* socket, struct sk_buff* skb)
     return 0;
 }
 
-int net_sock_read(struct sock* sock, uint8_t* buffer, unsigned int length)
+error_t net_sock_read(struct sock* sock, uint8_t* buffer, unsigned int length)
 {
 	dbgprintf(" [SOCK] Waiting for data... %d\n", sock);
 	/* Should be blocking */
@@ -88,14 +89,14 @@ int net_sock_read(struct sock* sock, uint8_t* buffer, unsigned int length)
 	return to_read;
 }
 
-static inline int net_sock_add_data_segment(struct sock* sock, struct sk_buff* skb)
+static inline error_t net_sock_add_data_segment(struct sock* sock, struct sk_buff* skb)
 {
     ASSERT_LOCKED(sock);
 
     int ret = sock->recv_buffer->ops->add(sock->recv_buffer, skb->data, skb->data_len);
     if(ret < 0){
         dbgprintf("[TCP] recv ring buffer is full!\n");
-        return -1;
+        return -ret;
     }
     sock->recvd += skb->data_len;
     sock->data_ready = sock->tcp == NULL ? 1 : skb->hdr.tcp->psh;
@@ -113,7 +114,7 @@ static inline int net_sock_add_data_segment(struct sock* sock, struct sk_buff* s
  * @param skb A pointer to the new network packet to be added to the socket's queue.
  * @return An integer error code. Returns -1 if the operation fails, or 0 if successful.
  */
-int net_sock_add_data(struct sock* sock, struct sk_buff* skb)
+error_t net_sock_add_data(struct sock* sock, struct sk_buff* skb)
 {
     int ret = -1;
     LOCK(sock, {
@@ -143,7 +144,7 @@ int net_sock_add_data(struct sock* sock, struct sk_buff* skb)
 }
 
 /* deprecated */
-int net_sock_read_skb(struct sock* socket)
+error_t net_sock_read_skb(struct sock* socket)
 {
     int read = -1;
 

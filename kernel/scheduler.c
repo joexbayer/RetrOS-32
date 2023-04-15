@@ -70,10 +70,10 @@ void context_switch()
 
             if(current_running->is_process){
                 tss.esp_0 = (uint32_t)current_running->kebp;
-                tss.ss_0 = KERNEL_DS;
+                tss.ss_0 = GDT_KERNEL_DS;
             }
 
-            //load_data_segments(KERNEL_DS);
+            //load_data_segments(GDT_KERNEL_DS);
             start_pcb();
             break; /* Never reached. */
         case SLEEPING:

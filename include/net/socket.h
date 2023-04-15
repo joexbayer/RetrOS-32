@@ -47,12 +47,12 @@ int net_sock_read_skb(struct sock* socket);
 void init_sockets();
 int get_total_sockets();
 
-int net_sock_is_established(struct sock* sk);
-int net_sock_awaiting_ack(struct sock* sk);
-int net_sock_data_ready(struct sock* sk, int length);
-int net_sock_add_data(struct sock* sock, struct sk_buff* skb);
+error_t net_sock_is_established(struct sock* sk);
+error_t net_sock_awaiting_ack(struct sock* sk);
+error_t net_sock_data_ready(struct sock* sk, int length);
+error_t net_sock_add_data(struct sock* sock, struct sk_buff* skb);
 
-int net_sock_read(struct sock* sock, uint8_t* buffer, unsigned int length);
+error_t net_sock_read(struct sock* sock, uint8_t* buffer, unsigned int length);
 
 struct sock* sock_find_listen_tcp(uint16_t d_port);
 

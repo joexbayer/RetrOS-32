@@ -1,6 +1,6 @@
 #include <arch/gdt.h>
 
-INIT_EFLAGS = ((0 << 12) | (1 << 9))
+NEW_PCB_INIT_EFLAGS = ((0 << 12) | (1 << 9))
 
 .code32
 .section .text.prologue
@@ -79,7 +79,7 @@ _start_pcb:
     pushl	160(%eax)
     pushl	4(%eax)
 _start_pcb_skip:
-    pushl	$INIT_EFLAGS
+    pushl	$NEW_PCB_INIT_EFLAGS
     pushl	164(%eax)
     pushl	8(%eax)
     subl $1, cli_cnt

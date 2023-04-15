@@ -2,8 +2,8 @@
 #include <memory.h>
 
 /* Prototypes */
-static int __ring_buffer_add(struct ring_buffer *buffer, unsigned char *data, int length);
-static int __ring_buffer_read(struct ring_buffer *buffer, unsigned char *data, int length);
+static error_t __ring_buffer_add(struct ring_buffer *buffer, unsigned char *data, int length);
+static error_t __ring_buffer_read(struct ring_buffer *buffer, unsigned char *data, int length);
 
 /* Default ring buffer operations */
 struct ring_buffer_operations default_ring_buffer_ops = {
@@ -63,12 +63,12 @@ void rbuffer_free(struct ring_buffer* rbuf)
  * @param length The number of bytes of data to add to the ring buffer.
  * @return The number of bytes of data added to the buffer.
  */
-static int __ring_buffer_add(struct ring_buffer *buffer, unsigned char *data, int length)
+static error_t __ring_buffer_add(struct ring_buffer *buffer, unsigned char *data, int length)
 {
     /* Calculate the number of bytes that can be added to the buffer */
     int available = buffer->size - buffer->end + buffer->start;
     if (available < length) {
-        return -1;
+        return -ERROR_RBUFFER_FULL;
     }
 
     SPINLOCK(buffer, {
@@ -102,12 +102,12 @@ static int __ring_buffer_add(struct ring_buffer *buffer, unsigned char *data, in
  * @param length The maximum number of bytes of data to read from the ring buffer.
  * @return The actual number of bytes of data read from the buffer.
  */
-static int __ring_buffer_read(struct ring_buffer *buffer, unsigned char *data, int length) {
+static error_t __ring_buffer_read(struct ring_buffer *buffer, unsigned char *data, int length) {
     /* Check if there is data available in the buffer */
     int available = buffer->end - buffer->start;
     int read_length = 0;
     if (available == 0) {
-        return 0;
+        return -ERROR_RBUFFER_EMPTY;
     }
 
     SPINLOCK(buffer, {

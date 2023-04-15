@@ -52,6 +52,19 @@ void page_fault_interrupt(unsigned long cr2, unsigned long err)
 	pcb_dbg_print(current_running);
 	PANIC();
 }
+
+void general_protection_fault()
+{
+	CLI();
+	dbgprintf("General Protection Fault: 0x%x - %s\n", current_running->stack_ptr, current_running->name);
+	pcb_dbg_print(current_running);
+
+	/* TODO: Some kind of feedback */
+	EOI(13);
+	STI();
+	kernel_exit();
+	UNREACHABLE();
+}
 /**
  * @brief Given a IRQ line, it assigns a handler to it. 
  * 
@@ -80,6 +93,7 @@ void isr_handler(struct registers regs)
 {	
 	if(regs.int_no < 32){
 		__interrupt_exception_handler(regs.int_no);
+		EOI(regs.int_no);
 		return;
 	}
 
@@ -112,11 +126,13 @@ static void init_idt()
 
 	/* Set all ISR_LINES to go to ISR0 */
 	for (int i = 0; i < 48; i++){ 
-		idt_set_gate(i, (uint32_t) irqs[i] , KERNEL_CS, 0x0E, 0);
+		idt_set_gate(i, (uint32_t) irqs[i] , GDT_KERNEL_CS, 0x0E, 0);
 	}
 	
-	idt_set_gate(48, (uint32_t)&_syscall_entry, KERNEL_CS, 0x0E, 3);
-	idt_set_gate(14, (uint32_t)&_page_fault_entry, KERNEL_CS, 0x0E, 0);
+	idt_set_gate(48, (uint32_t)&_syscall_entry, GDT_KERNEL_CS, 0x0E, 3);
+	idt_set_gate(14, (uint32_t)&_page_fault_entry, GDT_KERNEL_CS, 0x0E, 0);
+
+	interrupt_install_handler(13, &general_protection_fault);
 
 	idt_flush((uint32_t)&idt);
 }

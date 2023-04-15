@@ -4,6 +4,8 @@
 
 #include <stdint.h>
 
+extern struct tss_entry tss;
+
 struct tss_entry {
     uint32_t prev_tss;
     uint32_t esp_0;

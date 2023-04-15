@@ -2,12 +2,14 @@
 #define ADE2F814_93C0_48D5_8ADD_9DBB9B975A18
 
 #include <sync.h>
+#include <errors.h>
+
 struct ring_buffer;
 struct ring_buffer_operations {
     /* Reads data from a ring buffer. */
-    int (*read)(struct ring_buffer* rbuf, unsigned char* data, int len);
+    error_t (*read)(struct ring_buffer* rbuf, unsigned char* data, int len);
     /* Adds data to a ring buffer. */
-    int (*add)(struct ring_buffer* rbuf, unsigned char* data, int len);
+    error_t (*add)(struct ring_buffer* rbuf, unsigned char* data, int len);
 };
 
 struct ring_buffer {
