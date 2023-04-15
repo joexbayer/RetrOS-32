@@ -67,7 +67,7 @@ void* malloc(unsigned int size)
 		allocation->address = (uint32_t*) VMEM_HEAP;
 		allocation->size = size;
 
-		vmem_continious_allocation_map(allocation, allocation->address, num_pages);
+		vmem_continious_allocation_map(allocation, allocation->address, num_pages, USER);
 		
 		allocation->next = NULL;
 
@@ -89,7 +89,7 @@ void* malloc(unsigned int size)
 			iter->next = allocation;
 			allocation->next = next;
 
-			vmem_continious_allocation_map(allocation, allocation->address, num_pages);
+			vmem_continious_allocation_map(allocation, allocation->address, num_pages, USER);
 
 			current_running->used_memory += size;
 			memory_process_used += size;
@@ -100,7 +100,7 @@ void* malloc(unsigned int size)
 	}
 
 	allocation->address = (uint32_t*)((uint32_t)(iter->address)+iter->size);
-	vmem_continious_allocation_map(allocation, allocation->address, num_pages);
+	vmem_continious_allocation_map(allocation, allocation->address, num_pages, USER);
 	allocation->next = NULL;
 
 	iter->next = allocation;

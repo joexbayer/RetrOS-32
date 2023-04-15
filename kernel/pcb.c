@@ -406,8 +406,8 @@ error_t pcb_create_process(char* program, int args, char** argv)
 	pcb->current_directory = fs_get_root();
 	pcb->yields = 0;
 	pcb->parent = current_running;
-	pcb->cs = PROCESS_CS;
-	pcb->ds = PROCESS_DS;
+	pcb->cs = PROCESS_CS | 3;
+    pcb->ds = PROCESS_DS | 3;
 
 	/* Memory map data */
 	vmem_init_process(pcb, buf, read);
@@ -459,7 +459,7 @@ void start_pcb()
 {   
 	current_running->state = RUNNING;
 	dbgprintf("[START PCB] Starting pcb!\n");
-	pcb_dbg_print(current_running);
+	//pcb_dbg_print(current_running);
 	_start_pcb(); /* asm function */
 	
 	UNREACHABLE();

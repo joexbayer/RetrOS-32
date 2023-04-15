@@ -31,16 +31,14 @@ enum {
    PROCESS_DS = PROCESS_DATA << 3,
    KERNEL_TSS = TSS_INDEX << 3,
 
-   /* Segment descriptor types (used in gdt_set_segment) */
+   /* descriptor types */
    CODE_SEGMENT = 0x0A,
    DATA_SEGMENT = 0x02,
    TSS_SEGMENT = 0x09,
 
-   /* Used to set the system bit in gdt_set_segment() */
    MEMORY = 1,
    SYSTEM = 0,
 
-   /* Used to define size of a TSS segment */
    TSS_SIZE = 103
 };
 #endif /* ABB55FA7_D0EB_44AB_9054_17CC84EDC4B9 */

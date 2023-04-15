@@ -53,7 +53,17 @@ void init_gdt()
     gdt_set_segment(gdt + PROCESS_DATA, 0, 0xfffff, DATA_SEGMENT, PROCESSS_PRIVILEGE, MEMORY);
 
     /* Insert pointer to the global TSS */
-    gdt_set_segment(gdt + TSS_INDEX, (uint32_t)&tss,TSS_SIZE, TSS_SEGMENT, KERNEL_PRIVILEGE, SYSTEM); /* is a system segment */
+    gdt_set_segment(gdt + TSS_INDEX, (uint32_t)&tss, TSS_SIZE, TSS_SEGMENT, KERNEL_PRIVILEGE, SYSTEM); /* is a system segment */
 
    FLUSH_GDT();
+
+       /* Reload the Segment registers to refresh the hidden portions */
+    asm volatile ("pushl %ds");
+    asm volatile ("popl %ds");
+
+    asm volatile ("pushl %es");
+    asm volatile ("popl %es");
+
+    asm volatile ("pushl %ss");
+    asm volatile ("popl %ss");
 }

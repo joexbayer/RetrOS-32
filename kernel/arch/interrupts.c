@@ -10,6 +10,7 @@
  * 
  */
 #include <arch/interrupts.h>
+#include <arch/gdt.h>
 #include <pcb.h>
 #include <serial.h>
 #include <scheduler.h>
@@ -76,9 +77,7 @@ void load_data_segments(int seg)
 
 /* Main interrupt handler, calls interrupt specific hanlder if installed. */
 void isr_handler(struct registers regs)
-{
-	asm ("cli");
-	dbgprintf("Interrupt %d\n", regs.int_no);
+{	
 	if(regs.int_no < 32){
 		__interrupt_exception_handler(regs.int_no);
 		return;
@@ -93,13 +92,13 @@ void isr_handler(struct registers regs)
 		EOI(regs.int_no);
 }
 
-static void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags)
+static void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t type, uint8_t access)
 {
 	idt_entries[num].base_lo = base & 0xFFFF; /* Low part of address */
 	idt_entries[num].base_hi = (base >> 16) & 0xFFFF; /* High part of address */
 	idt_entries[num].sel     = sel;
 	idt_entries[num].always0 = 0;
-	idt_entries[num].flags   = flags | 0x60;
+	idt_entries[num].flags   = type | access << 5 | 1 << 7;
 }
 
 /* TODO: Setup exceptions. */
@@ -113,11 +112,11 @@ static void init_idt()
 
 	/* Set all ISR_LINES to go to ISR0 */
 	for (int i = 0; i < 48; i++){ 
-		idt_set_gate(i, (uint32_t) irqs[i] , 0x08, 0x8E);
+		idt_set_gate(i, (uint32_t) irqs[i] , KERNEL_CS, 0x0E, 0);
 	}
 	
-	idt_set_gate(48, (uint32_t)&_syscall_entry, 0x08, 0x8E);
-	idt_set_gate(14, (uint32_t)&_page_fault_entry, 0x08, 0x8E);
+	idt_set_gate(48, (uint32_t)&_syscall_entry, KERNEL_CS, 0x0E, 3);
+	idt_set_gate(14, (uint32_t)&_page_fault_entry, KERNEL_CS, 0x0E, 0);
 
 	idt_flush((uint32_t)&idt);
 }

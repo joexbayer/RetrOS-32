@@ -21,7 +21,9 @@ static void vmem_free(struct virtual_memory_allocator* vmem, void* addr);
 
 uint32_t* kernel_page_dir = NULL;
 
-static int vmem_default_permissions = PRESENT | READ_WRITE | USER;
+static int vmem_default_permissions = SUPERVISOR | PRESENT | READ_WRITE;
+static int vmem_user_permissions = USER | PRESENT | READ_WRITE;
+
 struct virtual_memory_operations {
 	uint32_t* (*alloc)(struct virtual_memory_allocator* vmem);
 	void (*free)(struct virtual_memory_allocator* vmem, void* page);
@@ -54,14 +56,14 @@ static inline uint32_t* vmem_get_page_table(uint32_t addr)
 	return (uint32_t*)(current_running->page_dir[DIRECTORY_INDEX(addr)] & ~PAGE_MASK);
 }
 
-static inline void vmem_map(uint32_t* page_table, uint32_t vaddr, uint32_t paddr)
+static inline void vmem_map(uint32_t* page_table, uint32_t vaddr, uint32_t paddr, int access)
 {
-	page_table[TABLE_INDEX(vaddr)] = (paddr & ~PAGE_MASK) | vmem_default_permissions;
+	page_table[TABLE_INDEX(vaddr)] = (paddr & ~PAGE_MASK) | (access == 0 ? vmem_default_permissions : vmem_user_permissions);
 }
 
-static inline void vmem_add_table(uint32_t* directory, uint32_t vaddr, uint32_t* table)
+static inline void vmem_add_table(uint32_t* directory, uint32_t vaddr, uint32_t* table, int access)
 {
-	directory[DIRECTORY_INDEX(vaddr)] = (((uint32_t) table) & ~PAGE_MASK) | vmem_default_permissions;
+	directory[DIRECTORY_INDEX(vaddr)] = (((uint32_t) table) & ~PAGE_MASK) | (access == 0 ? vmem_default_permissions : vmem_user_permissions);
 }
 
 /**
@@ -83,7 +85,7 @@ static uint32_t* vmem_alloc(struct virtual_memory_allocator* vmem)
 		paddr = (uint32_t*) (vmem->start + (bit * PAGE_SIZE));
 		//memset(paddr, 0, PAGE_SIZE);
 
-		dbgprintf("[VMEM MANAGER] Allocated page %d at 0x%x\n", bit, paddr);
+		//dbgprintf("[VMEM MANAGER] Allocated page %d at 0x%x\n", bit, paddr);
 
 	});
 
@@ -108,12 +110,12 @@ static void vmem_free(struct virtual_memory_allocator* vmem, void* addr)
 			break;
 		
 		unset_bitmap(vmem->pages, bit);
-		dbgprintf("VMEM MANAGER] Free page %d at 0x%x\n", bit, addr);
+		//dbgprintf("VMEM MANAGER] Free page %d at 0x%x\n", bit, addr);
 
 	});
 }
 
-int vmem_continious_allocation_map(struct allocation* allocation, uint32_t* address, int num)
+int vmem_continious_allocation_map(struct allocation* allocation, uint32_t* address, int num, int access)
 {
 
 	uint32_t* heap_table = vmem_get_page_table(VMEM_HEAP);
@@ -131,7 +133,7 @@ int vmem_continious_allocation_map(struct allocation* allocation, uint32_t* addr
 		int bit = (paddr - VMEM_START_ADDRESS)/PAGE_SIZE;
 		allocation->bits[i] = bit;
 		dbgprintf("Allocating %d continious blocks on heap 0x%x.\n", num, heap_table);
-		vmem_map(heap_table, (uint32_t)allocation->address+(i*PAGE_SIZE), paddr);
+		vmem_map(heap_table, (uint32_t)allocation->address+(i*PAGE_SIZE), paddr, access);
 	}
 
 
@@ -157,36 +159,36 @@ void vmem_init_process(struct pcb* pcb, char* data, int size)
 	uint32_t* process_directory = vmem_manager->ops->alloc(vmem_manager);
 	dbgprintf("[INIT PROCESS] Directory: 0x%x\n", process_directory);
 	uint32_t* process_data_table = vmem_manager->ops->alloc(vmem_manager);
-	dbgprintf("[INIT PROCESS] Data: 	0x%x\n", process_data_table);
+	dbgprintf("[INIT PROCESS] Data: 	 0x%x\n", process_data_table);
 	uint32_t* process_stack_table = vmem_manager->ops->alloc(vmem_manager);
-	dbgprintf("[INIT PROCESS] Stack:	0x%x\n", process_stack_table);
+	dbgprintf("[INIT PROCESS] Stack:	 0x%x\n", process_stack_table);
 	uint32_t* process_heap_table = vmem_manager->ops->alloc(vmem_manager);
-	dbgprintf("[INIT PROCESS] Heap: 	0x%x\n", process_heap_table);
+	dbgprintf("[INIT PROCESS] Heap: 	 0x%x\n", process_heap_table);
 
 	/* Map the process data to a page */
 	int i = 0;
 	while (size > PAGE_SIZE){
 		uint32_t* process_data_page = vmem_default->ops->alloc(vmem_default);;
 		memcpy(process_data_page, &data[i*PAGE_SIZE], PAGE_SIZE);
-		vmem_map(process_data_table, VMEM_DATA+(i*PAGE_SIZE), (uint32_t) process_data_page);
+		vmem_map(process_data_table, VMEM_DATA+(i*PAGE_SIZE), (uint32_t) process_data_page, USER);
 		size -= PAGE_SIZE;
 		i++;
 	}
 	uint32_t* process_data_page = vmem_default->ops->alloc(vmem_default);;
 	memcpy(process_data_page, &data[i*PAGE_SIZE], size);
-	vmem_map(process_data_table, VMEM_DATA+(i*PAGE_SIZE), (uint32_t) process_data_page);
+	vmem_map(process_data_table, VMEM_DATA+(i*PAGE_SIZE), (uint32_t) process_data_page, USER);
 	dbgprintf("[INIT PROCESS] Finished mapping data.\n");
 
 	/* Map the process stack to a page */
 	uint32_t* process_stack_page = vmem_default->ops->alloc(vmem_default);;
 	memset(process_stack_page, 0, PAGE_SIZE);
-	vmem_map(process_stack_table, VMEM_STACK, (uint32_t) process_stack_page);
+	vmem_map(process_stack_table, VMEM_STACK, (uint32_t) process_stack_page, USER);
 	dbgprintf("[INIT PROCESS] Finished mapping stack.\n");
 
 	/* Insert page and data tables in directory. */
-	vmem_add_table(process_directory, VMEM_HEAP, process_heap_table);
-	vmem_add_table(process_directory, VMEM_STACK, process_stack_table);
-	vmem_add_table(process_directory, VMEM_DATA, process_data_table); 
+	vmem_add_table(process_directory, VMEM_HEAP, process_heap_table, USER);
+	vmem_add_table(process_directory, VMEM_STACK, process_stack_table, USER);
+	vmem_add_table(process_directory, VMEM_DATA, process_data_table, USER); 
 
 	/* Any process should have the kernel first 4mb mapped */
 	process_directory[0] = kernel_page_dir[0];
@@ -268,19 +270,19 @@ void vmem_init_kernel()
 
 	uint32_t* kernel_page_table = vmem_default->ops->alloc(vmem_default);
 	for (int addr = 0; addr < 0x400000; addr += PAGE_SIZE)
-		vmem_map(kernel_page_table, addr, addr);
+		vmem_map(kernel_page_table, addr, addr, SUPERVISOR);
 	dbgprintf("[INIT KERNEL] 0x0 - 0x400000: 	0x%x\n", kernel_page_table);
 
 	int start = VMEM_HEAP;
 	uint32_t* kernel_heap_memory_table = vmem_default->ops->alloc(vmem_default);;
-	vmem_add_table(kernel_page_dir, start, kernel_heap_memory_table);
+	vmem_add_table(kernel_page_dir, start, kernel_heap_memory_table, SUPERVISOR);
 	dbgprintf("[INIT KERNEL] Heap (Kthreads): 	0x%x\n", kernel_heap_memory_table);
 
 	for (int i = 1; i < 7; i++){
 		uint32_t* kernel_page_table_memory = vmem_default->ops->alloc(vmem_default);;
 		for (int addr = 0x400000*i; addr < 0x400000*(i+1); addr += PAGE_SIZE)
-			vmem_map(kernel_page_table_memory, addr, addr);
-		vmem_add_table(kernel_page_dir, 0x400000*i, kernel_page_table_memory);
+			vmem_map(kernel_page_table_memory, addr, addr, SUPERVISOR);
+		vmem_add_table(kernel_page_dir, 0x400000*i, kernel_page_table_memory, SUPERVISOR);
 	}
 	
 	/**
@@ -289,11 +291,11 @@ void vmem_init_kernel()
 	 */
 	uint32_t* kernel_page_table_vesa = vmem_default->ops->alloc(vmem_default);;
 	for (int addr = 0; addr < (vbe_info->width*vbe_info->height*(vbe_info->bpp/8))+1; addr += PAGE_SIZE)
-		vmem_map(kernel_page_table_vesa, vbe_info->framebuffer+addr, vbe_info->framebuffer+addr);
+		vmem_map(kernel_page_table_vesa, vbe_info->framebuffer+addr, vbe_info->framebuffer+addr, SUPERVISOR);
 
-	vmem_add_table(kernel_page_dir, 0, kernel_page_table);
+	vmem_add_table(kernel_page_dir, 0, kernel_page_table, SUPERVISOR);
 
-	vmem_add_table(kernel_page_dir, vbe_info->framebuffer, kernel_page_table_vesa); 
+	vmem_add_table(kernel_page_dir, vbe_info->framebuffer, kernel_page_table_vesa, SUPERVISOR); 
 }
 
 int vmem_allocator_create(struct virtual_memory_allocator* allocator, int from, int to)
@@ -315,11 +317,11 @@ void vmem_map_driver_region(uint32_t addr, int size)
 {
 	uint32_t* kernel_page_table_e1000 = vmem_default->ops->alloc(vmem_default);;
 	for (int i = 0; i < size; i++)
-		vmem_map(kernel_page_table_e1000, (uint32_t) addr+(PAGE_SIZE*i), (uint32_t) addr+(PAGE_SIZE*i));
+		vmem_map(kernel_page_table_e1000, (uint32_t) addr+(PAGE_SIZE*i), (uint32_t) addr+(PAGE_SIZE*i), SUPERVISOR);
 	
 	dbgprintf("[mmap] Page for 0x%x set\n", addr);
 
-	vmem_add_table(kernel_page_dir,  addr, kernel_page_table_e1000);
+	vmem_add_table(kernel_page_dir,  addr, kernel_page_table_e1000, SUPERVISOR);
 	return;
 }
 

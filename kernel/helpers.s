@@ -52,20 +52,15 @@ _context_switch:
 
     fnsave 24(%eax)
 
-    movl %esp, 4(%eax)
-    movl %ebp, 0(%eax)
-    cmpl $0, 20(%eax)
-    je	skip
-    
-    movl 12(%eax), %esp
-    movl 16(%eax), %ebp
+    movl %esp, 12(%eax)
+    movl %ebp, 16(%eax)
 
 skip:
     call context_switch
     movl current_running, %eax
 
-    movl 0(%eax), %ebp
-    movl 4(%eax), %esp
+    movl 16(%eax), %ebp
+    movl 12(%eax), %esp
     frstor 24(%eax)
     popal
     popfl
@@ -84,7 +79,7 @@ _start_pcb:
     pushl	160(%eax)
     pushl	4(%eax)
 _start_pcb_skip:
-    pushf
+    pushl	$INIT_EFLAGS
     pushl	164(%eax)
     pushl	8(%eax)
     subl $1, cli_cnt

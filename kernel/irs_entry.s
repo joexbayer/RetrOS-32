@@ -106,12 +106,10 @@ isr_entry:
 
   pushal
 
-  pushl %ds
-  mov $16, %ax
-  mov %ax, %ds
-  mov %ax, %es
-  mov %ax, %fs
-  mov %ax, %gs
+  pushl	%ds
+  pushl	$16
+  call	load_data_segments
+  addl	$4, %esp
 
   call isr_handler
 
@@ -174,6 +172,11 @@ _page_fault_entry:
 
     pushal
 
+    pushl	%ds
+    pushl	$16
+    call	load_data_segments
+    addl	$4, %esp
+
     /* Push error code, and then contents of cr2 */
     movl	(page_fault_error), %eax
     pushl	%eax
@@ -184,6 +187,7 @@ _page_fault_entry:
 
     addl	$8, %esp
     
+    popl	%ds
     popal    
 
     iret

@@ -28,6 +28,7 @@ enum virtual_memory_constants {
   PRESENT = 1,
   READ_WRITE = 2,
   USER = 4,
+  SUPERVISOR = 0,
 
   WRITE_THROUGH = 8,
   ACCESSED = 32,
@@ -73,6 +74,6 @@ void vmem_cleanup_process(struct pcb* pcb);
 void vmem_init_process(struct pcb* pcb, char* data, int size);
 
 void vmem_free_allocation(struct allocation* allocation);
-int vmem_continious_allocation_map(struct allocation* allocation, uint32_t* address, int num);
+int vmem_continious_allocation_map(struct allocation* allocation, uint32_t* address, int num, int access);
 
 #endif

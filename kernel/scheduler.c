@@ -19,6 +19,7 @@ void kernel_sleep(int time)
 void kernel_yield()
 {   
     current_running->yields++;
+    //dbgprintf("%s called yield\n", current_running->name);
     _context_switch();
 }
 
@@ -65,10 +66,10 @@ void context_switch()
         case PCB_NEW:
             dbgprintf("[Context Switch] Running new PCB %s (PID %d) with page dir: %x: stack: %x kstack: %x\n", current_running->name, current_running->pid, current_running->page_dir, current_running->esp, current_running->kesp);
             load_page_directory(current_running->page_dir);
-            pcb_dbg_print(current_running);
+            //pcb_dbg_print(current_running);
 
             if(current_running->is_process){
-                tss.esp_0 = (uint32_t)current_running->stack_ptr;
+                tss.esp_0 = (uint32_t)current_running->kebp;
                 tss.ss_0 = KERNEL_DS;
             }
 
