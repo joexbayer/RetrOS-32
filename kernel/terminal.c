@@ -35,7 +35,7 @@ void terminal_commit()
 			continue;
 		}
 
-		kernel_gfx_draw_char(x*8, y*8, current_running->term->textbuffer[i], theme->terminal.text);
+		kernel_gfx_draw_char(1 + x*8, 1+ y*8, current_running->term->textbuffer[i], theme->terminal.text);
 		x++;
 	}
 }

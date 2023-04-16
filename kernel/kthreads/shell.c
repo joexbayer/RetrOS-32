@@ -28,9 +28,11 @@
 
 #include <gfx/gfxlib.h>
 #include <gfx/theme.h>
+#include <gfx/composition.h>
 #include <gfx/events.h>
 
-#define SHELL_HEIGHT 275
+#define SHELL_HEIGHT 275 /* 275 */
+#define SHELL_WIDTH 400 /* 400 */
 #define SHELL_POSITION SHELL_HEIGHT-12
 #define SHELL_MAX_SIZE SHELL_HEIGHT/8
 
@@ -55,7 +57,7 @@ static struct terminal term  = {
 void shell_clear()
 {
 	struct gfx_theme* theme = kernel_gfx_current_theme();
-	kernel_gfx_draw_rectangle(0, SHELL_POSITION, SHELL_HEIGHT, 8, theme->os.background);
+	kernel_gfx_draw_rectangle(0, SHELL_POSITION, gfx_get_window_height(), 8, theme->os.background);
 }
 
 void reset_shell()
@@ -277,10 +279,11 @@ void shell_main()
 	dbgprintf("shell is running!\n");
 
 	memset(term.textbuffer, 0, TERMINAL_BUFFER_SIZE);
-	struct gfx_window* window = gfx_new_window(400, SHELL_HEIGHT);
+	struct gfx_window* window = gfx_new_window(SHELL_WIDTH, SHELL_HEIGHT);
 	
 	dbgprintf("shell: window 0x%x\n", window);
-	kernel_gfx_draw_rectangle(0,0, 400, SHELL_HEIGHT, COLOR_BOX_BG);
+	kernel_gfx_draw_rectangle(0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_BOX_BG);
+	gfx_set_fullscreen(window);	
 
 
 	terminal_attach(&term);

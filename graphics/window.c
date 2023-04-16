@@ -40,7 +40,7 @@ void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
         for (j = window->x+8; j < (window->x+8+window->inner_width); j++)
             for (i = window->y+8; i < (window->y+8+window->inner_height); i++)
                 /* FIXME: Because of the j, i order we use height as pitch in gfxlib. */
-                putpixel(buffer, j, i, window->inner[c++], vbe_info->pitch);
+                putpixel(buffer, i, j, window->inner[c++], vbe_info->pitch);
     }
 
     for (int i = 0; i < (window->width/8) - 2; i++){
@@ -63,6 +63,26 @@ void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
     
     window->changed = 0;
 }   
+
+/* under construction */
+void gfx_window_resize(struct gfx_window* w, int width, int height)
+{
+    return;
+    /* Allocate new inner buffer, copy over old buffer, free old buffer, update struct */
+    uint8_t* new_buffer = kalloc(width*height);
+    uint8_t* old = w->inner;
+
+    /* problem: if resizing from a larger to smaller window, what happens to data that will be "offscreen" */
+    w->inner_height = height;
+    w->inner_width = width;
+    w->width = width + 16;
+    w->height = height + 16;
+
+    /* Copy over */
+    w->inner = new_buffer;
+
+    kfree(old);
+}
 
 /**
  * @brief Default handler for click event from mouse on given window.
@@ -183,8 +203,9 @@ struct gfx_window* gfx_new_window(int width, int height)
     w->inner_width = width;
     w->width = width + 16;
     w->height = height + 16;
-    w->x = 10;
-    w->y = 10;
+    w->pitch = w->inner_height;
+    w->x = 8;
+    w->y = 8;
     w->owner = current_running;
     current_running->gfx_window = w;
     w->changed = 1;

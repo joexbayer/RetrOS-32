@@ -3,17 +3,17 @@
 struct gfx_theme default1 = {
     .os = {
         .background = COLOR_BOX_BG,
-        .foreground = COLOR_BOX_LIGHT_FG,
+        .foreground = COLOR_BOX_DARK_BLUE,
         .text = COLOR_BOX_BG
     },
     .window = {
-        .border = COLOR_BOX_LIGHT_BLUE,
+        .border = COLOR_BOX_DARK_BLUE,
         .background = COLOR_BOX_BG,
         .text = COLOR_BOX_BG
     },
     .terminal = {
         .background = COLOR_BOX_BG,
-        .text = COLOR_BOX_LIGHT_FG
+        .text = COLOR_BOX_DARK_BLUE
     },
     .name = "Default"
 };
@@ -21,8 +21,8 @@ struct gfx_theme default1 = {
 struct gfx_theme dark_theme = {
     .os = {
         .background = COLOR_BLACK,
-        .foreground = COLOR_WHITE,
-        .text = COLOR_YELLOW
+        .foreground = COLOR_BLUE,
+        .text = COLOR_WHITE
     },
     .window = {
         .border = COLOR_BLUE,

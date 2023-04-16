@@ -10,5 +10,6 @@ void gfx_init();
 
 void gfx_compositor_main();
 void gfx_mouse_event(int x, int y, char flags);
+void gfx_set_fullscreen(struct gfx_window* w);
 
 #endif /* FCA672BC_C2FD_4772_BC32_C01EF99BEA47 */

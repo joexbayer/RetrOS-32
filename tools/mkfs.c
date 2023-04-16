@@ -277,6 +277,8 @@ int main(int argc, char* argv[])
     add_userspace_program(&superblock, bin, "edit");
     add_userspace_program(&superblock, bin, "display");
 
+    add_directory(&superblock, root_dir, "tmp");
+
     inodes_sync(&superblock);
 
     write_block_offset((char*) &superblock, sizeof(struct superblock), 0, FS_START_LOCATION);

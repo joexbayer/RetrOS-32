@@ -27,6 +27,7 @@ struct gfx_window {
     
     uint16_t x, y;
     uint16_t width, height, inner_width, inner_height;
+    uint16_t pitch;
 
     /* TODO: Click function should also take a mouse event  */
     void (*click)(struct gfx_window*, int x, int y);

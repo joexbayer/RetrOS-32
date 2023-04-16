@@ -194,10 +194,26 @@ void gfx_mouse_event(int x, int y, char flags)
     
     /* No window was clicked. */
 }
-
-void gfx_init()
+static int __is_fullscreen = 0;
+void gfx_set_fullscreen(struct gfx_window* w)
 {
-    mutex_init(&order_lock);
+    if(w != order){
+        dbgprintf("Cannot fullscreen window that isnt in focus\n");
+        return;
+    }
+
+    w->inner_width = 480-16;
+    w->inner_height = 640-16;
+    w->width = 480;
+    w->height = 640;
+    w->inner = wind.composition_buffer;
+    w->pitch = 640;
+    w->x = 8;
+    w->y = 8;
+
+    dbgprintf("%s is now in fullscreen\n", w->name);
+
+    __is_fullscreen = 1;
 }
 
 /**
@@ -216,6 +232,8 @@ void gfx_compositor_main()
 
     dbgprintf("[WSERVER] %d bytes allocated for composition buffer.\n", buffer_size);
     wind.composition_buffer = (uint8_t*) palloc(buffer_size);
+
+    //gfx_set_fullscreen(order);
 
     /* Main composition loop */
     while(1){
@@ -246,7 +264,7 @@ void gfx_compositor_main()
 
         if(window_changed){
             
-            memset(wind.composition_buffer, theme->os.background/*41*/, buffer_size);
+            //memset(wind.composition_buffer, theme->os.background/*41*/, buffer_size);
 
             for (int i = 0; i < (vbe_info->width/8) - 2; i++){
                 vesa_put_box(wind.composition_buffer, 80, 8+(i*8), 0, theme->os.foreground);
@@ -267,12 +285,12 @@ void gfx_compositor_main()
 
             vesa_fillrect(wind.composition_buffer, 8, 0, strlen("NETOS")*8, 8, theme->os.foreground);
             vesa_write_str(wind.composition_buffer, 8, 0, "NETOS",  theme->os.text);
-            
-            
-            /* Draw windows in reversed order */
-            //acquire(&order_lock);
-            gfx_recursive_draw(order);
-            //release(&order_lock);
+
+            if(__is_fullscreen){
+            } else {
+                gfx_recursive_draw(order);
+            }
+        
         }
 
         vesa_fillrect(wind.composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 0, strlen("00:00:00 00/00/00")*8, 8, theme->os.foreground);
@@ -294,4 +312,9 @@ void gfx_compositor_main()
 
 
     }
-}   
+}
+
+void gfx_init()
+{
+    mutex_init(&order_lock);
+}
