@@ -155,6 +155,7 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 
 - [x] Bootloader
 - [x] Multi-threaded pre-emptive scheduling
+- [x] GDT & TSS kernel / userspace separation
 - [x] Interrupt handling
 - [x] PS/2 Keyboard & Mouse, PIT, VESA (640x480x8), RTC, Serial drivers, E1000
 - [x] PCI.
