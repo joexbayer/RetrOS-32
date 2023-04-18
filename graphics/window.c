@@ -37,8 +37,8 @@ void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
     /* Copy inner window framebuffer to given buffer with relativ pitch. */
     if(window->inner != NULL){
         int i, j, c = 0;
-        for (j = window->x+8; j < (window->x+8+window->inner_width); j++)
-            for (i = window->y+8; i < (window->y+8+window->inner_height); i++)
+        for (j = window->y+8; j < (window->y+8+window->inner_height); j++)
+            for (i = window->x+8; i < (window->x+8+window->inner_width); i++)
                 /* FIXME: Because of the j, i order we use height as pitch in gfxlib. */
                 putpixel(buffer, i, j, window->inner[c++], vbe_info->pitch);
     }
@@ -203,7 +203,7 @@ struct gfx_window* gfx_new_window(int width, int height)
     w->inner_width = width;
     w->width = width + 16;
     w->height = height + 16;
-    w->pitch = w->inner_height;
+    w->pitch = w->inner_width;
     w->x = 8;
     w->y = 8;
     w->owner = current_running;

@@ -101,7 +101,7 @@ int kernel_gfx_draw_rectangle(int x, int y, int width, int height, unsigned char
     int i, j;
     for (j = y; j < (y+height); j++)
         for (i = x; i < (x+width); i++)
-            putpixel(current_running->gfx_window->inner, j, i, color, current_running->gfx_window->pitch);
+            putpixel(current_running->gfx_window->inner, i, j, color, current_running->gfx_window->pitch);
     //STI();
 
     //current_running->gfx_window->changed = 1;

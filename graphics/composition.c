@@ -202,10 +202,10 @@ void gfx_set_fullscreen(struct gfx_window* w)
         return;
     }
 
-    w->inner_width = 480-16;
-    w->inner_height = 640-16;
-    w->width = 480;
-    w->height = 640;
+    /* store and backup original window information */
+    w->inner_width = 640;
+    w->inner_height = 480;
+
     w->inner = wind.composition_buffer;
     w->pitch = 640;
     w->x = 8;
@@ -264,7 +264,7 @@ void gfx_compositor_main()
 
         if(window_changed){
             
-            //memset(wind.composition_buffer, theme->os.background/*41*/, buffer_size);
+            memset(wind.composition_buffer, theme->os.background/*41*/, buffer_size);
 
             for (int i = 0; i < (vbe_info->width/8) - 2; i++){
                 vesa_put_box(wind.composition_buffer, 80, 8+(i*8), 0, theme->os.foreground);

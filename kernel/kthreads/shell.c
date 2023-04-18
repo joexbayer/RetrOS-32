@@ -283,7 +283,7 @@ void shell_main()
 	
 	dbgprintf("shell: window 0x%x\n", window);
 	kernel_gfx_draw_rectangle(0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_BOX_BG);
-	gfx_set_fullscreen(window);	
+	//gfx_set_fullscreen(window);	
 
 
 	terminal_attach(&term);
