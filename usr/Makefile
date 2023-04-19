@@ -26,15 +26,17 @@ endif
 
 OUTPUTDIR = ./bin/
 
-USROBJS = bin/counter.o bin/clock.o bin/edit.o bin/display.o
+USROBJS = bin/counter.o bin/clock.o
 COMMON = ../bin/syscall.o ../bin/util.o ../bin/printf.o ../bin/graphics.o
 
 .PHONY: all new programs
 all: new
 
-new: bindir programs
+new: bindir programs 
 
-programs: bin/crt0.o ${USROBJS} 
+programs: bin/crt0.o ${USROBJS}
+	@make -C editor/
+	@make -C display/
 	@echo [USR] All user programs created and linked!
 
 bin/%.o: %.c bin/crt0.o
@@ -46,13 +48,6 @@ bin/%.o: */%.s
 	@echo [USR] Compiling dependency $<
 	@$(AS) -o $@ -c $< $(ASFLAGS)
 
-# C++ compiling
-bin/%.o: %.cpp bin/crt0.o ./bin/crti.o ./bin/crtn.o
-	$(CPP) -o $@ -c $< $(CCFLAGS) -fno-exceptions -fno-rtti
-	@$(LD) -o $(basename $@) ./bin/crt0.o $@ $(COMMON) $(LDFLAGS) -T ./utils/linker.ld
-	@echo [USR] Compiling C++ $(basename $@)
-
-
 .depend: **/*.[cSh]
 	@$(CC) $(CCFLAGS) -MM -MG **/*.[cS] > $@
 
@@ -63,4 +58,6 @@ bindir:
 
 clean:
 	rm -f ./bin/*
+	make -C editor/ clean
+	make -C display/ clean
 	rm -f .depend

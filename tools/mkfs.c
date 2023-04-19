@@ -148,8 +148,8 @@ void fs_setup_superblock(struct superblock* superblock, int size)
 int add_userspace_program(struct superblock* sb, struct inode* current_dir, char* program)
 {   
     /* Open the file and copy content to buffer*/
-    char path_buf[strlen("usr/bin/")+strlen(program)+1];
-    sprintf(path_buf, "%s%s", "usr/bin/", program);
+    char path_buf[strlen("usr/")+strlen(program)+1];
+    sprintf(path_buf, "%s%s", "usr/", program);
     printf("[MKFS] Attaching %s (%s) to the filesystem!\n", program, path_buf);
 
     FILE* file = fopen(path_buf, "r");
@@ -164,10 +164,15 @@ int add_userspace_program(struct superblock* sb, struct inode* current_dir, char
 
     char* buf = malloc(fs_size);
     int fret = fread(buf, 1, fs_size, file);
-    if(fret <= 0)
-    {
+    if(fret <= 0){
         printf("[MKFS] Error reading program %s!\n", program);
     }
+
+    /* Skip to the first / */
+    int name_offset = 0;
+    while(program[name_offset] != '/')
+        name_offset++;
+    name_offset++;
 
     /* Create a inode and write the contents of the given program.*/
     inode_t file_inode = alloc_inode(sb, FS_FILE);
@@ -178,7 +183,7 @@ int add_userspace_program(struct superblock* sb, struct inode* current_dir, char
     struct directory_entry file_dir_entry = {
         .inode = file_inode,
     };
-    memcpy(file_dir_entry.name, program, strlen(program)+1);
+    memcpy(file_dir_entry.name, &program[name_offset], strlen(&program[name_offset])+1);
     __inode_add_dir(&file_dir_entry, current_dir, sb);
 
     printf("[MKFS] Added userspace program %s (%d bytes)!\n", program, fs_size);
@@ -272,10 +277,10 @@ int main(int argc, char* argv[])
     int inode_index = add_directory(&superblock, root_dir, "bin");
     struct inode* bin = inode_get(inode_index, &superblock);
 
-    add_userspace_program(&superblock, bin, "counter");
-    add_userspace_program(&superblock, bin, "clock");
-    add_userspace_program(&superblock, bin, "edit");
-    add_userspace_program(&superblock, bin, "display");
+    add_userspace_program(&superblock, bin, "bin/counter");
+    add_userspace_program(&superblock, bin, "bin/clock");
+    add_userspace_program(&superblock, bin, "editor/edit.o");
+    add_userspace_program(&superblock, bin, "display/display.o");
 
     add_directory(&superblock, root_dir, "tmp");
 

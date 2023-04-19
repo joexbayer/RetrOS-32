@@ -73,6 +73,8 @@ skip:
 _start_pcb:
     movl current_running, %eax
     movl 12(%eax), %esp
+    movl 152(%eax), %ebx
+    movl 156(%eax), %ecx
     
     cmpl $0, 20(%eax)
     je _start_pcb_skip
