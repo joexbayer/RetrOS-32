@@ -22,6 +22,11 @@ struct coordiante {
     int y;
 };
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 int strlen(const char* str);
 uint32_t strncmp(const char* str, const char* str2, uint32_t len);
 
@@ -37,6 +42,10 @@ void itohex(uint32_t n, char s[]);
 
 int isdigit(char c);
 int rand(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 
 /* From linux kernel. */

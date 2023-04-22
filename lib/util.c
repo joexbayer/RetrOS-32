@@ -114,7 +114,7 @@ int parse_arguments(const char *input_string, char *tokens[]) {
  *
  * @return void*
  */
-inline void* memcpy(void *dest, const void *src, int n)
+void* memcpy(void *dest, const void *src, int n)
 {
 	uint32_t num_dwords	= n / 4;
 	uint32_t num_bytes	= n % 4;

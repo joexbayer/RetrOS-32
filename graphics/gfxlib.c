@@ -220,7 +220,7 @@ void kernel_gfx_draw_line(int x0, int y0, int x1, int y1, unsigned char color)
 
     while(1)  
     {  
-		putpixel(current_running->gfx_window->inner, x0, y0, color, current_running->gfx_window->pitch); 
+		putpixel(current_running->gfx_window->inner, y0, x0, color, current_running->gfx_window->pitch); 
 		if (x0 == x1 && y0 == y1) break;
         int e2 = 2*error;
 
