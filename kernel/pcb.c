@@ -17,6 +17,7 @@
 #include <fs/fs.h>
 #include <assert.h>
 #include <kthreads.h>
+#include <kutils.h>
 
 //#include <gfx/gfxlib.h>
 

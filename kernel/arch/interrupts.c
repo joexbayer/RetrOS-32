@@ -16,6 +16,7 @@
 #include <scheduler.h>
 #include <kthreads.h>
 #include <assert.h>
+#include <kutils.h>
 
 //TEMP
 #include <memory.h>

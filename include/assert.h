@@ -4,6 +4,7 @@
 #include <serial.h>
 #include <sync.h>
 #include <util.h>
+#include <kutils.h>
 
 #define assert(expr) \
     if (!(expr)) { \

@@ -17,6 +17,7 @@
 #include <vbe.h>
 #include <serial.h>
 #include <scheduler.h>
+#include <kutils.h>
 
 int gfx_get_window_width()
 {

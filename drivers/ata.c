@@ -17,6 +17,8 @@
 #include <diskdev.h>
 #include <util.h>
 
+#include <kutils.h>
+
 #include <serial.h>
 
 static uint8_t* ata_driver_data;

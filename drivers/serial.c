@@ -13,6 +13,7 @@
 #include <arch/io.h>
 #include <util.h>
 #include <args.h>
+#include <kutils.h>
 
 #define PORT 0x3f8          // COM1
 #define MAX_FMT_STR_SIZE 50

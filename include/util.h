@@ -43,9 +43,21 @@ void itohex(uint32_t n, char s[]);
 int isdigit(char c);
 int rand(void);
 
+#define SAVE_AND_RESTORE(x, code_block) \
+do { \
+    decltype(x) _temp = x; \
+    code_block \
+    x = _temp; \
+} while(0)
+
+
 #ifdef __cplusplus
 }
 #endif
+
+
+#define roundup(x, n) (((x) + (n) - 1) / (n) * (n))
+#define rounddown(x, n) ((x) / (n) * (n))
 
 
 /* From linux kernel. */
@@ -55,33 +67,13 @@ int rand(void);
     const typeof( ((type *)0)->member ) *__mptr = (ptr); \
     (type *)( (char *)__mptr - offsetof(type,member) );})
 
-#define HLT() asm ("hlt")
+#define STRINGIFY(x) #x
 
-#define PANIC()\
-     asm ("cli");\
-     while(1)\
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+#define UNUSED(x) (void)(x)
 
-#define GET_ESP() asm ("esp");
-
-extern int cli_cnt;
-#define CLI()\
-    cli_cnt++;\
-    asm ("cli");\
-
-#define STI()\
-    cli_cnt--;\
-    if(cli_cnt == 0){\
-        asm ("sti");\
-    }\
-
-#define CRITICAL_SECTION(code_block) \
-    do { \
-        CLI(); \
-        code_block \
-        STI(); \
-    } while (0)
-
-#define ASSERT_CRITICAL() assert(cli_cnt > 0)
+#define likely(x) (__builtin_expect(!!(x), 1))
+#define unlikely(x) (__builtin_expect(!!(x), 0))
 
 unsigned long long rdtsc(void);
 #endif

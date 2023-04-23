@@ -12,12 +12,6 @@ public:
 		m_textBuffer = (unsigned char*) malloc((c_width/8)*(c_height/8));
 		m_bufferSize = (c_width/8)*(c_height/8);
 		for (int i = 0; i < m_bufferSize; i++) m_textBuffer[i] = 0;
-		
-		gfx_draw_rectangle(0, 0, 288, 248, COLOR_BOX_LIGHT_FG);
-		gfx_draw_line(17, 0, 17, 248, 0xff);
-		for (int i = 0; i < 248; i++){
-			gfx_draw_format_text(0, i*8, 0xff, "%s%d ", i < 10 ? " " : "", i);
-		}
 
 	}
 
@@ -49,13 +43,22 @@ private:
 
 void Editor::reDraw()
 {	
-	m_x = 0;
-	m_y = 0;
-	gfx_draw_rectangle(0, 0, 288, 248, COLOR_BOX_LIGHT_FG);
-	gfx_draw_line(17, 0, 17, 248, 0xff);
-	for (int i = 0; i < 248; i++)gfx_draw_format_text(0, i*8, 0xff, "%s%d ", i < 10 ? " " : "", i);
+	SAVE_AND_RESTORE(m_x, {
 
-	for (int i = 0; i < m_bufferHead; i++)drawChar(m_textBuffer[i]);
+		SAVE_AND_RESTORE(m_y, {
+			m_x = 0;
+			m_y = 0;
+			gfx_draw_rectangle(0, 0, 288, 248, COLOR_BOX_LIGHT_FG);
+			gfx_draw_line(0, 17, 248, 17, 0xff);
+			for (int i = 0; i < 248; i++)gfx_draw_format_text(0, i*8, 0xff, "%s%d ", i < 10 ? " " : "", i);
+
+			for (int i = 0; i < m_bufferHead; i++)drawChar(m_textBuffer[i]);
+
+			gfx_draw_char(24 + m_x*8, m_y*8, '_', COLOR_BOX_BG);
+		
+			gfx_draw_rectangle(24 + m_x*8, m_y*8, 8, 8, COLOR_BOX_LIGHT_FG);
+		});
+	});
 
 	gfx_draw_char(24 + m_x*8, m_y*8, '_', COLOR_BOX_BG);
 }
@@ -93,11 +96,24 @@ void Editor::drawChar(unsigned char c)
 
 	switch (c){
 	case '\n':
+		gfx_draw_rectangle(24 + m_x*8, m_y*8, 8, 8, COLOR_BOX_LIGHT_FG);
 		gfx_draw_char(24 + m_x*8, m_y*8, '\\', COLOR_BOX_BG);
 		m_x = 0;
 		m_y++;
 		break;
+	case 252:
+		gfx_draw_rectangle(24 + (m_x+1)*8, m_y*8, 8, 8, COLOR_BOX_LIGHT_FG);
+		gfx_draw_char(24 + (m_x+1)*8, m_y*8, m_textBuffer[m_bufferEdit+2], COLOR_BOX_BG);
+
+		gfx_draw_char(24 + m_x*8, m_y*8, m_textBuffer[m_bufferEdit+1], COLOR_BOX_BG);
+		break;
+	case 251:
+		gfx_draw_rectangle(24 + (m_x-1)*8, m_y*8, 8, 8, COLOR_BOX_LIGHT_FG);
+		gfx_draw_char(24 + (m_x-1)*8, m_y*8, m_textBuffer[m_bufferEdit], COLOR_BOX_BG);
+		gfx_draw_char(24 + (m_x)*8, m_y*8, m_textBuffer[m_bufferEdit+1], COLOR_BOX_BG);
+		break;
 	default: /* Default add character to buffer and draw it */
+		gfx_draw_rectangle(24 + m_x*8, m_y*8, 8, 8, COLOR_BOX_LIGHT_FG);
 		gfx_draw_char(24 + m_x*8, m_y*8, c, COLOR_BOX_BG);
 		m_x++;
 		if(m_x > (c_width/8)){
@@ -112,7 +128,7 @@ void Editor::drawChar(unsigned char c)
 
 void Editor::putChar(unsigned char c)
 {
-	gfx_draw_rectangle(24 + m_x*8, m_y*8, 8, 8, COLOR_BOX_LIGHT_FG);
+	//gfx_draw_rectangle(24 + m_x*8, m_y*8, 8, 8, COLOR_BOX_LIGHT_FG);
 
 	switch (c){
 	case '\n':
@@ -120,15 +136,29 @@ void Editor::putChar(unsigned char c)
 		m_bufferEdit++;
 		break;
 	case '\b':
-		memcpy(&m_textBuffer[m_bufferEdit], &m_textBuffer[m_bufferEdit], m_bufferHead - m_bufferEdit);
+		memcpy(&m_textBuffer[m_bufferEdit], &m_textBuffer[m_bufferEdit]+1, m_bufferHead - m_bufferEdit);
 		m_bufferHead--;
+		reDraw();
+		return;
+	case 252:
 		m_bufferEdit--;
-		reDraw();
-		return;
-	case 254:
-		reDraw();
+		m_x--;
+		if(m_x - 1 < 0){
+			m_y--;
+			m_x = (c_width/8);
+		}
+		break;
+	
+	case 251:
+		if(m_bufferEdit == m_bufferHead-1) break;
+		m_bufferEdit++;
+		m_x++;
+		if(m_x > (c_width/8)){
+			m_x = 0;
+			m_y++;
+		}
 
-		return;
+		break;
 	case 0:
 		return;
 	default: /* Default add character to buffer and draw it */

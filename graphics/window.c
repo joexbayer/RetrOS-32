@@ -17,6 +17,7 @@
 #include <colors.h>
 #include <serial.h>
 #include <vbe.h>
+#include <kutils.h>
 
 /**
  * @brief Draw given window to a frambuffer.

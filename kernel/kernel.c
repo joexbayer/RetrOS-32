@@ -27,6 +27,7 @@
 #include <arch/io.h>
 #include <work.h>
 #include <arch/gdt.h>
+#include <kutils.h>
 
 #include <gfx/window.h>
 #include <gfx/composition.h>
