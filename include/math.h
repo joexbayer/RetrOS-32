@@ -8,6 +8,9 @@
 #define SIGN(x) ( (x) < 0 ? -1 : ( (x) > 0 ? 1 : 0 ) )
 
 
+#define DISTANCE(x1, y1, x2, y2) sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2))
+
+
 #define PI 3.14159265358979323846
 
 #endif /* E9ADA698_B583_4B4F_BBB9_3513A8E02614 */
