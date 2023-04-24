@@ -71,7 +71,7 @@
 
 ## About The Project
 
-32bit Hobby Operatingsystem with Windows 95 style graphics, multitasking and networking!
+32bit Hobby Operatingsystem with graphics, multitasking and networking!
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
