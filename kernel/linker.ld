@@ -21,15 +21,20 @@ SECTIONS
 
     .data BLOCK(4K) : ALIGN(4K)
     {
+
+        __start_symbol_table = .;
+        *(.symbol_table)
+        __start_symbol_table2 = .;
+
         _data_s = .;
         *(.data)
         _data_e = .;
-        
+    
+
         _bss_s = .;
         *(.bss)
         _bss_e = .;
     }
-
     _end = .;
 
 
