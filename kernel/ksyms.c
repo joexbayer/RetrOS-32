@@ -12,7 +12,7 @@
 
 #define EXPORT_KSYMBOL(func) \
     static void __register_##func() { add_symbol(#func, (uintptr_t)func); } \
-    __attribute__((section(".symbol_table"))) const struct symbol_entry* __ptr_##func = &__register_##func;
+    __attribute__((section(".symbol_table"))) void (*__ptr_##func)() = &__register_##func;
 
 static struct symbol_entry {
     char name[KSYMS_MAX_SYMBOL_LENGTH];
@@ -36,12 +36,10 @@ void add_symbol(const char* name, uintptr_t addr) {
 
 void register_symbols()
 {
-    extern void  (*__start_symbol_table)();
-    extern void  (*__start_symbol_table2)();
-    extern void  (*__stop_symbol_table)();
+    dbgprintf("0x%x - 0x%x = %x\n", _stop_symbol_table, _start_symbol_table, _symbol_table_size);
 }
 
-EXPORT_KSYMBOL(add_symbol)
+EXPORT_KSYMBOL(register_symbols)
 
 void backtrace(void) {
     uintptr_t* frame_ptr = __builtin_frame_address(0);;
@@ -67,5 +65,5 @@ void backtrace(void) {
         depth++;
     }
 }
-
 EXPORT_KSYMBOL(backtrace)
+

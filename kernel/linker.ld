@@ -19,12 +19,14 @@ SECTIONS
         _ro_e = .;
     }
 
+    .symbol_table ALIGN(4) : {
+        _start_symbol_table = .;
+        *(.symbol_table)
+        _stop_symbol_table = ALIGN(4);
+    }
+
     .data BLOCK(4K) : ALIGN(4K)
     {
-
-        __start_symbol_table = .;
-        *(.symbol_table)
-        __start_symbol_table2 = .;
 
         _data_s = .;
         *(.data)
@@ -36,6 +38,8 @@ SECTIONS
         _bss_e = .;
     }
     _end = .;
+
+    _symbol_table_size = _stop_symbol_table - _start_symbol_table;
 
 
 }
