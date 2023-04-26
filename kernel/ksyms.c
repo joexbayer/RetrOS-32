@@ -7,39 +7,44 @@
 
 #define KSYMS_MAX_SYMBOLS 100
 #define KSYMS_MAX_DEPTH 100
-
 #define KSYMS_MAX_SYMBOL_LENGTH 25
 
-#define EXPORT_KSYMBOL(func) \
-    static void __register_##func() { add_symbol(#func, (uintptr_t)func); } \
-    __attribute__((section(".symbol_table"))) void (*__ptr_##func)() = &__register_##func;
+static struct kernel_symbols {
+    struct symbol_entry {
+        char name[KSYMS_MAX_SYMBOL_LENGTH];
+        uintptr_t addr;
+    } symtable[KSYMS_MAX_SYMBOLS];
+    
+    int num_symbols;
+} __ksyms = {
+    .num_symbols = 0
+};
 
-static struct symbol_entry {
-    char name[KSYMS_MAX_SYMBOL_LENGTH];
-    uintptr_t addr;
-} symtable[KSYMS_MAX_SYMBOLS];
-static int num_symbols = 0;
-
-void add_symbol(const char* name, uintptr_t addr) {
+void ksyms_add_symbol(const char* name, uintptr_t addr) {
     
     assert(strlen(name) < KSYMS_MAX_SYMBOL_LENGTH);
 
-    if (num_symbols < KSYMS_MAX_SYMBOLS) {
-        memcpy(symtable[num_symbols].name, name, strlen(name));
-        symtable[num_symbols].addr = addr;
-        num_symbols++;
+    if (__ksyms.num_symbols < KSYMS_MAX_SYMBOLS) {
+        memcpy(__ksyms.symtable[__ksyms.num_symbols].name, name, strlen(name));
+        __ksyms.symtable[__ksyms.num_symbols].addr = addr;
+        __ksyms.num_symbols++;
     } else {
         twrite("Error: symbol table full\n");
     }
     dbgprintf("Added new symbol %s\n", name);
 }
+EXPORT_KSYMBOL(ksyms_add_symbol);
 
-void register_symbols()
+void* ksyms_resolve_symbol(const char* name)
 {
-    dbgprintf("0x%x - 0x%x = %x\n", _stop_symbol_table, _start_symbol_table, _symbol_table_size);
-}
+    for (int i = 0; i < __ksyms.num_symbols; i++) {
+        if(memcmp(name, __ksyms.symtable[i].name, strlen(__ksyms.symtable[i].name)) == 0){
+            return (void*) __ksyms.symtable[i].addr;
+        }
+    }
 
-EXPORT_KSYMBOL(register_symbols)
+    return NULL;
+}
 
 void backtrace(void) {
     uintptr_t* frame_ptr = __builtin_frame_address(0);;
@@ -52,18 +57,18 @@ void backtrace(void) {
         
         int best_index = -1;
         int best_diff = 0x999999;
-        for (int i = 0; i < num_symbols; i++) {
-            if(symtable[i].addr-return_addr < best_diff){
-                best_diff = symtable[i].addr-return_addr;
+        for (int i = 0; i < __ksyms.num_symbols; i++) {
+            if(__ksyms.symtable[i].addr-return_addr < best_diff){
+                best_diff = __ksyms.symtable[i].addr-return_addr;
                 best_index = i;
             }
         }
         if(best_index != -1)
-            dbgprintf("%s: 0x%lx - 0x%lx = 0x%lx\n",symtable[best_index].name, return_addr, symtable[best_index].addr, symtable[best_index].addr-return_addr);
+            dbgprintf("%s: 0x%lx - 0x%lx = 0x%lx\n", __ksyms.symtable[best_index].name, return_addr, __ksyms.symtable[best_index].addr, __ksyms.symtable[best_index].addr-return_addr);
         
         frame_ptr = (uintptr_t*) (*frame_ptr);
         depth++;
     }
 }
-EXPORT_KSYMBOL(backtrace)
+EXPORT_KSYMBOL(backtrace);
 
