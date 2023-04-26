@@ -81,7 +81,6 @@ void ps()
 		if(ret < 0) continue;
 		twritef("   %d   0x%s%x  %s  %s  %s\n", info.pid, info.is_process ? "" : "00", info.stack, info.is_process ? "process" : "kthread", pcb_status[info.state], info.name);
 	}
-	
 }
 
 void exec_cmd()
@@ -274,7 +273,7 @@ void shell_put(unsigned char c)
 
 int c_test = 0;
 
-void shell_main()
+void shell()
 {
 	dbgprintf("shell is running!\n");
 
@@ -309,3 +308,4 @@ void shell_main()
 	
 	kernel_exit();
 }
+EXPORT_KTHREAD(shell);

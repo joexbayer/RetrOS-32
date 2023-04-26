@@ -17,6 +17,23 @@
 
 #endif /* X86_REGISTERS_H */
 
+extern char _start_kctor_table[];
+extern char _stop_kctor_table[];
+extern char _kctor_table_size[];
+
+/**
+ * @brief EXPORT_KCTOR
+ * Adds a function pointer to the kctor table.
+ * All kernel constructors are called at boot.
+ * Expected function signature:
+ * @param func void func(void);
+ */
+#define EXPORT_KCTOR(func)\
+    __attribute__((section(".kctor_table")))\
+    void (*__kctor_ptr_##func)() = &func
+
+void init_kctors();
+
 #define jmp(addr) __asm__ __volatile__ ("jmp *%0" : : "m" (addr))
 #define call(addr) __asm__ __volatile__ ("call *%0" : : "m" (addr))
 #define ret() __asm__ __volatile__ ("ret")
@@ -38,6 +55,12 @@ extern int cli_cnt;
      asm ("cli");\
      while(1)\
 
+/**
+ * @brief CRITICAL_SECTION
+ * Enters critical section before the
+ * code block is run and leaves after.
+ * @param code_block block of code to run in critical section
+ */
 #define CRITICAL_SECTION(code_block) \
     do { \
         CLI(); \

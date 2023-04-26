@@ -51,7 +51,7 @@ void kernel(uint32_t magic)
 	dbgprintf("[VBE] Memory Size: %d (0x%x)\n", vbe_info->width*vbe_info->height*(vbe_info->bpp/8), vbe_info->width*vbe_info->height*(vbe_info->bpp/8));
 	//vmem_map_driver_region(vbe_info->framebuffer, (vbe_info->width*vbe_info->height*(vbe_info->bpp/8))+1);
 
-	register_symbols();
+	init_kctors();
 
 	vga_set_palette();
 
@@ -69,8 +69,7 @@ void kernel(uint32_t magic)
 	init_dns();
 
 	init_fs();
-	
-	register_kthread(&shell_main, "shell");
+
 	register_kthread(&Genesis, "Genesis");
 	register_kthread(&networking_main, "netd");
 	register_kthread(&dhcpd, "dhcpd");
@@ -134,4 +133,17 @@ void kernel(uint32_t magic)
 	pcb_start();
 	
 	UNREACHABLE();
+}
+
+void init_kctors()
+{
+    int symbols = ((int)_kctor_table_size)/4;
+    dbgprintf("%d total kernel constructors\n", symbols);
+
+    unsigned int* __address = (unsigned int*)_start_kctor_table;
+    for (int i = 0; i < symbols; i++){
+        void (*__func)() = (void (*)()) *__address;
+        __func();
+        __address++;
+    }
 }

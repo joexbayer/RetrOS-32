@@ -1,5 +1,5 @@
 OUTPUT_FORMAT("binary")
-ENTRY(kernel)
+ENTRY(_start)
 SECTIONS
 {
     . = 0x10000;
@@ -19,10 +19,10 @@ SECTIONS
         _ro_e = .;
     }
 
-    .symbol_table ALIGN(4) : {
-        _start_symbol_table = .;
-        *(.symbol_table)
-        _stop_symbol_table = ALIGN(4);
+    .kctor_table ALIGN(4) : {
+        _start_kctor_table = .;
+        *(.kctor_table)
+        _stop_kctor_table = .;
     }
 
     .data BLOCK(4K) : ALIGN(4K)
@@ -39,7 +39,7 @@ SECTIONS
     }
     _end = .;
 
-    _symbol_table_size = _stop_symbol_table - _start_symbol_table;
+    _kctor_table_size = _stop_kctor_table - _start_kctor_table;
 
 
 }
