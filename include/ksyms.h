@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 void ksyms_add_symbol(const char* name, uintptr_t addr);
-void* ksyms_resolve_symbol(const char* name);
+uintptr_t ksyms_resolve_symbol(const char* name);
 void backtrace(void);
 
 /**
@@ -15,7 +15,7 @@ void backtrace(void);
  * @param func function to export
  */
 #define EXPORT_KSYMBOL(func) \
-    static void __register_##func() { ksyms_add_symbol(#func, (uintptr_t)func); } \
-    EXPORT_KCTOR(__register_##func)
+    static void __ksymbol_##func() { ksyms_add_symbol(#func, (uintptr_t)func); }\
+    EXPORT_KCTOR(__ksymbol_##func)
 
 #endif // !__KSYMS_H

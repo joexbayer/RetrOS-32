@@ -33,9 +33,8 @@ void ksyms_add_symbol(const char* name, uintptr_t addr) {
     }
     dbgprintf("Added new symbol %s\n", name);
 }
-EXPORT_KSYMBOL(ksyms_add_symbol);
 
-void* ksyms_resolve_symbol(const char* name)
+uintptr_t ksyms_resolve_symbol(const char* name)
 {
     for (int i = 0; i < __ksyms.num_symbols; i++) {
         if(memcmp(name, __ksyms.symtable[i].name, strlen(__ksyms.symtable[i].name)) == 0){

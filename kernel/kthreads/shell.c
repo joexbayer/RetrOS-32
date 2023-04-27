@@ -15,6 +15,7 @@
 #include <pcb.h>
 #include <rtc.h>
 #include <kthreads.h>
+#include <ksyms.h>
 #include <arch/io.h>
 
 #include <windowmanager.h>
@@ -82,9 +83,46 @@ void ps()
 		twritef("   %d   0x%s%x  %s  %s  %s\n", info.pid, info.is_process ? "" : "00", info.stack, info.is_process ? "process" : "kthread", pcb_status[info.state], info.name);
 	}
 }
+EXPORT_KSYMBOL(ps);
+
+
+int shell_parse_command(const char* str, char* command, char args[][100]) {
+    int i = 0, j = 0, k = 0;
+    int numArgs = 0;
+
+    /* Extract command */
+    while (str[i] != '(' && str[i] != '\0') {
+        command[j++] = str[i++];
+    }
+    command[j] = '\0';
+
+    /* Extract arguments */
+    if (str[i] == '(') {
+        i++;
+        while (str[i] != ')' && str[i] != '\0') {
+            if (str[i] == ',') {
+                args[numArgs][k] = '\0';
+                numArgs++;
+                k = 0;
+            } else if (str[i] != ' ') {  /* Skip spaces before arguments */
+                args[numArgs][k++] = str[i];
+            }
+            i++;
+        }
+    }
+
+    args[numArgs][k] = '\0';
+    numArgs++;
+    return numArgs;
+}
 
 void exec_cmd()
 {
+	const char* str = "command(arg1, arg2, arg3);";
+    char command[100];
+    char args[10][100];
+    //int numArgs = shell_parse_command(str, command, args);
+
 	twritef("Kernel > %s", shell_buffer);
 
 	if(strncmp("lspci", shell_buffer, strlen("lspci"))){
@@ -137,7 +175,8 @@ void exec_cmd()
 	}
 
 	if(strncmp("ps", shell_buffer, strlen("ps"))){
-		ps();
+		void (*ptr)() = ksyms_resolve_symbol("ps");
+		ptr();
 		return;
 	}
 
@@ -272,7 +311,6 @@ void shell_put(unsigned char c)
 #include <gfx/api.h>
 
 int c_test = 0;
-
 void shell()
 {
 	dbgprintf("shell is running!\n");
@@ -283,7 +321,6 @@ void shell()
 	dbgprintf("shell: window 0x%x\n", window);
 	kernel_gfx_draw_rectangle(0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_BOX_BG);
 	//gfx_set_fullscreen(window);	
-
 
 	terminal_attach(&term);
 	//kernel_gfx_draw_text(0, 0, "Terminal!", VESA8_COLOR_BOX_LIGHT_GREEN);
