@@ -14,6 +14,7 @@ void image_viewer();
 
 error_t start(char* name);
 error_t register_kthread(void (*f)(), char* name);
+void kthread_entry(int argc, char* args[]);
 
 /**
  * @brief EXPORT_KTHREAD

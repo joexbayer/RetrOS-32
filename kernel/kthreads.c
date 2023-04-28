@@ -10,7 +10,9 @@
  */
 #include <kthreads.h>
 #include <terminal.h>
+#include <scheduler.h>
 #include <pcb.h>
+#include <assert.h>
 
 #define MAX_KTHREADS 64
 static int total_kthreads = 0;
@@ -18,9 +20,17 @@ static int total_kthreads = 0;
 static struct kthread {
     char name[PCB_MAX_NAME_LENGTH];
     void (*entry)();
-};
+} kthread_table[MAX_KTHREADS];
 
-static struct kthread kthread_table[MAX_KTHREADS];
+void kthread_entry(int argc, char* args[])
+{   
+    assert(!current_running->is_process);
+
+    void (*entry)() = current_running->thread_eip;
+    entry();
+    kernel_exit();
+    UNREACHABLE();
+}
 
 error_t register_kthread(void (*f)(), char* name)
 {

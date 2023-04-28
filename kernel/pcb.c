@@ -339,7 +339,7 @@ error_t pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 	pcb->esp = stack+STACK_SIZE-1;
 	pcb->kesp = pcb->esp;
 	pcb->kebp = pcb->kesp;
-	pcb->eip = entry;
+	pcb->eip = &kthread_entry;
 	pcb->state = PCB_NEW;
 	pcb->pid = pid;
 	pcb->stack_ptr = stack;
@@ -353,6 +353,7 @@ error_t pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 	pcb->current_directory = fs_get_root();
 	pcb->yields = 0;
 	pcb->parent = current_running;
+	pcb->thread_eip = (uintptr_t) entry;
 	pcb->cs = GDT_KERNEL_CS;
 	pcb->ds = GDT_KERNEL_DS;
 

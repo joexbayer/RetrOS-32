@@ -54,7 +54,10 @@ struct pcb {
     struct terminal* term;
 
     inode_t current_directory;
+    
 
+    uintptr_t thread_eip;
+    
     struct allocation* allocations;
     int used_memory;
 

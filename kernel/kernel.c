@@ -79,7 +79,6 @@ void kernel(uint32_t magic)
 	register_kthread(&dummytask, "Dummy");
 	register_kthread(&worker_thread, "workd");
 	register_kthread(&tcpd, "tcpd");
-	register_kthread(&image_viewer, "image");
 
 	#pragma GCC diagnostic ignored "-Wcast-function-type"
 	add_system_call(SYSCALL_PRTPUT, (syscall_t)&terminal_putchar);
