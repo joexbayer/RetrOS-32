@@ -20,18 +20,18 @@ struct gfx_theme default1 = {
 
 struct gfx_theme dark_theme = {
     .os = {
-        .background = COLOR_BLACK,
-        .foreground = COLOR_BLUE,
-        .text = COLOR_WHITE
+        .background = COLOR_VGA_BG,
+        .foreground = COLOR_VGA_MISC,
+        .text = COLOR_VGA_FG
     },
     .window = {
-        .border = COLOR_BLUE,
-        .background = COLOR_BLACK,
-        .text = COLOR_WHITE
+        .border = COLOR_VGA_MISC,
+        .background = COLOR_VGA_BG,
+        .text = COLOR_VGA_FG
     },
     .terminal = {
-        .background = COLOR_BLACK,
-        .text = COLOR_WHITE
+        .background = COLOR_VGA_BG,
+        .text = COLOR_VGA_FG
     },
     .name = "Dark theme"
 };
@@ -61,10 +61,10 @@ struct gfx_theme temple_os_theme = {
 static int total_themes = 3;
 
 static struct gfx_theme* gfx_themes[GFX_MAX_THEMES] = {
-    &default1, &dark_theme, &temple_os_theme
+    &dark_theme, &temple_os_theme,  &default1,
 };
 
-static struct gfx_theme* current_theme = &default1;
+static struct gfx_theme* current_theme = &dark_theme;
 
 int gfx_total_themes()
 {

@@ -135,7 +135,18 @@ void kfree(void* ptr)
 		__kmemory_bitmap[index] &= ~(1 << offset);
 	}
 
+    __kmemory_used -= num_blocks * KMEM_BLOCK_SIZE;
 	spin_unlock(&__kmemory_lock);
+}
+
+int kmemory_used()
+{
+    return __kmemory_used;
+}
+
+int kmemory_total()
+{
+    return KERNEL_MEMORY_END-KERNEL_MEMORY_START;
 }
 
 /**

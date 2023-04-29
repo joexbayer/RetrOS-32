@@ -8,6 +8,13 @@ typedef unsigned char color_t;
 
 #define COLOR_TURQUISE 50 // 50
 
+
+#define COLOR_VGA_BG 18
+#define COLOR_VGA_FG 90
+#define COLOR_VGA_MISC 125
+#define COLOR_VGA_RED 4
+#define COLOR_VGA_GREEN 0x2
+
 // 0x49, 0x92, 0xdb
 #define COLOR_GRAY_DARK 0x49
 #define COLOR_GRAY_DEFAULT 0x92 //144

@@ -7,7 +7,7 @@
 extern char _code[], _end[], _code_end[], _ro_s[], _ro_e[], _data_s[], _data_e[], _bss_s[], _bss_e[];
 extern int kernel_size;
 
-#define PMEM_END_ADDRESS 	  0x200000
+#define PMEM_END_ADDRESS 	 0x200000
 
 #define VMEM_MAX_ADDRESS    0x1600000
 #define VMEM_START_ADDRESS  0x400000
@@ -37,12 +37,26 @@ extern int kernel_size;
 
 extern uint32_t* kernel_page_dir;
 
+struct mem_info {
+	struct kernel {
+		int used;
+		int total;
+	};
+	struct virtual {
+		int used;
+		int total;
+	};
+	struct permanent {
+		int used;
+		int total;
+	};
+};
 
 struct allocation {
-  int* bits;
-  uint32_t* address;
-  int size;
-  struct allocation* next;
+	int* bits;
+	uint32_t* address;
+	int size;
+	struct allocation* next;
 };
 
 #define TABLE_INDEX(vaddr) ((vaddr >> PAGE_TABLE_BITS) & PAGE_TABLE_MASK)
@@ -52,11 +66,16 @@ void init_memory();
 void kmem_init();
 void vmem_init();
 
+/* Kernel memory*/
 void* kalloc(int size);
 void kfree(void* ptr);
+int kmemory_used();
+int kmemory_total();
 
+/* Permanent memory */
 void* palloc(int size);
 
+/* Userspace memory */
 void* malloc(unsigned int size);
 void free(void* ptr);
 

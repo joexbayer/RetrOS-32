@@ -30,9 +30,9 @@ void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
 
     struct gfx_theme* theme = kernel_gfx_current_theme();
 
-    int background_color = window->in_focus ? window->color.border == 0 ? theme->window.border : window->color.border : COLOR_BOX_DARK_BLUE;
+    int background_color = window->in_focus ? window->color.border == 0 ? theme->window.border : window->color.border : theme->window.border;
     /* Draw main frame of window with title bar and borders */
-    vesa_fillrect(buffer, window->x+8, window->y, window->width-16, 8, COLOR_BOX_BG);
+    vesa_fillrect(buffer, window->x+8, window->y, window->width-16, 8, 18);
 
 
     /* Copy inner window framebuffer to given buffer with relativ pitch. */

@@ -67,7 +67,7 @@ void reset_shell()
 	memset(&shell_buffer, 0, SHELL_MAX_SIZE);
 	shell_column = strlen(shell_name)+1;
 	shell_buffer_length = 0;
-	kernel_gfx_draw_text(0, SHELL_POSITION, shell_name, COLOR_BOX_LIGHT_AQUA);
+	kernel_gfx_draw_text(0, SHELL_POSITION, shell_name, COLOR_VGA_MISC);
 	shell_column += 1;
 }
 
@@ -290,7 +290,7 @@ void shell_put(unsigned char c)
 		if(shell_buffer_length < 1)
 			return;
 		shell_column -= 1;
-		kernel_gfx_draw_rectangle(shell_column*8, SHELL_POSITION, 8, 8, COLOR_BOX_BG);
+		kernel_gfx_draw_rectangle(shell_column*8, SHELL_POSITION, 8, 8, COLOR_VGA_BG);
 		gfx_commit();
 		shell_buffer[shell_buffer_length] = 0;
 		shell_buffer_length--;
@@ -301,7 +301,7 @@ void shell_put(unsigned char c)
 	{
 		return;
 	}
-	kernel_gfx_draw_char(shell_column*8, SHELL_POSITION, uc, COLOR_BOX_LIGHT_FG);
+	kernel_gfx_draw_char(shell_column*8, SHELL_POSITION, uc, COLOR_VGA_FG);
 	gfx_commit();
 	shell_buffer[shell_buffer_length] = uc;
 	shell_buffer_length++;
@@ -319,7 +319,7 @@ void shell()
 	struct gfx_window* window = gfx_new_window(SHELL_WIDTH, SHELL_HEIGHT);
 	
 	dbgprintf("shell: window 0x%x\n", window);
-	kernel_gfx_draw_rectangle(0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_BOX_BG);
+	kernel_gfx_draw_rectangle(0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_VGA_BG);
 	//gfx_set_fullscreen(window);	
 
 	terminal_attach(&term);

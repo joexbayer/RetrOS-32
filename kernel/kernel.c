@@ -53,7 +53,7 @@ void kernel(uint32_t magic)
 
 	init_kctors();
 
-	vga_set_palette();
+	//vga_set_palette();
 
 	init_interrupts();
 	gfx_init();

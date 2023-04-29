@@ -25,6 +25,7 @@
 #include <gfx/component.h>
 #include <sync.h>
 #include <assert.h>
+#include <math.h>
 
 static struct gfx_window* order;
 static mutex_t order_lock;
@@ -216,6 +217,20 @@ void gfx_set_fullscreen(struct gfx_window* w)
     __is_fullscreen = 1;
 }
 
+/* Helper function for displaying progress */
+static int __calculate_relative_difference(int a, int b) {
+    int diff = ABS(a - b);
+    int max = MAX(a, b);
+
+    if (max == 0)
+        return 1;
+
+    int ratio = (diff * 8) / max;
+    ratio = (ratio >= 1) ? ratio : 1;
+
+    return 8 - ratio;
+}
+
 /**
  * @brief Main window server kthread entry function
  * Allocates a second framebuffer that will be memcpy'd to the VGA framebuffer.
@@ -226,6 +241,8 @@ void gfx_set_fullscreen(struct gfx_window* w)
  * In current state its still very slow.
  */
 #define TIME_PREFIX(unit) unit < 10 ? "0" : ""
+
+int static tick = 1;
 void gfx_compositor_main()
 {
     int buffer_size = vbe_info->width*vbe_info->height*(vbe_info->bpp/8)+1;
@@ -296,6 +313,17 @@ void gfx_compositor_main()
         vesa_fillrect(wind.composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 0, strlen("00:00:00 00/00/00")*8, 8, theme->os.foreground);
         vesa_printf(wind.composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 0 ,  theme->os.text, "%s%d:%s%d:%s%d %s%d/%s%d/%d", TIME_PREFIX(time.hour), time.hour, TIME_PREFIX(time.minute), time.minute, TIME_PREFIX(time.second), time.second, TIME_PREFIX(time.day), time.day, TIME_PREFIX(time.month), time.month, time.year);
 
+        vesa_fillrect(wind.composition_buffer, 100, 0, 8*9, 8, theme->os.background);
+        for (int i = 1; i < 9; i++)
+        {
+            vesa_put_block(wind.composition_buffer, (tick + i) % 8 + 1, 100+(i*8), 0, COLOR_VGA_GREEN);
+        }
+        
+        //vesa_put_block(wind.composition_buffer, tick, 120, 0, COLOR_VGA_GREEN);
+        
+        tick++;
+        if(tick >= 9)
+            tick = 1;
 
         STI();
 
