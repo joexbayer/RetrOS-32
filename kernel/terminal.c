@@ -17,6 +17,33 @@
 #include <terminal.h>
 #include <gfx/theme.h>
 
+void terminal_set_color(color_t color)
+{
+	current_running->term->text_color = color;
+}
+
+void terminal_syntax(unsigned char c)
+{
+	struct gfx_theme* theme = kernel_gfx_current_theme();
+
+		/* Set different colors for different syntax elements */
+	switch (c) {
+		case '>':
+		case '/':
+			/* Highlight preprocessor directives */
+			terminal_set_color(COLOR_VGA_MISC);
+			break;
+		case '"':
+		case '-':
+			/* Highlight string literals and character literals */
+			terminal_set_color(COLOR_VGA_GREEN);
+			break;
+		default:
+			terminal_set_color(theme->terminal.text);
+			break;
+	}
+}
+
 /**
  * Writes out terminal buffer to screen.
  */
@@ -35,7 +62,8 @@ void terminal_commit()
 			continue;
 		}
 
-		kernel_gfx_draw_char(1 + x*8, 1+ y*8, current_running->term->textbuffer[i], theme->terminal.text);
+		terminal_syntax(current_running->term->textbuffer[i]);
+		kernel_gfx_draw_char(1 + x*8, 1+ y*8, current_running->term->textbuffer[i], current_running->term->text_color);
 		x++;
 	}
 }

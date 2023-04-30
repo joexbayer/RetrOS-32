@@ -101,7 +101,8 @@ int parse_arguments(const char *input_string, char *tokens[]) {
     return num_tokens;
 }
 
-char* strchr(const char* str, int ch) {
+char* strchr(const char* str, int ch)
+{
     while (*str != '\0') {
         if (*str == ch) {
             return (char*)str;
@@ -111,7 +112,8 @@ char* strchr(const char* str, int ch) {
     return NULL;
 }
 
-char* strtok(char* str, const char* delim) {
+char* strtok(char* str, const char* delim)
+{
     static char* current = NULL;   /* Keeps track of the current position in the string */
 
     if (str != NULL) {
@@ -135,6 +137,70 @@ char* strtok(char* str, const char* delim) {
     }
 
     return token;   /* Return the next token */
+}
+
+/**
+ * @brief Custom implementation of getopt.
+ *
+ * @param argc     The number of command-line arguments.
+ * @param argv     An array of command-line argument strings.
+ * @param optstring A string specifying the valid options and their characteristics.
+ *                  Each character represents an option, and a colon (:) following
+ *                  an option indicates that it requires an argument.
+ * @param optarg   A pointer to store the argument of the option (if any).
+ * @return int     The next recognized option character or -1 if there are no more options.
+ *                 Returns '?' if an invalid option is encountered.
+ *                 Returns ':' if an option requiring an argument is missing the argument.
+ *
+ * This function parses the command-line options and arguments, based on the provided
+ * optstring, and returns the next recognized option character. It also updates the
+ * optarg pointer to point to the argument associated with an option that requires one.
+ * If all options have been processed, the function returns -1. If an invalid option is
+ * encountered, it returns '?'. If an option requiring an argument is missing the argument,
+ * it returns ':'.
+ */
+int getopt(int argc, char* argv[], const char* optstring, char** optarg)
+{
+    int optind = 1;
+    int optpos = 1;
+
+    if (optind >= argc || argv[optind][0] != '-' || argv[optind][1] == '\0') {
+        return -1;  // No more options or not an option
+    }
+
+    char opt = argv[optind][optpos];
+    const char* optptr = strchr(optstring, opt);
+
+    if (optptr == NULL) {
+        return '?';  // Invalid option
+    }
+
+    if (*(optptr + 1) == ':') {
+        if (argv[optind][optpos + 1] != '\0') {
+            *optarg = argv[optind] + optpos + 1;
+            optind++;
+            optpos = 1;
+        }
+        else if (optind + 1 < argc) {
+            *optarg = argv[optind + 1];
+            optind += 2;
+            optpos = 1;
+        }
+        else {
+            return ':';  // Missing option argument
+        }
+    }
+    else {
+        if (argv[optind][optpos + 1] != '\0') {
+            optpos++;
+        }
+        else {
+            optind++;
+            optpos = 1;
+        }
+    }
+
+    return opt;
 }
 
 /* TODO: Move some functions into own files. */

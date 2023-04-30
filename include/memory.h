@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <pcb.h>
+#include <errors.h>
 
 extern char _code[], _end[], _code_end[], _ro_s[], _ro_e[], _data_s[], _data_e[], _bss_s[], _bss_e[];
 extern int kernel_size;
@@ -41,15 +42,15 @@ struct mem_info {
 	struct kernel {
 		int used;
 		int total;
-	};
+	} kernel;
 	struct virtual {
 		int used;
 		int total;
-	};
+	}virtual;
 	struct permanent {
 		int used;
 		int total;
-	};
+	}permanent;
 };
 
 struct allocation {
@@ -63,6 +64,7 @@ struct allocation {
 #define DIRECTORY_INDEX(vaddr) ((vaddr >> PAGE_DIRECTORY_BITS) & PAGE_TABLE_MASK)
 
 void init_memory();
+error_t get_mem_info(struct mem_info* info);
 void kmem_init();
 void vmem_init();
 

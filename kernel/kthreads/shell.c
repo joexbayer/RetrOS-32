@@ -116,32 +116,118 @@ int shell_parse_command(const char* str, char* command, char args[][100]) {
     return numArgs;
 }
 
+void run(int argc, char* argv[])
+{
+	dbgprintf("cmd: %d args: ", argc);
+	for (int i = 0; i < argc; i++)
+	{
+		dbgprintf("%s\n", argv[i]);
+	}
+
+	char* optarg = NULL;
+    int opt = 0;
+	while ((opt = getopt(argc, argv, "hc:", &optarg)) != -1) {
+		dbgprintf("%c\n", opt);
+        switch (opt) {
+            case 'h':
+                twritef("run [hn]\n  n - name\n  h - help\n  example: run -c /bin/clock\n");
+                return;
+			case 'c':
+				dbgprintf("c flag set\n");
+				{
+					int r = start(optarg);
+					if(r >= 0){
+						twritef("Kernel thread started\n");
+						return;
+					}
+
+					int pid = pcb_create_process(optarg, 0, NULL);
+					if(pid < 0)
+						twritef("%s does not exist\n", optarg);
+				}
+				return;
+            case '?':
+                twritef("Invalid option\n");
+				return;
+            case ':':
+                twritef("Missing option argument\n");
+				return;
+            default:
+                twritef("Unknown option %c\n", opt);
+				return;
+        }
+	}
+	
+	twritef("Missing option argument: -h for help\n");
+    return;
+}
+EXPORT_KSYMBOL(run);
+
+/**
+ * @brief cmd: command [opts] [args]
+ * 
+ * command:
+ * 	resolved from ksyms
+ * 
+ * opts:
+ *  -t run as a thread (long)
+ *  -w run as a worker (short)
+ * 
+ * args: 
+ * 	arguments passed to command
+ * 
+ */
+
+void ths()
+{
+	dbgprintf("%d\n", 0x1337);
+	int total_themes = gfx_total_themes();
+	for (int i = 0; i < total_themes; i++){
+		twritef("%d) %s\n", i, kernel_gfx_get_theme(i)->name);
+	}
+}
+EXPORT_KSYMBOL(ths);
+
+void dig(int argc, char* argv[])
+{
+	int ret = gethostname(argv[1]);
+	twritef("%s IN (A) %i\n", argv[1], ret);
+}
+EXPORT_KSYMBOL(dig);
+
+void th(int argc, char* argv[])
+{
+	int id = atoi(argv[1]);
+	kernel_gfx_set_theme(id);
+}
+EXPORT_KSYMBOL(th);
+
+char** argv = NULL;
+
 void exec_cmd()
 {
-	const char* str = "command(arg1, arg2, arg3);";
-    char command[100];
-    char args[10][100];
-    //int numArgs = shell_parse_command(str, command, args);
+	for (int i = 0; i < 5; i++) memset(argv[i], 0, 100);
+	int argc = parse_arguments(shell_buffer, argv);
+
+	void (*ptr)(int argc, char* argv[]) = (void (*)(int argc, char* argv[])) ksyms_resolve_symbol(argv[0]);
+	if(ptr == NULL){
+		twritef("Unknown command\n");
+		goto exec_cmd_exit;
+	}
 
 	twritef("Kernel > %s", shell_buffer);
+	ptr(argc, argv);
+	twritef("\n");
+	gfx_commit();
 
-	if(strncmp("lspci", shell_buffer, strlen("lspci"))){
-		list_pci_devices();
-		return;
-	}
+exec_cmd_exit:
+	return;
 
-	if(strncmp("scroll", shell_buffer, strlen("scroll"))){
-		termin_scroll(current_running->term);
-		return;
-	}
+    //int numArgs = shell_parse_command(str, command, args);
 
 	if(strncmp("ls", shell_buffer, strlen("ls"))){
 		ls("");
 		gfx_commit();
-		return;
-	}
-
-	if(strncmp("clear", shell_buffer, strlen("clear"))){
 		return;
 	}
 
@@ -151,32 +237,11 @@ void exec_cmd()
 		return;
 	}
 
-	if(strncmp("ths", shell_buffer, strlen("ths"))){
-		int total_themes = gfx_total_themes();
-		for (int i = 0; i < total_themes; i++){
-			twritef("%d) %s\n", i, kernel_gfx_get_theme(i)->name);
-		}
-		
-		return;
-	}
-
-	if(strncmp("th", shell_buffer, strlen("th"))){
-		int id = atoi(shell_buffer+strlen("th")+1);
-		kernel_gfx_set_theme(id);
-		return;
-	}
-
 	if(strncmp("dig", shell_buffer, strlen("dig"))){
 		char* hostname = shell_buffer+strlen("dig")+1;
 		hostname[strlen(hostname)-1] = 0;
 		int ret = gethostname(hostname);
 		twritef("%s IN (A) %i\n", hostname, ret);
-		return;
-	}
-
-	if(strncmp("ps", shell_buffer, strlen("ps"))){
-		void (*ptr)() = ksyms_resolve_symbol("ps");
-		ptr();
 		return;
 	}
 
@@ -233,33 +298,6 @@ void exec_cmd()
 		fs_mkdir(name, current_running->current_directory);
 		return;
 	}
-
-	if(strncmp("run", shell_buffer, strlen("run"))){
-		
-		dbgprintf("Command: %s\n", shell_buffer);
-		/* Allocate space for 5 args */
-		char** argv = (char**)kalloc(5 * sizeof(char*));
-		for (int i = 0; i < 5; i++) {
-			argv[i] = (char*)kalloc(100);
-		}
-		
-		int args = parse_arguments(shell_buffer, argv);
-		int pid = pcb_create_process(argv[1], args-1, &argv[1]);
-		if(pid < 0){
-			for (int i = 0; i < 5; i++) {
-				kfree(argv[i]);
-			}
-			kfree(argv);
-			twritef("%s does not exist\n", argv[1]);
-		}
-
-		return;
-	}
-	int r = start(shell_buffer);
-	if(r < 0)
-		twritef("Unknown command: %s\n", shell_buffer);
-	else
-		twriteln("Started process.");
 
 	gfx_commit();
 	//twrite(shell_buffer);
@@ -322,9 +360,17 @@ void shell()
 	kernel_gfx_draw_rectangle(0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_VGA_BG);
 	//gfx_set_fullscreen(window);	
 
+	argv = (char**)kalloc(5 * sizeof(char*));
+	for (int i = 0; i < 5; i++) {
+		argv[i] = (char*)kalloc(100);
+		memset(argv[i], 0, 100);
+	}
+
 	terminal_attach(&term);
 	//kernel_gfx_draw_text(0, 0, "Terminal!", VESA8_COLOR_BOX_LIGHT_GREEN);
 	reset_shell();
+
+	//gfx_set_fullscreen(window);
 	//sleep(2);
 	while(1)
 	{

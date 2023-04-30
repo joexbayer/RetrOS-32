@@ -37,7 +37,7 @@ void ksyms_add_symbol(const char* name, uintptr_t addr) {
 uintptr_t ksyms_resolve_symbol(const char* name)
 {
     for (int i = 0; i < __ksyms.num_symbols; i++) {
-        if(memcmp(name, __ksyms.symtable[i].name, strlen(__ksyms.symtable[i].name)) == 0){
+        if(memcmp(name, __ksyms.symtable[i].name, strlen(name)) == 0){
             return (void*) __ksyms.symtable[i].addr;
         }
     }

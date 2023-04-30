@@ -1,6 +1,7 @@
 #include <scheduler.h>
 #include <gfx/gfxlib.h>
 #include <kthreads.h>
+#include <ksyms.h>
 #include <vbe.h>
 
 #define IMAGE_WIDTH 320
@@ -20,3 +21,4 @@ void image()
     return 0;
 }
 EXPORT_KTHREAD(image);
+EXPORT_KSYMBOL(image);

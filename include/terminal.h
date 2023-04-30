@@ -1,6 +1,7 @@
 #ifndef TERMINAL_H
 #define TERMINAL_H
 
+#include <colors.h>
 #include <util.h>
 
 #define TERMINAL_BUFFER_SIZE 2000
@@ -9,6 +10,8 @@ struct terminal {
     int tail;
     int head;
     int lines;
+    color_t text_color;
+
 };
 
 void twrite(const char* data);

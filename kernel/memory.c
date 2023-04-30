@@ -118,6 +118,19 @@ void* calloc(int size, int val)
 	memset(m, val, size);
 	return m;
 }
+
+error_t get_mem_info(struct mem_info* info)
+{
+	struct mem_info inf = {
+		.kernel.total = kmemory_total(),
+		.kernel.used = kmemory_used()
+	};
+
+	*info = inf;
+
+	return 0;
+}
+
 /**
  * @brief Initializes all memory chunks and sets them to be free.
  * 

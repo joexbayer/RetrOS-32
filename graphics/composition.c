@@ -204,10 +204,10 @@ void gfx_set_fullscreen(struct gfx_window* w)
     }
 
     /* store and backup original window information */
-    w->inner_width = 640;
-    w->inner_height = 480;
+    w->inner_width = 640-8;
+    w->inner_height = 480-8;
 
-    w->inner = wind.composition_buffer;
+    w->inner = wind.composition_buffer+(640*8)+8;
     w->pitch = 640;
     w->x = 8;
     w->y = 8;
@@ -281,7 +281,8 @@ void gfx_compositor_main()
 
         if(window_changed){
             
-            memset(wind.composition_buffer, theme->os.background/*41*/, buffer_size);
+            if(!__is_fullscreen)
+                memset(wind.composition_buffer, theme->os.background/*41*/, buffer_size);
 
             for (int i = 0; i < (vbe_info->width/8) - 2; i++){
                 vesa_put_box(wind.composition_buffer, 80, 8+(i*8), 0, theme->os.foreground);
@@ -313,13 +314,15 @@ void gfx_compositor_main()
         vesa_fillrect(wind.composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 0, strlen("00:00:00 00/00/00")*8, 8, theme->os.foreground);
         vesa_printf(wind.composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 0 ,  theme->os.text, "%s%d:%s%d:%s%d %s%d/%s%d/%d", TIME_PREFIX(time.hour), time.hour, TIME_PREFIX(time.minute), time.minute, TIME_PREFIX(time.second), time.second, TIME_PREFIX(time.day), time.day, TIME_PREFIX(time.month), time.month, time.year);
 
-        vesa_fillrect(wind.composition_buffer, 100, 0, 8*9, 8, theme->os.background);
-        for (int i = 1; i < 9; i++)
-        {
+        vesa_fillrect(wind.composition_buffer, 100+8, 0, 8*9, 8, theme->os.background);
+        for (int i = 1; i < 9; i++){
             vesa_put_block(wind.composition_buffer, (tick + i) % 8 + 1, 100+(i*8), 0, COLOR_VGA_GREEN);
         }
         
-        //vesa_put_block(wind.composition_buffer, tick, 120, 0, COLOR_VGA_GREEN);
+        struct mem_info minfo;
+        get_mem_info(&minfo);
+
+        vesa_put_block(wind.composition_buffer, 1+__calculate_relative_difference(minfo.kernel.used, minfo.kernel.total), 300, 0, COLOR_VGA_GREEN);
         
         tick++;
         if(tick >= 9)

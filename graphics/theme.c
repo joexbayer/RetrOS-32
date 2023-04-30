@@ -2,20 +2,20 @@
 
 struct gfx_theme default1 = {
     .os = {
-        .background = COLOR_BOX_BG,
-        .foreground = COLOR_BOX_DARK_BLUE,
-        .text = COLOR_BOX_BG
+        .background = COLOR_VGA_FG,
+        .foreground = COLOR_VGA_MISC,
+        .text = COLOR_VGA_BG
     },
     .window = {
-        .border = COLOR_BOX_DARK_BLUE,
-        .background = COLOR_BOX_BG,
-        .text = COLOR_BOX_BG
+        .border = COLOR_VGA_MISC,
+        .background = COLOR_VGA_FG,
+        .text = COLOR_VGA_BG
     },
     .terminal = {
-        .background = COLOR_BOX_BG,
-        .text = COLOR_BOX_DARK_BLUE
+        .background = COLOR_VGA_FG,
+        .text = COLOR_VGA_BG
     },
-    .name = "Default"
+    .name = "Light theme"
 };
 
 struct gfx_theme dark_theme = {
@@ -38,18 +38,18 @@ struct gfx_theme dark_theme = {
 
 struct gfx_theme temple_os_theme = {
     .os = {
-        .background = COLOR_WHITE,
-        .foreground = 0x3,
-        .text = COLOR_WHITE
+        .background = 15,
+        .foreground = 0x1,
+        .text = 15
     },
     .window = {
-        .border = 0x3,
-        .background = COLOR_WHITE,
-        .text = 0x3
+        .border = 0x1,
+        .background = 15,
+        .text = 0x1
     },
     .terminal = {
-        .background = COLOR_WHITE,
-        .text = 0x3
+        .background = 15,
+        .text = 0x1
     },
     .name = "Temple OS"
 };
