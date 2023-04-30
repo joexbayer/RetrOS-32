@@ -2,6 +2,7 @@
 #include <assert.h>
 
 static char* error_string[] = {
+    "No error.",
     "Unspecified generic error.",
     "Unable to allocate memory.",
     "Invalid index.",

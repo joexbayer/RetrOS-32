@@ -4,6 +4,7 @@
 typedef int error_t;
 
 enum errors {
+    ERROR_OK,
     ERROR_DEFAULT,
     ERROR_ALLOC,
     ERROR_INDEX,

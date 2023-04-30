@@ -4,6 +4,13 @@
 #include <net/skb.h>
 #include <net/socket.h>
 
+struct net_info {
+    int dropped;
+    int sent;
+    int recvd;
+};
+error_t net_get_info(struct net_info* info);
+
 void net_incoming_packet_handler();
 void net_send_skb(struct sk_buff* skb);
 

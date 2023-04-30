@@ -24,6 +24,7 @@
 #include <net/tcp.h>
 #include <net/icmp.h>
 #include <net/socket.h>
+#include <net/net.h>
 #include <net/dhcp.h>
 
 #define MAX_PACKET_SIZE 0x600
@@ -39,9 +40,15 @@ static struct network_manager {
     uint16_t packets;
     struct skb_queue* skb_tx_queue;
     struct skb_queue* skb_rx_queue;
+
+    struct net_info stats;
+
 } netd = {
     .state = NETD_UNINITIALIZED,
-    .packets = 0
+    .packets = 0,
+    .stats.dropped = 0, 
+    .stats.recvd = 0,
+    .stats.sent = 0
 };
 
 void net_incoming_packet_handler()
@@ -56,6 +63,7 @@ void net_incoming_packet_handler()
 
     netd.skb_rx_queue->ops->add(netd.skb_rx_queue, skb);
     netd.packets++;
+    netd.stats.recvd++;
     dbgprintf("New packet incoming...\n");
 }
 
@@ -75,13 +83,21 @@ static void __net_transmit_skb(struct sk_buff* skb)
         dbgprintf("Error sending packet\n");
     }
     netd.packets++;
+    netd.stats.sent++;
 }
 
 int net_drop_packet(struct sk_buff* skb)
 {
     current_netdev.dropped++;
+    netd.stats.dropped++;
     skb_free(skb);
     return 0;
+}
+
+error_t net_get_info(struct net_info* info)
+{
+    *info = netd.stats;
+    return ERROR_OK;
 }
 
 int net_handle_recieve(struct sk_buff* skb)

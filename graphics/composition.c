@@ -26,6 +26,7 @@
 #include <sync.h>
 #include <assert.h>
 #include <math.h>
+#include <net/net.h>
 
 static struct gfx_window* order;
 static mutex_t order_lock;
@@ -242,7 +243,49 @@ static int __calculate_relative_difference(int a, int b) {
  */
 #define TIME_PREFIX(unit) unit < 10 ? "0" : ""
 
-int static tick = 1;
+#define TIMELINE_SIZE 5
+struct gfx_timeline {
+    char timeline[TIMELINE_SIZE];
+    int tick;
+    color_t bg;
+    color_t fg;
+    int start;
+};
+
+void gfx_timeline_draw(struct gfx_timeline* tl)
+{
+    vesa_fillrect(wind.composition_buffer, tl->start, 0, 8*TIMELINE_SIZE, 8,  tl->bg);
+    for (int i = 0; i < TIMELINE_SIZE; i++){
+        if(tl->timeline[i] != 0)
+            vesa_put_block(wind.composition_buffer, tl->timeline[i], tl->start+(i*8), 0,  tl->fg);
+    }
+}
+
+void gfx_timeline_update(struct gfx_timeline* tl, char value)
+{
+    if(value == 0) return;
+
+    if(tl->timeline[TIMELINE_SIZE-1] != value){
+        tl->timeline[TIMELINE_SIZE-1] = value;
+        memcpy(&tl->timeline[0], &tl->timeline[1], TIMELINE_SIZE-1);
+        return;
+    }
+    tl->tick++;
+
+    if(tl->tick == 50){
+        memcpy(&tl->timeline[0], &tl->timeline[1], TIMELINE_SIZE-1);
+        tl->tick = 0;
+    }
+}
+
+float ease(int startValue, int endValue, float t) {
+    // Clamp t between 0 and 1
+    t = (t < 0.0f) ? 0.0f : (t > 1.0f) ? 1.0f : t;
+
+    // Calculate the interpolated value
+    return startValue + (endValue - startValue) * t;
+}
+
 void gfx_compositor_main()
 {
     int buffer_size = vbe_info->width*vbe_info->height*(vbe_info->bpp/8)+1;
@@ -251,6 +294,30 @@ void gfx_compositor_main()
     wind.composition_buffer = (uint8_t*) palloc(buffer_size);
 
     //gfx_set_fullscreen(order);
+
+    struct gfx_timeline memory_timeline = {
+        .fg = COLOR_VGA_GREEN,
+        .bg = COLOR_VGA_BG,
+        .start = 100
+    };
+
+    int net_send_last_diff = 0;
+    int net_send_last = 0;
+    int net_send = 0;
+    struct gfx_timeline net_send_timeline = {
+        .fg = COLOR_VGA_MISC,
+        .bg = COLOR_VGA_BG,
+        .start = 160
+    };
+
+    int net_recv_last_diff = 0;
+    int net_recv_last = 0;
+    int net_recv = 0;
+    struct gfx_timeline net_recv_timeline = {
+        .fg = COLOR_VGA_RED,
+        .bg = COLOR_VGA_BG,
+        .start = 220
+    };
 
     /* Main composition loop */
     while(1){
@@ -308,25 +375,46 @@ void gfx_compositor_main()
             } else {
                 gfx_recursive_draw(order);
             }
-        
         }
 
         vesa_fillrect(wind.composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 0, strlen("00:00:00 00/00/00")*8, 8, theme->os.foreground);
         vesa_printf(wind.composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 0 ,  theme->os.text, "%s%d:%s%d:%s%d %s%d/%s%d/%d", TIME_PREFIX(time.hour), time.hour, TIME_PREFIX(time.minute), time.minute, TIME_PREFIX(time.second), time.second, TIME_PREFIX(time.day), time.day, TIME_PREFIX(time.month), time.month, time.year);
 
-        vesa_fillrect(wind.composition_buffer, 100+8, 0, 8*9, 8, theme->os.background);
-        for (int i = 1; i < 9; i++){
-            vesa_put_block(wind.composition_buffer, (tick + i) % 8 + 1, 100+(i*8), 0, COLOR_VGA_GREEN);
-        }
+        /* Memory timeline  */
         
         struct mem_info minfo;
         get_mem_info(&minfo);
+        char current_memory_usage = __calculate_relative_difference(minfo.kernel.used, minfo.kernel.total);
+        gfx_timeline_update(&memory_timeline, current_memory_usage);
 
-        vesa_put_block(wind.composition_buffer, 1+__calculate_relative_difference(minfo.kernel.used, minfo.kernel.total), 300, 0, COLOR_VGA_GREEN);
+        struct net_info ninfo;
+        net_get_info(&ninfo);
+
+        int new_diff = ninfo.recvd - net_recv_last;
+        int new_net_recv = __calculate_relative_difference(new_diff, net_recv_last_diff);
+        int interpolated_recv = ease(net_recv, new_net_recv, 0.3f);
+        net_recv = new_net_recv;
+
+        net_recv_last_diff = new_diff;
+        net_recv_last = ninfo.recvd;
+        gfx_timeline_update(&net_recv_timeline, interpolated_recv);
+
+        new_diff = ninfo.sent - net_send_last;
+        int new_net_send = __calculate_relative_difference(new_diff, net_send_last_diff);
         
-        tick++;
-        if(tick >= 9)
-            tick = 1;
+        int interpolated_send = ease(net_send, new_net_send, 0.3f);
+        net_send = new_net_send;
+        
+        //dbgprintf("new send: %d\n", interpolated_send);
+        net_send_last_diff = new_diff;
+        net_send_last = ninfo.sent;
+
+        gfx_timeline_update(&net_send_timeline, interpolated_send);
+
+        gfx_timeline_draw(&memory_timeline);
+        gfx_timeline_draw(&net_recv_timeline);
+        gfx_timeline_draw(&net_send_timeline);
+        
 
         STI();
 

@@ -282,8 +282,6 @@ int tcp_close_connection(struct sock* sock)
 	sock->tcp->state = TCP_FIN_WAIT;
 	tcp_send_fin(sock);
 
-	WAIT(!net_sock_awaiting_ack(sock));
-
 	WAIT(!(sock->tcp->state == TCP_CLOSED));
 
 	return 0;
