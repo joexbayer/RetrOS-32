@@ -202,12 +202,26 @@ void th(int argc, char* argv[])
 }
 EXPORT_KSYMBOL(th);
 
+void cd(int argc, char* argv[])
+{
+	current_running->current_directory = chdir(argv[1]);
+}
+EXPORT_KSYMBOL(cd);
+
+void ls()
+{
+	listdir();
+}
+EXPORT_KSYMBOL(ls);
+
+
 char** argv = NULL;
 
 void exec_cmd()
 {
 	for (int i = 0; i < 5; i++) memset(argv[i], 0, 100);
 	int argc = parse_arguments(shell_buffer, argv);
+	if(argc == 0) return;
 
 	void (*ptr)(int argc, char* argv[]) = (void (*)(int argc, char* argv[])) ksyms_resolve_symbol(argv[0]);
 	if(ptr == NULL){
@@ -276,19 +290,11 @@ exec_cmd_exit:
 		current_running->gfx_window->height = 400;
 		return;
 	}
-	
 
 	if(strncmp("exit", shell_buffer, strlen("exit"))){
 		sync();
 		dbgprintf("[SHUTDOWN] NETOS has shut down.\n");
 		outportw(0x604, 0x2000);
-		return;
-	}
-
-	if(strncmp("cd", shell_buffer, strlen("cd"))){
-		char* name = shell_buffer+strlen("cd")+1;
-		name[strlen(name)-1] = 0;
-		current_running->current_directory = chdir(name);
 		return;
 	}
 

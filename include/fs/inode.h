@@ -37,7 +37,7 @@ int inode_read(void* buf, int size, struct inode* inode, struct superblock* sb);
 inode_t alloc_inode(struct superblock* sb, char TYPE);
 struct inode* inode_get(inode_t inode, struct superblock* sb);
 
-void ls(char* path);
+void listdir();
 
 void inodes_sync(struct superblock* sb);
 void sync();

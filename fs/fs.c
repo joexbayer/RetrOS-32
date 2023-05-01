@@ -10,6 +10,7 @@
 #include <bitmap.h>
 #include <serial.h>
 #include <pcb.h>
+#include <ksyms.h>
 
 #include <util.h>
 #include <rtc.h>
@@ -336,7 +337,7 @@ int fs_mkdir(char* name, inode_t current)
 
 
 
-void ls(char* path)
+void listdir()
 {
 	struct directory_entry entry;
 	struct inode* current_dir = inode_get(fs_get_current_dir(), &superblock);
@@ -348,7 +349,6 @@ void ls(char* path)
 		int ret = inode_read((char*) &entry, sizeof(struct directory_entry), current_dir, &superblock);
 		struct inode* inode = inode_get(entry.inode, &superblock);
 		struct time* time = &inode->time;
-		dbgprintf("%d\n", time->month);
 		twritef("%x %s %d, %d:%d - %s%s\n",
 			inode->size,
 			months[time->month],

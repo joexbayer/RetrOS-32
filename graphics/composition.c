@@ -278,14 +278,6 @@ void gfx_timeline_update(struct gfx_timeline* tl, char value)
     }
 }
 
-float ease(int startValue, int endValue, float t) {
-    // Clamp t between 0 and 1
-    t = (t < 0.0f) ? 0.0f : (t > 1.0f) ? 1.0f : t;
-
-    // Calculate the interpolated value
-    return startValue + (endValue - startValue) * t;
-}
-
 void gfx_compositor_main()
 {
     int buffer_size = vbe_info->width*vbe_info->height*(vbe_info->bpp/8)+1;
@@ -392,7 +384,7 @@ void gfx_compositor_main()
 
         int new_diff = ninfo.recvd - net_recv_last;
         int new_net_recv = __calculate_relative_difference(new_diff, net_recv_last_diff);
-        int interpolated_recv = ease(net_recv, new_net_recv, 0.3f);
+        int interpolated_recv = EASE(net_recv, new_net_recv, 0.3f);
         net_recv = new_net_recv;
 
         net_recv_last_diff = new_diff;
@@ -402,7 +394,7 @@ void gfx_compositor_main()
         new_diff = ninfo.sent - net_send_last;
         int new_net_send = __calculate_relative_difference(new_diff, net_send_last_diff);
         
-        int interpolated_send = ease(net_send, new_net_send, 0.3f);
+        int interpolated_send = EASE(net_send, new_net_send, 0.3f);
         net_send = new_net_send;
         
         //dbgprintf("new send: %d\n", interpolated_send);
