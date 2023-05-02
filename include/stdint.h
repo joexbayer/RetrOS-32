@@ -11,6 +11,8 @@ typedef short               int16_t;
 typedef int                 int32_t;
 typedef long long           int64_t;
 
+typedef unsigned int        size_t;
+
 
 typedef unsigned int        uintptr_t;
 typedef int                 intptr_t;

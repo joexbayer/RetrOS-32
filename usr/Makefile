@@ -26,13 +26,15 @@ endif
 
 OUTPUTDIR = ./bin/
 
+UTILS = bin/cppUtils.o bin/StringHelper.o
+
 USROBJS = bin/counter.o bin/clock.o
 COMMON = ../bin/syscall.o ../bin/util.o ../bin/printf.o ../bin/graphics.o
 
 .PHONY: all new programs
 all: new
 
-new: bindir programs 
+new: ${UTILS} bindir programs
 
 programs: bin/crt0.o ${USROBJS}
 	@make -C editor/
@@ -43,6 +45,10 @@ bin/%.o: %.c bin/crt0.o
 	$(CC) -o $@ -c $< $(CCFLAGS)
 	@$(LD) -o $(basename $@) ./bin/crt0.o $@ $(COMMON) $(LDFLAGS) -T ./utils/linker.ld
 	@echo [USR] Compiling $(basename $@)
+
+bin/%.o: utils/%.cpp
+	$(CPP) -o $@ -c $< $(CCFLAGS) -fno-exceptions -fno-rtti -I ./../include/
+	@echo [USR] Compiling C++ $(basename $@)
 
 bin/%.o: */%.s
 	@echo [USR] Compiling dependency $<

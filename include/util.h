@@ -45,6 +45,7 @@ void itoa(int n, char s[]);
 void itohex(uint32_t n, char s[]);
 
 int isdigit(char c);
+int isspace(char c);
 int rand(void);
 
 #define SAVE_AND_RESTORE(x, code_block) \

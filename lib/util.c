@@ -1,5 +1,7 @@
 #ifdef __cplusplus
 extern "C" {
+    
+
 #endif
 
 #include <util.h>
@@ -269,6 +271,12 @@ inline int isdigit(char c)
 {
     if ((c>='0') && (c<='9')) return 1;
     return 0;
+}
+
+
+inline int isspace(char c)
+{
+    return c == ' ';
 }
 
 /*
