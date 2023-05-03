@@ -213,6 +213,7 @@ struct gfx_window* gfx_new_window(int width, int height)
     w->color.border = 0;
     w->color.header = 0;
     w->color.text = 0;
+    w->spinlock = 0;
     
     w->events.head = 0;
     w->events.tail = 0;

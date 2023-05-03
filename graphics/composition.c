@@ -372,7 +372,7 @@ void gfx_compositor_main()
         vesa_fillrect(wind.composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 0, strlen("00:00:00 00/00/00")*8, 8, theme->os.foreground);
         vesa_printf(wind.composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 0 ,  theme->os.text, "%s%d:%s%d:%s%d %s%d/%s%d/%d", TIME_PREFIX(time.hour), time.hour, TIME_PREFIX(time.minute), time.minute, TIME_PREFIX(time.second), time.second, TIME_PREFIX(time.day), time.day, TIME_PREFIX(time.month), time.month, time.year);
 
-        /* Memory timeline  */
+        /* Memory timeline  
         
         struct mem_info minfo;
         get_mem_info(&minfo);
@@ -406,7 +406,7 @@ void gfx_compositor_main()
         gfx_timeline_draw(&memory_timeline);
         gfx_timeline_draw(&net_recv_timeline);
         gfx_timeline_draw(&net_send_timeline);
-        
+        */
 
         STI();
 

@@ -46,10 +46,12 @@ int gfx_window_reize(int width, int height)
 static int test = 0;
 int gfx_push_event(struct gfx_window* w, struct gfx_event* e)
 {
-	//dbgprintf("Pushing event\n");
+	dbgprintf("Pushing event %d: data %d\n", e->event, e->data);
 
-	memcpy(&w->events.list[w->events.head], e, sizeof(*e));
-	w->events.head = (w->events.head + 1) % GFX_MAX_EVENTS;
+    SPINLOCK(w,  {
+        memcpy(&w->events.list[w->events.head], e, sizeof(*e));
+	    w->events.head = (w->events.head + 1) % GFX_MAX_EVENTS;
+    });
 
 	test--;
 
@@ -73,9 +75,11 @@ int gfx_event_loop(struct gfx_event* event)
 			block();
 			continue;	
 		}
-	
-		memcpy(event, &current_running->gfx_window->events.list[current_running->gfx_window->events.tail], sizeof(struct gfx_event));
-		current_running->gfx_window->events.tail = (current_running->gfx_window->events.tail + 1) % GFX_MAX_EVENTS;
+
+        SPINLOCK(current_running->gfx_window, {
+            memcpy(event, &current_running->gfx_window->events.list[current_running->gfx_window->events.tail], sizeof(struct gfx_event));
+		    current_running->gfx_window->events.tail = (current_running->gfx_window->events.tail + 1) % GFX_MAX_EVENTS;
+        });
 		return 0;
 	}
 }

@@ -8,6 +8,7 @@ struct gfx_window;
 #include <terminal.h>
 #include <pcb.h>
 #include <colors.h>
+#include <sync.h>
 
 #define GFX_MAX_WINDOW_NAME_SIZE 20
 #define GFX_WINDOW_BG_COLOR COLOR_BOX_GRAY_DEFAULT
@@ -57,6 +58,7 @@ struct gfx_window {
     } is_moving;     
 
     struct pcb* owner;
+    spinlock_t spinlock;
 
     uint8_t in_focus;
 
