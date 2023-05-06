@@ -182,9 +182,12 @@ void gfx_mouse_event(int x, int y, char flags)
                 i->click(i, x, y);
                 i->mouseup(i, x, y);
 
+                uint16_t new_x = CLAMP( (x - (i->x+8)), 0,  i->inner_width);
+                uint16_t new_y = CLAMP( (y - (i->y+8)), 0,  i->inner_height);
+
                 struct gfx_event e = {
-                    .data = x - (i->x+8),
-                    .data2 = y - (i->y+8),
+                    .data = new_x,
+                    .data2 = new_y,
                     .event = GFX_EVENT_MOUSE
                 };
                 gfx_push_event(order, &e);
@@ -372,7 +375,7 @@ void gfx_compositor_main()
         vesa_fillrect(wind.composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 0, strlen("00:00:00 00/00/00")*8, 8, theme->os.foreground);
         vesa_printf(wind.composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 0 ,  theme->os.text, "%s%d:%s%d:%s%d %s%d/%s%d/%d", TIME_PREFIX(time.hour), time.hour, TIME_PREFIX(time.minute), time.minute, TIME_PREFIX(time.second), time.second, TIME_PREFIX(time.day), time.day, TIME_PREFIX(time.month), time.month, time.year);
 
-        /* Memory timeline  
+        /* Memory timeline */  
         
         struct mem_info minfo;
         get_mem_info(&minfo);
@@ -406,11 +409,10 @@ void gfx_compositor_main()
         gfx_timeline_draw(&memory_timeline);
         gfx_timeline_draw(&net_recv_timeline);
         gfx_timeline_draw(&net_send_timeline);
-        */
 
         STI();
 
-        kernel_sleep(2);
+        kernel_yield();
 
         //if(mouse_changed || window_changed)
             memcpy((uint8_t*)vbe_info->framebuffer, wind.composition_buffer, buffer_size-1);

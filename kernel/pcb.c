@@ -387,12 +387,10 @@ error_t pcb_create_process(char* program, int args, char** argv)
 	
 	struct pcb* pcb = &pcb_table[i];
 
-	char* pname = "program";
-
 	pcb->eip = (void (*)()) 0x1000000; /* External programs start */
 	pcb->pid = i;
 	pcb->data_size = read;
-	memcpy(pcb->name, pname, strlen(pname)+1);
+	memcpy(pcb->name, program, strlen(program)+1);
 	pcb->esp = 0xEFFFFFF0;
 	pcb->ebp = pcb->esp;
 	pcb->stack_ptr = (uint32_t) kalloc(STACK_SIZE);

@@ -50,7 +50,7 @@ void kernel(uint32_t magic)
 	dbgprintf("[VBE] Bpp: %d\n", vbe_info->bpp);
 	dbgprintf("[VBE] Memory Size: %d (0x%x)\n", vbe_info->width*vbe_info->height*(vbe_info->bpp/8), vbe_info->width*vbe_info->height*(vbe_info->bpp/8));
 	//vmem_map_driver_region(vbe_info->framebuffer, (vbe_info->width*vbe_info->height*(vbe_info->bpp/8))+1);
-
+	
 	init_kctors();
 
 	//vga_set_palette();

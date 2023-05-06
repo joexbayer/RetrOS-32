@@ -195,6 +195,7 @@ struct gfx_window* gfx_new_window(int width, int height)
         return NULL;
     }
     memset(w->inner, 0, width*height);
+    memset(w->events.list, 0, sizeof(struct gfx_event)*GFX_MAX_EVENTS);
 
     w->click = &gfx_default_click;
     w->mousedown = &gfx_default_mouse_down;

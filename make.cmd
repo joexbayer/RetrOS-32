@@ -19,7 +19,7 @@ if "%~1"=="" (
 ) else (
 	if "%1" == "run" (
 		docker-compose up
-		qemu-system-i386 -device e1000,netdev=net0 -serial stdio -netdev user,id=net0 -object filter-dump,id=net0,netdev=net0,file=dump.dat -d cpu_reset -D ./log.txt boot.iso
+		qemu-system-i386 -device e1000,netdev=net0 -serial stdio  -netdev user,id=net0 -object filter-dump,id=net0,netdev=net0,file=dump.dat -d cpu_reset -D ./log.txt boot.iso
 	) else if "%1" == "compile" (
 		docker-compose up
 	) else if "%1" == "clean" (

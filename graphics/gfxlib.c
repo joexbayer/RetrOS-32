@@ -46,7 +46,7 @@ int gfx_window_reize(int width, int height)
 static int test = 0;
 int gfx_push_event(struct gfx_window* w, struct gfx_event* e)
 {
-	dbgprintf("Pushing event %d: data %d\n", e->event, e->data);
+	dbgprintf("Pushing event %d (head %d): data %d, data2 %d\n", e->event, w->events.head, e->data, e->data2);
 
     SPINLOCK(w,  {
         memcpy(&w->events.list[w->events.head], e, sizeof(*e));
