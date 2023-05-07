@@ -156,7 +156,7 @@ bindir:
 
 grub: kernel
 	cp bin/kernelout legacy/multiboot/boot/myos.bin
-	grub-mkrescue -o myos.iso legacy/multiboot
+	grub-mkrescue /usr/lib/grub/i386-pc -o myos.iso legacy/multiboot
 
 
 docker-rebuild:
