@@ -8,7 +8,7 @@
 extern char _code[], _end[], _code_end[], _ro_s[], _ro_e[], _data_s[], _data_e[], _bss_s[], _bss_e[];
 extern int kernel_size;
 
-#define PMEM_END_ADDRESS 	 0x200000
+#define PMEM_END_ADDRESS 	 0x2000000
 
 #define VMEM_MAX_ADDRESS    0x1600000
 #define VMEM_START_ADDRESS  0x400000

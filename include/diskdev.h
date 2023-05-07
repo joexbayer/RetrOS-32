@@ -18,6 +18,8 @@ struct diskdev {
     struct ide_device* dev;
 };
 
+int disk_attached();
+
 int write_block(char* buf, int block);
 int write_block_offset(char* usr_buf, int size, int offset, int block);
 

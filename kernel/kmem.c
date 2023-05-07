@@ -153,7 +153,7 @@ int kmemory_total()
  * @brief Permanent memory allocation scheme for memory that wont be freed.
  * Mainly by the windowservers framebuffer, and E1000's buffers.
  */
-#define PERMANENT_KERNEL_MEMORY_START 0x100000
+#define PERMANENT_KERNEL_MEMORY_START 0x600000
 static uint32_t memory_permanent_ptr = PERMANENT_KERNEL_MEMORY_START;
 void* palloc(int size)
 {

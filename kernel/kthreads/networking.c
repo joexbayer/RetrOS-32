@@ -148,6 +148,8 @@ int net_handle_recieve(struct sk_buff* skb)
  */
 void networking_main()
 {
+    if(!is_netdev_attached()) return;
+
     if(netd.state == NETD_UNINITIALIZED){
         netd.skb_rx_queue = skb_new_queue();
         netd.skb_tx_queue = skb_new_queue();

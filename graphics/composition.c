@@ -208,11 +208,11 @@ void gfx_set_fullscreen(struct gfx_window* w)
     }
 
     /* store and backup original window information */
-    w->inner_width = 640-8;
-    w->inner_height = 480-8;
+    w->inner_width = vbe_info->width-8;
+    w->inner_height = vbe_info->height-8;
 
-    w->inner = wind.composition_buffer+(640*8)+8;
-    w->pitch = 640;
+    w->inner = wind.composition_buffer+(vbe_info->width*8)+8;
+    w->pitch = vbe_info->width;
     w->x = 8;
     w->y = 8;
 

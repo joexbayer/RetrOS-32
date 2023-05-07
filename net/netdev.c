@@ -35,6 +35,11 @@ void netdev_attach_driver(
     memcpy(current_netdev.name, name, strlen(name)+1);
 }
 
+int is_netdev_attached()
+{
+    return netdev_attached;
+}
+
 int netdev_transmit(void* buffer, uint32_t size)
 {
     current_netdev.sent++;

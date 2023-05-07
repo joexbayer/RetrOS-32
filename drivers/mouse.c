@@ -74,8 +74,8 @@ void mouse_handler()
                     if (mouse_x < 0) mouse_x = 0;
 		            if (mouse_y < 0) mouse_y = 0;
 
-                    if (mouse_x > 640-16) mouse_x = 640-16;
-		            if (mouse_y > 480-16) mouse_y = 480-16;
+                    if (mouse_x > vbe_info->width-16) mouse_x = vbe_info->width-16;
+		            if (mouse_y > vbe_info->height-16) mouse_y = vbe_info->height-16;
 
 					received = 0;
 					mouse_cycle = 0;

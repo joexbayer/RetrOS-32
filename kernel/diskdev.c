@@ -18,6 +18,11 @@ void attach_disk_dev(
     disk_device.dev = dev;
 }
 
+int disk_attached()
+{
+    return disk_device.attached;
+}
+
 
 int disk_size(){
     if(disk_device.attached)

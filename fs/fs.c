@@ -25,8 +25,15 @@ static int FS_BLOCK_BMAP_LOCATION = 0;
 
 static char* months[] = {"NAN", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Nov", "Dec"};
 
+#define CHECK_DISK() if(!disk_attached()){\
+		dbgprintf("[FS]: No disk device found.\n");\
+		return -1;\
+	}
+
 int init_fs()
 {
+	CHECK_DISK();
+
 	FS_START_LOCATION = (kernel_size/512)+2;
 	FS_INODE_BMAP_LOCATION = FS_START_LOCATION+1;
 	FS_BLOCK_BMAP_LOCATION = FS_INODE_BMAP_LOCATION+1;
@@ -34,7 +41,7 @@ int init_fs()
 	/* Read superblock and check magic. */
 	read_block_offset((char*) &superblock, sizeof(struct superblock), 0, FS_START_LOCATION);
 	if(superblock.magic != MAGIC){
-		mkfs();
+		//mkfs();
 		return 1;
 	}
 
@@ -272,6 +279,7 @@ fs_open_done:
 
 inode_t fs_open(char* name)
 {
+	CHECK_DISK();
 	return inode_from_path(name);
 }
 
@@ -339,6 +347,8 @@ int fs_mkdir(char* name, inode_t current)
 
 void listdir()
 {
+	if(!disk_attached()) return;
+
 	struct directory_entry entry;
 	struct inode* current_dir = inode_get(fs_get_current_dir(), &superblock);
 	int size = 0;
