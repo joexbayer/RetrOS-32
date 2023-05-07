@@ -328,7 +328,7 @@ void kernel(uint32_t magic)
 	VGA_MEMORY[2] = 'e';
 
 	kernel_size = _end-_code;
-	init_serial();
+	//init_serial();
 	init_memory();
 
 	dbgprintf("Kernel is at: 0x%x\n", magic);
@@ -411,7 +411,7 @@ void kernel(uint32_t magic)
 	start("workd");
 	//start("workd");
 	start("wind");
-	start("netd");
+	//start("netd");
 	start("shell");
 	
 	//pcb_create_process("/bin/clock", 0, NULL);

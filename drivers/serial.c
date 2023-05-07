@@ -17,6 +17,7 @@
 
 #define PORT 0x3f8          // COM1
 #define MAX_FMT_STR_SIZE 50
+static int serial_init_done = 0;
 
 void serial_put(char a)
 {
@@ -43,6 +44,8 @@ void serial_write(char* str)
  */
 int32_t serial_printf(char* fmt, ...)
 {
+	if(!serial_init_done) return -1;
+
 	int written = 0;
 	#ifdef _KDEBUG
 	CLI();
