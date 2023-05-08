@@ -313,14 +313,14 @@ struct multiboot_apm_info
 void kernel(uint32_t magic) 
 {
 	CLI();
-	//vbe_info = (struct vbe_mode_info_structure*) magic;
+	vbe_info = (struct vbe_mode_info_structure*) magic;
 
-	struct multiboot_info* mb_info = (struct multiboot_info*) magic;
+	/*struct multiboot_info* mb_info = (struct multiboot_info*) magic;
 	vbe_info->height = mb_info->framebuffer_height;
 	vbe_info->width = mb_info->framebuffer_width;
 	vbe_info->bpp = mb_info->framebuffer_bpp;
 	vbe_info->pitch = mb_info->framebuffer_width;
-	vbe_info->framebuffer = mb_info->framebuffer_addr;
+	vbe_info->framebuffer = mb_info->framebuffer_addr;*/
 	
 	uint16_t* const VGA_MEMORY = (uint16_t*) 0xB8000;
 	VGA_MEMORY[0] = 'J';

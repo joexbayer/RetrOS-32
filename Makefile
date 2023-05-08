@@ -52,7 +52,7 @@ PROGRAMOBJ = bin/shell.o bin/networking.o bin/dhcpd.o bin/error.o bin/tcpd.o bin
 
 GFXOBJ = bin/window.o bin/component.o bin/composition.o bin/gfxlib.o bin/api.o bin/theme.o
 
-KERNELOBJ = bin/multiboot.o bin/kernel.o bin/terminal.o bin/helpers.o bin/pci.o \
+KERNELOBJ = bin/kernel.o bin/terminal.o bin/helpers.o bin/pci.o \
 			bin/util.o bin/interrupts.o bin/irs_entry.o bin/timer.o bin/gdt.o \
 			bin/keyboard.o bin/pcb.o bin/memory.o bin/vmem.o bin/kmem.o bin/e1000.o \
 			bin/sync.o bin/kthreads.o bin/ata.o bin/bitmap.o bin/rtc.o bin/tss.o \
@@ -76,8 +76,11 @@ ls:
 bootblock: $(BOOTOBJ)
 	@$(LD) $(LDFLAGS) -o bin/bootblock $^ -Ttext 0x7C00 --oformat=binary
 
-kernel: $(KERNELOBJ)
+multiboot_kernel: bin/multiboot.o $(KERNELOBJ)
 	@$(LD) -o bin/kernelout $^ $(LDFLAGS) -T ./legacy/multiboot.ld
+
+kernel: bin/kcrt0.o $(KERNELOBJ)
+	@$(LD) -o bin/kernelout $^ $(LDFLAGS) -T ./kernel/linker.ld
 
 .depend: **/*.[cSh]
 	@$(CC) $(CCFLAGS) -MM -MG **/*.[cS] > $@
@@ -109,7 +112,6 @@ bin/mkfs: bin/fs.o bin/bitmap.o ./tools/mkfs.c
 tools: bin/build bin/mkfs
 
 tests: compile
-	make -C tests/
 
 bin/net.o: ./net/*.c
 	@make -C ./net/
@@ -154,7 +156,7 @@ test: clean compile tests
 bindir:
 	@mkdir -p bin
 
-grub: kernel
+grub: multiboot_kernel
 	cp bin/kernelout legacy/multiboot/boot/myos.bin
 	grub-mkrescue /usr/lib/grub/i386-pc -o myos.iso legacy/multiboot
 

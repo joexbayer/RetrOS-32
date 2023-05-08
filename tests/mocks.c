@@ -21,6 +21,12 @@
 #define DEBUG 0
 #define DISKSIZE 1000000
 
+
+int disk_attached()
+{
+    return 1;
+}
+
 struct pcb __current_running = {
 
 };
