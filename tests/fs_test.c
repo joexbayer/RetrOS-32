@@ -62,7 +62,7 @@ int main(int argc, char const *argv[])
 {
 
     filesystem = fopen("filesystem.test", "w+");
-    init_fs();
+    mkfs();
     testprintf(1, "Created filesystem.");
 
     int create_test = fs_create("test.txt");

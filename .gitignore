@@ -49,6 +49,8 @@ usr/bin/*
 *.vdi
 filesystem.image
 
+legacy/multiboot/boot/myos.bin
+
 # Executables
 *.exe
 *.out

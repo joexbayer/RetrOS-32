@@ -112,6 +112,7 @@ bin/mkfs: bin/fs.o bin/bitmap.o ./tools/mkfs.c
 tools: bin/build bin/mkfs
 
 tests: compile
+	@make -C ./tests/
 
 bin/net.o: ./net/*.c
 	@make -C ./net/

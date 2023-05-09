@@ -36,9 +36,9 @@ int failed = 0;
 void testprintf(int test,  const char* test_str)
 {
     if(test)
-        fprintf(stderr, "TEST [ " GREEN "OK" RESET " ] %s\n", test_str);
+        fprintf(stderr, "[ " GREEN "OK" RESET " ] %s\n", test_str);
     else {
-        fprintf(stderr, "TEST [ " RED "FAILED" RESET " ] %s\n", test_str);
+        fprintf(stderr, "[ " RED "FAILED" RESET " ] %s\n", test_str);
         failed++;
     }
 }

@@ -30,6 +30,24 @@
 #include <fs/superblock.h>
 #include <fs/directory.h>
 
+#define RESET   "\033[0m"
+#define BLACK   "\033[30m"      /* Black */
+#define RED     "\033[31m"      /* Red */
+#define GREEN   "\033[32m"      /* Green */
+#define YELLOW  "\033[33m"      /* Yellow */
+#define BLUE    "\033[34m"      /* Blue */
+#define MAGENTA "\033[35m"      /* Magenta */
+#define CYAN    "\033[36m"      /* Cyan */
+#define WHITE   "\033[37m"      /* White */
+#define BOLDBLACK   "\033[1m\033[30m"      /* Bold Black */
+#define BOLDRED     "\033[1m\033[31m"      /* Bold Red */
+#define BOLDGREEN   "\033[1m\033[32m"      /* Bold Green */
+#define BOLDYELLOW  "\033[1m\033[33m"      /* Bold Yellow */
+#define BOLDBLUE    "\033[1m\033[34m"      /* Bold Blue */
+#define BOLDMAGENTA "\033[1m\033[35m"      /* Bold Magenta */
+#define BOLDCYAN    "\033[1m\033[36m"      /* Bold Cyan */
+#define BOLDWHITE   "\033[1m\033[37m"      /* Bold White */
+
 static FILE* filesystem = NULL;
 static struct inode* root_dir;
 
@@ -150,11 +168,11 @@ int add_userspace_program(struct superblock* sb, struct inode* current_dir, char
     /* Open the file and copy content to buffer*/
     char path_buf[strlen("usr/")+strlen(program)+1];
     sprintf(path_buf, "%s%s", "usr/", program);
-    printf("[MKFS] Attaching %s (%s) to the filesystem!\n", program, path_buf);
+    printf("[" BLUE "MKFS" RESET "] Attaching %s (%s) to the filesystem!\n", program, path_buf);
 
     FILE* file = fopen(path_buf, "r");
     if(file == NULL){
-        printf("[MKFS] File %s not found!\n", program);
+        printf("[" BLUE "MKFS" RESET "] File %s not found!\n", program);
         return -1;
     }
 
@@ -165,7 +183,7 @@ int add_userspace_program(struct superblock* sb, struct inode* current_dir, char
     char* buf = malloc(fs_size);
     int fret = fread(buf, 1, fs_size, file);
     if(fret <= 0){
-        printf("[MKFS] Error reading program %s!\n", program);
+        printf("[" BLUE "MKFS" RESET "] Error reading program %s!\n", program);
     }
 
     /* Skip to the first / */
@@ -186,7 +204,7 @@ int add_userspace_program(struct superblock* sb, struct inode* current_dir, char
     memcpy(file_dir_entry.name, &program[name_offset], strlen(&program[name_offset])+1);
     __inode_add_dir(&file_dir_entry, current_dir, sb);
 
-    printf("[MKFS] Added userspace program %s (%d bytes)!\n", program, fs_size);
+    printf("[" BLUE "MKFS" RESET "] Added userspace program %s (%d bytes)!\n", program, fs_size);
 
     free(buf);
 
@@ -219,7 +237,7 @@ int add_directory(struct superblock* sb, struct inode* parent, char* name)
     __inode_add_dir(&self, dir_inode_disk, sb);
     __inode_add_dir(&in_parent, parent, sb);
 
-    printf("[MKFS] Creating directory %s to the filesystem!\n", name);
+    printf("[" BLUE "MKFS" RESET "] Creating directory %s to the filesystem!\n", name);
 
     return dir_inode;
 
@@ -262,11 +280,11 @@ int main(int argc, char* argv[])
 
     root_dir = root;
 
-    printf("[MKFS] Creating Filesystem with size: %d (%d total)\n", superblock.nblocks*BLOCK_SIZE, superblock.size);
-    printf("[MKFS] With a total of %d inodes (%d blocks)\n", superblock.ninodes, superblock.ninodes / INODES_PER_BLOCK);
-    printf("[MKFS] And total of %d block\n", superblock.nblocks);
-    printf("[MKFS] Max file size: %d bytes\n", NDIRECT*BLOCK_SIZE);
-    printf("[MKFS] Written and saved filesystem to filesystem.image!\n");
+    printf("[" BLUE "MKFS" RESET "] Creating Filesystem with size: %d (%d total)\n", superblock.nblocks*BLOCK_SIZE, superblock.size);
+    printf("[" BLUE "MKFS" RESET "] With a total of %d inodes (%d blocks)\n", superblock.ninodes, superblock.ninodes / INODES_PER_BLOCK);
+    printf("[" BLUE "MKFS" RESET "] And total of %d block\n", superblock.nblocks);
+    printf("[" BLUE "MKFS" RESET "] Max file size: %d bytes\n", NDIRECT*BLOCK_SIZE);
+    printf("[" BLUE "MKFS" RESET "] Written and saved filesystem to filesystem.image!\n");
     /* Save filesystem to disk! */
 
     __inode_add_dir(&back, root_dir, &superblock);
@@ -294,7 +312,7 @@ int main(int argc, char* argv[])
     /* Padding 0s */
     fseek(filesystem, 0L, SEEK_END);
     int sz = ftell(filesystem);
-    printf("[MKFS] Padding with %d bytes!\n", 1000000-sz);
+    printf("[" BLUE "MKFS" RESET "] Padding with %d bytes!\n", 1000000-sz);
 
     int left = 1000000-sz;
     while(left > 0){
