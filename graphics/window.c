@@ -206,8 +206,8 @@ struct gfx_window* gfx_new_window(int width, int height)
     w->width = width + 16;
     w->height = height + 16;
     w->pitch = w->inner_width;
-    w->x = 8;
-    w->y = 8;
+    w->x = 16;
+    w->y = 16;
     w->owner = current_running;
     current_running->gfx_window = w;
     w->changed = 1;

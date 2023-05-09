@@ -85,45 +85,8 @@ void ps()
 }
 EXPORT_KSYMBOL(ps);
 
-
-int shell_parse_command(const char* str, char* command, char args[][100]) {
-    int i = 0, j = 0, k = 0;
-    int numArgs = 0;
-
-    /* Extract command */
-    while (str[i] != '(' && str[i] != '\0') {
-        command[j++] = str[i++];
-    }
-    command[j] = '\0';
-
-    /* Extract arguments */
-    if (str[i] == '(') {
-        i++;
-        while (str[i] != ')' && str[i] != '\0') {
-            if (str[i] == ',') {
-                args[numArgs][k] = '\0';
-                numArgs++;
-                k = 0;
-            } else if (str[i] != ' ') {  /* Skip spaces before arguments */
-                args[numArgs][k++] = str[i];
-            }
-            i++;
-        }
-    }
-
-    args[numArgs][k] = '\0';
-    numArgs++;
-    return numArgs;
-}
-
 void run(int argc, char* argv[])
 {
-	dbgprintf("cmd: %d args: ", argc);
-	for (int i = 0; i < argc; i++)
-	{
-		dbgprintf("%s\n", argv[i]);
-	}
-
 	char* optarg = NULL;
     int opt = 0;
 	while ((opt = getopt(argc, argv, "hc:", &optarg)) != -1) {
@@ -214,6 +177,21 @@ void ls()
 }
 EXPORT_KSYMBOL(ls);
 
+void help()
+{
+	twritef("Help:\n  run - Run a new thread / process.\n  th - Change theme\n  ths - List themes\n");
+}
+EXPORT_KSYMBOL(help);
+
+
+char* welcome = "\n\
+       _..--=--..._\n\
+    .-'            '-.  .-.\n\
+   /.'              '.\\/  /\n\
+  |=-                -=| (  NETOS\n\
+   \\'.              .'/\\  \\\n\
+    '-.,_____ _____.-'  '-'\n\
+         [_____]=8\n";
 
 char** argv = NULL;
 
@@ -226,7 +204,7 @@ void exec_cmd()
 	void (*ptr)(int argc, char* argv[]) = (void (*)(int argc, char* argv[])) ksyms_resolve_symbol(argv[0]);
 	if(ptr == NULL){
 		twritef("Unknown command\n");
-		goto exec_cmd_exit;
+		return;
 	}
 
 	twritef("Kernel > %s", shell_buffer);
@@ -234,7 +212,6 @@ void exec_cmd()
 	twritef("\n");
 	gfx_commit();
 
-exec_cmd_exit:
 	return;
 
     //int numArgs = shell_parse_command(str, command, args);
@@ -374,10 +351,20 @@ void shell()
 
 	terminal_attach(&term);
 	//kernel_gfx_draw_text(0, 0, "Terminal!", VESA8_COLOR_BOX_LIGHT_GREEN);
-	reset_shell();
+
+	struct mem_info minfo;
+    get_mem_info(&minfo);
 
 	//gfx_set_fullscreen(window);
 	//sleep(2);
+	twritef("_.--*/ \\*--._\nWelcome ADMIN!\n");
+	twritef("%s\n", welcome);
+	twritef("Memory: %d/%d\n", minfo.kernel.used+minfo.permanent.used, minfo.kernel.total+minfo.permanent.total);
+	help();
+	twriteln("");
+	terminal_commit(current_running->term);
+
+	reset_shell();
 	while(1)
 	{
 		struct gfx_event event;

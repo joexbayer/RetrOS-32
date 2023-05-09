@@ -540,7 +540,7 @@ int vesa_printf(uint8_t* buffer, int32_t x, int32_t y, int color, char* fmt, ...
 					case 'X': ;
 						num = va_arg(args, int);
 						itohex(num, str);
-						vesa_write_str(buffer, x+x_offset, y, str, color);
+						vesa_write_str(buffer, x+(x_offset*PIXELS_PER_CHAR), y, str, color);
 						x_offset += strlen(str);
 						break;
 					case 's': ;

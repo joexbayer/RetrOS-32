@@ -146,6 +146,12 @@ int kernel_gfx_draw_char(int x, int y, unsigned char c, unsigned char color)
     return 0;
 }
 
+void kernel_gfx_set_position(int x, int y)
+{
+    current_running->gfx_window->x = x;
+    current_running->gfx_window->y = y;
+}
+
 void gfx_commit()
 {
 	current_running->gfx_window->changed = 1;

@@ -8,6 +8,7 @@
 extern char _code[], _end[], _code_end[], _ro_s[], _ro_e[], _data_s[], _data_e[], _bss_s[], _bss_e[];
 extern int kernel_size;
 
+#define PERMANENT_KERNEL_MEMORY_START 0x100000
 #define PMEM_END_ADDRESS 	 0x200000
 
 #define VMEM_MAX_ADDRESS    0x1600000
@@ -76,6 +77,7 @@ int kmemory_total();
 
 /* Permanent memory */
 void* palloc(int size);
+int pmemory_used();
 
 /* Userspace memory */
 void* malloc(unsigned int size);

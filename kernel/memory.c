@@ -123,7 +123,9 @@ error_t get_mem_info(struct mem_info* info)
 {
 	struct mem_info inf = {
 		.kernel.total = kmemory_total(),
-		.kernel.used = kmemory_used()
+		.kernel.used = kmemory_used(),
+		.permanent.total = PMEM_END_ADDRESS-PERMANENT_KERNEL_MEMORY_START,
+		.permanent.used = pmemory_used()
 	};
 
 	*info = inf;

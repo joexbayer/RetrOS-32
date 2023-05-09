@@ -127,4 +127,5 @@ void init_serial()
     outportb(PORT + 4, 0x0F);
 
 	serial_printf("[%s] Serial debugging activated %d!\n", "Serial", 20);
+	serial_init_done = 1;
 }

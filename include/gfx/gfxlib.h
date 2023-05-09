@@ -32,6 +32,8 @@ int gfx_window_reize(int width, int height);
 
 int kernel_gfx_set_title(char* title);
 
+void kernel_gfx_set_position(int x, int y);
+
 void gfx_inner_box(int x, int y, int w, int h, int fill);
 void gfx_outer_box(int x, int y, int w, int h, int fill);
 

@@ -321,14 +321,13 @@ void kernel(uint32_t magic)
 	vbe_info->bpp = mb_info->framebuffer_bpp;
 	vbe_info->pitch = mb_info->framebuffer_width;
 	vbe_info->framebuffer = mb_info->framebuffer_addr;*/
-	
-	uint16_t* const VGA_MEMORY = (uint16_t*) 0xB8000;
-	VGA_MEMORY[0] = 'J';
-	VGA_MEMORY[1] = 'o';
-	VGA_MEMORY[2] = 'e';
+  
+  /* Clear memory and BSS */
+	memset((char*)_bss_e, 0, _bss_e-_bss_s);
+  memset((char*)0x100000, 0, 0x1600000-0x100000);
 
 	kernel_size = _end-_code;
-	//init_serial();
+	init_serial();
 	init_memory();
 
 	dbgprintf("Kernel is at: 0x%x\n", magic);
@@ -412,6 +411,7 @@ void kernel(uint32_t magic)
 	//start("workd");
 	start("wind");
 	//start("netd");
+  start("kclock");
 	start("shell");
 	
 	//pcb_create_process("/bin/clock", 0, NULL);

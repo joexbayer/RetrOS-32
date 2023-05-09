@@ -107,6 +107,8 @@ extern void isr47(struct registers*);
 int system_call(int index, int arg1, int arg2, int arg3);
 void _page_fault_entry(void);
 
+int interrupt_get_count(int interrupt);
+
 void isr_handler(struct registers regs);
 void interrupt_install_handler(int i, void (*handler)());
 void idt_flush(uint32_t idt);
