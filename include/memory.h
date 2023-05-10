@@ -5,7 +5,7 @@
 #include <pcb.h>
 #include <errors.h>
 
-extern char _code[], _end[], _code_end[], _ro_s[], _ro_e[], _data_s[], _data_e[], _bss_s[], _bss_e[];
+extern char _code[], _end[], _code_end[], _ro_s[], _ro_e[], _data_s[], _data_e[], _bss_s[], _bss_e[], _bss_size[];
 extern int kernel_size;
 
 #define PERMANENT_KERNEL_MEMORY_START 0x100000

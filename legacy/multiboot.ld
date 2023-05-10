@@ -37,18 +37,21 @@ SECTIONS
 
     .data BLOCK(4K) : ALIGN(4K)
     {
-
         _data_s = .;
         *(.data)
         _data_e = .;
-    
 
-        _bss_s = .;
+         _bss_s = .;
         *(.bss)
         _bss_e = .;
     }
+
+    .bss BLOCK(4K) : ALIGN(4K)
+    {
+    }
     _end = .;
 
+    _bss_size = _bss_e - _bss_s;
     _kctor_table_size = _stop_kctor_table - _start_kctor_table;
 
 	/* The compiler may produce other sections, put them in the proper place in

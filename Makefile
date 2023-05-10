@@ -39,7 +39,9 @@ ifeq ($(UNAME),Linux)
 	CCFLAGS += -elf_i386
 	ASFLAGS += --32
 	LDFLAGS += -m elf_i386
+	GRUB=grub-mkrescue /usr/lib/grub/i386-pc/ -o myos.iso legacy/multiboot
 else
+	GRUB=grub-mkrescue /usr/local/lib/grub/i386-pc/ -o myos.iso legacy/multiboot
 	CC=i386-elf-gcc
 	AS=i386-elf-as
 	LD=i386-elf-ld
@@ -161,7 +163,7 @@ bindir:
 
 grub: multiboot_kernel
 	cp bin/kernelout legacy/multiboot/boot/myos.bin
-	grub-mkrescue /usr/local/lib/grub/i386-pc/ -o myos.iso legacy/multiboot
+	$(GRUB)
 
 
 docker-rebuild:

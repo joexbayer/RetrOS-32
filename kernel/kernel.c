@@ -43,7 +43,9 @@ void kernel(uint32_t magic)
 	CLI();
 
     /* Clear memory and BSS */
-	//memset((char*)_bss_e, 0, _bss_e-_bss_s-1);
+	//memset(_bss_size, 0, _bss_size);
+
+
     memset((char*)0x100000, 0, 0x800000-0x100000);
 
 #if USE_MULTIBOOT
@@ -54,9 +56,9 @@ void kernel(uint32_t magic)
 	vbe_info->pitch = mb_info->framebuffer_width;
 	vbe_info->framebuffer = mb_info->framebuffer_addr;
 #else
-    init_serial();
 	vbe_info = (struct vbe_mode_info_structure*) magic;
 #endif  
+    init_serial();
 
 	kernel_size = _end-_code;
 	init_memory();
@@ -124,7 +126,7 @@ void kernel(uint32_t magic)
 	dbgprintf("[KERNEL] TEXT: %d\n", _code_end-_code);
 	dbgprintf("[KERNEL] RODATA: %d\n", _ro_e-_ro_s);
 	dbgprintf("[KERNEL] DATA: %d\n", _data_e-_data_s);
-	dbgprintf("[KERNEL] BSS: %d\n", _bss_e-_bss_s);
+	dbgprintf("[KERNEL] BSS: %d (0x%x)\n", _bss_e-_bss_s, _bss_s);
 	dbgprintf("[KERNEL] Total: %d (%d sectors)\n", _end-_code, ((_end-_code)/512)+2);
 	dbgprintf("[KERNEL] Kernel reaching too: 0x%x\n", _end-_code);
 

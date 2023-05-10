@@ -25,7 +25,6 @@
 .global _start
 .type _start, @function
 _start:
-	
     cli
 
     lgdt gdtp
@@ -43,6 +42,13 @@ _start:
     movl $stack, %esp
     andl $-16, %esp
     /* Use the number 0xDEADBEEF to check we can use that high addresses. */
+
+    /* Zero out bss */
+    movl _bss_s, %edi
+    movl _bss_e, %ecx
+    subl _bss_s, %ecx
+    mov 0, %al
+    rep stosb
 
     pushl %ebx
 	call kernel

@@ -31,14 +31,17 @@ SECTIONS
         _data_s = .;
         *(.data)
         _data_e = .;
-    
+    }
 
+    .bss BLOCK(4K) : ALIGN(4K)
+    {
         _bss_s = .;
         *(.bss)
         _bss_e = .;
     }
     _end = .;
 
+    _bss_size = _bss_e - _bss_s;
     _kctor_table_size = _stop_kctor_table - _start_kctor_table;
 
 
