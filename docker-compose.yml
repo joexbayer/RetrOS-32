@@ -1,6 +1,8 @@
 version: "3"
 services:
-  app:
+  netos:
     build: .
     volumes:
       - ./:/NETOS
+    entrypoint: make
+    command: compile

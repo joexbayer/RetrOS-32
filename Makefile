@@ -66,7 +66,7 @@ LIBOBJ = bin/printf.o bin/syscall.o bin/graphics.o
 
 # ---------------- Makefile rules ----------------
 
-.PHONY: all new image clean boot net kernel grub time tests
+.PHONY: all new image clean boot net kernel grub time tests build
 all: iso
 	$(TIME-END)
 
@@ -120,14 +120,16 @@ bin/net.o: ./net/*.c
 bin/fs.o: ./fs/*.c
 	@make -C ./fs/
 
-userspace:
-	@make -C ./usr/
-
-iso: compile tests userspace tools
+build: tools
 	@echo [BUILD]      Building ISO file and attaching filesystem.
 	@rm -f boot.iso
 	@./bin/mkfs
 	@./bin/build
+
+userspace:
+	@make -C ./usr/
+
+iso: compile tests userspace tools build
 	$(TIME-END)
 
 filesystem:
@@ -159,7 +161,7 @@ bindir:
 
 grub: multiboot_kernel
 	cp bin/kernelout legacy/multiboot/boot/myos.bin
-	grub-mkrescue /usr/lib/grub/i386-pc -o myos.iso legacy/multiboot
+	grub-mkrescue /usr/local/lib/grub/i386-pc/ -o myos.iso legacy/multiboot
 
 
 docker-rebuild:

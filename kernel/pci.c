@@ -15,6 +15,7 @@
 #include <terminal.h>
 #include <serial.h>
 #include <arch/io.h>
+#include <ksyms.h>
 
 static const char* pci_classes[] =
 {
@@ -40,6 +41,7 @@ static const char* pci_classes[] =
 
 struct pci_driver registered_drivers[] = {
     {(uint16_t)E1000_VENDOR_ID, (uint16_t)E1000_DEVICE_ID, &e1000_attach},
+    {(uint16_t)E1000_VENDOR_ID, (uint16_t)0x155a, &e1000_attach},
     {0x8086, 0x7010, &ata_ide_init},
     {0, 0, 0}
 };
@@ -127,30 +129,30 @@ void init_pci()
     for(uint32_t bus = 0; bus < 256; bus++){
         for(uint32_t slot = 0; slot < 32; slot++){
             for(uint32_t function = 0; function < 8; function++){
-                    uint16_t vendor = pci_read_word(bus, slot, function, 0);
-                    if(vendor == 0xffff) continue;
+                uint16_t vendor = pci_read_word(bus, slot, function, 0);
+                if(vendor == 0xffff) continue;
 
-                    uint16_t device = pci_read_word(bus, slot, function, 2);
-					uint16_t class = pci_get_device_class(bus, slot, function);
-					uint8_t irq = pci_get_device_irq(bus, slot ,function);
-                    uint32_t base = pci_get_device_base32(bus, slot, function);
+                uint16_t device = pci_read_word(bus, slot, function, 2);
+                uint16_t class = pci_get_device_class(bus, slot, function);
+                uint8_t irq = pci_get_device_irq(bus, slot ,function);
+                uint32_t base = pci_get_device_base32(bus, slot, function);
 
-					int driver_index = pci_register_device(bus, slot, function, vendor, device, class, irq, base);
-                    dbgprintf("DEVICE: Vendor: 0x%x, Device: 0x%x - %s\n", 
-                        vendor,
-                        device,
-                        class < 0x11 ? pci_classes[class] : pci_classes[0]
-                    );
-                    
-                    devices_found++;
+                int driver_index = pci_register_device(bus, slot, function, vendor, device, class, irq, base);
+                dbgprintf("DEVICE: Vendor: 0x%x, Device: 0x%x - %s\n", 
+                    vendor,
+                    device,
+                    class < 0x11 ? pci_classes[class] : pci_classes[0]
+                );
+                
+                devices_found++;
 
-                    int i = 0;
-                    for (struct pci_driver driver = registered_drivers[i]; driver.vendor != 0; driver = registered_drivers[i]){
-                        if(driver.vendor == vendor && driver.device == device){
-                            driver.attach(&_pci_devices[driver_index]);
-                        }
-                        i++;
+                int i = 0;
+                for (struct pci_driver driver = registered_drivers[i]; driver.vendor != 0; driver = registered_drivers[i]){
+                    if(driver.vendor == vendor && driver.device == device){
+                        driver.attach(&_pci_devices[driver_index]);
                     }
+                    i++;
+                }
                     
             }
         }
@@ -158,12 +160,16 @@ void init_pci()
     dbgprintf("[PCI] Peripheral Component Interconnect devices probed.\n");
 }
 
-void list_pci_devices()
+void lspci()
 {
     for (int i = 0; i < _pci_devices_size; i++){
-        
+        twritef("Dev 0x%x - %s\n", 
+            _pci_devices[i].device,
+            _pci_devices[i].class < 0x11 ? pci_classes[_pci_devices[i].class] : pci_classes[0]
+        );
     }   
 }
+EXPORT_KSYMBOL(lspci);
 
 uint8_t pci_find_device(uint16_t find_vendor, uint16_t find_device)
 {

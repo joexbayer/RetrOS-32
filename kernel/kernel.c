@@ -35,16 +35,16 @@
 
 #include <multiboot.h>
 
-#define USE_MULTIBOOT 0
+#define USE_MULTIBOOT 1
 
 /* This functions always needs to be on top? */
 void kernel(uint32_t magic) 
 {
 	CLI();
 
-  /* Clear memory and BSS */
-	memset((char*)_bss_e, 0, _bss_e-_bss_s);
-  memset((char*)0x100000, 0, 0x800000-0x100000);
+    /* Clear memory and BSS */
+	//memset((char*)_bss_e, 0, _bss_e-_bss_s-1);
+    memset((char*)0x100000, 0, 0x800000-0x100000);
 
 #if USE_MULTIBOOT
   struct multiboot_info* mb_info = (struct multiboot_info*) magic;
@@ -54,7 +54,7 @@ void kernel(uint32_t magic)
 	vbe_info->pitch = mb_info->framebuffer_width;
 	vbe_info->framebuffer = mb_info->framebuffer_addr;
 #else
-  init_serial();
+    init_serial();
 	vbe_info = (struct vbe_mode_info_structure*) magic;
 #endif  
 
