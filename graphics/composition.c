@@ -260,7 +260,7 @@ struct gfx_timeline {
 
 void gfx_timeline_draw(struct gfx_timeline* tl)
 {
-    vesa_fillrect(wind.composition_buffer, tl->start, 0, 8*TIMELINE_SIZE, 8,  tl->bg);
+    vesa_fillrect(wind.composition_buffer, tl->start, 0, 8*TIMELINE_SIZE, 8,  (kernel_gfx_current_theme())->os.background);
     for (int i = 0; i < TIMELINE_SIZE; i++){
         if(tl->timeline[i] != 0)
             vesa_put_block(wind.composition_buffer, tl->timeline[i], tl->start+(i*8), 0,  tl->fg);
@@ -416,44 +416,44 @@ void gfx_compositor_main()
         /* Interrupts */
         for (int i = 0; i < 12; i++){
             vesa_fillrect(wind.composition_buffer, 8, vbe_info->height-16-(12*8) + 8+(i*8), strlen("Int 4: 1000000")*8, 8, theme->os.background);
-            vesa_printf(wind.composition_buffer, 8, vbe_info->height-16-(12*8) + 8+(i*8), theme->os.text, "Int %d: %d", i, interrupt_get_count(i));
+            vesa_printf(wind.composition_buffer, 8, vbe_info->height-16-(12*8) + 8+(i*8), theme->os.foreground, "Int %d: %d", i, interrupt_get_count(i));
 
             vesa_fillrect(wind.composition_buffer, 8 +strlen("Int 4: 1000000")*8 ,vbe_info->height-16-(12*8) + 8+(i*8), strlen("Int 4: 1000000")*8, 8, theme->os.background);
-            vesa_printf(wind.composition_buffer, 8+strlen("Int 4: 1000000")*8, vbe_info->height-16-(12*8) +8+(i*8), theme->os.text, "Int %d: %d", i+12, interrupt_get_count(i+12));
+            vesa_printf(wind.composition_buffer, 8+strlen("Int 4: 1000000")*8, vbe_info->height-16-(12*8) +8+(i*8), theme->os.foreground, "Int %d: %d", i+12, interrupt_get_count(i+12));
 
             vesa_fillrect(wind.composition_buffer, 8 +strlen("Int 4: 1000000")*8*2 ,vbe_info->height-16-(12*8) + 8+(i*8), strlen("Int 4: 1000000")*8, 8, theme->os.background);
-            vesa_printf(wind.composition_buffer, 8+strlen("Int 4: 1000000")*8*2, vbe_info->height-16-(12*8) +8+(i*8), theme->os.text, "Int %d: %d", i+24, interrupt_get_count(i+24));
+            vesa_printf(wind.composition_buffer, 8+strlen("Int 4: 1000000")*8*2, vbe_info->height-16-(12*8) +8+(i*8), theme->os.foreground, "Int %d: %d", i+24, interrupt_get_count(i+24));
 
             vesa_fillrect(wind.composition_buffer, 8 +strlen("Int 4: 1000000")*8*3 ,vbe_info->height-16-(12*8) + 8+(i*8), strlen("Int 4: 1000000")*8, 8, theme->os.background);
-            vesa_printf(wind.composition_buffer, 8+strlen("Int 4: 1000000")*8*3, vbe_info->height-16-(12*8) +8+(i*8), theme->os.text, "Int %d: %d", i+36, interrupt_get_count(i+36));
+            vesa_printf(wind.composition_buffer, 8+strlen("Int 4: 1000000")*8*3, vbe_info->height-16-(12*8) +8+(i*8), theme->os.foreground, "Int %d: %d", i+36, interrupt_get_count(i+36));
         }
 
         /* Memory */
         vesa_fillrect(wind.composition_buffer, 8, vbe_info->height-16-(15*8) + 8, strlen("kmem: 10000000/10000000")*8, 8, theme->os.background);
-        vesa_printf(wind.composition_buffer, 8, vbe_info->height-16-(15*8) + 8, theme->os.text, "kmem: %d/%d", minfo.kernel.used, minfo.kernel.total);
+        vesa_printf(wind.composition_buffer, 8, vbe_info->height-16-(15*8) + 8, theme->os.foreground, "kmem: %d/%d", minfo.kernel.used, minfo.kernel.total);
         vesa_fillrect(wind.composition_buffer, 8, vbe_info->height-16-(14*8) + 8, strlen("pmem: 10000000/10000000")*8, 8, theme->os.background);
-        vesa_printf(wind.composition_buffer, 8,vbe_info->height-16-(14*8) + 8, theme->os.text, "pmem: %d/%d", minfo.permanent.used, minfo.permanent.total);
+        vesa_printf(wind.composition_buffer, 8,vbe_info->height-16-(14*8) + 8, theme->os.foreground, "pmem: %d/%d", minfo.permanent.used, minfo.permanent.total);
 
         /* Processes */
         int ret;
         int line = 1;
         vesa_fillrect(wind.composition_buffer, 8+strlen("Int 4: 1000000")*8*4, vbe_info->height-16-(11*8), strlen("kmem: 100000/100000")*8, 8*8, theme->os.background);
-        vesa_printf(wind.composition_buffer, 8+strlen("Int 4: 1000000")*8*4, vbe_info->height-16-(11*8), theme->os.text,"   PID  STACK");
-        vesa_printf(wind.composition_buffer, 8+strlen("Int 4: 1000000")*8*4, vbe_info->height-16-(11*8), theme->os.text,"   __________");
+        vesa_printf(wind.composition_buffer, 8+strlen("Int 4: 1000000")*8*4, vbe_info->height-16-(11*8), theme->os.foreground,"   PID  STACK");
+        vesa_printf(wind.composition_buffer, 8+strlen("Int 4: 1000000")*8*4, vbe_info->height-16-(11*8), theme->os.foreground,"   __________");
         for (int i = 0; i < MAX_NUM_OF_PCBS; i++){
             struct pcb_info info;
             ret = pcb_get_info(i, &info);
             if(ret < 0) continue;
-            vesa_printf(wind.composition_buffer, 8+strlen("Int 4: 1000000")*8*4 + 8, vbe_info->height-16-(11*8) + ((line++)*8), theme->os.text,"   %d   0x%s%x", info.pid, info.is_process ? "" : "00", info.stack);
+            vesa_printf(wind.composition_buffer, 8+strlen("Int 4: 1000000")*8*4 + 8, vbe_info->height-16-(11*8) + ((line++)*8), theme->os.foreground,"   %d   0x%s%x", info.pid, info.is_process ? "" : "00", info.stack);
         }
 
 
         if(is_netdev_attached()) {
             vesa_fillrect(wind.composition_buffer, 8, vbe_info->height-16-(16*8) + 8, strlen(current_netdev.name)*8, 8, theme->os.background);
-            vesa_printf(wind.composition_buffer, 8, vbe_info->height-16-(16*8) + 8, theme->os.text, "NetDev: %s", current_netdev.name);
+            vesa_printf(wind.composition_buffer, 8, vbe_info->height-16-(16*8) + 8, theme->os.foreground, "NetDev: %s", current_netdev.name);
 
             vesa_fillrect(wind.composition_buffer, 8, vbe_info->height-16-(16*8) + 8, strlen(current_netdev.name)*8, 8, theme->os.background);
-            vesa_printf(wind.composition_buffer, 8, vbe_info->height-16-(16*8) + 8, theme->os.text, "NetDev: %s (rx %d - tx %d)", current_netdev.name, ninfo.recvd, ninfo.sent);
+            vesa_printf(wind.composition_buffer, 8, vbe_info->height-16-(16*8) + 8, theme->os.foreground, "NetDev: %s (rx %d - tx %d)", current_netdev.name, ninfo.recvd, ninfo.sent);
         }
 
         STI();

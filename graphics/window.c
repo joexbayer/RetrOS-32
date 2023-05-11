@@ -57,10 +57,10 @@ void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
     }
 
     vesa_fillrect(buffer, window->x+8, window->y, strlen(window->name)*8 + 4, 8, background_color);
-    vesa_write_str(buffer, window->x+8+4, window->y, window->name, window->color.text == 0 ? theme->window.text : window->color.text);
+    vesa_write_str(buffer, window->x+8+4, window->y, window->name, window->color.text == 0 ? theme->window.background : window->color.text);
 
     vesa_fillrect(buffer,  window->x+window->width-28,  window->y, strlen("[X]")*8 - 2, 8, background_color);
-    vesa_write_str(buffer, window->x+window->width-28,  window->y, "[X]", window->color.text == 0 ? theme->window.text : window->color.text);
+    vesa_write_str(buffer, window->x+window->width-28,  window->y, "[X]", window->color.text == 0 ? theme->window.background : window->color.text);
     
     window->changed = 0;
 }   
