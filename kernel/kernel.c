@@ -40,13 +40,7 @@
 /* This functions always needs to be on top? */
 void kernel(uint32_t magic) 
 {
-	CLI();
-
-    /* Clear memory and BSS */
-	//memset(_bss_size, 0, _bss_size);
-
-
-    memset((char*)0x100000, 0, 0x800000-0x100000);
+	asm ("cli");
 
 #if USE_MULTIBOOT
   struct multiboot_info* mb_info = (struct multiboot_info*) magic;
@@ -57,8 +51,15 @@ void kernel(uint32_t magic)
 	vbe_info->framebuffer = mb_info->framebuffer_addr;
 #else
 	vbe_info = (struct vbe_mode_info_structure*) magic;
-#endif  
     init_serial();
+#endif
+
+	 /* Clear memory and BSS */
+	memset((char*)_bss_s, 0, (unsigned int) _bss_size);
+    memset((char*)0x100000, 0, 0x800000-0x100000);
+	CLI();
+
+	vesa_printf(vbe_info->framebuffer, 10, 10, 15, "Booting OS...");
 
 	kernel_size = _end-_code;
 	init_memory();
@@ -144,7 +145,7 @@ void kernel(uint32_t magic)
 	//start("workd");
 	start("wind");
 	//start("netd");
-  start("kclock");
+  	start("kclock");
 	start("shell");
 	
 	//pcb_create_process("/bin/clock", 0, NULL);

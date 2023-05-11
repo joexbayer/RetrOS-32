@@ -29,6 +29,8 @@
 #include <net/net.h>
 #include <arch/interrupts.h>
 
+#include <net/netdev.h>
+
 static struct gfx_window* order;
 static mutex_t order_lock;
 
@@ -443,6 +445,15 @@ void gfx_compositor_main()
             ret = pcb_get_info(i, &info);
             if(ret < 0) continue;
             vesa_printf(wind.composition_buffer, 8+strlen("Int 4: 1000000")*8*4 + 8, vbe_info->height-16-(11*8) + ((line++)*8), theme->os.text,"   %d   0x%s%x", info.pid, info.is_process ? "" : "00", info.stack);
+        }
+
+
+        if(is_netdev_attached()) {
+            vesa_fillrect(wind.composition_buffer, 8, vbe_info->height-16-(16*8) + 8, strlen(current_netdev.name)*8, 8, theme->os.background);
+            vesa_printf(wind.composition_buffer, 8, vbe_info->height-16-(16*8) + 8, theme->os.text, "NetDev: %s", current_netdev.name);
+
+            vesa_fillrect(wind.composition_buffer, 8, vbe_info->height-16-(16*8) + 8, strlen(current_netdev.name)*8, 8, theme->os.background);
+            vesa_printf(wind.composition_buffer, 8, vbe_info->height-16-(16*8) + 8, theme->os.text, "NetDev: %s (rx %d - tx %d)", current_netdev.name, ninfo.recvd, ninfo.sent);
         }
 
         STI();

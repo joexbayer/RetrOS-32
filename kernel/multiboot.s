@@ -38,17 +38,9 @@ _start:
     movw %ax, %gs
     movw %ax, %ss
 	
-
     movl $stack, %esp
     andl $-16, %esp
     /* Use the number 0xDEADBEEF to check we can use that high addresses. */
-
-    /* Zero out bss */
-    movl _bss_s, %edi
-    movl _bss_e, %ecx
-    subl _bss_s, %ecx
-    mov 0, %al
-    rep stosb
 
     pushl %ebx
 	call kernel
@@ -90,8 +82,7 @@ data_descriptor:
 gdt_end:
 
 .size _start, . - _start
-
-.section .bss /* .bss or .data */
+.section .data /* .bss or .data */
 .align 32
 stack_begin:
     .fill 0x4000
