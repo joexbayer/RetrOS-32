@@ -151,7 +151,8 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 ## Hardware
 Tested on:
 Lenovo x240,
-Asus Eee PC series
+Asus Eee PC series,
+Dell Optiplex 780
 
 
 <!-- ROADMAP -->
