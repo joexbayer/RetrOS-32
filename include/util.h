@@ -48,6 +48,8 @@ int isdigit(char c);
 int isspace(char c);
 int rand(void);
 
+typedef volatile int signal_value_t;
+
 #define SAVE_AND_RESTORE(x, code_block) \
 do { \
     decltype(x) _temp = x; \

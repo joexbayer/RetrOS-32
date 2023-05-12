@@ -2,11 +2,12 @@
 #define __TCP_H
 
 #include <stdint.h>
+#include <util.h>
 #include <sync.h>
 #include <rbuffer.h>
 
 struct tcp_connection {
-	uint8_t state;
+	signal_value_t state;
 
 	uint32_t sequence;
 	uint32_t acknowledgement;

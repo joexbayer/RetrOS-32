@@ -10,12 +10,28 @@
  */
 #include <ipc.h>
 #include <memory.h>
+#include <scheduler.h>
 #include <bitmap.h>
 
 /* Potentionally move to dynamic allocation? */
 #define MAX_MESSAGE_BOXES 10
+#define IPC_MAX_SIGNALS 255
+
 static struct message_box msg_boxes[MAX_MESSAGE_BOXES];
 static bitmap_t msg_bitmap;
+
+static signal_value_t signal_values[IPC_MAX_SIGNALS];
+
+void signal_wait(int sig)
+{
+    WAIT(signal_values[sig] == 0);
+    signal_values[sig] = 0;
+}
+
+void signal(int sig)
+{
+    signal_values[sig] = 1;
+}
 
 /**
  * @brief Creates new message in message box with given ID

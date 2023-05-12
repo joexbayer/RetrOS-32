@@ -24,7 +24,7 @@ struct sock {
     struct skb_queue* skb_queue;
 
     struct ring_buffer* recv_buffer;
-	uint8_t data_ready;
+	signal_value_t data_ready;
 	uint32_t recvd;
 
     struct sockaddr_in recv_addr;

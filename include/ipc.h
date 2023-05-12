@@ -35,4 +35,7 @@ struct message_box {
 
 void ipc_msg_box_init();
 
+void signal(int signal);
+void signal_wait(int signal);
+
 #endif // !__IPC_H
