@@ -152,7 +152,9 @@ _For more examples, please refer to the [Documentation](https://example.com)_
 Tested on:
 Lenovo x240,
 Asus Eee PC series,
-Dell Optiplex 780
+Dell Optiplex 780,
+Samsung N150 Plus,
+Samsung NP-NC10
 
 
 <!-- ROADMAP -->
