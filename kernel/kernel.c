@@ -35,7 +35,7 @@
 
 #include <multiboot.h>
 
-#define USE_MULTIBOOT 1
+#define USE_MULTIBOOT 0
 
 /* This functions always needs to be on top? */
 void kernel(uint32_t magic) 
@@ -43,20 +43,19 @@ void kernel(uint32_t magic)
 	asm ("cli");
 
 #if USE_MULTIBOOT
-  struct multiboot_info* mb_info = (struct multiboot_info*) magic;
+  	struct multiboot_info* mb_info = (struct multiboot_info*) magic;
 	vbe_info->height = mb_info->framebuffer_height;
 	vbe_info->width = mb_info->framebuffer_width;
 	vbe_info->bpp = mb_info->framebuffer_bpp;
 	vbe_info->pitch = mb_info->framebuffer_width;
 	vbe_info->framebuffer = mb_info->framebuffer_addr;
+	/* Clear memory and BSS */
+	memset((char*)_bss_s, 0, (unsigned int) _bss_size);
+    memset((char*)0x100000, 0, 0x800000-0x100000);
 #else
 	vbe_info = (struct vbe_mode_info_structure*) magic;
     init_serial();
 #endif
-
-	 /* Clear memory and BSS */
-	memset((char*)_bss_s, 0, (unsigned int) _bss_size);
-    memset((char*)0x100000, 0, 0x800000-0x100000);
 	CLI();
 
 	vesa_printf(vbe_info->framebuffer, 10, 10, 15, "Booting OS...");

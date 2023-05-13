@@ -31,10 +31,7 @@ SECTIONS
         _data_s = .;
         *(.data)
         _data_e = .;
-    }
 
-    .bss BLOCK(4K) : ALIGN(4K)
-    {
         _bss_s = .;
         *(.bss)
         _bss_e = .;
