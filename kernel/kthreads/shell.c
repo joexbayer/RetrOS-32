@@ -58,7 +58,7 @@ static struct terminal term  = {
 void shell_clear()
 {
 	struct gfx_theme* theme = kernel_gfx_current_theme();
-	kernel_gfx_draw_rectangle(0, SHELL_POSITION, gfx_get_window_height(), 8, theme->os.background);
+	kernel_gfx_draw_rectangle(0, SHELL_POSITION, gfx_get_window_height(), 8, theme->terminal.background);
 }
 
 void reset_shell()

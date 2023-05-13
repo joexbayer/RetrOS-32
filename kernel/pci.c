@@ -163,7 +163,8 @@ void init_pci()
 void lspci()
 {
     for (int i = 0; i < _pci_devices_size; i++){
-        twritef("Dev 0x%x - %s\n", 
+        twritef("C: 0x%x D: 0x%x - %s\n",
+            _pci_devices[i].class,
             _pci_devices[i].device,
             _pci_devices[i].class < 0x11 ? pci_classes[_pci_devices[i].class] : pci_classes[0]
         );

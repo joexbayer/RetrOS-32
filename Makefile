@@ -182,3 +182,4 @@ run: docker qemu
 endif
 
 # qemu-system-i386 -cdrom myos.iso -serial stdio -drive file=boot.iso,if=ide,index=0,media=disk
+#qemu-system-i386.exe -cdrom .\myos.iso -drive if=none,id=usbstick,format=raw,file=filesystem.image -usb -device usb-ehci,id=ehci -device usb-storage,bus=ehci.0,drive=usbstick

@@ -2,30 +2,30 @@
 
 struct gfx_theme default1 = {
     .os = {
-        .background = COLOR_VGA_FG,
-        .foreground = COLOR_VGA_MISC,
-        .text = COLOR_VGA_BG
+        .background = 0x5b, //0x5b
+        .foreground = 0x73,
+        .text = 0x5b
     },
     .window = {
-        .border = COLOR_VGA_MISC,
-        .background = COLOR_VGA_FG,
-        .text = COLOR_VGA_BG
+        .border = 0x73,
+        .background = 0x5b,
+        .text = 0x16
     },
     .terminal = {
-        .background = COLOR_VGA_FG,
-        .text = COLOR_VGA_BG
+        .background = COLOR_VGA_BG,
+        .text = COLOR_VGA_FG
     },
     .name = "Light theme"
 };
 
 struct gfx_theme dark_theme = {
     .os = {
-        .background = COLOR_VGA_BG,
-        .foreground = COLOR_VGA_MISC,
+        .background = COLOR_VGA_BG+1,
+        .foreground = COLOR_VGA_MISC-1,
         .text = COLOR_VGA_FG
     },
     .window = {
-        .border = COLOR_VGA_MISC,
+        .border = COLOR_VGA_MISC-1,
         .background = COLOR_VGA_BG,
         .text = COLOR_VGA_FG
     },
