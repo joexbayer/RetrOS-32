@@ -79,7 +79,7 @@ bootblock: $(BOOTOBJ)
 	@$(LD) $(LDFLAGS) -o bin/bootblock $^ -Ttext 0x7C00 --oformat=binary
 
 multiboot_kernel: bin/multiboot.o $(KERNELOBJ)
-	@$(LD) -o bin/kernelout $^ $(LDFLAGS) -T ./legacy/multiboot.ld
+	@$(LD) -o bin/kernelout $^ $(LDFLAGS) -T ./boot/multiboot.ld
 
 kernel: bin/kcrt0.o $(KERNELOBJ)
 	@$(LD) -o bin/kernelout $^ $(LDFLAGS) -T ./kernel/linker.ld
@@ -129,7 +129,7 @@ build: tools
 	@./bin/build
 
 userspace:
-	@make -C ./usr/
+	@make -C ./apps/
 
 iso: compile tests userspace tools build
 	$(TIME-END)
@@ -147,7 +147,7 @@ img: iso
 clean:
 	make -C ./net clean
 	make -C ./fs clean
-	make -C ./usr clean
+	make -C ./apps clean
 	make -C ./tests clean
 	rm -f ./bin/*.o
 	rm -f ./bin/bootblock

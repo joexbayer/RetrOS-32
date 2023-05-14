@@ -166,8 +166,8 @@ void fs_setup_superblock(struct superblock* superblock, int size)
 int add_userspace_program(struct superblock* sb, struct inode* current_dir, char* program)
 {   
     /* Open the file and copy content to buffer*/
-    char path_buf[strlen("usr/")+strlen(program)+1];
-    sprintf(path_buf, "%s%s", "usr/", program);
+    char path_buf[strlen("apps/")+strlen(program)+1];
+    sprintf(path_buf, "%s%s", "apps/", program);
     printf("[" BLUE "MKFS" RESET "] Attaching %s (%s) to the filesystem!\n", program, path_buf);
 
     FILE* file = fopen(path_buf, "r");
