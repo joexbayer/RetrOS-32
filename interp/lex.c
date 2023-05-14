@@ -1,3 +1,15 @@
+/**
+ * @file lex.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Lexer for the minmial C interpreter
+ * @version 0.1
+ * @date 2023-05-14
+ * @see https://github.com/rswier/c4
+ * @see https://github.com/lotabout/write-a-C-interpreter
+ * @copyright Copyright (c) 2023
+ * 
+ */
+
 #include "lex.h"
 #include "vm.h"
 #include "interpreter.h"

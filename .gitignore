@@ -48,7 +48,7 @@ bin/kernel*
 usr/bin/*
 *.vdi
 filesystem.image
-
+interp/interp
 legacy/multiboot/boot/myos.bin
 
 # Executables

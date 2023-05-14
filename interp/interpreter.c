@@ -1,3 +1,15 @@
+/**
+ * @file interpreter.c
+ * @author Joe Bayer (joexbayer)
+ * @brief main file for the minmial C interpreter
+ * @version 0.1
+ * @date 2023-05-14
+ * @see https://github.com/rswier/c4
+ * @see https://github.com/lotabout/write-a-C-interpreter
+ * @copyright Copyright (c) 2023
+ * 
+ */
+
 #include "vm.h"
 #include "lex.h"
 #include "interpreter.h"
