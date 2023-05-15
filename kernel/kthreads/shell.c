@@ -35,7 +35,7 @@
 #define SHELL_HEIGHT 275 /* 275 */
 #define SHELL_WIDTH 400 /* 400 */
 #define SHELL_POSITION SHELL_HEIGHT-12
-#define SHELL_MAX_SIZE SHELL_HEIGHT/8
+#define SHELL_MAX_SIZE SHELL_WIDTH/2
 
 static uint8_t shell_column = 0;
 static char shell_buffer[SHELL_MAX_SIZE];
@@ -171,6 +171,18 @@ void cd(int argc, char* argv[])
 }
 EXPORT_KSYMBOL(cd);
 
+void cat(int argc, char* argv[])
+{
+	inode_t inode = fs_open(argv[1]);
+
+	char buf[512];
+	fs_read(inode, buf, 512);
+	twritef("%s\n", buf);
+	fs_close(inode);
+	return;
+}
+EXPORT_KSYMBOL(cat);
+
 void ls()
 {
 	listdir();
@@ -233,17 +245,6 @@ void exec_cmd()
 		hostname[strlen(hostname)-1] = 0;
 		int ret = gethostname(hostname);
 		twritef("%s IN (A) %i\n", hostname, ret);
-		return;
-	}
-
-	if(strncmp("cat", shell_buffer, strlen("cat"))){
-		char* name = shell_buffer+strlen("cat")+1;
-		inode_t inode = fs_open(name);
-
-		char buf[512];
-		fs_read(inode, buf, 512);
-		twritef("%s\n", buf);
-		fs_close(inode);
 		return;
 	}
 

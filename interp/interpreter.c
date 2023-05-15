@@ -13,14 +13,14 @@
 #include "vm.h"
 #include "lex.h"
 #include "interpreter.h"
-#include <stdio.h>
+#include <kthreads.h>
 
 struct vm vm;
-int fd;
+inode_t fd;
 static char *src, *old_src;
 int i = 0;
 
-int main(int argc, char **argv)
+int interpreter(int argc, char **argv)
 {
     vm_init(&vm);
     lex_init();
@@ -28,24 +28,24 @@ int main(int argc, char **argv)
     argv++;
 
     // read the source file
-    DEBUG_PRINT("Reading %s\n", *argv);
-    if ((fd = open(*argv, 0)) < 0) {
-        printf("could not open(%s)\n", *argv);
+    DEBUG_PRINT("Reading hello.c\n");
+    if ((fd = fs_open("hello.c")) < 0) {
+        twritef("could not open(hello.c)\n");
         return -1;
     }
 
-    if (!(src = old_src = malloc(POOLSIZE))) {
-        printf("could not malloc(%d) for source area\n", POOLSIZE);
+    if (!(src = old_src = kalloc(POOLSIZE))) {
+        twritef("could not malloc(%d) for source area\n", POOLSIZE);
         return -1;
     }
     // read the source file
-    if ((i = read(fd, src, POOLSIZE)) <= 0) {
-        printf("read() returned %d\n", i);
+    if ((i = fs_read(fd, src, POOLSIZE)) <= 0) {
+        twritef("read() returned %d\n", i);
         return -1;
     }
     src[i] = 0; // add EOF character
     DEBUG_PRINT("%s\n", src);
-    close(fd);
+    fs_close(fd);
 
     DEBUG_PRINT("Lexing\n");
     void* entry = program(vm.text, vm.data, src);
@@ -60,5 +60,6 @@ int main(int argc, char **argv)
 
     vm_free(&vm);
 
-    free(src);
+    kfree(src);
 }
+EXPORT_KTHREAD(interpreter);

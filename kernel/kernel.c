@@ -29,13 +29,15 @@
 #include <arch/gdt.h>
 #include <kutils.h>
 
+#include <virtualdisk.h>
+
 #include <gfx/window.h>
 #include <gfx/composition.h>
 #include <gfx/api.h>
 
 #include <multiboot.h>
 
-#define USE_MULTIBOOT 0
+#define USE_MULTIBOOT 1
 
 /* This functions always needs to be on top? */
 void kernel(uint32_t magic) 
@@ -54,8 +56,8 @@ void kernel(uint32_t magic)
     memset((char*)0x100000, 0, 0x800000-0x100000);
 #else
 	vbe_info = (struct vbe_mode_info_structure*) magic;
-    init_serial();
 #endif
+    init_serial();
 	CLI();
 
 	vesa_printf(vbe_info->framebuffer, 10, 10, 15, "Booting OS...");
@@ -138,6 +140,12 @@ void kernel(uint32_t magic)
 	dbgprintf("[KERNEL] Enabled paging!\n");
 	
 	vesa_init();
+
+	if(!disk_attached()){
+		dbgprintf("[KERNEL] Attaching virtual disk because not physical one was found.\n");
+		virtual_disk_attach();
+		mkfs();
+	}
 
 	start("idled");
 	start("workd");

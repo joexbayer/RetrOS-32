@@ -163,12 +163,38 @@ void mkfs()
 	char* home_text = "Home is where the heart is.";
 	inode_write(home_text, strlen(home_text)+1, home_disk_inode, &superblock);
 
+	inode_t test_file_inode = alloc_inode(&superblock, FS_FILE);
+	struct inode* test_file_disk_inode = inode_get(test_file_inode, &superblock);
+
+	struct directory_entry hello_c = {
+		.inode = test_file_inode,
+		.name = "hello.c"
+	};
+
+	char* test_file_text = "\n\
+		\n\
+		int add(int a, int b)\n\
+		{\n\
+			return a+b;\n\
+		}\n\
+		\n\
+		int main()\n\
+		{\n\
+			int c;\n\
+			\n\
+			c = add(10, 13);\n\
+			return c;\n\
+		}\n";
+
+	inode_write(test_file_text, strlen(test_file_text)+1, test_file_disk_inode, &superblock);
+
 	root_dir = root;
 	current_dir = root;
 
 	__inode_add_dir(&back, root_dir, &superblock);
 	__inode_add_dir(&self, root_dir, &superblock);
 	__inode_add_dir(&home, root_dir, &superblock);
+	__inode_add_dir(&hello_c, root_dir, &superblock);
 
 	root_dir->pos = 0;
 }

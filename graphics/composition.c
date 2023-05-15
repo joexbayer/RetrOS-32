@@ -29,6 +29,7 @@
 #include <net/net.h>
 #include <arch/interrupts.h>
 
+#include <diskdev.h>
 #include <net/netdev.h>
 
 static struct gfx_window* order;
@@ -447,14 +448,13 @@ void gfx_compositor_main()
             vesa_printf(wind.composition_buffer, 8+strlen("Int 4: 1000000")*8*4 + 8, vbe_info->height-16-(11*8) + ((line++)*8), theme->os.foreground,"   %d   0x%s%x", info.pid, info.is_process ? "" : "00", info.stack);
         }
 
+        /* NIC */
+        vesa_fillrect(wind.composition_buffer, 8, vbe_info->height-16-(17*8) + 8, strlen(current_netdev.name)*8, 8, theme->os.background);
+        vesa_printf(wind.composition_buffer, 8, vbe_info->height-16-(17*8) + 8, theme->os.foreground, "NetDev: %s (rx %d - tx %d)", is_netdev_attached() ? current_netdev.name : "No NIC found.", ninfo.recvd, ninfo.sent);
 
-        if(is_netdev_attached()) {
-            vesa_fillrect(wind.composition_buffer, 8, vbe_info->height-16-(16*8) + 8, strlen(current_netdev.name)*8, 8, theme->os.background);
-            vesa_printf(wind.composition_buffer, 8, vbe_info->height-16-(16*8) + 8, theme->os.foreground, "NetDev: %s", current_netdev.name);
-
-            vesa_fillrect(wind.composition_buffer, 8, vbe_info->height-16-(16*8) + 8, strlen(current_netdev.name)*8, 8, theme->os.background);
-            vesa_printf(wind.composition_buffer, 8, vbe_info->height-16-(16*8) + 8, theme->os.foreground, "NetDev: %s (rx %d - tx %d)", current_netdev.name, ninfo.recvd, ninfo.sent);
-        }
+        /* Diskdev */
+        vesa_fillrect(wind.composition_buffer, 8, vbe_info->height-16-(18*8) + 8, strlen(disk_name())*8, 8, theme->os.background);
+        vesa_printf(wind.composition_buffer, 8, vbe_info->height-16-(18*8) + 8, theme->os.foreground, "Disk: %s", disk_attached() ? disk_name() : "No disk found.");
 
         STI();
 
@@ -468,8 +468,6 @@ void gfx_compositor_main()
             gfx_mouse_event(m.x, m.y, m.flags);
         }
         vesa_put_icon16((uint8_t*)vbe_info->framebuffer, m.x, m.y);
-
-
     }
 }
 

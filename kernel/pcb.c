@@ -346,6 +346,7 @@ error_t pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 	pcb->allocations = NULL;
 	pcb->used_memory = 0;
 	pcb->kallocs = 0;
+	pcb->term = current_running->term;
 	pcb->page_dir = kernel_page_dir;
 	pcb->is_process = 0;
 	pcb->args = 0;

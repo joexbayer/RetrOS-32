@@ -10,8 +10,6 @@
  * 
  */
 #include "interpreter.h"
-
-#define int long
 #include "vm.h"
 
 const char* optcodes[] = {
@@ -28,50 +26,50 @@ void hexdump(const void *data, size_t size) {
     int i, j;
 
     for (i = 0; i < size; i += HEXDUMP_COLS) {
-        printf("%06zu: ", i);
+        twritef("%x: ", i);
 
         for (j = 0; j < HEXDUMP_COLS; j++) {
             if (i + j < size)
-                printf("%02x ", p[i + j]);
+                twritef("%x ", p[i + j]);
             else
-                printf("   ");
+                twritef("   ");
 
             if (j % 8 == 7)
-                printf(" ");
+                twritef(" ");
         }
 
-        printf(" ");
+        twritef(" ");
 
         for (j = 0; j < HEXDUMP_COLS; j++) {
             if (i + j < size)
-                printf("%c", (p[i + j] >= 32 && p[i + j] <= 126) ? p[i + j] : '.');
+                twritef("%c", (p[i + j] >= 32 && p[i + j] <= 126) ? p[i + j] : '.');
             else
-                printf(" ");
+                twritef(" ");
         }
 
-        printf("\n");
+        twritef("\n");
     }
 }
 
 
 void vm_print(struct vm* vm)
 {
-    printf("__.--@ / VM \\ @--.__\n");
-    printf("  Stack: 0x%x\n", vm->stack);
-    printf("  Data:  0x%x\n", vm->data);
-    printf("  Text:  0x%x\n", vm->text);
-    printf("  ----------------\n");
-    printf("  AX: 0x%x\n", vm->ax);
-    printf("  PC: 0x%x\n", vm->pc);
-    printf("  SP: 0x%x\n", vm->sp);
-    printf("__.--@ / VM \\ @--.__\n");
+    twritef("__.--@ / VM \\ @--.__\n");
+    twritef("  Stack: 0x%x\n", vm->stack);
+    twritef("  Data:  0x%x\n", vm->data);
+    twritef("  Text:  0x%x\n", vm->text);
+    twritef("  ----------------\n");
+    twritef("  AX: 0x%x\n", vm->ax);
+    twritef("  PC: 0x%x\n", vm->pc);
+    twritef("  SP: 0x%x\n", vm->sp);
+    twritef("__.--@ / VM \\ @--.__\n");
     DEBUG_PRINT("  Stack:\n");
     //hexdump(vm->text, POOLSIZE);
     
 }
 
 int eval(struct vm* vm) {
-    vm_print(vm);
+    //vm_print(vm);
 
     int op, *tmp;
     while (1) {
@@ -173,23 +171,24 @@ int eval(struct vm* vm) {
                 vm->ax = *vm->sp++ % vm->ax;
                 break;
             case EXIT:
-                printf("exit(%d)\n", *vm->sp);
+                twritef("exit(%d)\n", *vm->sp);
                 return *vm->sp;
             case OPEN:
-                vm->ax = open((char*)vm->sp[1], vm->sp[0]);
+                vm->ax = fs_open((char*)vm->sp[1]);
                 break;
             case CLOS:
-                vm->ax = close(*vm->sp);
+                vm->ax = 0;
+                fs_close(*vm->sp);
                 break;
             case READ:
-                vm->ax = read(vm->sp[2], (char *)vm->sp[1], *vm->sp);
+                vm->ax = fs_read(vm->sp[2], (char *)vm->sp[1], *vm->sp);
                 break;
             case PRTF:
                 tmp = vm->sp + vm->pc[1];
-                vm->ax = printf((char *)tmp[-1], tmp[-2], tmp[-3], tmp[-4], tmp[-5], tmp[-6]);
+                vm->ax = twritef((char *)tmp[-1], tmp[-2], tmp[-3], tmp[-4], tmp[-5], tmp[-6]);
                 break;
             case MALC:
-                vm->ax = (int)malloc(*vm->sp);
+                vm->ax = (int)kalloc(*vm->sp);
                 break;
             case MSET:
                 vm->ax = (int)memset((char *)vm->sp[2], vm->sp[1], *vm->sp);
@@ -198,14 +197,15 @@ int eval(struct vm* vm) {
                 vm->ax = memcmp((char *)vm->sp[2], (char *)vm->sp[1], *vm->sp);
                 break;
             case FREE:
-                free((void *)*vm->sp);
+                kfree((void *)*vm->sp);
                 break;
             default:
-                printf("unknown instruction:%d\n", op);
+                twritef("unknown instruction:%d\n", op);
                 return -1;
         }
         DEBUG_PRINT("%s, AX: %d\n", optcodes[op], vm->ax);
     }
+    terminal_commit();
     return 0;
 }
 
@@ -213,9 +213,9 @@ void vm_init(struct vm* vm)
 {
     /* allocate memory for virtual machine */
 
-    vm->text = malloc(VM_TEXT_SIZE);
-    vm->data = malloc(VM_DATA_SIZE);
-    vm->stack = malloc(VM_STACK_SIZE);
+    vm->text = kalloc(VM_TEXT_SIZE);
+    vm->data = kalloc(VM_DATA_SIZE);
+    vm->stack = kalloc(VM_STACK_SIZE);
     DEBUG_PRINT("Allocated VM:\nText: 0x%x\nData: 0x%x\nStack: 0x%x\n", vm->text, vm->data, vm->stack);
 
     vm->old_text = vm->text;
@@ -231,9 +231,9 @@ void vm_init(struct vm* vm)
 void vm_free(struct vm* vm)
 {
     DEBUG_PRINT("Cleaning VM:\nText: 0x%x\nData: 0x%x\nStack: 0x%x\n", vm->text, vm->data, vm->stack);
-    free(vm->text);
-    free(vm->data);
-    free(vm->stack);
+    kfree(vm->text);
+    kfree(vm->data);
+    kfree(vm->stack);
 }
 
 void vm_setup_stack(struct vm* vm, int argc, char* argv[])

@@ -23,6 +23,11 @@ int disk_attached()
     return disk_device.attached;
 }
 
+char* disk_name()
+{
+    return disk_device.dev->model;
+}
+
 
 int disk_size(){
     if(disk_device.attached)

@@ -1,16 +1,18 @@
 #ifndef FCB4F955_2425_46A5_9A2F_B11453605E94
 #define FCB4F955_2425_46A5_9A2F_B11453605E94
 
-//#define DEBUG
+#define DEBUG
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#include <fs/fs.h>
+#include <terminal.h>
+#include <memory.h>
+#include <util.h>
+#include <serial.h>
 
 
 #ifdef DEBUG
 #define DEBUG_PRINT(fmt, ...) \
-    printf("[DEBUG] " fmt, ##__VA_ARGS__)
+    dbgprintf(fmt, ##__VA_ARGS__)
 #else
 #define DEBUG_PRINT(fmt, ...)
 #endif
