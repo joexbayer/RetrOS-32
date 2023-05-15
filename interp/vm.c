@@ -9,9 +9,6 @@
  * @copyright Copyright (c) 2023
  * 
  */
-
-#include <stdlib.h>
-#include <string.h>
 #include "interpreter.h"
 
 #define int long
@@ -25,6 +22,38 @@ const char* optcodes[] = {
 };
 
 
+#define HEXDUMP_COLS 16
+void hexdump(const void *data, size_t size) {
+    const unsigned char *p = (const unsigned char *)data;
+    int i, j;
+
+    for (i = 0; i < size; i += HEXDUMP_COLS) {
+        printf("%06zu: ", i);
+
+        for (j = 0; j < HEXDUMP_COLS; j++) {
+            if (i + j < size)
+                printf("%02x ", p[i + j]);
+            else
+                printf("   ");
+
+            if (j % 8 == 7)
+                printf(" ");
+        }
+
+        printf(" ");
+
+        for (j = 0; j < HEXDUMP_COLS; j++) {
+            if (i + j < size)
+                printf("%c", (p[i + j] >= 32 && p[i + j] <= 126) ? p[i + j] : '.');
+            else
+                printf(" ");
+        }
+
+        printf("\n");
+    }
+}
+
+
 void vm_print(struct vm* vm)
 {
     printf("__.--@ / VM \\ @--.__\n");
@@ -36,6 +65,9 @@ void vm_print(struct vm* vm)
     printf("  PC: 0x%x\n", vm->pc);
     printf("  SP: 0x%x\n", vm->sp);
     printf("__.--@ / VM \\ @--.__\n");
+    DEBUG_PRINT("  Stack:\n");
+    //hexdump(vm->text, POOLSIZE);
+    
 }
 
 int eval(struct vm* vm) {
@@ -73,11 +105,11 @@ int eval(struct vm* vm) {
                 vm->pc = vm->ax ? (int *)*vm->pc : vm->pc + 1; /* jump if vm->ax is not zero */
                 break;
             case CALL:
-                *--vm->sp = (long)(vm->pc + 1);
+                *--vm->sp = (int)(vm->pc + 1); /* Store next program counter on stack */
                 vm->pc = (int *)*vm->pc; /* call subroutine */
                 break;
             case ENT:
-                *--vm->sp = (long)vm->bp;
+                *--vm->sp = (int)vm->bp;
                 vm->bp = vm->sp;
                 vm->sp = vm->sp - *vm->pc++; /* make new stack frame */
                 break;
@@ -90,7 +122,7 @@ int eval(struct vm* vm) {
                 vm->pc = (int *)*vm->sp++; /* restore call frame and vm->pc */
                 break;
             case LEA:
-                vm->ax = (long)(vm->bp + *vm->pc++); /* load address for arguments. */
+                vm->ax = (int)(vm->bp + *vm->pc++); /* load address for arguments. */
                 break;
             case OR:
                 vm->ax = *vm->sp++ | vm->ax;
@@ -157,13 +189,16 @@ int eval(struct vm* vm) {
                 vm->ax = printf((char *)tmp[-1], tmp[-2], tmp[-3], tmp[-4], tmp[-5], tmp[-6]);
                 break;
             case MALC:
-                vm->ax = (long)malloc(*vm->sp);
+                vm->ax = (int)malloc(*vm->sp);
                 break;
             case MSET:
-                vm->ax = (long)memset((char *)vm->sp[2], vm->sp[1], *vm->sp);
+                vm->ax = (int)memset((char *)vm->sp[2], vm->sp[1], *vm->sp);
                 break;
             case MCMP:
                 vm->ax = memcmp((char *)vm->sp[2], (char *)vm->sp[1], *vm->sp);
+                break;
+            case FREE:
+                free((void *)*vm->sp);
                 break;
             default:
                 printf("unknown instruction:%d\n", op);
@@ -176,24 +211,26 @@ int eval(struct vm* vm) {
 
 void vm_init(struct vm* vm)
 {
-    
     /* allocate memory for virtual machine */
 
-    vm->text = malloc(POOLSIZE);
-    vm->data = malloc(POOLSIZE);
-    vm->stack = malloc(POOLSIZE);
+    vm->text = malloc(VM_TEXT_SIZE);
+    vm->data = malloc(VM_DATA_SIZE);
+    vm->stack = malloc(VM_STACK_SIZE);
+    DEBUG_PRINT("Allocated VM:\nText: 0x%x\nData: 0x%x\nStack: 0x%x\n", vm->text, vm->data, vm->stack);
+
     vm->old_text = vm->text;
 
-    memset(vm->text, 0, POOLSIZE);
-    memset(vm->data, 0, POOLSIZE);
-    memset(vm->stack, 0, POOLSIZE);
+    memset(vm->text, 0, VM_TEXT_SIZE);
+    memset(vm->data, 0, VM_DATA_SIZE);
+    memset(vm->stack, 0, VM_STACK_SIZE);
 
-    vm->bp = vm->sp = (int *)((long)vm->stack + POOLSIZE);
+    vm->bp = vm->sp = (int *)((int)vm->stack + VM_STACK_SIZE-2);
     vm->ax = 0;
 }
 
 void vm_free(struct vm* vm)
 {
+    DEBUG_PRINT("Cleaning VM:\nText: 0x%x\nData: 0x%x\nStack: 0x%x\n", vm->text, vm->data, vm->stack);
     free(vm->text);
     free(vm->data);
     free(vm->stack);
@@ -201,14 +238,13 @@ void vm_free(struct vm* vm)
 
 void vm_setup_stack(struct vm* vm, int argc, char* argv[])
 {
-    long tmp;
+    int tmp;
     /* setup stack */
-    vm->sp = (int *)((long)vm->stack + POOLSIZE-1);
-    printf("Setting stack %x\n", vm->sp);
+    vm->sp = (int *)((int)vm->stack + VM_STACK_SIZE-2);
     *--vm->sp = EXIT; /* call exit if main returns */
     *--vm->sp = PUSH;
     tmp = vm->sp;
     *--vm->sp = argc;
-    *--vm->sp = (long)argv;
-    *--vm->sp = (long)tmp;
+    *--vm->sp = (int)argv;
+    *--vm->sp = (int)tmp;
 }

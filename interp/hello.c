@@ -8,7 +8,6 @@ int add(int a, int b)
 int main()
 {
   int result;
-
   result = add(10, 13);
 
   printf("Hello world %d\n", result);

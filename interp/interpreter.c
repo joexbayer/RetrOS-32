@@ -17,7 +17,7 @@
 
 struct vm vm;
 int fd;
-char *src, *old_src;
+static char *src, *old_src;
 int i = 0;
 
 int main(int argc, char **argv)
@@ -48,7 +48,6 @@ int main(int argc, char **argv)
     close(fd);
 
     DEBUG_PRINT("Lexing\n");
-    memset(vm.text, 0, 4*1024);
     void* entry = program(vm.text, vm.data, src);
     DEBUG_PRINT("Lexing [done]\n");
 
@@ -61,5 +60,5 @@ int main(int argc, char **argv)
 
     vm_free(&vm);
 
-    free(old_src);
+    free(src);
 }

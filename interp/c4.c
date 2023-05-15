@@ -334,7 +334,8 @@ int main(int argc, char **argv)
 {
   int fd, bt, ty, poolsz, *idmain;
   int *pc, *sp, *bp, a, cycle; // vm registers
-  int i, *t; // temps
+  int *stack_p; int* data_p;
+  int i, *t, ret; // temps
 
   --argc; ++argv;
   if (argc > 0 && **argv == '-' && (*argv)[1] == 's') { src = 1; --argc; ++argv; }
@@ -352,6 +353,8 @@ int main(int argc, char **argv)
   memset(sym,  0, poolsz);
   memset(e,    0, poolsz);
   memset(data, 0, poolsz);
+
+  data_p = data; stack_p = sp;
 
   p = "char else enum if int return sizeof while "
       "open read close printf malloc free memset memcmp exit void main";
@@ -471,6 +474,7 @@ int main(int argc, char **argv)
   *--sp = (int)argv;
   *--sp = (int)t;
 
+
   // run...
   cycle = 0;
   while (1) {
@@ -519,10 +523,10 @@ int main(int argc, char **argv)
     else if (i == CLOS) a = close(*sp);
     else if (i == PRTF) { t = sp + pc[1]; a = printf((char *)t[-1], t[-2], t[-3], t[-4], t[-5], t[-6]); }
     else if (i == MALC) a = (int)malloc(*sp);
-    //else if (i == FREE) free((void *)*sp);
+    else if (i == FREE) free((void *)*sp);
     else if (i == MSET) a = (int)memset((char *)sp[2], sp[1], *sp);
     else if (i == MCMP) a = memcmp((char *)sp[2], (char *)sp[1], *sp);
-    else if (i == EXIT) { printf("exit(%d) cycle = %d\n", *sp, cycle); return *sp; }
+    else if (i == EXIT) { printf("exit(%d) cycle = %d\n", *sp, cycle); free(sym); free(le); free(lp); free(data_p); ret = *sp; free(stack_p); return ret; }
     else { printf("unknown instruction = %d! cycle = %d\n", i, cycle); return -1; }
   }
 }

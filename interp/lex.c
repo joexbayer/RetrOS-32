@@ -39,6 +39,15 @@ struct lexer {
     int basetype;    // the type of a declaration, make it global for convenience
     int expr_type;   // the type of an expression
 
+    // function frame
+    //
+    // 0: arg 1
+    // 1: arg 2
+    // 2: arg 3
+    // 3: return address
+    // 4: old bp pointer  <- lexer_context.index_of_bp
+    // 5: local var 1
+    // 6: local var 2
     int index_of_bp; // index of bp pointer on stack
 
 } lexer_context;
@@ -47,24 +56,9 @@ char *src;
 int line = 1;
 char* data;
 int* text;
-struct identifier* idmain;
 
-int basetype;    // the type of a declaration, make it global for convenience
-int expr_type;   // the type of an expression
 
-// function frame
-//
-// 0: arg 1
-// 1: arg 2
-// 2: arg 3
-// 3: return address
-// 4: old bp pointer  <- index_of_bp
-// 5: local var 1
-// 6: local var 2
-int index_of_bp; // index of bp pointer on stack
-
-struct identifier* current_id;
-struct identifier symbols[LEX_MAX_SYMBOLS];
+void next();
 
 void match(int tk) {
     if (lexer_context.token == tk) {
@@ -106,7 +100,7 @@ void expression(int level) {
             // emit code
             *++text = IMM;
             *++text = lexer_context.token_val;
-            expr_type = INT;
+            lexer_context.expr_type = INT;
         }
         else if (lexer_context.token == '"') {
             // continous string "abc" "abc"
@@ -119,42 +113,41 @@ void expression(int level) {
             match('"');
             // store the rest strings
             while (lexer_context.token == '"') {
-                DEBUG_PRINT("expression string %c\n", lexer_context.token);
                 match('"');
             }
 
             // append the end of string character '\0', all the data are default
             // to 0, so just move data one position forward.
             data = (char *)(((int)data + sizeof(int)) & (-sizeof(int)));
-            expr_type = PTR;
+            lexer_context.expr_type = PTR;
         } else if (lexer_context.token == Sizeof) {
-              DEBUG_PRINT("Sizeof\n");
+            DEBUG_PRINT("Sizeof\n");
             // sizeof is actually an unary operator
             // now only `sizeof(int)`, `sizeof(char)` and `sizeof(*...)` are
             // supported.
             match(Sizeof);
             match('(');
-            expr_type = INT;
+            lexer_context.expr_type = INT;
 
             if (lexer_context.token == Int) {
                 match(Int);
             } else if (lexer_context.token == Char) {
                 match(Char);
-                expr_type = CHAR;
+                lexer_context.expr_type = CHAR;
             }
 
             while (lexer_context.token == Mul) {
                 match(Mul);
-                expr_type = expr_type + PTR;
+                lexer_context.expr_type = lexer_context.expr_type + PTR;
             }
 
             match(')');
 
             // emit code
             *++text = IMM;
-            *++text = (expr_type == CHAR) ? sizeof(char) : sizeof(int);
+            *++text = (lexer_context.expr_type == CHAR) ? sizeof(char) : sizeof(int);
 
-            expr_type = INT;
+            lexer_context.expr_type = INT;
         } else if (lexer_context.token == Id) {
             // there are several type when occurs to Id
             // but this is unit, so it can only be
@@ -163,7 +156,9 @@ void expression(int level) {
             // 3. global/local variable
             match(Id);
 
-            id = current_id;
+
+            id = lexer_context.current_id;
+            DEBUG_PRINT("Context identifier: %s\n", id->name);
 
             if (lexer_context.token == '(') {
                 // function call
@@ -205,19 +200,19 @@ void expression(int level) {
                     *++text = ADJ;
                     *++text = tmp;
                 }
-                expr_type = id->type;
+                lexer_context.expr_type = id->type;
             }
             else if (id->class == Num) {
                 // enum variable
                 *++text = IMM;
                 *++text = id->value;
-                expr_type = INT;
+                lexer_context.expr_type = INT;
             }
             else {
                 // variable
                 if (id->class == Loc) {
                     *++text = LEA;
-                    *++text = index_of_bp - (int)id->value;
+                    *++text = lexer_context.index_of_bp - (int)id->value;
                 }
                 else if (id->class == Glo) {
                     *++text = IMM;
@@ -230,8 +225,8 @@ void expression(int level) {
 
                 // emit code, default behaviour is to load the value of the
                 // address which is stored in `ax`
-                expr_type = id->type;
-                *++text = (expr_type == CHAR) ? LC : LI;
+                lexer_context.expr_type = id->type;
+                *++text = (lexer_context.expr_type == CHAR) ? LC : LI;
             }
         }
         else if (lexer_context.token == '(') {
@@ -249,7 +244,7 @@ void expression(int level) {
 
                 expression(Inc); // cast has precedence as Inc(++)
 
-                expr_type  = tmp;
+                lexer_context.expr_type  = tmp;
             } else {
                 // normal parenthesis
                 expression(Assign);
@@ -261,14 +256,14 @@ void expression(int level) {
             match(Mul);
             expression(Inc); // dereference has the same precedence as Inc(++)
 
-            if (expr_type >= PTR) {
-                expr_type = expr_type - PTR;
+            if (lexer_context.expr_type >= PTR) {
+                lexer_context.expr_type = lexer_context.expr_type - PTR;
             } else {
                 printf("%d: bad dereference\n", line);
                 exit(-1);
             }
 
-            *++text = (expr_type == CHAR) ? LC : LI;
+            *++text = (lexer_context.expr_type == CHAR) ? LC : LI;
         }
         else if (lexer_context.token == And) {
             // get the address of
@@ -281,7 +276,7 @@ void expression(int level) {
                 exit(-1);
             }
 
-            expr_type = expr_type + PTR;
+            lexer_context.expr_type = lexer_context.expr_type + PTR;
         }
         else if (lexer_context.token == '!') {
             // not
@@ -294,7 +289,7 @@ void expression(int level) {
             *++text = 0;
             *++text = EQ;
 
-            expr_type = INT;
+            lexer_context.expr_type = INT;
         }
         else if (lexer_context.token == '~') {
             // bitwise not
@@ -307,14 +302,14 @@ void expression(int level) {
             *++text = -1;
             *++text = XOR;
 
-            expr_type = INT;
+            lexer_context.expr_type = INT;
         }
         else if (lexer_context.token == Add) {
             // +var, do nothing
             match(Add);
             expression(Inc);
 
-            expr_type = INT;
+            lexer_context.expr_type = INT;
         }
         else if (lexer_context.token == Sub) {
             // -var
@@ -333,7 +328,7 @@ void expression(int level) {
                 *++text = MUL;
             }
 
-            expr_type = INT;
+            lexer_context.expr_type = INT;
         }
         else if (lexer_context.token == Inc || lexer_context.token == Dec) {
             tmp = lexer_context.token;
@@ -351,9 +346,9 @@ void expression(int level) {
             }
             *++text = PUSH;
             *++text = IMM;
-            *++text = (expr_type > PTR) ? sizeof(int) : sizeof(char);
+            *++text = (lexer_context.expr_type > PTR) ? sizeof(int) : sizeof(char);
             *++text = (tmp == Inc) ? ADD : SUB;
-            *++text = (expr_type == CHAR) ? SC : SI;
+            *++text = (lexer_context.expr_type == CHAR) ? SC : SI;
         }
         else {
             printf("%d: bad expression\n", line);
@@ -365,7 +360,7 @@ void expression(int level) {
     {
         while (lexer_context.token >= level) {
             // handle according to current operator's precedence
-            tmp = expr_type;
+            tmp = lexer_context.expr_type;
             if (lexer_context.token == Assign) {
                 // var = expr;
                 match(Assign);
@@ -377,8 +372,8 @@ void expression(int level) {
                 }
                 expression(Assign);
 
-                expr_type = tmp;
-                *++text = (expr_type == CHAR) ? SC : SI;
+                lexer_context.expr_type = tmp;
+                *++text = (lexer_context.expr_type == CHAR) ? SC : SI;
             }
             else if (lexer_context.token == Cond) {
                 // expr ? a : b;
@@ -405,7 +400,7 @@ void expression(int level) {
                 addr = ++text;
                 expression(Lan);
                 *addr = (int)(text + 1);
-                expr_type = INT;
+                lexer_context.expr_type = INT;
             }
             else if (lexer_context.token == Lan) {
                 // logic and
@@ -414,7 +409,7 @@ void expression(int level) {
                 addr = ++text;
                 expression(Or);
                 *addr = (int)(text + 1);
-                expr_type = INT;
+                lexer_context.expr_type = INT;
             }
             else if (lexer_context.token == Or) {
                 // bitwise or
@@ -422,7 +417,7 @@ void expression(int level) {
                 *++text = PUSH;
                 expression(Xor);
                 *++text = OR;
-                expr_type = INT;
+                lexer_context.expr_type = INT;
             }
             else if (lexer_context.token == Xor) {
                 // bitwise xor
@@ -430,7 +425,7 @@ void expression(int level) {
                 *++text = PUSH;
                 expression(And);
                 *++text = XOR;
-                expr_type = INT;
+                lexer_context.expr_type = INT;
             }
             else if (lexer_context.token == And) {
                 // bitwise and
@@ -438,7 +433,7 @@ void expression(int level) {
                 *++text = PUSH;
                 expression(Eq);
                 *++text = AND;
-                expr_type = INT;
+                lexer_context.expr_type = INT;
             }
             else if (lexer_context.token == Eq) {
                 // equal ==
@@ -446,7 +441,7 @@ void expression(int level) {
                 *++text = PUSH;
                 expression(Ne);
                 *++text = EQ;
-                expr_type = INT;
+                lexer_context.expr_type = INT;
             }
             else if (lexer_context.token == Ne) {
                 // not equal !=
@@ -454,7 +449,7 @@ void expression(int level) {
                 *++text = PUSH;
                 expression(Lt);
                 *++text = NE;
-                expr_type = INT;
+                lexer_context.expr_type = INT;
             }
             else if (lexer_context.token == Lt) {
                 // less than
@@ -462,7 +457,7 @@ void expression(int level) {
                 *++text = PUSH;
                 expression(Shl);
                 *++text = LT;
-                expr_type = INT;
+                lexer_context.expr_type = INT;
             }
             else if (lexer_context.token == Gt) {
                 // greater than
@@ -470,7 +465,7 @@ void expression(int level) {
                 *++text = PUSH;
                 expression(Shl);
                 *++text = GT;
-                expr_type = INT;
+                lexer_context.expr_type = INT;
             }
             else if (lexer_context.token == Le) {
                 // less than or equal to
@@ -478,7 +473,7 @@ void expression(int level) {
                 *++text = PUSH;
                 expression(Shl);
                 *++text = LE;
-                expr_type = INT;
+                lexer_context.expr_type = INT;
             }
             else if (lexer_context.token == Ge) {
                 // greater than or equal to
@@ -486,7 +481,7 @@ void expression(int level) {
                 *++text = PUSH;
                 expression(Shl);
                 *++text = GE;
-                expr_type = INT;
+                lexer_context.expr_type = INT;
             }
             else if (lexer_context.token == Shl) {
                 // shift left
@@ -494,7 +489,7 @@ void expression(int level) {
                 *++text = PUSH;
                 expression(Add);
                 *++text = SHL;
-                expr_type = INT;
+                lexer_context.expr_type = INT;
             }
             else if (lexer_context.token == Shr) {
                 // shift right
@@ -502,7 +497,7 @@ void expression(int level) {
                 *++text = PUSH;
                 expression(Add);
                 *++text = SHR;
-                expr_type = INT;
+                lexer_context.expr_type = INT;
             }
             else if (lexer_context.token == Add) {
                 // add
@@ -510,8 +505,8 @@ void expression(int level) {
                 *++text = PUSH;
                 expression(Mul);
 
-                expr_type = tmp;
-                if (expr_type > PTR) {
+                lexer_context.expr_type = tmp;
+                if (lexer_context.expr_type > PTR) {
                     // pointer type, and not `char *`
                     *++text = PUSH;
                     *++text = IMM;
@@ -525,14 +520,14 @@ void expression(int level) {
                 match(Sub);
                 *++text = PUSH;
                 expression(Mul);
-                if (tmp > PTR && tmp == expr_type) {
+                if (tmp > PTR && tmp == lexer_context.expr_type) {
                     // pointer subtraction
                     *++text = SUB;
                     *++text = PUSH;
                     *++text = IMM;
                     *++text = sizeof(int);
                     *++text = DIV;
-                    expr_type = INT;
+                    lexer_context.expr_type = INT;
                 } else if (tmp > PTR) {
                     // pointer movement
                     *++text = PUSH;
@@ -540,11 +535,11 @@ void expression(int level) {
                     *++text = sizeof(int);
                     *++text = MUL;
                     *++text = SUB;
-                    expr_type = tmp;
+                    lexer_context.expr_type = tmp;
                 } else {
                     // numeral subtraction
                     *++text = SUB;
-                    expr_type = tmp;
+                    lexer_context.expr_type = tmp;
                 }
             }
             else if (lexer_context.token == Mul) {
@@ -553,7 +548,7 @@ void expression(int level) {
                 *++text = PUSH;
                 expression(Inc);
                 *++text = MUL;
-                expr_type = tmp;
+                lexer_context.expr_type = tmp;
             }
             else if (lexer_context.token == Div) {
                 // divide
@@ -561,7 +556,7 @@ void expression(int level) {
                 *++text = PUSH;
                 expression(Inc);
                 *++text = DIV;
-                expr_type = tmp;
+                lexer_context.expr_type = tmp;
             }
             else if (lexer_context.token == Mod) {
                 // Modulo
@@ -569,7 +564,7 @@ void expression(int level) {
                 *++text = PUSH;
                 expression(Inc);
                 *++text = MOD;
-                expr_type = tmp;
+                lexer_context.expr_type = tmp;
             }
             else if (lexer_context.token == Inc || lexer_context.token == Dec) {
                 // postfix inc(++) and dec(--)
@@ -590,12 +585,12 @@ void expression(int level) {
 
                 *++text = PUSH;
                 *++text = IMM;
-                *++text = (expr_type > PTR) ? sizeof(int) : sizeof(char);
+                *++text = (lexer_context.expr_type > PTR) ? sizeof(int) : sizeof(char);
                 *++text = (lexer_context.token == Inc) ? ADD : SUB;
-                *++text = (expr_type == CHAR) ? SC : SI;
+                *++text = (lexer_context.expr_type == CHAR) ? SC : SI;
                 *++text = PUSH;
                 *++text = IMM;
-                *++text = (expr_type > PTR) ? sizeof(int) : sizeof(char);
+                *++text = (lexer_context.expr_type > PTR) ? sizeof(int) : sizeof(char);
                 *++text = (lexer_context.token == Inc) ? SUB : ADD;
                 match(lexer_context.token);
             }
@@ -617,9 +612,9 @@ void expression(int level) {
                     printf("%d: pointer type expected\n", line);
                     exit(-1);
                 }
-                expr_type = tmp - PTR;
+                lexer_context.expr_type = tmp - PTR;
                 *++text = ADD;
-                *++text = (expr_type == CHAR) ? LC : LI;
+                *++text = (lexer_context.expr_type == CHAR) ? LC : LI;
             }
             else {
                 printf("%d: compiler error, lexer_context.token = %d\n", line, lexer_context.token);
@@ -634,7 +629,6 @@ void next() {
     char *last_pos;
     int hash;
 
-    DEBUG_PRINT("next lexer_context.token parsing... %c %c\n", lexer_context.token, *src);
     while (lexer_context.token = *src) {
         ++src;
         DEBUG_PRINT("Token %c\n", lexer_context.token);
@@ -643,6 +637,7 @@ void next() {
         if (lexer_context.token == '\n') {
             ++line;
             DEBUG_PRINT("new line\n");
+            continue;
         }
         else if (lexer_context.token == '#') {
             // skip macro, because we will not support it
@@ -663,30 +658,29 @@ void next() {
                 hash = hash * 147 + *src;
                 src++;
             }
-            DEBUG_PRINT("hash %d %d\n", hash, src - last_pos);
-
             // look for existing identifier, linear search
-            current_id = &symbols[0];
-            while (current_id->token) {
-                if (current_id->hash == hash && !memcmp((char *)current_id->name, last_pos, src - last_pos)) {
+            lexer_context.current_id = &lexer_context.symbols[0];
+            while (lexer_context.current_id->token) {
+                if (lexer_context.current_id->hash == hash && !memcmp((char *)lexer_context.current_id->name, last_pos, src - last_pos)) {
                     //found one, return
-                    lexer_context.token = current_id->token;
-                    //DEBUG_PRINT("Found identifier %s\n", current_id->name);
+                    lexer_context.token = lexer_context.current_id->token;
+                    //DEBUG_PRINT("Found identifier %s\n", lexer_context.current_id->name);
                     return;
                 }
-                current_id += 1;
+                lexer_context.current_id += 1;
             }
 
 
 
             // store new ID
-            current_id->name = last_pos;
-            current_id->hash = hash;
-            lexer_context.token = current_id->token = Id;
-            //DEBUG_PRINT("new identifier %s\n", current_id->name);
+            lexer_context.current_id->name = last_pos;
+            lexer_context.current_id->hash = hash;
+            lexer_context.token = lexer_context.current_id->token = Id;
+            //DEBUG_PRINT("new identifier %s\n", lexer_context.current_id->name);
             return;
         }
         else if (lexer_context.token >= '0' && lexer_context.token <= '9') {
+            DEBUG_PRINT("Parsing new number\n");
             // parse number, three kinds: dec(123) hex(0x123) oct(017)
             lexer_context.token_val = lexer_context.token - '0';
             if (lexer_context.token_val > 0) {
@@ -715,6 +709,7 @@ void next() {
             return;
         }
         else if (lexer_context.token == '"' || lexer_context.token == '\'') {
+            DEBUG_PRINT("Parsing string literal\n");
             // parse string literal, currently, the only supported escape
             // character is '\n', store the string literal into data.
             last_pos = data;
@@ -745,6 +740,7 @@ void next() {
         }
         else if (lexer_context.token == '/') {
             if (*src == '/') {
+                DEBUG_PRINT("Skipping comment...\n");
                 // skip comments
                 while (*src != 0 && *src != '\n') {
                     ++src;
@@ -918,7 +914,7 @@ void statement() {
         *b = (int)(text + 1);
     }
     else if (lexer_context.token == While) {
-        DEBUG_PRINT("whiles\n");
+        DEBUG_PRINT("while\n");
         //
         // a:                     a:
         //    while (<cond>)        <cond>
@@ -948,6 +944,7 @@ void statement() {
         match('{');
 
         while (lexer_context.token != '}') {
+            DEBUG_PRINT("Statement Body");
             statement();
         }
 
@@ -1004,7 +1001,7 @@ void function_parameter() {
             printf("%d: bad parameter declaration\n", line);
             exit(-1);
         }
-        if (current_id->class == Loc) {
+        if (lexer_context.current_id->class == Loc) {
             printf("%d: duplicate parameter declaration\n", line);
             exit(-1);
         }
@@ -1012,15 +1009,15 @@ void function_parameter() {
         match(Id);
         // store the local variable
         DEBUG_PRINT("store the local variable\n");
-        current_id->Bclass = current_id->class; current_id->class  = Loc;
-        current_id->Btype  = current_id->type;  current_id->type   = type;
-        current_id->Bvalue = current_id->value; current_id->value  = params++;   // index of current parameter
+        lexer_context.current_id->Bclass = lexer_context.current_id->class; lexer_context.current_id->class  = Loc;
+        lexer_context.current_id->Btype  = lexer_context.current_id->type;  lexer_context.current_id->type   = type;
+        lexer_context.current_id->Bvalue = lexer_context.current_id->value; lexer_context.current_id->value  = params++;   // index of current parameter
 
         if (lexer_context.token == ',') {
             match(',');
         }
     }
-    index_of_bp = params+1;
+    lexer_context.index_of_bp = params+1;
 }
 
 void function_body() {
@@ -1035,15 +1032,15 @@ void function_body() {
 
     int pos_local; // position of local variables on the stack.
     int type;
-    pos_local = index_of_bp;
+    pos_local = lexer_context.index_of_bp;
 
     while (lexer_context.token == Int || lexer_context.token == Char) {
         // local variable declaration, just like global ones.
-        basetype = (lexer_context.token == Int) ? INT : CHAR;
+        lexer_context.basetype = (lexer_context.token == Int) ? INT : CHAR;
 
         match(lexer_context.token);
         while (lexer_context.token != ';') {
-            type = basetype;
+            type = lexer_context.basetype;
             while (lexer_context.token == Mul) {
                 match(Mul);
                 type = type + PTR;
@@ -1054,7 +1051,7 @@ void function_body() {
                 printf("%d: bad local declaration\n", line);
                 exit(-1);
             }
-            if (current_id->class == Loc) {
+            if (lexer_context.current_id->class == Loc) {
                 // identifier exists
                 printf("%d: duplicate local declaration\n", line);
                 exit(-1);
@@ -1064,9 +1061,9 @@ void function_body() {
 
             DEBUG_PRINT("store the local variable\n");
             // store the local variable
-            current_id->Bclass = current_id->class; current_id->class  = Loc;
-            current_id->Btype  = current_id->type;  current_id->type   = type;
-            current_id->Bvalue = current_id->value; current_id->value  = ++pos_local;   // index of current parameter
+            lexer_context.current_id->Bclass = lexer_context.current_id->class; lexer_context.current_id->class  = Loc;
+            lexer_context.current_id->Btype  = lexer_context.current_id->type;  lexer_context.current_id->type   = type;
+            lexer_context.current_id->Bvalue = lexer_context.current_id->value; lexer_context.current_id->value  = ++pos_local;   // index of current parameter
 
             if (lexer_context.token == ',') {
                 match(',');
@@ -1078,10 +1075,10 @@ void function_body() {
     DEBUG_PRINT("save the stack size for local variables %x\n", text);
     // save the stack size for local variables
     *++text = ENT;
-    *++text = pos_local - index_of_bp;
+    *++text = pos_local - lexer_context.index_of_bp;
 
     // statements
-    //DEBUG_PRINT("statements\n");
+    DEBUG_PRINT("Function: statements\n");
     while (lexer_context.token != '}') {
         statement();
     }
@@ -1103,14 +1100,14 @@ void function_declaration() {
     //match('}');
 
     // unwind local variable declarations for all local variables.
-    current_id = symbols;
-    while (current_id->token) {
-        if (current_id->class == Loc) {
-            current_id->class = current_id->Bclass;
-            current_id->type  = current_id->Btype;
-            current_id->value = current_id->Bvalue;
+    lexer_context.current_id = lexer_context.symbols;
+    while (lexer_context.current_id->token) {
+        if (lexer_context.current_id->class == Loc) {
+            lexer_context.current_id->class = lexer_context.current_id->Bclass;
+            lexer_context.current_id->type  = lexer_context.current_id->Btype;
+            lexer_context.current_id->value = lexer_context.current_id->Bvalue;
         }
-        current_id = current_id + 1;
+        lexer_context.current_id = lexer_context.current_id + 1;
     }
 }
 
@@ -1135,9 +1132,9 @@ void enum_declaration() {
             next();
         }
 
-        current_id->class = Num;
-        current_id->type = INT;
-        current_id->value = i++;
+        lexer_context.current_id->class = Num;
+        lexer_context.current_id->type = INT;
+        lexer_context.current_id->value = i++;
 
         if (lexer_context.token == ',') {
             next();
@@ -1160,7 +1157,7 @@ void global_declaration() {
     int type; // tmp, actual type for variable
     int i; // tmp
 
-    basetype = INT;
+    lexer_context.basetype = INT;
 
     // parse enum, this should be treated alone.
     if (lexer_context.token == Enum) {
@@ -1189,13 +1186,13 @@ void global_declaration() {
     }
     else if (lexer_context.token == Char) {
         match(Char);
-        basetype = CHAR;
+        lexer_context.basetype = CHAR;
         DEBUG_PRINT("char matched\n");
     }
 
     // parse the comma seperated variable declaration.
     while (lexer_context.token != ';' && lexer_context.token != '}') {
-        type = basetype;
+        type = lexer_context.basetype;
         // parse pointer type, note that there may exist `int ****x;`
         while (lexer_context.token == Mul) {
             match(Mul);
@@ -1208,25 +1205,25 @@ void global_declaration() {
             printf("%d: bad global declaration\n", line);
             exit(-1);
         }
-        if (current_id->class) {
+        if (lexer_context.current_id->class) {
             // identifier exists
-            printf("%d: duplicate global declaration %s\n", line, current_id->name);
+            printf("%d: duplicate global declaration %s\n", line, lexer_context.current_id->name);
             exit(-1);
         }
         match(Id);
-        current_id->type = type;
+        lexer_context.current_id->type = type;
         DEBUG_PRINT("current type %d\n", type);
 
         if (lexer_context.token == '(') {
-            current_id->class = Fun;
-            current_id->value = (void*)(text + 1); // the memory address of function
+            lexer_context.current_id->class = Fun;
+            lexer_context.current_id->value = (void*)(text + 1); // the memory address of function
             DEBUG_PRINT("function_declaration\n");
             function_declaration();
         } else {
             // variable declaration
             DEBUG_PRINT("variable declaration\n");
-            current_id->class = Glo; // global variable
-            current_id->value = (void*)data; // assign memory address
+            lexer_context.current_id->class = Glo; // global variable
+            lexer_context.current_id->value = (void*)data; // assign memory address
             data = data + sizeof(int);
         }
 
@@ -1241,28 +1238,26 @@ void global_declaration() {
 void lex_init()
 {
     src = "char else enum if int return sizeof while "
-          "open read close printf malloc memset memcmp exit void main";
+          "open read close printf malloc memset memcmp exit free void main";
 
      // add keywords to symbol table
     int i = Char;
     while (i <= While) {
         next();
-        current_id->token = i++;
+        lexer_context.current_id->token = i++;
     }
 
     // add library to symbol table
     i = OPEN;
-    while (i <= EXIT) { 
+    while (i <= FREE) { 
         next();
-        current_id->class = Sys;
-        current_id->type = INT;
-        current_id->value = i++;
+        lexer_context.current_id->class = Sys;
+        lexer_context.current_id->type = INT;
+        lexer_context.current_id->value = i++;
     }
 
-    next(); current_id->token = Char; // handle void type
-    next(); idmain = current_id; // keep track of main
-    printf("main %s\n", idmain->name);
-
+    next(); lexer_context.current_id->token = Char; // handle void type
+    next(); lexer_context.main = lexer_context.current_id; // keep track of main
     DEBUG_PRINT("Added important default lexer_context.tokens and system lexer_context.tokens\n");
 }
 
@@ -1277,7 +1272,7 @@ void* program(char* _text, char* _data, char* _str)
     while (lexer_context.token > 0) {
         global_declaration();
     }
-    return idmain->value;
+    return lexer_context.main->value;
 }
 
 
