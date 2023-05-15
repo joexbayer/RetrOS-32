@@ -1,7 +1,7 @@
 #ifndef FCB4F955_2425_46A5_9A2F_B11453605E94
 #define FCB4F955_2425_46A5_9A2F_B11453605E94
 
-#define DEBUG
+//#define DEBUG
 
 #include <fs/fs.h>
 #include <terminal.h>

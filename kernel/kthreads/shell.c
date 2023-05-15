@@ -89,18 +89,33 @@ void run(int argc, char* argv[])
 {
 	char* optarg = NULL;
     int opt = 0;
-	while ((opt = getopt(argc, argv, "hc:", &optarg)) != -1) {
+	int bg = 0;
+	while ((opt = getopt(argc, argv, "hbc:", &optarg)) != -1) {
 		dbgprintf("%c\n", opt);
         switch (opt) {
             case 'h':
                 twritef("run [hn]\n  n - name\n  h - help\n  example: run -c /bin/clock\n");
                 return;
+			case 'b':
+				bg = 1;
+				break;
 			case 'c':
 				dbgprintf("c flag set\n");
 				{
 					int r = start(optarg);
 					if(r >= 0){
 						twritef("Kernel thread started\n");
+						
+						/*struct pcb_info pcbinf = {
+							.state = RUNNING
+						};
+
+						if(!bg){
+							while(pcbinf.state != STOPPED)
+								pcb_get_info(r, &pcbinf);
+							gfx_commit();
+						}*/
+						
 						return;
 					}
 

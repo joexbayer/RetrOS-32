@@ -203,7 +203,7 @@ int eval(struct vm* vm) {
                 twritef("unknown instruction:%d\n", op);
                 return -1;
         }
-        DEBUG_PRINT("%s, AX: %d\n", optcodes[op], vm->ax);
+        dbgprintf("%s, AX: %d\n", optcodes[op], vm->ax);
     }
     terminal_commit();
     return 0;
