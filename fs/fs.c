@@ -39,7 +39,7 @@ int init_fs()
 	/* Read superblock and check magic. */
 	read_block_offset((char*) &superblock, sizeof(struct superblock), 0, FS_START_LOCATION);
 	if(superblock.magic != MAGIC){
-		//mkfs();
+		//fs_create_file_system();
 		return 1;
 	}
 
@@ -115,7 +115,7 @@ static inline void __inode_add_dir(struct directory_entry* entry, struct inode* 
 	inode_write((char*) entry, sizeof(struct directory_entry), inode, sb);
 }
 
-void mkfs()
+void fs_create_file_system()
 {
 	superblock.magic = MAGIC;
 	superblock.size = (disk_size()) - (FS_START_LOCATION*BLOCK_SIZE);

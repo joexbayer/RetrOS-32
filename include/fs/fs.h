@@ -6,7 +6,7 @@
 #include <fs/inode.h>
 
 int init_fs();
-void mkfs();
+void fs_create_file_system();
 
 inode_t fs_open(char* name);
 inode_t fs_open_from_directory(char* name, inode_t i);

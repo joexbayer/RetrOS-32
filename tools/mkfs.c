@@ -324,8 +324,8 @@ int main(int argc, char* argv[])
     int inode_index = add_directory(&superblock, root_dir, "bin");
     struct inode* bin = inode_get(inode_index, &superblock);
 
-    add_userspace_program(&superblock, bin, "bin/counter");
-    add_userspace_program(&superblock, bin, "bin/clock");
+    add_userspace_program(&superblock, bin, "bin/counter.o");
+    add_userspace_program(&superblock, bin, "bin/clock.o");
     add_userspace_program(&superblock, bin, "editor/edit.o");
     add_userspace_program(&superblock, bin, "display/display.o");
 

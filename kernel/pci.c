@@ -46,7 +46,7 @@ struct pci_driver registered_drivers[] = {
     {0, 0, 0}
 };
 
-struct pci_device _pci_devices[8];
+struct pci_device _pci_devices[25];
 int _pci_devices_size = 0;
 
 /* https://wiki.osdev.org/PCI */
@@ -104,6 +104,7 @@ void pci_enable_device_busmaster(uint16_t bus, uint16_t slot, uint16_t function)
 
 int pci_register_device(uint32_t bus, uint32_t slot, uint32_t function, uint16_t vendor, uint16_t device, uint16_t class, uint8_t irq, uint32_t base)
 {
+    if(_pci_devices_size > 25) return -1;
 
 	struct pci_device pci_dev;
 

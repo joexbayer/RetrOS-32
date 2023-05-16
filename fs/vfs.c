@@ -35,3 +35,9 @@ void mkdir(int argc, char* argv[])
     twritef("Created directory.\n");
 }
 EXPORT_KSYMBOL(mkdir);
+
+void mkfs()
+{
+    fs_create_file_system();
+}
+EXPORT_KSYMBOL(mkfs);
