@@ -71,7 +71,8 @@
 
 ## About The Project
 
-32bit Hobby Operatingsystem with graphics, multitasking and networking!
+<p align="center">32bit Hobby Operatingsystem with graphics, multitasking and networking!</p>
+<p align="center"><i>Started: 12.05.2022</i></p>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
