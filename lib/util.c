@@ -161,19 +161,27 @@ char* strtok(char* str, const char* delim)
  * encountered, it returns '?'. If an option requiring an argument is missing the argument,
  * it returns ':'.
  */
-int getopt(int argc, char* argv[], const char* optstring, char** optarg)
-{
-    int optind = 1;
-    int optpos = 1;
+int getopt(int argc, char* argv[], const char* optstring, char** optarg) {
+    static int optind = 1;
+    static int optpos = 1;
 
-    if (optind >= argc || argv[optind][0] != '-' || argv[optind][1] == '\0') {
+    if (argc == 0 || optind >= argc || argv[optind][0] != '-' || argv[optind][1] == '\0') {
+        optind = 1;
+        optpos = 1;
         return -1;  // No more options or not an option
     }
 
     char opt = argv[optind][optpos];
-    const char* optptr = strchr(optstring, opt);
+    const char* optptr = optstring;
 
-    if (optptr == NULL) {
+    while (*optptr != '\0') {
+        if (*optptr == opt) {
+            break;
+        }
+        optptr++;
+    }
+
+    if (*optptr == '\0') {
         return '?';  // Invalid option
     }
 
@@ -200,6 +208,11 @@ int getopt(int argc, char* argv[], const char* optstring, char** optarg)
             optind++;
             optpos = 1;
         }
+    }
+
+    if (optind >= argc) {
+        optind = 1;
+        optpos = 1;
     }
 
     return opt;

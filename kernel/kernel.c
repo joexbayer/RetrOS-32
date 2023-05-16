@@ -178,3 +178,32 @@ void init_kctors()
         __address++;
     }
 }
+
+#define HEXDUMP_COLS 8
+void hexdump(const void *data, size_t size)
+{
+    const unsigned char *p = (const unsigned char *)data;
+    int i, j;
+
+    for (i = 0; i < size; i += HEXDUMP_COLS) {
+        twritef("%p: ", i);
+
+        for (j = 0; j < HEXDUMP_COLS; j++) {
+            if (i + j < size)
+                twritef("%s%x ", p[i + j] < 16 ? "0" : "", p[i + j]);
+            else
+                twritef("   ");
+            if (j % 8 == 7)
+                twritef(" ");
+        }
+        twritef(" ");
+
+        for (j = 0; j < HEXDUMP_COLS; j++) {
+            if (i + j < size)
+                twritef("%c", (p[i + j] >= 32 && p[i + j] <= 126) ? p[i + j] : '.');
+            else
+                twritef(" ");
+        }
+        twritef("\n");
+    }
+}

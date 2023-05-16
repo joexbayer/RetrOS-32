@@ -176,15 +176,16 @@ int32_t twritef(char* fmt, ...)
 					case 'p': ; /* p for padded int */
 						num = va_arg(args, int);
 						itoa(num, str);
-						twrite(str);
-						x_offset += strlen(str);
 
-                        if(strlen(str) < 3){
-                            int pad = 3-strlen(str);
+						if(strlen(str) < 5){
+                            int pad = 5-strlen(str);
                             for (int i = 0; i < pad; i++){
-                                terminal_putchar(' ');
+                                terminal_putchar('0');
                             }
                         }
+
+						twrite(str);
+						x_offset += strlen(str);
 						break;
 					case 'x':
 					case 'X': ;

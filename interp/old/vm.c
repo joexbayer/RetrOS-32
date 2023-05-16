@@ -10,9 +10,12 @@
  * 
  */
 #include "interpreter.h"
+#include <fcntl.h>
+#include <unistd.h>
 
 #define int long
 #include "vm.h"
+
 
 const char* optcodes[] = {
     "LEA", "IMM", "JMP", "CALL", "JZ", "JNZ", "ENT", "ADJ", "LEV", "LI",

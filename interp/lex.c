@@ -1237,6 +1237,8 @@ void global_declaration() {
 
 void lex_init()
 {
+    memset((char*)lexer_context.symbols, 0, LEX_MAX_SYMBOLS*sizeof(struct identifier));
+
     src = "char else enum if int return sizeof while "
           "open read close twritef malloc memset memcmp exit free void main";
 

@@ -325,12 +325,14 @@ inode_t chdir(char* path)
 
 	dbgprintf("[FS] Changing directory to %s, inode: %d\n", path, inode->inode);
 
+	/* This is this only for testing?? */
 	current_dir = inode;
 
 	return inode->inode;
 }
 
-int fs_mkdir(char* name, inode_t current)
+/* returnrs 0 on success, < 0 on error */
+int fs_create_directory(char* name, inode_t current)
 {
 	if(strlen(name)+1 > FS_DIRECTORY_NAME_SIZE)
 		return -FS_ERR_NAME_SIZE;

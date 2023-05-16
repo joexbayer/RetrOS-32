@@ -39,7 +39,7 @@ endif
 
 OUTPUTDIR = ../bin/
 
-FSOBJS = path.o fs.o inode.o
+FSOBJS = path.o fs.o inode.o vfs.o
 
 .PHONY: all new fs clean bindir
 all: new

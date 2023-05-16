@@ -68,7 +68,7 @@ int main(int argc, char const *argv[])
     int create_test = fs_create("test.txt");
     testprintf(create_test == 0, "Created test.txt file.");
 
-    fs_mkdir("testdir", fs_get_root());
+    fs_create_directory("testdir", fs_get_root());
     testprintf(1, "Created test directory.");
 
     int create_test2 = fs_create("test2.txt");

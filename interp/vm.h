@@ -16,6 +16,6 @@ struct vm {
 void vm_init(struct vm* vm);
 void vm_free(struct vm* vm);
 void vm_setup_stack(struct vm* vm, int argc, char* argv[]);
-int eval(struct vm* vm);
+int eval(struct vm* vm, int assembly);
 
 #endif /* !__INTERPRETER_VM_H */

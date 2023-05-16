@@ -13,6 +13,8 @@
 #include "vm.h"
 #include "lex.h"
 #include "interpreter.h"
+#include <fcntl.h>
+#include <unistd.h>
 
 struct vm vm;
 int fd;

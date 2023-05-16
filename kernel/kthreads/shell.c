@@ -71,6 +71,7 @@ void reset_shell()
 	shell_column += 1;
 }
 
+/* Shell commands */
 void ps()
 {
 	int ret;
@@ -85,13 +86,37 @@ void ps()
 }
 EXPORT_KSYMBOL(ps);
 
+void xxd(int argc, char* argv[])
+{
+	if(argc == 1){
+		twritef("usage: xxd <file>\n");
+		return;
+	}
+
+	inode_t inode = fs_open(argv[1]);
+	if(inode < 0){
+		twritef("File %s not found.\n", argv[1]);
+		return;
+	}
+
+	char* buf = kalloc(MAX_FILE_SIZE);
+	int ret = fs_read(inode, buf, MAX_FILE_SIZE);
+	
+	hexdump(buf, ret);
+	
+	fs_close(inode);
+	kfree(buf);
+
+	return;
+}
+EXPORT_KSYMBOL(xxd);
+
 void run(int argc, char* argv[])
 {
 	char* optarg = NULL;
     int opt = 0;
 	int bg = 0;
 	while ((opt = getopt(argc, argv, "hbc:", &optarg)) != -1) {
-		dbgprintf("%c\n", opt);
         switch (opt) {
             case 'h':
                 twritef("run [hn]\n  n - name\n  h - help\n  example: run -c /bin/clock\n");
@@ -100,22 +125,10 @@ void run(int argc, char* argv[])
 				bg = 1;
 				break;
 			case 'c':
-				dbgprintf("c flag set\n");
 				{
 					int r = start(optarg);
 					if(r >= 0){
 						twritef("Kernel thread started\n");
-						
-						/*struct pcb_info pcbinf = {
-							.state = RUNNING
-						};
-
-						if(!bg){
-							while(pcbinf.state != STOPPED)
-								pcb_get_info(r, &pcbinf);
-							gfx_commit();
-						}*/
-						
 						return;
 					}
 
@@ -189,6 +202,10 @@ EXPORT_KSYMBOL(cd);
 void cat(int argc, char* argv[])
 {
 	inode_t inode = fs_open(argv[1]);
+	if(inode < 0){
+		twritef("File %s not found.\n", argv[1]);
+		return;
+	}
 
 	char buf[512];
 	fs_read(inode, buf, 512);
@@ -291,12 +308,6 @@ void exec_cmd()
 		return;
 	}
 
-	if(strncmp("mkdir", shell_buffer, strlen("mkdir"))){
-		char* name = shell_buffer+strlen("mkdir")+1;
-		name[strlen(name)-1] = 0;
-		fs_mkdir(name, current_running->current_directory);
-		return;
-	}
 
 	gfx_commit();
 	//twrite(shell_buffer);

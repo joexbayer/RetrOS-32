@@ -20,38 +20,6 @@ const char* optcodes[] = {
 };
 
 
-#define HEXDUMP_COLS 16
-void hexdump(const void *data, size_t size) {
-    const unsigned char *p = (const unsigned char *)data;
-    int i, j;
-
-    for (i = 0; i < size; i += HEXDUMP_COLS) {
-        twritef("%x: ", i);
-
-        for (j = 0; j < HEXDUMP_COLS; j++) {
-            if (i + j < size)
-                twritef("%x ", p[i + j]);
-            else
-                twritef("   ");
-
-            if (j % 8 == 7)
-                twritef(" ");
-        }
-
-        twritef(" ");
-
-        for (j = 0; j < HEXDUMP_COLS; j++) {
-            if (i + j < size)
-                twritef("%c", (p[i + j] >= 32 && p[i + j] <= 126) ? p[i + j] : '.');
-            else
-                twritef(" ");
-        }
-
-        twritef("\n");
-    }
-}
-
-
 void vm_print(struct vm* vm)
 {
     twritef("__.--@ / VM \\ @--.__\n");
@@ -68,7 +36,8 @@ void vm_print(struct vm* vm)
     
 }
 
-int eval(struct vm* vm) {
+int eval(struct vm* vm, int assembly)
+{
     //vm_print(vm);
 
     int op, *tmp;
@@ -203,7 +172,7 @@ int eval(struct vm* vm) {
                 twritef("unknown instruction:%d\n", op);
                 return -1;
         }
-        dbgprintf("%s, AX: %d\n", optcodes[op], vm->ax);
+        if(assembly) twritef("%s, AX: %d\n", optcodes[op], vm->ax);
     }
     terminal_commit();
     return 0;

@@ -13,24 +13,54 @@
 #include "vm.h"
 #include "lex.h"
 #include "interpreter.h"
-#include <kthreads.h>
+#include <ksyms.h>
+#include <stdint.h>
 
 struct vm vm;
 inode_t fd;
 static char *src, *old_src;
 int i = 0;
 
-int interpreter(int argc, char **argv)
+int cc(int argc, char **argv)
 {
+    if(argc == 1){
+        twritef("usage: cc <file>\n");
+        return -1;
+    }
+
+    int assembly = 0;
+
+    char* optarg = NULL;
+    int option;
+    while ((option = getopt(argc, argv, "s", &optarg)) != -1) {
+        switch (option) {
+            case 's':
+                assembly = 1;
+                break;
+            case '?':
+                twritef("Invalid option: %c\n", optarg[0]);
+                return;
+            case ':':
+                twritef("Option requires an argument: %c\n", optarg[0]);
+                return;
+            default:
+                twritef("Unknown argument %c\n", option);
+                break;
+        }
+    }
+    if(assembly)
+        argv++;
+
     vm_init(&vm);
     lex_init();
     
     argv++;
 
+
     // read the source file
-    DEBUG_PRINT("Reading hello.c\n");
-    if ((fd = fs_open("hello.c")) < 0) {
-        twritef("could not open(hello.c)\n");
+    DEBUG_PRINT("Reading (%s)\n", *argv);
+    if ((fd = fs_open(*argv)) < 0) {
+        twritef("could not open(%s)\n", *argv);
         return -1;
     }
 
@@ -56,10 +86,10 @@ int interpreter(int argc, char **argv)
 
     vm_setup_stack(&vm ,argc, argv);
 
-    eval(&vm);
+    eval(&vm, assembly);
 
     vm_free(&vm);
 
     kfree(src);
 }
-EXPORT_KTHREAD(interpreter);
+EXPORT_KSYMBOL(cc);

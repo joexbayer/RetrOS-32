@@ -9,7 +9,6 @@
 #include <util.h>
 #include <serial.h>
 
-
 #ifdef DEBUG
 #define DEBUG_PRINT(fmt, ...) \
     dbgprintf(fmt, ##__VA_ARGS__)

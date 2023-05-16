@@ -77,6 +77,19 @@ int32_t serial_printf(char* fmt, ...)
 						bytes[3] = num & 0xFF;
 						serial_printf("%d.%d.%d.%d", bytes[3], bytes[2], bytes[1], bytes[0]);
 						break;
+					case 'p': ; /* p for padded int */
+						num = va_arg(args, int);
+						itoa(num, str);
+
+						if(strlen(str) < 5){
+                            int pad = 5-strlen(str);
+                            for (int i = 0; i < pad; i++){
+                                serial_put('0');
+                            }
+                        }
+
+						serial_write(str);
+						break;
 					case 'x':
 					case 'X': ;
 						num = va_arg(args, int);
