@@ -15,6 +15,8 @@
 #include <util.h>
 #include <rtc.h>
 
+#include <editor.h>
+
 static struct superblock superblock;
 static struct inode* root_dir;
 static struct inode* current_dir;
@@ -155,11 +157,10 @@ void fs_create_file_system()
 
 	struct directory_entry home = {
 		.inode = home_inode,
-		.name = "home"
+		.name = "editor"
 	};
 
-	char* home_text = "Home is where the heart is.";
-	inode_write(home_text, strlen(home_text)+1, home_disk_inode, &superblock);
+	inode_write(apps_editor_edit_o, apps_editor_edit_o_len, home_disk_inode, &superblock);
 
 	inode_t test_file_inode = alloc_inode(&superblock, FS_FILE);
 	struct inode* test_file_disk_inode = inode_get(test_file_inode, &superblock);
@@ -379,13 +380,14 @@ void listdir()
 	struct inode* current_dir = inode_get(fs_get_current_dir(), &superblock);
 	int size = 0;
 
+	twritef("Size  Date    Time    Name\n");
 	current_dir->pos = 0;
 	while (size < current_dir->size)
 	{
 		int ret = inode_read((char*) &entry, sizeof(struct directory_entry), current_dir, &superblock);
 		struct inode* inode = inode_get(entry.inode, &superblock);
 		struct time* time = &inode->time;
-		twritef("%x %s %d, %d:%d - %s%s\n",
+		twritef("%p %s %d, %d:%d - %s%s\n",
 			inode->size,
 			months[time->month],
 			time->day, time->hour, time->minute,

@@ -8,8 +8,8 @@
  * Mostly for testing on real hardware.
  */
 
-#define VIRTUAL_DISK_MEMORY_START 0x10000-512
-#define VIRTUAL_DISK_MEMORY_END   640*1024
+#define VIRTUAL_DISK_MEMORY_START 0x700000
+#define VIRTUAL_DISK_MEMORY_END   0x800000
 
 struct ide_device virtual_disk = {
     .size = VIRTUAL_DISK_MEMORY_END-VIRTUAL_DISK_MEMORY_START,

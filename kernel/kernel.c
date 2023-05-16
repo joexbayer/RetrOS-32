@@ -37,7 +37,7 @@
 
 #include <multiboot.h>
 
-#define USE_MULTIBOOT 0
+#define USE_MULTIBOOT 1
 
 /* This functions always needs to be on top? */
 void kernel(uint32_t magic) 
@@ -51,9 +51,9 @@ void kernel(uint32_t magic)
 	vbe_info->bpp = mb_info->framebuffer_bpp;
 	vbe_info->pitch = mb_info->framebuffer_width;
 	vbe_info->framebuffer = mb_info->framebuffer_addr;
-    init_serial();
 #else
 	vbe_info = (struct vbe_mode_info_structure*) magic;
+    init_serial();
 #endif
 	//init_serial();
 	vesa_printf(vbe_info->framebuffer, 10, 10, 15, "Booting OS...");
@@ -96,9 +96,11 @@ void kernel(uint32_t magic)
 	if(!disk_attached()){
 		dbgprintf("[KERNEL] Attaching virtual disk because not physical one was found.\n");
 		virtual_disk_attach();
-		//mkfs();
 	}
+
 	init_fs();
+
+	fs_create_file_system();
 
 	register_kthread(&Genesis, "Genesis");
 	register_kthread(&networking_main, "netd");

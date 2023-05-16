@@ -128,16 +128,18 @@ build: tools
 	@./bin/mkfs
 	@./bin/build
 
-userspace:
+apps:
 	@make -C ./apps/
+	xxd -i apps/editor/edit.o > include/editor.h
+	
 
-iso: compile tests userspace tools build
+iso: compile tests apps tools build
 	$(TIME-END)
 
 filesystem:
 	@dd if=/dev/zero of=filesystem.image bs=512 count=390
 
-compile: bindir $(LIBOBJ) bootblock kernel userspace
+compile: bindir $(LIBOBJ) bootblock kernel apps
 	@echo "[Compile] Finished."
 	$(TIME-END)
 
@@ -161,7 +163,7 @@ test: clean compile tests
 bindir:
 	@mkdir -p bin
 
-grub: multiboot_kernel
+grub: apps multiboot_kernel
 	cp bin/kernelout legacy/multiboot/boot/myos.bin
 	$(GRUB)
 
