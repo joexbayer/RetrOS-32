@@ -18,7 +18,7 @@
 #include <mocks.h>
 
 #define SMALL_BUFFER_SIZE 1024
-#define LARGE_BUFFER_SIZE 25096
+#define LARGE_BUFFER_SIZE 4*4096-8
 #define DEBUG 0
 
 /* Mock functions */

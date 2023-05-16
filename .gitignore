@@ -45,7 +45,7 @@ bin/build
 bin/mkfs
 bin/bootblock
 bin/kernel*
-usr/bin/*
+apps/bin/*
 *.vdi
 filesystem.image
 interp/interp

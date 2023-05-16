@@ -32,8 +32,6 @@ static char* months[] = {"NAN", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
 
 int init_fs()
 {
-	CHECK_DISK();
-
 	FS_START_LOCATION = (kernel_size/512)+2;
 	FS_INODE_BMAP_LOCATION = FS_START_LOCATION+1;
 	FS_BLOCK_BMAP_LOCATION = FS_INODE_BMAP_LOCATION+1;

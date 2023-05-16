@@ -172,7 +172,7 @@ int add_userspace_program(struct superblock* sb, struct inode* current_dir, char
 
     FILE* file = fopen(path_buf, "r");
     if(file == NULL){
-        printf("[" BLUE "MKFS" RESET "] File %s not found!\n", program);
+        printf("[" RED "MKFS" RESET "] File %s not found!\n", program);
         return -1;
     }
 
@@ -267,6 +267,7 @@ int main(int argc, char* argv[])
         .name = ".."
     };
 
+    /* Home file */
     inode_t home_inode = alloc_inode(&superblock, FS_FILE);
     struct inode* home_disk_inode = inode_get(home_inode, &superblock);
 
@@ -280,6 +281,33 @@ int main(int argc, char* argv[])
 
     root_dir = root;
 
+    /* Test .c file */
+    inode_t hello_inode = alloc_inode(&superblock, FS_FILE);
+    struct inode* hello_disk_inode = inode_get(hello_inode, &superblock);
+
+    struct directory_entry hello = {
+        .inode = hello_inode,
+        .name = "add.c"
+    };
+
+    FILE* hello_file = fopen("./interp/hello.c", "r");
+    if(hello_file == NULL){
+        printf("[" RED "MKFS" RESET "] File %s not found!\n", "hello.c");
+        return -1;
+    }
+
+    fseek(hello_file, 0L, SEEK_END);
+    int hello_sz = ftell(hello_file);
+    rewind(hello_file);
+
+    char* hello_buf = malloc(hello_sz);
+    int hret = fread(hello_buf, 1, hello_sz, hello_file);
+    printf("[" BLUE "MKFS" RESET "] Added file add.c %d bytes\n", hello_sz);
+
+    inode_write(hello_buf, hret, hello_disk_inode, &superblock);
+
+    /* Done */
+
     printf("[" BLUE "MKFS" RESET "] Creating Filesystem with size: %d (%d total)\n", superblock.nblocks*BLOCK_SIZE, superblock.size);
     printf("[" BLUE "MKFS" RESET "] With a total of %d inodes (%d blocks)\n", superblock.ninodes, superblock.ninodes / INODES_PER_BLOCK);
     printf("[" BLUE "MKFS" RESET "] And total of %d block\n", superblock.nblocks);
@@ -290,6 +318,7 @@ int main(int argc, char* argv[])
     __inode_add_dir(&back, root_dir, &superblock);
     __inode_add_dir(&self, root_dir, &superblock);
     __inode_add_dir(&home, root_dir, &superblock);
+     __inode_add_dir(&hello, root_dir, &superblock);
 
 
     int inode_index = add_directory(&superblock, root_dir, "bin");

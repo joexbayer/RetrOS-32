@@ -16,7 +16,7 @@ const char* optcodes[] = {
     "LEA", "IMM", "JMP", "CALL", "JZ", "JNZ", "ENT", "ADJ", "LEV", "LI",
     "LC", "SI", "SC", "PUSH", "OR", "XOR", "AND", "EQ", "NE", "LT",
     "GT", "LE", "GE", "SHL", "SHR", "ADD", "SUB", "MUL", "DIV", "MOD",
-    "OPEN", "READ", "CLOS", "PRTF", "MALC", "MSET", "MCMP", "EXIT"
+    "OPEN", "READ", "CLOS", "PRTF", "MALC", "MSET", "MCMP", "EXIT", "FREE"
 };
 
 

@@ -37,7 +37,7 @@
 
 #include <multiboot.h>
 
-#define USE_MULTIBOOT 1
+#define USE_MULTIBOOT 0
 
 /* This functions always needs to be on top? */
 void kernel(uint32_t magic) 
@@ -51,16 +51,16 @@ void kernel(uint32_t magic)
 	vbe_info->bpp = mb_info->framebuffer_bpp;
 	vbe_info->pitch = mb_info->framebuffer_width;
 	vbe_info->framebuffer = mb_info->framebuffer_addr;
-	/* Clear memory and BSS */
-	memset((char*)_bss_s, 0, (unsigned int) _bss_size);
-    memset((char*)0x100000, 0, 0x800000-0x100000);
+    init_serial();
 #else
 	vbe_info = (struct vbe_mode_info_structure*) magic;
 #endif
-    init_serial();
-	CLI();
-
+	//init_serial();
 	vesa_printf(vbe_info->framebuffer, 10, 10, 15, "Booting OS...");
+	/* Clear memory and BSS */
+	//memset((char*)_bss_s, 0, (unsigned int) _bss_size);
+    memset((char*)0x100000, 0, 0x800000-0x100000);
+	CLI();
 
 	kernel_size = _end-_code;
 	init_memory();
@@ -93,6 +93,11 @@ void kernel(uint32_t magic)
 	init_sockets();
 	init_dns();
 
+	if(!disk_attached()){
+		dbgprintf("[KERNEL] Attaching virtual disk because not physical one was found.\n");
+		virtual_disk_attach();
+		//mkfs();
+	}
 	init_fs();
 
 	register_kthread(&Genesis, "Genesis");
@@ -141,12 +146,6 @@ void kernel(uint32_t magic)
 	
 	vesa_init();
 
-	if(!disk_attached()){
-		dbgprintf("[KERNEL] Attaching virtual disk because not physical one was found.\n");
-		virtual_disk_attach();
-		mkfs();
-	}
-
 	start("idled");
 	start("workd");
 	//start("workd");
@@ -180,7 +179,7 @@ void init_kctors()
 }
 
 #define HEXDUMP_COLS 8
-void hexdump(const void *data, size_t size)
+void hexdump(const void *data, int size)
 {
     const unsigned char *p = (const unsigned char *)data;
     int i, j;

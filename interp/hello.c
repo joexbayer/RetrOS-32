@@ -7,9 +7,9 @@ int add(int a, int b)
 
 int main()
 {
-  int result;
-  result = add(10, 13);
+  int c;
+  c = add(10, 12);
 
-  printf("Hello world %d\n", result);
+  printf("Hello %d\n", c);
   return 0;
 }

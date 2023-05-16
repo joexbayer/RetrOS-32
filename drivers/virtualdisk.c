@@ -8,24 +8,24 @@
  * Mostly for testing on real hardware.
  */
 
-#define VIRTUAL_DISK_MEMORY_START 0x700000
-#define VIRTUAL_DISK_MEMORY_END   0x800000
+#define VIRTUAL_DISK_MEMORY_START 0x10000-512
+#define VIRTUAL_DISK_MEMORY_END   640*1024
 
 struct ide_device virtual_disk = {
-    .size = 0x800000-0x700000,
-    .model = "Virtual Disk 1.0"
+    .size = VIRTUAL_DISK_MEMORY_END-VIRTUAL_DISK_MEMORY_START,
+    .model = "Virtual Disk"
 };
 
 int virtual_read(char* buffer, uint32_t from, uint32_t size)
 {
-    char* addr = VIRTUAL_DISK_MEMORY_START + (from*512);
+    char* addr = (char*)(VIRTUAL_DISK_MEMORY_START + (from*512));
     memcpy(buffer, addr, size*512);
     return size;
 }
 
 int virtual_write(char* buffer, uint32_t from, uint32_t size)
 {
-    char* addr = VIRTUAL_DISK_MEMORY_START + (from*512);
+    char* addr = (char*)(VIRTUAL_DISK_MEMORY_START + (from*512));
     memcpy(addr, buffer, size*512);
     return size;
 }

@@ -66,7 +66,7 @@ void match(int tk) {
         return;
     }
     twritef("%d: expected lexer_context.token: %d\n", line, tk);
-    kernel_exit();
+    lexer_context.main->value = (int)NULL;
 }
 
 void expression(int level) {
@@ -91,7 +91,7 @@ void expression(int level) {
     {
         if (!lexer_context.token) {
             twritef("%d: unexpected lexer_context.lexer_context.token EOF of expression\n", line);
-            kernel_exit();
+            lexer_context.main->value = (int)NULL;
         }
         if (lexer_context.token == Num) {
             match(Num);
@@ -192,7 +192,7 @@ void expression(int level) {
                 }
                 else {
                     twritef("%d: bad function call\n", line);
-                    kernel_exit();
+                    lexer_context.main->value = (int)NULL;
                 }
 
                 // clean the stack for arguments
@@ -220,7 +220,7 @@ void expression(int level) {
                 }
                 else {
                     twritef("%d: undefined variable\n", line);
-                    kernel_exit();
+                    lexer_context.main->value = (int)NULL;
                 }
 
                 // emit code, default behaviour is to load the value of the
@@ -260,7 +260,7 @@ void expression(int level) {
                 lexer_context.expr_type = lexer_context.expr_type - PTR;
             } else {
                 twritef("%d: bad dereference\n", line);
-                kernel_exit();
+                lexer_context.main->value = (int)NULL;
             }
 
             *++text = (lexer_context.expr_type == CHAR) ? LC : LI;
@@ -273,7 +273,7 @@ void expression(int level) {
                 text --;
             } else {
                 twritef("%d: bad address of\n", line);
-                kernel_exit();
+                lexer_context.main->value = (int)NULL;
             }
 
             lexer_context.expr_type = lexer_context.expr_type + PTR;
@@ -342,7 +342,7 @@ void expression(int level) {
                 *++text = LI;
             } else {
                 twritef("%d: bad lvalue of pre-increment\n", line);
-                kernel_exit();
+                lexer_context.main->value = (int)NULL;
             }
             *++text = PUSH;
             *++text = IMM;
@@ -352,7 +352,7 @@ void expression(int level) {
         }
         else {
             twritef("%d: bad expression\n", line);
-            kernel_exit();
+            lexer_context.main->value = (int)NULL;
         }
     }
 
@@ -368,7 +368,7 @@ void expression(int level) {
                     *text = PUSH; // save the lvalue's pointer
                 } else {
                     twritef("%d: bad lvalue in assignment\n", line);
-                    kernel_exit();
+                    lexer_context.main->value = (int)NULL;
                 }
                 expression(Assign);
 
@@ -385,7 +385,7 @@ void expression(int level) {
                     match(':');
                 } else {
                     twritef("%d: missing colon in conditional\n", line);
-                    kernel_exit();
+                    lexer_context.main->value = (int)NULL;
                 }
                 *addr = (int)(text + 3);
                 *++text = JMP;
@@ -580,7 +580,7 @@ void expression(int level) {
                 }
                 else {
                     twritef("%d: bad value in increment\n", line);
-                    kernel_exit();
+                    lexer_context.main->value = (int)NULL;
                 }
 
                 *++text = PUSH;
@@ -610,7 +610,7 @@ void expression(int level) {
                 }
                 else if (tmp < PTR) {
                     twritef("%d: pointer type expected\n", line);
-                    kernel_exit();
+                    lexer_context.main->value = (int)NULL;
                 }
                 lexer_context.expr_type = tmp - PTR;
                 *++text = ADD;
@@ -618,7 +618,7 @@ void expression(int level) {
             }
             else {
                 twritef("%d: compiler error, lexer_context.token = %d\n", line, lexer_context.token);
-                kernel_exit();
+                lexer_context.main->value = (int)NULL;
             }
         }
     }
@@ -999,11 +999,11 @@ void function_parameter() {
         // parameter name
         if (lexer_context.token != Id) {
             twritef("%d: bad parameter declaration\n", line);
-            kernel_exit();
+            lexer_context.main->value = (int)NULL;
         }
         if (lexer_context.current_id->class == Loc) {
             twritef("%d: duplicate parameter declaration\n", line);
-            kernel_exit();
+            lexer_context.main->value = (int)NULL;
         }
 
         match(Id);
@@ -1049,12 +1049,12 @@ void function_body() {
             if (lexer_context.token != Id) {
                 // invalid declaration
                 twritef("%d: bad local declaration\n", line);
-                kernel_exit();
+                lexer_context.main->value = (int)NULL;
             }
             if (lexer_context.current_id->class == Loc) {
                 // identifier exists
                 twritef("%d: duplicate local declaration\n", line);
-                kernel_exit();
+                lexer_context.main->value = (int)NULL;
             }
             match(Id);
 
@@ -1118,7 +1118,7 @@ void enum_declaration() {
     while (lexer_context.token != '}') {
         if (lexer_context.token != Id) {
             twritef("%d: bad enum identifier %d\n", line, lexer_context.token);
-            kernel_exit();
+            lexer_context.main->value = (int)NULL;
         }
         next();
         if (lexer_context.token == Assign) {
@@ -1126,7 +1126,7 @@ void enum_declaration() {
             next();
             if (lexer_context.token != Num) {
                 twritef("%d: bad enum initializer\n", line);
-                kernel_exit();
+                lexer_context.main->value = (int)NULL;
             }
             i = lexer_context.token_val;
             next();
@@ -1203,12 +1203,12 @@ void global_declaration() {
         if (lexer_context.token != Id) {
             // invalid declaration
             twritef("%d: bad global declaration\n", line);
-            kernel_exit();
+            lexer_context.main->value = (int)NULL;
         }
         if (lexer_context.current_id->class) {
             // identifier exists
             twritef("%d: duplicate global declaration %s\n", line, lexer_context.current_id->name);
-            kernel_exit();
+            lexer_context.main->value = (int)NULL;
         }
         match(Id);
         lexer_context.current_id->type = type;
@@ -1216,14 +1216,14 @@ void global_declaration() {
 
         if (lexer_context.token == '(') {
             lexer_context.current_id->class = Fun;
-            lexer_context.current_id->value = (void*)(text + 1); // the memory address of function
+            lexer_context.current_id->value = (text + 1); // the memory address of function
             DEBUG_PRINT("function_declaration\n");
             function_declaration();
         } else {
             // variable declaration
             DEBUG_PRINT("variable declaration\n");
             lexer_context.current_id->class = Glo; // global variable
-            lexer_context.current_id->value = (void*)data; // assign memory address
+            lexer_context.current_id->value = (int)data; // assign memory address
             data = data + sizeof(int);
         }
 
@@ -1240,7 +1240,7 @@ void lex_init()
     memset((char*)lexer_context.symbols, 0, LEX_MAX_SYMBOLS*sizeof(struct identifier));
 
     src = "char else enum if int return sizeof while "
-          "open read close twritef malloc memset memcmp exit free void main";
+          "open read close printf malloc memset memcmp exit free void main";
 
      // add keywords to symbol table
     int i = Char;
@@ -1263,7 +1263,7 @@ void lex_init()
     DEBUG_PRINT("Added important default lexer_context.tokens and system lexer_context.tokens\n");
 }
 
-void* program(char* _text, char* _data, char* _str)
+void* program(int* _text, char* _data, char* _str)
 {
     // get next lexer_context.token
     text = _text;
@@ -1274,7 +1274,10 @@ void* program(char* _text, char* _data, char* _str)
     while (lexer_context.token > 0) {
         global_declaration();
     }
-    return lexer_context.main->value;
+
+    dbgprintf("Section sizes: Text: %d. Data: %d\n", text - _text, data - _data);
+
+    return (void*)lexer_context.main->value;
 }
 
 

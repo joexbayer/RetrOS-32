@@ -14,8 +14,8 @@ _start:
     cli
     call kernel
 
-.section .bss
+.section .data
 .align 16
 stack_bottom:
-.skip 8128 # 16 KiB
+.skip 4096 # 16 KiB
 stack:

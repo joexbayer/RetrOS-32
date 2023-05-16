@@ -56,7 +56,6 @@ int cc(int argc, char **argv)
     
     argv++;
 
-
     // read the source file
     DEBUG_PRINT("Reading (%s)\n", *argv);
     if ((fd = fs_open(*argv)) < 0) {
@@ -69,16 +68,19 @@ int cc(int argc, char **argv)
         return -1;
     }
     // read the source file
-    if ((i = fs_read(fd, src, POOLSIZE)) <= 0) {
+    if ((i = fs_read(fd, src, MAX_FILE_SIZE)) <= 0) {
         twritef("read() returned %d\n", i);
+        kfree(src);
+        vm_free(&vm);
         return -1;
     }
-    src[i] = 0; // add EOF character
+    src[i+1] = 0; // add EOF character
     DEBUG_PRINT("%s\n", src);
     fs_close(fd);
 
     DEBUG_PRINT("Lexing\n");
     void* entry = program(vm.text, vm.data, src);
+    if(entry == NULL) return -1;
     DEBUG_PRINT("Lexing [done]\n");
 
     vm.pc = entry;

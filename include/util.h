@@ -40,7 +40,7 @@ void* memcpy(void *dest, const void *src, int n);
 
 int parse_arguments(const char *input_string, char *tokens[]);
 
-void hexdump(const void *data, size_t size);
+void hexdump(const void *data, int size);
 
 int atoi(char s[]);
 void itoa(int n, char s[]); 
