@@ -119,6 +119,7 @@ struct inode* inode_get(inode_t inode, struct superblock* sb)
  */
 int inode_read(void* buf, int size, struct inode* inode, struct superblock* sb)
 {
+	dbgprintf("Reading %d from inode: %d (%d)\n", size, inode->size, inode->pos);
 	int left = size > inode->size ? inode->size : size;
 	int new_pos = inode->pos % BLOCK_SIZE;
 	int block = (inode->pos) / BLOCK_SIZE;

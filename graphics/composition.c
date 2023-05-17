@@ -336,8 +336,8 @@ void gfx_compositor_main()
         get_current_time(&time);
         
         
-        char key = kb_get_char();
-        if(key != -1){
+        unsigned char key = kb_get_char();
+        if(key != 0){
             struct gfx_event e = {
                 .data = key,
                 .event = GFX_EVENT_KEYBOARD

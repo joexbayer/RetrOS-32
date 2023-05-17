@@ -37,7 +37,7 @@
 
 #include <multiboot.h>
 
-#define USE_MULTIBOOT 1
+#define USE_MULTIBOOT 0
 
 /* This functions always needs to be on top? */
 void kernel(uint32_t magic) 
@@ -100,7 +100,7 @@ void kernel(uint32_t magic)
 
 	init_fs();
 
-	fs_create_file_system();
+	//fs_create_file_system();
 
 	register_kthread(&Genesis, "Genesis");
 	register_kthread(&networking_main, "netd");

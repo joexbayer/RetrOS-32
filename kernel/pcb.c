@@ -404,7 +404,7 @@ error_t pcb_create_process(char* program, int args, char** argv)
 	pcb->kallocs = 0;
 	pcb->args = args;
 	pcb->argv = argv;
-	pcb->current_directory = fs_get_root();
+	pcb->current_directory = current_running->current_directory;
 	pcb->yields = 0;
 	pcb->parent = current_running;
 	pcb->cs = GDT_PROCESS_CS | PROCESSS_PRIVILEGE;

@@ -41,7 +41,7 @@ int init_fs()
 	/* Read superblock and check magic. */
 	read_block_offset((char*) &superblock, sizeof(struct superblock), 0, FS_START_LOCATION);
 	if(superblock.magic != MAGIC){
-		//fs_create_file_system();
+		fs_create_file_system();
 		return 1;
 	}
 
@@ -137,8 +137,8 @@ void fs_create_file_system()
 	dbgprintf("[FS]: Max file size: %d bytes\n", NDIRECT*BLOCK_SIZE);
 
 	inode_t root_inode = alloc_inode(&superblock, FS_DIRECTORY);
-	struct inode* root = inode_get(root_inode, &superblock);
-	root->nlink++;
+	root_dir = inode_get(root_inode, &superblock);
+	root_dir->nlink++;
 
 	superblock.root_inode = root_inode;
 
@@ -152,22 +152,20 @@ void fs_create_file_system()
 		.name = ".."
 	};
 
-	inode_t home_inode = alloc_inode(&superblock, FS_FILE);
-	struct inode* home_disk_inode = inode_get(home_inode, &superblock);
+	current_dir = root_dir;
 
-	struct directory_entry home = {
-		.inode = home_inode,
-		.name = "editor"
-	};
+	__inode_add_dir(&back, root_dir, &superblock);
+	__inode_add_dir(&self, root_dir, &superblock);
 
-	inode_write(apps_editor_edit_o, apps_editor_edit_o_len, home_disk_inode, &superblock);
+	inode_t bin_dir = fs_create_directory("bin", root_inode);
+	struct inode* bin_dir_inode = inode_get(bin_dir, &superblock);
 
 	inode_t test_file_inode = alloc_inode(&superblock, FS_FILE);
 	struct inode* test_file_disk_inode = inode_get(test_file_inode, &superblock);
 
 	struct directory_entry hello_c = {
 		.inode = test_file_inode,
-		.name = "hello.c"
+		.name = "add.c"
 	};
 
 	char* test_file_text = "\n\
@@ -187,13 +185,20 @@ void fs_create_file_system()
 
 	inode_write(test_file_text, strlen(test_file_text)+1, test_file_disk_inode, &superblock);
 
-	root_dir = root;
-	current_dir = root;
+	/* Editor */
+	inode_t home_inode = alloc_inode(&superblock, FS_FILE);
+	struct inode* home_disk_inode = inode_get(home_inode, &superblock);
 
-	__inode_add_dir(&back, root_dir, &superblock);
-	__inode_add_dir(&self, root_dir, &superblock);
-	__inode_add_dir(&home, root_dir, &superblock);
+	struct directory_entry home = {
+		.inode = home_inode,
+		.name = "edit.o"
+	};
+
+	inode_write(apps_editor_edit_o, apps_editor_edit_o_len, home_disk_inode, &superblock);
+
 	__inode_add_dir(&hello_c, root_dir, &superblock);
+	__inode_add_dir(&home, bin_dir_inode, &superblock);
+
 
 	root_dir->pos = 0;
 }
@@ -331,7 +336,7 @@ inode_t chdir(char* path)
 }
 
 /* returnrs 0 on success, < 0 on error */
-int fs_create_directory(char* name, inode_t current)
+inode_t fs_create_directory(char* name, inode_t current)
 {
 	if(strlen(name)+1 > FS_DIRECTORY_NAME_SIZE)
 		return -FS_ERR_NAME_SIZE;
@@ -367,7 +372,7 @@ int fs_create_directory(char* name, inode_t current)
 
 	dbgprintf("[FS] Created directory %s with inode %d.\n", name, inode->inode);
 
-	return 0;
+	return inode_index;
 }
 
 

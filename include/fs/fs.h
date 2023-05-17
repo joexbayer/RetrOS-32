@@ -14,7 +14,7 @@ void fs_close(inode_t inode);
 int fs_read(inode_t i, void* buf, int size);
 int fs_write(inode_t i, void* buf, int size);
 inode_t chdir(char* path);
-int fs_create_directory(char* name, inode_t);
+inode_t fs_create_directory(char* name, inode_t);
 int fs_create(char* name);
 
 int fs_seek(inode_t i, int pos, int opt);

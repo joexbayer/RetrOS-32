@@ -14,6 +14,8 @@ typedef unsigned char color_t;
 #define COLOR_VGA_MISC 125
 #define COLOR_VGA_RED 4
 #define COLOR_VGA_GREEN 0x2
+#define COLOR_VGA_PURPLE 0x3b
+#define COLOR_VGA_YELLOW 0x44
 
 // 0x49, 0x92, 0xdb
 #define COLOR_GRAY_DARK 0x49

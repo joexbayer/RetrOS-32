@@ -111,6 +111,14 @@ void xxd(int argc, char* argv[])
 }
 EXPORT_KSYMBOL(xxd);
 
+void ed()
+{
+	int pid = pcb_create_process("/bin/edit.o", 0, NULL);
+	if(pid < 0)
+		twritef("%s does not exist\n", "edit.o");
+}
+EXPORT_KSYMBOL(ed);
+
 void run(int argc, char* argv[])
 {
 	char* optarg = NULL;

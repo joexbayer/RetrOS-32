@@ -18,6 +18,7 @@ if "%~1"=="" (
 	goto help
 ) else (
 	if "%1" == "run" (
+		wsl make -C ./apps
 		docker-compose up
 		qemu-system-i386 -device e1000,netdev=net0 -serial stdio  -netdev user,id=net0 -object filter-dump,id=net0,netdev=net0,file=dump.dat -d cpu_reset -D ./log.txt boot.iso
 	) else if "%1" == "compile" (

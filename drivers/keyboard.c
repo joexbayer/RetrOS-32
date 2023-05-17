@@ -33,6 +33,9 @@ static int kb_buffer_tail = 0;
 #define ARROW_DOWN 253
 #define ARROW_LEFT 252
 #define ARROW_RIGHT 251
+#define F1 250
+#define F2 249
+#define F3 248
 
 static unsigned char kbdus[128] =
 {
@@ -50,8 +53,8 @@ static unsigned char kbdus[128] =
     0,	/* Alt */
   ' ',	/* Space bar */
     0,	/* Caps lock */
-    0,	/* 59 - F1 key ... > */
-    0,   0,   0,   0,   0,   0,   0,   0,
+    F1,	/* 59 - F1 key ... > */
+    F2,   F3,   0,   0,   0,   0,   0,   0,
     0,	/* < ... F10 */
     0,	/* 69 - Num lock*/
     0,	/* Scroll Lock */
@@ -75,13 +78,15 @@ static unsigned char kbdus[128] =
 };
 static int __keyboard_presses = 0;
 static uint8_t __shift_pressed = 0;
+static uint8_t __alt_pressed = 0;
+
 
 unsigned char kb_get_char()
 {
 	//acquire(&kb_lock);
 	if(kb_buffer_tail == kb_buffer_head || !current_running->gfx_window->in_focus){
 		//release(&kb_lock);
-		return -1;
+		return 0;
 	}
 	
 	unsigned char c = kb_buffer[kb_buffer_tail];
@@ -108,10 +113,20 @@ static void kb_callback()
 			__shift_pressed = 0;
 			return;
 			break;
+    case 224: /* shift down */
+			__alt_pressed = 1;
+			return;
+			break;
+		case 184: /* shift up */
+			__alt_pressed = 0;
+			return;
+			break;
 
 		default:
 			break;
 	}
+
+  //dbgprintf("Scancode (%d)\n", scancode);
 
 	if(scancode & 0x80)
 		return;
@@ -119,10 +134,30 @@ static void kb_callback()
 	unsigned char c = kbdus[scancode];
   if(c == '7' && __shift_pressed){
     kb_add_char('/');
+  } else if(c == '8' && __shift_pressed){
+    kb_add_char('(');
+  } else if(c == '9' && __shift_pressed){
+    kb_add_char(')');
+  } else if(c == ',' && __shift_pressed){
+    kb_add_char(';');
+  } else if(c == '0' && __shift_pressed){
+    kb_add_char('=');
+  } else if(c == '7' && __shift_pressed){
+    kb_add_char('/');
+  } else if(c == '8' && __alt_pressed){
+    kb_add_char('[');
+  } else if(c == '9' && __alt_pressed){
+    kb_add_char(']');
+  } else if(c == '7' && __alt_pressed){
+    kb_add_char('{');
+  } else if(c == '0' && __alt_pressed){
+    kb_add_char('}');
+  } else if(c == '2' && __shift_pressed){
+    kb_add_char('"');
   } else {
-    dbgprintf("Pressed %d\n", c);
 	  kb_add_char( __shift_pressed ? c+('A'-'a') : c);
   }
+  dbgprintf("Pressed %d\n", c);
 	__keyboard_presses++;
 
 }
