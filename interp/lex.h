@@ -18,7 +18,13 @@ enum {
     PTR
 };
 
-void* program(int* _text, char* _data, char* _str);
+struct lexed_file { 
+    int textsize;
+    int datasize;
+    int entry;
+};
+
+struct lexed_file program(int* _text, char* _data, char* _str);
 char* lex_get_error();
 int lex_get_error_line();
 void lex_init();

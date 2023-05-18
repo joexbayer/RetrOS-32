@@ -23,8 +23,8 @@ else
 endif
 
 #### ONLY EDIT THIS ####
-OUTPUT = display.o
-DEPENDS = bin/display.o
+OUTPUT = colors.o
+DEPENDS = bin/colors.o
 ########################
 
 OUTPUTDIR = ./bin/

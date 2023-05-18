@@ -318,7 +318,7 @@ int main(int argc, char* argv[])
     __inode_add_dir(&back, root_dir, &superblock);
     __inode_add_dir(&self, root_dir, &superblock);
     __inode_add_dir(&home, root_dir, &superblock);
-     __inode_add_dir(&hello, root_dir, &superblock);
+    __inode_add_dir(&hello, root_dir, &superblock);
 
 
     int inode_index = add_directory(&superblock, root_dir, "bin");
@@ -327,7 +327,7 @@ int main(int argc, char* argv[])
     add_userspace_program(&superblock, bin, "bin/counter.o");
     add_userspace_program(&superblock, bin, "bin/clock.o");
     add_userspace_program(&superblock, bin, "editor/edit.o");
-    add_userspace_program(&superblock, bin, "display/display.o");
+    add_userspace_program(&superblock, bin, "colors/colors.o");
 
     add_directory(&superblock, root_dir, "tmp");
 

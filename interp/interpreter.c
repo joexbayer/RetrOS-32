@@ -16,15 +16,147 @@
 #include <ksyms.h>
 #include <stdint.h>
 
-struct vm vm;
-inode_t fd;
-static char *src, *old_src;
-int i = 0;
+#define DEFAULT_OUT "bytecode.o"
+
+
+int rc(int argc, char **argv)
+{
+    inode_t fd;
+    int i;
+    char *src, *old_src;
+    struct vm vm;
+
+    if(argc == 1){
+        twritef("usage: as <file>\n");
+        return -1;
+    }
+
+    argv++;
+
+    if ((fd = fs_open(*argv)) < 0) {
+        twritef("could not open(%s)\n", *argv);
+        return -1;
+    }
+
+    if (!(src = old_src = kalloc(POOLSIZE))) {
+        twritef("could not malloc(%d) for source area\n", POOLSIZE);
+        return -1;
+    }
+    // read the source file
+    if ((i = fs_read(fd, src, MAX_FILE_SIZE)) <= 0) {
+        twritef("read() returned %d\n", i);
+        kfree(src);
+        return -1;
+    }
+    dbgprintf("read() returned %d\n", i);
+    src[i+1] = 0; // add EOF character
+    DEBUG_PRINT("%s\n", src);
+    fs_close(fd);
+
+    struct lexed_file* lexd = (struct lexed_file*) src;
+    dbgprintf("%d : %d : %d\n", lexd->datasize, lexd->entry, lexd->textsize);
+    src += sizeof(struct lexed_file);
+
+    int* text = (int*) src;
+    src += lexd->textsize;
+
+    char* data = (char*) src;
+
+    vm_setup(&vm, text, data);
+
+    vm.pc = (int)vm.text+lexd->entry;
+
+    vm_setup_stack(&vm ,argc, argv);
+
+    eval(&vm, 0);
+
+    //vm_free(&vm);
+
+    kfree(vm.stack);
+
+    kfree(src);
+}
+EXPORT_KSYMBOL(rc);
+
+int as(int argc, char **argv)
+{
+    inode_t fd;
+    int i;
+    char *src, *old_src;
+
+    if(argc == 1){
+        twritef("usage: as <file>\n");
+        return -1;
+    }
+
+    argv++;
+
+    if ((fd = fs_open(*argv)) < 0) {
+        twritef("could not open(%s)\n", *argv);
+        return -1;
+    }
+
+    if (!(src = old_src = kalloc(POOLSIZE))) {
+        twritef("could not malloc(%d) for source area\n", POOLSIZE);
+        return -1;
+    }
+    // read the source file
+    if ((i = fs_read(fd, src, MAX_FILE_SIZE)) <= 0) {
+        twritef("read() returned %d\n", i);
+        kfree(src);
+        return -1;
+    }
+    src[i+1] = 0; // add EOF character
+    DEBUG_PRINT("%s\n", src);
+    fs_close(fd);
+
+    int* text = kalloc(VM_TEXT_SIZE);
+    char* data = kalloc(VM_DATA_SIZE);
+
+    lex_init();
+    struct lexed_file lexd = program(text, data, src);
+    dbgprintf("%d : %d : %d\n", lexd.datasize, lexd.entry, lexd.textsize);
+    if(lexd.entry == 0)
+    {
+        twritef("%d: %s\n", lex_get_error_line(), lex_get_error());
+        return -1;
+    }
+
+    if ((fd = fs_open(DEFAULT_OUT)) < 0) {
+        twritef("could not open(%s)\n", *argv);
+        return -1;
+    }
+
+    int sz = sizeof(struct lexed_file) + lexd.datasize + lexd.textsize;
+    char* buffer = kalloc(sz);
+    char* original_buffer = buffer;
+
+    memcpy(buffer, &lexd, sizeof(struct lexed_file));
+    buffer += sizeof(struct lexed_file);
+    memcpy(buffer, text, lexd.textsize);
+    buffer += lexd.textsize;
+    memcpy(buffer, data, lexd.datasize);
+
+    fs_write(fd, original_buffer, sz);
+
+    fs_close(fd);
+    kfree(text);
+    kfree(data);
+    kfree(src);
+
+    twritef("Assembled file %s to %s\n", *argv, DEFAULT_OUT);
+}
+EXPORT_KSYMBOL(as);
 
 int cc(int argc, char **argv)
 {
+    struct vm vm;
+    inode_t fd;
+    static char *src, *old_src;
+    int i = 0;
+
     if(argc == 1){
-        twritef("usage: cc <file>\n");
+        twritef("usage: cc [-s] <file>\n");
         return -1;
     }
 
@@ -79,15 +211,15 @@ int cc(int argc, char **argv)
     fs_close(fd);
 
     DEBUG_PRINT("Lexing\n");
-    void* entry = program(vm.text, vm.data, src);
-    if(entry == NULL)
+    struct lexed_file lexd = program(vm.text, vm.data, src);
+    if(lexd.entry == 0)
     {
         twritef("%d: %s\n", lex_get_error_line(), lex_get_error());
         return -1;
     }
     DEBUG_PRINT("Lexing [done]\n");
 
-    vm.pc = entry;
+    vm.pc = (int)vm.text+lexd.entry;
     DEBUG_PRINT("Main entry %x\n", vm.pc);
 
     vm_setup_stack(&vm ,argc, argv);

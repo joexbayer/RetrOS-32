@@ -103,7 +103,7 @@ void terminal_scroll(struct terminal* term)
 	}
 	term->tail++;
 
-	terminal_remove_line(term);
+	//terminal_remove_line(term);
 }
 
 /**

@@ -86,7 +86,7 @@ void kernel(uint32_t magic)
 	mouse_init();
 	init_pcbs();
 	ipc_msg_box_init();
-	//init_pci();
+	init_pci();
 	init_worker();
 
 	init_arp();

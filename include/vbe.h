@@ -45,12 +45,6 @@ struct vbe_mode_info_structure {
    uint8_t reserved1[206];
 } __attribute__ ((packed));
 
-
-struct display_info {
-   int width, height, pith, bbp;
-   unsigned int framebuffer;
-};
-
 void vesa_put_char(uint8_t* buffer, unsigned char c, int x, int y, int color);
 void vesa_put_box(uint8_t* buffer, unsigned char c, int x, int y, int color);
 void vesa_put_block(uint8_t* buffer, unsigned char c, int x, int y, int color);

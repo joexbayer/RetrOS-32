@@ -178,23 +178,24 @@ int eval(struct vm* vm, int assembly)
     return 0;
 }
 
+void vm_setup(struct vm* vm, int* text, char* data)
+{
+    vm->text = text;
+    vm->data = data;
+    vm->stack = kalloc(VM_STACK_SIZE);
+    vm->old_text = vm->text;
+    
+    vm->bp = vm->sp = (int *)((int)vm->stack + VM_STACK_SIZE-2);
+    vm->ax = 0;
+}
+
 void vm_init(struct vm* vm)
 {
     /* allocate memory for virtual machine */
 
     vm->text = kalloc(VM_TEXT_SIZE);
     vm->data = kalloc(VM_DATA_SIZE);
-    vm->stack = kalloc(VM_STACK_SIZE);
-    DEBUG_PRINT("Allocated VM:\nText: 0x%x\nData: 0x%x\nStack: 0x%x\n", vm->text, vm->data, vm->stack);
-
-    vm->old_text = vm->text;
-
-    memset(vm->text, 0, VM_TEXT_SIZE);
-    memset(vm->data, 0, VM_DATA_SIZE);
-    memset(vm->stack, 0, VM_STACK_SIZE);
-
-    vm->bp = vm->sp = (int *)((int)vm->stack + VM_STACK_SIZE-2);
-    vm->ax = 0;
+    vm_setup(vm, vm->text, vm->data);
 }
 
 void vm_free(struct vm* vm)

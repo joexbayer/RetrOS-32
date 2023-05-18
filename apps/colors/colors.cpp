@@ -3,13 +3,13 @@
 #include <gfx/events.h>
 #include <colors.h>
 
-#define PIXELS_PER_BLOCK 16
+#define PIXELS_PER_BLOCK 8
 #define WIDTH (16*PIXELS_PER_BLOCK)
 #define HEIGHT ((255/16) * PIXELS_PER_BLOCK) + 32
 
-class DisplayViewer : public Window {  
+class ColorPicker : public Window {  
 public:  
-	DisplayViewer() : Window(WIDTH, HEIGHT, "DisplayViewer") {
+	ColorPicker() : Window(WIDTH, HEIGHT, "ColorPicker") {
 		int x = 0, y = 0;
 		for (int i = 0; i < 256; i++){
 			gfx_draw_rectangle(x*PIXELS_PER_BLOCK, y*PIXELS_PER_BLOCK, PIXELS_PER_BLOCK, PIXELS_PER_BLOCK, i);
@@ -19,7 +19,6 @@ public:
 				y++;
 			}
 		}
-		
 	}
 
 	void Run()
@@ -33,7 +32,7 @@ public:
 			case GFX_EVENT_MOUSE:
 				color = ((event.data2/PIXELS_PER_BLOCK)*16) + (event.data/PIXELS_PER_BLOCK);
 
-				gfx_draw_rectangle(0, HEIGHT-16, WIDTH, PIXELS_PER_BLOCK, color);
+				gfx_draw_rectangle(0, HEIGHT-16, WIDTH, 16, color);
 				gfx_draw_format_text(0, HEIGHT-12, COLOR_WHITE, "Color: %d (0x%x)", color, color);
 				break;
 			default:
@@ -44,7 +43,7 @@ public:
 };
 
 int main(void) {  
-    DisplayViewer s1;
+    ColorPicker s1;
 	s1.Run();
 
 	printf("Done\n");

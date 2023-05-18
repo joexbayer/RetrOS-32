@@ -310,6 +310,12 @@ fs_open_done:
 inode_t fs_open(char* name)
 {
 	CHECK_DISK();
+
+	int ret = inode_from_path(name);
+	if(ret <= 0){
+		fs_create(name);
+	}
+
 	return inode_from_path(name);
 }
 

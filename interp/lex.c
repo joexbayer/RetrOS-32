@@ -1296,7 +1296,7 @@ void lex_init()
     while (i <= While) {
         next();
         lexer_context.current_id->token = i++;
-    }
+        }
 
     // add library to symbol table
     i = OPEN;
@@ -1312,7 +1312,7 @@ void lex_init()
     //DEBUG_PRINT("Added important default lexer_context.tokens and system lexer_context.tokens\n");
 }
 
-void* program(int* _text, char* _data, char* _str)
+struct lexed_file program(int* _text, char* _data, char* _str)
 {
     error = 0;
     error_line = 0;
@@ -1330,7 +1330,13 @@ void* program(int* _text, char* _data, char* _str)
 
     //dbgprintf("Section sizes: Text: %d. Data: %d\n", text - _text, data - _data);
 
-    return error ? 0 : (void*)lexer_context.main->value;
+    struct lexed_file result = {
+        .textsize = (int)text - (int)_text,
+        .datasize = (int)data - (int)_data,
+        .entry = error ? 0 : (int)lexer_context.main->value - (int)_text
+    };
+
+    return result;
 }
 
 

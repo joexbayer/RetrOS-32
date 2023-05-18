@@ -266,7 +266,6 @@ void Editor::putChar(unsigned char c)
 		/* Append text to the end */
 		m_bufferHead--;
 		m_bufferEdit--;
-		
 
 		line_start = prevNewline(&m_textBuffer[m_bufferEdit], m_textBuffer);
 		line_end = nextNewline(&m_textBuffer[m_bufferEdit]);

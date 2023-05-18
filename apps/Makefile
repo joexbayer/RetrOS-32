@@ -38,7 +38,7 @@ new: ${UTILS} bindir programs
 
 programs: bin/crt0.o ${USROBJS}
 	@make -C editor/
-	@make -C display/
+	@make -C colors/
 	@echo [USR] All user programs created and linked!
 
 bin/%.o: %.c bin/crt0.o

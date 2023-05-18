@@ -14,6 +14,7 @@ struct vm {
 };
 
 void vm_init(struct vm* vm);
+void vm_setup(struct vm* vm, int* text, char* data);
 void vm_free(struct vm* vm);
 void vm_setup_stack(struct vm* vm, int argc, char* argv[]);
 int eval(struct vm* vm, int assembly);
