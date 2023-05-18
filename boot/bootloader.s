@@ -121,12 +121,12 @@ set_a20:
 
 set_video_mode:
     mov $0x4F02, %ax	
-    mov $0x4101, %bx
+    mov $0x4103, %bx /* 101 = 640x480, 103 = 800x600 */
     int $0x10 
 
     push %es
 	mov $0x4F01, %ax
-	mov $0x4101, %cx	
+	mov $0x4103, %cx	
 	mov $vbe_info_structure, %di
 	int $0x10
 	pop %es

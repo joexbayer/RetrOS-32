@@ -29,14 +29,6 @@ static unsigned char kb_buffer[KB_BUFFER_SIZE];
 static int kb_buffer_head = 0;
 static int kb_buffer_tail = 0;
 
-#define ARROW_UP 254
-#define ARROW_DOWN 253
-#define ARROW_LEFT 252
-#define ARROW_RIGHT 251
-#define F1 250
-#define F2 249
-#define F3 248
-
 static unsigned char kbdus[128] =
 {
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8',	/* 9 */

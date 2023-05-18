@@ -25,8 +25,6 @@ void terminal_commit();
 
 void terminal_attach(struct terminal* term);
 
-void termin_scroll(struct terminal* term);
-
 
 void twriteln(const char* data);
 

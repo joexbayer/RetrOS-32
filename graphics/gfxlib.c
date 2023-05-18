@@ -43,7 +43,6 @@ int gfx_window_reize(int width, int height)
 	return 0;
 }
 
-static int test = 0;
 int gfx_push_event(struct gfx_window* w, struct gfx_event* e)
 {
 	dbgprintf("Pushing event %d (head %d): data %d, data2 %d\n", e->event, w->events.head, e->data, e->data2);
@@ -52,8 +51,6 @@ int gfx_push_event(struct gfx_window* w, struct gfx_event* e)
         memcpy(&w->events.list[w->events.head], e, sizeof(*e));
 	    w->events.head = (w->events.head + 1) % GFX_MAX_EVENTS;
     });
-
-	test--;
 
 	if(w->owner->state == BLOCKED)
 		w->owner->state = RUNNING;
@@ -99,8 +96,8 @@ int kernel_gfx_draw_rectangle(int x, int y, int width, int height, unsigned char
     if(current_running->gfx_window == NULL)
         return -1;
 
-    //if(x < 0 || y < 0 || x+width > current_running->gfx_window->inner_width || y+height > current_running->gfx_window->inner_height)
-    //    return -2;
+    if(x < 0 || y < 0 || x+width > current_running->gfx_window->inner_width || y+height > current_running->gfx_window->inner_height)
+        return -2;
 
     //CLI();
     int i, j;
@@ -186,6 +183,17 @@ int kernel_gfx_set_title(char* title)
 	
 	memset(current_running->gfx_window->name, 0, GFX_MAX_WINDOW_NAME_SIZE);
 	memcpy(current_running->gfx_window->name, title, strlen(title));
+
+	return 0;
+}
+
+int kernel_gfx_set_header(const char* header)
+{
+	if(strlen(header) > GFX_MAX_WINDOW_NAME_SIZE)
+		return -1;
+	
+	memset(current_running->gfx_window->header, 0, GFX_MAX_WINDOW_NAME_SIZE);
+	memcpy(current_running->gfx_window->header, header, strlen(header));
 
 	return 0;
 }

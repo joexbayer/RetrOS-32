@@ -30,6 +30,7 @@ void terminal_syntax(unsigned char c)
 	switch (c) {
 		case '>':
 		case '/':
+		case '\\':
 			/* Highlight preprocessor directives */
 			terminal_set_color(COLOR_VGA_MISC);
 			break;
@@ -73,7 +74,26 @@ void terminal_attach(struct terminal* term)
 	current_running->term = term;
 }
 
-void termin_scroll(struct terminal* term)
+int nextNewline(void* _data)
+{
+	char* data = (char*) _data;
+
+	while (*data != '\n'){
+		data++;
+	}
+	data++;
+
+	return (int)data - (int)_data;
+}
+
+void terminal_remove_line(struct terminal* term)
+{
+	int skip = nextNewline(term->textbuffer);
+	memcpy(term->textbuffer, &term->textbuffer[skip], term->head-skip);
+	term->head -= skip;
+}
+
+void terminal_scroll(struct terminal* term)
 {
 	if(term->tail == term->head)
 		return;
@@ -82,6 +102,8 @@ void termin_scroll(struct terminal* term)
 		term->tail++;
 	}
 	term->tail++;
+
+	terminal_remove_line(term);
 }
 
 /**
@@ -97,7 +119,7 @@ void terminal_putchar(char c)
 	//unsigned char uc = c;	
 	if(c == '\n'){
 		if((gfx_get_window_height()/8) -1 == current_running->term->lines)
-			termin_scroll(current_running->term);
+			terminal_scroll(current_running->term);
 		else
 			current_running->term->lines++;
 	}

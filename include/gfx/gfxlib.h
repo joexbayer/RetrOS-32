@@ -31,6 +31,7 @@ int gfx_get_window_height();
 int gfx_window_reize(int width, int height);
 
 int kernel_gfx_set_title(char* title);
+int kernel_gfx_set_header(const char* header);
 
 void kernel_gfx_set_position(int x, int y);
 

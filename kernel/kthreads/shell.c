@@ -38,6 +38,8 @@
 #define SHELL_MAX_SIZE SHELL_WIDTH/2
 
 static uint8_t shell_column = 0;
+
+static char previous_shell_buffer[SHELL_MAX_SIZE];
 static char shell_buffer[SHELL_MAX_SIZE];
 static uint8_t shell_buffer_length = 0;
 
@@ -253,13 +255,15 @@ void exec_cmd()
 	int argc = parse_arguments(shell_buffer, argv);
 	if(argc == 0) return;
 
+	memcpy(previous_shell_buffer, shell_buffer, strlen(shell_buffer)+1);
+
 	void (*ptr)(int argc, char* argv[]) = (void (*)(int argc, char* argv[])) ksyms_resolve_symbol(argv[0]);
 	if(ptr == NULL){
 		twritef("Unknown command\n");
 		return;
 	}
 
-	twritef("Kernel > %s", shell_buffer);
+	twritef("Kernel > %s\n", shell_buffer);
 	ptr(argc, argv);
 	twritef("\n");
 	gfx_commit();
@@ -330,10 +334,16 @@ void exec_cmd()
 void shell_put(unsigned char c)
 {
 	unsigned char uc = c;
-	if(uc == newline)
-	{
-		shell_buffer[shell_buffer_length] = newline;
-		shell_buffer_length++;
+
+	if(uc == ARROW_UP){
+		int len = strlen(previous_shell_buffer)+1;
+		for (int i = 0; i < len; i++){
+			shell_put(previous_shell_buffer[i]);
+		}
+		return;
+	}
+
+	if(uc == newline){
 		exec_cmd();
 		terminal_commit();
 		reset_shell();
@@ -398,6 +408,8 @@ void shell()
 	help();
 	twriteln("");
 	terminal_commit(current_running->term);
+
+	kernel_gfx_set_header("/");
 
 	reset_shell();
 	while(1)

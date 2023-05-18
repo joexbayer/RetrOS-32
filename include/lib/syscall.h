@@ -15,6 +15,7 @@ void gfx_create_window(int width, int height);
 
 int gfx_draw_syscall(int option, void* data);
 int gfx_set_title(const char* title);
+int gfx_set_header(const char* header);
 
 int open(char* name);
 int write(int fd, void* buffer, int size);

@@ -80,7 +80,11 @@ int cc(int argc, char **argv)
 
     DEBUG_PRINT("Lexing\n");
     void* entry = program(vm.text, vm.data, src);
-    if(entry == NULL) return -1;
+    if(entry == NULL)
+    {
+        twritef("%d: %s\n", lex_get_error_line(), lex_get_error());
+        return -1;
+    }
     DEBUG_PRINT("Lexing [done]\n");
 
     vm.pc = entry;

@@ -132,7 +132,7 @@ int vmem_continious_allocation_map(struct allocation* allocation, uint32_t* addr
 		}
 		int bit = (paddr - VMEM_START_ADDRESS)/PAGE_SIZE;
 		allocation->bits[i] = bit;
-		dbgprintf("Allocating %d continious blocks on heap 0x%x.\n", num, heap_table);
+		//dbgprintf("Allocating %d continious blocks on heap 0x%x.\n", num, heap_table);
 		vmem_map(heap_table, (uint32_t)allocation->address+(i*PAGE_SIZE), paddr, access);
 	}
 
@@ -165,6 +165,11 @@ void vmem_init_process(struct pcb* pcb, char* data, int size)
 	uint32_t* process_heap_table = vmem_manager->ops->alloc(vmem_manager);
 	dbgprintf("[INIT PROCESS] Heap: 	 0x%x\n", process_heap_table);
 
+	/* Any process should have the kernel first 4mb mapped */
+	for (int i = 0; i < 1024; i++){
+		if(kernel_page_dir[i] != 0) process_directory[i] = kernel_page_dir[i];
+	}
+
 	/* Map the process data to a page */
 	int i = 0;
 	while (size > PAGE_SIZE){
@@ -189,9 +194,6 @@ void vmem_init_process(struct pcb* pcb, char* data, int size)
 	vmem_add_table(process_directory, VMEM_HEAP, process_heap_table, USER);
 	vmem_add_table(process_directory, VMEM_STACK, process_stack_table, USER);
 	vmem_add_table(process_directory, VMEM_DATA, process_data_table, USER); 
-
-	/* Any process should have the kernel first 4mb mapped */
-	process_directory[0] = kernel_page_dir[0];
 
 	dbgprintf("[INIT PROCESS] Process paging setup done.\n");
 	pcb->page_dir = (uint32_t*)process_directory;
@@ -248,6 +250,7 @@ void vmem_cleanup_process(struct pcb* pcb)
 		int num_pages = (old->size + PAGE_SIZE - 1) / PAGE_SIZE;
 		for (int i = 0; i < num_pages; i++)
 		{
+			//dbgprintf("[PCB] Cleaning up continious virtual allocation 0x%x\n",  old->address);
 			vmem_default->ops->free(vmem_default, (void*) (VMEM_START_ADDRESS + (old->bits[i] * PAGE_SIZE)));
 		}
 	

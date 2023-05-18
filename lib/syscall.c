@@ -68,6 +68,13 @@ int gfx_set_title(const char* title)
     return invoke_syscall(SYSCALL_GFX_SET_TITLE, (int)title, 0, 0);
 }
 
+
+int gfx_set_header(const char* header)
+{
+    return invoke_syscall(SYSCALL_GFX_SET_HEADER, (int)header, 0, 0);
+}
+
+
 int open(char* name)
 {
     return invoke_syscall(SYSCALL_OPEN, (int)name, 0, 0);

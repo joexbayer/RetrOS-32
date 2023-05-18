@@ -25,6 +25,10 @@ struct gfx_window {
     struct gfx_window* prev;
 
     char name[GFX_MAX_WINDOW_NAME_SIZE];
+    char header[GFX_MAX_WINDOW_NAME_SIZE];
+
+    /* TODO: create proper buttons */
+    char buttons[5][GFX_MAX_WINDOW_NAME_SIZE];
     
     uint16_t x, y;
     uint16_t width, height, inner_width, inner_height;

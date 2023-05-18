@@ -68,7 +68,7 @@ LIBOBJ = bin/printf.o bin/syscall.o bin/graphics.o
 
 # ---------------- Makefile rules ----------------
 
-.PHONY: all new image clean boot net kernel grub time tests build
+.PHONY: all new image clean boot net kernel grub time tests build apps
 all: iso
 	$(TIME-END)
 

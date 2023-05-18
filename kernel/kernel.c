@@ -86,7 +86,7 @@ void kernel(uint32_t magic)
 	mouse_init();
 	init_pcbs();
 	ipc_msg_box_init();
-	init_pci();
+	//init_pci();
 	init_worker();
 
 	init_arp();
@@ -120,6 +120,7 @@ void kernel(uint32_t magic)
 	add_system_call(SYSCALL_GFX_GET_TIME,  (syscall_t)&get_current_time);
 	add_system_call(SYSCALL_GFX_DRAW, (syscall_t)&gfx_syscall_hook);
 	add_system_call(SYSCALL_GFX_SET_TITLE, (syscall_t)&kernel_gfx_set_title);
+	add_system_call(SYSCALL_GFX_SET_HEADER, (syscall_t)&kernel_gfx_set_header);
 
 
 	add_system_call(SYSCALL_FREE, (syscall_t)&free);

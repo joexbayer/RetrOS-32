@@ -187,6 +187,9 @@ int inode_write(void* buf, int size, struct inode* inode, struct superblock* sb)
 	if(inode->blocks[block] == 0)
 		inode->blocks[block] = __new_block(sb);
 
+	/* if pos is 0, we want to rewrite file. TODO: Free not used blocks */
+	if(inode->pos == 0) inode->size = 0;
+
 	acquire(&inode->lock);
 
 	/* If we will write past a block "border", only write the missing part of current block. */    

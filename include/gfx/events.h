@@ -9,6 +9,7 @@
 #define KEY_LEFT 252
 #define KEY_RIGHT 251
 #define KEY_F3 248
+#define KEY_F2 249
 #define KEY_F1 250
 
 enum gfx_events {
