@@ -43,17 +43,43 @@ void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
                 putpixel(buffer, i, j, window->inner[c++], vbe_info->pitch);
     }
 
+    vesa_line_horizontal(buffer, window->x+6, window->y+window->height-7, window->inner_width+4, background_color);
+    vesa_line_horizontal(buffer, window->x+6, window->y+window->height-6, window->inner_width+4, background_color);
+
+    /* Shadow horizontal */
+    vesa_line_horizontal(buffer, window->x+6, window->y+window->height-5, window->inner_width+6, 0);
+    vesa_line_horizontal(buffer, window->x+6, window->y+window->height-4, window->inner_width+6, 0);
+
+    /* Header */
     for (int i = 0; i < (window->width/8) - 2; i++){
         vesa_put_box(buffer, 80, window->x+8+(i*8), window->y-4, background_color);
         vesa_put_box(buffer, 80, window->x+8+(i*8), window->y+2, background_color);
         vesa_put_box(buffer, 80, window->x+8+(i*8), window->y-2, background_color);
-        vesa_put_box(buffer, 0, window->x+8+(i*8), window->y-4+window->height-8, background_color);
+
+        //vesa_put_box(buffer, 0, window->x+8+(i*8), window->y-4+window->height-8, background_color);;
     }
 
+    vesa_line_vertical(buffer, window->x+7, window->y, window->inner_height+9, background_color);
+    vesa_line_vertical(buffer, window->x+6, window->y, window->inner_height+9, background_color);
+
+    vesa_line_vertical(buffer, window->x+window->width-7, window->y, window->inner_height+9, background_color);
+    vesa_line_vertical(buffer, window->x+window->width-6, window->y, window->inner_height+9, background_color);
+
+    /* Shadow vertical */
+    vesa_line_vertical(buffer, window->x+window->width-5, window->y, window->inner_height+12, 0);
+    vesa_line_vertical(buffer, window->x+window->width-4, window->y, window->inner_height+12, 0);
+
+
+    /*
     for (int i = 0; i < (window->height/8) - 1; i++){
         vesa_put_box(buffer, 2, window->x+4, window->y+(i*8), background_color);
+        vesa_put_box(buffer, 2, window->x+4-1, window->y+(i*8), background_color);
+
         vesa_put_box(buffer, 2, window->x-3+window->width-8, window->y+(i*8), background_color);
-    }
+        vesa_put_box(buffer, 2, window->x-3+window->width-8+1, window->y+(i*8), background_color);
+        vesa_put_box(buffer, 2, window->x-3+window->width-8+2, window->y+(i*8), 0);
+        vesa_put_box(buffer, 2, window->x-3+window->width-8+3, window->y+(i*8), 0);
+    }*/
 
     /* Title */
     vesa_fillrect(buffer, window->x+8, window->y, strlen(window->name)*8 + 4, 8, background_color);

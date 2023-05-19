@@ -39,6 +39,7 @@
 
 #define USE_MULTIBOOT 0
 
+int kernel_msg = 0;
 /* This functions always needs to be on top? */
 void kernel(uint32_t magic) 
 {
@@ -64,6 +65,7 @@ void kernel(uint32_t magic)
 
 	kernel_size = _end-_code;
 	init_memory();
+	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Memory initialized.");
 
 	dbgprintf("Kernel is at: 0x%x\n", magic);
 	dbgprintf("Kernel is at: 0x%x\n", kernel);
@@ -77,21 +79,29 @@ void kernel(uint32_t magic)
 	//vmem_map_driver_region(vbe_info->framebuffer, (vbe_info->width*vbe_info->height*(vbe_info->bpp/8))+1);
 	
 	init_kctors();
+	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Kernel constructors initialized.");
 
 	//vga_set_palette();
 
 	init_interrupts();
+	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Interrupts initialized.");
 	gfx_init();
 	init_keyboard();
 	mouse_init();
+	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Peripherals initialized.");
 	init_pcbs();
 	ipc_msg_box_init();
 	init_pci();
+	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "PCI initialized.");
 	init_worker();
+
+	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Hardware initialized.");
 
 	init_arp();
 	init_sockets();
 	init_dns();
+
+	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Networking initialized.");
 
 	if(!disk_attached()){
 		dbgprintf("[KERNEL] Attaching virtual disk because not physical one was found.\n");
@@ -99,6 +109,8 @@ void kernel(uint32_t magic)
 	}
 
 	init_fs();
+
+	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Filesystem initialized.");
 
 	//fs_create_file_system();
 
@@ -111,6 +123,8 @@ void kernel(uint32_t magic)
 	register_kthread(&dummytask, "Dummy");
 	register_kthread(&worker_thread, "workd");
 	register_kthread(&tcpd, "tcpd");
+
+	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Kernel Threads initialized.");
 
 	#pragma GCC diagnostic ignored "-Wcast-function-type"
 	add_system_call(SYSCALL_PRTPUT, (syscall_t)&terminal_putchar);
@@ -133,6 +147,8 @@ void kernel(uint32_t magic)
 	#pragma GCC diagnostic pop
 	
 
+	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Systemcalls initialized.");
+
 	dbgprintf("[KERNEL] TEXT: %d\n", _code_end-_code);
 	dbgprintf("[KERNEL] RODATA: %d\n", _ro_e-_ro_s);
 	dbgprintf("[KERNEL] DATA: %d\n", _data_e-_data_s);
@@ -143,11 +159,16 @@ void kernel(uint32_t magic)
 	load_page_directory(kernel_page_dir);
 	init_gdt();
 	init_tss();
+	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "GDT & TSS initialized.");
 	enable_paging();
+
+	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Virtual memory initialized.");
 
 	dbgprintf("[KERNEL] Enabled paging!\n");
 	
 	vesa_init();
+
+	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Graphics initialized.");
 
 	start("idled");
 	start("workd");
@@ -156,12 +177,17 @@ void kernel(uint32_t magic)
 	//start("netd");
   	start("kclock");
 	start("shell");
+
+	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Deamons initialized.");
 	
 	//pcb_create_process("/bin/clock", 0, NULL);
 	
 	init_pit(1);
+	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Timer initialized.");
 
 	dbgprintf("[CLI] %d\n", cli_cnt);
+
+	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Starting OS.");
 
 	pcb_start();
 	
