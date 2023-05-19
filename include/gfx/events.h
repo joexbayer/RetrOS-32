@@ -15,7 +15,8 @@
 enum gfx_events {
     GFX_EVENT_KEYBOARD,
     GFX_EVENT_MOUSE,
-    GFX_EVENT_EXIT
+    GFX_EVENT_EXIT,
+    GFX_EVENT_RESOLUTION
 };
 
 struct gfx_event {

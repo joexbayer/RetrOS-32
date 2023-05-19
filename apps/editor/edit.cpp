@@ -40,22 +40,21 @@ int prevNewline(unsigned char* str, unsigned char* limit)
 
 class Editor : public Window {  
 public:  
-	Editor() : Window(288, 248, "Editor") {
+	Editor() : Window(288*2, 248*2, "Editor") {
 		m_x = 0;
 		m_y = 0;
 		m_textBuffer = (unsigned char*) malloc((c_width/8)*(c_height/8));
 
-		vm_data = (char*) malloc((c_width)*(c_height));
-		vm_text = (int*) malloc((c_width)*(c_height));
+		vm_data = (char*) malloc((c_width/4)*(c_height/4));
+		vm_text = (int*) malloc((c_width/4)*(c_height/4));
 
 		m_bufferSize = (c_width/8)*(c_height/8);
 		for (int i = 0; i < m_bufferSize; i++) m_textBuffer[i] = 0;
-		gfx_draw_rectangle(0, 0, 288, 248, COLOR_BG);
-		gfx_draw_line(0, 17, 248, 17, COLOR_BG+2);
-		for (int i = 0; i < 248; i++)gfx_draw_format_text(0, i*8, COLOR_BG+4, "%s%d ", i < 10 ? " " : "", i);
+		gfx_draw_rectangle(0, 0, c_width, c_height, COLOR_BG);
+		gfx_draw_line(0, 17, c_height, 17, COLOR_BG+2);
+		for (int i = 0; i < c_height/8; i++)gfx_draw_format_text(0, i*8, COLOR_BG+4, "%s%d ", i < 10 ? " " : "", i);
 
 		//lex_init();
-
 
 		setColor(COLOR_TEXT);
 		reDraw(0, 0);
@@ -106,8 +105,8 @@ private:
 	};
 
 	/* Size is based on the fact that our filesystem can only handle 8kb files */
-	const int c_width = 280-24;
-	const int c_height = 240;
+	const int c_width = (288*2)-24;
+	const int c_height = (248*2);
 
 	void reDraw(int from, int to);
 };
