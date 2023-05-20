@@ -53,14 +53,18 @@ int rc(int argc, char **argv)
     DEBUG_PRINT("%s\n", src);
     fs_close(fd);
 
-    struct lexed_file* lexd = (struct lexed_file*) src;
+    unsigned char* dec = kalloc(i*2);
+    int dec_sz = 0;
+    run_length_decode(src, i, dec, &dec_sz);
+
+    struct lexed_file* lexd = (struct lexed_file*) dec;
     dbgprintf("%d : %d : %d\n", lexd->datasize, lexd->entry, lexd->textsize);
-    src += sizeof(struct lexed_file);
+    dec += sizeof(struct lexed_file);
 
-    int* text = (int*) src;
-    src += lexd->textsize;
+    int* text = (int*) dec;
+    dec += lexd->textsize;
 
-    char* data = (char*) src;
+    char* data = (char*) dec;
 
     vm_setup(&vm, text, data);
 
@@ -73,7 +77,7 @@ int rc(int argc, char **argv)
     //vm_free(&vm);
 
     kfree(vm.stack);
-
+    kfree(dec);
     kfree(src);
 }
 EXPORT_KSYMBOL(rc);
@@ -137,9 +141,16 @@ int as(int argc, char **argv)
     buffer += lexd.textsize;
     memcpy(buffer, data, lexd.datasize);
 
-    fs_write(fd, original_buffer, sz);
+    unsigned char* enc = kalloc(sz);
+    int enc_sz = 0;
+
+    run_length_encode(original_buffer, sz, enc, &enc_sz);
+
+    fs_write(fd, enc, enc_sz);
 
     fs_close(fd);
+
+    kfree(enc);
     kfree(text);
     kfree(data);
     kfree(src);

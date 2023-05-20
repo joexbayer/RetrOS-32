@@ -204,6 +204,7 @@ void gfx_mouse_event(int x, int y, char flags)
     /* No window was clicked. */
 }
 static int __is_fullscreen = 0;
+static void* inner_window_save;
 void gfx_set_fullscreen(struct gfx_window* w)
 {
     if(w != order){
@@ -212,17 +213,38 @@ void gfx_set_fullscreen(struct gfx_window* w)
     }
 
     /* store and backup original window information */
-    w->inner_width = vbe_info->width-8;
+    w->inner_width = vbe_info->width-16;
     w->inner_height = vbe_info->height-8;
 
+    inner_window_save = w->inner;
     w->inner = wind.composition_buffer+(vbe_info->width*8)+8;
     w->pitch = vbe_info->width;
-    w->x = 8;
     w->y = 8;
 
     dbgprintf("%s is now in fullscreen\n", w->name);
 
     __is_fullscreen = 1;
+}
+
+void gfx_unset_fullscreen(struct gfx_window* w)
+{
+    if(w != order){
+        dbgprintf("Cannot fullscreen window that isnt in focus\n");
+        return;
+    }
+
+    /* store and backup original window information */
+    w->inner_width = w->width-16;
+    w->inner_height = w->height-16;
+
+    w->inner = inner_window_save;
+    w->pitch = w->inner_width;
+    w->y = 10;
+    w->x = 10;
+
+    dbgprintf("%s is now not in fullscreen\n", w->name);
+
+    __is_fullscreen = 0;
 }
 
 /* Helper function for displaying progress */
@@ -338,21 +360,34 @@ void gfx_compositor_main()
         
         unsigned char key = kb_get_char();
         if(key != 0){
-            struct gfx_event e = {
-                .data = key,
-                .event = GFX_EVENT_KEYBOARD
-            };
-            gfx_push_event(order, &e);
+
+            if(key == F10){
+                if(!__is_fullscreen) {
+                    gfx_set_fullscreen(order);
+                } else {
+                    gfx_unset_fullscreen(order);
+                }
+                struct gfx_event e = {
+                    .data = order->inner_width,
+                    .data2 = order->inner_height,
+                    .event = GFX_EVENT_RESOLUTION
+                };
+                gfx_push_event(order, &e);
+            } else {
+                struct gfx_event e = {
+                    .data = key,
+                    .event = GFX_EVENT_KEYBOARD
+                };
+                gfx_push_event(order, &e);
+            }
         }
 
-        if(window_changed){
+        if(window_changed && !__is_fullscreen){
             
-            if(!__is_fullscreen)
-                memset(wind.composition_buffer, theme->os.background/*41*/, buffer_size);
-
-            for (int i = 0; i < (vbe_info->width/8) - 2; i++){
-                vesa_put_box(wind.composition_buffer, 80, 8+(i*8), 0, theme->os.foreground);
-                vesa_put_box(wind.composition_buffer, 0, 8+(i*8), vbe_info->height-8, theme->os.foreground);
+            memset(wind.composition_buffer, theme->os.background/*41*/, buffer_size);
+                for (int i = 0; i < (vbe_info->width/8) - 2; i++){
+            vesa_put_box(wind.composition_buffer, 80, 8+(i*8), 0, theme->os.foreground);
+            vesa_put_box(wind.composition_buffer, 0, 8+(i*8), vbe_info->height-8, theme->os.foreground);
             }
 
             for (int i = 0; i < (vbe_info->height/8)-2; i++){
@@ -409,7 +444,7 @@ void gfx_compositor_main()
         gfx_timeline_draw(&net_recv_timeline);
         gfx_timeline_draw(&net_send_timeline);
 
-        if(window_changed){
+        if(window_changed && !__is_fullscreen){
 
             /* Interrupts */
             for (int i = 0; i < 12; i++){

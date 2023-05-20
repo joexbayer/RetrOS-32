@@ -46,8 +46,8 @@ static unsigned char kbdus[128] =
   ' ',	/* Space bar */
     0,	/* Caps lock */
     F1,	/* 59 - F1 key ... > */
-    F2,   F3,   0,   0,   0,   0,   0,   0,
-    0,	/* < ... F10 */
+    F2,   F3,   F4,   F5,   F6,   F7,   F8,   F9,
+    F10,	/* < ... F10 */
     0,	/* 69 - Num lock*/
     0,	/* Scroll Lock */
     0,	/* Home key */

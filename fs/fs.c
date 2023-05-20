@@ -263,6 +263,7 @@ int fs_write(inode_t i, void* buf, int size)
 	
 	dbgprintf("[FS] writing %d from inode %d\n", size, i);
 	int ret = inode_write(buffer, size, inode, &superblock);
+	
 	return ret;
 }
 

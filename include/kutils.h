@@ -68,5 +68,9 @@ extern int cli_cnt;
     
 #define ASSERT_CRITICAL() assert(cli_cnt > 0)
 
+unsigned char* run_length_encode(const unsigned char* data, int length, unsigned char* out, int* encodedLength);
+unsigned char* run_length_decode(const unsigned char* encodedData, int encodedLength, unsigned char* out, int* decodedLength);
+
+
 
 #endif /* __KERNEL_UTILS_H */

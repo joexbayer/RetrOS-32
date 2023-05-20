@@ -223,6 +223,7 @@ int inode_write(void* buf, int size, struct inode* inode, struct superblock* sb)
 	inode->pos += size;
 	inode->size += original_size;
 
+	__inode_sync(inode, sb);
 	release(&inode->lock);
 
 	return original_size;

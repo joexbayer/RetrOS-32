@@ -40,7 +40,7 @@ int prevNewline(unsigned char* str, unsigned char* limit)
 
 class Editor : public Window {  
 public:  
-	Editor() : Window(288*2, 248*2, "Editor") {
+	Editor() : Window(288, 248, "Editor") {
 		m_x = 0;
 		m_y = 0;
 		m_textBuffer = (unsigned char*) malloc((c_width/8)*(c_height/8));
@@ -50,11 +50,6 @@ public:
 
 		m_bufferSize = (c_width/8)*(c_height/8);
 		for (int i = 0; i < m_bufferSize; i++) m_textBuffer[i] = 0;
-		gfx_draw_rectangle(0, 0, c_width, c_height, COLOR_BG);
-		gfx_draw_line(0, 17, c_height, 17, COLOR_BG+2);
-		for (int i = 0; i < c_height/8; i++)gfx_draw_format_text(0, i*8, COLOR_BG+4, "%s%d ", i < 10 ? " " : "", i);
-
-		//lex_init();
 
 		setColor(COLOR_TEXT);
 		reDraw(0, 0);
@@ -73,6 +68,7 @@ public:
 	
 	void drawChar(unsigned char c, color_t bg);
 	void EditorLoop();
+	void FileChooser();
 	void setColor(color_t color);
 
 private:
@@ -85,6 +81,7 @@ private:
 	int m_bufferHead = 1;
 	int m_bufferEdit = 0;
 	int m_x, m_y;
+	int m_saved;
 
 	int* vm_text;
 	char* vm_data;
@@ -105,8 +102,8 @@ private:
 	};
 
 	/* Size is based on the fact that our filesystem can only handle 8kb files */
-	const int c_width = (288*2)-24;
-	const int c_height = (248*2);
+	int c_width = (288)-24;
+	int c_height = (248);
 
 	void reDraw(int from, int to);
 };
@@ -144,8 +141,8 @@ void Editor::reDraw(int from, int to)
 void Editor::Lex()
 {
 	program(vm_text, vm_data, (char*)m_textBuffer);
-	gfx_draw_rectangle(24, c_height, c_width, 8, COLOR_BG);
-	gfx_draw_format_text(24, c_height, COLOR_VGA_YELLOW, "%d: %s\n", lex_get_error_line(), lex_get_error());
+	gfx_draw_rectangle(24, c_height-8, c_width-24, 8, COLOR_BG);
+	gfx_draw_format_text(24, c_height-8, COLOR_VGA_YELLOW, "%d: %s\n", lex_get_error_line(), lex_get_error());
 }
 
 void Editor::Open(char* path)
@@ -169,10 +166,62 @@ void Editor::Save()
 	write(m_fd, m_textBuffer, m_bufferSize);
 }
 
+void Editor::FileChooser()
+{
+	char filename[127];
+	int i = 0;
 
+	if(m_fd > 0){
+		/* TODO: Check for unsaved changes */
+		close(m_fd);
+	}
+
+	gfx_draw_rectangle(0, 0, 24+c_width, c_height, COLOR_BG);
+	gfx_draw_format_text(8, 8, COLOR_VGA_FG, "Open file: ");
+
+	while (1){
+		struct gfx_event event;
+		gfx_get_event(&event);
+		switch (event.event){
+			case GFX_EVENT_KEYBOARD: {
+				switch (event.data){
+				case '\n':{
+						filename[i] = 0;
+						Open(filename);
+						return;
+					}
+					break;
+				case '\b':
+					filename[i--] = 0;
+					gfx_draw_char(8 + (11*8) + (i*8), 8, ' ', COLOR_VGA_FG);
+					break;
+				default:
+					if(i == 127) return;
+					filename[i++] = event.data;
+					gfx_draw_char(8 + (11*8) + (i*8), 8, event.data, COLOR_VGA_FG);
+					break;
+				}
+			}
+			break;
+		case GFX_EVENT_RESOLUTION:
+			c_width = event.data;
+			c_height = event.data2;
+			gfx_draw_rectangle(0, 0, c_width, c_height, COLOR_BG);
+			gfx_draw_line(0, 17, c_height, 17, COLOR_BG+2);
+			for (int i = 0; i < c_height/8; i++)gfx_draw_format_text(0, i*8, COLOR_BG+4, "%s%d ", i < 10 ? " " : "", i);
+
+			reDraw(0, m_bufferSize);
+		default:
+			break;
+		}
+	}
+}
 
 void Editor::EditorLoop()
 {
+	gfx_draw_line(0, 17, c_height, 17, COLOR_BG+2);
+	for (int i = 0; i < c_height/8; i++)gfx_draw_format_text(0, i*8, COLOR_BG+4, "%s%d ", i < 10 ? " " : "", i);
+
 	while (1){
 		struct gfx_event event;
 		gfx_get_event(&event);
@@ -180,6 +229,14 @@ void Editor::EditorLoop()
 		case GFX_EVENT_KEYBOARD:
 			putChar(event.data);
 			break;
+		case GFX_EVENT_RESOLUTION:
+			c_width = event.data;
+			c_height = event.data2;
+			gfx_draw_rectangle(0, 0, c_width, c_height, COLOR_BG);
+			gfx_draw_line(0, 17, c_height, 17, COLOR_BG+2);
+			for (int i = 0; i < c_height/8; i++)gfx_draw_format_text(0, i*8, COLOR_BG+4, "%s%d ", i < 10 ? " " : "", i);
+
+			reDraw(0, m_bufferSize);
 		default:
 			break;
 		}
@@ -193,6 +250,8 @@ void Editor::setColor(color_t color)
 
 void Editor::drawChar(unsigned char c, color_t bg)
 {
+	if(m_x*8 > c_width || m_y*8 > c_height) return;
+
 	if(c == '\n'){
 		gfx_draw_rectangle(24 + m_x*8, m_y*8, c_width-(24 + m_x*8), 8, bg);
 		//gfx_draw_char(24 + m_x*8, m_y*8, '\\', m_textColor);
@@ -202,7 +261,7 @@ void Editor::drawChar(unsigned char c, color_t bg)
 		gfx_draw_rectangle(24 + m_x*8, m_y*8, 8, 8, bg);
 		gfx_draw_char(24 + m_x*8, m_y*8, c, m_textColor);
 		m_x++;
-		if(m_x > (c_width/8)){
+		if(m_x >= ((c_width-24)/8)){
 			m_x = 0;
 			m_y++;
 		}
@@ -318,7 +377,7 @@ void Editor::putChar(unsigned char c)
 		Lex();
 		return;
 	case KEY_F1:{
-			Open("add.c");
+			FileChooser();
 		}
 		return;
 	default: /* Default add character to buffer and draw it */
@@ -345,12 +404,14 @@ void Editor::putChar(unsigned char c)
 	}
 }
 
-int main()
+int main(/* int argc, char* argv[]*/)
 {
 	//for (int i = 0; i < argc; i++){
 	//	printf("argv: %s\n", argv[i]);
 	//}
+
 	Editor s1;
+	s1.FileChooser();
 	s1.EditorLoop();
 
 	printf("Done\n");

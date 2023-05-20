@@ -34,11 +34,14 @@
 
 #define SHELL_HEIGHT 275 /* 275 */
 #define SHELL_WIDTH 400 /* 400 */
-#define SHELL_POSITION SHELL_HEIGHT-12
+#define SHELL_POSITION shell_height-8
 #define SHELL_MAX_SIZE SHELL_WIDTH/2
 
-static uint8_t shell_column = 0;
 
+/* TODO: Move this into a shell struct */
+static uint16_t shell_width = SHELL_WIDTH;
+static uint16_t shell_height = SHELL_HEIGHT;
+static uint8_t shell_column = 0;
 static char previous_shell_buffer[SHELL_MAX_SIZE];
 static char shell_buffer[SHELL_MAX_SIZE];
 static uint8_t shell_buffer_length = 0;
@@ -142,7 +145,7 @@ void run(int argc, char* argv[])
 						return;
 					}
 
-					int pid = pcb_create_process(optarg, 0, NULL);
+					int pid = pcb_create_process(optarg, argc, NULL);
 					if(pid < 0)
 						twritef("%s does not exist\n", optarg);
 				}
@@ -424,6 +427,12 @@ void shell()
 				break;
 			shell_put(event.data);
 			c_test++;
+			break;
+		case GFX_EVENT_RESOLUTION:
+			shell_height = event.data2;
+			shell_width = event.data;
+			terminal_commit();
+			reset_shell();
 		default:
 			break;
 		}

@@ -272,8 +272,9 @@ void vmem_init_kernel()
 	dbgprintf("[INIT KERNEL] Directory: 		0x%x\n", kernel_page_dir);
 
 	uint32_t* kernel_page_table = vmem_default->ops->alloc(vmem_default);
-	for (int addr = 0; addr < 0x400000; addr += PAGE_SIZE)
+	for (int addr = 0; addr < 0x400000; addr += PAGE_SIZE){
 		vmem_map(kernel_page_table, addr, addr, SUPERVISOR);
+	}
 	dbgprintf("[INIT KERNEL] 0x0 - 0x400000: 	0x%x\n", kernel_page_table);
 
 	int start = VMEM_HEAP;
