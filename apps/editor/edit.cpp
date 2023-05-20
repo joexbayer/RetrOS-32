@@ -51,6 +51,10 @@ public:
 		m_bufferSize = (c_width/8)*(c_height/8);
 		for (int i = 0; i < m_bufferSize; i++) m_textBuffer[i] = 0;
 
+		gfx_draw_rectangle(0, 0, c_width+24, c_height, COLOR_BG);
+		gfx_draw_line(0, 17, c_height, 17, COLOR_BG+2);
+		for (int i = 0; i < c_height/8; i++)gfx_draw_format_text(0, i*8, COLOR_BG+4, "%s%d ", i < 10 ? " " : "", i);
+
 		setColor(COLOR_TEXT);
 		reDraw(0, 0);
 
@@ -70,6 +74,7 @@ public:
 	void EditorLoop();
 	void FileChooser();
 	void setColor(color_t color);
+	void Reset();
 
 private:
 	void highlightSyntax(unsigned char* start);
@@ -108,6 +113,14 @@ private:
 	void reDraw(int from, int to);
 };
 
+void Editor::Reset()
+{
+	for (int i = 0; i < m_bufferSize; i++) m_textBuffer[i] = 0;
+	gfx_draw_rectangle(0, 0, c_width, c_height, COLOR_BG);
+	gfx_draw_line(0, 17, c_height, 17, COLOR_BG+2);
+	for (int i = 0; i < c_height/8; i++)gfx_draw_format_text(0, i*8, COLOR_BG+4, "%s%d ", i < 10 ? " " : "", i);
+}
+
 void Editor::reDraw(int from, int to)
 {	
 	m_x = 0;
@@ -140,9 +153,11 @@ void Editor::reDraw(int from, int to)
 
 void Editor::Lex()
 {
-	program(vm_text, vm_data, (char*)m_textBuffer);
-	gfx_draw_rectangle(24, c_height-8, c_width-24, 8, COLOR_BG);
-	gfx_draw_format_text(24, c_height-8, COLOR_VGA_YELLOW, "%d: %s\n", lex_get_error_line(), lex_get_error());
+	if(m_bufferHead > 0){
+		program(vm_text, vm_data, (char*)m_textBuffer);
+		gfx_draw_rectangle(24, c_height-8, c_width-24, 8, COLOR_BG);
+		gfx_draw_format_text(24, c_height-8, COLOR_VGA_YELLOW, "%d: %s\n", lex_get_error_line(), lex_get_error());
+	}
 }
 
 void Editor::Open(char* path)
@@ -176,8 +191,8 @@ void Editor::FileChooser()
 		close(m_fd);
 	}
 
-	gfx_draw_rectangle(0, 0, 24+c_width, c_height, COLOR_BG);
-	gfx_draw_format_text(8, 8, COLOR_VGA_FG, "Open file: ");
+	gfx_draw_rectangle(24, c_height-8, c_width-24, 8, COLOR_BG);
+	gfx_draw_format_text(24, c_height-8, COLOR_VGA_YELLOW, "Open file: ");
 
 	while (1){
 		struct gfx_event event;
@@ -187,18 +202,19 @@ void Editor::FileChooser()
 				switch (event.data){
 				case '\n':{
 						filename[i] = 0;
+						Reset();
 						Open(filename);
 						return;
 					}
 					break;
 				case '\b':
+					gfx_draw_rectangle(24 + (11*8) + (i*8), c_height-8, 8, 8, COLOR_BG);
 					filename[i--] = 0;
-					gfx_draw_char(8 + (11*8) + (i*8), 8, ' ', COLOR_VGA_FG);
 					break;
 				default:
 					if(i == 127) return;
 					filename[i++] = event.data;
-					gfx_draw_char(8 + (11*8) + (i*8), 8, event.data, COLOR_VGA_FG);
+					gfx_draw_char(24 + (11*8) + (i*8), c_height-8, event.data, COLOR_VGA_FG);
 					break;
 				}
 			}
@@ -207,10 +223,12 @@ void Editor::FileChooser()
 			c_width = event.data;
 			c_height = event.data2;
 			gfx_draw_rectangle(0, 0, c_width, c_height, COLOR_BG);
-			gfx_draw_line(0, 17, c_height, 17, COLOR_BG+2);
-			for (int i = 0; i < c_height/8; i++)gfx_draw_format_text(0, i*8, COLOR_BG+4, "%s%d ", i < 10 ? " " : "", i);
+			gfx_draw_format_text(24, c_height-8, COLOR_VGA_YELLOW, "Open file: ");
 
-			reDraw(0, m_bufferSize);
+			for (int j = 0; j < i; j++){
+				gfx_draw_char(24 + (11*8) + (i*8), c_height-8, filename[i], COLOR_VGA_FG);
+			}
+			
 		default:
 			break;
 		}
@@ -219,6 +237,7 @@ void Editor::FileChooser()
 
 void Editor::EditorLoop()
 {
+	gfx_draw_rectangle(0, 0, 24, c_height, COLOR_BG);
 	gfx_draw_line(0, 17, c_height, 17, COLOR_BG+2);
 	for (int i = 0; i < c_height/8; i++)gfx_draw_format_text(0, i*8, COLOR_BG+4, "%s%d ", i < 10 ? " " : "", i);
 

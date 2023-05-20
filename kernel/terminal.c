@@ -95,15 +95,15 @@ void terminal_remove_line(struct terminal* term)
 
 void terminal_scroll(struct terminal* term)
 {
-	if(term->tail == term->head)
+	/*if(term->tail == term->head)
 		return;
 		
 	while(term->textbuffer[term->tail] != '\n' && term->head != term->tail){
 		term->tail++;
 	}
-	term->tail++;
+	term->tail++;*/
 
-	//terminal_remove_line(term);
+	terminal_remove_line(term);
 }
 
 /**

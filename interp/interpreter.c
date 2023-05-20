@@ -141,7 +141,7 @@ int as(int argc, char **argv)
     buffer += lexd.textsize;
     memcpy(buffer, data, lexd.datasize);
 
-    unsigned char* enc = kalloc(sz);
+    unsigned char* enc = kalloc(sz*2);
     int enc_sz = 0;
 
     run_length_encode(original_buffer, sz, enc, &enc_sz);
