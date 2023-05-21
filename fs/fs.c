@@ -326,7 +326,7 @@ int fs_size(inode_t i)
 	return inode->size;
 }
 
-inode_t chdir(char* path)
+inode_t change_directory(char* path)
 {
 	inode_t ret = fs_open(path);
 	struct inode* inode = inode_get(ret, &superblock);

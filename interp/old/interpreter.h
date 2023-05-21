@@ -32,9 +32,6 @@
 
 /* Total 132kb total memory */
 
-/* 128 symbols */
-#define LEX_MAX_SYMBOLS 128
-
 #endif /* FCB4F955_2425_46A5_9A2F_B11453605E94 */
 
 

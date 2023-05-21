@@ -16,7 +16,7 @@ enum {
     PTR
 };
 
-void* program(char* _text, char* _data, char* _str);
+void* lex(char* _text, char* _data, char* _str);
 void lex_init();
 
 #endif /* !__INTERPRETER_LEX_H */

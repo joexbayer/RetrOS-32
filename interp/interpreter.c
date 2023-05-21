@@ -18,7 +18,6 @@
 
 #define DEFAULT_OUT "bytecode.o"
 
-
 int rc(int argc, char **argv)
 {
     inode_t fd;

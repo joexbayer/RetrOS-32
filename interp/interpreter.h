@@ -22,7 +22,7 @@
 /* 96kb text section */
 #define VM_TEXT_SIZE 96*1024
 /* 3kb data section */
-#define VM_DATA_SIZE 3*1024
+#define VM_DATA_SIZE 32*1024
 /* 1kb stack section */
 #define VM_STACK_SIZE 1024
 

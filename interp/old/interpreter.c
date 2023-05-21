@@ -49,7 +49,7 @@ int main(int argc, char **argv)
     close(fd);
 
     DEBUG_PRINT("Lexing\n");
-    void* entry = program(vm.text, vm.data, src);
+    void* entry = kernel_lex(vm.text, vm.data, src);
     DEBUG_PRINT("Lexing [done]\n");
 
     vm.pc = entry;

@@ -21,6 +21,10 @@
 #include <fcntl.h>
 
 #include <time.h>
+#include <stdio.h>
+#include <dirent.h>
+#include <unistd.h>
+
 
 
 #define FS_SIZE 1000000
@@ -163,6 +167,54 @@ void fs_setup_superblock(struct superblock* superblock, int size)
     superblock->inode_map = create_bitmap(superblock->ninodes);
 }
 
+int add_file(struct superblock* sb, struct inode* current_dir, char* program)
+{
+    /*char cwd[127];
+    if (getcwd(cwd, sizeof(cwd)) != NULL) {
+            printf("[" RED "MKFS" RESET "] Current working dir: %s\n", cwd);
+    } else {
+        printf("[" RED "MKFS" RESET "] Error\n");
+    }*/
+
+    FILE* file = fopen(program, "r");
+    if(file == NULL){
+        printf("[" RED "MKFS" RESET "] File %s not found!\n", program);
+        return -1;
+    }
+
+    fseek(file, 0L, SEEK_END);
+    int fs_size = ftell(file);
+    rewind(file);
+
+    char* buf = malloc(fs_size);
+    int fret = fread(buf, 1, fs_size, file);
+    if(fret <= 0){
+        printf("[" RED "MKFS" RESET "] Error reading program %s!\n", program);
+    }
+
+    /* Skip to the first last */
+    int name_offset = strlen(program);
+    while(program[name_offset] != '/')
+        name_offset--;
+    name_offset++;
+
+     /* Create a inode and write the contents of the given program.*/
+    inode_t file_inode = alloc_inode(sb, FS_FILE);
+    struct inode* file_inode_disk = inode_get(file_inode, sb);
+    inode_write(buf, fs_size, file_inode_disk, sb);
+
+    /* Add file to current dir */
+    struct directory_entry file_dir_entry = {
+        .inode = file_inode,
+    };
+    memcpy(file_dir_entry.name, &program[name_offset], strlen(&program[name_offset])+1);
+    __inode_add_dir(&file_dir_entry, current_dir, sb);
+
+    printf("[" BLUE "MKFS" RESET "] Added file %s (%d bytes)!\n", program, fs_size);
+
+    free(buf);
+}
+
 int add_userspace_program(struct superblock* sb, struct inode* current_dir, char* program)
 {   
     /* Open the file and copy content to buffer*/
@@ -180,28 +232,22 @@ int add_userspace_program(struct superblock* sb, struct inode* current_dir, char
     int fs_size = ftell(file);
     rewind(file);
 
-    char* buf = malloc(fs_size);
+    char* buf = malloc(fs_size+1);
     int fret = fread(buf, 1, fs_size, file);
     if(fret <= 0){
         printf("[" BLUE "MKFS" RESET "] Error reading program %s!\n", program);
     }
 
-    /* Skip to the first / */
-    int name_offset = 0;
-    while(program[name_offset] != '/')
-        name_offset++;
-    name_offset++;
-
     /* Create a inode and write the contents of the given program.*/
     inode_t file_inode = alloc_inode(sb, FS_FILE);
     struct inode* file_inode_disk = inode_get(file_inode, sb);
     inode_write(buf, fs_size, file_inode_disk, sb);
+    
 
     /* Add file to current dir */
     struct directory_entry file_dir_entry = {
         .inode = file_inode,
     };
-    memcpy(file_dir_entry.name, &program[name_offset], strlen(&program[name_offset])+1);
     __inode_add_dir(&file_dir_entry, current_dir, sb);
 
     printf("[" BLUE "MKFS" RESET "] Added userspace program %s (%d bytes)!\n", program, fs_size);
@@ -240,7 +286,55 @@ int add_directory(struct superblock* sb, struct inode* parent, char* name)
     printf("[" BLUE "MKFS" RESET "] Creating directory %s to the filesystem!\n", name);
 
     return dir_inode;
+}
 
+#define DT_DIR 4
+
+void traverseDirectories(struct inode* root, struct superblock* superblock, const char *basePath, int depth) {
+    DIR *dir;
+    struct dirent *entry;
+
+    // Open the directory
+    dir = opendir(basePath);
+    if (dir == NULL) {
+        perror("opendir");
+        return;
+    }
+    // Traverse the directory
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_type == DT_DIR) {
+            
+            for (int i = 0; i < depth; i++) printf("\t");
+
+            printf("/%s\n", entry->d_name);
+            // Ignore "." and ".." directories
+            if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+                continue;
+
+            int inode_index = add_directory(superblock, root, entry->d_name);
+            struct inode* bin = inode_get(inode_index, superblock);
+
+            // Recursively traverse subdirectories
+            char path[1024];
+            snprintf(path, sizeof(path), "%s/%s", basePath, entry->d_name);
+            traverseDirectories(bin, superblock, path, depth++);
+        } else {
+
+            for (int i = 0; i < depth; i++) printf("\t");
+            
+
+            printf("\t%s\n", entry->d_name);
+
+            char path[1024];
+            snprintf(path, sizeof(path), "%s/%s", basePath, entry->d_name);
+
+            add_file(superblock, root, path);
+        }
+    }
+
+
+    // Close the directory
+    closedir(dir);
 }
 
 int main(int argc, char* argv[])
@@ -267,44 +361,10 @@ int main(int argc, char* argv[])
         .name = ".."
     };
 
-    /* Home file */
-    inode_t home_inode = alloc_inode(&superblock, FS_FILE);
-    struct inode* home_disk_inode = inode_get(home_inode, &superblock);
-
-    struct directory_entry home = {
-        .inode = home_inode,
-        .name = "home"
-    };
-
-    char* home_text = "Home is where the heart is.";
-    inode_write(home_text, strlen(home_text)+1, home_disk_inode, &superblock);
-
     root_dir = root;
 
-    /* Test .c file */
-    inode_t hello_inode = alloc_inode(&superblock, FS_FILE);
-    struct inode* hello_disk_inode = inode_get(hello_inode, &superblock);
-
-    struct directory_entry hello = {
-        .inode = hello_inode,
-        .name = "add.c"
-    };
-
-    FILE* hello_file = fopen("./interp/hello.c", "r");
-    if(hello_file == NULL){
-        printf("[" RED "MKFS" RESET "] File %s not found!\n", "hello.c");
-        return -1;
-    }
-
-    fseek(hello_file, 0L, SEEK_END);
-    int hello_sz = ftell(hello_file);
-    rewind(hello_file);
-
-    char* hello_buf = malloc(hello_sz);
-    int hret = fread(hello_buf, 1, hello_sz, hello_file);
-    printf("[" BLUE "MKFS" RESET "] Added file add.c %d bytes\n", hello_sz);
-
-    inode_write(hello_buf, hret, hello_disk_inode, &superblock);
+    __inode_add_dir(&back, root_dir, &superblock);
+    __inode_add_dir(&self, root_dir, &superblock);
 
     /* Done */
 
@@ -314,22 +374,10 @@ int main(int argc, char* argv[])
     printf("[" BLUE "MKFS" RESET "] Max file size: %d bytes\n", NDIRECT*BLOCK_SIZE);
     printf("[" BLUE "MKFS" RESET "] Written and saved filesystem to filesystem.image!\n");
     /* Save filesystem to disk! */
+    const char *basePath = "./rootfs"; // Current directory
+    traverseDirectories(root, &superblock, basePath, 0);
 
-    __inode_add_dir(&back, root_dir, &superblock);
-    __inode_add_dir(&self, root_dir, &superblock);
-    __inode_add_dir(&home, root_dir, &superblock);
-    __inode_add_dir(&hello, root_dir, &superblock);
-
-
-    int inode_index = add_directory(&superblock, root_dir, "bin");
-    struct inode* bin = inode_get(inode_index, &superblock);
-
-    add_userspace_program(&superblock, bin, "bin/counter.o");
-    add_userspace_program(&superblock, bin, "bin/clock.o");
-    add_userspace_program(&superblock, bin, "editor/edit.o");
-    add_userspace_program(&superblock, bin, "colors/colors.o");
-
-    add_directory(&superblock, root_dir, "tmp");
+    //add_file(&superblock, root, "./rootfs/add.c");
 
     inodes_sync(&superblock);
 

@@ -69,6 +69,7 @@ public:
 	void Open(char* path);
 	void putChar(unsigned char c);
 	void Lex();
+	void Quit();
 	
 	void drawChar(unsigned char c, color_t bg);
 	void EditorLoop();
@@ -160,6 +161,15 @@ void Editor::Lex()
 	}
 }
 
+void Editor::Quit()
+{
+	if(m_fd > 0){
+		/* TODO: Check for unsaved changes */
+		close(m_fd);
+	}
+	//free(m_textBuffer);
+}
+
 void Editor::Open(char* path)
 {
 	m_fd = open(path);
@@ -228,7 +238,10 @@ void Editor::FileChooser()
 			for (int j = 0; j < i; j++){
 				gfx_draw_char(24 + (11*8) + (i*8), c_height-8, filename[i], COLOR_VGA_FG);
 			}
-			
+			break;
+		case GFX_EVENT_EXIT:
+			Quit();
+			exit();
 		default:
 			break;
 		}
@@ -256,6 +269,10 @@ void Editor::EditorLoop()
 			for (int i = 0; i < c_height/8; i++)gfx_draw_format_text(0, i*8, COLOR_BG+4, "%s%d ", i < 10 ? " " : "", i);
 
 			reDraw(0, m_bufferSize);
+			break;;
+		case GFX_EVENT_EXIT:
+			Quit();
+			return;
 		default:
 			break;
 		}

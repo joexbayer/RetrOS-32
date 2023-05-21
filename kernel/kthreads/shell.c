@@ -208,7 +208,7 @@ EXPORT_KSYMBOL(th);
 
 void cd(int argc, char* argv[])
 {
-	current_running->current_directory = chdir(argv[1]);
+	current_running->current_directory = change_directory(argv[1]);
 }
 EXPORT_KSYMBOL(cd);
 

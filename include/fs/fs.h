@@ -13,7 +13,7 @@ inode_t fs_open_from_directory(char* name, inode_t i);
 void fs_close(inode_t inode);
 int fs_read(inode_t i, void* buf, int size);
 int fs_write(inode_t i, void* buf, int size);
-inode_t chdir(char* path);
+inode_t change_directory(char* path);
 inode_t fs_create_directory(char* name, inode_t);
 int fs_create(char* name);
 

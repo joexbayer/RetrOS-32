@@ -144,12 +144,14 @@ int vmem_continious_allocation_map(struct allocation* allocation, uint32_t* addr
 void vmem_free_allocation(struct allocation* allocation)
 {
 	int num_pages = (allocation->size + PAGE_SIZE - 1) / PAGE_SIZE;
+	dbgprintf("Freeing %d pages\n", num_pages);
 	for (int i = 0; i < num_pages; i++){
 		vmem_default->ops->free(vmem_default, (void*) (VMEM_START_ADDRESS + (allocation->bits[i] * PAGE_SIZE)));
 	}
 
 	kfree(allocation->bits);
 	kfree(allocation);
+	dbgprintf("Done Freeing %d pages\n", num_pages);
 }
 
 void vmem_init_process(struct pcb* pcb, char* data, int size)

@@ -1,4 +1,4 @@
-CCFLAGS=-m32 -std=gnu11 -O1 \
+CCFLAGS=-m32 -std=gnu11 -O1 -D__KERNEL \
 		-g -Wall -Wextra -Wpedantic -Wstrict-aliasing \
 		-Wno-pointer-arith -Wno-unused-parameter -nostdlib \
 		-nostdinc -ffreestanding -fno-pie -fno-stack-protector \
@@ -108,7 +108,7 @@ bin/build: ./tools/build.c
 	@echo [BUILD]      Compiling $<
 
 bin/mkfs: bin/fs.o bin/bitmap.o ./tools/mkfs.c
-	@gcc tools/mkfs.c bin/bitmap.o fs/bin/inode.o -I include/  -O2 -m32 -Wall -g --no-builtin -o ./bin/mkfs
+	@gcc tools/mkfs.c bin/bitmap.o fs/bin/inode.o -I include/  -O2 -m32 -Wall -g -D_XOPEN_SOURCE -D_FILE_OFFSET_BITS=64 -o ./bin/mkfs
 	@echo [BUILD]      Compiling $<
 
 tools: bin/build bin/mkfs
@@ -132,7 +132,7 @@ apps:
 	@make -C ./apps/
 	xxd -i apps/editor/edit.o > include/editor.h
 
-iso: compile tests apps tools build
+iso: compile tests apps tools build img
 	$(TIME-END)
 
 filesystem:
@@ -174,10 +174,10 @@ docker:
 	sudo docker-compose up
 
 vdi: cleanvid docker
-	qemu-img convert -f raw -O vdi boot.iso boot.vdi
+	qemu-img convert -f raw -O vdi boot.img boot.vdi
 
 qemu:
-	sudo qemu-system-i386 -device e1000,netdev=net0 -serial stdio -netdev user,id=net0 -object filter-dump,id=net0,netdev=net0,file=dump.dat boot.iso
+	sudo qemu-system-i386 -device e1000,netdev=net0 -serial stdio -netdev user,id=net0 -object filter-dump,id=net0,netdev=net0,file=dump.dat boot.img
 
 run: docker qemu
 endif

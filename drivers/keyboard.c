@@ -146,6 +146,8 @@ static void kb_callback()
     kb_add_char('}');
   } else if(c == '2' && __shift_pressed){
     kb_add_char('"');
+  } else if(c == 92 && __shift_pressed){
+    kb_add_char('*');
   } else {
 	  kb_add_char( __shift_pressed ? c+('A'-'a') : c);
   }

@@ -32,7 +32,7 @@ struct lexer {
     int token;
     int token_val;
 
-    struct identifier symbols[LEX_MAX_SYMBOLS];
+    struct identifier symbols[LEX_DEFAULT_SYMBOLS];
     struct identifier* current_id;
     struct identifier* main;
 
@@ -1261,7 +1261,7 @@ void lex_init()
     DEBUG_PRINT("Added important default lexer_context.tokens and system lexer_context.tokens\n");
 }
 
-void* program(char* _text, char* _data, char* _str)
+void* lex(char* _text, char* _data, char* _str)
 {
     // get next lexer_context.token
     text = _text;

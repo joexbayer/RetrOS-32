@@ -97,6 +97,8 @@ void* kalloc(int size)
     __kmemory_used += num_blocks * KMEM_BLOCK_SIZE;
     current_running->kallocs++;
 
+    dbgprintf("Total mem: %d\n", __kmemory_used);
+
     spin_unlock(&__kmemory_lock);
     return ptr;
 }

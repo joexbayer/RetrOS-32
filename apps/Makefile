@@ -65,5 +65,5 @@ bindir:
 clean:
 	rm -f ./bin/*
 	make -C editor/ clean
-	make -C display/ clean
+	make -C colors/ clean
 	rm -f .depend
