@@ -330,16 +330,18 @@ int kernel_gfx_draw_format_text(int x, int y, unsigned char color, char* fmt, ..
                     case 'p': ; /* p for padded int */
 						num = va_arg(args, int);
 						itoa(num, str);
-						kernel_gfx_draw_text(x+(x_offset*PIXELS_PER_CHAR), y, str, color);
-						x_offset += strlen(str);
 
-                        if(strlen(str) < 3){
-                            int pad = 3-strlen(str);
+                        if(strlen(str) < 6){
+                            int pad = 6-strlen(str);
                             for (int i = 0; i < pad; i++){
-                                kernel_gfx_draw_char(' ', x+(x_offset*PIXELS_PER_CHAR), y, color);
+                                kernel_gfx_draw_char(x+(x_offset*PIXELS_PER_CHAR), y,'0', color);
                                 x_offset++;
                             }
                         }
+                                dbgprintf("OFFSET %d\n", strlen(str));
+
+                        kernel_gfx_draw_text(x+(x_offset*PIXELS_PER_CHAR), y, str, color);
+						x_offset += strlen(str);
 						break;
 					case 'x':
 					case 'X': ;
@@ -355,7 +357,7 @@ int kernel_gfx_draw_format_text(int x, int y, unsigned char color, char* fmt, ..
 						break;
 					case 'c': ;
 						char char_arg = (char)va_arg(args, int);
-						kernel_gfx_draw_char(char_arg, x+(x_offset*PIXELS_PER_CHAR), y, color);
+						kernel_gfx_draw_char(x+(x_offset*PIXELS_PER_CHAR), y, char_arg, color);
 						x_offset++;
 						break;
 					default:

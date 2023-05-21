@@ -139,6 +139,9 @@ void Editor::reDraw(int from, int to)
 			m_y++;
 		}
 	}
+
+	int line = 0;
+	int col = 0;
 	
 	for (int i = from; i < to; i++){
 		if(i > 0 && (!isAlpha(m_textBuffer[i-1]) || m_textBuffer[i-1] == ' ')){
@@ -146,10 +149,14 @@ void Editor::reDraw(int from, int to)
 		}
 
 		drawChar(m_textBuffer[i], i == m_bufferEdit ? COLOR_VGA_BG+5 : COLOR_BG);
+		if(i == m_bufferEdit){
+			line = m_y;
+			col = m_x;
+		}
 	}
-
-	//gfx_draw_rectangle(24, c_height-8, c_width, 8, COLOR_BG);
-	//gfx_draw_format_text(24, c_height-8, COLOR_VGA_YELLOW, "%d -> %d\n", from, to);
+	
+	gfx_draw_rectangle(24, c_height-8, c_width-24, 8, COLOR_BG);
+	gfx_draw_format_text(24, c_height-8, COLOR_MISC, "W:%p Line:%p Col:%p\n", m_bufferHead, line, col);
 }
 
 void Editor::Lex()
@@ -167,6 +174,7 @@ void Editor::Quit()
 		/* TODO: Check for unsaved changes */
 		close(m_fd);
 	}
+
 	//free(m_textBuffer);
 }
 

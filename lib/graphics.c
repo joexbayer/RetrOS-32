@@ -118,16 +118,16 @@ int gfx_draw_format_text(int x, int y, unsigned char color, const char* fmt, ...
                     case 'p': ; /* p for padded int */
 						num = va_arg(args, int);
 						itoa(num, str);
-						gfx_draw_text(x+(x_offset*8), y, str, color);
-						x_offset += strlen(str);
 
-                        if(strlen(str) < 3){
-                            int pad = 3-strlen(str);
+                        if(strlen(str) < 4){
+                            int pad = 4-strlen(str);
                             for (int i = 0; i < pad; i++){
-                                gfx_draw_char(x+(x_offset*8), y, ' ', color);
+                                gfx_draw_char(x+(x_offset*8), y, '0', color);
                                 x_offset++;
                             }
                         }
+						gfx_draw_text(x+(x_offset*8), y, str, color);
+						x_offset += strlen(str);
 						break;
 					case 'x':
 					case 'X': ;
