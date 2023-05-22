@@ -116,6 +116,7 @@ error_t pcb_create_kthread( void (*entry)(), char* name);
 error_t pcb_create_process(char* program, int args, char** argv);
 
 void pcb_set_running(int pid);
+void pcb_kill(pid);
 
 void pcb_dbg_print(struct pcb* pcb);
 

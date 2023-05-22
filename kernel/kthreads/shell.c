@@ -206,6 +206,15 @@ void th(int argc, char* argv[])
 }
 EXPORT_KSYMBOL(th);
 
+void kill(int argc, char* argv[])
+{
+	int id = atoi(argv[1]);
+	pcb_kill(id);
+}
+EXPORT_KSYMBOL(kill);
+
+
+
 void cd(int argc, char* argv[])
 {
 	current_running->current_directory = change_directory(argv[1]);

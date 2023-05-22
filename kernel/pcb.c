@@ -234,6 +234,13 @@ struct pcb* pcb_get_new_running()
 	return running->_list;
 }
 
+void pcb_kill(pid)
+{
+	if(pid < 0 || pid > MAX_NUM_OF_PCBS) return;
+
+	pcb_table[pid].state = ZOMBIE;
+}
+
 void Genesis()
 {
 	while (1);
@@ -407,9 +414,11 @@ error_t pcb_create_process(char* program, int args, char** argv)
 	pcb->current_directory = current_running->current_directory;
 	pcb->yields = 0;
 	pcb->parent = current_running;
-	pcb->cs = GDT_PROCESS_CS | PROCESSS_PRIVILEGE;
-    pcb->ds = GDT_PROCESS_DS | PROCESSS_PRIVILEGE;
+	//pcb->cs = GDT_PROCESS_CS | PROCESSS_PRIVILEGE;
+    //pcb->ds = GDT_PROCESS_DS | PROCESSS_PRIVILEGE;
 
+	pcb->cs = GDT_KERNEL_CS;
+	pcb->ds = GDT_KERNEL_DS;
 	/* Memory map data */
 	vmem_init_process(pcb, buf, read);
 
