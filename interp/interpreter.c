@@ -32,7 +32,7 @@ int rc(int argc, char **argv)
 
     argv++;
 
-    if ((fd = fs_open(*argv)) < 0) {
+    if ((fd = fs_open(*argv, 0)) <= 0) {
         twritef("could not open(%s)\n", *argv);
         return -1;
     }
@@ -94,7 +94,7 @@ int as(int argc, char **argv)
 
     argv++;
 
-    if ((fd = fs_open(*argv)) < 0) {
+    if ((fd = fs_open(*argv, 0)) <= 0) {
         twritef("could not open(%s)\n", *argv);
         return -1;
     }
@@ -125,7 +125,7 @@ int as(int argc, char **argv)
         return -1;
     }
 
-    if ((fd = fs_open(DEFAULT_OUT)) < 0) {
+    if ((fd = fs_open(DEFAULT_OUT, FS_FLAG_CREATE)) <= 0) {
         twritef("could not open(%s)\n", *argv);
         return -1;
     }
@@ -200,7 +200,7 @@ int cc(int argc, char **argv)
 
     // read the source file
     DEBUG_PRINT("Reading (%s)\n", *argv);
-    if ((fd = fs_open(*argv)) < 0) {
+    if ((fd = fs_open(*argv, 0)) < 0) {
         twritef("could not open(%s)\n", *argv);
         return -1;
     }

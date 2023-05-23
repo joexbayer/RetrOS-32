@@ -21,7 +21,7 @@
 
 //#include <gfx/gfxlib.h>
 
-#define STACK_SIZE 0x2000
+#define PCB_STACK_SIZE 0x2000
 const char* pcb_status[] = {"stopped ", "running ", "new     ", "blocked ", "sleeping", "zombie"};
 static struct pcb pcb_table[MAX_NUM_OF_PCBS];
 static int pcb_count = 0;
@@ -44,12 +44,12 @@ static struct pcb_queue_operations pcb_queue_default_ops = {
 struct pcb_queue* running;
 struct pcb_queue* blocked;
 
+/**
+ * Current running PCB, used for context aware
+ * functions such as windows drawing to the screen.
+ */
+struct pcb* current_running = &pcb_table[0];
 
-/* Helper function to attach default ops */
-void pcb_queue_attach_ops(struct pcb_queue* q)
-{
-	q->ops = &pcb_queue_default_ops;
-}
 
 /**
  * @brief Creates a new PCB queue.
@@ -63,7 +63,7 @@ struct pcb_queue* pcb_new_queue()
 {
 	struct pcb_queue* queue = kalloc(sizeof(struct pcb_queue));
 	queue->_list = NULL;
-	pcb_queue_attach_ops(queue);
+	queue->ops = &pcb_queue_default_ops;
 	queue->spinlock = 0;
 	queue->total = 0;
 
@@ -193,12 +193,6 @@ static struct pcb* __pcb_queue_pop(struct pcb_queue* queue)
     return front;
 }
 /**
- * Current running PCB, used for context aware
- * functions such as windows drawing to the screen.
- */
-struct pcb* current_running = &pcb_table[0];
-
-/**
  * @brief Wrapper function to push to running queue
  * 
  * @param pcb 
@@ -234,7 +228,7 @@ struct pcb* pcb_get_new_running()
 	return running->_list;
 }
 
-void pcb_kill(pid)
+void pcb_kill(int pid)
 {
 	if(pid < 0 || pid > MAX_NUM_OF_PCBS) return;
 
@@ -276,7 +270,7 @@ void pcb_set_running(int pid)
 void pcb_dbg_print(struct pcb* pcb)
 {
 	dbgprintf("\n###### PCB ######\npid: %d\nname: %s\nesp: 0x%x\nebp: 0x%x\nkesp: 0x%x\nkebp: 0x%x\neip: 0x%x\nstate: %s\nstack limit: 0x%x\nstack size: 0x%x (0x%x - 0x%x)\nPage Directory: 0x%x\nCS: %d\nDS:%d\n",
-		pcb->pid, pcb->name, pcb->esp, pcb->ebp, pcb->kesp, pcb->kebp, pcb->eip, pcb_status[pcb->state], pcb->stack_ptr, (int)((pcb->stack_ptr+STACK_SIZE-1) - pcb->esp), (pcb->stack_ptr+STACK_SIZE-1), pcb->esp,  pcb->page_dir, pcb->cs, pcb->ds
+		pcb->pid, pcb->name, pcb->esp, pcb->ebp, pcb->kesp, pcb->kebp, pcb->eip, pcb_status[pcb->state], pcb->stack_ptr, (int)((pcb->stack_ptr+PCB_STACK_SIZE-1) - pcb->esp), (pcb->stack_ptr+PCB_STACK_SIZE-1), pcb->esp,  pcb->page_dir, pcb->cs, pcb->ds
 	);
 }
 
@@ -290,7 +284,7 @@ int pcb_cleanup_routine(int pid)
 {
 	assert(pid != current_running->pid && !(pid < 0 || pid > MAX_NUM_OF_PCBS));
 
-	dbgprintf("[PCB] Cleanup on PID %d stack: 0x%x (original: 0x%x)\n", pid, pcb_table[pid].esp, pcb_table[pid].stack_ptr+STACK_SIZE-1);
+	dbgprintf("[PCB] Cleanup on PID %d stack: 0x%x (original: 0x%x)\n", pid, pcb_table[pid].esp, pcb_table[pid].stack_ptr+PCB_STACK_SIZE-1);
 
 	gfx_destory_window(pcb_table[pid].gfx_window);
 
@@ -306,7 +300,7 @@ int pcb_cleanup_routine(int pid)
 	if(pcb_table[pid].is_process){
 		vmem_cleanup_process(&pcb_table[pid]);
 	}
-	dbgprintf("[PCB] Freeing stack (0x%x)\n", pcb_table[pid].stack_ptr+STACK_SIZE-1);
+	dbgprintf("[PCB] Freeing stack (0x%x)\n", pcb_table[pid].stack_ptr+PCB_STACK_SIZE-1);
 	kfree((void*)pcb_table[pid].stack_ptr);
 
 	pcb_count--;
@@ -334,16 +328,16 @@ int pcb_cleanup_routine(int pid)
 error_t pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 {
 	dbgprintf("Initiating new kernel thread!\n");
-	uint32_t stack = (uint32_t) kalloc(STACK_SIZE);
+	uint32_t stack = (uint32_t) kalloc(PCB_STACK_SIZE);
 	if((void*)stack == NULL){
 		dbgprintf("[PCB] STACK == NULL");
 		return -ERROR_ALLOC;
 	}
-	memset((void*)stack, 0, STACK_SIZE);
+	memset((void*)stack, 0, PCB_STACK_SIZE);
 
 	/* Stack grows down so we want the upper part of allocated memory.*/ 
-	pcb->ebp = stack+STACK_SIZE-1;
-	pcb->esp = stack+STACK_SIZE-1;
+	pcb->ebp = stack+PCB_STACK_SIZE-1;
+	pcb->esp = stack+PCB_STACK_SIZE-1;
 	pcb->kesp = pcb->esp;
 	pcb->kebp = pcb->kesp;
 	pcb->eip = &kthread_entry;
@@ -372,12 +366,12 @@ error_t pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 	return 1;
 }
 
-error_t pcb_create_process(char* program, int args, char** argv)
+error_t pcb_create_process(char* program, int args, char** argv, pcb_flag_t flags)
 {
 	CLI();
 	/* Load process from disk */
-	inode_t inode = fs_open(program);
-	if(inode == 0)
+	inode_t inode = fs_open(program, 0);
+	if(inode <= 0)
 		return -ERROR_FILE_NOT_FOUND;
 
 	dbgprintf("[INIT PROCESS] Reading %s from disk\n", program);
@@ -401,9 +395,9 @@ error_t pcb_create_process(char* program, int args, char** argv)
 	memcpy(pcb->name, program, strlen(program)+1);
 	pcb->esp = 0xEFFFFFF0;
 	pcb->ebp = pcb->esp;
-	pcb->stack_ptr = (uint32_t) kalloc(STACK_SIZE);
-	memset((void*)pcb->stack_ptr, 0, STACK_SIZE);
-	pcb->kesp = pcb->stack_ptr+STACK_SIZE-1;
+	pcb->stack_ptr = (uint32_t) kalloc(PCB_STACK_SIZE);
+	memset((void*)pcb->stack_ptr, 0, PCB_STACK_SIZE);
+	pcb->kesp = pcb->stack_ptr+PCB_STACK_SIZE-1;
 	dbgprintf("[INIT PROCESS] Setup PCB %d for %s\n", i, program);
 	pcb->kebp = pcb->kesp;
 	pcb->term = current_running->term;
@@ -414,11 +408,15 @@ error_t pcb_create_process(char* program, int args, char** argv)
 	pcb->current_directory = current_running->current_directory;
 	pcb->yields = 0;
 	pcb->parent = current_running;
-	//pcb->cs = GDT_PROCESS_CS | PROCESSS_PRIVILEGE;
-    //pcb->ds = GDT_PROCESS_DS | PROCESSS_PRIVILEGE;
+	pcb->cs = GDT_PROCESS_CS | PROCESSS_PRIVILEGE;
+    pcb->ds = GDT_PROCESS_DS | PROCESSS_PRIVILEGE;
 
-	pcb->cs = GDT_KERNEL_CS;
-	pcb->ds = GDT_KERNEL_DS;
+	/* Launch with kernel privileges */
+	if(flags & PCB_FLAG_KERNEL){
+		pcb->cs = GDT_KERNEL_CS;
+		pcb->ds = GDT_KERNEL_DS;
+	}
+
 	/* Memory map data */
 	vmem_init_process(pcb, buf, read);
 

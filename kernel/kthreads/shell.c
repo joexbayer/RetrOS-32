@@ -98,8 +98,8 @@ void xxd(int argc, char* argv[])
 		return;
 	}
 
-	inode_t inode = fs_open(argv[1]);
-	if(inode < 0){
+	inode_t inode = fs_open(argv[1], 0);
+	if(inode <= 0){
 		twritef("File %s not found.\n", argv[1]);
 		return;
 	}
@@ -118,7 +118,7 @@ EXPORT_KSYMBOL(xxd);
 
 void ed()
 {
-	int pid = pcb_create_process("/bin/edit.o", 0, NULL);
+	int pid = pcb_create_process("/bin/edit.o", 0, NULL, PCB_FLAG_KERNEL);
 	if(pid < 0)
 		twritef("%s does not exist\n", "edit.o");
 }
@@ -127,29 +127,22 @@ EXPORT_KSYMBOL(ed);
 void run(int argc, char* argv[])
 {
 	char* optarg = NULL;
+	char* file = NULL;
     int opt = 0;
-	int bg = 0;
-	while ((opt = getopt(argc, argv, "hbc:", &optarg)) != -1) {
+	int kpriv = 0;
+
+	while ((opt = getopt(argc, argv, "hkc:", &optarg)) != -1) {
+		dbgprintf("%c\n", opt);
         switch (opt) {
             case 'h':
-                twritef("run [hn]\n  n - name\n  h - help\n  example: run -c /bin/clock\n");
+                twritef("run [hn]\n  n - name\n  h - help\nk - launch with kernel permissions\n  example: run -c /bin/clock\n");
                 return;
-			case 'b':
-				bg = 1;
+			case 'k':
+				kpriv = 1;
 				break;
 			case 'c':
-				{
-					int r = start(optarg);
-					if(r >= 0){
-						twritef("Kernel thread started\n");
-						return;
-					}
-
-					int pid = pcb_create_process(optarg, argc, NULL);
-					if(pid < 0)
-						twritef("%s does not exist\n", optarg);
-				}
-				return;
+				file = optarg;
+				break;
             case '?':
                 twritef("Invalid option\n");
 				return;
@@ -161,8 +154,17 @@ void run(int argc, char* argv[])
 				return;
         }
 	}
+
+	int r = start(file);
+	if(r >= 0){
+		twritef("Kernel thread started\n");
+		return;
+	}
+
+	int pid = pcb_create_process(optarg, argc, NULL, kpriv ? PCB_FLAG_KERNEL : 0);
+	if(pid < 0)
+		twritef("%s does not exist\n", file);
 	
-	twritef("Missing option argument: -h for help\n");
     return;
 }
 EXPORT_KSYMBOL(run);
@@ -223,7 +225,7 @@ EXPORT_KSYMBOL(cd);
 
 void cat(int argc, char* argv[])
 {
-	inode_t inode = fs_open(argv[1]);
+	inode_t inode = fs_open(argv[1], 0);
 	if(inode < 0){
 		twritef("File %s not found.\n", argv[1]);
 		return;

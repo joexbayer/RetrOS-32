@@ -213,6 +213,7 @@ int getopt(int argc, char* argv[], const char* optstring, char** optarg) {
     if (optind >= argc) {
         optind = 1;
         optpos = 1;
+        return -1;
     }
 
     return opt;

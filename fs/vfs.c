@@ -36,6 +36,13 @@ void mkdir(int argc, char* argv[])
 }
 EXPORT_KSYMBOL(mkdir);
 
+void sync()
+{
+	twritef("[FS] Synchronizing filesystem.\n");
+	fs_sync();
+}
+EXPORT_KSYMBOL(sync);
+
 void mkfs()
 {
     fs_create_file_system();

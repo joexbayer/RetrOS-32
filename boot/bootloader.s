@@ -6,7 +6,7 @@
 _start:
     jmp main
     .space 3 - (.-_start)
-
+    
     /* Configuration for a 2.88MB floppy using FAT 12, needed when booting with USB on real hardware. */
     OEMname:            .ascii      "MYBOOT  "
     bytesPerSector:     .word       512
@@ -215,6 +215,26 @@ data_descriptor:
     .byte 0b11001111
     .byte 0x00
 gdt_end:
+
+. = _start + 446
+partition_table:
+    # Partition 1 (example values, adjust as needed)
+    .byte 0x80       # Bootable flag (0x80 for bootable, 0x00 for non-bootable)
+    .byte 0x00       # Starting head
+    .byte 0x01       # Starting sector and cylinder
+    .byte 0x00       # Starting Cylinder
+    .byte 0x0B       # Partition type (e.g., 0x83 for Linux)
+    .byte 0x01       # Ending head
+    .byte 0x20       # Ending sector 6 bit
+    .byte 0x00       # Ending sector 10bit
+    .byte 0x00       # Relativ sector 32bit (4 bytes)
+    .byte 0x00
+    .byte 0x00
+    .byte 0x00
+    .byte 0x00       # Total sectors 32bit (4 bytes)
+    .byte 0x00
+    .byte 0x00
+    .byte 0x00
 
 /* BOOT SIGNATURE */
 vbe_info_structure:

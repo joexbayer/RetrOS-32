@@ -4,6 +4,7 @@
 #include "../../interp/lex.h"
 #include <util.h>
 #include <colors.h>
+#include <fs/fs.h>
 
 #define COLOR_BG COLOR_VGA_BG
 #define COLOR_TEXT COLOR_VGA_FG
@@ -180,7 +181,7 @@ void Editor::Quit()
 
 void Editor::Open(char* path)
 {
-	m_fd = open(path);
+	m_fd = open(path, FS_FLAG_CREATE);
 	if(m_fd <= 0)
 		return;
 	

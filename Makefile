@@ -108,7 +108,7 @@ bin/build: ./tools/build.c
 	@echo [BUILD]      Compiling $<
 
 bin/mkfs: bin/fs.o bin/bitmap.o ./tools/mkfs.c
-	@gcc tools/mkfs.c bin/bitmap.o fs/bin/inode.o -I include/  -O2 -m32 -Wall -g -D_XOPEN_SOURCE -D_FILE_OFFSET_BITS=64 -o ./bin/mkfs
+	@gcc tools/mkfs.c bin/bitmap.o fs/bin/inode.o -I include/  -O2 -m32 -Wall -g -D_XOPEN_SOURCE -D_FILE_OFFSET_BITS=64 -D__KERNEL -o  ./bin/mkfs
 	@echo [BUILD]      Compiling $<
 
 tools: bin/build bin/mkfs

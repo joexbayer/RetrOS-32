@@ -93,22 +93,12 @@ int fs_get_blocks()
 	return superblock.nblocks;
 }
 
-void __superblock_sync()
+void fs_sync()
 {
+	inodes_sync(&superblock);
 	write_block_offset((char*) &superblock, sizeof(struct superblock), 0, FS_START_LOCATION);
 	write_block_offset((char*) superblock.inode_map, get_bitmap_size(superblock.ninodes), 0, FS_INODE_BMAP_LOCATION);
 	write_block_offset((char*) superblock.block_map, get_bitmap_size(superblock.nblocks), 0, FS_BLOCK_BMAP_LOCATION);
-
-	dbgprintf("[FS] Superblock... (DONE)\n");
-}
-
-void sync()
-{
-	/*TODO: Causes pagefault! */
-	dbgprintf("[FS] Synchronizing filesystem.\n");
-	__superblock_sync();
-	inodes_sync(&superblock);
-	dbgprintf("[FS] %d inodes... (DONE)\n", superblock.ninodes);
 }
 
 static inline void __inode_add_dir(struct directory_entry* entry, struct inode* inode, struct superblock* sb)
@@ -308,16 +298,19 @@ fs_open_done:
 	return entry.inode;
 }
 
-inode_t fs_open(char* name)
+inode_t fs_open(char* name, fs_flag_t flags)
 {
 	CHECK_DISK();
 
-	int ret = inode_from_path(name);
-	if(ret <= 0){
-		fs_create(name);
-	}
+	/* TODO: check flags for read / write access */
 
-	return inode_from_path(name);
+	int ret = inode_from_path(name);
+	if(ret <= 0 && flags & FS_FLAG_CREATE){
+		fs_create(name);
+		return inode_from_path(name);
+	}
+	return ret;
+
 }
 
 int fs_size(inode_t i)
@@ -328,7 +321,7 @@ int fs_size(inode_t i)
 
 inode_t change_directory(char* path)
 {
-	inode_t ret = fs_open(path);
+	inode_t ret = fs_open(path, 0);
 	struct inode* inode = inode_get(ret, &superblock);
 	if(inode->type != FS_DIRECTORY){
 		return -FS_ERR_NOT_DIRECTORY;
@@ -341,6 +334,7 @@ inode_t change_directory(char* path)
 
 	return inode->inode;
 }
+
 
 /* returnrs 0 on success, < 0 on error */
 inode_t fs_create_directory(char* name, inode_t current)

@@ -17,7 +17,7 @@ int gfx_draw_syscall(int option, void* data);
 int gfx_set_title(const char* title);
 int gfx_set_header(const char* header);
 
-int open(char* name);
+int open(char* name, int flags);
 int write(int fd, void* buffer, int size);
 int read(int fd, void* buffer, int size);
 int close(int fd);

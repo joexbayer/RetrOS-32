@@ -1,14 +1,21 @@
 #ifndef __FS_H
 #define __FS_H
 
-#define FS_START_OFFSET
+typedef enum __fs_flags {
+    FS_FLAG_READ = 1 << 0,
+    FS_FLAG_WRITE = 1 << 1,
+    FS_FLAG_EXECUTE = 1 << 2,
+    FS_FLAG_CREATE = 1 << 3
+} fs_flag_t;
 
+#define FS_START_OFFSET
 #include <fs/inode.h>
 
 int init_fs();
+void fs_sync();
 void fs_create_file_system();
 
-inode_t fs_open(char* name);
+inode_t fs_open(char* name, fs_flag_t flags);
 inode_t fs_open_from_directory(char* name, inode_t i);
 void fs_close(inode_t inode);
 int fs_read(inode_t i, void* buf, int size);

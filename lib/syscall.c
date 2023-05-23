@@ -75,9 +75,9 @@ int gfx_set_header(const char* header)
 }
 
 
-int open(char* name)
+int open(char* name, int flags)
 {
-    return invoke_syscall(SYSCALL_OPEN, (int)name, 0, 0);
+    return invoke_syscall(SYSCALL_OPEN, (int)name, flags, 0);
 }
 
 int write(int fd, void* buffer, int size)

@@ -14,7 +14,7 @@ struct pcb;
 #define PCB_MAX_NAME_LENGTH 25
 
 /* TODO: Move to new file */
-enum pcb_states {
+typedef enum pcb_states {
     STOPPED,
     RUNNING,
     PCB_NEW,
@@ -22,7 +22,11 @@ enum pcb_states {
     SLEEPING,
     ZOMBIE,
     CLEANING
-};
+} pcb_state_t;
+
+typedef enum pcb_flags {
+    PCB_FLAG_KERNEL = 1 << 1,
+} pcb_flag_t;
 
 struct pcb {
     uint32_t ebp;
@@ -38,7 +42,7 @@ struct pcb {
     uint32_t cs;            /* Code segment selector */
     /* DO NOT NOT CHANGE ABOVE.*/
     char name[PCB_MAX_NAME_LENGTH];
-    uint8_t state;
+    pcb_state_t state;
     int16_t pid;
     uint16_t sleep;
     uint32_t stack_ptr;
@@ -107,16 +111,14 @@ struct pcb_queue {
 	int total;
 };
 
-void pcb_queue_attach_ops(struct pcb_queue* q);
-
 void init_pcbs();
 void pcb_start();
 void start_pcb();
 error_t pcb_create_kthread( void (*entry)(), char* name);
-error_t pcb_create_process(char* program, int args, char** argv);
+error_t pcb_create_process(char* program, int args, char** argv, pcb_flag_t flags);
 
 void pcb_set_running(int pid);
-void pcb_kill(pid);
+void pcb_kill(int pid);
 
 void pcb_dbg_print(struct pcb* pcb);
 

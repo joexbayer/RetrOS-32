@@ -143,7 +143,7 @@ int eval(struct vm* vm, int assembly)
                 twritef("exit(%d)\n", *vm->sp);
                 return *vm->sp;
             case OPEN:
-                vm->ax = fs_open((char*)vm->sp[1]);
+                vm->ax = fs_open((char*)vm->sp[1], 0);
                 break;
             case CLOS:
                 vm->ax = 0;
