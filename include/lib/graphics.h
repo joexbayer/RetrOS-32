@@ -19,8 +19,8 @@ extern "C" {
  */
 class Window {
 public:
-	Window(int width, int height, const char* name) {
-		gfx_create_window(width, height);
+	Window(int width, int height, const char* name, int flags) {
+		gfx_create_window(width, height, flags);
 		gfx_set_title(name);
 	}
 	

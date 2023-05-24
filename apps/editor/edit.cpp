@@ -41,7 +41,7 @@ int prevNewline(unsigned char* str, unsigned char* limit)
 
 class Editor : public Window {  
 public:  
-	Editor() : Window(288, 248, "Editor") {
+	Editor() : Window(288, 248, "Editor", 1) {
 		m_x = 0;
 		m_y = 0;
 		m_textBuffer = (unsigned char*) malloc((c_width/8)*(c_height/8));

@@ -284,28 +284,11 @@ void exec_cmd()
 
 	return;
 
-    //int numArgs = shell_parse_command(str, command, args);
-
-	if(strncmp("ls", shell_buffer, strlen("ls"))){
-		ls("");
-		gfx_commit();
-		return;
-	}
-
 	if(strncmp("unblock", shell_buffer, strlen("unblock"))){
 		int id = atoi(shell_buffer+strlen("unblock")+1);
 		pcb_set_running(id);
 		return;
 	}
-
-	if(strncmp("dig", shell_buffer, strlen("dig"))){
-		char* hostname = shell_buffer+strlen("dig")+1;
-		hostname[strlen(hostname)-1] = 0;
-		int ret = gethostname(hostname);
-		twritef("%s IN (A) %i\n", hostname, ret);
-		return;
-	}
-
 	if(strncmp("ping", shell_buffer, strlen("ping"))){
 		char* hostname = shell_buffer+strlen("ping")+1;
 		hostname[strlen(hostname)-1] = 0;
@@ -317,13 +300,6 @@ void exec_cmd()
 		char* filename = shell_buffer+strlen("touch")+1;
 		filename[strlen(filename)-1] = 0;
 		fs_create(filename);
-		return;
-	}
-
-	if(strncmp("sync", shell_buffer, strlen("sync"))){
-		sync();
-		current_running->gfx_window->width = 400;
-		current_running->gfx_window->height = 400;
 		return;
 	}
 
@@ -378,9 +354,8 @@ void shell_put(unsigned char c)
 	}
 
 	if(shell_column == SHELL_MAX_SIZE)
-	{
 		return;
-	}
+
 	kernel_gfx_draw_char(shell_column*8, SHELL_POSITION, uc, COLOR_VGA_FG);
 	gfx_commit();
 	shell_buffer[shell_buffer_length] = uc;
@@ -396,11 +371,10 @@ void shell()
 	dbgprintf("shell is running!\n");
 
 	memset(term.textbuffer, 0, TERMINAL_BUFFER_SIZE);
-	struct gfx_window* window = gfx_new_window(SHELL_WIDTH, SHELL_HEIGHT);
+	struct gfx_window* window = gfx_new_window(SHELL_WIDTH, SHELL_HEIGHT, GFX_IS_RESIZABLE);
 	
 	dbgprintf("shell: window 0x%x\n", window);
 	kernel_gfx_draw_rectangle(0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_VGA_BG);
-	//gfx_set_fullscreen(window);	
 
 	argv = (char**)kalloc(5 * sizeof(char*));
 	for (int i = 0; i < 5; i++) {
@@ -409,13 +383,10 @@ void shell()
 	}
 
 	terminal_attach(&term);
-	//kernel_gfx_draw_text(0, 0, "Terminal!", VESA8_COLOR_BOX_LIGHT_GREEN);
 
 	struct mem_info minfo;
     get_mem_info(&minfo);
 
-	//gfx_set_fullscreen(window);
-	//sleep(2);
 	twritef("_.--*/ \\*--._\nWelcome ADMIN!\n");
 	twritef("%s\n", welcome);
 	twritef("Memory: %d/%d\n", minfo.kernel.used+minfo.permanent.used, minfo.kernel.total+minfo.permanent.total);
@@ -426,18 +397,24 @@ void shell()
 	kernel_gfx_set_header("/");
 
 	reset_shell();
+
+	gfx_window_resize(current_running->gfx_window, 350, 350);
 	while(1)
 	{
 		struct gfx_event event;
 		gfx_event_loop(&event);
 
-		switch (event.event)
-		{
+		switch (event.event){
 		case GFX_EVENT_KEYBOARD:
-			if(event.data == -1)
+			switch (event.data){
+			case CTRLC:
+				reset_shell();
 				break;
-			shell_put(event.data);
-			c_test++;
+			default:
+				shell_put(event.data);
+				c_test++;
+				break;
+			}
 			break;
 		case GFX_EVENT_RESOLUTION:
 			shell_height = event.data2;

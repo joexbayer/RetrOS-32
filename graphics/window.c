@@ -55,8 +55,6 @@ void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
         vesa_put_box(buffer, 80, window->x+8+(i*8), window->y-4, background_color);
         vesa_put_box(buffer, 80, window->x+8+(i*8), window->y+2, background_color);
         vesa_put_box(buffer, 80, window->x+8+(i*8), window->y-2, background_color);
-
-        //vesa_put_box(buffer, 0, window->x+8+(i*8), window->y-4+window->height-8, background_color);;
     }
 
     vesa_line_vertical(buffer, window->x+7, window->y, window->inner_height+9, background_color);
@@ -68,18 +66,6 @@ void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
     /* Shadow vertical */
     vesa_line_vertical(buffer, window->x+window->width-5, window->y, window->inner_height+12, 0);
     vesa_line_vertical(buffer, window->x+window->width-4, window->y, window->inner_height+12, 0);
-
-
-    /*
-    for (int i = 0; i < (window->height/8) - 1; i++){
-        vesa_put_box(buffer, 2, window->x+4, window->y+(i*8), background_color);
-        vesa_put_box(buffer, 2, window->x+4-1, window->y+(i*8), background_color);
-
-        vesa_put_box(buffer, 2, window->x-3+window->width-8, window->y+(i*8), background_color);
-        vesa_put_box(buffer, 2, window->x-3+window->width-8+1, window->y+(i*8), background_color);
-        vesa_put_box(buffer, 2, window->x-3+window->width-8+2, window->y+(i*8), 0);
-        vesa_put_box(buffer, 2, window->x-3+window->width-8+3, window->y+(i*8), 0);
-    }*/
 
     /* Title */
     vesa_fillrect(buffer, window->x+8, window->y, strlen(window->name)*8 + 4, 8, background_color);
@@ -95,26 +81,45 @@ void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
     /* Exit */
     vesa_fillrect(buffer,  window->x+window->width-28,  window->y, strlen("[X]")*8 - 2, 8, background_color);
     vesa_write_str(buffer, window->x+window->width-28,  window->y, "[X]", window->color.text == 0 ? theme->window.background : window->color.text);
+
+    if(window->is_resizable)
+        vesa_fillrect(buffer,  window->x+window->width-8,  window->y+window->height-8, 6, 6, background_color);
     
     window->changed = 0;
 }   
 
+void gfx_window_set_resizable()
+{
+    current_running->gfx_window->is_resizable = 1;
+}
+
 /* under construction */
 void gfx_window_resize(struct gfx_window* w, int width, int height)
 {
-    return;
     /* Allocate new inner buffer, copy over old buffer, free old buffer, update struct */
     uint8_t* new_buffer = kalloc(width*height);
     uint8_t* old = w->inner;
+
+    //memcpy(new_buffer, old, w->inner_height*w->inner_width > width*width ? width*width : w->inner_height*w->inner_width);
 
     /* problem: if resizing from a larger to smaller window, what happens to data that will be "offscreen" */
     w->inner_height = height;
     w->inner_width = width;
     w->width = width + 16;
     w->height = height + 16;
+    w->pitch = width;
 
     /* Copy over */
     w->inner = new_buffer;
+
+    struct gfx_event e = {
+        .data = width,
+        .data2 = height,
+        .event = GFX_EVENT_RESOLUTION
+    };
+    gfx_push_event(w, &e);
+
+    w->changed = 1;
 
     kfree(old);
 }
@@ -164,6 +169,10 @@ void gfx_default_hover(struct gfx_window* window, int x, int y)
         
         window->changed = 1;
     }
+
+    if(window->resize && window->is_resizable){
+        gfx_window_resize(window, x-window->x-8, y-window->y-8);
+    }
 }
 
 void gfx_default_mouse_down(struct gfx_window* window, int x, int y)
@@ -173,6 +182,11 @@ void gfx_default_mouse_down(struct gfx_window* window, int x, int y)
         window->is_moving.x = x;
         window->is_moving.y = y;
     }
+
+    if(gfx_point_in_rectangle(window->x+window->width-8,  window->y+window->height-8, window->x+window->width,  window->y+window->height, x, y) && window->is_resizable){
+        dbgprintf("Clicked resize\n");
+        window->resize = 1;
+    }
 }
 
 void gfx_default_mouse_up(struct gfx_window* window, int x, int y)
@@ -181,6 +195,12 @@ void gfx_default_mouse_up(struct gfx_window* window, int x, int y)
         window->is_moving.state = GFX_WINDOW_STATIC;
         window->is_moving.x = x;
         window->is_moving.y = y;
+    }
+
+    if(gfx_point_in_rectangle(window->x+window->width-8,  window->y+window->height-8, window->x+window->width,  window->y+window->height, x, y) && window->is_resizable){
+        dbgprintf("Unclicked resize\n");
+        window->resize = 0;
+        window->changed = 1;
     }
 }
 
@@ -217,7 +237,7 @@ int gfx_destory_window(struct gfx_window* w)
  * @param height 
  * @return struct gfx_window* 
  */
-struct gfx_window* gfx_new_window(int width, int height)
+struct gfx_window* gfx_new_window(int width, int height, window_flag_t flags)
 {
     if(current_running->gfx_window != NULL)
         return current_running->gfx_window;
@@ -254,6 +274,13 @@ struct gfx_window* gfx_new_window(int width, int height)
     w->color.header = 0;
     w->color.text = 0;
     w->spinlock = 0;
+
+    if(flags & GFX_IS_RESIZABLE){
+        w->is_resizable = 1;
+    } else {
+        w->is_resizable = 0;
+    }
+    w->resize = 0;
     
     w->events.head = 0;
     w->events.tail = 0;

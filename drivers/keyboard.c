@@ -71,6 +71,7 @@ static unsigned char kbdus[128] =
 static int __keyboard_presses = 0;
 static uint8_t __shift_pressed = 0;
 static uint8_t __alt_pressed = 0;
+static uint8_t __ctrl_pressed = 0;
 
 
 unsigned char kb_get_char()
@@ -100,28 +101,31 @@ static void kb_callback()
 		case 0x2a: /* shift down */
 			__shift_pressed = 1;
 			return;
-			break;
 		case 0xaa: /* shift up */
 			__shift_pressed = 0;
 			return;
-			break;
     case 224: /* shift down */
 			__alt_pressed = 1;
 			return;
-			break;
 		case 184: /* shift up */
 			__alt_pressed = 0;
 			return;
-			break;
-
+    case 29: /* ctrl down */
+			__ctrl_pressed = 1;
+			return;
+    case 157: /* ctrl up */
+			__ctrl_pressed = 0;
+			return;
 		default:
 			break;
 	}
 
-  //dbgprintf("Scancode (%d)\n", scancode);
+  dbgprintf("Scancode (%d)\n", scancode);
 
 	if(scancode & 0x80)
 		return;
+
+    /* CTRL: down 29 up 157 */
 
 	unsigned char c = kbdus[scancode];
   if(c == '7' && __shift_pressed){
@@ -148,10 +152,13 @@ static void kb_callback()
     kb_add_char('"');
   } else if(c == 92 && __shift_pressed){
     kb_add_char('*');
+  } else if(__ctrl_pressed) {
+    kb_add_char(128+c);
   } else {
 	  kb_add_char( __shift_pressed ? c+('A'-'a') : c);
   }
-  dbgprintf("Pressed %d\n", c);
+  dbgprintf("Pressed %d\n", __ctrl_pressed ? 128+c : c);
+
 	__keyboard_presses++;
 
 }

@@ -12,7 +12,7 @@ static char* months[] = {"NAN", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
 void kclock()
 {   
     struct time current_time;
-    gfx_new_window(110, 140);
+    gfx_new_window(110, 140, 0);
 
     kernel_gfx_set_position(450, 50);
 
