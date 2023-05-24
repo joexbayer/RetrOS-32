@@ -5,18 +5,18 @@
 
 #define MAX_BLOCKED 20
 
-enum {
+typedef enum {
     UNDEFINED,
     LOCKED,
     UNLOCKED
-};
+} lock_state_t;
 
 void spin_lock(int volatile *p);
 void spin_unlock(int volatile *p);
 typedef int volatile spinlock_t;
 
 typedef struct _mutex {
-    int state;
+    lock_state_t state;
     struct pcb_queue* blocked;
 } mutex_t;
 

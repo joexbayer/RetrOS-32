@@ -48,7 +48,7 @@ static struct mouse m;
 int gfx_check_changes(struct gfx_window* w)
 {
     while(w != NULL){
-        if(w->changed && !w->resize)
+        if(w->changed)
             return 1;
         w = w->next;
     }
@@ -77,8 +77,7 @@ static void gfx_window_push_front(struct gfx_window* w)
     assert(w != wind.order);
 
     /* remove w from wind.order list */
-    for (struct gfx_window* i = wind.order; i != NULL; i = i->next)
-    {
+    for (struct gfx_window* i = wind.order; i != NULL; i = i->next){
         if(i->next == w){
             i->next = w->next;
             break;
@@ -214,7 +213,7 @@ void gfx_set_fullscreen(struct gfx_window* w)
 
     /* store and backup original window information */
     w->inner_width = vbe_info->width-16;
-    w->inner_height = vbe_info->height-8;
+    w->inner_height = vbe_info->height-16;
 
     inner_window_save = w->inner;
     w->inner = wind.composition_buffer+(vbe_info->width*8)+8;

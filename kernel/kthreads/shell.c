@@ -398,7 +398,6 @@ void shell()
 
 	reset_shell();
 
-	gfx_window_resize(current_running->gfx_window, 350, 350);
 	while(1)
 	{
 		struct gfx_event event;

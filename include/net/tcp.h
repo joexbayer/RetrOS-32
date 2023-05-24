@@ -6,8 +6,26 @@
 #include <sync.h>
 #include <rbuffer.h>
 
+/* TCP STATES */
+typedef enum {
+	TCP_CREATED,
+	TCP_CLOSED,
+	TCP_LISTEN,
+	TCP_WAIT_ACK,
+	TCP_SYN_RCVD,
+	TCP_SYN_SENT,
+	/* Between SYN_SENT and ESTABLISHED a new socket is created. */
+	TCP_ESTABLISHED,
+	TCP_FIN_WAIT,
+	TCP_FIN_WAIT_2,
+	TCP_CLOSING,
+	TCP_TIME_WAIT,
+	TCP_CLOSE_WAIT,
+	TCP_LAST_ACK
+} tcp_state_t;
+
 struct tcp_connection {
-	signal_value_t state;
+	volatile tcp_state_t state;
 
 	uint32_t sequence;
 	uint32_t acknowledgement;
@@ -34,23 +52,6 @@ struct tcp_connection {
 
 #define TCP_MSS        512
 
-/* TCP STATES */
-enum {
-	TCP_CREATED,
-	TCP_CLOSED,
-	TCP_LISTEN,
-	TCP_WAIT_ACK,
-	TCP_SYN_RCVD,
-	TCP_SYN_SENT,
-	/* Between SYN_SENT and ESTABLISHED a new socket is created. */
-	TCP_ESTABLISHED,
-	TCP_FIN_WAIT,
-	TCP_FIN_WAIT_2,
-	TCP_CLOSING,
-	TCP_TIME_WAIT,
-	TCP_CLOSE_WAIT,
-	TCP_LAST_ACK
-};
 
 #define TCP_HTONS(hdr) \
 	(hdr)->seq = htonl((hdr)->seq); \

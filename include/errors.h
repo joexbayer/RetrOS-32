@@ -1,9 +1,7 @@
 #ifndef EDD28A84_235C_41BD_B175_C5224DEECC55
 #define EDD28A84_235C_41BD_B175_C5224DEECC55
 
-typedef int error_t;
-
-enum errors {
+typedef enum errors {
     ERROR_OK,
     ERROR_DEFAULT,
     ERROR_ALLOC,
@@ -17,5 +15,5 @@ enum errors {
     ERROR_MSS_SIZE,
     ERROR_RBUFFER_FULL,
     ERROR_RBUFFER_EMPTY
-};
+} error_t;
 #endif /* EDD28A84_235C_41BD_B175_C5224DEECC55 */

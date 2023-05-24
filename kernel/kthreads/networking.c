@@ -29,7 +29,7 @@
 
 #define MAX_PACKET_SIZE 0x600
 
-enum NETD_STATES {
+enum netd_states {
     NETD_UNINITIALIZED,
     NETD_STARTED
 };
