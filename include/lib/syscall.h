@@ -11,7 +11,7 @@ void print_put(unsigned char c);
 void exit();
 void sleep(int seconds);
 
-void gfx_create_window(int width, int height);
+void gfx_create_window(int width, int height, int flags);
 
 int gfx_draw_syscall(int option, void* data);
 int gfx_set_title(const char* title);

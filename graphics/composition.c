@@ -32,12 +32,11 @@
 #include <diskdev.h>
 #include <net/netdev.h>
 
-static struct gfx_window* order;
-static mutex_t order_lock;
-
 static struct window_server {
     uint8_t sleep_time;
     uint8_t* composition_buffer;
+    struct gfx_window* order;
+    mutex_t order_lock;
 } wind = {
     .sleep_time = 2
 };
@@ -49,7 +48,7 @@ static struct mouse m;
 int gfx_check_changes(struct gfx_window* w)
 {
     while(w != NULL){
-        if(w->changed)
+        if(w->changed && !w->resize)
             return 1;
         w = w->next;
     }
@@ -65,20 +64,20 @@ void gfx_recursive_draw(struct gfx_window* w)
 }
 
 /**
- * @brief Push a window to the front of "order" list.
+ * @brief Push a window to the front of "wind.order" list.
  * Changing its z-axis position in the framebuffer.
  * 
  * Assuming w is NOT already the first element.
  * @param w 
  */
-void gfx_order_push_front(struct gfx_window* w)
+static void gfx_window_push_front(struct gfx_window* w)
 {
-    acquire(&order_lock);
+    acquire(&wind.order_lock);
 
-    assert(w != order);
+    assert(w != wind.order);
 
-    /* remove w from order list */
-    for (struct gfx_window* i = order; i != NULL; i = i->next)
+    /* remove w from wind.order list */
+    for (struct gfx_window* i = wind.order; i != NULL; i = i->next)
     {
         if(i->next == w){
             i->next = w->next;
@@ -86,38 +85,38 @@ void gfx_order_push_front(struct gfx_window* w)
         }
     }
     
-    /* Replace order with w, pushing old order back. */
-    order->in_focus = 0;
-    struct gfx_window* save = order;
-    order = w;
+    /* Replace wind.order with w, pushing old wind.order back. */
+    wind.order->in_focus = 0;
+    struct gfx_window* save = wind.order;
+    wind.order = w;
     w->next = save;
-    order->in_focus = 1;
+    wind.order->in_focus = 1;
 
     w->changed = 1;
 
-    release(&order_lock);
+    release(&wind.order_lock);
 }
 
 /**
- * @brief Removes a window from the "order" list.
- * Important keep the order list intact even if removing the first element.
+ * @brief Removes a window from the "wind.order" list.
+ * Important keep the wind.order list intact even if removing the first element.
  * @param w 
  */
 void gfx_composition_remove_window(struct gfx_window* w)
 {
-    acquire(&order_lock);
+    acquire(&wind.order_lock);
 
-    if(order == w)
+    if(wind.order == w)
     {
-        order = w->next;
-        if(order != NULL){
-            order->changed = 1;
-            order->in_focus = 1;
+        wind.order = w->next;
+        if(wind.order != NULL){
+            wind.order->changed = 1;
+            wind.order->in_focus = 1;
         }
         goto gfx_composition_remove_window_exit;
     }
 
-    struct gfx_window* iter = order;
+    struct gfx_window* iter = wind.order;
     while(iter != NULL && iter->next != w)
         iter = iter->next;
     if(iter == NULL){
@@ -129,32 +128,33 @@ void gfx_composition_remove_window(struct gfx_window* w)
 gfx_composition_remove_window_exit:
 
     dbgprintf("[GFX] Removing window\n");
-    release(&order_lock);
+    release(&wind.order_lock);
 }
 
 /**
- * @brief Adds new window in the "order" list.
+ * @brief Adds new window in the "wind.order" list.
  * 
  * @param w 
  */
 void gfx_composition_add_window(struct gfx_window* w)
 {
-    acquire(&order_lock);
+    acquire(&wind.order_lock);
 
-    if(order == NULL){
-        order = w;
-        order->in_focus = 1;
-        release(&order_lock);
+    if(wind.order == NULL){
+        wind.order = w;
+        wind.order->in_focus = 1;
+        release(&wind.order_lock);
         return;
     }
     
-    struct gfx_window* iter = order;
-    order->in_focus = 0;
-    order = w;
-    order->in_focus = 1;
-    order->next = iter;
+    struct gfx_window* iter = wind.order;
+    wind.order->in_focus = 0;
+    wind.order = w;
 
-    release(&order_lock);
+    wind.order->in_focus = 1;
+    wind.order->next = iter;
+
+    release(&wind.order_lock);
 }
 
 /**
@@ -166,16 +166,16 @@ void gfx_composition_add_window(struct gfx_window* w)
  */
 void gfx_mouse_event(int x, int y, char flags)
 {
-    for (struct gfx_window* i = order; i != NULL; i = i->next)
-        if(gfx_point_in_rectangle(i->x, i->y, i->x+i->inner_width, i->y+i->inner_height, x, y)){
+    for (struct gfx_window* i = wind.order; i != NULL; i = i->next)
+        if(gfx_point_in_rectangle(i->x, i->y, i->x+i->width, i->y+i->height, x, y)){
             /* on click when left mouse down */
             if(flags & 1 && gfx_mouse_state == 0){
                 gfx_mouse_state = 1;
                 i->mousedown(i, x, y);
 
                 /* If clicked window is not in front, push it. */
-                if(i != order){
-                    gfx_order_push_front(i);
+                if(i != wind.order){
+                    gfx_window_push_front(i);
                 }
 
                 /* TODO: push mouse gfx event to window */
@@ -194,7 +194,7 @@ void gfx_mouse_event(int x, int y, char flags)
                     .data2 = new_y,
                     .event = GFX_EVENT_MOUSE
                 };
-                gfx_push_event(order, &e);
+                gfx_push_event(wind.order, &e);
             }
 
             i->hover(i, x, y);
@@ -207,7 +207,7 @@ static int __is_fullscreen = 0;
 static void* inner_window_save;
 void gfx_set_fullscreen(struct gfx_window* w)
 {
-    if(w != order){
+    if(w != wind.order){
         dbgprintf("Cannot fullscreen window that isnt in focus\n");
         return;
     }
@@ -228,7 +228,7 @@ void gfx_set_fullscreen(struct gfx_window* w)
 
 void gfx_unset_fullscreen(struct gfx_window* w)
 {
-    if(w != order){
+    if(w != wind.order){
         dbgprintf("Cannot fullscreen window that isnt in focus\n");
         return;
     }
@@ -314,7 +314,7 @@ void gfx_compositor_main()
     dbgprintf("[WSERVER] %d bytes allocated for composition buffer.\n", buffer_size);
     wind.composition_buffer = (uint8_t*) palloc(buffer_size);
 
-    //gfx_set_fullscreen(order);
+    //gfx_set_fullscreen(wind.order);
 
     struct gfx_timeline memory_timeline = {
         .fg = COLOR_VGA_GREEN,
@@ -353,7 +353,7 @@ void gfx_compositor_main()
         //CLI();
         int test = rdtsc();
         int mouse_changed = mouse_event_get(&m);
-        int window_changed = gfx_check_changes(order);
+        int window_changed = gfx_check_changes(wind.order);
         struct time time;
         get_current_time(&time);
         
@@ -363,22 +363,22 @@ void gfx_compositor_main()
 
             if(key == F10){
                 if(!__is_fullscreen) {
-                    gfx_set_fullscreen(order);
+                    gfx_set_fullscreen(wind.order);
                 } else {
-                    gfx_unset_fullscreen(order);
+                    gfx_unset_fullscreen(wind.order);
                 }
                 struct gfx_event e = {
-                    .data = order->inner_width,
-                    .data2 = order->inner_height,
+                    .data = wind.order->inner_width,
+                    .data2 = wind.order->inner_height,
                     .event = GFX_EVENT_RESOLUTION
                 };
-                gfx_push_event(order, &e);
+                gfx_push_event(wind.order, &e);
             } else {
                 struct gfx_event e = {
                     .data = key,
                     .event = GFX_EVENT_KEYBOARD
                 };
-                gfx_push_event(order, &e);
+                gfx_push_event(wind.order, &e);
             }
         }
 
@@ -491,7 +491,7 @@ void gfx_compositor_main()
             //STI();
             if(__is_fullscreen){
             } else {
-                gfx_recursive_draw(order);
+                gfx_recursive_draw(wind.order);
             }
          }
 
@@ -512,5 +512,5 @@ void gfx_compositor_main()
 
 void gfx_init()
 {
-    mutex_init(&order_lock);
+    mutex_init(&wind.order_lock);
 }

@@ -50,6 +50,7 @@ apps/bin/*
 filesystem.image
 interp/interp
 legacy/multiboot/boot/myos.bin
+include/editor.h
 
 # Executables
 *.exe

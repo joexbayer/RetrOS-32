@@ -9,7 +9,7 @@
 
 class ColorPicker : public Window {  
 public:  
-	ColorPicker() : Window(WIDTH, HEIGHT, "ColorPicker") {
+	ColorPicker() : Window(WIDTH, HEIGHT, "ColorPicker", 0) {
 		int x = 0, y = 0;
 		for (int i = 0; i < 256; i++){
 			gfx_draw_rectangle(x*PIXELS_PER_BLOCK, y*PIXELS_PER_BLOCK, PIXELS_PER_BLOCK, PIXELS_PER_BLOCK, i);

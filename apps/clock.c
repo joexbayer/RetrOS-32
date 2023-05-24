@@ -22,7 +22,7 @@ static char* months[] = {"NAN", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
 int main()
 {   
     struct time current_time;
-    gfx_create_window(110, 140);
+    gfx_create_window(110, 140, 0);
     gfx_set_title("Clock");
 
     printf("Clock started\n");

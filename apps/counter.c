@@ -14,7 +14,7 @@
 int main()
 {
 	int j = 1;
-	gfx_create_window(100, 100);
+	gfx_create_window(100, 100, 0);
 	printf("Counter started.\n");
 	while(j < 10)
 	{	

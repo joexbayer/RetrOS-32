@@ -49,9 +49,9 @@ void sleep(int seconds)
     invoke_syscall(SYSCALL_SLEEP, seconds, 0, 0);
 }
 
-void gfx_create_window(int width, int height)
+void gfx_create_window(int width, int height, int flags)
 {
-    invoke_syscall(SYSCALL_GFX_WINDOW, width, height, 0);
+    invoke_syscall(SYSCALL_GFX_WINDOW, width, height, flags);
 }
 
 int get_current_time(struct time* time)
@@ -73,7 +73,6 @@ int gfx_set_header(const char* header)
 {
     return invoke_syscall(SYSCALL_GFX_SET_HEADER, (int)header, 0, 0);
 }
-
 
 int open(char* name, int flags)
 {

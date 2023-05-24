@@ -29,20 +29,6 @@ int gfx_get_window_height()
     return current_running->gfx_window->inner_height;
 }
 
-int gfx_window_reize(int width, int height)
-{
-    if(width > vbe_info->width || height > vbe_info->height || width < 1 || height < 1)
-        return -1;
-
-    CLI();
-
-    current_running->gfx_window->width = width;
-    current_running->gfx_window->height = height;
-
-    STI();
-	return 0;
-}
-
 int gfx_push_event(struct gfx_window* w, struct gfx_event* e)
 {
 	dbgprintf("Pushing event %d (head %d): data %d, data2 %d\n", e->event, w->events.head, e->data, e->data2);

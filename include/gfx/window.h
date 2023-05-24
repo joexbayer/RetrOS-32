@@ -20,6 +20,10 @@ enum window_states {
     GFX_WINDOW_STATIC
 };
 
+typedef enum window_flags {
+    GFX_IS_RESIZABLE = 1 << 0
+} window_flag_t;
+
 struct gfx_window {
     struct gfx_window* next;
     struct gfx_window* prev;
@@ -54,6 +58,8 @@ struct gfx_window {
 
     /* Pointer to inner memory where applications draw. */
     uint8_t* inner;
+    uint8_t is_resizable;
+    uint8_t resize;
 
     struct sticky {
         char state;
@@ -70,14 +76,17 @@ struct gfx_window {
 };
 
 void gfx_draw_window(uint8_t* buffer, struct gfx_window* window);
-struct gfx_window* gfx_new_window(int width, int height);
+struct gfx_window* gfx_new_window(int width, int height, window_flag_t flags);
 int gfx_destory_window(struct gfx_window* w);
+void gfx_window_set_resizable();
 
 /* Default mouse event hooks */
 void gfx_default_click(struct gfx_window* window, int x, int y);
 void gfx_default_hover(struct gfx_window* window, int x, int y);
 void gfx_default_mouse_down(struct gfx_window* window, int x, int y);
 void gfx_default_mouse_up(struct gfx_window* window, int x, int y);
+
+void gfx_window_resize(struct gfx_window* w, int width, int height);
 
 
 #endif //  __WINDOW_H   

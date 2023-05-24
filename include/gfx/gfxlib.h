@@ -28,7 +28,6 @@ void kernel_gfx_draw_line(int x0, int y0, int x1, int y1, unsigned  char color);
 
 int gfx_get_window_width();
 int gfx_get_window_height();
-int gfx_window_reize(int width, int height);
 
 int kernel_gfx_set_title(char* title);
 int kernel_gfx_set_header(const char* header);
