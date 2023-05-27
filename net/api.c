@@ -166,7 +166,7 @@ error_t kernel_accept(struct sock* socket, struct sockaddr *address, socklen_t *
     return 0;
 }
 
-int kernel_listen(struct sock* socket, int backlog)
+error_t kernel_listen(struct sock* socket, int backlog)
 {
     return tcp_set_listening(socket, backlog);
 }

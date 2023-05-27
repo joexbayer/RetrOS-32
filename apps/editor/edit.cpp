@@ -176,7 +176,10 @@ void Editor::Quit()
 		close(m_fd);
 	}
 
-	//free(m_textBuffer);
+	free(m_textBuffer);
+	free(vm_data);
+	free(vm_text);
+	exit();
 }
 
 void Editor::Open(char* path)
@@ -250,7 +253,6 @@ void Editor::FileChooser()
 			break;
 		case GFX_EVENT_EXIT:
 			Quit();
-			exit();
 		default:
 			break;
 		}

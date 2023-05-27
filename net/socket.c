@@ -143,43 +143,25 @@ error_t net_sock_add_data(struct sock* sock, struct sk_buff* skb)
 	return ret;
 }
 
-/* deprecated */
-error_t net_sock_read_skb(struct sock* socket)
-{
-    int read = -1;
-
-    //WAIT(!(SKB_QUEUE_READY(socket->skb_queue)));
-
-    struct sk_buff* skb = socket->skb_queue->ops->remove(socket->skb_queue);
-    if(skb == NULL) return read;
-
-    read = net_sock_add_data(socket, skb);
-    if(read >= 0)
-        skb_free(skb);
-    
-
-    return read;
-}
-
 
 int get_total_sockets()
 {
     return total_sockets;
 }
 
-int net_sock_is_established(struct sock* sk)
+error_t net_sock_is_established(struct sock* sk)
 {
     assert(sk->tcp != NULL);
     return sk->tcp->state == TCP_ESTABLISHED;
 }
 
-int net_sock_awaiting_ack(struct sock* sk)
+error_t net_sock_awaiting_ack(struct sock* sk)
 {
     assert(sk->tcp != NULL);
     return sk->tcp->state == TCP_WAIT_ACK;
 }
 
-int net_sock_data_ready(struct sock* sk, int length)
+error_t net_sock_data_ready(struct sock* sk, int length)
 {
     assert(sk != NULL);
 	return sk->data_ready == 1 || sk->recvd >= length;

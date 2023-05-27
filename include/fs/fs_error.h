@@ -1,7 +1,7 @@
 #ifndef __FS_ERROR_H
 #define __FS_ERROR_H
 
-typdef enum fs_errors {
+typedef enum fs_errors {
     FS_ERR_UNKNOWN = 1,
     FS_ERR_FILE_MISSING,
     FS_ERR_NOT_DIRECTORY,

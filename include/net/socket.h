@@ -4,6 +4,7 @@
 struct sock;
 
 #include <util.h>
+#include <errors.h>
 #include <sync.h>
 #include <net/skb.h>
 #include <lib/net.h>

@@ -33,6 +33,7 @@ void free(void* ptr)
 		
 		dbgprintf("[1] Free %d bytes of data from 0x%x\n", old->size, old->address);
 		vmem_free_allocation(old);
+		dbgprintf("Done\n");
 		return;
 	}
 
@@ -47,6 +48,7 @@ void free(void* ptr)
 
 			dbgprintf("[2] Free %d bytes of data from 0x%x\n", save->size, save->address);
 			vmem_free_allocation(save);
+			dbgprintf("Done\n");
 			return;
 		}
 	}
