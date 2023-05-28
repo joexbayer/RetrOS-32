@@ -158,7 +158,7 @@ int inode_read(void* buf, int size, struct inode* inode, struct superblock* sb)
 	block = (inode->pos) / BLOCK_SIZE;
 	read_block_offset(&buffer[progress], left, inode->pos % BLOCK_SIZE, sb->blocks_start+inode->blocks[block]);
 	inode->pos += size;
-inode_read_done:
+
 	release(&inode->lock);
 	return inode->size > size ? size : inode->size;
 }

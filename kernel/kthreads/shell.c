@@ -155,7 +155,7 @@ void run(int argc, char* argv[])
         }
 	}
 
-	int r = start(file);
+	int r = start(optarg);
 	if(r >= 0){
 		twritef("Kernel thread started\n");
 		return;

@@ -38,6 +38,18 @@ struct sockaddr {
 	char		sa_data[14];	/* 14 bytes of protocol address	*/
 };
 
+struct sock_info {
+    socket_t sd;
+    /* TODO */
+};
+
+struct network_info {
+    unsigned short dhcp; /* state */
+    unsigned int my_ip;
+    unsigned int gw;
+    unsigned int dns;
+};
+
 /* These are the userspace api */
 int bind(int socket, const struct sockaddr *address, socklen_t address_len);
 int accept(int socket, struct sockaddr *address, socklen_t *address_len);

@@ -24,7 +24,6 @@ int tcp_free_connection(struct sock* sock)
 {
 	/* TODO: check for active connections */
 	tcp_close_connection(sock);
-	return;
 	kfree(sock->tcp);
 	sock->tcp = NULL;
 

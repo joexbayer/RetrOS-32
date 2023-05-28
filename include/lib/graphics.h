@@ -28,6 +28,11 @@ public:
 		gfx_set_title(name);
 	}
 
+    void setHeader(const char* header)
+    {
+        gfx_set_header(header);
+    }
+
 private:
 	
 };

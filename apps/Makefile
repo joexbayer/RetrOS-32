@@ -28,7 +28,7 @@ OUTPUTDIR = ./bin/
 
 UTILS = bin/cppUtils.o bin/StringHelper.o
 
-USROBJS = bin/counter.o bin/clock.o
+USROBJS = bin/counter.o bin/clock.o bin/cube.o
 COMMON = ../bin/syscall.o ../bin/util.o ../bin/printf.o ../bin/graphics.o
 
 .PHONY: all new programs
@@ -42,12 +42,19 @@ programs: bin/crt0.o ${USROBJS}
 	@echo [USR] All user programs created and linked!
 
 bin/%.o: %.c bin/crt0.o
-	$(CC) -o $@ -c $< $(CCFLAGS)
+	@$(CC) -o $@ -c $< $(CCFLAGS) 
 	@$(LD) -o $(basename $@) ./bin/crt0.o $@ $(COMMON) $(LDFLAGS) -T ./utils/linker.ld
+	@cp $(basename $@) ../rootfs/bin/
+	@echo [USR] Compiling $(basename $@)
+
+bin/%.o: %.cpp bin/crt0.o
+	@$(CPP) -o $@ -c $< $(CCFLAGS) -fno-exceptions -fno-rtti
+	@$(LD) -o $(basename $@) ./bin/crt0.o $@ $(COMMON) $(LDFLAGS) -T ./utils/linker.ld
+	@cp $(basename $@) ../rootfs/bin/
 	@echo [USR] Compiling $(basename $@)
 
 bin/%.o: utils/%.cpp
-	$(CPP) -o $@ -c $< $(CCFLAGS) -fno-exceptions -fno-rtti -I ./../include/
+	@$(CPP) -o $@ -c $< $(CCFLAGS) -fno-exceptions -fno-rtti -I ./../include/
 	@echo [USR] Compiling C++ $(basename $@)
 
 bin/%.o: */%.s

@@ -50,7 +50,7 @@ int get_total_sockets();
 
 error_t net_sock_is_established(struct sock* sk);
 error_t net_sock_awaiting_ack(struct sock* sk);
-error_t net_sock_data_ready(struct sock* sk, int length);
+error_t net_sock_data_ready(struct sock* sk, unsigned int length);
 error_t net_sock_add_data(struct sock* sock, struct sk_buff* skb);
 
 error_t net_sock_read(struct sock* sock, uint8_t* buffer, unsigned int length);

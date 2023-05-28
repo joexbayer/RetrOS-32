@@ -1,4 +1,5 @@
 #include <gfx/theme.h>
+#include <util.h>
 
 struct gfx_theme default1 = {
     .os = {
@@ -107,6 +108,6 @@ int kernel_gfx_set_theme(int index)
 struct gfx_theme* kernel_gfx_get_theme(int index)
 {
     if(index >= total_themes)
-        return -1;
+        return NULL;
     return gfx_themes[index];
 }

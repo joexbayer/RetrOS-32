@@ -161,7 +161,7 @@ error_t net_sock_awaiting_ack(struct sock* sk)
     return sk->tcp->state == TCP_WAIT_ACK;
 }
 
-error_t net_sock_data_ready(struct sock* sk, int length)
+error_t net_sock_data_ready(struct sock* sk, unsigned int length)
 {
     assert(sk != NULL);
 	return sk->data_ready == 1 || sk->recvd >= length;
