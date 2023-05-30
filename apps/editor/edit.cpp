@@ -100,7 +100,7 @@ void Editor::Open(char* path)
 	
 	setHeader(path);
 
-	m_bufferHead = read(m_fd, m_textBuffer, (c_width/8)*(c_height/8));
+	m_bufferHead = read(m_fd, m_textBuffer, 1000);
 	m_fileSize = m_bufferHead;
 	reDraw(0, m_bufferHead);
 }

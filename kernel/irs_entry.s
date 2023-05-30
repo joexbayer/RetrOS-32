@@ -80,6 +80,7 @@ ISR_NO_ERR 46
 ISR_NO_ERR 47
 
 isr_entry:
+  cli
   /*pushal
   
   pushl %ds

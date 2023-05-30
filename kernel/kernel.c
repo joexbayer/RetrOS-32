@@ -57,7 +57,7 @@ void kernel(uint32_t magic)
     init_serial();
 #endif
 	//init_serial();
-	vesa_printf(vbe_info->framebuffer, 10, 10, 15, "Booting OS...");
+	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Booting OS...");
 	/* Clear memory and BSS */
 	//memset((char*)_bss_s, 0, (unsigned int) _bss_size);
     memset((char*)0x100000, 0, 0x800000-0x100000);

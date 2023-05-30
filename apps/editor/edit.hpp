@@ -25,8 +25,8 @@ public:
 		m_y = 0;
 		m_textBuffer = (unsigned char*) malloc((c_width/8)*(c_height/8));
 
-		vm_data = (char*) malloc((c_width/4)*(c_height/4));
-		vm_text = (int*) malloc((c_width/4)*(c_height/4));
+		//vm_data = (char*) malloc((c_width/4)*(c_height/4));
+		//vm_text = (int*) malloc((c_width/4)*(c_height/4));
 
 		m_bufferSize = (c_width/8)*(c_height/8);
 		for (int i = 0; i < m_bufferSize; i++) m_textBuffer[i] = 0;

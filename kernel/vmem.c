@@ -78,15 +78,13 @@ static uint32_t* vmem_alloc(struct virtual_memory_allocator* vmem)
 	LOCK(vmem, {
 
 		int bit = get_free_bitmap(vmem->pages, vmem->total_pages);
-		if(bit == -1){
-			break;
-		}
-			
+		assert(bit != -1);
+
 		paddr = (uint32_t*) (vmem->start + (bit * PAGE_SIZE));
 		vmem->used_pages++;
 		//memset(paddr, 0, PAGE_SIZE);
 
-		//dbgprintf("[VMEM MANAGER] Allocated page %d at 0x%x\n", bit, paddr);
+		dbgprintf("[VMEM MANAGER] Allocated page %d at 0x%x\n", bit, paddr);
 
 	});
 
@@ -158,7 +156,6 @@ void vmem_free_allocation(struct allocation* allocation)
 
 void vmem_init_process(struct pcb* pcb, char* data, int size)
 {
-
 	/* Allocate directory and tables for data and stack */
 	uint32_t* process_directory = vmem_manager->ops->alloc(vmem_manager);
 	dbgprintf("[INIT PROCESS] Directory: 0x%x\n", process_directory);
@@ -174,24 +171,29 @@ void vmem_init_process(struct pcb* pcb, char* data, int size)
 		if(kernel_page_dir[i] != 0) process_directory[i] = kernel_page_dir[i];
 	}
 
+	uint32_t* process_data_page;
 	/* Map the process data to a page */
 	int i = 0;
 	while (size > PAGE_SIZE){
-		uint32_t* process_data_page = vmem_default->ops->alloc(vmem_default);;
+		process_data_page = vmem_default->ops->alloc(vmem_default);;
 		memcpy(process_data_page, &data[i*PAGE_SIZE], PAGE_SIZE);
 		vmem_map(process_data_table, VMEM_DATA+(i*PAGE_SIZE), (uint32_t) process_data_page, USER);
 		size -= PAGE_SIZE;
 		i++;
 	}
-	uint32_t* process_data_page = vmem_default->ops->alloc(vmem_default);;
+	process_data_page = vmem_default->ops->alloc(vmem_default);;
 	memcpy(process_data_page, &data[i*PAGE_SIZE], size);
 	vmem_map(process_data_table, VMEM_DATA+(i*PAGE_SIZE), (uint32_t) process_data_page, USER);
 	dbgprintf("[INIT PROCESS] Finished mapping data.\n");
 
-	/* Map the process stack to a page */
+	/* Map the process stack 8Kb to a page */
 	uint32_t* process_stack_page = vmem_default->ops->alloc(vmem_default);;
 	memset(process_stack_page, 0, PAGE_SIZE);
 	vmem_map(process_stack_table, VMEM_STACK, (uint32_t) process_stack_page, USER);
+
+	uint32_t* process_stack_page2 = vmem_default->ops->alloc(vmem_default);;
+	memset(process_stack_page2, 0, PAGE_SIZE);
+	vmem_map(process_stack_table, VMEM_STACK-PAGE_SIZE, (uint32_t) process_stack_page2, USER);
 	dbgprintf("[INIT PROCESS] Finished mapping stack.\n");
 
 	/* Insert page and data tables in directory. */

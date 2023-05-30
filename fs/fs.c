@@ -222,6 +222,8 @@ int fs_read(inode_t i, void* buf, int size)
 	struct inode* inode = inode_get(i, &superblock);
 	int ret = inode_read(buffer, size, inode, &superblock);
 	
+	dbgprintf("Read %d bytes from %d\n", ret, i);
+
 	return ret;
 }
 
