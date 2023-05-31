@@ -161,7 +161,7 @@ Samsung NP-NC10
 <!-- ROADMAP -->
 ## Roadmap
 
-- [x] Bootloader
+- [x] Custom Bootloader & GRUB compatible
 - [x] Multi-threaded pre-emptive scheduling
 - [x] GDT & TSS kernel / userspace separation
 - [x] Interrupt handling
@@ -172,10 +172,11 @@ Samsung NP-NC10
   - [x] Socket API
   - [x] DHCP
   - [x] DNS
-  - [ ] TCP
+  - [x] TCP
   - [ ] HTTP
 - [x] ATA IDE Driver
   - [x] Ext2 (like) Filesystem
+  - [ ] FAT16
   - [x] read / write
 - [x] Memory
   - [x] 32bit Virtual Memory
@@ -186,15 +187,20 @@ Samsung NP-NC10
   - [x] GFXLib
   - [x] Double framebuffer rendering
   - [x] Mouse events
-  - [ ] Dynamic resize
+  - [x] Dynamic resize
+  - [x] Fullscreen
 - [x] Terminal, Window Server, Process Informtaion.
 - [x] Library (printf, memcpy, etc)
 - [ ] IPC
 - [x] System calls
+- [x] C Compiler / interpreter to bytecode
+- [x] Custom VM to run bytecode.
+- [x] Editor with Syntax Highlighting 
 - [x] Tools
   - [x] Build
   - [x] mkfs
   - [x] Testing
+  - [ ] 
 ### General Improvements
 
 1. Less hardcoded arrays, more linked lists.
