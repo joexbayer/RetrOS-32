@@ -17,8 +17,8 @@
 .long 0 # bss_end_addr
 .long 0 # entry_addr
 .long 0 # mode_type
-.long 800 # width
-.long 600 # height
+.long 640 # width
+.long 480 # height
 .long 8 # depth
 
 .section .text

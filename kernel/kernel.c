@@ -37,7 +37,7 @@
 
 #include <multiboot.h>
 
-#define USE_MULTIBOOT 0
+#define USE_MULTIBOOT 1
 
 int kernel_msg = 0;
 /* This functions always needs to be on top? */
