@@ -54,7 +54,7 @@ PROGRAMOBJ = bin/shell.o bin/networking.o bin/dhcpd.o bin/error.o bin/tcpd.o bin
 
 GFXOBJ = bin/window.o bin/component.o bin/composition.o bin/gfxlib.o bin/api.o bin/theme.o
 
-KERNELOBJ = bin/kernel.o bin/terminal.o bin/helpers.o bin/pci.o bin/virtualdisk.o \
+KERNELOBJ = bin/kernel.o bin/terminal.o bin/helpers.o bin/pci.o bin/virtualdisk.o bin/fat16.o \
 			bin/util.o bin/interrupts.o bin/irs_entry.o bin/timer.o bin/gdt.o bin/interpreter.o bin/vm.o bin/lex.o \
 			bin/keyboard.o bin/pcb.o bin/memory.o bin/vmem.o bin/kmem.o bin/e1000.o bin/display.o \
 			bin/sync.o bin/kthreads.o bin/ata.o bin/bitmap.o bin/rtc.o bin/tss.o bin/kutils.o \

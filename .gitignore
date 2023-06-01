@@ -32,7 +32,7 @@
 *.dylib
 boot.iso
 boot2.iso
-*.img
+boot.img
 *.dat
 
 tests/filesystem.test
