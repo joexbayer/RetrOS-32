@@ -179,6 +179,21 @@ vdi: cleanvid docker
 qemu:
 	sudo qemu-system-i386 -device e1000,netdev=net0 -serial stdio -netdev user,id=net0 -object filter-dump,id=net0,netdev=net0,file=dump.dat boot.img
 
+fat16reset:
+	rm fatfs.img
+	dd if=/dev/zero of=fatfs.img bs=16M count=2
+	mkfs.fat -F 16 -v -n FAT16 fatfs.img
+
+fat16mount:
+	sudo mount fatfs.img ./mnt
+
+fat16test:
+	gcc tools/fat.c -o ./bin/fattest.o
+	./bin/fattest.o
+
+fat16umount:
+	sudo umount ./mnt
+
 run: docker qemu
 endif
 
