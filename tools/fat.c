@@ -46,7 +46,7 @@ typedef struct {
 } __attribute__((packed)) DirectoryEntry;
 
 int main() {
-    FILE* file = fopen("fatfs.img", "a+");
+    FILE* file = fopen("fatfs.img", "r+b");
     if (file == NULL) {
         printf("Failed to open file.\n");
         return 1;
@@ -85,26 +85,46 @@ int main() {
     int i = 0;
     while (fread(&entry, sizeof(DirectoryEntry), 1, file) == 1 && 10 > i++) {
         // Check for end of directory marker
-        if (entry.name[0] == 0x00)
+        if (entry.filename[0] == 0x00)
             break;
 
         if(entry.attributes != 0x20 && entry.attributes != 0x10) continue;
-        // Process the directory entry
-        printf("Name: %.8s\n", entry.filename);
-        printf("Extension: %.3s\n", entry.extension);
+        // Check if the entry is a file and not a directory
+        if (entry.attributes == 0x20) {
+            // Process the file entry
+            printf("Name: %.8s\n", entry.filename);
+            printf("Extension: %.3s\n", entry.extension);
+            printf("Attributes: 0x%02X\n", entry.attributes);
+            printf("File Size: %u bytes\n", entry.file_size);
+            printf("first_cluster_low: %x\n", entry.first_cluster_low);
+            printf("first_cluster_high: %x\n", entry.first_cluster_high);
 
-        printf("Attributes: 0x%02X\n", entry.attributes);
-        printf("File Size: %u bytes\n", entry.file_size);
+            // Seek to the file's data in the filesystem image
+            uint32_t fileDataOffset = (rootDirectoryOffset + ((entry.first_cluster_low+6) * bootSector.sectorsPerCluster * bootSector.bytesPerSector));
+            fseek(file, fileDataOffset, SEEK_SET);
+
+            // Read and display the file contents
+            uint8_t fileBuffer[entry.file_size];
+            fread(fileBuffer, sizeof(uint8_t), entry.file_size, file);
+            printf("File Contents: (@ 0x%x)\n", fileDataOffset);
+            for (uint32_t i = 0; i < entry.file_size; i++) {
+                printf("%c", fileBuffer[i]);
+            }
+            printf("\n");
+        }
     }
+    /*
+    fseek(file, rootDirectoryOffset + (i-1)*sizeof(DirectoryEntry), SEEK_SET);
 
-    DirectoryEntry newEntry;
+
+    /*DirectoryEntry newEntry;
     strncpy((char*)newEntry.filename, "NEWDIR", 8);
     strncpy((char*)newEntry.extension, "   ", 3);
     newEntry.attributes = 0x10; // Directory attribute
 
     // Write the new directory entry to the file
     //fseek(file, rootDirectoryOffset, SEEK_SET);
-    fwrite(&newEntry, sizeof(DirectoryEntry), 1, file);
+    fwrite(&newEntry, sizeof(DirectoryEntry), 1, file);*/
 
     fclose(file);
     return 0;
