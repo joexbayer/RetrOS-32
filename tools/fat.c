@@ -45,6 +45,69 @@ typedef struct {
     uint32_t file_size;                 /* 4 bytes - File size in bytes */
 } __attribute__((packed)) DirectoryEntry;
 
+uint32_t firstDataSector;
+
+void processDirectory(FILE* file, BootSector bootSector, uint32_t offset, int level) {
+    // Seek to the directory offset
+    fseek(file, offset, SEEK_SET);
+    for (int i = 0; i < level; i++){printf("\t");}
+    printf("Context: @ 0x%x\n", offset);
+
+    // Read directory entries
+    DirectoryEntry entry;
+    int i = 0;
+    while (fread(&entry, sizeof(DirectoryEntry), 1, file) == 1) {
+        // Check for end of directory marker
+        i++;
+        if (entry.filename[0] == 0x00)
+            break;
+
+        if(entry.attributes != 0x20 && entry.attributes != 0x10) continue;
+        //if(entry.filename[0] == '.') continue;
+
+        for (int i = 0; i < level; i++){printf("\t");}
+
+        // Check if the entry is a file or a directory
+        printf("Name: %.8s\n", entry.filename);
+         for (int i = 0; i < level; i++){printf("\t");}
+        printf("Extension: %.3s\n", entry.extension);
+         for (int i = 0; i < level; i++){printf("\t");}
+        printf("Attributes: 0x%02X\n", entry.attributes);
+         for (int i = 0; i < level; i++){printf("\t");}
+        printf("File Size: %u bytes\n", entry.file_size);
+
+        uint32_t firstFileSector = ((entry.first_cluster_low - 2) * bootSector.sectorsPerCluster) + firstDataSector;
+
+        // Calculate the file's data offset in the filesystem image
+        uint32_t fileDataOffset = firstFileSector * bootSector.bytesPerSector;
+
+        if (entry.attributes == 0x20) {
+            // Process the file entry
+
+            // Seek to the file's data in the filesystem image
+            fseek(file, fileDataOffset, SEEK_SET);
+
+            // Read and display the file contents
+            uint8_t fileBuffer[entry.file_size];
+            fread(fileBuffer, sizeof(uint8_t), entry.file_size, file);
+             for (int i = 0; i < level; i++){printf("\t");}
+            printf("File Contents: (@ 0x%x)\n", fileDataOffset);
+             for (int i = 0; i < level; i++){printf("\t");}
+            for (uint32_t i = 0; i < entry.file_size; i++) {
+                printf("%c", fileBuffer[i]);
+            }
+            printf("\n");
+        } else if (entry.attributes == 0x10) {
+            // Process the subdirectory entry
+            // Calculate the offset of the subdirectory
+            uint32_t subDirectoryOffset = (offset + ((entry.first_cluster_low+6) * bootSector.sectorsPerCluster * bootSector.bytesPerSector));
+            processDirectory(file, bootSector, subDirectoryOffset, level + 1);
+        }
+        fseek(file, offset + (i)*sizeof(DirectoryEntry), SEEK_SET);
+
+    }
+}
+
 int main() {
     FILE* file = fopen("fatfs.img", "r+b");
     if (file == NULL) {
@@ -75,44 +138,26 @@ int main() {
     printf("------------ Root Directory ------------\n");
 
     // Calculate the offset of the root directory
-    uint32_t rootDirectoryOffset = (bootSector.reservedSectorCount + bootSector.fatCount * bootSector.fatSize16) * bootSector.bytesPerSector;
+    //uint32_t rootDirectoryOffset = (bootSector.reservedSectorCount + bootSector.fatCount * bootSector.fatSize16) * bootSector.bytesPerSector;
 
     // Seek to the root directory offset
-    fseek(file, rootDirectoryOffset, SEEK_SET);
+    //fseek(file, rootDirectoryOffset, SEEK_SET);
 
     // Read directory entries
-    DirectoryEntry entry;
-    int i = 0;
-    while (fread(&entry, sizeof(DirectoryEntry), 1, file) == 1 && 10 > i++) {
-        // Check for end of directory marker
-        if (entry.filename[0] == 0x00)
-            break;
+    // Calculate the offset of the root directory
+    uint32_t rootDirectoryOffset = (bootSector.reservedSectorCount + bootSector.fatCount * bootSector.fatSize16) * bootSector.bytesPerSector;
+    // Compute RootDirSectors
+    uint32_t rootDirSectors = ((bootSector.rootEntryCount * 32) + (bootSector.bytesPerSector - 1)) / bootSector.bytesPerSector;
 
-        if(entry.attributes != 0x20 && entry.attributes != 0x10) continue;
-        // Check if the entry is a file and not a directory
-        if (entry.attributes == 0x20) {
-            // Process the file entry
-            printf("Name: %.8s\n", entry.filename);
-            printf("Extension: %.3s\n", entry.extension);
-            printf("Attributes: 0x%02X\n", entry.attributes);
-            printf("File Size: %u bytes\n", entry.file_size);
-            printf("first_cluster_low: %x\n", entry.first_cluster_low);
-            printf("first_cluster_high: %x\n", entry.first_cluster_high);
+// Calculate the first data sector
+    firstDataSector = bootSector.reservedSectorCount + (bootSector.fatCount * bootSector.fatSize16) + rootDirSectors;
+    
+    printf("%d\n", firstDataSector);
+    
+    processDirectory(file, bootSector, rootDirectoryOffset, 0);
 
-            // Seek to the file's data in the filesystem image
-            uint32_t fileDataOffset = (rootDirectoryOffset + ((entry.first_cluster_low+6) * bootSector.sectorsPerCluster * bootSector.bytesPerSector));
-            fseek(file, fileDataOffset, SEEK_SET);
-
-            // Read and display the file contents
-            uint8_t fileBuffer[entry.file_size];
-            fread(fileBuffer, sizeof(uint8_t), entry.file_size, file);
-            printf("File Contents: (@ 0x%x)\n", fileDataOffset);
-            for (uint32_t i = 0; i < entry.file_size; i++) {
-                printf("%c", fileBuffer[i]);
-            }
-            printf("\n");
-        }
-    }
+    fclose(file);
+    return 0;
     /*
     fseek(file, rootDirectoryOffset + (i-1)*sizeof(DirectoryEntry), SEEK_SET);
 
