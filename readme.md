@@ -155,7 +155,8 @@ Lenovo x240,
 Asus Eee PC series,
 Dell Optiplex 780,
 Samsung N150 Plus,
-Samsung NP-NC10
+Samsung NP-NC10,
+IBM Thinkpad a21p
 
 
 <!-- ROADMAP -->
