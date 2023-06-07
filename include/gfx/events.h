@@ -12,12 +12,17 @@
 #define KEY_F2 249
 #define KEY_F1 250
 
-enum gfx_events {
+typedef enum gfx_event_flags {
+    GFX_EVENT_BLOCKING = 1 << 0,
+    GFX_EVENT_NONBLOCKING = 1 << 1
+} gfx_event_flag_t;
+
+typedef enum gfx_events {
     GFX_EVENT_KEYBOARD,
     GFX_EVENT_MOUSE,
     GFX_EVENT_EXIT,
     GFX_EVENT_RESOLUTION
-};
+} gfx_event_t;
 
 struct gfx_event {
     uint8_t event;

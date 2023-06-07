@@ -85,7 +85,7 @@ int gfx_draw_char(int x, int y, char data, unsigned char color);
 int gfx_draw_rectangle(int x, int y, int width, int height, unsigned char color);
 int gfx_draw_circle(int x, int y, int r, unsigned char color);
 int gfx_draw_line(int x0, int y0, int x1, int y1, unsigned char color);
-int gfx_get_event(struct gfx_event*);
+int gfx_get_event(struct gfx_event*, gfx_event_flag_t flags);
 
 #ifdef __cplusplus
 }

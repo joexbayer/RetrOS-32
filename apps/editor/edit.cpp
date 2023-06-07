@@ -128,7 +128,7 @@ void Editor::FileChooser()
 
 	while (1){
 		struct gfx_event event;
-		gfx_get_event(&event);
+		gfx_get_event(&event, GFX_EVENT_BLOCKING);
 		switch (event.event){
 			case GFX_EVENT_KEYBOARD: {
 				switch (event.data){
@@ -177,7 +177,7 @@ void Editor::EditorLoop()
 
 	while (1){
 		struct gfx_event event;
-		gfx_get_event(&event);
+		gfx_get_event(&event, GFX_EVENT_BLOCKING);
 		switch (event.event){
 		case GFX_EVENT_KEYBOARD:
 			putChar(event.data);

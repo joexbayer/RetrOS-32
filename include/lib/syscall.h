@@ -13,7 +13,7 @@ void sleep(int seconds);
 
 void gfx_create_window(int width, int height, int flags);
 
-int gfx_draw_syscall(int option, void* data);
+int gfx_draw_syscall(int option, void* data, int flags);
 int gfx_set_title(const char* title);
 int gfx_set_header(const char* header);
 

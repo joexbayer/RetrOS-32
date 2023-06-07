@@ -401,7 +401,7 @@ void shell()
 	while(1)
 	{
 		struct gfx_event event;
-		gfx_event_loop(&event);
+		gfx_event_loop(&event, GFX_EVENT_BLOCKING);
 
 		switch (event.event){
 		case GFX_EVENT_KEYBOARD:

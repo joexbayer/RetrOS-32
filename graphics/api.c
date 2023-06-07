@@ -2,9 +2,12 @@
 #include <gfx/gfxlib.h>
 #include <lib/graphics.h>
 #include <gfx/events.h>
+#include <assert.h>
 
-int gfx_syscall_hook(int option, void* data)
+int gfx_syscall_hook(int option, void* data, int flags)
 {
+    assert(flags >= 0 && flags < 255);
+
     switch (option)
     {
     case GFX_DRAW_CHAR_OPT:;
@@ -27,7 +30,7 @@ int gfx_syscall_hook(int option, void* data)
         break;
     
     case GFX_EVEN_LOOP_OPT:
-        return gfx_event_loop((struct gfx_event*)data);
+        return gfx_event_loop((struct gfx_event*)data, flags);
 
     default:
         break;

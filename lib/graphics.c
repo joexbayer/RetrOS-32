@@ -15,7 +15,7 @@ int gfx_draw_char(int x, int y, char data, unsigned char color)
         .x = x,
         .y = y
     };
-    gfx_draw_syscall(GFX_DRAW_CHAR_OPT, &c);
+    gfx_draw_syscall(GFX_DRAW_CHAR_OPT, &c, 0);
 
     return 0;
 }
@@ -29,7 +29,7 @@ int gfx_draw_circle(int x, int y, int r, unsigned char color)
 		.color = color
 	};
 
-	gfx_draw_syscall(GFX_DRAW_CIRCLE_OPT, &c);
+	gfx_draw_syscall(GFX_DRAW_CIRCLE_OPT, &c, 0);
 
 	return 0;
 }
@@ -44,7 +44,7 @@ int gfx_draw_line(int x0, int y0, int x1, int y1, unsigned char color)
 		.color = color
 	};
 
-	gfx_draw_syscall(GFX_DRAW_LINE_OPT, &line);
+	gfx_draw_syscall(GFX_DRAW_LINE_OPT, &line, 0);
 
 	return 0;
 }
@@ -59,7 +59,7 @@ int gfx_draw_rectangle(int x, int y, int width, int height, unsigned char color)
 		.height = height
 	};
 
-    gfx_draw_syscall(GFX_DRAW_RECTANGLE_OPT, &rect);
+    gfx_draw_syscall(GFX_DRAW_RECTANGLE_OPT, &rect, 0);
 
     return 0;
 }
@@ -77,16 +77,16 @@ int gfx_draw_text(int x, int y, const char* text, unsigned char color)
     for (int i = 0; i < len; i++)
     {
         c.data = text[i];
-        gfx_draw_syscall(GFX_DRAW_CHAR_OPT, &c);
+        gfx_draw_syscall(GFX_DRAW_CHAR_OPT, &c, 0);
         c.x += 8;
     }
     
     return 0;
 }
 
-int gfx_get_event(struct gfx_event* event)
+int gfx_get_event(struct gfx_event* event, gfx_event_flag_t flags)
 {
-	return gfx_draw_syscall(GFX_EVEN_LOOP_OPT, event);
+	return gfx_draw_syscall(GFX_EVEN_LOOP_OPT, event, flags);
 }
 
 #define GFX_MAX_FMT 50

@@ -17,12 +17,14 @@ struct Point2D {
 
 class CubeDemo : public Window {
 public:
-    CubeDemo() : Window(200, 200, "Cube", 0) {
+    CubeDemo(int width, int height) : Window(200, 200, "Cube", 0) {
         this->angle = 0;
+        this->width = width;
+        this->height = height;
     }
 
     void drawCube() {
-        gfx_draw_rectangle(0, 0, 200, 200, COLOR_VGA_BG);
+        gfx_draw_rectangle(0, 0, width, height, COLOR_VGA_BG);
         for (int i = 0; i < 12; i++) {
             Point2D p1 = project(cube[edges[i][0]]);
             Point2D p2 = project(cube[edges[i][1]]);
@@ -51,6 +53,11 @@ public:
         }
     }
 
+    void setSize(int width, int height) {
+        this->width = width;
+        this->height = height;
+    }
+
 private:
     int angle;
     Point3D cube[8] = {
@@ -73,22 +80,38 @@ private:
         {0, 4}, {1, 5}, {2, 6}, {3, 7}
     };
 
+    int width, height;
+
     /* Project 3D cube to 2D */
     Point2D project(Point3D point) {
-        return {(int)(point.x * 50 + 100), (int)(point.y * 50 + 100)};
+        return {(int)(point.x * (width/4) + height/2), (int)(point.y * (width/4) + height/2)};
     }
 
 };
 
+
+
 int main()
 {
-    CubeDemo demo;
+    CubeDemo demo(200, 200);
+    struct gfx_event e;
     demo.setHeader("3D");
 
     while (1){
         demo.rotateCube();
         demo.drawCube();
         sleep(20);
+
+        gfx_get_event(&e, GFX_EVENT_NONBLOCKING);
+        switch (e.event)
+        {
+        case GFX_EVENT_RESOLUTION:
+            demo.setSize(e.data, e.data2);
+            break;
+        case GFX_EVENT_EXIT:
+            return 0;
+        }
+
     }
     
 

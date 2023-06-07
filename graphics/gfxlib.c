@@ -38,13 +38,13 @@ int gfx_push_event(struct gfx_window* w, struct gfx_event* e)
 	    w->events.head = (w->events.head + 1) % GFX_MAX_EVENTS;
     });
 
-	if(w->owner->state == BLOCKED)
-		w->owner->state = RUNNING;
+    /* TODO: Check for a block reason */
+	if(w->owner->state == BLOCKED) w->owner->state = RUNNING;
 
 	return 0;
 }
 
-int gfx_event_loop(struct gfx_event* event)
+int gfx_event_loop(struct gfx_event* event, gfx_event_flag_t flags)
 {
 	/**
 	 * The gfx event loop is PCB specific,
@@ -55,7 +55,12 @@ int gfx_event_loop(struct gfx_event* event)
 	while(1)
 	{
 		if(current_running->gfx_window->events.tail == current_running->gfx_window->events.head){
-			block();
+			
+            if(flags & GFX_EVENT_BLOCKING){
+                block();
+            } else {
+                return -1;
+            }
 			continue;	
 		}
 

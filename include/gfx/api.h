@@ -3,6 +3,6 @@
 
 #include <gfx/gfxlib.h>
 
-int gfx_syscall_hook(int option, void* data);
+int gfx_syscall_hook(int option, void* data, int flags);
 
 #endif /* __GFX_API_H */
