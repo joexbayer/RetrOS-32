@@ -34,6 +34,12 @@ void ksyms_add_symbol(const char* name, uintptr_t addr) {
     dbgprintf("Added new symbol %s\n", name);
 }
 
+/**
+ * @brief Checks if there exists a kernel symbol with the given name.
+ * 
+ * @param name name to resolve
+ * @return uintptr_t function pointer, NULL on error.
+ */
 uintptr_t ksyms_resolve_symbol(const char* name)
 {
     for (int i = 0; i < __ksyms.num_symbols; i++) {

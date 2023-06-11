@@ -1,5 +1,8 @@
 #include <util.h>
+#include <memory.h>
 #include <serial.h>
+#include <ksyms.h>
+#include <terminal.h>
 
 /* Function to perform run-length encoding on binary data */
 unsigned char* run_length_encode(const unsigned char* data, int length, unsigned char* out, int* encodedLength)
@@ -44,4 +47,34 @@ unsigned char* run_length_decode(const unsigned char* encodedData, int encodedLe
 
     *decodedLength = index;
     return decodedData;
+}
+
+int exec_cmd(char* str)
+{
+    char* argv[5];
+	for (int i = 0; i < 5; i++) {
+		argv[i] = (char*)kalloc(100);
+		memset(argv[i], 0, 100);
+	}
+
+    dbgprintf("%s\n", str);
+	int argc = parse_arguments(str, argv);
+	if(argc == 0) return -1;
+
+    dbgprintf("%s %s\n", argv[0], str);
+
+	void (*ptr)(int argc, char* argv[]) = (void (*)(int argc, char* argv[])) ksyms_resolve_symbol(argv[0]);
+	if(ptr == NULL){
+		return -1;
+	}
+
+	ptr(argc, argv);
+	gfx_commit();
+
+    for (int i = 0; i < 5; i++) {
+		kfree(argv[i]);
+	}
+    //free(argv);
+
+	return 0;
 }

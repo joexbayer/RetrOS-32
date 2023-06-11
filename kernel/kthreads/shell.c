@@ -32,6 +32,9 @@
 #include <gfx/composition.h>
 #include <gfx/events.h>
 
+#include <kutils.h>
+#include <script.h>
+
 #define SHELL_HEIGHT 275 /* 275 */
 #define SHELL_WIDTH 400 /* 400 */
 #define SHELL_POSITION shell_height-8
@@ -115,6 +118,31 @@ void xxd(int argc, char* argv[])
 	return;
 }
 EXPORT_KSYMBOL(xxd);
+
+void sh(int argc, char* argv[])
+{
+	if(argc == 1){
+		twritef("usage: sh <file>\n");
+		return;
+	}
+
+	inode_t inode = fs_open(argv[1], 0);
+	if(inode <= 0){
+		twritef("File %s not found.\n", argv[1]);
+		return;
+	}
+
+	char* buf = kalloc(MAX_FILE_SIZE);
+	int ret = fs_read(inode, buf, MAX_FILE_SIZE);
+	
+	script_parse(buf);
+	
+	fs_close(inode);
+	kfree(buf);
+
+	return;
+}
+EXPORT_KSYMBOL(sh);
 
 void ed()
 {
@@ -215,6 +243,15 @@ void kill(int argc, char* argv[])
 }
 EXPORT_KSYMBOL(kill);
 
+void echo(int argc, char* argv[])
+{	
+	if(argc <= 1){
+		return;
+	}
+
+	twritef("%s\n", argv[1]);
+}
+EXPORT_KSYMBOL(echo);
 
 
 void cd(int argc, char* argv[])
@@ -261,60 +298,6 @@ char* welcome = "\n\
     '-.,_____ _____.-'  '-'\n\
          [_____]=8\n";
 
-char** argv = NULL;
-
-void exec_cmd()
-{
-	for (int i = 0; i < 5; i++) memset(argv[i], 0, 100);
-	int argc = parse_arguments(shell_buffer, argv);
-	if(argc == 0) return;
-
-	memcpy(previous_shell_buffer, shell_buffer, strlen(shell_buffer)+1);
-
-	void (*ptr)(int argc, char* argv[]) = (void (*)(int argc, char* argv[])) ksyms_resolve_symbol(argv[0]);
-	if(ptr == NULL){
-		twritef("Unknown command\n");
-		return;
-	}
-
-	twritef("Kernel > %s\n", shell_buffer);
-	ptr(argc, argv);
-	twritef("\n");
-	gfx_commit();
-
-	return;
-
-	if(strncmp("unblock", shell_buffer, strlen("unblock"))){
-		int id = atoi(shell_buffer+strlen("unblock")+1);
-		pcb_set_running(id);
-		return;
-	}
-	if(strncmp("ping", shell_buffer, strlen("ping"))){
-		char* hostname = shell_buffer+strlen("ping")+1;
-		hostname[strlen(hostname)-1] = 0;
-		ping(hostname);
-		return;
-	}
-
-	if(strncmp("touch", shell_buffer, strlen("touch"))){
-		char* filename = shell_buffer+strlen("touch")+1;
-		filename[strlen(filename)-1] = 0;
-		fs_create(filename);
-		return;
-	}
-
-	if(strncmp("exit", shell_buffer, strlen("exit"))){
-		sync();
-		dbgprintf("[SHUTDOWN] NETOS has shut down.\n");
-		outportw(0x604, 0x2000);
-		return;
-	}
-
-
-	gfx_commit();
-	//twrite(shell_buffer);
-}
-
 /**
  * @brief Puts a character c into the shell line 
  * at correct position. Also detects enter.
@@ -323,6 +306,7 @@ void exec_cmd()
  */
 void shell_put(unsigned char c)
 {
+	int ret;
 	unsigned char uc = c;
 
 	if(uc == ARROW_UP){
@@ -334,7 +318,13 @@ void shell_put(unsigned char c)
 	}
 
 	if(uc == newline){
-		exec_cmd();
+		
+		memcpy(previous_shell_buffer, shell_buffer, strlen(shell_buffer)+1);
+		twritef("kernel> %s\n", shell_buffer);
+		if(exec_cmd(shell_buffer) < 0){
+			twritef("Unknown command\n");
+		}
+		
 		terminal_commit();
 		reset_shell();
 		
@@ -375,12 +365,6 @@ void shell()
 	
 	dbgprintf("shell: window 0x%x\n", window);
 	kernel_gfx_draw_rectangle(0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_VGA_BG);
-
-	argv = (char**)kalloc(5 * sizeof(char*));
-	for (int i = 0; i < 5; i++) {
-		argv[i] = (char*)kalloc(100);
-		memset(argv[i], 0, 100);
-	}
 
 	terminal_attach(&term);
 
