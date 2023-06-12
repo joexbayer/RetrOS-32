@@ -18,12 +18,13 @@
 
 #define PIT_IRQ		32
 
-static int tick = 0;
+static unsigned int tick = 0;
 static void timer_callback()
 {
 	tick++;
 	if(current_running != NULL)
 	{
+		current_running->preempts++;
 		EOI(32);
 		kernel_yield();
 	}

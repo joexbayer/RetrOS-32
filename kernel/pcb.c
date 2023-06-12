@@ -347,6 +347,7 @@ error_t pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 	pcb->allocations = NULL;
 	pcb->used_memory = 0;
 	pcb->kallocs = 0;
+	pcb->preempts = 0;
 	pcb->term = current_running->term;
 	pcb->page_dir = kernel_page_dir;
 	pcb->is_process = 0;
@@ -403,6 +404,7 @@ error_t pcb_create_process(char* program, int args, char** argv, pcb_flag_t flag
 	pcb->term = current_running->term;
 	pcb->is_process = 1;
 	pcb->kallocs = 0;
+	pcb->preempts = 0;
 	pcb->args = args;
 	pcb->argv = argv;
 	pcb->current_directory = current_running->current_directory;

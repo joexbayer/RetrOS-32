@@ -371,9 +371,12 @@ void shell()
 	struct mem_info minfo;
     get_mem_info(&minfo);
 
+	struct unit used = calculate_size_unit(minfo.kernel.used+minfo.permanent.used);
+	struct unit total = calculate_size_unit(minfo.kernel.total+minfo.permanent.total);
+
 	twritef("_.--*/ \\*--._\nWelcome ADMIN!\n");
 	twritef("%s\n", welcome);
-	twritef("Memory: %d/%d\n", minfo.kernel.used+minfo.permanent.used, minfo.kernel.total+minfo.permanent.total);
+	twritef("Memory: %d%s/%d%s\n", used.size, used.unit, total.size, total.unit);
 	help();
 	twriteln("");
 	terminal_commit(current_running->term);

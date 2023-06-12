@@ -51,6 +51,7 @@ struct pcb {
 
     /* stats */
     int kallocs;
+    int preempts;
     int yields;
     uint32_t blocked_count;
 

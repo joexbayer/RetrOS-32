@@ -4,6 +4,8 @@
 #include <ksyms.h>
 #include <terminal.h>
 
+const char *units[] = {"bytes", "kb", "mb"};
+
 /* Function to perform run-length encoding on binary data */
 unsigned char* run_length_encode(const unsigned char* data, int length, unsigned char* out, int* encodedLength)
 {
@@ -77,4 +79,22 @@ int exec_cmd(char* str)
     //free(argv);
 
 	return 0;
+}
+
+struct unit calculate_size_unit(int bytes)
+{
+    int index = 0;
+    double size = bytes;
+
+    while (size >= 1024 && index < 2) {
+        size /= 1024;
+        index++;
+    }
+
+    struct unit unit = {
+        .size = size,
+        .unit = units[index]
+    };
+
+    return unit;
 }
