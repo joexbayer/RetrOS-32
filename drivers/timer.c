@@ -18,7 +18,7 @@
 
 #define PIT_IRQ		32
 
-static unsigned int tick = 0;
+static unsigned long tick = 0;
 static void timer_callback()
 {
 	tick++;

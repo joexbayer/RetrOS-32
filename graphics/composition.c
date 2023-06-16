@@ -306,12 +306,63 @@ void gfx_timeline_update(struct gfx_timeline* tl, char value)
     }
 }
 
+void create_circle_pattern(uint8_t* buffer, int width, int height, int centerX, int centerY, int radius, int color) {
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            int dx = x - centerX;
+            int dy = y - centerY;
+            int distanceSquared = dx * dx + dy * dy;
+            if (distanceSquared <= radius * radius) {
+                vesa_fillrect(buffer, x, y, 1, 1, color);
+            }
+        }
+    }
+}
+
+
+void create_checkerboard(uint8_t* buffer, int width, int height, int cellSize, int color1, int color2) {
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            int cellX = x / cellSize;
+            int cellY = y / cellSize;
+            int color = ((cellX + cellY) % 2 == 0) ? color1 : color2;
+            vesa_fillrect(buffer, x, y, 1, 1, color);
+        }
+    }
+}
+
+void create_old_computer_background(uint8_t* buffer, int width, int height, int gridSize, int lineInterval, int lineColor) {
+    memset(buffer, COLOR_VGA_BG, width*height);
+
+    // Draw horizontal lines
+    for (int y = lineInterval; y < height; y += lineInterval) {
+        for (int x = 0; x < width; x++) {
+            buffer[y * width + x] = lineColor;
+        }
+    }
+
+    // Draw vertical lines
+    for (int x = lineInterval; x < width; x += lineInterval) {
+        for (int y = 0; y < height; y++) {
+            buffer[y * width + x] = lineColor;
+        }
+    }
+}
+
+
+static char* background;
+
 void gfx_compositor_main()
 {
     int buffer_size = vbe_info->width*vbe_info->height*(vbe_info->bpp/8)+1;
 
     dbgprintf("[WSERVER] %d bytes allocated for composition buffer.\n", buffer_size);
     wind.composition_buffer = (uint8_t*) palloc(buffer_size);
+    background = (uint8_t*) kalloc(buffer_size);
+    //create_checkerboard(background, vbe_info->width, vbe_info->height, 50, COLOR_VGA_GREEN, COLOR_VGA_MISC);
+    //create_circle_pattern(background, vbe_info->width, vbe_info->height, vbe_info->width/2, vbe_info->height/2, 100, COLOR_VGA_MISC);
+
+    create_old_computer_background(background, vbe_info->width, vbe_info->height, 160, 16, 191);
 
     //gfx_set_fullscreen(wind.order);
 
@@ -383,10 +434,13 @@ void gfx_compositor_main()
 
         if(window_changed && !__is_fullscreen){
             
-            memset(wind.composition_buffer, theme->os.background/*41*/, buffer_size);
-                for (int i = 0; i < (vbe_info->width/8) - 2; i++){
-            vesa_put_box(wind.composition_buffer, 80, 8+(i*8), 0, theme->os.foreground);
-            vesa_put_box(wind.composition_buffer, 0, 8+(i*8), vbe_info->height-8, theme->os.foreground);
+            //memset(wind.composition_buffer, theme->os.background/*41*/, buffer_size);
+            memcpy(wind.composition_buffer, background, buffer_size);
+
+
+            for (int i = 0; i < (vbe_info->width/8) - 2; i++){
+                vesa_put_box(wind.composition_buffer, 80, 8+(i*8), 0, theme->os.foreground);
+                vesa_put_box(wind.composition_buffer, 0, 8+(i*8), vbe_info->height-8, theme->os.foreground);
             }
 
             for (int i = 0; i < (vbe_info->height/8)-2; i++){

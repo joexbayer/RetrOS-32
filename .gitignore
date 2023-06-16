@@ -52,6 +52,8 @@ interp/interp
 legacy/multiboot/boot/myos.bin
 include/editor.h
 
+rootfs/bin/*
+
 # Executables
 *.exe
 *.out
