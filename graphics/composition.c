@@ -528,9 +528,11 @@ void gfx_compositor_main()
             vesa_printf(wind.composition_buffer, 8+strlen("Int 4: 1000000")*8*4, vbe_info->height-16-(11*8), theme->os.foreground,"   __________");
             for (int i = 0; i < MAX_NUM_OF_PCBS; i++){
                 struct pcb_info info;
+                struct pcb* pcb;
                 ret = pcb_get_info(i, &info);
                 if(ret < 0) continue;
-                vesa_printf(wind.composition_buffer, 8+strlen("Int 4: 1000000")*8*4 + 8, vbe_info->height-16-(11*8) + ((line++)*8), theme->os.foreground,"   %d   0x%s%x", info.pid, info.is_process ? "" : "00", info.stack);
+                pcb = pcb_get_by_pid(i);
+                vesa_printf(wind.composition_buffer, 8+strlen("Int 4: 1000000")*8*4 + 8, vbe_info->height-16-(11*8) + ((line++)*8), theme->os.foreground,"   %d   0x%s%x  %d/%d", info.pid, info.is_process ? "" : "00", info.stack, pcb->preempts, timer_get_tick());
             }
 
             /* NIC */

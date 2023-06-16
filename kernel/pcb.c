@@ -207,6 +207,19 @@ void pcb_queue_remove_running(struct pcb* pcb)
 	running->ops->remove(running, pcb);
 }
 
+
+int pcb_total_usage()
+{
+	int total = 0;
+	/* Do not include idle task at pid 0 */
+	for (int i = 1; i < MAX_NUM_OF_PCBS; i++)
+	{
+		total += pcb_table[i].preempts;
+	}
+
+	return total;
+}
+
 error_t pcb_get_info(int pid, struct pcb_info* info)
 {
 	if(pid < 0 || pid > MAX_NUM_OF_PCBS || pcb_table[pid].state == STOPPED)
@@ -217,6 +230,7 @@ error_t pcb_get_info(int pid, struct pcb_info* info)
 	info->state = pcb_table[pid].state;
 	info->used_memory = pcb_table[pid].used_memory;
 	info->is_process = pcb_table[pid].is_process;
+	info->usage = (float)pcb_table[pid].preempts / (float)pcb_total_usage();
 	memcpy(info->name, pcb_table[pid].name, PCB_MAX_NAME_LENGTH);
 
 	return 0;
@@ -264,6 +278,11 @@ void pcb_set_running(int pid)
 		return;
 
 	pcb_table[pid].state = RUNNING;
+}
+
+struct pcb* pcb_get_by_pid(int pid)
+{
+	return &pcb_table[pid];
 }
 
 

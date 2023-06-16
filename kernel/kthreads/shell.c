@@ -84,12 +84,14 @@ void ps()
 {
 	int ret;
 	int line = 0;
-	twritef("  PID  STACK       TYPE     STATE     NAME\n");
+	int usage;
+	twritef("  PID  USAGE    TYPE     STATE     NAME\n");
 	for (int i = 0; i < MAX_NUM_OF_PCBS; i++){
 		struct pcb_info info;
 		ret = pcb_get_info(i, &info);
 		if(ret < 0) continue;
-		twritef("   %d   0x%s%x  %s  %s  %s\n", info.pid, info.is_process ? "" : "00", info.stack, info.is_process ? "process" : "kthread", pcb_status[info.state], info.name);
+		usage = (int)(info.usage*100);
+		twritef("   %d    %s%d%      %s  %s  %s\n", info.pid, usage < 10 ? " ": "", usage, info.is_process ? "process" : "kthread", pcb_status[info.state], info.name);
 	}
 }
 EXPORT_KSYMBOL(ps);
