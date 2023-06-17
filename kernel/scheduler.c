@@ -9,6 +9,104 @@
 #include <arch/gdt.h>
 #include <arch/tss.h>
 
+struct scheduler;
+struct scheduler_ops;
+/* exposed operator functions */
+static int sched_prioritize(struct scheduler* sched, struct pcb* pcb);
+static int sched_default(struct scheduler* sched);
+static int sched_add(struct scheduler* sched, struct pcb* pcb);
+static int sched_sleep(struct scheduler* sched, int time);
+
+typedef enum scheduler_flags {
+    UNUSED = 1 << 0,
+} sched_flag_t;
+
+struct scheduler_ops {
+    int (*prioritize)(struct scheduler* sched, struct pcb* pcb);
+    int (*schedule)(struct scheduler* sched);
+    int (*add)(struct scheduler* sched, struct pcb* pcb);
+    int (*sleep)(struct scheduler* sched, int time);
+};
+
+struct scheduler {
+    unsigned char flags;
+    unsigned int yields;
+    unsigned int exits;
+
+    struct scheduler_ops* ops;
+    struct pcb_queue* queue;
+    struct pcb_queue* priority;
+
+    struct {
+        struct pcb* running;
+    } ctx;
+};
+
+/* Default scheduler operations */
+static struct scheduler_ops scheduler_default_ops = {
+    .prioritize = &sched_prioritize,
+    .add = &sched_prioritize,
+    .schedule = &sched_default,
+    .sleep = &sched_sleep
+};
+
+
+struct pcb* sched_ctx_get_running()
+{
+    /* This function should return the current running process from the scheduler context. */
+    assert(0);
+    return NULL;
+}
+
+static int sched_sleep(struct scheduler* sched, int time)
+{
+    sched->ctx.running->sleep = timer_get_tick() + time;
+    sched->ctx.running->state = SLEEPING;
+    sched->ops->schedule(sched);
+}
+
+void sched_save_ctx()
+{
+    asm (
+        "cli\n"
+        "addl $1, %0\n"
+        "pushfl\n"
+        "pushal\n"
+        
+        "movl %1, %%eax\n"
+        "fnsave 24(%%eax)\n"
+        
+        "movl %%esp, 12(%%eax)\n"
+        "movl %%ebp, 16(%%eax)\n"
+        
+        "ret\n"
+        :
+        : "m" (cli_cnt), "m" (current_running)
+    );
+}
+
+void sched_restore_ctx()
+{
+    asm (
+        "movl %0, %%eax\n"
+        
+        "movl 16(%%eax), %%ebp\n"
+        "movl 12(%%eax), %%esp\n"
+        "frstor 24(%%eax)\n"
+        "popal\n"
+        "popfl\n"
+        
+        "sti\n"
+        "subl $1, %1\n"
+        "ret\n"
+        :
+        : "m" (current_running), "m" (cli_cnt)
+    );
+}
+
+
+
+
 void kernel_sleep(int time)
 {
     current_running->sleep = timer_get_tick() + time;
@@ -20,14 +118,14 @@ void kernel_yield()
 {   
     current_running->yields++;
     //dbgprintf("%s called yield\n", current_running->name);
-    _context_switch();
+    context_switch_entry();
 }
 
 void kernel_exit()
 {
     dbgprintf("%s (PID %d) called Exit\n", current_running->name, current_running->pid);
     current_running->state = ZOMBIE;
-    _context_switch();
+    context_switch_entry();
 
     UNREACHABLE();
 }
@@ -36,7 +134,7 @@ void block()
 {
     current_running->state = BLOCKED;
     current_running->blocked_count++;
-    _context_switch();
+    context_switch_entry();
 }
 
 void unblock(int pid)
@@ -44,7 +142,8 @@ void unblock(int pid)
     pcb_set_running(pid);
 }
 
-void context_switch()
+/* This code is resposible for choosing the next pcb to run */
+void context_switch_process()
 {
     ASSERT_CRITICAL();
 

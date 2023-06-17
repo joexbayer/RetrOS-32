@@ -41,8 +41,8 @@ enable_paging:
     pop %ebp
     ret
 
-.global _context_switch
-_context_switch:
+.global pcb_save_ctx
+pcb_save_ctx:
     cli
     addl $1, cli_cnt
     pushfl
@@ -55,8 +55,10 @@ _context_switch:
     movl %esp, 12(%eax)
     movl %ebp, 16(%eax)
 
-skip:
-    call context_switch
+    ret
+
+.global pcb_restore_ctx
+pcb_restore_ctx:
     movl current_running, %eax
 
     movl 16(%eax), %ebp
@@ -67,6 +69,17 @@ skip:
 
     sti
     subl $1, cli_cnt
+    ret
+
+.global context_switch_entry
+context_switch_entry:
+    call sched_save_ctx
+
+skip:
+    call context_switch_process
+    
+    call sched_restore_ctx
+
     ret
 
 .global _start_pcb

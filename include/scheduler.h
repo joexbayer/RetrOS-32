@@ -6,8 +6,11 @@ void kernel_yield();
 void kernel_exit();
 void block();
 void unblock(int pid);
-void context_switch();
+void context_switch_process();
 
 #define WAIT(pred) while(pred){kernel_yield();}
+
+void sched_save_ctx();
+void sched_restore_ctx();
 
 #endif

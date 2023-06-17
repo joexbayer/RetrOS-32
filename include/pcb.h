@@ -136,7 +136,7 @@ struct pcb_queue* pcb_new_queue();
 
 /* functions in entry.s */
 void _start_pcb();
-void _context_switch();
+void context_switch_entry();
 
 void idletask();
 void dummytask();
