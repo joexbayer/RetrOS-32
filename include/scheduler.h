@@ -13,4 +13,7 @@ void context_switch_process();
 void sched_save_ctx();
 void sched_restore_ctx();
 
+void pcb_restore_ctx();
+void pcb_save_ctx();
+
 #endif

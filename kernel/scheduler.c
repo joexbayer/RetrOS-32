@@ -65,48 +65,6 @@ static int sched_sleep(struct scheduler* sched, int time)
     sched->ops->schedule(sched);
 }
 
-void sched_save_ctx()
-{
-    asm (
-        "cli\n"
-        "addl $1, %0\n"
-        "pushfl\n"
-        "pushal\n"
-        
-        "movl %1, %%eax\n"
-        "fnsave 24(%%eax)\n"
-        
-        "movl %%esp, 12(%%eax)\n"
-        "movl %%ebp, 16(%%eax)\n"
-        
-        "ret\n"
-        :
-        : "m" (cli_cnt), "m" (current_running)
-    );
-}
-
-void sched_restore_ctx()
-{
-    asm (
-        "movl %0, %%eax\n"
-        
-        "movl 16(%%eax), %%ebp\n"
-        "movl 12(%%eax), %%esp\n"
-        "frstor 24(%%eax)\n"
-        "popal\n"
-        "popfl\n"
-        
-        "sti\n"
-        "subl $1, %1\n"
-        "ret\n"
-        :
-        : "m" (current_running), "m" (cli_cnt)
-    );
-}
-
-
-
-
 void kernel_sleep(int time)
 {
     current_running->sleep = timer_get_tick() + time;
@@ -142,12 +100,15 @@ void unblock(int pid)
     pcb_set_running(pid);
 }
 
+
+
 /* This code is resposible for choosing the next pcb to run */
 void context_switch_process()
 {
     ASSERT_CRITICAL();
 
     current_running = current_running->next;
+    assert(current_running != NULL);
     while(current_running->state != RUNNING){
         switch (current_running->state){
         case STOPPED:
@@ -163,7 +124,8 @@ void context_switch_process()
             dbgprintf("Adding work to clean up PID %d\n", old->pid);
             break;
         case PCB_NEW:
-            dbgprintf("[Context Switch] Running new PCB %s (PID %d) with page dir: %x: stack: %x kstack: %x\n", current_running->name, current_running->pid, current_running->page_dir, current_running->esp, current_running->kesp);
+            dbgprintf("Entering scheduler... NEW\n");
+            dbgprintf("[Context Switch] Running new PCB %s (PID %d) with page dir: %x: stack: %x kstack: %x\n", current_running->name, current_running->pid, current_running->page_dir, current_running->ctx.esp, current_running->kesp);
             load_page_directory(current_running->page_dir);
             //pcb_dbg_print(current_running);
 
@@ -186,6 +148,6 @@ void context_switch_process()
             break;
         }
     }
-    //dbgprintf("[Context Switch] Switching too PCB %s with page dir: %x, stack: %x, kstack: %x\n", current_running->name, current_running->page_dir, current_running->esp, current_running->kesp);
     load_page_directory(current_running->page_dir);
+    //dbgprintf("[Context Switch] Switching too PCB %s with page dir: %x, stack: %x, kstack: %x\n", current_running->name, current_running->page_dir, current_running->ctx.esp, current_running->kesp);
 }

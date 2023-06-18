@@ -28,18 +28,29 @@ typedef enum pcb_flags {
     PCB_FLAG_KERNEL = 1 << 1,
 } pcb_flag_t;
 
-struct pcb {
-    uint32_t ebp;
+struct pcb_state {
+    uint32_t eax;
+    uint32_t ecx;
+    uint32_t edx;
+    uint32_t ebx;
     uint32_t esp;
-    void (*eip)();
-    uint32_t kesp;
-    uint32_t kebp;
-    uint32_t is_process;
-    uint32_t fpu[32];
+    uint32_t ebp;
+    uint32_t esi;
+    uint32_t edi;
+    uint32_t eip;
+    uint32_t eflags;    /* Field for the EFLAGS register */
+    uint8_t fpu_state[108];
+};
+
+struct pcb {
+    struct pcb_state ctx;
     int args;
     char** argv;
     uint32_t ds;            /* Data segment selector */
     uint32_t cs;            /* Code segment selector */
+    uint32_t kesp;
+    uint32_t kebp;
+    uint8_t is_process;
     /* DO NOT NOT CHANGE ABOVE.*/
     char name[PCB_MAX_NAME_LENGTH];
     pcb_state_t state;
