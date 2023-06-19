@@ -15,6 +15,10 @@
 #define UNREACHABLE()\
         dbgprintf("Unreachable was reached: file %s, line %d\n", __FILE__, __LINE__); \
         PANIC();\
+    
+#define NOT_IMPLEMENTED()\
+        dbgprintf("Function not implemented yet: file %s, line %d\n", __FILE__, __LINE__); \
+        PANIC();\
 
 #define ASSERT_LOCKED(obj) assert((obj->lock.state) == LOCKED);
 #endif // ! __ASSERT_H

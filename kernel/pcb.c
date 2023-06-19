@@ -71,7 +71,7 @@ struct pcb_queue* pcb_new_queue()
 }
 
 /**
- * @brief Pushes a PCB onto the PCB queue.
+ * @brief Pushes a PCB onto the single linked PCB queue.
  *
  * The `__pcb_queue_push()` function adds a PCB to the end of the specified queue. The function takes a pointer to
  * the `pcb_queue` structure and a pointer to the `pcb` structure to be added as arguments. The function uses
@@ -103,7 +103,7 @@ static void __pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb)
 }
 
 /**
- * @brief Adds a PCB to the PCB queue.
+ * @brief Adds a PCB to the double linked PCB queue.
  *
  * The `__pcb_queue_add()` function adds a PCB to the beginning of the specified queue. The function takes a pointer to
  * the `pcb_queue` structure and a pointer to the `pcb` structure to be added as arguments. The function uses
@@ -132,7 +132,7 @@ static void __pcb_queue_add(struct pcb_queue* queue, struct pcb* pcb)
 }
 
 /**
- * @brief Removes a PCB from the PCB queue.
+ * @brief Removes a PCB from the double linked PCB queue.
  *
  * The `__pcb_queue_remove()` function removes a PCB from the specified queue. The function takes a pointer to the
  * `pcb_queue` structure and a pointer to the `pcb` structure to be removed as arguments. The function uses a

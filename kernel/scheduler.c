@@ -54,7 +54,7 @@ static struct scheduler_ops scheduler_default_ops = {
 struct pcb* sched_ctx_get_running()
 {
     /* This function should return the current running process from the scheduler context. */
-    assert(0);
+    NOT_IMPLEMENTED();
     return NULL;
 }
 
@@ -63,6 +63,24 @@ static int sched_sleep(struct scheduler* sched, int time)
     sched->ctx.running->sleep = timer_get_tick() + time;
     sched->ctx.running->state = SLEEPING;
     sched->ops->schedule(sched);
+}
+
+static int sched_prioritize(struct scheduler* sched, struct pcb* pcb)
+{
+    NOT_IMPLEMENTED();
+    return -1;
+}
+
+static int sched_default(struct scheduler* sched)
+{
+    NOT_IMPLEMENTED();
+    return -1;
+}
+
+static int sched_add(struct scheduler* sched, struct pcb* pcb)
+{
+    NOT_IMPLEMENTED();
+    return -1;
 }
 
 void kernel_sleep(int time)
