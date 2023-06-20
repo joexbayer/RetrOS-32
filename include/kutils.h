@@ -77,6 +77,7 @@ struct unit calculate_size_unit(int bytes);
 unsigned char* run_length_encode(const unsigned char* data, int length, unsigned char* out, int* encodedLength);
 unsigned char* run_length_decode(const unsigned char* encodedData, int encodedLength, unsigned char* out, int* decodedLength);
 int exec_cmd(char* str);
+void kernel_panic(const char* reason);
 
 
 

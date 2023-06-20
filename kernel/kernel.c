@@ -182,13 +182,13 @@ void kernel(uint32_t magic)
 	
 	//pcb_create_process("/bin/clock", 0, NULL);
 	
-	init_pit(1);
 	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Timer initialized.");
 
 	dbgprintf("[CLI] %d\n", cli_cnt);
 
 	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Starting OS.");
 
+	init_pit(1);
 	pcb_start();
 	
 	UNREACHABLE();

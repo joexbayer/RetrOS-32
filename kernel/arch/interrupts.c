@@ -57,7 +57,13 @@ void page_fault_interrupt(unsigned long cr2, unsigned long err)
 	dbgprintf("Page fault: 0x%x (Stack: 0x%x) %d (%s)\n", cr2, current_running->stack_ptr, err, current_running->name);
 	dbgprintf("Page: %x, process: %s\n", current_running->page_dir[DIRECTORY_INDEX(cr2)], current_running->name);
 	pcb_dbg_print(current_running);
-	kernel_exit();
+
+	if(current_running->is_process){
+		kernel_exit();
+		UNREACHABLE();
+	}
+
+	kernel_panic("A critical kernel thread encountered a page fault.");
 }
 
 void general_protection_fault()
@@ -87,7 +93,12 @@ static void __interrupt_exception_handler(int i)
 	interrupt_counter[i]++;
 	dbgprintf("[exception] %d %s (%s)\n", i, __exceptions_names[i], current_running->name);
 	pcb_dbg_print(current_running);
-	kernel_exit();
+	if(current_running->is_process){
+		kernel_exit();
+		UNREACHABLE();
+	}
+
+	kernel_panic("A critical kernel thread encountered an exception.");
 }
 
 void load_data_segments(int seg)

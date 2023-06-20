@@ -86,7 +86,7 @@ void ps()
 	int line = 0;
 	int usage;
 	twritef("  PID  USAGE    TYPE     STATE     NAME\n");
-	for (int i = 0; i < MAX_NUM_OF_PCBS; i++){
+	for (int i = 1; i < MAX_NUM_OF_PCBS; i++){
 		struct pcb_info info;
 		ret = pcb_get_info(i, &info);
 		if(ret < 0) continue;
@@ -320,7 +320,6 @@ void shell_put(unsigned char c)
 	}
 
 	if(uc == newline){
-		
 		memcpy(previous_shell_buffer, shell_buffer, strlen(shell_buffer)+1);
 		twritef("kernel> %s\n", shell_buffer);
 		if(exec_cmd(shell_buffer) < 0){

@@ -559,7 +559,7 @@ int vesa_printf(uint8_t* buffer, int32_t x, int32_t y, int color, char* fmt, ...
 				fmt++;
 				break;
 			case '\n':
-				y++;
+				y += 8;
 				written += x_offset;
 				x_offset = 0;
 				break;
