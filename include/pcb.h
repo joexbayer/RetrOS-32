@@ -105,7 +105,7 @@ struct pcb_queue;
  * as well as getting the next PCB to be executed.
  */
 struct pcb_queue_operations {
-	void (*push)(struct pcb_queue* queue, struct pcb* pcb);
+	error_t (*push)(struct pcb_queue* queue, struct pcb* pcb);
 	void (*add)(struct pcb_queue* queue, struct pcb* pcb);
 	void (*remove)(struct pcb_queue* queue, struct pcb* pcb);
 	struct pcb* (*pop)(struct pcb_queue* queue);
@@ -148,6 +148,10 @@ struct pcb_queue* pcb_new_queue();
 /* functions in entry.s */
 void _start_pcb();
 void context_switch_entry();
+
+/* declaration in helpers.s */
+void pcb_restore_context();
+void pcb_save_context();
 
 void idletask();
 void dummytask();

@@ -18,6 +18,7 @@
 #include <assert.h>
 #include <kthreads.h>
 #include <kutils.h>
+#include <errors.h>
 
 //#include <gfx/gfxlib.h>
 
@@ -27,7 +28,7 @@ static struct pcb pcb_table[MAX_NUM_OF_PCBS];
 static int pcb_count = 0;
 
 /* Prototype functions for pcb queue interface */
-static void __pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb);
+static error_t __pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb);
 static void __pcb_queue_add(struct pcb_queue* queue, struct pcb* pcb);
 static void __pcb_queue_remove(struct pcb_queue* queue, struct pcb* pcb);
 static struct pcb* __pcb_queue_pop(struct pcb_queue* queue);
@@ -57,11 +58,15 @@ struct pcb* current_running = &pcb_table[0];
  * The `pcb_new_queue()` function allocates memory for a new `pcb_queue` structure and initializes its members.
  * The `_list` member is set to `NULL`, and the queue's operations and spinlock are attached and initialized.
  *
- * @return A pointer to the newly created `pcb_queue` structure.
+ * @return A pointer to the newly created `pcb_queue` structure. NULL on error.
  */ 
 struct pcb_queue* pcb_new_queue()
 {
 	struct pcb_queue* queue = kalloc(sizeof(struct pcb_queue));
+	if(queue == NULL){
+		return NULL;
+	}
+
 	queue->_list = NULL;
 	queue->ops = &pcb_queue_default_ops;
 	queue->spinlock = 0;
@@ -81,9 +86,11 @@ struct pcb_queue* pcb_new_queue()
  * @param queue A pointer to the `pcb_queue` structure to add the `pcb` to.
  * @param pcb A pointer to the `pcb` structure to add to the queue.
  */
-static void __pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb)
+static error_t __pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb)
 {
-	assert(queue != NULL);
+	if(queue == NULL){
+		return -ERROR_PCB_QUEUE_NULL;
+	}
 
 	SPINLOCK(queue, {
 
@@ -100,6 +107,8 @@ static void __pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb)
 
 	});
 	dbgprintf("Added %s to a queue\n", pcb->name);
+
+	return 0;
 }
 
 /**

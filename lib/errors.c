@@ -14,7 +14,11 @@ static char* error_string[] = {
     "Invalid socket type.",
     "Invalid size of packet (probably too high).",
     "Ring buffer full.",
-    "Ring buffer empty"
+    "Ring buffer empty.",
+    "PCB queue is NULL.",
+    "Unable to create PCB queue.",
+    "Scheduler already exists and is initiated.",
+    "Invalid scheduler, probably not initiated."
 
 };
 

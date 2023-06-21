@@ -9,8 +9,12 @@
 #include <arch/gdt.h>
 #include <arch/tss.h>
 
+/* Checks that the given scheduler is initiated. */
+#define SCHED_VALIDATE(sched) if(!(sched->flags & SCHED_INITIATED)) {return -ERROR_SCHED_INVALID;}
+
 struct scheduler;
 struct scheduler_ops;
+
 /* exposed operator functions */
 static int sched_prioritize(struct scheduler* sched, struct pcb* pcb);
 static int sched_default(struct scheduler* sched);
@@ -18,7 +22,8 @@ static int sched_add(struct scheduler* sched, struct pcb* pcb);
 static int sched_sleep(struct scheduler* sched, int time);
 
 typedef enum scheduler_flags {
-    UNUSED = 1 << 0,
+    SCHED_UNUSED = 1 << 0,
+    SCHED_INITIATED = 1 << 1
 } sched_flag_t;
 
 struct scheduler_ops {
@@ -43,44 +48,88 @@ struct scheduler {
 };
 
 /* Default scheduler operations */
-static struct scheduler_ops scheduler_default_ops = {
+static struct scheduler_ops sched_default_ops = {
     .prioritize = &sched_prioritize,
     .add = &sched_prioritize,
     .schedule = &sched_default,
     .sleep = &sched_sleep
 };
 
+static struct scheduler sched_default_instance = {
+    .ops = &sched_default_ops,
+    .queue = NULL,
+    .priority = NULL,
+    .ctx.running = NULL,
+    .yields = 0,
+    .exits = 0,
+    .flags = 0
+};
 
-struct pcb* sched_ctx_get_running()
+error_t sched_init_default(struct scheduler* sched, sched_flag_t flags)
 {
-    /* This function should return the current running process from the scheduler context. */
-    NOT_IMPLEMENTED();
-    return NULL;
+    if(sched->flags & SCHED_INITIATED){
+        return -ERROR_SCHED_EXISTS;
+    }
+    
+    sched->ops = &sched_default_ops;
+
+    sched->priority = pcb_new_queue();
+    if(sched->priority == NULL){
+        return -ERROR_PCB_QUEUE_CREATE;
+    }
+
+    sched->queue = pcb_new_queue();
+    if(sched->queue){
+        return -ERROR_PCB_QUEUE_CREATE;
+    }
+
+    sched->flags = flags | SCHED_INITIATED;
+
+    return 0;
 }
 
 static int sched_sleep(struct scheduler* sched, int time)
 {
+    SCHED_VALIDATE(sched);
+
     sched->ctx.running->sleep = timer_get_tick() + time;
     sched->ctx.running->state = SLEEPING;
+
     sched->ops->schedule(sched);
+
+    return 0;
 }
 
 static int sched_prioritize(struct scheduler* sched, struct pcb* pcb)
 {
+    SCHED_VALIDATE(sched);
+
     NOT_IMPLEMENTED();
     return -1;
 }
 
+/* Default round robin scheduler behavior */
 static int sched_default(struct scheduler* sched)
 {
+    SCHED_VALIDATE(sched);
+
+    pcb_save_context();
+
+    /* Switch to next PCB */
+
+    pcb_restore_context();
+
     NOT_IMPLEMENTED();
     return -1;
 }
 
 static int sched_add(struct scheduler* sched, struct pcb* pcb)
 {
-    NOT_IMPLEMENTED();
-    return -1;
+    SCHED_VALIDATE(sched);
+
+    RETURN_ON_ERR(sched->queue->ops->push(sched->queue, pcb));
+    
+    return 0;
 }
 
 void kernel_sleep(int time)
@@ -129,37 +178,40 @@ void context_switch_process()
     assert(current_running != NULL);
     while(current_running->state != RUNNING){
         switch (current_running->state){
-        case STOPPED:
-            current_running = current_running->next;
-            break;
-        case ZOMBIE:
-            ;
-            struct pcb* old = current_running;
-            current_running = current_running->next;
-            old->state = CLEANING;
-
-            work_queue_add(&pcb_cleanup_routine, (void*)old->pid, NULL);
-            dbgprintf("Adding work to clean up PID %d\n", old->pid);
-            break;
-        case PCB_NEW:
-            dbgprintf("Entering scheduler... NEW\n");
-            dbgprintf("[Context Switch] Running new PCB %s (PID %d) with page dir: %x: stack: %x kstack: %x\n", current_running->name, current_running->pid, current_running->page_dir, current_running->ctx.esp, current_running->kesp);
-            load_page_directory(current_running->page_dir);
-            //pcb_dbg_print(current_running);
-
-            if(current_running->is_process){
-                tss.esp_0 = (uint32_t)current_running->kebp;
-                tss.ss_0 = GDT_KERNEL_DS;
-            }
-
-            //load_data_segments(GDT_KERNEL_DS);
-            start_pcb();
-            break; /* Never reached. */
-        case SLEEPING:
-            if(timer_get_tick() >= current_running->sleep)
-                current_running->state = RUNNING;
-            else
+        case STOPPED:{
                 current_running = current_running->next;
+            }
+            break;
+        case ZOMBIE:{
+                struct pcb* old = current_running;
+                current_running = current_running->next;
+                old->state = CLEANING;
+
+                work_queue_add(&pcb_cleanup_routine, (void*)old->pid, NULL);
+                dbgprintf("Adding work to clean up PID %d\n", old->pid);
+            }
+            break;
+        case PCB_NEW:{
+                dbgprintf("Entering scheduler... NEW\n");
+                dbgprintf("[Context Switch] Running new PCB %s (PID %d) with page dir: %x: stack: %x kstack: %x\n", current_running->name, current_running->pid, current_running->page_dir, current_running->ctx.esp, current_running->kesp);
+                load_page_directory(current_running->page_dir);
+                //pcb_dbg_print(current_running);
+
+                if(current_running->is_process){
+                    tss.esp_0 = (uint32_t)current_running->kebp;
+                    tss.ss_0 = GDT_KERNEL_DS;
+                }
+
+                //load_data_segments(GDT_KERNEL_DS);
+                start_pcb();
+            }
+            break; /* Never reached. */
+        case SLEEPING:{
+                if(timer_get_tick() >= current_running->sleep)
+                current_running->state = RUNNING;
+                else
+                    current_running = current_running->next;
+                }
             break;
         default:
             current_running = current_running->next;

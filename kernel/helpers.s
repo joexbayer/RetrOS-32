@@ -65,6 +65,7 @@ enable_paging:
     pop %ebp
     ret
 
+.global pcb_save_context 
 pcb_save_context:
     movl current_running, %eax
 
@@ -83,6 +84,7 @@ pcb_save_context:
 
     ret
 
+.global pcb_restore_context 
 pcb_restore_context:
     
     movl current_running, %eax
