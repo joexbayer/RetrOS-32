@@ -106,7 +106,7 @@ struct pcb_queue;
  */
 struct pcb_queue_operations {
 	error_t (*push)(struct pcb_queue* queue, struct pcb* pcb);
-	void (*add)(struct pcb_queue* queue, struct pcb* pcb);
+	error_t (*add)(struct pcb_queue* queue, struct pcb* pcb);
 	void (*remove)(struct pcb_queue* queue, struct pcb* pcb);
 	struct pcb* (*pop)(struct pcb_queue* queue);
 };

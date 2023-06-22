@@ -386,6 +386,7 @@ void shell()
 
 	reset_shell();
 
+	dbgprintf("shell: entering event loop\n");
 	while(1)
 	{
 		struct gfx_event event;

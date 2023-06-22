@@ -39,6 +39,7 @@ struct scheduler {
     unsigned int exits;
 
     struct scheduler_ops* ops;
+    /* queue is the list of ready PCBs */
     struct pcb_queue* queue;
     struct pcb_queue* priority;
 
@@ -108,6 +109,49 @@ static int sched_prioritize(struct scheduler* sched, struct pcb* pcb)
     return -1;
 }
 
+static int sched_round_robin(struct scheduler* sched)
+{
+    struct pcb* next;
+    SCHED_VALIDATE(sched);
+
+    /* Add current running context to queue */
+    if(sched->ctx.running != NULL){
+        sched->queue->ops->push(sched->queue, sched->ctx.running);
+        sched->ctx.running = NULL;
+    }
+
+    /* get next pcb from queue */
+    do {
+        /* If queue is empty, return error */
+        next = sched->queue->ops->pop(sched->queue); 
+        if(next == NULL){
+            return -ERROR_PCB_QUEUE_EMPTY;
+        }
+
+        /* If next is sleeping, check if it should be woken up */
+        switch (next->state){
+        case RUNNING:
+            sched->ctx.running = next;
+            break;
+        case SLEEPING:{
+                if(next->sleep > timer_get_tick()){
+                    sched->queue->ops->push(sched->queue, next);
+                } else {
+                    next->state = RUNNING;
+                    sched->ctx.running = next;
+                }
+            }
+            break;
+        default:
+            /* This should be rare, only when blocked threads are in this queue (blocked threads without synchronizational needs)*/
+            sched->queue->ops->push(sched->queue, next);
+            break;
+        }
+    } while(next->state != RUNNING);
+  
+    return 0;
+}
+
 /* Default round robin scheduler behavior */
 static int sched_default(struct scheduler* sched)
 {
@@ -116,6 +160,7 @@ static int sched_default(struct scheduler* sched)
     pcb_save_context();
 
     /* Switch to next PCB */
+    sched_round_robin(sched);
 
     pcb_restore_context();
 
@@ -173,15 +218,19 @@ void unblock(int pid)
 void context_switch_process()
 {
     ASSERT_CRITICAL();
+    
 
     current_running = current_running->next;
-    assert(current_running != NULL);
+    
+    /* quick hacky fix*/
+    if(current_running == NULL){
+        current_running = pcb_get_new_running();
+    }
+
+
     while(current_running->state != RUNNING){
+
         switch (current_running->state){
-        case STOPPED:{
-                current_running = current_running->next;
-            }
-            break;
         case ZOMBIE:{
                 struct pcb* old = current_running;
                 current_running = current_running->next;
@@ -216,6 +265,11 @@ void context_switch_process()
         default:
             current_running = current_running->next;
             break;
+        }
+    
+        /* quick hacky fix*/
+        if(current_running == NULL){
+            current_running = pcb_get_new_running();
         }
     }
     load_page_directory(current_running->page_dir);

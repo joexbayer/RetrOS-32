@@ -29,7 +29,7 @@ static int pcb_count = 0;
 
 /* Prototype functions for pcb queue interface */
 static error_t __pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb);
-static void __pcb_queue_add(struct pcb_queue* queue, struct pcb* pcb);
+static error_t __pcb_queue_add(struct pcb_queue* queue, struct pcb* pcb);
 static void __pcb_queue_remove(struct pcb_queue* queue, struct pcb* pcb);
 static struct pcb* __pcb_queue_pop(struct pcb_queue* queue);
 
@@ -92,6 +92,7 @@ static error_t __pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb)
 		return -ERROR_PCB_QUEUE_NULL;
 	}
 
+	/* This approach is suboptimal for large pcb queues, as you have to iterate over all pcbs */
 	SPINLOCK(queue, {
 
 		struct pcb* current = queue->_list;
@@ -99,11 +100,14 @@ static error_t __pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb)
 			queue->_list = pcb;
 			break;
 		}
-		while (current->next != NULL)
+		while (current->next != NULL){
+			dbgprintf("Current: %s\n", current->name);
 			current = current->next;
+		}
 		current->next = pcb;
 		pcb->next = NULL;
 		queue->total++;
+
 
 	});
 	dbgprintf("Added %s to a queue\n", pcb->name);
@@ -112,7 +116,7 @@ static error_t __pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb)
 }
 
 /**
- * @brief Adds a PCB to the double linked PCB queue.
+ * @brief Adds a PCB to the single linked PCB queue.
  *
  * The `__pcb_queue_add()` function adds a PCB to the beginning of the specified queue. The function takes a pointer to
  * the `pcb_queue` structure and a pointer to the `pcb` structure to be added as arguments. The function uses
@@ -122,17 +126,21 @@ static error_t __pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb)
  * @param queue A pointer to the `pcb_queue` structure to add the `pcb` to.
  * @param pcb A pointer to the `pcb` structure to add to the queue.
  */
-static void __pcb_queue_add(struct pcb_queue* queue, struct pcb* pcb)
+static error_t __pcb_queue_add(struct pcb_queue* queue, struct pcb* pcb)
 {
-	assert(queue != NULL);
+	if(queue == NULL){
+		return -ERROR_PCB_QUEUE_NULL;
+	}
+
+	if(pcb == NULL){
+		return -ERROR_PCB_NULL;
+	}
 
 	SPINLOCK(queue, {
 
-		struct pcb* prev = queue->_list->prev;
-		queue->_list->prev = pcb;
-		pcb->next = queue->_list;
-		prev->next = pcb;
-		pcb->prev = prev;
+		/* Add the pcb to the front of the queue */
+		pcb->next = queue->_list; // Set the next pointer of the new pcb to the current head of the queue
+		queue->_list = pcb; // Set the head of the queue to the new pcb
 
 		queue->total++;
 
@@ -154,19 +162,23 @@ static void __pcb_queue_add(struct pcb_queue* queue, struct pcb* pcb)
 static void __pcb_queue_remove(struct pcb_queue* queue, struct pcb* pcb)
 {
 	assert(queue != NULL);
+	dbgprintf("Removed %s from a queue\n", pcb->name);
 
 	SPINLOCK(queue, {
 
-		struct pcb* prev = pcb->prev;
-		prev->next = pcb->next;
-		pcb->next->prev = prev;
+		/* Remove pcb from linked list queue */
+		struct pcb* current = queue->_list;
+		while ( current->next != NULL && current->next != pcb){
+			current = current->next;
+		}
 
-		pcb->next = NULL;
-		pcb->prev = NULL;
+		if(current->next == NULL){
+			return;
+		}
 
-		queue->total--;
-		
+		current->next = pcb->next;
 	});
+
 }
 
 /**
@@ -182,19 +194,16 @@ static void __pcb_queue_remove(struct pcb_queue* queue, struct pcb* pcb)
  */
 static struct pcb* __pcb_queue_pop(struct pcb_queue* queue)
 {
-    assert(queue != NULL);
-
-	if(queue->_list == NULL)
+    if(queue == NULL || queue->_list == NULL){
 		return NULL;
+	}
 
 	struct pcb* front = NULL;
 	SPINLOCK(queue, {
 
 		front = queue->_list;
 		queue->_list = front->next;
-		if (queue->_list != NULL) {
-			queue->_list->prev = NULL;
-		}
+
 		front->next = NULL;
 		front->prev = NULL;
 	});
@@ -208,7 +217,7 @@ static struct pcb* __pcb_queue_pop(struct pcb_queue* queue)
  */
 void pcb_queue_push_running(struct pcb* pcb)
 {
-	running->ops->add(running, pcb);
+	running->ops->push(running, pcb);
 }
 
 void pcb_queue_remove_running(struct pcb* pcb)
@@ -485,7 +494,7 @@ error_t pcb_create_kthread(void (*entry)(), char* name)
 	int ret = pcb_init_kthread(i, &pcb_table[i], entry, name);
 	assert(ret);
 
-	running->ops->add(running, &pcb_table[i]);
+	running->ops->push(running, &pcb_table[i]);
 
 	pcb_count++;
 	dbgprintf("Added %s, PID: %d, Stack: 0x%x\n", name, i, pcb_table[i].kesp);
@@ -513,6 +522,7 @@ void init_pcbs()
 	for (int i = 0; i < MAX_NUM_OF_PCBS; i++){
 		pcb_table[i].state = STOPPED;
 		pcb_table[i].pid = -1;
+		pcb_table[i].next = NULL;
 	}
 
 	running = pcb_new_queue();
@@ -522,10 +532,8 @@ void init_pcbs()
 	//if(ret < 0) return; // error
 
 	current_running = &pcb_table[0];
-	pcb_table[0].next = &pcb_table[0];
-	pcb_table[0].prev = &pcb_table[0];
 
-	running->_list = current_running;
+	//running->_list = current_running;
 
 	dbgprintf("[PCB] All process control blocks are ready.\n");
 
