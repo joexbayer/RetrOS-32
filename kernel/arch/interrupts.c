@@ -53,7 +53,7 @@ static const char* __exceptions_names[32] = {
 void page_fault_interrupt(unsigned long cr2, unsigned long err)
 {
 	interrupt_counter[14]++;
-	CLI();
+	ENTER_CRITICAL();
 	dbgprintf("Page fault: 0x%x (Stack: 0x%x) %d (%s)\n", cr2, current_running->stack_ptr, err, current_running->name);
 	dbgprintf("Page: %x, process: %s\n", current_running->page_dir[DIRECTORY_INDEX(cr2)], current_running->name);
 	pcb_dbg_print(current_running);
@@ -68,7 +68,7 @@ void page_fault_interrupt(unsigned long cr2, unsigned long err)
 
 void general_protection_fault()
 {
-	CLI();
+	ENTER_CRITICAL();
 	dbgprintf("General Protection Fault: 0x%x - %s\n", current_running->stack_ptr, current_running->name);
 	pcb_dbg_print(current_running);
 

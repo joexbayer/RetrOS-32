@@ -216,7 +216,7 @@ int gfx_destory_window(struct gfx_window* w)
 {
     if(w == NULL) return -1;
 
-    CLI();
+    ENTER_CRITICAL();
     
     gfx_composition_remove_window(w);
 
@@ -224,7 +224,7 @@ int gfx_destory_window(struct gfx_window* w)
     w->owner->gfx_window = NULL;
     kfree(w);
 
-    STI();
+    LEAVE_CRITICAL();
 
     return 0;
 

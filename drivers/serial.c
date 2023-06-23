@@ -48,7 +48,7 @@ int32_t serial_printf(char* fmt, ...)
 
 	int written = 0;
 	#ifdef _KDEBUG
-	CLI();
+	ENTER_CRITICAL();
 	va_list args;
 
 	char str[MAX_FMT_STR_SIZE];
@@ -115,7 +115,7 @@ int32_t serial_printf(char* fmt, ...)
 			}
         fmt++;
     }
-	STI();
+	LEAVE_CRITICAL();
 	#endif
 	return written;
 }

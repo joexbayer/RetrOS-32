@@ -67,7 +67,7 @@ enable_paging:
 
 .global pcb_save_context 
 pcb_save_context:
-    movl current_running, %eax
+    movl 4(%esp), %eax
 
     movl %ebx, PCB_EBX(%eax)
     movl %ecx, PCB_ECX(%eax)
@@ -77,8 +77,8 @@ pcb_save_context:
     movl %esp, PCB_ESP(%eax)
     movl %ebp, PCB_EBP(%eax)
 
-    pushf
-    pop %ebx
+    pushfl
+    popl %ebx
     movl %ebx, PCB_EFLAGS(%eax)
     fnsave PCB_FPU_STATE(%eax)
 
@@ -86,8 +86,7 @@ pcb_save_context:
 
 .global pcb_restore_context 
 pcb_restore_context:
-    
-    movl current_running, %eax
+    movl 4(%esp), %eax
 
     movl PCB_EBP(%eax), %ebp  /* ebp */
     movl PCB_ESP(%eax), %esp  /* esp */
@@ -100,8 +99,8 @@ pcb_restore_context:
     movl PCB_ESI(%eax), %esi  /* esi */
     movl PCB_EDI(%eax), %edi  /* edi */
 
-    push PCB_EFLAGS(%eax)  /* push EFLAGS onto the stack */
-    popf  /* pop EFLAGS from the stack */
+    pushl PCB_EFLAGS(%eax)  /* push EFLAGS onto the stack */
+    popfl  /* pop EFLAGS from the stack */
 
     ret
 
@@ -109,12 +108,14 @@ pcb_restore_context:
 context_switch_entry:
     cli
     addl $1, cli_cnt
-   
-    call pcb_save_context
+
+    # movl current_running, %eax
+    # pushl %eax
+    # call pcb_save_context
 
     call context_switch_process
 
-    call pcb_restore_context
+    # call pcb_restore_context
 
     sti
     subl $1, cli_cnt

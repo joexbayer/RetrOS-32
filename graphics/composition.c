@@ -400,7 +400,7 @@ void gfx_compositor_main()
          * 
          * Should also NOT redraw entire screen, only things that change.
          */
-        //CLI();
+        //ENTER_CRITICAL();
         int test = rdtsc();
         int mouse_changed = mouse_event_get(&m);
         int window_changed = gfx_check_changes(wind.order);
@@ -543,7 +543,7 @@ void gfx_compositor_main()
             vesa_fillrect(wind.composition_buffer, 8, vbe_info->height-16-(18*8) + 8, strlen(disk_name())*8, 8, theme->os.background);
             vesa_printf(wind.composition_buffer, 8, vbe_info->height-16-(18*8) + 8, theme->os.foreground, "Disk: %s", disk_attached() ? disk_name() : "No disk found.");
 
-            //STI();
+            //LEAVE_CRITICAL();
             if(__is_fullscreen){
             } else {
                 gfx_recursive_draw(wind.order);
@@ -553,9 +553,9 @@ void gfx_compositor_main()
         kernel_yield();
 
         //if(mouse_changed || window_changed)
-        CLI();
+        ENTER_CRITICAL();
         memcpy((uint8_t*)vbe_info->framebuffer, wind.composition_buffer, buffer_size-1);
-        STI();
+        LEAVE_CRITICAL();
         /* Copy buffer over to framebuffer. */
 
         if(mouse_changed){

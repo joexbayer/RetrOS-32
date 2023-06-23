@@ -61,7 +61,7 @@ void kernel(uint32_t magic)
 	/* Clear memory and BSS */
 	//memset((char*)_bss_s, 0, (unsigned int) _bss_size);
     memset((char*)0x100000, 0, 0x800000-0x100000);
-	CLI();
+	ENTER_CRITICAL();
 
 	kernel_size = _end-_code;
 	init_memory();
@@ -184,7 +184,7 @@ void kernel(uint32_t magic)
 	
 	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Timer initialized.");
 
-	dbgprintf("[CLI] %d\n", cli_cnt);
+	dbgprintf("[ENTER_CRITICAL] %d\n", cli_cnt);
 
 	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Starting OS.");
 

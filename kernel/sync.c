@@ -43,7 +43,7 @@ void mutex_init(mutex_t* l)
  */
 void acquire(mutex_t* l)
 {
-    CLI();
+    ENTER_CRITICAL();
     switch (l->state){
     case LOCKED:
         dbgprintf("Locking 0x%x (%d: %s)\n", l, current_running->pid, current_running->name);
@@ -63,7 +63,7 @@ void acquire(mutex_t* l)
     }
 
     assert(l->state == LOCKED);
-    STI();
+    LEAVE_CRITICAL();
 }
 
 /**
@@ -74,17 +74,17 @@ void acquire(mutex_t* l)
 void release(mutex_t* l)
 {
 
-    CLI();
+    ENTER_CRITICAL();
     struct pcb* blocked = l->blocked->ops->pop(l->blocked);
     if(blocked != NULL){
         pcb_queue_push_running(blocked);
         unblock(blocked->pid);
 
         assert(l->state == LOCKED);
-        STI();
+        LEAVE_CRITICAL();
         return;
     }
     //assert(l->state != UNLOCKED);
     l->state = UNLOCKED;
-    STI();
+    LEAVE_CRITICAL();
 }

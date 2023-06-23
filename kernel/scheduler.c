@@ -21,11 +21,13 @@ static int sched_default(struct scheduler* sched);
 static int sched_add(struct scheduler* sched, struct pcb* pcb);
 static int sched_sleep(struct scheduler* sched, int time);
 
+/* Scheduler flags */
 typedef enum scheduler_flags {
     SCHED_UNUSED = 1 << 0,
     SCHED_INITIATED = 1 << 1
 } sched_flag_t;
 
+/* Scheduler operations */
 struct scheduler_ops {
     int (*prioritize)(struct scheduler* sched, struct pcb* pcb);
     int (*schedule)(struct scheduler* sched);
@@ -56,6 +58,7 @@ static struct scheduler_ops sched_default_ops = {
     .sleep = &sched_sleep
 };
 
+/* Default scheduler instance */
 static struct scheduler sched_default_instance = {
     .ops = &sched_default_ops,
     .queue = NULL,
@@ -66,6 +69,13 @@ static struct scheduler sched_default_instance = {
     .flags = 0
 };
 
+/**
+ * @brief Initializes the default scheduler
+ * This scheduler is a round robin scheduler, for now...
+ * @param sched  The scheduler to initialize
+ * @param flags  Flags to set on the scheduler
+ * @return error_t  0 on success, error code on failure
+ */
 error_t sched_init_default(struct scheduler* sched, sched_flag_t flags)
 {
     if(sched->flags & SCHED_INITIATED){
@@ -113,6 +123,7 @@ static int sched_round_robin(struct scheduler* sched)
 {
     struct pcb* next;
     SCHED_VALIDATE(sched);
+    ASSERT_CRITICAL();
 
     /* Add current running context to queue */
     if(sched->ctx.running != NULL){
@@ -130,17 +141,12 @@ static int sched_round_robin(struct scheduler* sched)
 
         /* If next is sleeping, check if it should be woken up */
         switch (next->state){
-        case RUNNING:
-            sched->ctx.running = next;
-            break;
-        case SLEEPING:{
-                if(next->sleep > timer_get_tick()){
-                    sched->queue->ops->push(sched->queue, next);
-                } else {
-                    next->state = RUNNING;
-                    sched->ctx.running = next;
-                }
+        case SLEEPING:
+            if(next->sleep < timer_get_tick()){
+                next->state = RUNNING;
+                break;
             }
+        case RUNNING:
             break;
         default:
             /* This should be rare, only when blocked threads are in this queue (blocked threads without synchronizational needs)*/
@@ -148,7 +154,9 @@ static int sched_round_robin(struct scheduler* sched)
             break;
         }
     } while(next->state != RUNNING);
-  
+    
+    sched->ctx.running = next;
+
     return 0;
 }
 
@@ -157,15 +165,18 @@ static int sched_default(struct scheduler* sched)
 {
     SCHED_VALIDATE(sched);
 
-    pcb_save_context();
+    sched->ctx.running->yields++;
 
-    /* Switch to next PCB */
-    sched_round_robin(sched);
+    CRITICAL_SECTION({
+        pcb_save_context();
 
-    pcb_restore_context();
+        /* Switch to next PCB, should be chosen by flag? */
+        sched_round_robin(sched);
 
-    NOT_IMPLEMENTED();
-    return -1;
+        pcb_restore_context();
+    });
+
+    return 0;
 }
 
 static int sched_add(struct scheduler* sched, struct pcb* pcb)
@@ -176,6 +187,8 @@ static int sched_add(struct scheduler* sched, struct pcb* pcb)
     
     return 0;
 }
+
+/* Kernel scheduling API */
 
 void kernel_sleep(int time)
 {
@@ -218,7 +231,8 @@ void unblock(int pid)
 void context_switch_process()
 {
     ASSERT_CRITICAL();
-    
+
+    pcb_save_context(current_running);   
 
     current_running = current_running->next;
     
@@ -253,6 +267,7 @@ void context_switch_process()
 
                 //load_data_segments(GDT_KERNEL_DS);
                 start_pcb();
+                UNREACHABLE();
             }
             break; /* Never reached. */
         case SLEEPING:{
@@ -273,5 +288,6 @@ void context_switch_process()
         }
     }
     load_page_directory(current_running->page_dir);
-    //dbgprintf("[Context Switch] Switching too PCB %s with page dir: %x, stack: %x, kstack: %x\n", current_running->name, current_running->page_dir, current_running->ctx.esp, current_running->kesp);
+    // dbgprintf("[Context Switch] Switching too PCB %s with page dir: %x, stack: %x, kstack: %x\n", current_running->name, current_running->page_dir, current_running->ctx.esp, current_running->kesp);
+    pcb_restore_context(current_running);
 }

@@ -90,12 +90,12 @@ int kernel_gfx_draw_rectangle(int x, int y, int width, int height, unsigned char
     if(x < 0 || y < 0 || x+width > current_running->gfx_window->inner_width || y+height > current_running->gfx_window->inner_height)
         return -2;
 
-    //CLI();
+    //ENTER_CRITICAL();
     int i, j;
     for (j = y; j < (y+height); j++)
         for (i = x; i < (x+width); i++)
             putpixel(current_running->gfx_window->inner, i, j, color, current_running->gfx_window->pitch);
-    //STI();
+    //LEAVE_CRITICAL();
 
     //current_running->gfx_window->changed = 1;
     return 0;
@@ -115,7 +115,7 @@ int kernel_gfx_draw_char(int x, int y, unsigned char c, unsigned char color)
     if(current_running->gfx_window == NULL)
         return -1;
 
-    //CLI();
+    //ENTER_CRITICAL();
     for (int l = 0; l < 8; l++) {
         for (int i = 8; i >= 0; i--) {
             if (font8x8_basic[c][l] & (1 << i)) {
@@ -126,7 +126,7 @@ int kernel_gfx_draw_char(int x, int y, unsigned char c, unsigned char color)
             }
         }
     }
-    //STI();
+    //LEAVE_CRITICAL();
 
 	//dbgprintf("[GFX] %s put %c\n", current_running->name, c);
     //current_running->gfx_window->changed = 1;

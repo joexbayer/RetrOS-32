@@ -116,7 +116,7 @@ void scrwrite(int x, int y, char* str, uint8_t color)
  */
 void scr_clear()
 {
-    CLI();
+    ENTER_CRITICAL();
 	for (int y = 1; y < SCREEN_HEIGHT-2; y++)
 	{
 		for (int x = 1; x < SCREEN_WIDTH-1; x++)
@@ -128,7 +128,7 @@ void scr_clear()
 			//scrput(x, y, ' ', VGA_COLOR_BOX_BLACK);
 		}
 	}
-    STI();
+    LEAVE_CRITICAL();
 	
 }
 
@@ -136,7 +136,7 @@ void scr_scroll(int from, int to, int width, int height)
 {
     if(is_window_visable() == 0)
         return;
-    CLI();
+    ENTER_CRITICAL();
     from = current_running->window->x + 1;
     to = current_running->window->y + 1;
     width = current_running->window->x  +  current_running->window->width +1;
@@ -158,7 +158,7 @@ void scr_scroll(int from, int to, int width, int height)
 			VGA_MEMORY[index] = VGA_MEMORY[index_b];
 		}
 	}
-    STI();
+    LEAVE_CRITICAL();
 }
 
 /**

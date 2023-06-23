@@ -406,7 +406,7 @@ error_t pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 
 error_t pcb_create_process(char* program, int args, char** argv, pcb_flag_t flags)
 {
-	CLI();
+	ENTER_CRITICAL();
 	/* Load process from disk */
 	inode_t inode = fs_open(program, 0);
 	if(inode <= 0)
@@ -462,7 +462,7 @@ error_t pcb_create_process(char* program, int args, char** argv, pcb_flag_t flag
 	running->ops->add(running, pcb);
 
 	pcb_count++;
-	STI();
+	LEAVE_CRITICAL();
 	kfree(buf);
 	dbgprintf("[INIT PROCESS] Created new process!\n");
 	pcb->state = PCB_NEW;
@@ -480,7 +480,7 @@ error_t pcb_create_process(char* program, int args, char** argv, pcb_flag_t flag
  */
 error_t pcb_create_kthread(void (*entry)(), char* name)
 {   
-	CLI();
+	ENTER_CRITICAL();
 	if(MAX_NUM_OF_PCBS == pcb_count){
 		dbgprintf("All PCBs are in use!\n");
 		return -ERROR_PCB_FULL;
@@ -498,7 +498,7 @@ error_t pcb_create_kthread(void (*entry)(), char* name)
 
 	pcb_count++;
 	dbgprintf("Added %s, PID: %d, Stack: 0x%x\n", name, i, pcb_table[i].kesp);
-	STI();
+	LEAVE_CRITICAL();
 	return i;
 }
 

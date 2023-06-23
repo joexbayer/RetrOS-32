@@ -83,10 +83,10 @@ void worker_thread()
     dbgprintf("[%d] Starting worker thread...\n", my_id);
     while (1) {
 
-        CLI();
+        ENTER_CRITICAL();
         if(queue.head == NULL) {
             /* Should block */
-            STI();
+            LEAVE_CRITICAL();
             kernel_yield();
             continue;
         }
@@ -100,7 +100,7 @@ void worker_thread()
             queue.tail = NULL;
         }
         
-        STI();
+        LEAVE_CRITICAL();
 
         work->state = WORK_STARTED;
         dbgprintf("[%d] Running work... 0x%x (arg: %d)\n", my_id, work->work_fn, work->arg);

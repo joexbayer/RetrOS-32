@@ -150,7 +150,7 @@ int ata_write(char *buf, uint32_t from, uint32_t count)
 {
     unsigned long pos = from;
 
-    CLI();
+    ENTER_CRITICAL();
 
     for (uint32_t i = 0; i < count; i++)
     {
@@ -160,7 +160,7 @@ int ata_write(char *buf, uint32_t from, uint32_t count)
             ;
     }
     
-    STI();
+    LEAVE_CRITICAL();
     return count;
 }
 
@@ -169,19 +169,19 @@ int ata_read(char *buf, uint32_t from, uint32_t numsects)
 	unsigned long pos = from;
     int rc = 0;
 
-    CLI();
+    ENTER_CRITICAL();
 
     for (uint32_t i = 0; i < numsects; i++)
     {
         rc = __ata_read_sector((char*) buf, pos + i);
         if (rc == -1){
-            STI();
+            LEAVE_CRITICAL();
             return -1;
         }
         buf += 512;
     }
 
-    STI();
+    LEAVE_CRITICAL();
     return rc;
 }
 

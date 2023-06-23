@@ -103,7 +103,7 @@ struct unit calculate_size_unit(int bytes)
 
 void kernel_panic(const char* reason)
 {
-    CLI();
+    ENTER_CRITICAL();
 
     int len = strlen(reason);
     const char* message = "KERNEL PANIC";

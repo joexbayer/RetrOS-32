@@ -40,11 +40,11 @@ void init_kctors();
 #define ret() __asm__ __volatile__ ("ret")
 
 extern int cli_cnt;
-#define CLI()\
+#define ENTER_CRITICAL()\
     cli_cnt++;\
     asm ("cli");\
 
-#define STI()\
+#define LEAVE_CRITICAL()\
     cli_cnt--;\
     if(cli_cnt == 0){\
         asm ("sti");\
@@ -64,9 +64,9 @@ extern int cli_cnt;
  */
 #define CRITICAL_SECTION(code_block) \
     do { \
-        CLI(); \
+        ENTER_CRITICAL(); \
         code_block \
-        STI(); \
+        LEAVE_CRITICAL(); \
     } while (0)
     
 #define ASSERT_CRITICAL() assert(cli_cnt > 0)
