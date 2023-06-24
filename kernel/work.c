@@ -40,12 +40,12 @@ static struct work_queue queue = {
  * @param arg argument to work_fn
  * @param callback with return value of work_fn
  */
-void work_queue_add(int (*work_fn)(void*), void* arg, void(*callback)(int))
+int work_queue_add(int (*work_fn)(void*), void* arg, void(*callback)(int))
 {
     struct work* work = get_new_work();
     if(work == NULL){
         dbgprintf("Out of works\n");
-        return;
+        return -ERROR_WORK_QUEUE_FULL;
     }
 
     work->work_fn = work_fn;
@@ -66,6 +66,8 @@ void work_queue_add(int (*work_fn)(void*), void* arg, void(*callback)(int))
         }
         works_in_queue++;
     });
+
+    return 0;
 }
 
 void init_worker()

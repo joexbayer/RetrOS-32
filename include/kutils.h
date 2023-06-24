@@ -32,8 +32,6 @@ extern char _kctor_table_size[];
 
 void init_kctors();
 
-#define RETURN_ON_ERR(exp) do{int ret; ret = exp; if(ret != 0) return ret;}while (0);
-
 
 #define jmp(addr) __asm__ __volatile__ ("jmp *%0" : : "m" (addr))
 #define call(addr) __asm__ __volatile__ ("call *%0" : : "m" (addr))

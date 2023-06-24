@@ -1,9 +1,12 @@
 #ifndef EDD28A84_235C_41BD_B175_C5224DEECC55
 #define EDD28A84_235C_41BD_B175_C5224DEECC55
 
+#include <serial.h>
+
 typedef enum errors {
     ERROR_OK,
-    ERROR_DEFAULT,
+    ERROR_UNKNOWN,
+    ERROR_WORK_QUEUE_FULL,
     ERROR_ALLOC,
     ERROR_INDEX,
     ERROR_FILE_NOT_FOUND,
@@ -22,4 +25,9 @@ typedef enum errors {
     ERROR_SCHED_EXISTS,
     ERROR_SCHED_INVALID,
 } error_t;
+
+char* error_get_string(error_t err);
+
+#define RETURN_ON_ERR(exp) do{int ret; ret = exp; if(ret != 0){dbgprintf("WARNING: %s\n", error_get_string(ret)); return ret;}}while (0);
+
 #endif /* EDD28A84_235C_41BD_B175_C5224DEECC55 */

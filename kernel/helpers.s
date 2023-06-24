@@ -123,8 +123,9 @@ context_switch_entry:
 
 .global _start_pcb
 _start_pcb:
-    cli
-    movl current_running, %eax
+    # movl current_running, %eax
+    movl 4(%esp), %eax
+
     movl PCB_KESP(%eax), %esp
     movl PCB_ARGS(%eax), %ebx
     movl PCB_ARGV(%eax), %ecx

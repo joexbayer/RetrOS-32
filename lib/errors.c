@@ -4,6 +4,7 @@
 static char* error_string[] = {
     "No error.",
     "Unspecified generic error.",
+    "Work queue full.",
     "Unable to allocate memory.",
     "Invalid index.",
     "File not found.",

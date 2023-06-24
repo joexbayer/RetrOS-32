@@ -63,7 +63,7 @@ int get_current_time(struct time* time_s){
     return 0;
 }
 
-void _start_pcb()
+void _start_pcb(struct pcb* pcb)
 {
     
 }

@@ -190,8 +190,11 @@ void kernel(uint32_t magic)
 
 	init_pit(1);
 	pcb_start();
+
+	LEAVE_CRITICAL();
 	
-	UNREACHABLE();
+	while (1);
+	
 }
 
 void init_kctors()

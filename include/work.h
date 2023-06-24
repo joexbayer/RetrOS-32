@@ -25,7 +25,7 @@ struct work_queue {
     int size;
 };
 
-void work_queue_add(int (*work_fn)(void*), void* arg, void(*callback)(int));
+int work_queue_add(int (*work_fn)(void*), void* arg, void(*callback)(int));
 void worker_thread();
 void init_worker();
 #endif /* C344935F_66B9_4B70_A26F_D6BCDAF73498 */

@@ -502,12 +502,12 @@ error_t pcb_create_kthread(void (*entry)(), char* name)
 	return i;
 }
 
-void start_pcb()
+void start_pcb(struct pcb* pcb)
 {   
-	current_running->state = RUNNING;
+	pcb->state = RUNNING;
 	dbgprintf("[START PCB] Starting pcb!\n");
 	//pcb_dbg_print(current_running);
-	_start_pcb(); /* asm function */
+	_start_pcb(pcb); /* asm function */
 	
 	UNREACHABLE();
 }
@@ -541,6 +541,5 @@ void init_pcbs()
 
 void pcb_start()
 {
-	start_pcb();
 	/* We will never reach this.*/
 }

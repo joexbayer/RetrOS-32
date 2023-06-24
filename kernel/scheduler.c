@@ -1,6 +1,5 @@
 #include <scheduler.h>
 #include <memory.h>
-#include <pcb.h>
 #include <timer.h>
 #include <serial.h>
 #include <assert.h>
@@ -9,46 +8,11 @@
 #include <arch/gdt.h>
 #include <arch/tss.h>
 
-/* Checks that the given scheduler is initiated. */
-#define SCHED_VALIDATE(sched) if(!(sched->flags & SCHED_INITIATED)) {return -ERROR_SCHED_INVALID;}
-
-struct scheduler;
-struct scheduler_ops;
-
 /* exposed operator functions */
 static int sched_prioritize(struct scheduler* sched, struct pcb* pcb);
 static int sched_default(struct scheduler* sched);
 static int sched_add(struct scheduler* sched, struct pcb* pcb);
 static int sched_sleep(struct scheduler* sched, int time);
-
-/* Scheduler flags */
-typedef enum scheduler_flags {
-    SCHED_UNUSED = 1 << 0,
-    SCHED_INITIATED = 1 << 1
-} sched_flag_t;
-
-/* Scheduler operations */
-struct scheduler_ops {
-    int (*prioritize)(struct scheduler* sched, struct pcb* pcb);
-    int (*schedule)(struct scheduler* sched);
-    int (*add)(struct scheduler* sched, struct pcb* pcb);
-    int (*sleep)(struct scheduler* sched, int time);
-};
-
-struct scheduler {
-    unsigned char flags;
-    unsigned int yields;
-    unsigned int exits;
-
-    struct scheduler_ops* ops;
-    /* queue is the list of ready PCBs */
-    struct pcb_queue* queue;
-    struct pcb_queue* priority;
-
-    struct {
-        struct pcb* running;
-    } ctx;
-};
 
 /* Default scheduler operations */
 static struct scheduler_ops sched_default_ops = {
@@ -146,6 +110,21 @@ static int sched_round_robin(struct scheduler* sched)
                 next->state = RUNNING;
                 break;
             }
+        case PCB_NEW:{
+                dbgprintf("[Context Switch] Running new PCB %s (PID %d) with page dir: %x: stack: %x kstack: %x\n", current_running->name, current_running->pid, current_running->page_dir, current_running->ctx.esp, current_running->kesp);
+
+                if(next->is_process){
+                    tss.esp_0 = (uint32_t)next->kebp;
+                    tss.ss_0 = GDT_KERNEL_DS;
+                }
+
+                sched->ctx.running = next;
+                load_page_directory(next->page_dir);
+                //load_data_segments(GDT_KERNEL_DS);
+                start_pcb(next);
+                return 0; /* not sure if it should return or break */
+            }
+            break; /* Never reached. */
         case RUNNING:
             break;
         default:
@@ -156,6 +135,7 @@ static int sched_round_robin(struct scheduler* sched)
     } while(next->state != RUNNING);
     
     sched->ctx.running = next;
+    load_page_directory(sched->ctx.running->page_dir);
 
     return 0;
 }
@@ -168,13 +148,31 @@ static int sched_default(struct scheduler* sched)
     sched->ctx.running->yields++;
 
     CRITICAL_SECTION({
-        pcb_save_context();
+        pcb_save_context(sched->ctx.running);
 
         /* Switch to next PCB, should be chosen by flag? */
-        sched_round_robin(sched);
+        assert(sched_round_robin(sched) == 0);
 
-        pcb_restore_context();
+        pcb_restore_context(sched->ctx.running);
     });
+
+    return 0;
+}
+
+static int sched_exit(struct scheduler* sched)
+{
+    SCHED_VALIDATE(sched);
+
+    sched->exits++;  
+
+    /* Add cleanup routine to work queue */
+    RETURN_ON_ERR(work_queue_add(&pcb_cleanup_routine, (void*)sched->ctx.running->pid, NULL));
+    sched->ctx.running = NULL;
+
+    /* Switch to next PCB, dont need to store context */
+    sched_round_robin(sched);
+
+    pcb_restore_context(sched->ctx.running);
 
     return 0;
 }
@@ -241,7 +239,6 @@ void context_switch_process()
         current_running = pcb_get_new_running();
     }
 
-
     while(current_running->state != RUNNING){
 
         switch (current_running->state){
@@ -256,7 +253,7 @@ void context_switch_process()
             break;
         case PCB_NEW:{
                 dbgprintf("Entering scheduler... NEW\n");
-                dbgprintf("[Context Switch] Running new PCB %s (PID %d) with page dir: %x: stack: %x kstack: %x\n", current_running->name, current_running->pid, current_running->page_dir, current_running->ctx.esp, current_running->kesp);
+                dbgprintf("Running new PCB %s (PID %d) with page dir: %x: stack: %x kstack: %x\n", current_running->name, current_running->pid, current_running->page_dir, current_running->ctx.esp, current_running->kesp);
                 load_page_directory(current_running->page_dir);
                 //pcb_dbg_print(current_running);
 
@@ -266,8 +263,8 @@ void context_switch_process()
                 }
 
                 //load_data_segments(GDT_KERNEL_DS);
-                start_pcb();
-                UNREACHABLE();
+                start_pcb(current_running);
+                return; /* not sure if it should return or break */
             }
             break; /* Never reached. */
         case SLEEPING:{
@@ -288,6 +285,6 @@ void context_switch_process()
         }
     }
     load_page_directory(current_running->page_dir);
-    // dbgprintf("[Context Switch] Switching too PCB %s with page dir: %x, stack: %x, kstack: %x\n", current_running->name, current_running->page_dir, current_running->ctx.esp, current_running->kesp);
+    dbgprintf("Switching too PCB %s with page dir: %x, stack: %x, kstack: %x\n", current_running->name, current_running->page_dir, current_running->ctx.esp, current_running->kesp);
     pcb_restore_context(current_running);
 }
