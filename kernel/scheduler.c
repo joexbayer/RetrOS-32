@@ -79,8 +79,10 @@ static int sched_prioritize(struct scheduler* sched, struct pcb* pcb)
 {
     SCHED_VALIDATE(sched);
 
-    NOT_IMPLEMENTED();
-    return -1;
+    /* Add pcb to priority queue */
+    RETURN_ON_ERR(sched->priority->ops->push(sched->priority, pcb));
+
+    return 0;
 }
 
 static int sched_round_robin(struct scheduler* sched)
@@ -111,7 +113,13 @@ static int sched_round_robin(struct scheduler* sched)
                 break;
             }
         case PCB_NEW:{
-                dbgprintf("[Context Switch] Running new PCB %s (PID %d) with page dir: %x: stack: %x kstack: %x\n", current_running->name, current_running->pid, current_running->page_dir, current_running->ctx.esp, current_running->kesp);
+                dbgprintf("[Context Switch] Running new PCB %s (PID %d) with page dir: %x: stack: %x kstack: %x\n",
+                    current_running->name,
+                    current_running->pid,
+                    current_running->page_dir,
+                    current_running->ctx.esp,
+                    current_running->kesp
+                );
 
                 if(next->is_process){
                     tss.esp_0 = (uint32_t)next->kebp;

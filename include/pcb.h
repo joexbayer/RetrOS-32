@@ -109,6 +109,7 @@ struct pcb_queue_operations {
 	error_t (*add)(struct pcb_queue* queue, struct pcb* pcb);
 	void (*remove)(struct pcb_queue* queue, struct pcb* pcb);
 	struct pcb* (*pop)(struct pcb_queue* queue);
+    struct pcb* (*peek)(struct pcb_queue* queue);
 };
 
 /**

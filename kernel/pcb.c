@@ -32,13 +32,15 @@ static error_t __pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb);
 static error_t __pcb_queue_add(struct pcb_queue* queue, struct pcb* pcb);
 static void __pcb_queue_remove(struct pcb_queue* queue, struct pcb* pcb);
 static struct pcb* __pcb_queue_pop(struct pcb_queue* queue);
+static struct pcb* __pcb_queue_peek(struct pcb_queue* queue);
 
 /* Setup for default pcb queue operations */
 static struct pcb_queue_operations pcb_queue_default_ops = {
 	.push = &__pcb_queue_push,
 	.add = &__pcb_queue_add,
 	.remove = &__pcb_queue_remove,
-	.pop = &__pcb_queue_pop
+	.pop = &__pcb_queue_pop,
+	.peek = &__pcb_queue_peek
 };
 
 /* Global running and blocked queue */
@@ -210,6 +212,33 @@ static struct pcb* __pcb_queue_pop(struct pcb_queue* queue)
 
     return front;
 }
+
+/**
+ * @brief Returns but not removes the first PCB in the PCB queue.
+ *
+ * The `__pcb_queue_peek()` function returns the first PCB in the specified queue. The function takes a pointer
+ * to the `pcb_queue` structure as an argument. The function uses a spinlock to protect the critical section and
+ * returns a pointer to the first PCB in the queue, or `NULL` if the queue is empty.
+ *
+ * @param queue A pointer to the `pcb_queue` structure to return the first PCB from.
+ * @return A pointer to the first PCB in the queue, or `NULL` if the queue is empty.
+ */
+static struct pcb* __pcb_queue_peek(struct pcb_queue* queue)
+{
+	if(queue == NULL || queue->_list == NULL){
+		return NULL;
+	}
+
+	struct pcb* front = NULL;
+	SPINLOCK(queue, {
+
+		front = queue->_list;
+	});
+
+	return front;
+}
+
+
 /**
  * @brief Wrapper function to push to running queue
  * 
