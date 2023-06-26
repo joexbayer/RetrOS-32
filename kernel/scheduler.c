@@ -63,6 +63,13 @@ error_t sched_init_default(struct scheduler* sched, sched_flag_t flags)
     return 0;
 }
 
+/**
+ * @brief Puts the current running process to sleep for the given time
+ * 
+ * @param sched  The scheduler to sleep on
+ * @param time  The time to sleep for
+ * @return int  0 on success, error code on failure
+ */
 static int sched_sleep(struct scheduler* sched, int time)
 {
     SCHED_VALIDATE(sched);
@@ -75,6 +82,13 @@ static int sched_sleep(struct scheduler* sched, int time)
     return 0;
 }
 
+/**
+ * @brief Prioritizes the given pcb in the scheduler
+ * 
+ * @param sched  The scheduler to prioritize on
+ * @param pcb  The pcb to prioritize
+ * @return int  0 on success, error code on failure
+ */
 static int sched_prioritize(struct scheduler* sched, struct pcb* pcb)
 {
     SCHED_VALIDATE(sched);
@@ -85,11 +99,23 @@ static int sched_prioritize(struct scheduler* sched, struct pcb* pcb)
     return 0;
 }
 
+/**
+ * @brief round robin scheduler
+ * 
+ * @param sched  The scheduler to schedule on
+ * @return int 0 on success, error code on failure
+ */
 static int sched_round_robin(struct scheduler* sched)
 {
     struct pcb* next;
     SCHED_VALIDATE(sched);
     ASSERT_CRITICAL();
+
+    /* If queue is empty, return error */
+    next = sched->queue->ops->peek(sched->queue); 
+    if(next == NULL){
+        return -ERROR_PCB_QUEUE_EMPTY;
+    }
 
     /* Add current running context to queue */
     if(sched->ctx.running != NULL){
@@ -99,21 +125,11 @@ static int sched_round_robin(struct scheduler* sched)
 
     /* get next pcb from queue */
     do {
-        /* If queue is empty, return error */
         next = sched->queue->ops->pop(sched->queue); 
-        if(next == NULL){
-            return -ERROR_PCB_QUEUE_EMPTY;
-        }
 
-        /* If next is sleeping, check if it should be woken up */
         switch (next->state){
-        case SLEEPING:
-            if(next->sleep < timer_get_tick()){
-                next->state = RUNNING;
-                break;
-            }
         case PCB_NEW:{
-                dbgprintf("[Context Switch] Running new PCB %s (PID %d) with page dir: %x: stack: %x kstack: %x\n",
+                dbgprintf("Running new PCB %s (PID %d) with page dir: %x: stack: %x kstack: %x\n",
                     current_running->name,
                     current_running->pid,
                     current_running->page_dir,
@@ -135,10 +151,18 @@ static int sched_round_robin(struct scheduler* sched)
             break; /* Never reached. */
         case RUNNING:
             break;
+        /* If next is sleeping, check if it should be woken up */
+        case SLEEPING:{
+                if(next->sleep < timer_get_tick()){
+                    next->state = RUNNING;
+                    break;
+                }
+            }
+        case BLOCKED:
         default:
-            /* This should be rare, only when blocked threads are in this queue (blocked threads without synchronizational needs)*/
+            /* push next back into queue */
             sched->queue->ops->push(sched->queue, next);
-            break;
+            break;;
         }
     } while(next->state != RUNNING);
     
@@ -167,6 +191,12 @@ static int sched_default(struct scheduler* sched)
     return 0;
 }
 
+/**
+ * @brief Cleans up the given pcb
+ * 
+ * @param sched The scheduler to clean up on
+ * @return int 0 on success, error code on failure
+ */
 static int sched_exit(struct scheduler* sched)
 {
     SCHED_VALIDATE(sched);
@@ -178,13 +208,20 @@ static int sched_exit(struct scheduler* sched)
     sched->ctx.running = NULL;
 
     /* Switch to next PCB, dont need to store context */
-    sched_round_robin(sched);
+    (void)sched_round_robin(sched);
 
     pcb_restore_context(sched->ctx.running);
 
     return 0;
 }
 
+/**
+ * @brief Adds the given pcb to the scheduler
+ * 
+ * @param sched  The scheduler to add to
+ * @param pcb The pcb to add
+ * @return int 0 on success, error code on failure
+ */
 static int sched_add(struct scheduler* sched, struct pcb* pcb)
 {
     SCHED_VALIDATE(sched);
