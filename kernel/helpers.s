@@ -67,7 +67,10 @@ enable_paging:
 
 .global pcb_save_context 
 pcb_save_context:
-    movl 4(%esp), %eax
+    pushl %eax
+    movl 8(%esp), %eax
+
+    pushl %ebx
 
     movl %ebx, PCB_EBX(%eax)
     movl %ecx, PCB_ECX(%eax)
@@ -81,6 +84,10 @@ pcb_save_context:
     popl %ebx
     movl %ebx, PCB_EFLAGS(%eax)
     fnsave PCB_FPU_STATE(%eax)
+
+    popl %ebx
+
+    popl %eax
 
     ret
 

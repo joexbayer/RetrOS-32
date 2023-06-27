@@ -28,6 +28,7 @@
 #include <work.h>
 #include <arch/gdt.h>
 #include <kutils.h>
+#include <errors.h>
 
 #include <virtualdisk.h>
 
@@ -38,6 +39,14 @@
 #include <multiboot.h>
 
 #define USE_MULTIBOOT 0
+
+struct kernel_context {
+	struct scheduler sched_ctx;
+	/* netdriver? */
+	/* diskdriver? */
+	/* fs? */
+	/* graphics?? */
+} global_kernel_context;
 
 int kernel_msg = 0;
 /* This functions always needs to be on top? */
@@ -94,6 +103,12 @@ void kernel(uint32_t magic)
 	init_pci();
 	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "PCI initialized.");
 	init_worker();
+	int ret = init_test_scheduler();
+	dbgprintf("Scheduler init: %d\n", ret);
+	if(ret != 0){
+		kernel_panic(error_get_string(ret));
+	}
+	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Scheduler initialized.");
 
 	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Hardware initialized.");
 

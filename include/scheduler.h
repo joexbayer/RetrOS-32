@@ -13,7 +13,7 @@ void context_switch_process();
 #define WAIT(pred) while(pred){kernel_yield();}
 
 /* Checks that the given scheduler is initiated. */
-#define SCHED_VALIDATE(sched) if(!(sched->flags & SCHED_INITIATED)) {return -ERROR_SCHED_INVALID;}
+#define SCHED_VALIDATE(s)  dbgprintf("Flags: %d\n", s->flags); if(!((s)->flags & SCHED_INITIATED)) { return -ERROR_SCHED_INVALID;}dbgprintf("Flags: %d\n", s->flags);
 
 struct scheduler;
 struct scheduler_ops;
@@ -29,7 +29,11 @@ struct scheduler_ops {
     int (*prioritize)(struct scheduler* sched, struct pcb* pcb);
     int (*schedule)(struct scheduler* sched);
     int (*add)(struct scheduler* sched, struct pcb* pcb);
+    int (*block)(struct scheduler* sched, struct pcb* pcb);
     int (*sleep)(struct scheduler* sched, int time);
+    int (*exit)(struct scheduler* sched);
+    int (*yield)(struct scheduler* sched);
+    struct pcb* (*consume)(struct scheduler* sched);
 };
 
 struct scheduler {
@@ -51,5 +55,8 @@ struct scheduler {
 
 void pcb_restore_ctx();
 void pcb_save_ctx();
+
+/* Temporary */
+struct scheduler* get_default_scheduler();
 
 #endif

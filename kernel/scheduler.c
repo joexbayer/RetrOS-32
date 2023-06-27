@@ -12,14 +12,24 @@
 static int sched_prioritize(struct scheduler* sched, struct pcb* pcb);
 static int sched_default(struct scheduler* sched);
 static int sched_add(struct scheduler* sched, struct pcb* pcb);
+static int sched_block(struct scheduler* sched, struct pcb* pcb);
 static int sched_sleep(struct scheduler* sched, int time);
+static struct pcb* sched_consume(struct scheduler* sched);
+static int sched_exit(struct scheduler* sched);
+
+static int sched_round_robin(struct scheduler* sched);
+
 
 /* Default scheduler operations */
 static struct scheduler_ops sched_default_ops = {
     .prioritize = &sched_prioritize,
-    .add = &sched_prioritize,
+    .add = &sched_add,
     .schedule = &sched_default,
-    .sleep = &sched_sleep
+    .sleep = &sched_sleep,
+    .exit = &sched_exit,
+    .yield = &sched_default,
+    .consume = &sched_consume,
+    .block = &sched_block
 };
 
 /* Default scheduler instance */
@@ -53,14 +63,26 @@ error_t sched_init_default(struct scheduler* sched, sched_flag_t flags)
         return -ERROR_PCB_QUEUE_CREATE;
     }
 
+
     sched->queue = pcb_new_queue();
-    if(sched->queue){
+    if(sched->queue == NULL){
         return -ERROR_PCB_QUEUE_CREATE;
     }
 
     sched->flags = flags | SCHED_INITIATED;
+    dbgprintf("Flags %d\n",sched->flags);
 
     return 0;
+}
+
+void init_test_scheduler()
+{
+    sched_init_default(&sched_default_instance, 0);
+}
+
+struct scheduler* get_default_scheduler()
+{
+    return &sched_default_instance;
 }
 
 /**
@@ -77,7 +99,7 @@ static int sched_sleep(struct scheduler* sched, int time)
     sched->ctx.running->sleep = timer_get_tick() + time;
     sched->ctx.running->state = SLEEPING;
 
-    sched->ops->schedule(sched);
+    (void)sched->ops->schedule(sched);
 
     return 0;
 }
@@ -100,6 +122,49 @@ static int sched_prioritize(struct scheduler* sched, struct pcb* pcb)
 }
 
 /**
+ * @brief Consumes the current running pcb
+ * 
+ * @param sched  The scheduler to consume on
+ * @return struct pcb*  The consumed pcb
+ */
+static struct pcb* sched_consume(struct scheduler* sched)
+{
+    SCHED_VALIDATE(sched);
+
+    /* Consume the current running pcb and return it */
+    struct pcb* pcb = sched->ctx.running;
+    sched->ctx.running = NULL;
+    return pcb;
+}
+
+/**
+ * @brief Blocks the given pcb
+ * 
+ * @param sched  The scheduler to block on
+ * @param pcb  The pcb to block
+ * @return int  0 on success, error code on failure
+ */
+static int sched_block(struct scheduler* sched, struct pcb* pcb)
+{
+    SCHED_VALIDATE(sched);
+    /* At this point current running should have been consumed? */
+    assert(sched->ctx.running == NULL);
+
+    pcb->state = BLOCKED;
+
+    CRITICAL_SECTION({
+        pcb_save_context(pcb);
+
+        /* Switch to next PCB, should be chosen by flag? */
+        assert(sched_round_robin(sched) == 0);
+
+        pcb_restore_context(sched->ctx.running);
+    });
+
+    return 0;
+}
+
+/**
  * @brief round robin scheduler
  * 
  * @param sched  The scheduler to schedule on
@@ -107,9 +172,12 @@ static int sched_prioritize(struct scheduler* sched, struct pcb* pcb)
  */
 static int sched_round_robin(struct scheduler* sched)
 {
-    struct pcb* next;
+    dbgprintf("%x\n", sched);
     SCHED_VALIDATE(sched);
+    struct pcb* next;
     ASSERT_CRITICAL();
+
+    assert(sched->queue->_list != NULL);
 
     /* If queue is empty, return error */
     next = sched->queue->ops->peek(sched->queue); 
@@ -126,15 +194,16 @@ static int sched_round_robin(struct scheduler* sched)
     /* get next pcb from queue */
     do {
         next = sched->queue->ops->pop(sched->queue); 
+        dbgprintf("next %s\n", next->name);
 
         switch (next->state){
         case PCB_NEW:{
                 dbgprintf("Running new PCB %s (PID %d) with page dir: %x: stack: %x kstack: %x\n",
-                    current_running->name,
-                    current_running->pid,
-                    current_running->page_dir,
-                    current_running->ctx.esp,
-                    current_running->kesp
+                    next->name,
+                    next->pid,
+                    next->page_dir,
+                    next->ctx.esp,
+                    next->kesp
                 );
 
                 if(next->is_process){
@@ -143,6 +212,7 @@ static int sched_round_robin(struct scheduler* sched)
                 }
 
                 sched->ctx.running = next;
+                current_running = next;
                 load_page_directory(next->page_dir);
                 //load_data_segments(GDT_KERNEL_DS);
                 start_pcb(next);
@@ -167,6 +237,7 @@ static int sched_round_robin(struct scheduler* sched)
     } while(next->state != RUNNING);
     
     sched->ctx.running = next;
+    current_running = next;
     load_page_directory(sched->ctx.running->page_dir);
 
     return 0;
@@ -175,17 +246,34 @@ static int sched_round_robin(struct scheduler* sched)
 /* Default round robin scheduler behavior */
 static int sched_default(struct scheduler* sched)
 {
+    dbgprintf("%x\n", sched);
+    assert(sched->queue->_list != NULL);
     SCHED_VALIDATE(sched);
-
+    if (sched->ctx.running == NULL){
+        sched->ctx.running = sched->queue->ops->pop(sched->queue);
+        current_running = sched->ctx.running;
+        dbgprintf("peeking %s\n", sched->ctx.running->name);
+    }
+    
     sched->ctx.running->yields++;
 
     CRITICAL_SECTION({
-        pcb_save_context(sched->ctx.running);
-
+        struct pcb* current = sched->ctx.running;
+        
+        if(current_running->state != PCB_NEW) pcb_save_context(current_running);
+        dbgprintf("Saving context of %s (%x)\n", current_running->name, sched);
+        
+        assert(sched->queue->_list != NULL);
         /* Switch to next PCB, should be chosen by flag? */
-        assert(sched_round_robin(sched) == 0);
+        int ret = sched_round_robin(sched);
+        if(ret != 0){
+            kernel_panic(error_get_string(ret));
+        }
+
+        assert(0);
 
         pcb_restore_context(sched->ctx.running);
+        dbgprintf("Switching too PCB %s with page dir: %x, stack: %x, kstack: %x\n", sched->ctx.running->name, sched->ctx.running->page_dir, sched->ctx.running->ctx.esp, sched->ctx.running->kesp);
     });
 
     return 0;
@@ -235,37 +323,31 @@ static int sched_add(struct scheduler* sched, struct pcb* pcb)
 
 void kernel_sleep(int time)
 {
-    current_running->sleep = timer_get_tick() + time;
-    current_running->state = SLEEPING;
-    kernel_yield();
+    get_default_scheduler()->ops->sleep(get_default_scheduler(), time);
 }
 
 void kernel_yield()
 {   
-    current_running->yields++;
-    //dbgprintf("%s called yield\n", current_running->name);
-    context_switch_entry();
+    dbgprintf("Yielding...\n");
+    assert(get_default_scheduler()->ops->schedule(get_default_scheduler()) == 0);
 }
 
 void kernel_exit()
 {
-    dbgprintf("%s (PID %d) called Exit\n", current_running->name, current_running->pid);
-    current_running->state = ZOMBIE;
-    context_switch_entry();
+    get_default_scheduler()->ops->exit(get_default_scheduler());
 
     UNREACHABLE();
 }
 
 void block()
 {
-    current_running->state = BLOCKED;
-    current_running->blocked_count++;
-    context_switch_entry();
+    struct pcb* current = get_default_scheduler()->ops->consume(get_default_scheduler());
+    get_default_scheduler()->ops->block(get_default_scheduler(), current);
 }
 
 void unblock(int pid)
 {
-    pcb_set_running(pid);
+    //pcb_set_running(pid);
 }
 
 
@@ -330,6 +412,6 @@ void context_switch_process()
         }
     }
     load_page_directory(current_running->page_dir);
-    dbgprintf("Switching too PCB %s with page dir: %x, stack: %x, kstack: %x\n", current_running->name, current_running->page_dir, current_running->ctx.esp, current_running->kesp);
+    //dbgprintf("Switching too PCB %s with page dir: %x, stack: %x, kstack: %x\n", current_running->name, current_running->page_dir, current_running->ctx.esp, current_running->kesp);
     pcb_restore_context(current_running);
 }

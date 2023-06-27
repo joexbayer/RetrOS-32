@@ -488,7 +488,8 @@ error_t pcb_create_process(char* program, int args, char** argv, pcb_flag_t flag
 	/* Memory map data */
 	vmem_init_process(pcb, buf, read);
 
-	running->ops->add(running, pcb);
+	get_default_scheduler()->ops->add(get_default_scheduler(), &pcb_table[i]);
+	//running->ops->add(running, pcb);
 
 	pcb_count++;
 	LEAVE_CRITICAL();
@@ -523,7 +524,8 @@ error_t pcb_create_kthread(void (*entry)(), char* name)
 	int ret = pcb_init_kthread(i, &pcb_table[i], entry, name);
 	assert(ret);
 
-	running->ops->push(running, &pcb_table[i]);
+	get_default_scheduler()->ops->add(get_default_scheduler(), &pcb_table[i]);
+	//running->ops->push(running, &pcb_table[i]);
 
 	pcb_count++;
 	dbgprintf("Added %s, PID: %d, Stack: 0x%x\n", name, i, pcb_table[i].kesp);

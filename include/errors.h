@@ -3,7 +3,9 @@
 
 #include <serial.h>
 
-typedef enum errors {
+typedef int error_t;
+
+enum errors {
     ERROR_OK,
     ERROR_UNKNOWN,
     ERROR_WORK_QUEUE_FULL,
@@ -24,7 +26,7 @@ typedef enum errors {
     ERROR_PCB_QUEUE_EMPTY,
     ERROR_SCHED_EXISTS,
     ERROR_SCHED_INVALID,
-} error_t;
+};
 
 char* error_get_string(error_t err);
 
