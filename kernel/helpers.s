@@ -93,6 +93,10 @@ pcb_save_context:
 
 .global pcb_restore_context 
 pcb_restore_context:
+
+    /* preserve the current context */
+    pushl %eax
+
     movl 4(%esp), %eax
 
     movl PCB_EBP(%eax), %ebp  /* ebp */
@@ -108,6 +112,8 @@ pcb_restore_context:
 
     pushl PCB_EFLAGS(%eax)  /* push EFLAGS onto the stack */
     popfl  /* pop EFLAGS from the stack */
+
+    popl %eax
 
     ret
 

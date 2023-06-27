@@ -265,10 +265,7 @@ static int sched_default(struct scheduler* sched)
         
         assert(sched->queue->_list != NULL);
         /* Switch to next PCB, should be chosen by flag? */
-        int ret = sched_round_robin(sched);
-        if(ret != 0){
-            kernel_panic(error_get_string(ret));
-        }
+        PANIC_ON_ERR(sched_round_robin(sched));
 
         assert(0);
 
