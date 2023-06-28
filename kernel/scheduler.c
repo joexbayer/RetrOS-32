@@ -40,12 +40,13 @@ static struct scheduler sched_default_instance = {
     .ctx.running = NULL,
     .yields = 0,
     .exits = 0,
-    .flags = 0
+    .flags = SCHED_UNUSED
 };
 
 /**
  * @brief Initializes the default scheduler
- * This scheduler is a round robin scheduler, for now...
+ * Sets up the default scheduler with the given flags.
+ * Using default operations and creates queues.
  * @param sched  The scheduler to initialize
  * @param flags  Flags to set on the scheduler
  * @return error_t  0 on success, error code on failure
@@ -70,19 +71,8 @@ error_t sched_init_default(struct scheduler* sched, sched_flag_t flags)
     }
 
     sched->flags = flags | SCHED_INITIATED;
-    dbgprintf("Flags %d\n",sched->flags);
 
     return 0;
-}
-
-void init_test_scheduler()
-{
-    sched_init_default(&sched_default_instance, 0);
-}
-
-struct scheduler* get_default_scheduler()
-{
-    return &sched_default_instance;
 }
 
 /**
@@ -95,6 +85,8 @@ struct scheduler* get_default_scheduler()
 static int sched_sleep(struct scheduler* sched, int time)
 {
     SCHED_VALIDATE(sched);
+
+    assert(sched->ctx.running != NULL);
 
     sched->ctx.running->sleep = timer_get_tick() + time;
     sched->ctx.running->state = SLEEPING;
@@ -123,7 +115,8 @@ static int sched_prioritize(struct scheduler* sched, struct pcb* pcb)
 
 /**
  * @brief Consumes the current running pcb
- * 
+ * This function is useful if a process wants to take ownership of the current running pcb.
+ * @warning The scheduler will have no running pcb after this function is called.
  * @param sched  The scheduler to consume on
  * @return struct pcb*  The consumed pcb
  */
@@ -131,7 +124,7 @@ static struct pcb* sched_consume(struct scheduler* sched)
 {
     SCHED_VALIDATE(sched);
 
-    /* Consume the current running pcb and return it */
+    /* Consume the current running pcb and return it */ 
     struct pcb* pcb = sched->ctx.running;
     sched->ctx.running = NULL;
     return pcb;
@@ -147,6 +140,7 @@ static struct pcb* sched_consume(struct scheduler* sched)
 static int sched_block(struct scheduler* sched, struct pcb* pcb)
 {
     SCHED_VALIDATE(sched);
+
     /* At this point current running should have been consumed? */
     assert(sched->ctx.running == NULL);
 
@@ -172,12 +166,10 @@ static int sched_block(struct scheduler* sched, struct pcb* pcb)
  */
 static int sched_round_robin(struct scheduler* sched)
 {
-    dbgprintf("%x\n", sched);
-    SCHED_VALIDATE(sched);
     struct pcb* next;
+ 
+    SCHED_VALIDATE(sched);
     ASSERT_CRITICAL();
-
-    assert(sched->queue->_list != NULL);
 
     /* If queue is empty, return error */
     next = sched->queue->ops->peek(sched->queue); 
@@ -191,20 +183,30 @@ static int sched_round_robin(struct scheduler* sched)
         sched->ctx.running = NULL;
     }
 
-    /* get next pcb from queue */
+    /**
+     * @brief Loops through the queue until it finds a pcb that is ready to run.
+     * Multiple iterations should be rare, athe first pcb will most likely be ready to run.
+     * Uses a switch case for all relevant states.
+     */
     do {
         next = sched->queue->ops->pop(sched->queue); 
-        dbgprintf("next %s\n", next->name);
 
         switch (next->state){
+        case RUNNING:
+            break;
         case PCB_NEW:{
-                dbgprintf("Running new PCB %s (PID %d) with page dir: %x: stack: %x kstack: %x\n",
-                    next->name,
-                    next->pid,
-                    next->page_dir,
-                    next->ctx.esp,
-                    next->kesp
-                );
+                /**
+                 * @brief This is where the new process is started
+                 * This calls the start_pcb function and sets up the page directory.
+                 * Should only be called once for each pcb.
+                    dbgprintf("Running new PCB %s (PID %d) with page dir: %x: stack: %x kstack: %x\n",
+                        next->name,
+                        next->pid,
+                        next->page_dir,
+                        next->ctx.esp,
+                        next->kesp
+                    );
+                 */
 
                 if(next->is_process){
                     tss.esp_0 = (uint32_t)next->kebp;
@@ -219,18 +221,32 @@ static int sched_round_robin(struct scheduler* sched)
                 return 0; /* not sure if it should return or break */
             }
             break; /* Never reached. */
-        case RUNNING:
+        case ZOMBIE:{
+                /**
+                 * @brief A PCB is in the ZOMBIE state if it has been killed by another process
+                 * or has exited. This is where the PCB is cleaned up.
+                 * The ZOMBIE pcb will not be scheduled again and a work thread will deal with cleaning up the pcb.
+                 * This is because we want to spend as little time as possible in the scheduler.
+                 */
+                RETURN_ON_ERR(work_queue_add(&pcb_cleanup_routine, (void*)next->pid, NULL));
+            }
             break;
         /* If next is sleeping, check if it should be woken up */
         case SLEEPING:{
+                /**
+                 * @brief When a pcb is sleeping, we need to know if we should wake it up.
+                 * If the pcb's sleep time is less than the current tick we can wake it up
+                 * and schedule it as running, else it will be put at the end of the queue.
+                 */
                 if(next->sleep < timer_get_tick()){
                     next->state = RUNNING;
                     break;
                 }
             }
         case BLOCKED:
+            /* Blocked just means we want to add it back to the queue */
         default:
-            /* push next back into queue */
+            /* push next back into queue, should be very rare. */
             sched->queue->ops->push(sched->queue, next);
             break;;
         }
@@ -246,31 +262,27 @@ static int sched_round_robin(struct scheduler* sched)
 /* Default round robin scheduler behavior */
 static int sched_default(struct scheduler* sched)
 {
-    dbgprintf("%x\n", sched);
-    assert(sched->queue->_list != NULL);
     SCHED_VALIDATE(sched);
+
+    /* If no running process, get one from queue */
     if (sched->ctx.running == NULL){
         sched->ctx.running = sched->queue->ops->pop(sched->queue);
+        /* Temporary fix */
         current_running = sched->ctx.running;
-        dbgprintf("peeking %s\n", sched->ctx.running->name);
     }
     
     sched->ctx.running->yields++;
 
     CRITICAL_SECTION({
-        struct pcb* current = sched->ctx.running;
-        
-        if(current_running->state != PCB_NEW) pcb_save_context(current_running);
-        dbgprintf("Saving context of %s (%x)\n", current_running->name, sched);
-        
-        assert(sched->queue->_list != NULL);
+
+        pcb_save_context(sched->ctx.running);
+
         /* Switch to next PCB, should be chosen by flag? */
         PANIC_ON_ERR(sched_round_robin(sched));
 
-        assert(0);
-
         pcb_restore_context(sched->ctx.running);
-        dbgprintf("Switching too PCB %s with page dir: %x, stack: %x, kstack: %x\n", sched->ctx.running->name, sched->ctx.running->page_dir, sched->ctx.running->ctx.esp, sched->ctx.running->kesp);
+        
+        //dbgprintf("Switching too PCB %s with page dir: %x, stack: %x, kstack: %x\n", sched->ctx.running->name, sched->ctx.running->page_dir, sched->ctx.running->ctx.esp, sched->ctx.running->kesp);
     });
 
     return 0;
@@ -278,7 +290,8 @@ static int sched_default(struct scheduler* sched)
 
 /**
  * @brief Cleans up the given pcb
- * 
+ * A work is added to complete the pcb cleanup routine and a new process
+ * is scheduled. 
  * @param sched The scheduler to clean up on
  * @return int 0 on success, error code on failure
  */
@@ -292,10 +305,12 @@ static int sched_exit(struct scheduler* sched)
     RETURN_ON_ERR(work_queue_add(&pcb_cleanup_routine, (void*)sched->ctx.running->pid, NULL));
     sched->ctx.running = NULL;
 
-    /* Switch to next PCB, dont need to store context */
-    (void)sched_round_robin(sched);
+    CRITICAL_SECTION({
+        /* Switch to next PCB, dont need to store context */
+        PANIC_ON_ERR(sched_round_robin(sched));
 
-    pcb_restore_context(sched->ctx.running);
+        pcb_restore_context(sched->ctx.running);
+    });
 
     return 0;
 }
@@ -316,6 +331,17 @@ static int sched_add(struct scheduler* sched, struct pcb* pcb)
     return 0;
 }
 
+
+void init_test_scheduler()
+{
+    sched_init_default(&sched_default_instance, 0);
+}
+
+struct scheduler* get_default_scheduler()
+{
+    return &sched_default_instance;
+}
+
 /* Kernel scheduling API */
 
 void kernel_sleep(int time)
@@ -325,7 +351,6 @@ void kernel_sleep(int time)
 
 void kernel_yield()
 {   
-    dbgprintf("Yielding...\n");
     assert(get_default_scheduler()->ops->schedule(get_default_scheduler()) == 0);
 }
 
@@ -347,68 +372,3 @@ void unblock(int pid)
     //pcb_set_running(pid);
 }
 
-
-
-/* This code is resposible for choosing the next pcb to run */
-void context_switch_process()
-{
-    ASSERT_CRITICAL();
-
-    pcb_save_context(current_running);   
-
-    current_running = current_running->next;
-    
-    /* quick hacky fix*/
-    if(current_running == NULL){
-        current_running = pcb_get_new_running();
-    }
-
-    while(current_running->state != RUNNING){
-
-        switch (current_running->state){
-        case ZOMBIE:{
-                struct pcb* old = current_running;
-                current_running = current_running->next;
-                old->state = CLEANING;
-
-                work_queue_add(&pcb_cleanup_routine, (void*)old->pid, NULL);
-                dbgprintf("Adding work to clean up PID %d\n", old->pid);
-            }
-            break;
-        case PCB_NEW:{
-                dbgprintf("Entering scheduler... NEW\n");
-                dbgprintf("Running new PCB %s (PID %d) with page dir: %x: stack: %x kstack: %x\n", current_running->name, current_running->pid, current_running->page_dir, current_running->ctx.esp, current_running->kesp);
-                load_page_directory(current_running->page_dir);
-                //pcb_dbg_print(current_running);
-
-                if(current_running->is_process){
-                    tss.esp_0 = (uint32_t)current_running->kebp;
-                    tss.ss_0 = GDT_KERNEL_DS;
-                }
-
-                //load_data_segments(GDT_KERNEL_DS);
-                start_pcb(current_running);
-                return; /* not sure if it should return or break */
-            }
-            break; /* Never reached. */
-        case SLEEPING:{
-                if(timer_get_tick() >= current_running->sleep)
-                current_running->state = RUNNING;
-                else
-                    current_running = current_running->next;
-                }
-            break;
-        default:
-            current_running = current_running->next;
-            break;
-        }
-    
-        /* quick hacky fix*/
-        if(current_running == NULL){
-            current_running = pcb_get_new_running();
-        }
-    }
-    load_page_directory(current_running->page_dir);
-    //dbgprintf("Switching too PCB %s with page dir: %x, stack: %x, kstack: %x\n", current_running->name, current_running->page_dir, current_running->ctx.esp, current_running->kesp);
-    pcb_restore_context(current_running);
-}

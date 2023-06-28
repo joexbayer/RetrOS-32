@@ -103,7 +103,6 @@ static error_t __pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb)
 			break;
 		}
 		while (current->next != NULL){
-			dbgprintf("Current: %s\n", current->name);
 			current = current->next;
 		}
 		current->next = pcb;
@@ -112,7 +111,6 @@ static error_t __pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb)
 
 
 	});
-	dbgprintf("Added %s to a queue\n", pcb->name);
 
 	return 0;
 }
@@ -353,8 +351,6 @@ int pcb_cleanup_routine(int pid)
 	dbgprintf("[PCB] Cleanup on PID %d stack: 0x%x (original: 0x%x)\n", pid, pcb_table[pid].ctx.esp, pcb_table[pid].stack_ptr+PCB_STACK_SIZE-1);
 
 	gfx_destory_window(pcb_table[pid].gfx_window);
-
-	running->ops->remove(running, &pcb_table[pid]);
 
 	/* Free potential arguments */
 	if(pcb_table[pid].argv != NULL){

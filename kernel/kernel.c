@@ -76,9 +76,6 @@ void kernel(uint32_t magic)
 	init_memory();
 	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Memory initialized.");
 
-	dbgprintf("Kernel is at: 0x%x\n", magic);
-	dbgprintf("Kernel is at: 0x%x\n", kernel);
-
 	dbgprintf("[VBE] INFO:\n");
 	dbgprintf("[VBE] Height: %d\n", vbe_info->height);
 	dbgprintf("[VBE] Width: %d\n", vbe_info->width);
@@ -103,11 +100,8 @@ void kernel(uint32_t magic)
 	init_pci();
 	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "PCI initialized.");
 	init_worker();
-	int ret = init_test_scheduler();
-	dbgprintf("Scheduler init: %d\n", ret);
-	if(ret != 0){
-		kernel_panic(error_get_string(ret));
-	}
+	PANIC_ON_ERR(init_test_scheduler());
+
 	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Scheduler initialized.");
 
 	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Hardware initialized.");

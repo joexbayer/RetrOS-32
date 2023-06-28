@@ -67,8 +67,12 @@ enable_paging:
 
 .global pcb_save_context 
 pcb_save_context:
+    pushl %ebp
+    movl %esp, %ebp
+
     pushl %eax
-    movl 8(%esp), %eax
+
+    movl 12(%esp), %eax
 
     pushl %ebx
 
@@ -89,15 +93,21 @@ pcb_save_context:
 
     popl %eax
 
+    movl %ebp, %esp
+    popl %ebp
+
     ret
 
 .global pcb_restore_context 
 pcb_restore_context:
-
     /* preserve the current context */
+    pushl %ebp
+    movl %esp, %ebp
+
     pushl %eax
 
-    movl 4(%esp), %eax
+    movl 12(%esp), %eax
+
 
     movl PCB_EBP(%eax), %ebp  /* ebp */
     movl PCB_ESP(%eax), %esp  /* esp */
@@ -115,23 +125,9 @@ pcb_restore_context:
 
     popl %eax
 
-    ret
+    movl %ebp, %esp
+    popl %ebp
 
-.global context_switch_entry
-context_switch_entry:
-    cli
-    addl $1, cli_cnt
-
-    # movl current_running, %eax
-    # pushl %eax
-    # call pcb_save_context
-
-    call context_switch_process
-
-    # call pcb_restore_context
-
-    sti
-    subl $1, cli_cnt
     ret
 
 .global _start_pcb

@@ -13,7 +13,7 @@ void context_switch_process();
 #define WAIT(pred) while(pred){kernel_yield();}
 
 /* Checks that the given scheduler is initiated. */
-#define SCHED_VALIDATE(s)  dbgprintf("Flags: %d\n", s->flags); if(!((s)->flags & SCHED_INITIATED)) { return -ERROR_SCHED_INVALID;}dbgprintf("Flags: %d\n", s->flags);
+#define SCHED_VALIDATE(s) if(!((s)->flags & SCHED_INITIATED)) { return -ERROR_SCHED_INVALID;}
 
 struct scheduler;
 struct scheduler_ops;
