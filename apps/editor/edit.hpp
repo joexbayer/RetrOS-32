@@ -7,7 +7,7 @@
 #include "../../interp/lex.h"
 #include <util.h>
 #include <colors.h>
-#include <fs/fs.h>
+#include <fs/ext.h>
 
 #define COLOR_BG COLOR_VGA_BG
 #define COLOR_TEXT COLOR_VGA_FG

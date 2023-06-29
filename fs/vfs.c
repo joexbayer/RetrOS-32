@@ -1,9 +1,9 @@
-#include <fs/fs.h>
+#include <fs/ext.h>
 #include <fs/inode.h>
 #include <diskdev.h>
 #include <terminal.h>
 #include <pcb.h>
-#include <fs/fs_error.h>
+#include <fs/ext_error.h>
 #include <ksyms.h>
 
 /**
@@ -26,7 +26,7 @@ void mkdir(int argc, char* argv[])
         return;
     }
 
-    int ret = fs_create_directory(argv[1], current_running->current_directory);
+    int ret = ext_create_directory(argv[1], current_running->current_directory);
     if(ret == -FS_ERR_INODE_MISSING){
         twritef("Unable to find current directory\n");
         return;
@@ -39,12 +39,12 @@ EXPORT_KSYMBOL(mkdir);
 void sync()
 {
 	twritef("[FS] Synchronizing filesystem.\n");
-	fs_sync();
+	ext_sync();
 }
 EXPORT_KSYMBOL(sync);
 
 void mkfs()
 {
-    fs_create_file_system();
+    ext_create_file_system();
 }
 EXPORT_KSYMBOL(mkfs);

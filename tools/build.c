@@ -69,8 +69,8 @@ int main(int argc, char* argv[])
     printf(" (DONE)\n");
 
     printf("[" BLUE "BUILD" RESET "] Attaching filesystem to the iso file... ");
-    int fs_start = ((sz_2/512)+2)*512;
-    fseek(image, fs_start, SEEK_SET);
+    int ext_start = ((sz_2/512)+2)*512;
+    fseek(image, ext_start, SEEK_SET);
     while (0 < (bytes = fread(buffer, 1, sizeof(buffer), fs))){
         //printf("Writing %d bytes to image\n", bytes);
         fwrite(buffer, 1, bytes, image);

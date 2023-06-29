@@ -14,7 +14,7 @@
 #include <serial.h>
 #include <memory.h>
 #include <scheduler.h>
-#include <fs/fs.h>
+#include <fs/ext.h>
 #include <assert.h>
 #include <kthreads.h>
 #include <kutils.h>
@@ -146,6 +146,8 @@ static error_t __pcb_queue_add(struct pcb_queue* queue, struct pcb* pcb)
 
 	});
 	dbgprintf("New pcb added to a queue\n");
+
+	return 0;
 }
 
 /**
@@ -415,7 +417,7 @@ error_t pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 	pcb->is_process = 0;
 	pcb->args = 0;
 	pcb->argv = NULL;
-	pcb->current_directory = fs_get_root();
+	pcb->current_directory = ext_get_root();
 	pcb->yields = 0;
 	pcb->parent = current_running;
 	pcb->thread_eip = (uintptr_t) entry;
@@ -433,14 +435,14 @@ error_t pcb_create_process(char* program, int args, char** argv, pcb_flag_t flag
 {
 	ENTER_CRITICAL();
 	/* Load process from disk */
-	inode_t inode = fs_open(program, 0);
+	inode_t inode = ext_open(program, 0);
 	if(inode <= 0)
 		return -ERROR_FILE_NOT_FOUND;
 
 	dbgprintf("[INIT PROCESS] Reading %s from disk\n", program);
 	char* buf = kalloc(MAX_FILE_SIZE);
-	int read = fs_read(inode, buf, MAX_FILE_SIZE);
-	fs_close(inode);
+	int read = ext_read(inode, buf, MAX_FILE_SIZE);
+	ext_close(inode);
 
 	/* Create stack and pcb */
 	int i; /* Find a pcb is that is "free" */

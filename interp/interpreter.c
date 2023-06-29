@@ -32,7 +32,7 @@ int rc(int argc, char **argv)
 
     argv++;
 
-    if ((fd = fs_open(*argv, 0)) <= 0) {
+    if ((fd = ext_open(*argv, 0)) <= 0) {
         twritef("could not open(%s)\n", *argv);
         return -1;
     }
@@ -42,7 +42,7 @@ int rc(int argc, char **argv)
         return -1;
     }
     // read the source file
-    if ((i = fs_read(fd, src, MAX_FILE_SIZE)) <= 0) {
+    if ((i = ext_read(fd, src, MAX_FILE_SIZE)) <= 0) {
         twritef("read() returned %d\n", i);
         kfree(src);
         return -1;
@@ -50,7 +50,7 @@ int rc(int argc, char **argv)
     dbgprintf("read() returned %d\n", i);
     src[i+1] = 0; // add EOF character
     DEBUG_PRINT("%s\n", src);
-    fs_close(fd);
+    ext_close(fd);
 
     unsigned char* dec = src;
     int dec_sz = i;
@@ -94,7 +94,7 @@ int as(int argc, char **argv)
 
     argv++;
 
-    if ((fd = fs_open(*argv, 0)) <= 0) {
+    if ((fd = ext_open(*argv, 0)) <= 0) {
         twritef("could not open(%s)\n", *argv);
         return -1;
     }
@@ -104,14 +104,14 @@ int as(int argc, char **argv)
         return -1;
     }
     // read the source file
-    if ((i = fs_read(fd, src, MAX_FILE_SIZE)) <= 0) {
+    if ((i = ext_read(fd, src, MAX_FILE_SIZE)) <= 0) {
         twritef("read() returned %d\n", i);
         kfree(src);
         return -1;
     }
     src[i+1] = 0; // add EOF character
     DEBUG_PRINT("%s\n", src);
-    fs_close(fd);
+    ext_close(fd);
 
     int* text = kalloc(VM_TEXT_SIZE);
     char* data = kalloc(VM_DATA_SIZE);
@@ -125,7 +125,7 @@ int as(int argc, char **argv)
         return -1;
     }
 
-    if ((fd = fs_open(DEFAULT_OUT, FS_FLAG_CREATE)) <= 0) {
+    if ((fd = ext_open(DEFAULT_OUT, FS_FLAG_CREATE)) <= 0) {
         twritef("could not open(%s)\n", *argv);
         return -1;
     }
@@ -145,9 +145,9 @@ int as(int argc, char **argv)
 
     //run_length_encode(original_buffer, sz, enc, &enc_sz);
 
-    fs_write(fd, original_buffer, sz);
+    ext_write(fd, original_buffer, sz);
 
-    fs_close(fd);
+    ext_close(fd);
 
     //kfree(enc);
     kfree(text);
@@ -200,7 +200,7 @@ int cc(int argc, char **argv)
 
     // read the source file
     DEBUG_PRINT("Reading (%s)\n", *argv);
-    if ((fd = fs_open(*argv, 0)) < 0) {
+    if ((fd = ext_open(*argv, 0)) < 0) {
         twritef("could not open(%s)\n", *argv);
         return -1;
     }
@@ -210,7 +210,7 @@ int cc(int argc, char **argv)
         return -1;
     }
     // read the source file
-    if ((i = fs_read(fd, src, MAX_FILE_SIZE)) <= 0) {
+    if ((i = ext_read(fd, src, MAX_FILE_SIZE)) <= 0) {
         twritef("read() returned %d\n", i);
         kfree(src);
         vm_free(&vm);
@@ -218,7 +218,7 @@ int cc(int argc, char **argv)
     }
     src[i+1] = 0; // add EOF character
     DEBUG_PRINT("%s\n", src);
-    fs_close(fd);
+    ext_close(fd);
 
     DEBUG_PRINT("Lexing\n");
     struct lexed_file lexd = program(vm.text, vm.data, src);

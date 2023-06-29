@@ -29,7 +29,7 @@
 
 #define FS_SIZE 1000000
 
-#include <fs/fs.h>
+#include <fs/ext.h>
 #include <fs/inode.h>
 #include <fs/superblock.h>
 #include <fs/directory.h>
@@ -151,7 +151,7 @@ static inline void __inode_add_dir(struct directory_entry* entry, struct inode* 
 }
 
 
-void fs_setup_superblock(struct superblock* superblock, int size)
+void ext_setup_superblock(struct superblock* superblock, int size)
 {
     superblock->magic = MAGIC;
     superblock->size = size;
@@ -183,11 +183,11 @@ int add_file(struct superblock* sb, struct inode* current_dir, char* program)
     }
 
     fseek(file, 0L, SEEK_END);
-    int fs_size = ftell(file);
+    int ext_size = ftell(file);
     rewind(file);
 
-    char* buf = malloc(fs_size);
-    int fret = fread(buf, 1, fs_size, file);
+    char* buf = malloc(ext_size);
+    int fret = fread(buf, 1, ext_size, file);
     if(fret <= 0){
         printf("[" RED "MKFS" RESET "] Error reading program %s!\n", program);
     }
@@ -201,7 +201,7 @@ int add_file(struct superblock* sb, struct inode* current_dir, char* program)
      /* Create a inode and write the contents of the given program.*/
     inode_t file_inode = alloc_inode(sb, FS_FILE);
     struct inode* file_inode_disk = inode_get(file_inode, sb);
-    inode_write(buf, fs_size, file_inode_disk, sb);
+    inode_write(buf, ext_size, file_inode_disk, sb);
 
     /* Add file to current dir */
     struct directory_entry file_dir_entry = {
@@ -210,7 +210,7 @@ int add_file(struct superblock* sb, struct inode* current_dir, char* program)
     memcpy(file_dir_entry.name, &program[name_offset], strlen(&program[name_offset])+1);
     __inode_add_dir(&file_dir_entry, current_dir, sb);
 
-    printf("[" BLUE "MKFS" RESET "] Added file %s (%d bytes)!\n", program, fs_size);
+    printf("[" BLUE "MKFS" RESET "] Added file %s (%d bytes)!\n", program, ext_size);
 
     free(buf);
 }
@@ -229,11 +229,11 @@ int add_userspace_program(struct superblock* sb, struct inode* current_dir, char
     }
 
     fseek(file, 0L, SEEK_END);
-    int fs_size = ftell(file);
+    int ext_size = ftell(file);
     rewind(file);
 
-    char* buf = malloc(fs_size+1);
-    int fret = fread(buf, 1, fs_size, file);
+    char* buf = malloc(ext_size+1);
+    int fret = fread(buf, 1, ext_size, file);
     if(fret <= 0){
         printf("[" BLUE "MKFS" RESET "] Error reading program %s!\n", program);
     }
@@ -241,7 +241,7 @@ int add_userspace_program(struct superblock* sb, struct inode* current_dir, char
     /* Create a inode and write the contents of the given program.*/
     inode_t file_inode = alloc_inode(sb, FS_FILE);
     struct inode* file_inode_disk = inode_get(file_inode, sb);
-    inode_write(buf, fs_size, file_inode_disk, sb);
+    inode_write(buf, ext_size, file_inode_disk, sb);
     
 
     /* Add file to current dir */
@@ -250,7 +250,7 @@ int add_userspace_program(struct superblock* sb, struct inode* current_dir, char
     };
     __inode_add_dir(&file_dir_entry, current_dir, sb);
 
-    printf("[" BLUE "MKFS" RESET "] Added userspace program %s (%d bytes)!\n", program, fs_size);
+    printf("[" BLUE "MKFS" RESET "] Added userspace program %s (%d bytes)!\n", program, ext_size);
 
     free(buf);
 
@@ -343,7 +343,7 @@ int main(int argc, char* argv[])
     filesystem = fopen("filesystem.image", "w+");
     
     struct superblock superblock;
-    fs_setup_superblock(&superblock, 1000000);
+    ext_setup_superblock(&superblock, 1000000);
 
     /* Create a root directory inode. */
     inode_t root_inode = alloc_inode(&superblock, FS_DIRECTORY);

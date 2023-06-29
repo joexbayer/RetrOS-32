@@ -199,13 +199,6 @@ static int sched_round_robin(struct scheduler* sched)
                  * @brief This is where the new process is started
                  * This calls the start_pcb function and sets up the page directory.
                  * Should only be called once for each pcb.
-                    dbgprintf("Running new PCB %s (PID %d) with page dir: %x: stack: %x kstack: %x\n",
-                        next->name,
-                        next->pid,
-                        next->page_dir,
-                        next->ctx.esp,
-                        next->kesp
-                    );
                  */
 
                 if(next->is_process){

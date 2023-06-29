@@ -39,7 +39,7 @@ endif
 
 OUTPUTDIR = ../bin/
 
-FSOBJS = path.o fs.o inode.o vfs.o
+FSOBJS = path.o ext.o inode.o vfs.o
 
 .PHONY: all new fs clean bindir
 all: new
@@ -47,7 +47,7 @@ all: new
 new: bindir fs
 
 fs: ${FSOBJS}
-	@$(LD) -o ${OUTPUTDIR}fs.o $(addprefix ./bin/,$^) $(LDFLAGS) -r
+	@$(LD) -o ${OUTPUTDIR}ext.o $(addprefix ./bin/,$^) $(LDFLAGS) -r
 
 .depend: **/*.[cSh]
 	@$(CC) $(CCFLAGS) -MM -MG **/*.[cS] > $@

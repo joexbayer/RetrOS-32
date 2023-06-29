@@ -14,7 +14,7 @@
 #include <bitmap.h>
 #include <net/socket.h>
 #include <net/dns.h>
-#include <fs/fs.h>
+#include <fs/ext.h>
 #include <serial.h>
 #include <syscall_helper.h>
 #include <syscalls.h>
@@ -117,11 +117,11 @@ void kernel(uint32_t magic)
 		virtual_disk_attach();
 	}
 
-	init_fs();
+	init_ext();
 
 	vesa_printf(vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Filesystem initialized.");
 
-	//fs_create_file_system();
+	//ext_create_file_system();
 
 	register_kthread(&Genesis, "Genesis");
 	register_kthread(&networking_main, "netd");
@@ -149,10 +149,10 @@ void kernel(uint32_t magic)
 	add_system_call(SYSCALL_FREE, (syscall_t)&free);
 	add_system_call(SYSCALL_MALLOC, (syscall_t)&malloc);
 
-	add_system_call(SYSCALL_OPEN, (syscall_t)&fs_open);
-	add_system_call(SYSCALL_READ, (syscall_t)&fs_read);
-	add_system_call(SYSCALL_WRITE, (syscall_t)&fs_write);
-	add_system_call(SYSCALL_CLOSE, (syscall_t)&fs_close);
+	add_system_call(SYSCALL_OPEN, (syscall_t)&ext_open);
+	add_system_call(SYSCALL_READ, (syscall_t)&ext_read);
+	add_system_call(SYSCALL_WRITE, (syscall_t)&ext_write);
+	add_system_call(SYSCALL_CLOSE, (syscall_t)&ext_close);
 	#pragma GCC diagnostic pop
 	
 

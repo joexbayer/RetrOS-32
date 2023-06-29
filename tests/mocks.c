@@ -12,7 +12,7 @@
 #include <sync.h>
 #include <mocks.h>
 
-#include <fs/fs.h>
+#include <fs/ext.h>
 #include <fs/inode.h>
 #include <fs/superblock.h>
 #include <fs/directory.h>

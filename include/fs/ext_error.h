@@ -1,7 +1,7 @@
 #ifndef __FS_ERROR_H
 #define __FS_ERROR_H
 
-typedef enum fs_errors {
+typedef enum ext_errors {
     FS_ERR_UNKNOWN = 1,
     FS_ERR_FILE_MISSING,
     FS_ERR_NOT_DIRECTORY,
@@ -10,8 +10,8 @@ typedef enum fs_errors {
     FS_ERR_NAME_SIZE,
     FS_ERR_CREATE_INODE,
     FS_ERR_INODE_MISSING
-} fs_error_t;
+} ext_error_t;
 
-void fs_err(int error);
+void ext_err(int error);
 
 #endif /* __FS_ERROR_H */

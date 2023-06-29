@@ -1,5 +1,5 @@
-#include <fs/fs.h>
-#include <fs/fs_error.h>
+#include <fs/ext.h>
+#include <fs/ext_error.h>
 #include <fs/superblock.h>
 #include <fs/path.h>
 #include <fs/inode.h>
@@ -32,7 +32,7 @@ static char* months[] = {"NAN", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
 		return -1;\
 	}
 
-int init_fs()
+int init_ext()
 {
 	FS_START_LOCATION = (kernel_size/512)+2;
 	FS_INODE_BMAP_LOCATION = FS_START_LOCATION+1;
@@ -41,7 +41,7 @@ int init_fs()
 	/* Read superblock and check magic. */
 	read_block_offset((char*) &superblock, sizeof(struct superblock), 0, FS_START_LOCATION);
 	if(superblock.magic != MAGIC){
-		fs_create_file_system();
+		ext_create_file_system();
 		return 1;
 	}
 
@@ -67,33 +67,33 @@ int init_fs()
 	return 0;
 }
 
-inode_t fs_get_root()
+inode_t ext_get_root()
 {
 	return root_dir->inode;
 }
 
-inode_t fs_get_current_dir()
+inode_t ext_get_current_dir()
 {
 	return current_running->current_directory;
 }
 
 
-int fs_get_size()
+int ext_get_size()
 {
 	return superblock.size;
 }
 
-int fs_get_inodes()
+int ext_get_inodes()
 {
 	return superblock.ninodes;
 }
 
-int fs_get_blocks()
+int ext_get_blocks()
 {
 	return superblock.nblocks;
 }
 
-void fs_sync()
+void ext_sync()
 {
 	inodes_sync(&superblock);
 	write_block_offset((char*) &superblock, sizeof(struct superblock), 0, FS_START_LOCATION);
@@ -107,7 +107,7 @@ static inline void __inode_add_dir(struct directory_entry* entry, struct inode* 
 	inode_write((char*) entry, sizeof(struct directory_entry), inode, sb);
 }
 
-void fs_create_file_system()
+void ext_create_file_system()
 {
 	superblock.magic = MAGIC;
 	superblock.size = (disk_size()) - (FS_START_LOCATION*BLOCK_SIZE);
@@ -147,7 +147,7 @@ void fs_create_file_system()
 	__inode_add_dir(&back, root_dir, &superblock);
 	__inode_add_dir(&self, root_dir, &superblock);
 
-	inode_t bin_dir = fs_create_directory("bin", root_inode);
+	inode_t bin_dir = ext_create_directory("bin", root_inode);
 	struct inode* bin_dir_inode = inode_get(bin_dir, &superblock);
 
 	inode_t test_file_inode = alloc_inode(&superblock, FS_FILE);
@@ -193,7 +193,7 @@ void fs_create_file_system()
 	root_dir->pos = 0;
 }
 
-int fs_create(char* name)
+int ext_create(char* name)
 {
 	if(strlen(name)+1 > FS_DIRECTORY_NAME_SIZE)
 		return -FS_ERR_NAME_SIZE;
@@ -216,7 +216,7 @@ int fs_create(char* name)
 	return 0;
 } 
 
-int fs_read(inode_t i, void* buf, int size)
+int ext_read(inode_t i, void* buf, int size)
 {
 	char* buffer = (char*)buf;
 	struct inode* inode = inode_get(i, &superblock);
@@ -235,7 +235,7 @@ int fs_read(inode_t i, void* buf, int size)
  * @param opt UNUSED
  * @return int 
  */
-int fs_seek(inode_t i, int pos, int opt)
+int ext_seek(inode_t i, int pos, int opt)
 {
 	struct inode* inode = inode_get(i, &superblock);
 	
@@ -247,7 +247,7 @@ int fs_seek(inode_t i, int pos, int opt)
 }
 
 
-int fs_write(inode_t i, void* buf, int size)
+int ext_write(inode_t i, void* buf, int size)
 {
 	char* buffer = (char*) buf;
 	struct inode* inode = inode_get(i, &superblock);
@@ -259,13 +259,13 @@ int fs_write(inode_t i, void* buf, int size)
 	return ret;
 }
 
-void fs_close(inode_t inode)
+void ext_close(inode_t inode)
 {
 	struct inode* inode_disk = inode_get(inode, &superblock);
 	inode_disk->nlink--;
 }
 
-inode_t fs_open_from_directory(char* name, inode_t i)
+inode_t ext_open_from_directory(char* name, inode_t i)
 {
 	struct directory_entry entry;
 	struct inode* inode = inode_get(i, &superblock);
@@ -280,13 +280,13 @@ inode_t fs_open_from_directory(char* name, inode_t i)
 		int ret = inode_read((char*) &entry, sizeof(struct directory_entry), inode, &superblock);
 		int mem_ret = memcmp((void*)entry.name, (void*)name, strlen(entry.name));
 		if(mem_ret == 0)
-			goto fs_open_done;
+			goto ext_open_done;
 		size += ret;
 	}
 
 	return 0;
 
-fs_open_done:
+ext_open_done:
 	dbgprintf("[FS] Opened file %s inode: %d\n", name, entry.inode);
 
 	inode = inode_get(entry.inode, &superblock);
@@ -300,7 +300,7 @@ fs_open_done:
 	return entry.inode;
 }
 
-inode_t fs_open(char* name, fs_flag_t flags)
+inode_t ext_open(char* name, ext_flag_t flags)
 {
 	CHECK_DISK();
 
@@ -308,14 +308,14 @@ inode_t fs_open(char* name, fs_flag_t flags)
 
 	int ret = inode_from_path(name);
 	if(ret <= 0 && flags & FS_FLAG_CREATE){
-		fs_create(name);
+		ext_create(name);
 		return inode_from_path(name);
 	}
 	return ret;
 
 }
 
-int fs_size(inode_t i)
+int ext_size(inode_t i)
 {
 	struct inode* inode = inode_get(i, &superblock);
 	return inode->size;
@@ -323,7 +323,7 @@ int fs_size(inode_t i)
 
 inode_t change_directory(char* path)
 {
-	inode_t ret = fs_open(path, 0);
+	inode_t ret = ext_open(path, 0);
 	struct inode* inode = inode_get(ret, &superblock);
 	if(inode->type != FS_DIRECTORY){
 		return -FS_ERR_NOT_DIRECTORY;
@@ -339,7 +339,7 @@ inode_t change_directory(char* path)
 
 
 /* returnrs 0 on success, < 0 on error */
-inode_t fs_create_directory(char* name, inode_t current)
+inode_t ext_create_directory(char* name, inode_t current)
 {
 	if(strlen(name)+1 > FS_DIRECTORY_NAME_SIZE)
 		return -FS_ERR_NAME_SIZE;
@@ -385,7 +385,7 @@ void listdir()
 	if(!disk_attached()) return;
 
 	struct directory_entry entry;
-	struct inode* current_dir = inode_get(fs_get_current_dir(), &superblock);
+	struct inode* current_dir = inode_get(ext_get_current_dir(), &superblock);
 	int size = 0;
 
 	twritef("Size  Date    Time    Name\n");
