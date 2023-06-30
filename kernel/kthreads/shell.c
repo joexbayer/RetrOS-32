@@ -362,7 +362,7 @@ void shell()
 	dbgprintf("shell is running!\n");
 
 	memset(term.textbuffer, 0, TERMINAL_BUFFER_SIZE);
-	struct gfx_window* window = gfx_new_window(SHELL_WIDTH, SHELL_HEIGHT, GFX_IS_RESIZABLE);
+	struct window* window = gfx_new_window(SHELL_WIDTH, SHELL_HEIGHT, GFX_IS_RESIZABLE);
 	
 	dbgprintf("shell: window 0x%x\n", window);
 	kernel_gfx_draw_rectangle(0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_VGA_BG);

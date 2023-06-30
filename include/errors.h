@@ -27,6 +27,7 @@ enum errors {
     ERROR_PCB_QUEUE_EMPTY,
     ERROR_SCHED_EXISTS,
     ERROR_SCHED_INVALID,
+    ERROR_WINDOW_NOT_FOUND,
 };
 
 char* error_get_string(error_t err);

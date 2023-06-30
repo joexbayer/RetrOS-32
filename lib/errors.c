@@ -21,7 +21,8 @@ static char* error_string[] = {
     "Unable to create PCB queue.",
     "PCB queue is empty.",
     "Scheduler already exists and is initiated.",
-    "Invalid scheduler, probably not initiated."
+    "Invalid scheduler, probably not initiated.",
+    "Window not found.",
 
 };
 

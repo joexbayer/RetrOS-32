@@ -2,34 +2,31 @@
 #define __WINDOWMANAGER_H
 
 #include <stdint.h>
-#include <colors.h>
+#include <sync.h>
+#include <gfx/window.h>
 
-struct terminal_state {
-    uint8_t column;
-    uint8_t row;
-    uint8_t color;
+struct windowmanager;
+struct windowmanager_ops {
+    /* add new window */
+    int (*add)(struct windowmanager *wm, struct window *window);
+    /* remove window */
+    int (*remove)(struct windowmanager *wm, struct window *window);
+    /* draw all windows */
+    int (*draw)(struct windowmanager *wm, struct window *window);
+    int (*push_front)(struct windowmanager *wm, struct window *window);
+    int (*mouse_event)(struct windowmanager *wm, int x, int y, char type);
 };
 
-struct text_window {
-
-    char name[40];
-    uint8_t x;
-    uint8_t y;
-    uint8_t height;
-    uint8_t width;
-    uint8_t color;
-    uint8_t visable;
-
-    struct terminal_state state;
-
+/* Window manager struct */
+struct windowmanager {
+    uint32_t composition_buffer_size;
+    struct windowmanager_ops *ops;
+    uint8_t* composition_buffer;
+    struct window *windows;
+    uint32_t window_count;
+    spinlock_t spinlock;
+    
+    int mouse_state;
 };
 
-void draw_window(struct text_window* w);
-int get_window_width();
-int get_window_height();
-int attach_window(struct text_window* w);
-uint8_t is_window_visable();
-void init_wm();
-
-struct terminal_state* get_terminal_state();
 #endif /* __WINDOWMANAGER_H */

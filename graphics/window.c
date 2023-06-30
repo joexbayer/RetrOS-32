@@ -25,7 +25,7 @@
  * @param buffer 
  * @param window 
  */
-void gfx_draw_window(uint8_t* buffer, struct gfx_window* window)
+void gfx_draw_window(uint8_t* buffer, struct window* window)
 {
 
     struct gfx_theme* theme = kernel_gfx_current_theme();
@@ -94,7 +94,7 @@ void gfx_window_set_resizable()
 }
 
 /* under construction */
-void gfx_window_resize(struct gfx_window* w, int width, int height)
+void gfx_window_resize(struct window* w, int width, int height)
 {
     /* Allocate new inner buffer, copy over old buffer, free old buffer, update struct */
     uint8_t* new_buffer = kalloc(width*height);
@@ -131,7 +131,7 @@ void gfx_window_resize(struct gfx_window* w, int width, int height)
  * @param x 
  * @param y 
  */
-void gfx_default_click(struct gfx_window* window, int x, int y)
+void gfx_default_click(struct window* window, int x, int y)
 {
     dbgprintf("[GFX WINDOW] Clicked %s\n", window->name);
 
@@ -151,7 +151,7 @@ void gfx_default_click(struct gfx_window* window, int x, int y)
 }
 
 
-void gfx_default_hover(struct gfx_window* window, int x, int y)
+void gfx_default_hover(struct window* window, int x, int y)
 {
     if(window->is_moving.state == GFX_WINDOW_MOVING){
 
@@ -175,7 +175,7 @@ void gfx_default_hover(struct gfx_window* window, int x, int y)
     }
 }
 
-void gfx_default_mouse_down(struct gfx_window* window, int x, int y)
+void gfx_default_mouse_down(struct window* window, int x, int y)
 {
     if(gfx_point_in_rectangle(window->x+8, window->y, window->x+window->width-16, window->y+10, x, y)){
         window->is_moving.state = GFX_WINDOW_MOVING;
@@ -189,7 +189,7 @@ void gfx_default_mouse_down(struct gfx_window* window, int x, int y)
     }
 }
 
-void gfx_default_mouse_up(struct gfx_window* window, int x, int y)
+void gfx_default_mouse_up(struct window* window, int x, int y)
 {
     if(gfx_point_in_rectangle(window->x+8, window->y, window->x+window->width-16, window->y+10, x, y)){
         window->is_moving.state = GFX_WINDOW_STATIC;
@@ -212,7 +212,7 @@ int kernel_gfx_window_border_color(uint8_t color)
     return 0;
 }
 
-int gfx_destory_window(struct gfx_window* w)
+int gfx_destory_window(struct window* w)
 {
     if(w == NULL) return -1;
 
@@ -235,14 +235,14 @@ int gfx_destory_window(struct gfx_window* w)
  * Allocates the inner buffer in the processes personal memory.
  * @param width 
  * @param height 
- * @return struct gfx_window* 
+ * @return struct window* 
  */
-struct gfx_window* gfx_new_window(int width, int height, window_flag_t flags)
+struct window* gfx_new_window(int width, int height, window_flag_t flags)
 {
     if(current_running->gfx_window != NULL)
         return current_running->gfx_window;
 
-    struct gfx_window* w = (struct gfx_window*) kalloc(sizeof(struct gfx_window));
+    struct window* w = (struct window*) kalloc(sizeof(struct window));
     if(w == NULL){
         dbgprintf("window is NULL\n");
         return NULL;
@@ -291,7 +291,7 @@ struct gfx_window* gfx_new_window(int width, int height, window_flag_t flags)
     memset(w->header, 0, GFX_MAX_WINDOW_NAME_SIZE);
     w->in_focus = 0;
 
-    dbgprintf("[Window] Created new window for %s at 0x%x: inner 0x%x (total %x - %x)\n", current_running->name, w, w->inner, sizeof(struct gfx_window), width*height);
+    dbgprintf("[Window] Created new window for %s at 0x%x: inner 0x%x (total %x - %x)\n", current_running->name, w, w->inner, sizeof(struct window), width*height);
 
     gfx_composition_add_window(w);
 

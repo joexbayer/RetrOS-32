@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <gfx/events.h>
-struct gfx_window;
+struct window;
 #include <gfx/component.h>
 #include <terminal.h>
 #include <pcb.h>
@@ -24,9 +24,9 @@ typedef enum window_flags {
     GFX_IS_RESIZABLE = 1 << 0
 } window_flag_t;
 
-struct gfx_window {
-    struct gfx_window* next;
-    struct gfx_window* prev;
+struct window {
+    struct window* next;
+    //struct window* prev;
 
     char name[GFX_MAX_WINDOW_NAME_SIZE];
     char header[GFX_MAX_WINDOW_NAME_SIZE];
@@ -39,10 +39,10 @@ struct gfx_window {
     uint16_t pitch;
 
     /* TODO: Click function should also take a mouse event  */
-    void (*click)(struct gfx_window*, int x, int y);
-    void (*hover)(struct gfx_window*, int x, int y);
-    void (*mousedown)(struct gfx_window*, int x, int y);
-    void (*mouseup)(struct gfx_window*, int x, int y);
+    void (*click)(struct window*, int x, int y);
+    void (*hover)(struct window*, int x, int y);
+    void (*mousedown)(struct window*, int x, int y);
+    void (*mouseup)(struct window*, int x, int y);
 
     struct {
         struct gfx_event list[GFX_MAX_EVENTS];
@@ -75,18 +75,18 @@ struct gfx_window {
     char changed;
 };
 
-void gfx_draw_window(uint8_t* buffer, struct gfx_window* window);
-struct gfx_window* gfx_new_window(int width, int height, window_flag_t flags);
-int gfx_destory_window(struct gfx_window* w);
+void gfx_draw_window(uint8_t* buffer, struct window* window);
+struct window* gfx_new_window(int width, int height, window_flag_t flags);
+int gfx_destory_window(struct window* w);
 void gfx_window_set_resizable();
 
 /* Default mouse event hooks */
-void gfx_default_click(struct gfx_window* window, int x, int y);
-void gfx_default_hover(struct gfx_window* window, int x, int y);
-void gfx_default_mouse_down(struct gfx_window* window, int x, int y);
-void gfx_default_mouse_up(struct gfx_window* window, int x, int y);
+void gfx_default_click(struct window* window, int x, int y);
+void gfx_default_hover(struct window* window, int x, int y);
+void gfx_default_mouse_down(struct window* window, int x, int y);
+void gfx_default_mouse_up(struct window* window, int x, int y);
 
-void gfx_window_resize(struct gfx_window* w, int width, int height);
+void gfx_window_resize(struct window* w, int width, int height);
 
 
 #endif //  __WINDOW_H   

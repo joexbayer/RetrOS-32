@@ -9,7 +9,7 @@
 
 void image()
 {
-    struct gfx_window* window = gfx_new_window(IMAGE_WIDTH, IMAGE_HEIGHT, 0);
+    struct window* window = gfx_new_window(IMAGE_WIDTH, IMAGE_HEIGHT, 0);
     
     for (int i = 0; i < 320; i++){
         for (int j = 0; j < 240; j++){

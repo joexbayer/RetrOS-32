@@ -66,7 +66,7 @@ struct pcb {
     int yields;
     uint32_t blocked_count;
 
-    struct gfx_window* gfx_window;
+    struct window* gfx_window;
     struct terminal* term;
 
     inode_t current_directory;

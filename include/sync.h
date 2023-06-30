@@ -11,6 +11,11 @@ typedef enum {
     UNLOCKED
 } lock_state_t;
 
+typedef enum {
+    SPINLOCK_UNLOCKED,
+    SPINLOCK_LOCKED
+} spinlock_state_t;
+
 void spin_lock(int volatile *p);
 void spin_unlock(int volatile *p);
 typedef int volatile spinlock_t;

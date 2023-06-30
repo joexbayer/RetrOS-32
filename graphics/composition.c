@@ -35,7 +35,7 @@
 static struct window_server {
     uint8_t sleep_time;
     uint8_t* composition_buffer;
-    struct gfx_window* order;
+    struct window* order;
     mutex_t order_lock;
 } wind = {
     .sleep_time = 2
@@ -45,17 +45,18 @@ static struct window_server {
 static char gfx_mouse_state = 0;
 static struct mouse m;
 
-int gfx_check_changes(struct gfx_window* w)
+int gfx_check_changes(struct window* w)
 {
     while(w != NULL){
         if(w->changed)
             return 1;
         w = w->next;
     }
+    
     return 0;
 }
 
-void gfx_recursive_draw(struct gfx_window* w)
+void gfx_recursive_draw(struct window* w)
 {
     if(w->next != NULL)
         gfx_recursive_draw(w->next);
@@ -70,14 +71,14 @@ void gfx_recursive_draw(struct gfx_window* w)
  * Assuming w is NOT already the first element.
  * @param w 
  */
-static void gfx_window_push_front(struct gfx_window* w)
+static void gfx_window_push_front(struct window* w)
 {
     acquire(&wind.order_lock);
 
     assert(w != wind.order);
 
     /* remove w from wind.order list */
-    for (struct gfx_window* i = wind.order; i != NULL; i = i->next){
+    for (struct window* i = wind.order; i != NULL; i = i->next){
         if(i->next == w){
             i->next = w->next;
             break;
@@ -86,7 +87,7 @@ static void gfx_window_push_front(struct gfx_window* w)
     
     /* Replace wind.order with w, pushing old wind.order back. */
     wind.order->in_focus = 0;
-    struct gfx_window* save = wind.order;
+    struct window* save = wind.order;
     wind.order = w;
     w->next = save;
     wind.order->in_focus = 1;
@@ -101,7 +102,7 @@ static void gfx_window_push_front(struct gfx_window* w)
  * Important keep the wind.order list intact even if removing the first element.
  * @param w 
  */
-void gfx_composition_remove_window(struct gfx_window* w)
+void gfx_composition_remove_window(struct window* w)
 {
     acquire(&wind.order_lock);
 
@@ -115,7 +116,7 @@ void gfx_composition_remove_window(struct gfx_window* w)
         goto gfx_composition_remove_window_exit;
     }
 
-    struct gfx_window* iter = wind.order;
+    struct window* iter = wind.order;
     while(iter != NULL && iter->next != w)
         iter = iter->next;
     if(iter == NULL){
@@ -135,7 +136,7 @@ gfx_composition_remove_window_exit:
  * 
  * @param w 
  */
-void gfx_composition_add_window(struct gfx_window* w)
+void gfx_composition_add_window(struct window* w)
 {
     acquire(&wind.order_lock);
 
@@ -146,7 +147,7 @@ void gfx_composition_add_window(struct gfx_window* w)
         return;
     }
     
-    struct gfx_window* iter = wind.order;
+    struct window* iter = wind.order;
     wind.order->in_focus = 0;
     wind.order = w;
 
@@ -165,7 +166,7 @@ void gfx_composition_add_window(struct gfx_window* w)
  */
 void gfx_mouse_event(int x, int y, char flags)
 {
-    for (struct gfx_window* i = wind.order; i != NULL; i = i->next)
+    for (struct window* i = wind.order; i != NULL; i = i->next)
         if(gfx_point_in_rectangle(i->x, i->y, i->x+i->width, i->y+i->height, x, y)){
             /* on click when left mouse down */
             if(flags & 1 && gfx_mouse_state == 0){
@@ -204,7 +205,7 @@ void gfx_mouse_event(int x, int y, char flags)
 }
 static int __is_fullscreen = 0;
 static void* inner_window_save;
-void gfx_set_fullscreen(struct gfx_window* w)
+void gfx_set_fullscreen(struct window* w)
 {
     if(w != wind.order){
         dbgprintf("Cannot fullscreen window that isnt in focus\n");
@@ -225,7 +226,7 @@ void gfx_set_fullscreen(struct gfx_window* w)
     __is_fullscreen = 1;
 }
 
-void gfx_unset_fullscreen(struct gfx_window* w)
+void gfx_unset_fullscreen(struct window* w)
 {
     if(w != wind.order){
         dbgprintf("Cannot fullscreen window that isnt in focus\n");
