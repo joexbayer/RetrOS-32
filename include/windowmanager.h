@@ -25,7 +25,16 @@ struct windowmanager {
     struct window *windows;
     uint32_t window_count;
     spinlock_t spinlock;
-    
+
+    struct {
+        int x;
+        int y;
+        int left;
+        int right;
+        int middle;
+        char state;
+    } mouse;    
+
     int mouse_state;
 };
 

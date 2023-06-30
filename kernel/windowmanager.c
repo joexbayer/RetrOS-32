@@ -5,36 +5,62 @@
 #include <gfx/gfxlib.h>
 #include <gfx/events.h>
 #include <sync.h>
+#include <assert.h>
+#include <memory.h>
+#include <math.h>
+
+
+/* macro to validate that all ops in a wm are not NULL */
+#define WM_VALIDATE(wm) if((wm)->ops == NULL || (wm)->ops->add == NULL || (wm)->ops->remove == NULL || (wm)->ops->draw == NULL || (wm)->ops->push_front == NULL || (wm)->ops->mouse_event == NULL) { return -ERROR_OPS_CORRUPTED; }
 
 /* default static prototype functions for windowmanager ops */
-static int default_add(struct windowmanager* wm, struct window* window);
-static int default_remove(struct windowmanager* wm, struct window* window);
-static int default_draw(struct windowmanager* wm, struct window* window);
-static int default_push_front(struct windowmanager* wm, struct window* window);
-static int default_mouse_event(struct windowmanager* wm, int x, int y, char type);
+
+static int wm_default_add(struct windowmanager* wm, struct window* window);
+static int wm_default_remove(struct windowmanager* wm, struct window* window);
+static int wm_default_draw(struct windowmanager* wm, struct window* window);
+static int wm_default_push_front(struct windowmanager* wm, struct window* window);
+static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char type);
 
 /* default windowmanager ops struct */
-static struct windowmanager_ops default_wm_ops = {
-    .add = default_add,
-    .remove = default_remove,
-    .draw = default_draw,
-    .push_front = default_push_front,
-    .mouse_event = default_mouse_event
+static struct windowmanager_ops wm_default_wm_ops = {
+    .add = wm_default_add,
+    .remove = wm_default_remove,
+    .draw = wm_default_draw,
+    .push_front = wm_default_push_front,
+    .mouse_event = wm_default_mouse_event
 };
 
-/* default windowmanager struct */
-static struct windowmanager default_wm = {
-    .ops = &default_wm_ops,
-    .composition_buffer_size = 0,
-    .composition_buffer = NULL,
-    .windows = NULL,
-    .window_count = 0,
-    .spinlock = SPINLOCK_UNLOCKED
-};
+/* init new window manager with default ops and rest 0 */
+int init_windowmanager(struct windowmanager* wm)
+{
+    ERR_ON_NULL(wm);
+
+    wm->spinlock = SPINLOCK_UNLOCKED;
+    wm->composition_buffer_size = 0;
+    wm->composition_buffer = NULL;
+    wm->ops = &wm_default_wm_ops;
+    wm->windows = NULL;
+    wm->window_count = 0;
+
+    WM_VALIDATE(wm);
+
+    return 0;
+}
+
 
 /* default static functions for windowmanager ops */
-static int default_add(struct windowmanager* wm, struct window* window)
+
+/**
+ * @brief wm_default_add adds a window to the windowmanager
+ * adds the window to the end of the list
+ * @param wm  windowmanager
+ * @param window  window to add
+ * @return int  0 on success, error code otherwise
+ */
+static int wm_default_add(struct windowmanager* wm, struct window* window)
 {
+    ERR_ON_NULL(wm);
+    
     if (wm->window_count == 0) {
         wm->windows = window;
         wm->window_count++;
@@ -51,8 +77,17 @@ static int default_add(struct windowmanager* wm, struct window* window)
     return 0;
 }
 
-static int default_remove(struct windowmanager* wm, struct window* window)
+/**
+ * @brief wm_default_remove removes a window from the windowmanager
+ * 
+ * @param wm windowmanager
+ * @param window window to remove
+ * @return int 0 on success, error code otherwise
+ */
+static int wm_default_remove(struct windowmanager* wm, struct window* window)
 {
+    ERR_ON_NULL(wm);
+
     if (wm->window_count == 0) {
         return -ERROR_WINDOW_NOT_FOUND;
     }
@@ -81,8 +116,17 @@ static int default_remove(struct windowmanager* wm, struct window* window)
     return 0;
 }
 
-static int push_front(struct windowmanager* wm, struct window* window)
+/**
+ * @brief wm_default_push_front pushes a window to the front of the windowmanager
+ * Used to bring a window to the front of the screen
+ * @param wm windowmanager
+ * @param window window to push 
+ * @return int 0 on success, error code otherwise 
+ */
+static int wm_default_push_front(struct windowmanager* wm, struct window* window)
 {
+    ERR_ON_NULL(wm);
+
     if(window == wm->windows){
         return 0;
     }
@@ -104,15 +148,20 @@ static int push_front(struct windowmanager* wm, struct window* window)
 
 }
 
-/* default draw should tail recursivly draw windows */
-static int default_draw(struct windowmanager* wm, struct window* window)
+/**
+ * @brief wm_default_draw draws the windows from back to front recursively
+ * TODO: add a max depth to this to prevent stack overflow
+ * @warning this can cause a stack overflow if there are too many windows
+ * @param wm windowmanager
+ * @param window window to recursively draw from 
+ * @return int 0 on success, error code otherwise
+ */
+static int wm_default_draw(struct windowmanager* wm, struct window* window)
 {
-    if (wm->window_count == 0) {
-        return 0;
-    }
+    ERR_ON_NULL(wm);
 
-    if(window == NULL){
-        window = wm->windows;
+    if (wm->window_count == 0 || window == NULL) {
+        return 0;
     }
 
     if(window->next != NULL)
@@ -123,13 +172,18 @@ static int default_draw(struct windowmanager* wm, struct window* window)
     return 0;
 }
 
-static int default_mouse_event(struct windowmanager* wm, int x, int y, char type)
+static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char type)
 {
+    ERR_ON_NULL(wm);
+
     if (wm->window_count == 0) {
         return 0;
     }
+    /* NOTE: no spinlock needed as windows are not changed */
 
-    for (struct window* i = wm->windows; i != NULL; i = i->next)
+    /* iterate over windows and check if a window was clicked, from front to back. */
+    for (struct window* i = wm->windows; i != NULL; i = i->next){   
+        /* if mouse is in window */
         if(gfx_point_in_rectangle(i->x, i->y, i->x+i->width, i->y+i->height, x, y)){
             /* on click when left mouse down */
             if((type & 1) && wm->mouse_state == 0){
@@ -149,6 +203,7 @@ static int default_mouse_event(struct windowmanager* wm, int x, int y, char type
                 uint16_t x2 = CLAMP( (x - (i->x+8)), 0,  i->inner_width);
                 uint16_t y2 = CLAMP( (y - (i->y+8)), 0,  i->inner_height);
 
+                /* Send mouse event */
                 struct gfx_event e = {
                     .data = x2,
                     .data2 = y2,
@@ -157,9 +212,11 @@ static int default_mouse_event(struct windowmanager* wm, int x, int y, char type
                 gfx_push_event(i, &e);
             }
 
+            /* always send a hover event */
             i->hover(i, x, y);
             return 0;
         }
+    }
 
     return 0;
 }

@@ -3,6 +3,7 @@
 
 static char* error_string[] = {
     "No error.",
+    "Null pointer.",
     "Unspecified generic error.",
     "Work queue full.",
     "Unable to allocate memory.",
@@ -23,6 +24,7 @@ static char* error_string[] = {
     "Scheduler already exists and is initiated.",
     "Invalid scheduler, probably not initiated.",
     "Window not found.",
+    "Window operations are corrupted.",
 
 };
 

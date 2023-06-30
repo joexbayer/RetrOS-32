@@ -8,6 +8,7 @@ typedef int error_t;
 
 enum errors {
     ERROR_OK,
+    ERROR_NULL_POINTER,
     ERROR_UNKNOWN,
     ERROR_WORK_QUEUE_FULL,
     ERROR_ALLOC,
@@ -28,11 +29,13 @@ enum errors {
     ERROR_SCHED_EXISTS,
     ERROR_SCHED_INVALID,
     ERROR_WINDOW_NOT_FOUND,
+    ERROR_OPS_CORRUPTED,
 };
 
 char* error_get_string(error_t err);
 
 #define RETURN_ON_ERR(exp) do{int ret; ret = exp; if(ret < 0){dbgprintf("WARNING: %s\n", error_get_string(ret)); return ret;}}while (0);
 #define PANIC_ON_ERR(exp) do{int ret; ret = exp; if(ret < 0){kernel_panic(error_get_string(ret));}}while (0);
+#define ERR_ON_NULL(exp) do{if(exp == NULL){dbgprintf("WARNING: %s\n", error_get_string(ERROR_NULL_POINTER)); return -ERROR_NULL_POINTER;}}while (0);
 
 #endif /* EDD28A84_235C_41BD_B175_C5224DEECC55 */
