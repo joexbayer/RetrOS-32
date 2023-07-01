@@ -8,8 +8,9 @@ typedef int error_t;
 
 enum errors {
     ERROR_OK,
-    ERROR_NULL_POINTER,
     ERROR_UNKNOWN,
+    ERROR_NULL_POINTER,
+    ERROR_INVALID_ARGUMENTS,
     ERROR_WORK_QUEUE_FULL,
     ERROR_ALLOC,
     ERROR_INDEX,

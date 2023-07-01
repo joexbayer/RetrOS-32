@@ -63,7 +63,7 @@ void mouse_handler()
 				case 2:
 					mouse_byte[2] = mouse_in;
 					/* We now have a full mouse packet ready to use */
-					if (mouse_byte[0] & 0x80 || mouse_byte[0] & 0x40) {
+					if (mouse_byte[0] & MOUSE_Y_OVERFLOW || mouse_byte[0] & MOUSE_X_OVERFLOW) {
 						/* x/y overflow? bad packet! */
 						break;
 					}

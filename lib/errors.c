@@ -3,8 +3,9 @@
 
 static char* error_string[] = {
     "No error.",
-    "Null pointer.",
     "Unspecified generic error.",
+    "Null pointer.",
+    "Invalid arguments.",
     "Work queue full.",
     "Unable to allocate memory.",
     "Invalid index.",

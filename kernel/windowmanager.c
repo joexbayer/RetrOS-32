@@ -7,11 +7,14 @@
 #include <sync.h>
 #include <assert.h>
 #include <memory.h>
+#include <mouse.h>
 #include <math.h>
 
 
 /* macro to validate that all ops in a wm are not NULL */
 #define WM_VALIDATE(wm) if((wm)->ops == NULL || (wm)->ops->add == NULL || (wm)->ops->remove == NULL || (wm)->ops->draw == NULL || (wm)->ops->push_front == NULL || (wm)->ops->mouse_event == NULL) { return -ERROR_OPS_CORRUPTED; }
+/* validate flags macro */
+#define WM_VALIDATE_FLAGS(wm) if((wm)->flags & ~(WM_FULLSCREEN | WM_RESIZABLE)) { return -ERROR_INVALID_ARGUMENTS; }
 
 /* default static prototype functions for windowmanager ops */
 
@@ -19,7 +22,7 @@ static int wm_default_add(struct windowmanager* wm, struct window* window);
 static int wm_default_remove(struct windowmanager* wm, struct window* window);
 static int wm_default_draw(struct windowmanager* wm, struct window* window);
 static int wm_default_push_front(struct windowmanager* wm, struct window* window);
-static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char type);
+static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char flags);
 
 /* default windowmanager ops struct */
 static struct windowmanager_ops wm_default_wm_ops = {
@@ -31,9 +34,10 @@ static struct windowmanager_ops wm_default_wm_ops = {
 };
 
 /* init new window manager with default ops and rest 0 */
-int init_windowmanager(struct windowmanager* wm)
+int init_windowmanager(struct windowmanager* wm, int flags)
 {
     ERR_ON_NULL(wm);
+    WM_VALIDATE_FLAGS(wm);
 
     wm->spinlock = SPINLOCK_UNLOCKED;
     wm->composition_buffer_size = 0;
@@ -41,6 +45,12 @@ int init_windowmanager(struct windowmanager* wm)
     wm->ops = &wm_default_wm_ops;
     wm->windows = NULL;
     wm->window_count = 0;
+
+    /* flags */
+    wm->flags = flags;
+    
+    /* state */
+    wm->state = WM_INITIALIZED;
 
     WM_VALIDATE(wm);
 
@@ -71,6 +81,7 @@ static int wm_default_add(struct windowmanager* wm, struct window* window)
     while (current->next != NULL) {
         current = current->next;
     }
+
     current->next = window;
     wm->window_count++;
 
@@ -172,7 +183,7 @@ static int wm_default_draw(struct windowmanager* wm, struct window* window)
     return 0;
 }
 
-static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char type)
+static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char flags)
 {
     ERR_ON_NULL(wm);
 
@@ -186,7 +197,7 @@ static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char t
         /* if mouse is in window */
         if(gfx_point_in_rectangle(i->x, i->y, i->x+i->width, i->y+i->height, x, y)){
             /* on click when left mouse down */
-            if((type & 1) && wm->mouse_state == 0){
+            if((flags & MOUSE_LEFT) && wm->mouse_state == 0){
                 wm->mouse_state = 1;
                 i->mousedown(i, x, y);
 
@@ -194,7 +205,7 @@ static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char t
                 if(i != wm->windows){
                     wm->ops->push_front(wm, i);
                 }
-            } else if(!(type & 1) && wm->mouse_state == 1) {
+            } else if(!(flags & MOUSE_LEFT) && wm->mouse_state == 1) {
                 /* If mouse state is "down" send click event */
                 wm->mouse_state = 0;
                 i->click(i, x, y);

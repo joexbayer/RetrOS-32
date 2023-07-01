@@ -38,7 +38,7 @@ struct window {
     uint16_t width, height, inner_width, inner_height;
     uint16_t pitch;
 
-    /* TODO: Click function should also take a mouse event  */
+    /* TODO: Move to ops struct */
     void (*click)(struct window*, int x, int y);
     void (*hover)(struct window*, int x, int y);
     void (*mousedown)(struct window*, int x, int y);
