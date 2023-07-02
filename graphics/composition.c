@@ -403,7 +403,7 @@ void gfx_compositor_main()
          */
         //ENTER_CRITICAL();
         int test = rdtsc();
-        int mouse_changed = mouse_event_get(&m);
+        int mouse_changed = mouse_get_event(&m);
         int window_changed = gfx_check_changes(wind.order);
         struct time time;
         get_current_time(&time);
