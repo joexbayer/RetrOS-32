@@ -19,6 +19,25 @@
 #include <vbe.h>
 #include <kutils.h>
 
+/* prototype window ops */
+static void gfx_default_click(struct window* window, int x, int y);
+static void gfx_default_mouse_down(struct window* window, int x, int y);
+static void gfx_default_mouse_up(struct window* window, int x, int y);
+static void gfx_default_hover(struct window* window, int x, int y);
+
+/* default window ops struct */
+static struct window_ops default_window_ops = {
+    .click = &gfx_default_click,
+    .mousedown = &gfx_default_mouse_down,
+    .mouseup = &gfx_default_mouse_up,
+    .hover = &gfx_default_hover
+};
+
+/* default windows draw ops */
+static struct window_draw_ops default_window_draw_ops = {
+    .draw = &gfx_draw_window
+};
+
 /**
  * @brief Draw given window to a frambuffer.
  * 
@@ -131,7 +150,7 @@ void gfx_window_resize(struct window* w, int width, int height)
  * @param x 
  * @param y 
  */
-void gfx_default_click(struct window* window, int x, int y)
+static void gfx_default_click(struct window* window, int x, int y)
 {
     dbgprintf("[GFX WINDOW] Clicked %s\n", window->name);
 
@@ -151,7 +170,7 @@ void gfx_default_click(struct window* window, int x, int y)
 }
 
 
-void gfx_default_hover(struct window* window, int x, int y)
+static void gfx_default_hover(struct window* window, int x, int y)
 {
     if(window->is_moving.state == GFX_WINDOW_MOVING){
 
@@ -175,7 +194,7 @@ void gfx_default_hover(struct window* window, int x, int y)
     }
 }
 
-void gfx_default_mouse_down(struct window* window, int x, int y)
+static void gfx_default_mouse_down(struct window* window, int x, int y)
 {
     if(gfx_point_in_rectangle(window->x+8, window->y, window->x+window->width-16, window->y+10, x, y)){
         window->is_moving.state = GFX_WINDOW_MOVING;
@@ -189,7 +208,7 @@ void gfx_default_mouse_down(struct window* window, int x, int y)
     }
 }
 
-void gfx_default_mouse_up(struct window* window, int x, int y)
+static void gfx_default_mouse_up(struct window* window, int x, int y)
 {
     if(gfx_point_in_rectangle(window->x+8, window->y, window->x+window->width-16, window->y+10, x, y)){
         window->is_moving.state = GFX_WINDOW_STATIC;

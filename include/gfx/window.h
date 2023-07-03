@@ -15,14 +15,33 @@ struct window;
 #define GFX_WINDOW_TITLE_HEIGHT 12
 #define GFX_MAX_EVENTS 10
 
-enum window_states {
+typedef enum window_states {
     GFX_WINDOW_MOVING,
     GFX_WINDOW_STATIC
-};
+} window_state_t;
 
 typedef enum window_flags {
     GFX_IS_RESIZABLE = 1 << 0
 } window_flag_t;
+
+/* window ops */
+struct window_ops {
+    void (*click)(struct window*, int x, int y);
+    void (*hover)(struct window*, int x, int y);
+    void (*mousedown)(struct window*, int x, int y);
+    void (*mouseup)(struct window*, int x, int y);
+};
+
+/* window draw ops */
+struct window_draw_ops {
+    void (*draw)(struct window*);
+    void (*rect)(struct window*, int x, int y, int width, int height, uint8_t color);
+    void (*textf)(struct window*, int x, int y, uint8_t color, char* fmt, ...);
+    void (*text)(struct window*, int x, int y, char* text, uint8_t color);
+    void (*line)(struct window*, int x1, int y1, int x2, int y2, uint8_t color);
+    void (*circle)(struct window*, int x, int y, int radius, uint8_t color);
+
+};
 
 struct window {
     struct window* next;
@@ -43,6 +62,12 @@ struct window {
     void (*hover)(struct window*, int x, int y);
     void (*mousedown)(struct window*, int x, int y);
     void (*mouseup)(struct window*, int x, int y);
+
+    /* draw ops */
+    struct window_draw_ops* draw_ops;
+
+    /* ops */
+    struct window_ops* ops;
 
     struct {
         struct gfx_event list[GFX_MAX_EVENTS];
