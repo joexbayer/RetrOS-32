@@ -171,7 +171,7 @@ void gfx_mouse_event(int x, int y, char flags)
             /* on click when left mouse down */
             if(flags & 1 && gfx_mouse_state == 0){
                 gfx_mouse_state = 1;
-                i->mousedown(i, x, y);
+                i->ops->mousedown(i, x, y);
 
                 /* If clicked window is not in front, push it. */
                 if(i != wind.order){
@@ -183,8 +183,8 @@ void gfx_mouse_event(int x, int y, char flags)
             } else if(!(flags & 1) && gfx_mouse_state == 1) {
                 /* If mouse state is "down" send click event */
                 gfx_mouse_state = 0;
-                i->click(i, x, y);
-                i->mouseup(i, x, y);
+                i->ops->click(i, x, y);
+                i->ops->mouseup(i, x, y);
 
                 uint16_t new_x = CLAMP( (x - (i->x+8)), 0,  i->inner_width);
                 uint16_t new_y = CLAMP( (y - (i->y+8)), 0,  i->inner_height);
@@ -197,7 +197,7 @@ void gfx_mouse_event(int x, int y, char flags)
                 gfx_push_event(wind.order, &e);
             }
 
-            i->hover(i, x, y);
+            i->ops->hover(i, x, y);
             return;
         }
     

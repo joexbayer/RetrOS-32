@@ -20,10 +20,10 @@
 #include <kutils.h>
 
 /* prototype window ops */
-void gfx_default_click(struct window* window, int x, int y);
-void gfx_default_mouse_down(struct window* window, int x, int y);
-void gfx_default_mouse_up(struct window* window, int x, int y);
-void gfx_default_hover(struct window* window, int x, int y);
+static void gfx_default_click(struct window* window, int x, int y);
+static void gfx_default_mouse_down(struct window* window, int x, int y);
+static void gfx_default_mouse_up(struct window* window, int x, int y);
+static void gfx_default_hover(struct window* window, int x, int y);
 
 /* default window ops struct */
 static struct window_ops default_window_ops = {
@@ -150,7 +150,7 @@ void gfx_window_resize(struct window* w, int width, int height)
  * @param x 
  * @param y 
  */
-void gfx_default_click(struct window* window, int x, int y)
+static void gfx_default_click(struct window* window, int x, int y)
 {
     dbgprintf("[GFX WINDOW] Clicked %s\n", window->name);
 
@@ -170,7 +170,7 @@ void gfx_default_click(struct window* window, int x, int y)
 }
 
 
-void gfx_default_hover(struct window* window, int x, int y)
+static void gfx_default_hover(struct window* window, int x, int y)
 {
     if(window->is_moving.state == GFX_WINDOW_MOVING){
 
@@ -194,7 +194,7 @@ void gfx_default_hover(struct window* window, int x, int y)
     }
 }
 
-void gfx_default_mouse_down(struct window* window, int x, int y)
+static void gfx_default_mouse_down(struct window* window, int x, int y)
 {
     if(gfx_point_in_rectangle(window->x+8, window->y, window->x+window->width-16, window->y+10, x, y)){
         window->is_moving.state = GFX_WINDOW_MOVING;
@@ -208,7 +208,7 @@ void gfx_default_mouse_down(struct window* window, int x, int y)
     }
 }
 
-void gfx_default_mouse_up(struct window* window, int x, int y)
+static void gfx_default_mouse_up(struct window* window, int x, int y)
 {
     if(gfx_point_in_rectangle(window->x+8, window->y, window->x+window->width-16, window->y+10, x, y)){
         window->is_moving.state = GFX_WINDOW_STATIC;
@@ -275,10 +275,7 @@ struct window* gfx_new_window(int width, int height, window_flag_t flags)
     memset(w->inner, 0, width*height);
     memset(w->events.list, 0, sizeof(struct gfx_event)*GFX_MAX_EVENTS);
 
-    w->click = &gfx_default_click;
-    w->mousedown = &gfx_default_mouse_down;
-    w->mouseup = &gfx_default_mouse_up;
-    w->hover = &gfx_default_hover;
+    w->ops = &default_window_ops;
     w->inner_height = height;
     w->inner_width = width;
     w->width = width + 16;

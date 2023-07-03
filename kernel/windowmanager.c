@@ -199,7 +199,7 @@ static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char f
             /* on click when left mouse down */
             if((flags & MOUSE_LEFT) && wm->mouse_state == 0){
                 wm->mouse_state = 1;
-                i->mousedown(i, x, y);
+                i->ops->mousedown(i, x, y);
 
                 /* If clicked window is not in front, push it. */
                 if(i != wm->windows){
@@ -208,8 +208,8 @@ static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char f
             } else if(!(flags & MOUSE_LEFT) && wm->mouse_state == 1) {
                 /* If mouse state is "down" send click event */
                 wm->mouse_state = 0;
-                i->click(i, x, y);
-                i->mouseup(i, x, y);
+                i->ops->click(i, x, y);
+                i->ops->mouseup(i, x, y);
 
                 uint16_t x2 = CLAMP( (x - (i->x+8)), 0,  i->inner_width);
                 uint16_t y2 = CLAMP( (y - (i->y+8)), 0,  i->inner_height);
@@ -224,7 +224,7 @@ static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char f
             }
 
             /* always send a hover event */
-            i->hover(i, x, y);
+            i->ops->hover(i, x, y);
             return 0;
         }
     }

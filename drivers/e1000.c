@@ -15,6 +15,7 @@
 #include <net/netdev.h>
 #include <memory.h>
 #include <serial.h>
+#include <kutils.h>
 
 #define PACKET_SIZE   2048
 #define TX_SIZE 16

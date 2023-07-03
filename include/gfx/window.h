@@ -21,7 +21,9 @@ typedef enum window_states {
 } window_state_t;
 
 typedef enum window_flags {
-    GFX_IS_RESIZABLE = 1 << 0
+    GFX_IS_RESIZABLE = 1 << 0,
+    GFX_IS_IMMUATABLE = 1 << 1,
+    GFX_IS_MOVABLE = 1 << 2,
 } window_flag_t;
 
 /* window ops */
@@ -35,11 +37,11 @@ struct window_ops {
 /* window draw ops */
 struct window_draw_ops {
     void (*draw)(struct window*);
-    void (*rect)(struct window*, int x, int y, int width, int height, uint8_t color);
-    void (*textf)(struct window*, int x, int y, uint8_t color, char* fmt, ...);
-    void (*text)(struct window*, int x, int y, char* text, uint8_t color);
-    void (*line)(struct window*, int x1, int y1, int x2, int y2, uint8_t color);
-    void (*circle)(struct window*, int x, int y, int radius, uint8_t color);
+    void (*rect)(struct window*, int x, int y, int width, int height, color_t color);
+    void (*textf)(struct window*, int x, int y, color_t color, char* fmt, ...);
+    void (*text)(struct window*, int x, int y, char* text, color_t color);
+    void (*line)(struct window*, int x1, int y1, int x2, int y2, color_t color);
+    void (*circle)(struct window*, int x, int y, int radius, color_t color);
 
 };
 
@@ -57,14 +59,8 @@ struct window {
     uint16_t width, height, inner_width, inner_height;
     uint16_t pitch;
 
-    /* TODO: Move to ops struct */
-    void (*click)(struct window*, int x, int y);
-    void (*hover)(struct window*, int x, int y);
-    void (*mousedown)(struct window*, int x, int y);
-    void (*mouseup)(struct window*, int x, int y);
-
     /* draw ops */
-    struct window_draw_ops* draw_ops;
+    struct window_draw_ops* draw;
 
     /* ops */
     struct window_ops* ops;
@@ -81,16 +77,16 @@ struct window {
         uint8_t text;
     } color;
 
-    /* Pointer to inner memory where applications draw. */
-    uint8_t* inner;
-    uint8_t is_resizable;
-    uint8_t resize;
-
-    struct sticky {
+    struct {
         char state;
         uint16_t x;
         uint16_t y;
-    } is_moving;     
+    } is_moving; 
+
+    /* Pointer to inner memory where applications draw. */
+    uint8_t* inner;
+    uint8_t is_resizable;
+    uint8_t resize;    
 
     struct pcb* owner;
     spinlock_t spinlock;
@@ -104,12 +100,6 @@ void gfx_draw_window(uint8_t* buffer, struct window* window);
 struct window* gfx_new_window(int width, int height, window_flag_t flags);
 int gfx_destory_window(struct window* w);
 void gfx_window_set_resizable();
-
-/* Default mouse event hooks */
-void gfx_default_click(struct window* window, int x, int y);
-void gfx_default_hover(struct window* window, int x, int y);
-void gfx_default_mouse_down(struct window* window, int x, int y);
-void gfx_default_mouse_up(struct window* window, int x, int y);
 
 void gfx_window_resize(struct window* w, int width, int height);
 

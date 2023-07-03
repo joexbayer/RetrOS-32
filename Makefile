@@ -50,7 +50,7 @@ endif
 
 
 # ---------------- Objects to compile ----------------
-PROGRAMOBJ = bin/shell.o bin/networking.o bin/dhcpd.o bin/error.o bin/tcpd.o bin/image.o
+PROGRAMOBJ = bin/shell.o bin/networking.o bin/dhcpd.o bin/tcpd.o
 
 GFXOBJ = bin/window.o bin/component.o bin/composition.o bin/gfxlib.o bin/api.o bin/theme.o
 
