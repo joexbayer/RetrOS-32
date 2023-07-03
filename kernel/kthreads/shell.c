@@ -356,10 +356,26 @@ void shell_put(unsigned char c)
 
 #include <gfx/api.h>
 
+#define CLEANUP_FUNCTION __attribute__((cleanup(cleanup_function)))
+void cleanup_function(int** ptr)
+{
+    dbgprintf("Cleaning up...\n");
+    kfree(*ptr);
+}
+
+
+void testfn()
+{
+	dbgprintf("Testfn...\n");
+	CLEANUP_FUNCTION int* ptr = kalloc(sizeof(int) * 50);
+}
+
 int c_test = 0;
-void shell()
+void __kthread_entry shell()
 {
 	dbgprintf("shell is running!\n");
+
+	testfn();
 
 	memset(term.textbuffer, 0, TERMINAL_BUFFER_SIZE);
 	struct window* window = gfx_new_window(SHELL_WIDTH, SHELL_HEIGHT, GFX_IS_RESIZABLE);

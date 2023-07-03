@@ -23,9 +23,6 @@ struct registers
     uint32_t eip, cs, eflags, useresp, ss; /*  Pushed by the processor automatically. */
 };
 
-/* This is a callback function */
-#define __int_handler //__attribute__((interrupt))
-
 void init_interrupts();
 void load_data_segments(int seg);
 void _syscall_entry(void);

@@ -19,7 +19,7 @@
 #include <util.h>
 #include <serial.h>
 
-void tcpd()
+void __kthread_entry tcpd()
 {
     int ret;
     struct sock* socket = kernel_socket(AF_INET, SOCK_STREAM, 0);

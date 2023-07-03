@@ -146,7 +146,7 @@ int net_handle_recieve(struct sk_buff* skb)
  * @brief Main networking event loop.
  * 
  */
-void networking_main()
+void __kthread_entry networking_main()
 {
     if(!is_netdev_attached()) return;
 

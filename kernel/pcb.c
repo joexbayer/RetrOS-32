@@ -531,7 +531,7 @@ error_t pcb_create_kthread(void (*entry)(), char* name)
 	return i;
 }
 
-void start_pcb(struct pcb* pcb)
+void __noreturn start_pcb(struct pcb* pcb)
 {   
 	pcb->state = RUNNING;
 	dbgprintf("[START PCB] Starting pcb!\n");

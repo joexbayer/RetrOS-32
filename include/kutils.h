@@ -21,6 +21,16 @@ extern char _start_kctor_table[];
 extern char _stop_kctor_table[];
 extern char _kctor_table_size[];
 
+
+/* This is a interupt handler function */
+#define __int_handler //__attribute__((interrupt))
+/* This is a async callback function */
+#define __async_callback
+/* This is a thread entry function */
+#define __kthread_entry
+/* This function does not return */
+#define __noreturn //__attribute__((noreturn))
+
 /**
  * @brief EXPORT_KCTOR
  * Adds a function pointer to the kctor table.

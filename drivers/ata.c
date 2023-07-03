@@ -24,11 +24,11 @@
 static uint8_t* ata_driver_data;
 struct ide_device ata_ide_device;
 
-void ata_primary()
+void __int_handler ata_primary()
 {
 }
 
-void ata_secondary()
+void __int_handler ata_secondary()
 {
 }
 
@@ -41,7 +41,7 @@ static void __ide_set_drive(uint8_t bus, uint8_t i)
     /* ELSE UNSUPPORTED. */
 }
 
-int ata_status_wait(int io_base, int timeout) {
+static int ata_status_wait(int io_base, int timeout) {
 	int status;
 
 	if (timeout > 0) {
@@ -53,14 +53,14 @@ int ata_status_wait(int io_base, int timeout) {
 	return status;
 }
 
-void ata_io_wait(int io_base) {
+static void ata_io_wait(int io_base) {
 	inportb(io_base + ATA_REG_ALTSTATUS);
 	inportb(io_base + ATA_REG_ALTSTATUS);
 	inportb(io_base + ATA_REG_ALTSTATUS);
 	inportb(io_base + ATA_REG_ALTSTATUS);
 }
 
-int ata_wait(int io, int adv)
+static int ata_wait(int io, int adv)
 {
     uint8_t status = 0;
 
@@ -85,7 +85,7 @@ static int __ata_read_sector(char *buf, int lba)
     uint8_t cmd = 0xE0;
     int errors = 0;
 
-try_again:
+__ata_read_sector_try_again:
     outportb(io + ATA_REG_CONTROL, 0x02);
 
     ata_wait(io, 0);
@@ -103,7 +103,7 @@ try_again:
         if (errors > 4)
             return -1;
 
-        goto try_again;
+        goto __ata_read_sector_try_again;
     }
 
     for (int i = 0; i < 256; i++) {

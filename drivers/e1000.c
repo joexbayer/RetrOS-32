@@ -198,7 +198,7 @@ int e1000_transmit(char* buffer, uint32_t size)
 	return size;
 }
 
-void e1000_callback()
+void __int_handler e1000_callback()
 {
 	interrupts++;
 	net_incoming_packet_handler();

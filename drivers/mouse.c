@@ -15,6 +15,7 @@
 #include <arch/io.h>
 #include <serial.h>
 #include <util.h>
+#include <kutils.h>
 
 #include <vbe.h>
 #include <colors.h>

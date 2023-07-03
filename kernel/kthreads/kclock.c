@@ -4,12 +4,13 @@
 #include <gfx/gfxlib.h>
 #include <gfx/theme.h>
 #include <timer.h>
+#include <kutils.h>
 
 #define center_x(size) ((110/2) - ((size*8)/2))
 
 static char* months[] = {"NAN", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Nov", "Dec"};
 
-void kclock()
+void __kthread_entry kclock()
 {   
     struct time current_time;
     gfx_new_window(110, 140, 0);

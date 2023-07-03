@@ -14,6 +14,7 @@
 #include <net/socket.h>
 #include <net/ipv4.h>
 #include <net/dns.h>
+#include <kutils.h>
 
 #include <scheduler.h>
 #include <memory.h>
@@ -191,7 +192,7 @@ int dhcp_get_gw()
     return dhcp_state.gateway;
 }
 
-void dhcpd()
+void __kthread_entry dhcpd()
 {
     if(dhcp_state.state == DHCP_SUCCESS)
         return;

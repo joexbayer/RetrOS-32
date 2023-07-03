@@ -15,11 +15,12 @@
 #include <scheduler.h>
 #include <pcb.h>
 #include <arch/io.h>
+#include <kutils.h>
 
 #define PIT_IRQ		32
 
 static unsigned long tick = 0;
-static void timer_callback()
+static void __int_handler timer_callback()
 {
 	tick++;
 	if(current_running != NULL)

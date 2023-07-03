@@ -17,6 +17,7 @@
 #include <sync.h>
 #include <arch/io.h>
 #include <pcb.h>
+#include <kutils.h>
 
 #include <vbe.h>
 #include <vbe.h>
@@ -94,7 +95,7 @@ void kb_add_char(unsigned char c)
 	kb_buffer_head = (kb_buffer_head + 1) % KB_BUFFER_SIZE;
 }
 
-static void kb_callback()
+static void __int_handler kb_callback()
 {
 	uint8_t scancode = inportb(0x60); /* Recieve scancode, also ACK's interrupt? */
 	switch (scancode) {
