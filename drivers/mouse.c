@@ -121,8 +121,8 @@ void __int_handler __mouse_handler()
 							break;
 						}
 
-						mouse_device.x += mouse_device.x;
-						mouse_device.y -= mouse_device.y;
+						mouse_device.x += mouse_device.packet.x;
+						mouse_device.y -= mouse_device.packet.y;
 
 						if (mouse_device.x < 0) mouse_device.x = 0;
 						if (mouse_device.y < 0) mouse_device.y = 0;
