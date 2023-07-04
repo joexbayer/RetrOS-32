@@ -66,7 +66,7 @@ static struct terminal term  = {
 void shell_clear()
 {
 	struct gfx_theme* theme = kernel_gfx_current_theme();
-	kernel_gfx_draw_rectangle(0, SHELL_POSITION, gfx_get_window_height(), 8, theme->terminal.background);
+	kernel_gfx_draw_rectangle(current_running->gfx_window, 0, SHELL_POSITION, gfx_get_window_height(), 8, theme->terminal.background);
 }
 
 void reset_shell()
@@ -337,7 +337,7 @@ void shell_put(unsigned char c)
 		if(shell_buffer_length < 1)
 			return;
 		shell_column -= 1;
-		kernel_gfx_draw_rectangle(shell_column*8, SHELL_POSITION, 8, 8, COLOR_VGA_BG);
+		kernel_gfx_draw_rectangle(current_running->gfx_window, shell_column*8, SHELL_POSITION, 8, 8, COLOR_VGA_BG);
 		gfx_commit();
 		shell_buffer[shell_buffer_length] = 0;
 		shell_buffer_length--;
@@ -381,7 +381,7 @@ void __kthread_entry shell()
 	struct window* window = gfx_new_window(SHELL_WIDTH, SHELL_HEIGHT, GFX_IS_RESIZABLE);
 	
 	dbgprintf("shell: window 0x%x\n", window);
-	kernel_gfx_draw_rectangle(0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_VGA_BG);
+	kernel_gfx_draw_rectangle(current_running->gfx_window, 0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_VGA_BG);
 
 	terminal_attach(&term);
 

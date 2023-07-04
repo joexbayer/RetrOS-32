@@ -16,7 +16,7 @@ int gfx_syscall_hook(int option, void* data, int flags)
         break;
     case GFX_DRAW_RECTANGLE_OPT:;
         struct gfx_rectangle* r = (struct gfx_rectangle*)data;
-        kernel_gfx_draw_rectangle(r->x, r->y, r->width, r->height, r->color);
+        kernel_gfx_draw_rectangle(current_running->gfx_window, r->x, r->y, r->width, r->height, r->color);
         break;
     
     case GFX_DRAW_CIRCLE_OPT:;

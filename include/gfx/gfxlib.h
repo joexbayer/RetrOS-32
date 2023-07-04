@@ -18,7 +18,7 @@ int gfx_push_event(struct window* w, struct gfx_event* e);
 
 void gfx_line(int x, int y, int length, int option, int color);
 
-int kernel_gfx_draw_rectangle(int x, int y, int width, int height, unsigned char color);
+int kernel_gfx_draw_rectangle(struct window* w, int x, int y, int width, int height, unsigned char color);
 int kernel_gfx_draw_char(int x, int y, unsigned char c, unsigned char color);
 int kernel_gfx_draw_text(int x, int y, char* str, unsigned char color);
 int kernel_gfx_draw_format_text(int x, int y, unsigned char color, char* fmt, ...);

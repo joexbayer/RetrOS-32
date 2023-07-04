@@ -22,7 +22,7 @@ void __kthread_entry kclock()
         struct gfx_theme* theme = kernel_gfx_current_theme();
         get_current_time(&current_time);
 
-        kernel_gfx_draw_rectangle(0, 0, 110, 140, theme->window.background);
+        kernel_gfx_draw_rectangle(current_running->gfx_window, 0, 0, 110, 140, theme->window.background);
 
         int angle_id = (0.5 * (current_time.hour%12 * 60 + current_time.minute) / 6);
 

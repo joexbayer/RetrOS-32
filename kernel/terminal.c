@@ -55,7 +55,7 @@ void terminal_commit()
 
 	struct gfx_theme* theme = kernel_gfx_current_theme();
 	int x = 0, y = 0;
-	kernel_gfx_draw_rectangle(0, 0, gfx_get_window_width(), gfx_get_window_height(), theme->terminal.background);
+	kernel_gfx_draw_rectangle(current_running->gfx_window, 0, 0, gfx_get_window_width(), gfx_get_window_height(), theme->terminal.background);
 	for (int i = current_running->term->tail; i < current_running->term->head; i++){
 		if(current_running->term->textbuffer[i] == '\n'){
 			x = 0;

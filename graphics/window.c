@@ -233,7 +233,7 @@ int kernel_gfx_window_border_color(uint8_t color)
 
 int gfx_destory_window(struct window* w)
 {
-    if(w == NULL) return -1;
+    ERR_ON_NULL(w);
 
     ENTER_CRITICAL();
     
@@ -284,7 +284,6 @@ struct window* gfx_new_window(int width, int height, window_flag_t flags)
     w->x = 16;
     w->y = 16;
     w->owner = current_running;
-    current_running->gfx_window = w;
     w->changed = 1;
     w->color.border = 0;
     w->color.header = 0;
@@ -309,6 +308,7 @@ struct window* gfx_new_window(int width, int height, window_flag_t flags)
 
     dbgprintf("[Window] Created new window for %s at 0x%x: inner 0x%x (total %x - %x)\n", current_running->name, w, w->inner, sizeof(struct window), width*height);
 
+    current_running->gfx_window = w;
     gfx_composition_add_window(w);
 
     return w;

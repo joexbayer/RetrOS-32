@@ -75,6 +75,7 @@ int gfx_event_loop(struct gfx_event* event, gfx_event_flag_t flags)
 /**
  * @brief Draws a rectangle onto the inner framebufferfor currently running process.
  * 
+ * @param w window to draw to
  * @param x coordinate
  * @param y coordiante
  * @param width of rectangle
@@ -82,21 +83,22 @@ int gfx_event_loop(struct gfx_event* event, gfx_event_flag_t flags)
  * @param color
  * @return int 0 on success, less than 0 on error
  */
-int kernel_gfx_draw_rectangle(int x, int y, int width, int height, unsigned char color)
+int kernel_gfx_draw_rectangle(struct window* w, int x, int y, int width, int height, unsigned char color)
 {
-	if(current_running->gfx_window == NULL)
-		return -1;
-	/*  */
-	if(x < 0 || y < 0 || x+width > current_running->gfx_window->inner_width || y+height > current_running->gfx_window->inner_height)
+	ERR_ON_NULL(w);
+
+	/* only draw rectangle inside window */
+	if(x < 0 || y < 0 || x+width > w->inner_width || y+height > w->inner_height)
 		return -2;
 
 	int i, j;
 	for (j = y; j < (y+height); j++)
 		for (i = x; i < (x+width); i++)
-			putpixel(current_running->gfx_window->inner, i, j, color, current_running->gfx_window->pitch);
+			putpixel(w->inner, i, j, color, w->pitch);
 
 	return 0;
 }
+
 /**
  * @brief Draws a character to the framebuffer of currently running process.
  * 
