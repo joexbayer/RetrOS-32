@@ -32,6 +32,7 @@ struct window_ops {
     void (*hover)(struct window*, int x, int y);
     void (*mousedown)(struct window*, int x, int y);
     void (*mouseup)(struct window*, int x, int y);
+    void (*resize)(struct window*, int width, int height);
 };
 
 /* window draw ops */
@@ -96,12 +97,12 @@ struct window {
     char changed;
 };
 
-void gfx_draw_window(uint8_t* buffer, struct window* window);
+
 struct window* gfx_new_window(int width, int height, window_flag_t flags);
+
+void gfx_draw_window(uint8_t* buffer, struct window* window);
 int gfx_destory_window(struct window* w);
 void gfx_window_set_resizable();
-
-void gfx_window_resize(struct window* w, int width, int height);
 
 
 #endif //  __WINDOW_H   

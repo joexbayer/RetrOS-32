@@ -83,7 +83,7 @@ int gfx_event_loop(struct gfx_event* event, gfx_event_flag_t flags)
  * @param color
  * @return int 0 on success, less than 0 on error
  */
-int kernel_gfx_draw_rectangle(struct window* w, int x, int y, int width, int height, unsigned char color)
+int kernel_gfx_draw_rectangle(struct window* w, int x, int y, int width, int height, color_t color)
 {
 	ERR_ON_NULL(w);
 

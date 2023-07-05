@@ -3,6 +3,7 @@
 #include <colors.h>
 #include <gfx/gfxlib.h>
 #include <gfx/theme.h>
+#include <gfx/window.h>
 #include <timer.h>
 #include <kutils.h>
 
@@ -13,7 +14,7 @@ static char* months[] = {"NAN", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
 void __kthread_entry kclock()
 {   
     struct time current_time;
-    gfx_new_window(110, 140, 0);
+    struct window* w = gfx_new_window(110, 140, 0);
 
     kernel_gfx_set_position(450, 50);
 
@@ -22,7 +23,7 @@ void __kthread_entry kclock()
         struct gfx_theme* theme = kernel_gfx_current_theme();
         get_current_time(&current_time);
 
-        kernel_gfx_draw_rectangle(current_running->gfx_window, 0, 0, 110, 140, theme->window.background);
+        w->draw->rect(w, 0, 0, 110, 140, theme->window.background);
 
         int angle_id = (0.5 * (current_time.hour%12 * 60 + current_time.minute) / 6);
 

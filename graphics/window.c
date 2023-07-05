@@ -20,22 +20,25 @@
 #include <kutils.h>
 
 /* prototype window ops */
-static void gfx_default_click(struct window* window, int x, int y);
+static void gfx_default_click(struct window* window, int x, int y); 
 static void gfx_default_mouse_down(struct window* window, int x, int y);
 static void gfx_default_mouse_up(struct window* window, int x, int y);
 static void gfx_default_hover(struct window* window, int x, int y);
+static void gfx_window_resize(struct window* w, int width, int height);
 
 /* default window ops struct */
 static struct window_ops default_window_ops = {
     .click = &gfx_default_click,
     .mousedown = &gfx_default_mouse_down,
     .mouseup = &gfx_default_mouse_up,
-    .hover = &gfx_default_hover
+    .hover = &gfx_default_hover,
+    .resize = &gfx_window_resize
 };
 
 /* default windows draw ops */
 static struct window_draw_ops default_window_draw_ops = {
-    .draw = &gfx_draw_window
+    .draw = &gfx_draw_window,
+    .rect = kernel_gfx_draw_rectangle
 };
 
 /**
@@ -113,7 +116,7 @@ void gfx_window_set_resizable()
 }
 
 /* under construction */
-void gfx_window_resize(struct window* w, int width, int height)
+static void gfx_window_resize(struct window* w, int width, int height)
 {
     /* Allocate new inner buffer, copy over old buffer, free old buffer, update struct */
     uint8_t* new_buffer = kalloc(width*height);
@@ -190,7 +193,7 @@ static void gfx_default_hover(struct window* window, int x, int y)
     }
 
     if(window->resize && window->is_resizable){
-        gfx_window_resize(window, x-window->x-8, y-window->y-8);
+        window->ops->resize(window, x-window->x-8, y-window->y-8);
     }
 }
 
@@ -276,6 +279,8 @@ struct window* gfx_new_window(int width, int height, window_flag_t flags)
     memset(w->events.list, 0, sizeof(struct gfx_event)*GFX_MAX_EVENTS);
 
     w->ops = &default_window_ops;
+    w->draw = &default_window_draw_ops;
+    
     w->inner_height = height;
     w->inner_width = width;
     w->width = width + 16;
