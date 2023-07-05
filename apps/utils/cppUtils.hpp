@@ -3,9 +3,9 @@
 
 #include <stdint.h>
 
-void *operator new(long unsigned int size);
+void *operator new(unsigned int size);
  
-void *operator new[](long unsigned int size);
+void *operator new[](unsigned int size);
 void operator delete(void *p);
  
 void operator delete[](void *p);

@@ -57,7 +57,7 @@ void terminal_commit()
 	int x = 0, y = 0;
 	kernel_gfx_draw_rectangle(current_running->gfx_window, 0, 0, gfx_get_window_width(), gfx_get_window_height(), theme->terminal.background);
 	for (int i = current_running->term->tail; i < current_running->term->head; i++){
-		if(current_running->term->textbuffer[i] == '\n'){
+		if(current_running->term->textbuffer[i] == '\n' || x > gfx_get_window_width()/8){
 			x = 0;
 			y++;
 			continue;
@@ -152,11 +152,15 @@ void terminal_write(const char* data, int size)
  */
 void twrite(const char* data)
 {
+	if(current_running->term == NULL)
+		return 0;
 	terminal_write(data, strlen(data));
 }
 
 void twriteln(const char* data)
 {
+	if(current_running->term == NULL)
+		return 0;
 	twrite(data);
 	terminal_putchar('\n');
 }
@@ -165,6 +169,9 @@ void twriteln(const char* data)
 
 int32_t twritef(char* fmt, ...)
 {
+	if(current_running->term == NULL)
+		return 0;
+	
 	va_list args;
 
 	int x_offset = 0;

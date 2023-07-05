@@ -13,6 +13,7 @@
 #include <scheduler.h>
 #include <pcb.h>
 #include <assert.h>
+#include <kutils.h>
 
 #define MAX_KTHREADS 64
 static int total_kthreads = 0;
@@ -22,7 +23,7 @@ static struct kthread {
     void (*entry)();
 } kthread_table[MAX_KTHREADS];
 
-void kthread_entry(int argc, char* args[])
+void __noreturn kthread_entry(int argc, char* args[])
 {   
     assert(!current_running->is_process);
 
