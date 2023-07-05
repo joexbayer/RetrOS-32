@@ -75,7 +75,7 @@ void reset_shell()
 	memset(&shell_buffer, 0, SHELL_MAX_SIZE);
 	shell_column = strlen(shell_name)+1;
 	shell_buffer_length = 0;
-	kernel_gfx_draw_text(0, SHELL_POSITION, shell_name, COLOR_VGA_MISC);
+	kernel_gfx_draw_text(current_running->gfx_window, 0, SHELL_POSITION, shell_name, COLOR_VGA_MISC);
 	shell_column += 1;
 }
 
@@ -347,7 +347,7 @@ void shell_put(unsigned char c)
 	if(shell_column == SHELL_MAX_SIZE)
 		return;
 
-	kernel_gfx_draw_char(shell_column*8, SHELL_POSITION, uc, COLOR_VGA_FG);
+	kernel_gfx_draw_char(current_running->gfx_window, shell_column*8, SHELL_POSITION, uc, COLOR_VGA_FG);
 	gfx_commit();
 	shell_buffer[shell_buffer_length] = uc;
 	shell_buffer_length++;

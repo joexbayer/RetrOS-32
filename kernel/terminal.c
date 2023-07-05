@@ -64,7 +64,7 @@ void terminal_commit()
 		}
 
 		terminal_syntax(current_running->term->textbuffer[i]);
-		kernel_gfx_draw_char(1 + x*8, 1+ y*8, current_running->term->textbuffer[i], current_running->term->text_color);
+		kernel_gfx_draw_char(current_running->gfx_window, 1 + x*8, 1+ y*8, current_running->term->textbuffer[i], current_running->term->text_color);
 		x++;
 	}
 }

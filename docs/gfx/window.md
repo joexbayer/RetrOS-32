@@ -1,6 +1,6 @@
 # GFX Library - Window API Documentation
 
-### window
+### struct window
 Represents a window object with its properties and actions.
 Mainly needed to draw to the window using its draw operations.
 
@@ -18,6 +18,7 @@ Creates a new window.
 struct window* win = gfx_new_window(250, 200, GFX_IS_RESIZABLE);
 win->draw->rect(win, 0, 0, 250, 200, COLOR_VGA_GREEN);
 ```
+Example: [kclock](https://github.com/joexbayer/NETOS/blob/main/kernel/kthreads/kclock.c).
 
 ## Enums
 
@@ -46,6 +47,7 @@ Hover and click are used to move the window. For receiving window interactions u
 - `void (*mousedown)(struct window*, int x, int y)`: Triggered when mouse button is pressed down on the window.
 - `void (*mouseup)(struct window*, int x, int y)`: Triggered when mouse button is released over the window.
 - `void (*resize)(struct window*, int width, int height)`: Resizes the window.
+- `void (*move)(struct window*, int x, int y)`: Moved window to given x, y coordinates
 
 ### window_draw_ops
 Struct for window drawing operations.

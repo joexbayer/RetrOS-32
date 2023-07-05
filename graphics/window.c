@@ -32,13 +32,18 @@ static struct window_ops default_window_ops = {
     .mousedown = &gfx_default_mouse_down,
     .mouseup = &gfx_default_mouse_up,
     .hover = &gfx_default_hover,
-    .resize = &gfx_window_resize
+    .resize = &gfx_window_resize,
+    .move = &kernel_gfx_set_position
 };
 
 /* default windows draw ops */
 static struct window_draw_ops default_window_draw_ops = {
     .draw = &gfx_draw_window,
-    .rect = kernel_gfx_draw_rectangle
+    .rect = &kernel_gfx_draw_rectangle,
+    .textf = &kernel_gfx_draw_format_text,
+    .text = &kernel_gfx_draw_text,
+    .line = &kernel_gfx_draw_line,
+    .circle = &kernel_gfx_draw_circle
 };
 
 /**
@@ -266,21 +271,23 @@ struct window* gfx_new_window(int width, int height, window_flag_t flags)
 
     struct window* w = (struct window*) kalloc(sizeof(struct window));
     if(w == NULL){
-        dbgprintf("window is NULL\n");
+        warningf("window is NULL\n");
         return NULL;
     }
 
     w->inner = kalloc(width*height);
     if(w->inner == NULL){
-        dbgprintf("Inner window is NULL\n");
+        warningf("Inner window is NULL\n");
+        kfree(w);
         return NULL;
     }
     memset(w->inner, 0, width*height);
     memset(w->events.list, 0, sizeof(struct gfx_event)*GFX_MAX_EVENTS);
 
+    /* Set default ops */
     w->ops = &default_window_ops;
     w->draw = &default_window_draw_ops;
-    
+
     w->inner_height = height;
     w->inner_width = width;
     w->width = width + 16;

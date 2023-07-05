@@ -19,12 +19,12 @@ int gfx_push_event(struct window* w, struct gfx_event* e);
 void gfx_line(int x, int y, int length, int option, int color);
 
 int kernel_gfx_draw_rectangle(struct window* w, int x, int y, int width, int height, color_t color);
-int kernel_gfx_draw_char(int x, int y, unsigned char c, unsigned char color);
-int kernel_gfx_draw_text(int x, int y, char* str, unsigned char color);
-int kernel_gfx_draw_format_text(int x, int y, unsigned char color, char* fmt, ...);
+int kernel_gfx_draw_char(struct window* w, int x, int y, unsigned char c, unsigned char color);
+int kernel_gfx_draw_text(struct window* w, int x, int y, char* str, unsigned char color);
+int kernel_gfx_draw_format_text(struct window* w, int x, int y, unsigned char color, char* fmt, ...);
 
-void kernel_gfx_draw_circle(int xc, int yc, int r, unsigned  char color);
-void kernel_gfx_draw_line(int x0, int y0, int x1, int y1, unsigned  char color);
+void kernel_gfx_draw_circle(struct window* w, int xc, int yc, int r, unsigned char color);
+void kernel_gfx_draw_line(struct window* w, int x0, int y0, int x1, int y1, unsigned char color);
 
 int gfx_get_window_width();
 int gfx_get_window_height();
@@ -32,7 +32,7 @@ int gfx_get_window_height();
 int kernel_gfx_set_title(char* title);
 int kernel_gfx_set_header(const char* header);
 
-void kernel_gfx_set_position(int x, int y);
+void kernel_gfx_set_position(struct window* w, int x, int y);
 
 void gfx_inner_box(int x, int y, int w, int h, int fill);
 void gfx_outer_box(int x, int y, int w, int h, int fill);

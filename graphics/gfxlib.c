@@ -108,20 +108,19 @@ int kernel_gfx_draw_rectangle(struct window* w, int x, int y, int width, int hei
  * @param color 
  * @return int 0 on success, less than 0 on error.
  */
-int kernel_gfx_draw_char(int x, int y, unsigned char c, unsigned char color)
+int kernel_gfx_draw_char(struct window* w, int x, int y, unsigned char c, unsigned char color)
 {
 
-	if(current_running->gfx_window == NULL)
-		return -1;
+	ERR_ON_NULL(w);
 
 	//ENTER_CRITICAL();
 	for (int l = 0; l < 8; l++) {
 		for (int i = 8; i >= 0; i--) {
 			if (font8x8_basic[c][l] & (1 << i)) {
 
-				if((x)+i < 0 || (y)+l < 0 || (x)+i > current_running->gfx_window->inner_width || (y)+l > current_running->gfx_window->inner_height)
+				if((x)+i < 0 || (y)+l < 0 || (x)+i > w->inner_width || (y)+l > w->inner_height)
 					continue;
-				putpixel(current_running->gfx_window->inner, (x)+i, (y)+l, color, current_running->gfx_window->pitch);
+				putpixel(w->inner, (x)+i, (y)+l, color, w->pitch);
 			}
 		}
 	}
@@ -133,10 +132,10 @@ int kernel_gfx_draw_char(int x, int y, unsigned char c, unsigned char color)
 	return 0;
 }
 
-void kernel_gfx_set_position(int x, int y)
+void kernel_gfx_set_position(struct window* w, int x, int y)
 {
-	current_running->gfx_window->x = x;
-	current_running->gfx_window->y = y;
+	w->x = x;
+	w->y = y;
 }
 
 void gfx_commit()
@@ -153,14 +152,13 @@ void gfx_commit()
  * @param color 
  * @return int 0 on success, less than 0 on error.
  */
-int kernel_gfx_draw_text(int x, int y, char* str, unsigned char color)
+int kernel_gfx_draw_text(struct window* w, int x, int y, char* str, unsigned char color)
 {
-	if(current_running->gfx_window == NULL)
-		return -1;
+	ERR_ON_NULL(w);
 
 	for (int i = 0; i < strlen(str); i++)
 	{
-		kernel_gfx_draw_char(x+(i*8), y, str[i], color);
+		kernel_gfx_draw_char(w, x+(i*8), y, str[i], color);
 	}
 
 	return 0;
@@ -215,7 +213,7 @@ plotLine(x0, y0, x1, y1)
 	end while
 */
 
-void kernel_gfx_draw_line(int x0, int y0, int x1, int y1, unsigned char color)  
+void kernel_gfx_draw_line(struct window* w, int x0, int y0, int x1, int y1, unsigned char color)
 {  
 	int dx, dy, sx, sy, error;
 	int t1 = x1-x0;
@@ -229,7 +227,7 @@ void kernel_gfx_draw_line(int x0, int y0, int x1, int y1, unsigned char color)
 
 	while(1)  
 	{  
-		putpixel(current_running->gfx_window->inner, y0, x0, color, current_running->gfx_window->pitch); 
+		putpixel(w->inner, y0, x0, color, w->pitch); 
 		if (x0 == x1 && y0 == y1) break;
 		int e2 = 2*error;
 
@@ -249,24 +247,24 @@ void kernel_gfx_draw_line(int x0, int y0, int x1, int y1, unsigned char color)
 	gfx_commit();
 }  
 
-void kernel_gfx_draw_circle_helper(int xc, int yc, int x, int y, unsigned char color)
+static void kernel_gfx_draw_circle_helper(struct window* w, int xc, int yc, int x, int y, unsigned char color)
 {
-	putpixel(current_running->gfx_window->inner, xc+x, yc+y, color, current_running->gfx_window->pitch);
-	putpixel(current_running->gfx_window->inner, xc-x, yc+y, color, current_running->gfx_window->pitch);
-	putpixel(current_running->gfx_window->inner, xc+x, yc-y, color, current_running->gfx_window->pitch);
-	putpixel(current_running->gfx_window->inner, xc-x, yc-y, color, current_running->gfx_window->pitch);
-	putpixel(current_running->gfx_window->inner, xc+y, yc+x, color, current_running->gfx_window->pitch);
-	putpixel(current_running->gfx_window->inner, xc-y, yc+x, color, current_running->gfx_window->pitch);
-	putpixel(current_running->gfx_window->inner, xc+y, yc-x, color, current_running->gfx_window->pitch);
-	putpixel(current_running->gfx_window->inner, xc-y, yc-x, color, current_running->gfx_window->pitch);
+	putpixel(w->inner, xc+x, yc+y, color, w->pitch);
+	putpixel(w->inner, xc-x, yc+y, color, w->pitch);
+	putpixel(w->inner, xc+x, yc-y, color, w->pitch);
+	putpixel(w->inner, xc-x, yc-y, color, w->pitch);
+	putpixel(w->inner, xc+y, yc+x, color, w->pitch);
+	putpixel(w->inner, xc-y, yc+x, color, w->pitch);
+	putpixel(w->inner, xc+y, yc-x, color, w->pitch);
+	putpixel(w->inner, xc-y, yc-x, color, w->pitch);
 }
  
 // using Bresenham's algorithm
-void kernel_gfx_draw_circle(int xc, int yc, int r, unsigned char color)
+void kernel_gfx_draw_circle(struct window* w, int xc, int yc, int r, unsigned char color)
 {
 	int x = 0, y = r;
 	int d = 3 - 2 * r;
-	kernel_gfx_draw_circle_helper(xc, yc, x, y, color);
+	kernel_gfx_draw_circle_helper(w, xc, yc, x, y, color);
 	while (y >= x)
 	{
 		// for each pixel we will
@@ -284,7 +282,7 @@ void kernel_gfx_draw_circle(int xc, int yc, int r, unsigned char color)
 		}
 		else
 			d = d + 4 * x + 6;
-		kernel_gfx_draw_circle_helper(xc, yc, x, y, color);
+		kernel_gfx_draw_circle_helper(w, xc, yc, x, y, color);
 	}
 
 	gfx_commit();
@@ -292,7 +290,7 @@ void kernel_gfx_draw_circle(int xc, int yc, int r, unsigned char color)
 
 
 #define GFX_MAX_FMT 50
-int kernel_gfx_draw_format_text(int x, int y, unsigned char color, char* fmt, ...)
+int kernel_gfx_draw_format_text(struct window* w, int x, int y, unsigned char color, char* fmt, ...)
 {
 	va_list args;
 
@@ -314,7 +312,7 @@ int kernel_gfx_draw_format_text(int x, int y, unsigned char color, char* fmt, ..
 					case 'i': ;
 						num = va_arg(args, int);
 						itoa(num, str);
-						kernel_gfx_draw_text(x+(x_offset*PIXELS_PER_CHAR), y, str, color);
+						kernel_gfx_draw_text(w, x+(x_offset*PIXELS_PER_CHAR), y, str, color);
 						x_offset += strlen(str);
 						break;
 					case 'p': ; /* p for padded int */
@@ -324,30 +322,30 @@ int kernel_gfx_draw_format_text(int x, int y, unsigned char color, char* fmt, ..
 						if(strlen(str) < 6){
 							int pad = 6-strlen(str);
 							for (int i = 0; i < pad; i++){
-								kernel_gfx_draw_char(x+(x_offset*PIXELS_PER_CHAR), y,'0', color);
+								kernel_gfx_draw_char(w, x+(x_offset*PIXELS_PER_CHAR), y,'0', color);
 								x_offset++;
 							}
 						}
 								dbgprintf("OFFSET %d\n", strlen(str));
 
-						kernel_gfx_draw_text(x+(x_offset*PIXELS_PER_CHAR), y, str, color);
+						kernel_gfx_draw_text(w, x+(x_offset*PIXELS_PER_CHAR), y, str, color);
 						x_offset += strlen(str);
 						break;
 					case 'x':
 					case 'X': ;
 						num = va_arg(args, int);
 						itohex(num, str);
-						kernel_gfx_draw_text(x+(x_offset*PIXELS_PER_CHAR), y, str, color);
+						kernel_gfx_draw_text(w, x+(x_offset*PIXELS_PER_CHAR), y, str, color);
 						x_offset += strlen(str);
 						break;
 					case 's': ;
 						char* str_arg = va_arg(args, char *);
-						kernel_gfx_draw_text(x+(x_offset*PIXELS_PER_CHAR), y, str_arg, color);
+						kernel_gfx_draw_text(w, x+(x_offset*PIXELS_PER_CHAR), y, str_arg, color);
 						x_offset += strlen(str_arg);
 						break;
 					case 'c': ;
 						char char_arg = (char)va_arg(args, int);
-						kernel_gfx_draw_char(x+(x_offset*PIXELS_PER_CHAR), y, char_arg, color);
+						kernel_gfx_draw_char(w, x+(x_offset*PIXELS_PER_CHAR), y, char_arg, color);
 						x_offset++;
 						break;
 					default:
@@ -361,7 +359,7 @@ int kernel_gfx_draw_format_text(int x, int y, unsigned char color, char* fmt, ..
 				x_offset = 0;
 				break;
 			default:  
-				kernel_gfx_draw_char(x+(x_offset*PIXELS_PER_CHAR), y, *fmt, color);
+				kernel_gfx_draw_char(w, x+(x_offset*PIXELS_PER_CHAR), y, *fmt, color);
 				x_offset++;
 				written++;
 			}
