@@ -21,11 +21,6 @@ void logd_attach_by_pid(int pid)
     pcb->term = &term;
 }
 
-void logd_attach()
-{
-    terminal_attach(&term);
-}
-
 void __kthread_entry logd()
 {
     struct window* w = gfx_new_window(400, 300, 0);

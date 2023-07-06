@@ -25,7 +25,8 @@ public:
 	{
 		while (1){
 			struct gfx_event event;
-			gfx_get_event(&event, GFX_EVENT_BLOCKING);
+			int ret = gfx_get_event(&event, GFX_EVENT_BLOCKING);
+			if(ret == -1) continue;
 			unsigned char color;
 
 			switch (event.event){

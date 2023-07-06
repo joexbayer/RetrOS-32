@@ -23,8 +23,9 @@ public:
 	Editor() : Window(288, 248, "Editor", 1) {
 		m_x = 0;
 		m_y = 0;
+		
 		m_textBuffer = (unsigned char*) malloc((c_width/8)*(c_height/8));
-
+	
 		//vm_data = (char*) malloc((c_width/4)*(c_height/4));
 		//vm_text = (int*) malloc((c_width/4)*(c_height/4));
 

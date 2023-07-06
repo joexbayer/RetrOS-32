@@ -126,6 +126,8 @@ syscall_return_value:
 .global _syscall_entry
 _syscall_entry:
     cli
+    addl $1, cli_cnt
+
     pushfl
     pushal
 
@@ -155,6 +157,7 @@ _syscall_entry:
     
     movl	(syscall_return_value), %eax
 
+    subl $1, cli_cnt
     iret
 
 page_fault_save:

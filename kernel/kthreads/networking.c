@@ -34,6 +34,12 @@ enum netd_states {
     NETD_STARTED
 };
 
+struct network_manager_ops {
+    void (*start)();
+    void (*stop)();
+    void (*restart)();
+};
+
 static struct network_manager {
     int state;
 
@@ -43,7 +49,14 @@ static struct network_manager {
 
     struct net_info stats;
 
+    struct network_manager_ops ops;
+
 } netd = {
+    .ops = {
+        .start = NULL,
+        .stop = NULL,
+        .restart = NULL
+    },
     .state = NETD_UNINITIALIZED,
     .packets = 0,
     .stats.dropped = 0, 
@@ -61,6 +74,7 @@ void net_incoming_packet_handler()
         return;
     }
 
+    twritef("-> %i:%d, %d\n", ntohl(skb->hdr.ip->daddr), skb->hdr.tcp->dest == 0 ? ntohs(skb->hdr.udp->destport) : ntohs(skb->hdr.tcp->dest) , skb->len);
     netd.skb_rx_queue->ops->add(netd.skb_rx_queue, skb);
     netd.packets++;
     netd.stats.recvd++;
@@ -84,7 +98,6 @@ static void __net_transmit_skb(struct sk_buff* skb)
     }
     netd.packets++;
     netd.stats.sent++;
-    twritef("-> %i:%d, %d\n", ntohl(skb->hdr.ip->daddr), skb->hdr.tcp->dest == 0 ? ntohs(skb->hdr.udp->destport) : ntohs(skb->hdr.tcp->dest) , skb->len);
 }
 
 int net_drop_packet(struct sk_buff* skb)
@@ -157,8 +170,6 @@ void __kthread_entry networking_main()
         netd.skb_rx_queue = skb_new_queue();
         netd.skb_tx_queue = skb_new_queue();
     }
-
-    logd_attach();
 
     start("dhcpd");
 

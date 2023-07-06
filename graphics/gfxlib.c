@@ -63,7 +63,8 @@ int gfx_event_loop(struct gfx_event* event, gfx_event_flag_t flags)
 			}
 			continue;
 		}
-
+		
+		dbgprintf("Getting event %d (tail %d)\n", current_running->gfx_window->events.list[current_running->gfx_window->events.tail].event, current_running->gfx_window->events.tail);
 		SPINLOCK(current_running->gfx_window, {
 			memcpy(event, &current_running->gfx_window->events.list[current_running->gfx_window->events.tail], sizeof(struct gfx_event));
 			current_running->gfx_window->events.tail = (current_running->gfx_window->events.tail + 1) % GFX_MAX_EVENTS;

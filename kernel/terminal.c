@@ -58,7 +58,7 @@ void terminal_commit()
 	int x = 0, y = 0;
 	kernel_gfx_draw_rectangle(current_running->gfx_window, 0, 0, current_running->term->screen->inner_width, current_running->term->screen->inner_height, theme->terminal.background);
 	for (int i = current_running->term->tail; i < current_running->term->head; i++){
-		if(current_running->term->textbuffer[i] == '\n' || x > current_running->term->screen->inner_height/8){
+		if(current_running->term->textbuffer[i] == '\n'){
 			x = 0;
 			y++;
 			continue;
