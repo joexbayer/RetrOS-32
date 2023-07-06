@@ -5,6 +5,7 @@
 #include <gfx/theme.h>
 #include <gfx/window.h>
 #include <timer.h>
+#include <terminal.h>
 #include <kutils.h>
 
 #define center_x(size) ((110/2) - ((size*8)/2))
@@ -22,7 +23,6 @@ void __kthread_entry kclock()
         warningf("Failed to create window for kclock");
         return;
     }
-
 
     w->ops->move(w, 450, 50);
 
@@ -45,6 +45,8 @@ void __kthread_entry kclock()
         w->draw->textf(w, center_x(6), 124, theme->window.text, "%d. %s", current_time.day, months[current_time.month]);
 
         kernel_sleep(100);
+
+        twritef("Time: %d:%d:%d\n", current_time.hour, current_time.minute, current_time.second);
     }
 }
 EXPORT_KTHREAD(kclock);

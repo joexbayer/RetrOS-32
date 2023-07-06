@@ -84,6 +84,7 @@ static void __net_transmit_skb(struct sk_buff* skb)
     }
     netd.packets++;
     netd.stats.sent++;
+    twritef("-> %i:%d, %d\n", ntohl(skb->hdr.ip->daddr), skb->hdr.tcp->dest == 0 ? ntohs(skb->hdr.udp->destport) : ntohs(skb->hdr.tcp->dest) , skb->len);
 }
 
 int net_drop_packet(struct sk_buff* skb)
@@ -111,10 +112,12 @@ int net_handle_recieve(struct sk_buff* skb)
             switch (skb->hdr.ip->proto){
             case UDP:
                 if(net_udp_parse(skb) < 0) return net_drop_packet(skb);
+                twritef("<- %i:%d, %d\n", skb->hdr.ip->daddr, skb->hdr.udp->destport, skb->len);
                 break;
             
             case TCP:
                 if(tcp_parse(skb) < 0) return net_drop_packet(skb);
+                twritef("<- %i:%d, %d\n", skb->hdr.ip->daddr, skb->hdr.tcp->dest, skb->len);
                 skb_free(skb);
                 break;
             
@@ -155,6 +158,8 @@ void __kthread_entry networking_main()
         netd.skb_tx_queue = skb_new_queue();
     }
 
+    logd_attach();
+
     start("dhcpd");
 
     while(1){
@@ -175,7 +180,8 @@ void __kthread_entry networking_main()
             assert(skb != NULL);
 
             /* Offload skb parsing to worker thread. */
-            work_queue_add(&net_handle_recieve, (void*)skb, NULL);
+            //work_queue_add(&net_handle_recieve, (void*)skb, NULL);
+            net_handle_recieve(skb);
         }
     }
 }

@@ -255,6 +255,12 @@ void echo(int argc, char* argv[])
 }
 EXPORT_KSYMBOL(echo);
 
+void log(int argc, char* argv[])
+{
+	int pid = atoi(argv[1]);
+	logd_attach_by_pid(pid);
+}
+EXPORT_KSYMBOL(log);
 
 void cd(int argc, char* argv[])
 {

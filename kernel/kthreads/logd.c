@@ -1,12 +1,25 @@
 #include <kthreads.h>
+#include <pcb.h>
 #include <gfx/window.h>
 #include <terminal.h>
+#include <logd.h>
 
 static struct terminal term  = {
 	.head = 0,
 	.tail = 0,
 	.lines = 0
 };
+
+void logd_attach_by_pid(int pid)
+{
+    struct pcb* pcb = pcb_get_by_pid(pid);
+    if(pcb->state == STOPPED){
+        warningf("Failed to attach logd to pid %d", pid);
+        return;
+    }
+
+    pcb->term = &term;
+}
 
 void logd_attach()
 {
@@ -27,8 +40,8 @@ void __kthread_entry logd()
 
     while (1)
     {
-        twritef("Hello from logd!\n");
         terminal_commit();
+
         kernel_sleep(100);
     }
 }

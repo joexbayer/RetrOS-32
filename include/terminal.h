@@ -2,6 +2,7 @@
 #define TERMINAL_H
 
 #include <colors.h>
+#include <gfx/window.h>
 #include <util.h>
 
 #define TERMINAL_BUFFER_SIZE 2000
@@ -10,6 +11,7 @@ struct terminal {
     int tail;
     int head;
     int lines;
+    struct window* screen;
     color_t text_color;
 
 };

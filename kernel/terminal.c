@@ -35,6 +35,7 @@ void terminal_syntax(unsigned char c)
 			terminal_set_color(COLOR_VGA_MISC);
 			break;
 		case '"':
+		case ':':
 		case '-':
 			/* Highlight string literals and character literals */
 			terminal_set_color(COLOR_VGA_GREEN);
@@ -55,9 +56,9 @@ void terminal_commit()
 
 	struct gfx_theme* theme = kernel_gfx_current_theme();
 	int x = 0, y = 0;
-	kernel_gfx_draw_rectangle(current_running->gfx_window, 0, 0, gfx_get_window_width(), gfx_get_window_height(), theme->terminal.background);
+	kernel_gfx_draw_rectangle(current_running->gfx_window, 0, 0, current_running->term->screen->inner_width, current_running->term->screen->inner_height, theme->terminal.background);
 	for (int i = current_running->term->tail; i < current_running->term->head; i++){
-		if(current_running->term->textbuffer[i] == '\n' || x > gfx_get_window_width()/8){
+		if(current_running->term->textbuffer[i] == '\n' || x > current_running->term->screen->inner_height/8){
 			x = 0;
 			y++;
 			continue;
@@ -72,6 +73,7 @@ void terminal_commit()
 void terminal_attach(struct terminal* term)
 {
 	current_running->term = term;
+	term->screen = current_running->gfx_window;
 }
 
 int nextNewline(void* _data)
@@ -118,7 +120,7 @@ void terminal_putchar(char c)
 	
 	//unsigned char uc = c;	
 	if(c == '\n'){
-		if((gfx_get_window_height()/8) -1 == current_running->term->lines)
+		if((current_running->term->screen->inner_height/8) -1 == current_running->term->lines)
 			terminal_scroll(current_running->term);
 		else
 			current_running->term->lines++;
