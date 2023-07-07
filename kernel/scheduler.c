@@ -19,7 +19,6 @@ static int sched_exit(struct scheduler* sched);
 
 static int sched_round_robin(struct scheduler* sched);
 
-
 /* Default scheduler operations */
 static struct scheduler_ops sched_default_ops = {
     .prioritize = &sched_prioritize,
@@ -241,12 +240,18 @@ static int sched_round_robin(struct scheduler* sched)
         default:
             /* push next back into queue, should be very rare. */
             sched->queue->ops->push(sched->queue, next);
-            break;;
+            break;
         }
     } while(next->state != RUNNING);
     
     sched->ctx.running = next;
     current_running = next;
+
+    if(next->is_process){
+        tss.esp_0 = (uint32_t)next->kebp;
+        tss.ss_0 = GDT_KERNEL_DS;
+    }
+
     load_page_directory(sched->ctx.running->page_dir);
 
     return 0;
@@ -275,7 +280,7 @@ static int sched_default(struct scheduler* sched)
 
         pcb_restore_context(sched->ctx.running);
         
-        dbgprintf("Switching too PCB %s with page dir: %x, stack: %x, kstack: %x\n", sched->ctx.running->name, sched->ctx.running->page_dir, sched->ctx.running->ctx.esp, sched->ctx.running->kesp);
+        //dbgprintf("Switching too PCB %s with page dir: %x, stack: %x, kstack: %x\n", sched->ctx.running->name, sched->ctx.running->page_dir, sched->ctx.running->ctx.esp, sched->ctx.running->kesp);
     });
 
     return 0;

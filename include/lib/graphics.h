@@ -12,30 +12,8 @@ extern "C" {
 
 #ifdef __cplusplus
 #include <lib/syscall.h>
-/**
- * Base class for a simple window.
- * Creates a window and sets title.
- * More to come..,
- */
-class Window {
-public:
-	Window(int width, int height, const char* name, int flags) {
-		gfx_create_window(width, height, flags);
-		gfx_set_title(name);
-	}
-	
-	void setTitle(char* name){
-		gfx_set_title(name);
-	}
+#include <args.h>
 
-    void setHeader(const char* header)
-    {
-        gfx_set_header(header);
-    }
-
-private:
-	
-};
 
 #endif
 
@@ -88,6 +66,64 @@ int gfx_draw_line(int x0, int y0, int x1, int y1, unsigned char color);
 int gfx_get_event(struct gfx_event*, gfx_event_flag_t flags);
 
 #ifdef __cplusplus
+/**
+ * Base class for a simple window.
+ * Creates a window and sets title.
+ * More to come..,
+ */
+class Window {
+public:
+	Window(int width, int height, const char* name, int flags) {
+		gfx_create_window(width, height, flags);
+		gfx_set_title(name);
+	}
+
+    void drawRect(int x, int y, int width, int height, unsigned char color)
+    {
+        gfx_draw_rectangle(x, y, width, height, color);
+    }
+
+    void drawCircle(int x, int y, int r, unsigned char color)
+    {
+        gfx_draw_circle(x, y, r, color);
+    }
+
+    void drawLine(int x0, int y0, int x1, int y1, unsigned char color)
+    {
+        gfx_draw_line(x0, y0, x1, y1, color);
+    }
+
+    void drawText(int x, int y, const char* text, unsigned char color)
+    {
+        gfx_draw_text(x, y, text, color);
+    }
+
+    void drawChar(int x, int y, char data, unsigned char color)
+    {
+        gfx_draw_char(x, y, data, color);
+    }
+
+    void drawFormatText(int x, int y, unsigned char color, const char* fmt, ...)
+    {
+        va_list args;
+        va_start(args, fmt);
+        gfx_draw_format_text(x, y, color, fmt, args);
+        va_end(args);
+    }
+	
+	void setTitle(char* name){
+		gfx_set_title(name);
+	}
+
+    void setHeader(const char* header)
+    {
+        gfx_set_header(header);
+    }
+
+private:
+	
+};
+
 }
 #endif
 

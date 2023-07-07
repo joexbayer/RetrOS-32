@@ -1,10 +1,11 @@
 #include "edit.hpp"
 
-int isAlpha(unsigned char c) {
+/* Helper functions */
+static int isAlpha(unsigned char c) {
     return ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'));
 }
 
-int nextNewline(unsigned char* str)
+static int nextNewline(unsigned char* str)
 {
 	unsigned char* begin = str;
 	while (*begin != '\n' && *begin != 0)
@@ -15,7 +16,7 @@ int nextNewline(unsigned char* str)
 	return begin - str;
 }
 
-int prevNewline(unsigned char* str, unsigned char* limit)
+static int prevNewline(unsigned char* str, unsigned char* limit)
 {
 	unsigned char* begin = str;
 	while (*begin != '\n' && begin != limit)
@@ -27,10 +28,10 @@ int prevNewline(unsigned char* str, unsigned char* limit)
 
 void Editor::Reset()
 {
-	for (int i = 0; i < m_bufferSize; i++) m_textBuffer[i] = 0;
-	gfx_draw_rectangle(0, 0, c_width, c_height, COLOR_BG);
-	gfx_draw_line(0, 17, c_height, 17, COLOR_BG+2);
-	for (int i = 0; i < c_height/8; i++)gfx_draw_format_text(0, i*8, COLOR_BG+4, "%s%d ", i < 10 ? " " : "", i);
+	for (int i = 0; i < this->m_bufferSize; i++) this->m_textBuffer[i] = 0;
+	gfx_draw_rectangle(0, 0, this->c_width, this->c_height, COLOR_BG);
+	gfx_draw_line(0, 17, this->c_height, 17, COLOR_BG+2);
+	for (int i = 0; i < this->c_height/8; i++)gfx_draw_format_text(0, i*8, COLOR_BG+4, "%s%d ", i < 10 ? " " : "", i);
 }
 
 void Editor::reDraw(int from, int to)

@@ -5,6 +5,11 @@
 #include <sync.h>
 #include <gfx/window.h>
 
+/* macro to validate that all ops in a wm are not NULL */
+#define WM_VALIDATE(wm) if((wm)->ops == NULL || (wm)->ops->add == NULL || (wm)->ops->remove == NULL || (wm)->ops->draw == NULL || (wm)->ops->push_front == NULL || (wm)->ops->mouse_event == NULL) { return -ERROR_OPS_CORRUPTED; }
+/* validate flags macro */
+#define WM_VALIDATE_FLAGS(wm) if((wm)->flags & ~(WM_FULLSCREEN | WM_RESIZABLE)) { return -ERROR_INVALID_ARGUMENTS; }
+
 typedef enum windowmanager_states {
     WM_UNUSED,
     WN_ACTIVE,

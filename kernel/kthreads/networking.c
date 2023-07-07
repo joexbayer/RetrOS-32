@@ -74,7 +74,6 @@ void net_incoming_packet_handler()
         return;
     }
 
-    twritef("-> %i:%d, %d\n", ntohl(skb->hdr.ip->daddr), skb->hdr.tcp->dest == 0 ? ntohs(skb->hdr.udp->destport) : ntohs(skb->hdr.tcp->dest) , skb->len);
     netd.skb_rx_queue->ops->add(netd.skb_rx_queue, skb);
     netd.packets++;
     netd.stats.recvd++;
@@ -87,11 +86,13 @@ void net_send_skb(struct sk_buff* skb)
     netd.skb_tx_queue->ops->add(netd.skb_tx_queue, skb);
     netd.packets++;
     dbgprintf("Added SKB to TX queue\n");
+    
 }
 
 static void __net_transmit_skb(struct sk_buff* skb)
 {
     dbgprintf("Transmitting packet\n");
+    twritef("-> %i:%d, %d\n", ntohl(skb->hdr.ip->daddr), skb->hdr.tcp->dest == 0 ? ntohs(skb->hdr.udp->destport) : ntohs(skb->hdr.tcp->dest) , skb->len);
     int read = netdev_transmit(skb->head, skb->len);
     if(read <= 0){
         dbgprintf("Error sending packet\n");
@@ -125,12 +126,12 @@ int net_handle_recieve(struct sk_buff* skb)
             switch (skb->hdr.ip->proto){
             case UDP:
                 if(net_udp_parse(skb) < 0) return net_drop_packet(skb);
-                twritef("<- %i:%d, %d\n", skb->hdr.ip->daddr, skb->hdr.udp->destport, skb->len);
+                twritef("<- %i:%d, %d\n", ntohl(skb->hdr.ip->daddr), skb->hdr.udp->destport, skb->len);
                 break;
             
             case TCP:
                 if(tcp_parse(skb) < 0) return net_drop_packet(skb);
-                twritef("<- %i:%d, %d\n", skb->hdr.ip->daddr, skb->hdr.tcp->dest, skb->len);
+                twritef("<- %i:%d, %d\n", ntohl(skb->hdr.ip->daddr), skb->hdr.tcp->dest, skb->len);
                 skb_free(skb);
                 break;
             
@@ -194,5 +195,7 @@ void __kthread_entry networking_main()
             //work_queue_add(&net_handle_recieve, (void*)skb, NULL);
             net_handle_recieve(skb);
         }
+
+        kernel_yield();
     }
 }
