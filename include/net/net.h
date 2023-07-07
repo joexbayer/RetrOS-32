@@ -12,7 +12,7 @@ struct net_info {
 error_t net_get_info(struct net_info* info);
 
 void net_incoming_packet_handler();
-void net_send_skb(struct sk_buff* skb);
+int net_send_skb(struct sk_buff* skb);
 
 error_t kernel_bind(struct sock* socket, const struct sockaddr *address, socklen_t address_len);
 error_t kernel_accept(struct sock* socket, struct sockaddr *address, socklen_t *address_len);

@@ -28,8 +28,8 @@ OUTPUTDIR = ./bin/
 
 UTILS = bin/cppUtils.o bin/StringHelper.o
 
-USROBJS = bin/counter.o bin/clock.o bin/cube.o
-COMMON = ../bin/syscall.o ../bin/util.o ../bin/printf.o ../bin/graphics.o
+USROBJS = bin/counter.o bin/clock.o bin/cube.o bin/echo.o
+COMMON = ../bin/syscall.o ../bin/util.o ../bin/printf.o ../bin/graphics.o ../bin/netlib.o
 
 .PHONY: all new programs
 all: new

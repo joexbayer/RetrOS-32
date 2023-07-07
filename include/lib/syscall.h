@@ -6,6 +6,8 @@ extern "C"
 {
 #endif
 
+int invoke_syscall(int i, int arg1, int arg2, int arg3);
+
 void screen_put(int x, int y, unsigned char c);
 void print_put(unsigned char c);
 void exit();
@@ -20,7 +22,7 @@ int gfx_set_header(const char* header);
 int open(char* name, int flags);
 int write(int fd, void* buffer, int size);
 int read(int fd, void* buffer, int size);
-int close(int fd);
+int fclose(int fd);
 
 void* malloc(int size);
 void free(void* ptr);

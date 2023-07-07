@@ -99,7 +99,7 @@ void free(void* ptr)
     invoke_syscall(SYSCALL_FREE, (int)ptr, 0, 0);
 }
 
-int close(int fd)
+int fclose(int fd)
 {
     return invoke_syscall(SYSCALL_CLOSE, fd, 0, 0);
 }

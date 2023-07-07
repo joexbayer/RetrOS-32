@@ -84,7 +84,7 @@ void Editor::Quit()
 {
 	if(m_fd > 0){
 		/* TODO: Check for unsaved changes */
-		close(m_fd);
+		fclose(m_fd);
 	}
 
 	free(m_textBuffer);
@@ -121,7 +121,7 @@ void Editor::FileChooser()
 
 	if(m_fd > 0){
 		/* TODO: Check for unsaved changes */
-		close(m_fd);
+		fclose(m_fd);
 	}
 
 	gfx_draw_rectangle(24, c_height-8, c_width-24, 8, COLOR_BG);

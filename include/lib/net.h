@@ -1,6 +1,11 @@
 #ifndef __LIB_NET_H
 #define __LIB_NET_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 /**
  * @brief Following the Linux and UNIX implementation for learning purposes:
  * https://github.com/torvalds/linux/blob/master/include/linux/socket.h
@@ -43,6 +48,12 @@ struct sock_info {
     /* TODO */
 };
 
+struct net_buffer {
+    void* buffer;
+    int length;
+    int flags;
+};
+
 struct network_info {
     unsigned short dhcp; /* state */
     unsigned int my_ip;
@@ -63,4 +74,8 @@ int sendto(int socket, const void *message, int length, int flags, const struct 
 int socket(int domain, int type, int protocol);
 void close(int socket);
 
+
+#ifdef __cplusplus
+}
+#endif
 #endif // !__LIB_NET_H

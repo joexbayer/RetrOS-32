@@ -3,6 +3,8 @@
 #include <gfx/events.h>
 #include <colors.h>
 
+#include <lib/net.h>
+
 #define PIXELS_PER_BLOCK 8
 #define WIDTH (16*PIXELS_PER_BLOCK)
 #define HEIGHT ((255/16) * PIXELS_PER_BLOCK) + 32
@@ -36,6 +38,9 @@ public:
 				gfx_draw_rectangle(0, HEIGHT-16, WIDTH, 16, color);
 				gfx_draw_format_text(0, HEIGHT-12, COLOR_WHITE, "Color: %d (0x%x)", color, color);
 				break;
+			case GFX_EVENT_EXIT:
+				exit();
+				break;
 			default:
 				break;
 			}
@@ -46,6 +51,12 @@ public:
 int main(void) {  
     ColorPicker s1;
 	s1.Run();
+
+	while (1)
+	{
+		/* code */
+	}
+	
 
 	printf("Done\n");
 	return 0;

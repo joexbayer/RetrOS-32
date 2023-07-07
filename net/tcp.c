@@ -110,6 +110,16 @@ static int __tcp_send(struct sock* sock, struct tcp_header* hdr, struct sk_buff*
 	return 0;
 }
 
+/**
+ * @brief Sends a TCP segment.
+ * Function sends given data as a TCP segment. Creates a SKB and fills in the header
+ * before sending it to the network daemon.
+ * @param sock generic socket to send from.
+ * @param data given data to send.
+ * @param len length of data
+ * @param push if set to 1, the PSH flag will be set.
+ * @return int 0 on success, -1 on failure.
+ */
 int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t push)
 {
 	struct sk_buff* skb = skb_new();
@@ -128,6 +138,16 @@ int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t pus
 	};
 
 	sock->tcp->sequence += len;
+
+	/**
+	 * @brief This is where we need to check if packet is lost.
+	 * @see https://github.com/joexbayer/NETOS/issues/30
+	 * TODO: check if packet is lost.
+	 * Simples solution is to just wait for an ACK, if we dont get one, resend the packet.
+	 * Need a timer to resend the packet.
+	 * 
+	 * Problem is that we "lose" the skb after it is transmitted, keep a copy?
+	 */
 
 	__tcp_send(sock, &hdr, skb, data, len);
 	return 0;
@@ -338,7 +358,17 @@ int tcp_parse(struct sk_buff* skb)
 			dbgprintf("Socket %d received data for %d\n", sk, hdr->ack_seq);
 			//tcp_recv_segment(sk, hdr, skb);
 
-			/* Check if correct packet is in order. */
+			/**
+			 * @brief This is where we should check if the packet is in order.
+			 * @see https://github.com/joexbayer/NETOS/issues/34
+			 * TODO: check if packet is in order.
+			 * Probably need to check if the sequence number is equal to the expected sequence number.
+			 * If not, we should probably drop the packet and wait for the correct one. 
+			 * (We should probably also send a NACK to the sender)
+			 * 
+			 * We will not buffer packets for now, but we should probably do that in the future.
+			 * sock->tcp->sequence == htonl(tcp->seq)
+			 */
 			int ret = net_sock_add_data(sk, skb);
 			tcp_send_ack(sk, hdr, skb->data_len);
 			if(ret == 0)

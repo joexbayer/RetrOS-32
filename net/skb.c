@@ -67,7 +67,7 @@ static int __skb_queue_add(struct skb_queue* skb_queue, struct sk_buff* skb)
 	});
 
 	skb_queue->size++;
-	return 1;
+	return 0;
 }
 
 /**

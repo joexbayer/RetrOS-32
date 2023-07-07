@@ -89,6 +89,14 @@ error_t net_sock_read(struct sock* sock, uint8_t* buffer, unsigned int length)
 	return to_read;
 }
 
+struct sock* sock_get(socket_t id)
+{
+    if(id > NET_NUMBER_OF_SOCKETS)
+        return NULL;
+
+    return socket_table[id];
+}
+
 static inline error_t net_sock_add_data_segment(struct sock* sock, struct sk_buff* skb)
 {
     ASSERT_LOCKED(sock);

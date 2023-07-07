@@ -35,6 +35,7 @@
 #include <gfx/window.h>
 #include <gfx/composition.h>
 #include <gfx/api.h>
+#include <net/api.h>
 
 #include <multiboot.h>
 
@@ -152,6 +153,7 @@ void kernel(uint32_t magic)
 	add_system_call(SYSCALL_READ, (syscall_t)&ext_read);
 	add_system_call(SYSCALL_WRITE, (syscall_t)&ext_write);
 	add_system_call(SYSCALL_CLOSE, (syscall_t)&ext_close);
+
 	#pragma GCC diagnostic pop
 	
 
@@ -182,7 +184,7 @@ void kernel(uint32_t magic)
 	start("workd");
 	//start("workd");
 	start("wind");
-	//start("netd");
+	start("netd");
   	start("kclock");
 	start("shell");
 

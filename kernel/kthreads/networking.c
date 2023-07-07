@@ -80,12 +80,15 @@ void net_incoming_packet_handler()
     dbgprintf("New packet incoming...\n");
 }
 
-void net_send_skb(struct sk_buff* skb)
+int net_send_skb(struct sk_buff* skb)
 {
-    /* Validate SKB */
-    netd.skb_tx_queue->ops->add(netd.skb_tx_queue, skb);
+    ERR_ON_NULL(netd.skb_tx_queue);
+
+    RETURN_ON_ERR(netd.skb_tx_queue->ops->add(netd.skb_tx_queue, skb));
     netd.packets++;
     dbgprintf("Added SKB to TX queue\n");
+
+    return 0;
     
 }
 
@@ -176,7 +179,7 @@ void __kthread_entry networking_main()
 
     while(1){
         /**
-         * @brief Query RX and TX queue for netd.packets.
+         * @brief Query RX an    TX queue for netd.packets.
          */
         if(SKB_QUEUE_READY(netd.skb_tx_queue)){
             dbgprintf("Sending new SKB from TX queue\n");

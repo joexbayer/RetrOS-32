@@ -28,7 +28,7 @@ DEPENDS = bin/colors.o
 ########################
 
 OUTPUTDIR = ./bin/
-COMMON = ../../bin/syscall.o ../../bin/util.o ../../bin/printf.o ../../bin/graphics.o
+COMMON = ../../bin/syscall.o ../../bin/util.o ../../bin/printf.o ../../bin/graphics.o ../../bin/netlib.o
 
 .PHONY: all new programs
 all: new bin $(OUTPUT)
