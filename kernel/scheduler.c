@@ -71,7 +71,7 @@ error_t sched_init_default(struct scheduler* sched, sched_flag_t flags)
 
     sched->flags = flags | SCHED_INITIATED;
 
-    return 0;
+    return ERROR_OK;
 }
 
 /**
@@ -92,7 +92,7 @@ static int sched_sleep(struct scheduler* sched, int time)
 
     (void)sched->ops->schedule(sched);
 
-    return 0;
+    return ERROR_OK;
 }
 
 /**
@@ -109,7 +109,7 @@ static int sched_prioritize(struct scheduler* sched, struct pcb* pcb)
     /* Add pcb to priority queue */
     RETURN_ON_ERR(sched->priority->ops->push(sched->priority, pcb));
 
-    return 0;
+    return ERROR_OK;
 }
 
 /**
@@ -149,12 +149,12 @@ static int sched_block(struct scheduler* sched, struct pcb* pcb)
         pcb_save_context(pcb);
 
         /* Switch to next PCB, should be chosen by flag? */
-        assert(sched_round_robin(sched) == 0);
+        assert(sched_round_robin(sched) == ERROR_OK);
 
         pcb_restore_context(sched->ctx.running);
     });
 
-    return 0;
+    return ERROR_OK;
 }
 
 /**
@@ -210,7 +210,7 @@ static int sched_round_robin(struct scheduler* sched)
                 load_page_directory(next->page_dir);
                 //load_data_segments(GDT_KERNEL_DS);
                 start_pcb(next);
-                return 0; /* not sure if it should return or break */
+                return ERROR_OK; /* not sure if it should return or break */
             }
             break; /* Never reached. */
         case ZOMBIE:{
@@ -254,7 +254,7 @@ static int sched_round_robin(struct scheduler* sched)
 
     load_page_directory(sched->ctx.running->page_dir);
 
-    return 0;
+    return ERROR_OK;
 }
 
 /* Default round robin scheduler behavior */
@@ -283,7 +283,7 @@ static int sched_default(struct scheduler* sched)
         //dbgprintf("Switching too PCB %s with page dir: %x, stack: %x, kstack: %x\n", sched->ctx.running->name, sched->ctx.running->page_dir, sched->ctx.running->ctx.esp, sched->ctx.running->kesp);
     });
 
-    return 0;
+    return ERROR_OK;
 }
 
 /**
@@ -310,7 +310,7 @@ static int sched_exit(struct scheduler* sched)
         pcb_restore_context(sched->ctx.running);
     });
 
-    return 0;
+    return ERROR_OK;
 }
 
 /**
@@ -326,7 +326,7 @@ static int sched_add(struct scheduler* sched, struct pcb* pcb)
 
     RETURN_ON_ERR(sched->queue->ops->push(sched->queue, pcb));
     
-    return 0;
+    return ERROR_OK;
 }
 
 

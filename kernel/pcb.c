@@ -112,7 +112,7 @@ static error_t __pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb)
 
 	});
 
-	return 0;
+	return ERROR_OK;
 }
 
 /**
@@ -147,7 +147,7 @@ static error_t __pcb_queue_add(struct pcb_queue* queue, struct pcb* pcb)
 	});
 	dbgprintf("New pcb added to a queue\n");
 
-	return 0;
+	return ERROR_OK;
 }
 
 /**
@@ -280,7 +280,7 @@ error_t pcb_get_info(int pid, struct pcb_info* info)
 	info->usage = (float)pcb_table[pid].preempts / (float)pcb_total_usage();
 	memcpy(info->name, pcb_table[pid].name, PCB_MAX_NAME_LENGTH);
 
-	return 0;
+	return ERROR_OK;
 }
 
 struct pcb* pcb_get_new_running()

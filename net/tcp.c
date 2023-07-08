@@ -7,6 +7,7 @@
 #include <serial.h>
 #include <rbuffer.h>
 #include <scheduler.h>
+#include <errors.h>
 
 int tcp_new_connection(struct sock* sock, uint16_t dst_port, uint16_t src_port)
 {
@@ -17,7 +18,7 @@ int tcp_new_connection(struct sock* sock, uint16_t dst_port, uint16_t src_port)
 	sock->tcp->state = TCP_CREATED;
 	sock->tcp->sequence = 227728011;
 
-	return 0;
+	return ERROR_OK;
 }
 
 int tcp_free_connection(struct sock* sock)
@@ -27,7 +28,7 @@ int tcp_free_connection(struct sock* sock)
 	kfree(sock->tcp);
 	sock->tcp = NULL;
 
-	return 0;
+	return ERROR_OK;
 }
 
 inline int tcp_is_listening(struct sock* sock)
@@ -107,7 +108,7 @@ static int __tcp_send(struct sock* sock, struct tcp_header* hdr, struct sk_buff*
 
 	net_send_skb(skb);
 
-	return 0;
+	return ERROR_OK;
 }
 
 /**
@@ -150,7 +151,7 @@ int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t pus
 	 */
 
 	__tcp_send(sock, &hdr, skb, data, len);
-	return 0;
+	return ERROR_OK;
 }
 
 int tcp_send_ack(struct sock* sock, struct tcp_header* tcp, int len)
@@ -172,7 +173,7 @@ int tcp_send_ack(struct sock* sock, struct tcp_header* tcp, int len)
 	sock->tcp->acknowledgement = htonl(tcp->seq)+1;
 
 	__tcp_send(sock, &hdr, skb, NULL, 0);
-	return 0;
+	return ERROR_OK;
 }
 
 /* Currently deprecated */
@@ -214,7 +215,7 @@ int tcp_recv_segment(struct sock* sock, struct tcp_header* tcp, struct sk_buff* 
 	dbgprintf("[TCP] Added segment to socket %d (ready: %d)\n", sock, sock->tcp->data_ready);
 
 	tcp_send_ack(sock, tcp, skb->data_len);
-	return 0;
+	return ERROR_OK;
 	*/
 
 	return -1;
@@ -237,13 +238,13 @@ int tcp_connect(struct sock* sock)
 	};
 
 	__tcp_send(sock, &hdr, skb, NULL, 0);
-	return 0;
+	return ERROR_OK;
 }
 
 int tcp_send_syn(struct sock* sock, uint16_t dst_port, uint16_t src_port)
 {
 
-	return 0;
+	return ERROR_OK;
 }
 
 int tcp_recv_ack(struct sock* sock, struct tcp_header* tcp)
@@ -255,7 +256,7 @@ int tcp_recv_ack(struct sock* sock, struct tcp_header* tcp)
 		sock->tcp->state = TCP_ESTABLISHED;
 	}
 	
-	return 0;
+	return ERROR_OK;
 }
 
 int tcp_recv_fin(struct sock* sock, struct tcp_header* tcp)
@@ -293,7 +294,7 @@ int tcp_send_fin(struct sock* sock)
 	sock->tcp->sequence += 1;
 
 	__tcp_send(sock, &hdr, skb, NULL, 0);
-	return 0;
+	return ERROR_OK;
 }
 
 int tcp_close_connection(struct sock* sock)
@@ -303,7 +304,7 @@ int tcp_close_connection(struct sock* sock)
 
 	WAIT(!(sock->tcp->state == TCP_CLOSED));
 
-	return 0;
+	return ERROR_OK;
 }
 
 
@@ -343,14 +344,14 @@ int tcp_parse(struct sk_buff* skb)
 			sk->tcp->state = TCP_ESTABLISHED;
 
 			dbgprintf("Socket %d set to established\n", sk);
-			return 0;
+			return ERROR_OK;
 		}
 		break;
 	case TCP_WAIT_ACK:
 		if(hdr->syn == 0 && hdr->ack == 1){
 			dbgprintf("Socket %d received ack for %d\n", sk, hdr->ack_seq);
 			tcp_recv_ack(sk, hdr);
-			return 0;
+			return ERROR_OK;
 		}
 		break;
 	case TCP_ESTABLISHED:
@@ -373,7 +374,7 @@ int tcp_parse(struct sk_buff* skb)
 			tcp_send_ack(sk, hdr, skb->data_len);
 			if(ret == 0)
 				skb_free(skb);
-			return 0;
+			return ERROR_OK;
 		}
 		break;
 	case TCP_FIN_WAIT:

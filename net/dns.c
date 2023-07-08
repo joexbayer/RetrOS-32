@@ -163,6 +163,4 @@ int gethostname(char* hostname)
         return result;
     }
     return 0;
-    
-
 }

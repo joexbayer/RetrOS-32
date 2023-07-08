@@ -17,6 +17,7 @@
 #include <colors.h>
 #include <serial.h>
 #include <vbe.h>
+#include <errors.h>
 #include <kutils.h>
 
 /* prototype window ops */
@@ -236,7 +237,7 @@ int kernel_gfx_window_border_color(uint8_t color)
     if(current_running->gfx_window == NULL) return -1;
     current_running->gfx_window->color.border = color;
 
-    return 0;
+    return ERROR_OK;
 }
 
 int gfx_destory_window(struct window* w)
@@ -253,7 +254,7 @@ int gfx_destory_window(struct window* w)
 
     LEAVE_CRITICAL();
 
-    return 0;
+    return ERROR_OK;
 
 }
 

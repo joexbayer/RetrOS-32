@@ -16,35 +16,21 @@ static unsigned int htonl(unsigned int data)
           ((data & 0x00ff0000) >> 8)  |
           ((data & 0xff000000) >> 24) );
 }
+
+
 class TcpEcho : public Window {
 public:
-    TcpEcho(int width, int height) : Window(200, 200, "TcpEcho", 0) {
+    TcpEcho(int width, int height) : Window(200, 200, "Echo", 0) {
         this->width = width;
         this->height = height;
+
+        client = new TcpClient("tcpbin.com", 4242);
 
         drawRect(0, 0, width, height, COLOR_VGA_BG);
     }
 
-    void Connect(){
-        sd = socket(AF_INET, SOCK_STREAM, 0);
-		if (sd != 0) {
-			exit();
-		}
-
-		struct sockaddr_in dest_addr;
-		dest_addr.sin_addr.s_addr = htonl(760180939);
-		dest_addr.sin_port = htons(4242);
-		dest_addr.sin_family = AF_INET;
-
-        int ret = connect(sd, (struct sockaddr *)&dest_addr, sizeof(struct sockaddr_in));
-		if (ret != 0) {
-			exit();
-		}
-    }
 
     void Run(){
-        Connect();
-
         struct gfx_event e;
 
         char buf[100] = {0};
@@ -52,6 +38,7 @@ public:
         int i = 0;
 
         while (1){
+
             gfx_get_event(&e, GFX_EVENT_BLOCKING);
             switch (e.event)
             {
@@ -69,19 +56,21 @@ public:
                     if(i > 0){
                         i--;
                         buf[i] = 0;
-                        gfx_draw_format_text(0, 0, COLOR_VGA_FG, buf);
+                        drawFormatText(0, 0, COLOR_VGA_FG, buf);
                     }
                 break;
                 case '\n':
                     buf[i++] = '\n';
-                    send(sd, buf, i, 0);
+                    client->sendMsg(buf);   
                     i = 0;
-                    recv(sd, recvBuf, 100, 0);
-                    gfx_draw_format_text(0, 10, COLOR_VGA_FG, recvBuf);
+
+                    client->recvMsg(recvBuf, 100);
+
+                    drawFormatText(0, 10, COLOR_VGA_FG, recvBuf);
                     break;
                 default:
                     buf[i++] = e.data;
-                    gfx_draw_format_text(0, 0, COLOR_VGA_FG, buf);
+                    drawFormatText(0, 0, COLOR_VGA_FG, buf);
                     break;
                 }
                 break;
@@ -92,7 +81,7 @@ public:
     }
 
     void Cleanup(){
-        close(sd);
+        delete client;
     }
 
     void setSize(int width, int height) {
@@ -103,13 +92,14 @@ public:
 private:
     int sd;
     int width, height;
+    TcpClient* client;
 
 };
 
 int main()
 {
     TcpEcho demo(200, 200);
-    demo.setHeader("TcpBin");
+    demo.setHeader("tcpbin.com");
     demo.Run();
 
     while (1)

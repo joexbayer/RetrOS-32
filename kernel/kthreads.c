@@ -42,7 +42,7 @@ error_t register_kthread(void (*f)(), char* name)
     memcpy(kthread_table[total_kthreads].name, name, strlen(name)+1);
     total_kthreads++;
 
-    return 0;
+    return ERROR_OK;
 }
 
 error_t start(char* name)

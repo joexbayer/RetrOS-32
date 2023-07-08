@@ -48,7 +48,7 @@ int init_windowmanager(struct windowmanager* wm, int flags)
 
     WM_VALIDATE(wm);
 
-    return 0;
+    return ERROR_OK;
 }
 
 
@@ -68,7 +68,7 @@ static int wm_default_add(struct windowmanager* wm, struct window* window)
     if (wm->window_count == 0) {
         wm->windows = window;
         wm->window_count++;
-        return 0;
+        return ERROR_OK;
     }
 
     struct window* current = wm->windows;
@@ -79,7 +79,7 @@ static int wm_default_add(struct windowmanager* wm, struct window* window)
     current->next = window;
     wm->window_count++;
 
-    return 0;
+    return ERROR_OK;
 }
 
 /**
@@ -118,7 +118,7 @@ static int wm_default_remove(struct windowmanager* wm, struct window* window)
 
     spin_unlock(&wm->spinlock);
 
-    return 0;
+    return ERROR_OK;
 }
 
 /**
@@ -133,7 +133,7 @@ static int wm_default_push_front(struct windowmanager* wm, struct window* window
     ERR_ON_NULL(wm);
 
     if(window == wm->windows){
-        return 0;
+        return ERROR_OK;
     }
 
     RETURN_ON_ERR(wm->ops->remove(wm, window));
@@ -149,7 +149,7 @@ static int wm_default_push_front(struct windowmanager* wm, struct window* window
 
     spin_unlock(&wm->spinlock);
 
-    return 0;
+    return ERROR_OK;
 
 }
 
@@ -166,7 +166,7 @@ static int wm_default_draw(struct windowmanager* wm, struct window* window)
     ERR_ON_NULL(wm);
 
     if (wm->window_count == 0 || window == NULL) {
-        return 0;
+        return ERROR_OK;
     }
 
     if(window->next != NULL)
@@ -174,7 +174,7 @@ static int wm_default_draw(struct windowmanager* wm, struct window* window)
     
     gfx_draw_window(wm->composition_buffer, window);
 
-    return 0;
+    return ERROR_OK;
 }
 
 static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char flags)
@@ -182,7 +182,7 @@ static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char f
     ERR_ON_NULL(wm);
 
     if (wm->window_count == 0) {
-        return 0;
+        return ERROR_OK;
     }
     /* NOTE: no spinlock needed as windows are not changed */
 
@@ -219,9 +219,9 @@ static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char f
 
             /* always send a hover event */
             i->ops->hover(i, x, y);
-            return 0;
+            return ERROR_OK;
         }
     }
 
-    return 0;
+    return ERROR_OK;
 }

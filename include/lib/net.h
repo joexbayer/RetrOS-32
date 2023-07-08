@@ -76,6 +76,44 @@ void close(int socket);
 
 
 #ifdef __cplusplus
+
+/* TCP Client */
+class TcpClient {
+
+public:
+    TcpClient(const char* host, unsigned short port = 80) {
+        sd = socket(AF_INET, SOCK_STREAM, 0);
+        if (sd != 0) {
+            // error
+        }
+
+        dest_addr.sin_addr.s_addr = htonl(760180939);
+        dest_addr.sin_port = htons(4242);
+        dest_addr.sin_family = AF_INET;
+
+        int ret = connect(sd, (struct sockaddr *)&dest_addr, sizeof(struct sockaddr_in));
+        if (ret != 0) {
+            // error
+        }
+    }
+
+    ~TcpClient(){
+        close(sd);
+    }
+
+    int sendMsg(const char* msg){
+        return send(sd, msg, strlen(msg), 0);
+    }
+
+    int recvMsg(char* buf, int len){
+        return recv(sd, buf, len, 0);
+    }
+
+private:
+    socket_t sd;
+    struct sockaddr_in dest_addr;
+};
+
 }
 #endif
 #endif // !__LIB_NET_H

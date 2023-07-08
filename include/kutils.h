@@ -79,6 +79,11 @@ extern int cli_cnt;
     
 #define ASSERT_CRITICAL() assert(cli_cnt > 0)
 
+typedef enum {
+    false = 0,
+    true = 1
+} bool_t;
+
 struct unit {
     char* unit;
     int size;
