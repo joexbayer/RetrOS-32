@@ -2,20 +2,7 @@
 #include <util.h>
 #include <colors.h>
 #include <lib/net.h>
-
-static unsigned short htons(unsigned short data)
-{
-  return (((data & 0x00ff) << 8) |
-           (data & 0xff00) >> 8);
-}
-
-static unsigned int htonl(unsigned int data)
-{
-  return (((data & 0x000000ff) << 24) |
-          ((data & 0x0000ff00) << 8)  |
-          ((data & 0x00ff0000) >> 8)  |
-          ((data & 0xff000000) >> 24) );
-}
+#include "../apps/utils/cppUtils.hpp"
 
 
 class TcpEcho : public Window {
@@ -24,13 +11,13 @@ public:
         this->width = width;
         this->height = height;
 
-        client = new TcpClient("tcpbin.com", 4242);
-
         drawRect(0, 0, width, height, COLOR_VGA_BG);
     }
 
 
     void Run(){
+
+        TcpClient client("tcpbin.com", 4242);
         struct gfx_event e;
 
         char buf[100] = {0};
@@ -61,10 +48,10 @@ public:
                 break;
                 case '\n':
                     buf[i++] = '\n';
-                    client->sendMsg(buf);   
+                    client.sendMsg(buf);   
                     i = 0;
 
-                    client->recvMsg(recvBuf, 100);
+                    client.recvMsg(recvBuf, 100);
 
                     drawFormatText(0, 10, COLOR_VGA_FG, recvBuf);
                     break;
@@ -81,7 +68,7 @@ public:
     }
 
     void Cleanup(){
-        delete client;
+        
     }
 
     void setSize(int width, int height) {
@@ -92,8 +79,6 @@ public:
 private:
     int sd;
     int width, height;
-    TcpClient* client;
-
 };
 
 int main()

@@ -76,6 +76,21 @@ void close(int socket);
 
 
 #ifdef __cplusplus
+#include "../../apps/utils/cppUtils.hpp"
+
+inline unsigned short htons(unsigned short data)
+{
+  return (((data & 0x00ff) << 8) |
+           (data & 0xff00) >> 8);
+}
+
+inline unsigned int htonl(unsigned int data)
+{
+  return (((data & 0x000000ff) << 24) |
+          ((data & 0x0000ff00) << 8)  |
+          ((data & 0x00ff0000) >> 8)  |
+          ((data & 0xff000000) >> 24) );
+}
 
 /* TCP Client */
 class TcpClient {
