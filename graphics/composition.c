@@ -30,6 +30,8 @@
 #include <net/net.h>
 #include <arch/interrupts.h>
 
+#include <fs/ext.h>
+
 #include <diskdev.h>
 #include <net/netdev.h>
 
@@ -249,112 +251,59 @@ void gfx_unset_fullscreen(struct window* w)
     __is_fullscreen = 0;
 }
 
-/* Helper function for displaying progress */
-static int __calculate_relative_difference(int a, int b) {
-    int diff = ABS(a - b);
-    int max = MAX(a, b);
+int gfx_decode_background_image(char* background, int width, int height){
 
-    if (max == 0)
-        return 1;
-
-    int ratio = (diff * 8) / max;
-    ratio = (ratio >= 1) ? ratio : 1;
-
-    return 8 - ratio;
-}
-
-/**
- * @brief Main window server kthread entry function
- * Allocates a second framebuffer that will be memcpy'd to the VGA framebuffer.
- * 
- * Handles mouse events and pushes them to correct window.
- * Only redraws screen if a window has changed.
- * 
- * In current state its still very slow.
- */
-#define TIME_PREFIX(unit) unit < 10 ? "0" : ""
-
-#define TIMELINE_SIZE 5
-struct gfx_timeline {
-    char timeline[TIMELINE_SIZE];
-    int tick;
-    color_t bg;
-    color_t fg;
-    int start;
-};
-
-void gfx_timeline_draw(struct gfx_timeline* tl)
-{
-    vesa_fillrect(wind.composition_buffer, tl->start, 0, 8*TIMELINE_SIZE, 8,  (kernel_gfx_current_theme())->os.background);
-    for (int i = 0; i < TIMELINE_SIZE; i++){
-        if(tl->timeline[i] != 0)
-            vesa_put_block(wind.composition_buffer, tl->timeline[i], tl->start+(i*8), 0,  tl->fg);
+    char* temp = (char*) kalloc(5000);
+    inode_t inode = ext_open("bg.bin", 0);
+    if(inode == 0){
+        dbgprintf("[WSERVER] Could not open background file.\n");
+        return -1;
     }
-}
 
-void gfx_timeline_update(struct gfx_timeline* tl, char value)
-{
-    if(value == 0) return;
-
-    if(tl->timeline[TIMELINE_SIZE-1] != value){
-        tl->timeline[TIMELINE_SIZE-1] = value;
-        memcpy(&tl->timeline[0], &tl->timeline[1], TIMELINE_SIZE-1);
-        return;
+    int ret = ext_read(inode, temp, 5000);
+    if(ret == 0){
+        dbgprintf("[WSERVER] Could not read background file.\n");
+        return -1;
     }
-    tl->tick++;
+    ext_close(inode);
 
-    if(tl->tick == 50){
-        memcpy(&tl->timeline[0], &tl->timeline[1], TIMELINE_SIZE-1);
-        tl->tick = 0;
-    }
-}
+    int out;
+    run_length_decode(temp, ret, wind.composition_buffer, &out);
+    kfree(temp);
 
-void create_circle_pattern(uint8_t* buffer, int width, int height, int centerX, int centerY, int radius, int color) {
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            int dx = x - centerX;
-            int dy = y - centerY;
-            int distanceSquared = dx * dx + dy * dy;
-            if (distanceSquared <= radius * radius) {
-                vesa_fillrect(buffer, x, y, 1, 1, color);
+    int originalWidth = 320;   // Original image width
+    int originalHeight = 240;  // Original image height
+    int targetWidth = vbe_info->width;     // Target screen width
+    int targetHeight = vbe_info->height;    // Target screen height
+
+    /* upscale image */
+    float scaleX = (float)targetWidth / originalWidth;
+    float scaleY = (float)targetHeight / originalHeight;
+
+    for (int i = 0; i < originalWidth; i++){
+        for (int j = 0; j < originalHeight; j++){
+            // Calculate the position on the screen based on the scaling factors
+            int screenX = (int)(i * scaleX);
+            int screenY = (int)(j * scaleY);
+
+            // Retrieve the pixel value from the original image
+            unsigned char pixelValue = wind.composition_buffer[j * originalWidth + i];
+
+            // Set the pixel value on the screen at the calculated position
+            for (int x = 0; x < scaleX; x++){
+                for (int y = 0; y < scaleY; y++){
+                    vesa_put_pixel(background, screenX + x, screenY + y, pixelValue);
+                }
             }
         }
     }
+
+
+    return ERROR_OK;
 }
-
-
-void create_checkerboard(uint8_t* buffer, int width, int height, int cellSize, int color1, int color2) {
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            int cellX = x / cellSize;
-            int cellY = y / cellSize;
-            int color = ((cellX + cellY) % 2 == 0) ? color1 : color2;
-            vesa_fillrect(buffer, x, y, 1, 1, color);
-        }
-    }
-}
-
-void create_old_computer_background(uint8_t* buffer, int width, int height, int gridSize, int lineInterval, int lineColor) {
-    memset(buffer, COLOR_VGA_BG, width*height);
-
-    // Draw horizontal lines
-    for (int y = lineInterval; y < height; y += lineInterval) {
-        for (int x = 0; x < width; x++) {
-            buffer[y * width + x] = lineColor;
-        }
-    }
-
-    // Draw vertical lines
-    for (int x = lineInterval; x < width; x += lineInterval) {
-        for (int y = 0; y < height; y++) {
-            buffer[y * width + x] = lineColor;
-        }
-    }
-}
-
 
 static char* background;
-
+#define TIME_PREFIX(unit) unit < 10 ? "0" : ""
 void gfx_compositor_main()
 {
     int buffer_size = vbe_info->width*vbe_info->height*(vbe_info->bpp/8)+1;
@@ -362,64 +311,12 @@ void gfx_compositor_main()
     dbgprintf("[WSERVER] %d bytes allocated for composition buffer.\n", buffer_size);
     wind.composition_buffer = (uint8_t*) palloc(buffer_size);
     background = (uint8_t*) kalloc(buffer_size);
+
+
+    gfx_decode_background_image(background, vbe_info->width, vbe_info->height);
+
     //create_checkerboard(background, vbe_info->width, vbe_info->height, 50, COLOR_VGA_GREEN, COLOR_VGA_MISC);
     //create_circle_pattern(background, vbe_info->width, vbe_info->height, vbe_info->width/2, vbe_info->height/2, 100, COLOR_VGA_MISC);
-
-    int originalWidth = 320;   // Original image width
-    int originalHeight = 240;  // Original image height
-    int targetWidth = vbe_info->width;     // Target screen width
-    int targetHeight = vbe_info->height;    // Target screen height
-
-    float scaleX = (float)targetWidth / originalWidth;
-    float scaleY = (float)targetHeight / originalHeight;
-
-    for (int i = 0; i < originalWidth; i++)
-    {
-        for (int j = 0; j < originalHeight; j++)
-        {
-            // Calculate the position on the screen based on the scaling factors
-            int screenX = (int)(i * scaleX);
-            int screenY = (int)(j * scaleY);
-
-            // Retrieve the pixel value from the original image
-            unsigned char pixelValue = forman[j * originalWidth + i];
-
-            // Set the pixel value on the screen at the calculated position
-            for (int x = 0; x < scaleX; x++)
-            {
-                for (int y = 0; y < scaleY; y++)
-                {
-                    vesa_put_pixel(background, screenX + x, screenY + y, pixelValue);
-                }
-            }
-        }
-    }
-
-    //gfx_set_fullscreen(wind.order);
-
-    struct gfx_timeline memory_timeline = {
-        .fg = COLOR_VGA_GREEN,
-        .bg = COLOR_VGA_BG,
-        .start = 100
-    };
-
-    int net_send_last_diff = 0;
-    int net_send_last = 0;
-    int net_send = 0;
-    struct gfx_timeline net_send_timeline = {
-        .fg = COLOR_VGA_MISC,
-        .bg = COLOR_VGA_BG,
-        .start = 160
-    };
-
-    int net_recv_last_diff = 0;
-    int net_recv_last = 0;
-    int net_recv = 0;
-    struct gfx_timeline net_recv_timeline = {
-        .fg = COLOR_VGA_RED,
-        .bg = COLOR_VGA_BG,
-        .start = 220
-    };
 
     /* Main composition loop */
     while(1){
