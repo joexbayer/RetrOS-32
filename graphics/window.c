@@ -55,13 +55,11 @@ static struct window_draw_ops default_window_draw_ops = {
  */
 void gfx_draw_window(uint8_t* buffer, struct window* window)
 {
-
     struct gfx_theme* theme = kernel_gfx_current_theme();
 
     int background_color = window->in_focus ? window->color.border == 0 ? theme->window.border : window->color.border : theme->window.border;
     /* Draw main frame of window with title bar and borders */
-    vesa_fillrect(buffer, window->x+8, window->y, window->width-16, 8, 18);
-
+    vesa_fillrect(buffer, window->x, window->y-4, window->width, 14, theme->window.background);
 
     /* Copy inner window framebuffer to given buffer with relativ pitch. */
     if(window->inner != NULL){
@@ -70,20 +68,42 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
             for (i = window->x+8; i < (window->x+8+window->inner_width); i++)
                 putpixel(buffer, i, j, window->inner[c++], vbe_info->pitch);
     }
+    /* bottom */
+    vesa_fillrect(buffer, window->x, window->y+window->height-8, window->width, 8, theme->window.background);
+    vesa_line_horizontal(buffer, window->x, window->y+window->height, window->width, COLOR_VGA_DARKEST_GRAY);
+    vesa_line_horizontal(buffer, window->x, window->y+window->height-8, window->width, background_color);
+    
+    /* left */
+    vesa_fillrect(buffer, window->x, window->y, 8, window->height, theme->window.background);
+    vesa_line_vertical(buffer, window->x, window->y-4, window->height+4, background_color);
+    vesa_line_vertical(buffer, window->x+7, window->y-4, window->height-4, background_color);
 
-    vesa_line_horizontal(buffer, window->x+6, window->y+window->height-7, window->inner_width+4, background_color);
-    vesa_line_horizontal(buffer, window->x+6, window->y+window->height-6, window->inner_width+4, background_color);
+    /* right */
+    vesa_fillrect(buffer, window->x+window->width-8, window->y, 8, window->height, theme->window.background);
+    vesa_line_vertical(buffer, window->x+window->width, window->y-4, window->height+4, COLOR_VGA_DARKEST_GRAY);
+    vesa_line_vertical(buffer, window->x+window->width-8, window->y-4, window->height-4, background_color);
+    
+    /* Header */
+    for (int i = 0; i < 6; i++){
+        vesa_line_horizontal(buffer, window->x, window->y-4+i*2, window->width, background_color);
+    }
+
+    /* Exit */
+    vesa_fillrect(buffer,  window->x+window->width-24,  window->y-2, strlen("[X]")*8 - 2, 8, theme->window.background);
+    vesa_write_str(buffer, window->x+window->width-24,  window->y-2, "[X]", COLOR_VGA_DARK_GRAY);
+
+    /* Title */
+    vesa_fillrect(buffer, window->x+8, window->y-2, strlen(window->name)*8 + 4, 8, theme->window.background);
+    vesa_write_str(buffer, window->x+8+4, window->y-2, window->name, COLOR_VGA_DARK_GRAY);
+
+    window->changed = 0;
+    return;
+
 
     /* Shadow horizontal */
     vesa_line_horizontal(buffer, window->x+6, window->y+window->height-5, window->inner_width+6, 0);
     vesa_line_horizontal(buffer, window->x+6, window->y+window->height-4, window->inner_width+6, 0);
 
-    /* Header */
-    for (int i = 0; i < (window->width/8) - 2; i++){
-        vesa_put_box(buffer, 80, window->x+8+(i*8), window->y-4, background_color);
-        vesa_put_box(buffer, 80, window->x+8+(i*8), window->y+2, background_color);
-        vesa_put_box(buffer, 80, window->x+8+(i*8), window->y-2, background_color);
-    }
 
     vesa_line_vertical(buffer, window->x+7, window->y, window->inner_height+9, background_color);
     vesa_line_vertical(buffer, window->x+6, window->y, window->inner_height+9, background_color);
@@ -105,10 +125,6 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
         vesa_fillrect(buffer, window->x+header_position, window->y, strlen(window->header)*8 + 4, 8, background_color);
         vesa_write_str(buffer, window->x+header_position+4, window->y, window->header, window->color.text == 0 ? theme->window.background : window->color.text);
     }
-
-    /* Exit */
-    vesa_fillrect(buffer,  window->x+window->width-28,  window->y, strlen("[X]")*8 - 2, 8, background_color);
-    vesa_write_str(buffer, window->x+window->width-28,  window->y, "[X]", window->color.text == 0 ? theme->window.background : window->color.text);
 
     if(window->is_resizable)
         vesa_fillrect(buffer,  window->x+window->width-8,  window->y+window->height-8, 6, 6, background_color);
@@ -163,7 +179,7 @@ static void gfx_default_click(struct window* window, int x, int y)
 {
     dbgprintf("[GFX WINDOW] Clicked %s\n", window->name);
 
-    if(gfx_point_in_rectangle(window->x+window->width-20,  window->y, window->x+window->width-12, window->y+8, x, y)){
+    if(gfx_point_in_rectangle(window->x+window->width-24,  window->y-4, window->x+window->width-12, window->y+10, x, y)){
         dbgprintf("[GFX WINDOW] Clicked %s exit button\n", window->name);
         struct gfx_event e = {
             .data = 0,
@@ -173,7 +189,7 @@ static void gfx_default_click(struct window* window, int x, int y)
         gfx_push_event(window, &e);
         return; 
     }
-    if(gfx_point_in_rectangle(window->x, window->y, window->x+window->width, window->y+8, x, y)){
+    if(gfx_point_in_rectangle(window->x, window->y, window->x+window->width, window->y+10, x, y)){
         dbgprintf("[GFX WINDOW] Clicked %s title\n", window->name);
     }
 }
@@ -205,7 +221,7 @@ static void gfx_default_hover(struct window* window, int x, int y)
 
 static void gfx_default_mouse_down(struct window* window, int x, int y)
 {
-    if(gfx_point_in_rectangle(window->x+8, window->y, window->x+window->width-16, window->y+10, x, y)){
+    if(gfx_point_in_rectangle(window->x, window->y-2, window->x+window->width, window->y+10, x, y)){
         window->is_moving.state = GFX_WINDOW_MOVING;
         window->is_moving.x = x;
         window->is_moving.y = y;
@@ -219,7 +235,7 @@ static void gfx_default_mouse_down(struct window* window, int x, int y)
 
 static void gfx_default_mouse_up(struct window* window, int x, int y)
 {
-    if(gfx_point_in_rectangle(window->x+8, window->y, window->x+window->width-16, window->y+10, x, y)){
+    if(gfx_point_in_rectangle(window->x, window->y-2, window->x+window->width, window->y+10, x, y)){
         window->is_moving.state = GFX_WINDOW_STATIC;
         window->is_moving.x = x;
         window->is_moving.y = y;

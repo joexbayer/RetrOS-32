@@ -20,12 +20,13 @@ int gfx_draw_char(int x, int y, char data, unsigned char color)
     return 0;
 }
 
-int gfx_draw_circle(int x, int y, int r, unsigned char color)
+int gfx_draw_circle(int x, int y, int r, unsigned char color, char fill)
 {
 	struct gfx_circle c = {
 		.x = x,
 		.y = y,
 		.r = r,
+		.fill = fill,
 		.color = color
 	};
 

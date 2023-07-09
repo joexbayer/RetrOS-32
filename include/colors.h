@@ -8,6 +8,18 @@ typedef unsigned char color_t;
 
 #define COLOR_TURQUISE 50 // 50
 
+enum grays {
+    COLOR_VGA_DARKEST_GRAY = 17,
+    COLOR_VGA_DARK_GRAY = 19,
+    COLOR_VGA_MEDIUM_DARK_GRAY = 21,
+    COLOR_VGA_MEDIUM_GRAY = 23,
+    COLOR_VGA_MEDIUM_LIGHT_GRAY = 25,
+    COLOR_VGA_LIGHT_GRAY = 27,
+    COLOR_VGA_LIGHTER_GRAY = 29,
+    COLOR_VGA_LIGHTEST_GRAY = 31
+};
+
+
 
 #define COLOR_VGA_BG 18
 #define COLOR_VGA_FG 90

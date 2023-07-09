@@ -30,8 +30,8 @@ void Editor::Reset()
 {
 	for (int i = 0; i < this->m_bufferSize; i++) this->m_textBuffer[i] = 0;
 	gfx_draw_rectangle(0, 0, this->c_width, this->c_height, COLOR_BG);
-	gfx_draw_line(0, 17, this->c_height, 17, COLOR_BG+2);
-	for (int i = 0; i < this->c_height/8; i++)gfx_draw_format_text(0, i*8, COLOR_BG+4, "%s%d ", i < 10 ? " " : "", i);
+	gfx_draw_line(0, 17, this->c_height, 17, COLOR_VGA_MEDIUM_GRAY);
+	for (int i = 0; i < this->c_height/8; i++)gfx_draw_format_text(0, i*8, COLOR_VGA_MEDIUM_GRAY, "%s%d ", i < 10 ? " " : "", i);
 }
 
 void Editor::reDraw(int from, int to)
@@ -60,7 +60,7 @@ void Editor::reDraw(int from, int to)
 			highlightSyntax(&m_textBuffer[i]);
 		}
 
-		drawChar(m_textBuffer[i], i == m_bufferEdit ? COLOR_VGA_BG+5 : COLOR_BG);
+		drawChar(m_textBuffer[i], i == m_bufferEdit ? COLOR_VGA_LIGHT_GRAY : COLOR_BG);
 		if(i == m_bufferEdit){
 			line = m_y;
 			col = m_x;
@@ -68,7 +68,7 @@ void Editor::reDraw(int from, int to)
 	}
 	
 	gfx_draw_rectangle(24, c_height-8, c_width-24, 8, COLOR_BG);
-	gfx_draw_format_text(24, c_height-8, COLOR_MISC, "W:%p Line:%p Col:%p\n", m_bufferHead, line, col);
+	gfx_draw_format_text(24, c_height-8, COLOR_VGA_MEDIUM_DARK_GRAY, "W:%p Line:%p Col:%p\n", m_bufferHead, line, col);
 }
 
 void Editor::Lex()
@@ -76,7 +76,7 @@ void Editor::Lex()
 	if(m_bufferHead > 0){
 		program(vm_text, vm_data, (char*)m_textBuffer);
 		gfx_draw_rectangle(24, c_height-8, c_width-24, 8, COLOR_BG);
-		gfx_draw_format_text(24, c_height-8, COLOR_VGA_YELLOW, "%d: %s\n", lex_get_error_line(), lex_get_error());
+		gfx_draw_format_text(24, c_height-8, COLOR_BLACK, "%d: %s\n", lex_get_error_line(), lex_get_error());
 	}
 }
 
@@ -147,7 +147,7 @@ void Editor::FileChooser()
 				default:
 					if(i == 127) return;
 					filename[i++] = event.data;
-					gfx_draw_char(24 + (11*8) + (i*8), c_height-8, event.data, COLOR_VGA_FG);
+					gfx_draw_char(24 + (11*8) + (i*8), c_height-8, event.data, COLOR_TEXT);
 					break;
 				}
 			}
@@ -159,7 +159,7 @@ void Editor::FileChooser()
 			gfx_draw_format_text(24, c_height-8, COLOR_VGA_YELLOW, "Open file: ");
 
 			for (int j = 0; j < i; j++){
-				gfx_draw_char(24 + (11*8) + (i*8), c_height-8, filename[i], COLOR_VGA_FG);
+				gfx_draw_char(24 + (11*8) + (i*8), c_height-8, filename[i], COLOR_TEXT);
 			}
 			break;
 		case GFX_EVENT_EXIT:
@@ -248,7 +248,7 @@ void Editor::highlightSyntax(unsigned char* start)
 			return;
 		}
 	}
-	setColor(COLOR_VGA_FG);
+	setColor(COLOR_TEXT);
 }
 
 void Editor::putChar(unsigned char c)

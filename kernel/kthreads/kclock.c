@@ -33,13 +33,14 @@ void __kthread_entry kclock()
         
         get_current_time(&current_time);
 
-        w->draw->rect(w, 0, 0, 110, 140, theme->window.background);
+        w->draw->rect(w, 0, 0, 110, 140, 30);
+
+        w->draw->circle(w, 55, 55, 50, COLOR_VGA_LIGHTEST_GRAY, 1);
+        w->draw->circle(w, 55, 55, 50, 0, 0);
 
 		w->draw->line(w, 55, 55, 55 + (50*sin_60[angle_id])/1.5, 55+ (50*cos_60[angle_id])/1.5, theme->window.text);
 		w->draw->line(w, 55, 55, 55 + (50*sin_60[current_time.minute])/1.1, 55+ (50*cos_60[current_time.minute])/1.1, theme->window.text);
 		w->draw->line(w, 55, 55, 55 + (50*sin_60[current_time.second])/1.1, 55+ (50*cos_60[current_time.second])/1.1, COLOR_VGA_RED);
-
-        w->draw->circle(w, 55, 55, 50, theme->window.text);
 
         w->draw->textf(w, center_x(5), 112, theme->window.text, "%s%d:%s%d", current_time.hour > 9 ? "" : "0", current_time.hour, current_time.minute > 9 ? "" : "0", current_time.minute);
         w->draw->textf(w, center_x(6), 124, theme->window.text, "%d. %s", current_time.day, months[current_time.month]);

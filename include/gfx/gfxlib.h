@@ -2,6 +2,7 @@
 #define __GFXLIB_H
 
 #include <gfx/events.h>
+#include <kutils.h>
 #include <gfx/window.h>
 
 enum GFX_LINE_ATTRIBUTES {
@@ -23,7 +24,7 @@ int kernel_gfx_draw_char(struct window* w, int x, int y, unsigned char c, unsign
 int kernel_gfx_draw_text(struct window* w, int x, int y, char* str, unsigned char color);
 int kernel_gfx_draw_format_text(struct window* w, int x, int y, unsigned char color, char* fmt, ...);
 
-void kernel_gfx_draw_circle(struct window* w, int xc, int yc, int r, unsigned char color);
+void kernel_gfx_draw_circle(struct window* w, int xc, int yc, int r, unsigned char color, bool_t fill);
 void kernel_gfx_draw_line(struct window* w, int x0, int y0, int x1, int y1, unsigned char color);
 
 int gfx_get_window_width();

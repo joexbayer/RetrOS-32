@@ -272,13 +272,18 @@ error_t pcb_get_info(int pid, struct pcb_info* info)
 	if(pid < 0 || pid > MAX_NUM_OF_PCBS || pcb_table[pid].state == STOPPED)
 		return -ERROR_INDEX;
 
-	info->pid = pid;
-	info->stack = pcb_table[pid].ctx.esp;
-	info->state = pcb_table[pid].state;
-	info->used_memory = pcb_table[pid].used_memory;
-	info->is_process = pcb_table[pid].is_process;
-	info->usage = (float)pcb_table[pid].preempts / (float)pcb_total_usage();
-	memcpy(info->name, pcb_table[pid].name, PCB_MAX_NAME_LENGTH);
+	struct pcb_info _info = {
+		.pid = pid,
+		.stack = pcb_table[pid].ctx.esp,
+		.state = pcb_table[pid].state,
+		.used_memory = pcb_table[pid].used_memory,
+		.is_process = pcb_table[pid].is_process,
+		.usage = (float)pcb_table[pid].preempts / (float)pcb_total_usage(),
+		.name = {0}
+	};
+	memcpy(_info.name, pcb_table[pid].name, PCB_MAX_NAME_LENGTH);
+
+	*info = _info;
 
 	return ERROR_OK;
 }

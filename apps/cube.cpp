@@ -24,11 +24,11 @@ public:
     }
 
     void drawCube() {
-        gfx_draw_rectangle(0, 0, width, height, COLOR_VGA_BG);
+        gfx_draw_rectangle(0, 0, width, height, COLOR_VGA_LIGHTEST_GRAY);
         for (int i = 0; i < 12; i++) {
             Point2D p1 = project(cube[edges[i][0]]);
             Point2D p2 = project(cube[edges[i][1]]);
-            gfx_draw_line(p1.x, p1.y, p2.x, p2.y, COLOR_VGA_FG);
+            gfx_draw_line(p1.x, p1.y, p2.x, p2.y, COLOR_VGA_DARKEST_GRAY);
         }
     }
 

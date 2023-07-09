@@ -36,6 +36,7 @@ struct gfx_rectangle {
 
 struct gfx_circle {
     int x, y, r;
+    char fill;
     unsigned char color;
 };
 
@@ -61,7 +62,7 @@ int gfx_draw_text(int x, int y, const char* text, unsigned char color);
 int gfx_draw_format_text(int x, int y, unsigned char color, const char* fmt, ...);
 int gfx_draw_char(int x, int y, char data, unsigned char color);
 int gfx_draw_rectangle(int x, int y, int width, int height, unsigned char color);
-int gfx_draw_circle(int x, int y, int r, unsigned char color);
+int gfx_draw_circle(int x, int y, int r, unsigned char color, char fill);
 int gfx_draw_line(int x0, int y0, int x1, int y1, unsigned char color);
 int gfx_get_event(struct gfx_event*, gfx_event_flag_t flags);
 
@@ -83,9 +84,9 @@ public:
         gfx_draw_rectangle(x, y, width, height, color);
     }
 
-    void drawCircle(int x, int y, int r, unsigned char color)
+    void drawCircle(int x, int y, int r, unsigned char color, char fill)
     {
-        gfx_draw_circle(x, y, r, color);
+        gfx_draw_circle(x, y, r, color, fill);
     }
 
     void drawLine(int x0, int y0, int x1, int y1, unsigned char color)

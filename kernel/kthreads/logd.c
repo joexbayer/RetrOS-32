@@ -3,6 +3,7 @@
 #include <gfx/window.h>
 #include <terminal.h>
 #include <logd.h>
+#include <vbe.h>
 
 static struct terminal term  = {
 	.head = 0,
@@ -23,7 +24,7 @@ void logd_attach_by_pid(int pid)
 
 void __kthread_entry logd()
 {
-    struct window* w = gfx_new_window(400, 300, 0);
+    struct window* w = gfx_new_window(320, 200, 0);
     if(w == NULL){
         warningf("Failed to create window for logd");
         return;
@@ -33,11 +34,13 @@ void __kthread_entry logd()
 
     w->ops->move(w, 50, 50);
 
+
     while (1)
     {
-        terminal_commit();
+        //terminal_commit();
 
-        kernel_sleep(100);
+        //kernel_sleep(100);
+        kernel_yield();
     }
 }
 EXPORT_KTHREAD(logd);

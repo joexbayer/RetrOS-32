@@ -21,7 +21,7 @@ int gfx_syscall_hook(int option, void* data, int flags)
     
     case GFX_DRAW_CIRCLE_OPT:;
         struct gfx_circle* circle = (struct gfx_circle*)data;
-        kernel_gfx_draw_circle(current_running->gfx_window, circle->x, circle->y, circle->r, circle->color);
+        kernel_gfx_draw_circle(current_running->gfx_window, circle->x, circle->y, circle->r, circle->color, circle->fill);
         break;
     
     case GFX_DRAW_LINE_OPT:;

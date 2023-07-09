@@ -248,45 +248,58 @@ void kernel_gfx_draw_line(struct window* w, int x0, int y0, int x1, int y1, unsi
 	gfx_commit();
 }  
 
-static void kernel_gfx_draw_circle_helper(struct window* w, int xc, int yc, int x, int y, unsigned char color)
+static void kernel_gfx_draw_circle_helper(struct window* w, int xc, int yc, int x, int y, unsigned char color, bool_t fill)
 {
-	putpixel(w->inner, xc+x, yc+y, color, w->pitch);
-	putpixel(w->inner, xc-x, yc+y, color, w->pitch);
-	putpixel(w->inner, xc+x, yc-y, color, w->pitch);
-	putpixel(w->inner, xc-x, yc-y, color, w->pitch);
-	putpixel(w->inner, xc+y, yc+x, color, w->pitch);
-	putpixel(w->inner, xc-y, yc+x, color, w->pitch);
-	putpixel(w->inner, xc+y, yc-x, color, w->pitch);
-	putpixel(w->inner, xc-y, yc-x, color, w->pitch);
-}
- 
-// using Bresenham's algorithm
-void kernel_gfx_draw_circle(struct window* w, int xc, int yc, int r, unsigned char color)
-{
-	int x = 0, y = r;
-	int d = 3 - 2 * r;
-	kernel_gfx_draw_circle_helper(w, xc, yc, x, y, color);
-	while (y >= x)
-	{
-		// for each pixel we will
-		// draw all eight pixels
-		 
-		x++;
- 
-		// check for decision parameter
-		// and correspondingly
-		// update d, x, y
-		if (d > 0)
-		{
-			y--;
-			d = d + 4 * (x - y) + 10;
-		}
-		else
-			d = d + 4 * x + 6;
-		kernel_gfx_draw_circle_helper(w, xc, yc, x, y, color);
-	}
+    // Draw the circle outline
+    putpixel(w->inner, xc + x, yc + y, color, w->pitch);
+    putpixel(w->inner, xc - x, yc + y, color, w->pitch);
+    putpixel(w->inner, xc + x, yc - y, color, w->pitch);
+    putpixel(w->inner, xc - x, yc - y, color, w->pitch);
+    putpixel(w->inner, xc + y, yc + x, color, w->pitch);
+    putpixel(w->inner, xc - y, yc + x, color, w->pitch);
+    putpixel(w->inner, xc + y, yc - x, color, w->pitch);
+    putpixel(w->inner, xc - y, yc - x, color, w->pitch);
 
-	gfx_commit();
+    // Fill the circle if the flag is set
+    if (fill)
+    {
+        for (int i = xc - x; i <= xc + x; i++) {
+            for (int j = yc - y + 1; j < yc + y; j++) {
+                putpixel(w->inner, i, j, color, w->pitch);
+            }
+        }
+
+        for (int i = xc - y; i <= xc + y; i++) {
+            for (int j = yc - x + 1; j < yc + x; j++) {
+                putpixel(w->inner, i, j, color, w->pitch);
+            }
+        }
+    }
+}
+
+// using Bresenham's algorithm
+void kernel_gfx_draw_circle(struct window* w, int xc, int yc, int r, unsigned char color, bool_t fill)
+{
+    int x = 0, y = r;
+    int d = 3 - 2 * r;
+    kernel_gfx_draw_circle_helper(w, xc, yc, x, y, color, fill);
+
+    while (y >= x)
+    {
+        x++;
+
+        if (d > 0)
+        {
+            y--;
+            d = d + 4 * (x - y) + 10;
+        }
+        else
+        {
+            d = d + 4 * x + 6;
+        }
+
+        kernel_gfx_draw_circle_helper(w, xc, yc, x, y, color, fill);
+    }
 }
 
 

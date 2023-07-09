@@ -431,6 +431,10 @@ void __kthread_entry shell()
 			shell_width = event.data;
 			terminal_commit();
 			reset_shell();
+			break;
+		case GFX_EVENT_EXIT:
+			kernel_exit();
+			return;
 		default:
 			break;
 		}

@@ -9,8 +9,8 @@
 #include <colors.h>
 #include <fs/ext.h>
 
-#define COLOR_BG COLOR_VGA_BG
-#define COLOR_TEXT COLOR_VGA_FG
+#define COLOR_BG COLOR_VGA_LIGHTEST_GRAY
+#define COLOR_TEXT COLOR_VGA_MEDIUM_DARK_GRAY
 #define COLOR_MISC COLOR_VGA_MISC
 
 struct keyword {

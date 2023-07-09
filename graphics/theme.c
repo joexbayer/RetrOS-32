@@ -19,6 +19,24 @@ struct gfx_theme default1 = {
     .name = "Light theme"
 };
 
+struct gfx_theme macos = {
+    .os = {
+        .background = COLOR_VGA_BG+1,
+        .foreground = COLOR_VGA_MISC-1,
+        .text = COLOR_VGA_FG
+    },
+    .window = {
+        .border = COLOR_VGA_LIGHT_GRAY,
+        .background = COLOR_VGA_LIGHTER_GRAY,
+        .text = COLOR_VGA_MEDIUM_GRAY
+    },
+    .terminal = {
+        .background = COLOR_VGA_BG,
+        .text = COLOR_VGA_FG
+    },
+    .name = "MacOS theme"
+};
+
 struct gfx_theme dark_theme = {
     .os = {
         .background = COLOR_VGA_BG+1,
@@ -27,7 +45,7 @@ struct gfx_theme dark_theme = {
     },
     .window = {
         .border = COLOR_VGA_MISC-1,
-        .background = COLOR_VGA_BG,
+            .background = COLOR_VGA_BG,
         .text = COLOR_VGA_FG
     },
     .terminal = {
@@ -59,13 +77,13 @@ struct gfx_theme temple_os_theme = {
 
 #define GFX_MAX_THEMES 8
 
-static int total_themes = 3;
+static int total_themes = 4;
 
 static struct gfx_theme* gfx_themes[GFX_MAX_THEMES] = {
-    &dark_theme, &temple_os_theme,  &default1,
+    &dark_theme, &temple_os_theme,  &default1, &macos
 };
 
-static struct gfx_theme* current_theme = &dark_theme;
+static struct gfx_theme* current_theme = &macos;
 
 int gfx_total_themes()
 {
@@ -94,7 +112,7 @@ int kernel_gfx_update_theme(struct gfx_theme theme)
 
 struct gfx_theme* kernel_gfx_default_theme()
 {
-    return &default1;
+    return &macos;
 }
 
 int kernel_gfx_set_theme(int index)

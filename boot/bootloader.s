@@ -126,7 +126,7 @@ set_video_mode:
 
     push %es
 	mov $0x4F01, %ax
-	mov $0x4103, %cx	
+	mov $0x4103, %cx /* !! change this as well */ 	
 	mov $vbe_info_structure, %di
 	int $0x10
 	pop %es
