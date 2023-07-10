@@ -329,13 +329,7 @@ static int sched_add(struct scheduler* sched, struct pcb* pcb)
     return ERROR_OK;
 }
 
-
-void init_test_scheduler()
-{
-    sched_init_default(&sched_default_instance, 0);
-}
-
-struct scheduler* get_default_scheduler()
+struct scheduler* get_scheduler()
 {
     return &sched_default_instance;
 }
@@ -344,25 +338,25 @@ struct scheduler* get_default_scheduler()
 
 void kernel_sleep(int time)
 {
-    get_default_scheduler()->ops->sleep(get_default_scheduler(), time);
+    get_scheduler()->ops->sleep(get_scheduler(), time);
 }
 
 void kernel_yield()
 {   
-    assert(get_default_scheduler()->ops->schedule(get_default_scheduler()) == 0);
+    assert(get_scheduler()->ops->schedule(get_scheduler()) == 0);
 }
 
 void kernel_exit()
 {
-    get_default_scheduler()->ops->exit(get_default_scheduler());
+    get_scheduler()->ops->exit(get_scheduler());
 
     UNREACHABLE();
 }
 
 void block()
 {
-    struct pcb* current = get_default_scheduler()->ops->consume(get_default_scheduler());
-    get_default_scheduler()->ops->block(get_default_scheduler(), current);
+    struct pcb* current = get_scheduler()->ops->consume(get_scheduler());
+    get_scheduler()->ops->block(get_scheduler(), current);
 }
 
 void unblock(int pid)

@@ -17,7 +17,7 @@ public:
 
     void Run(){
 
-        TcpClient client("tcpbin.com", 4242);
+        TcpClient* client = new TcpClient("tcpbin.com", 4242);
         struct gfx_event e;
 
         char buf[100] = {0};
@@ -34,6 +34,7 @@ public:
                 break;
             case GFX_EVENT_EXIT:
                 Cleanup();
+                delete client;
                 exit();
                 return ;
             case GFX_EVENT_KEYBOARD:
@@ -48,10 +49,10 @@ public:
                 break;
                 case '\n':
                     buf[i++] = '\n';
-                    client.sendMsg(buf);   
+                    client->sendMsg(buf);   
                     i = 0;
 
-                    client.recvMsg(recvBuf, 100);
+                    client->recvMsg(recvBuf, 100);
 
                     drawFormatText(0, 10, COLOR_VGA_FG, recvBuf);
                     break;
@@ -68,7 +69,6 @@ public:
     }
 
     void Cleanup(){
-        
     }
 
     void setSize(int width, int height) {

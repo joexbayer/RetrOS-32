@@ -60,7 +60,7 @@ static int __sock_add_skb(struct sock* socket, struct sk_buff* skb)
         /* The queue itself is already spinlock protected */
         socket->skb_queue->ops->add(socket->skb_queue, skb);
     });
-    return 0;
+    return ERROR_OK;
 }
 
 error_t net_sock_read(struct sock* sock, uint8_t* buffer, unsigned int length)
@@ -109,7 +109,7 @@ static inline error_t net_sock_add_data_segment(struct sock* sock, struct sk_buf
     sock->recvd += skb->data_len;
     sock->data_ready = sock->tcp == NULL ? 1 : skb->hdr.tcp->psh;
 
-    return 0;
+    return ERROR_OK;
 }
 
 /**
@@ -157,6 +157,7 @@ int get_total_sockets()
     return total_sockets;
 }
 
+/* Helper functions */
 error_t net_sock_is_established(struct sock* sk)
 {
     assert(sk->tcp != NULL);
@@ -186,8 +187,9 @@ struct sock* sock_find_listen_tcp(uint16_t d_port)
     }
 
     return NULL;
-    
 }
+
+
 struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip)
 {
     struct sock* _sk = NULL; /* save listen socket incase no established connection is found. */
@@ -228,6 +230,7 @@ void kernel_sock_close(struct sock* socket)
         struct sk_buff* skb = socket->skb_queue->ops->remove(socket->skb_queue);
         skb_free(skb);
     }
+
     skb_free_queue(socket->skb_queue);
     rbuffer_free(socket->recv_buffer);
 
@@ -236,6 +239,7 @@ void kernel_sock_close(struct sock* socket)
 
     kfree((void*) socket);
     unset_bitmap(socket_map, (int)socket->socket);
+
     total_sockets--;
 }
 
@@ -254,6 +258,7 @@ struct sock* kernel_socket(int domain, int type, int protocol)
 
     socket_table[current] = kalloc(sizeof(struct sock)); /* Allocate space for a socket. Needs to be freed. */
     memset(socket_table[current], 0, sizeof(struct sock));
+
     socket_table[current]->domain = domain;
     socket_table[current]->protocol = protocol;
     socket_table[current]->type = type;

@@ -72,11 +72,9 @@ static int wm_default_add(struct windowmanager* wm, struct window* window)
     }
 
     struct window* current = wm->windows;
-    while (current->next != NULL) {
-        current = current->next;
-    }
+    wm->windows = window;
+    window->next = current;
 
-    current->next = window;
     wm->window_count++;
 
     return ERROR_OK;
@@ -103,11 +101,15 @@ static int wm_default_remove(struct windowmanager* wm, struct window* window)
 
     if (wm->windows == window) {
         wm->windows = window->next;
+        dbgprintf("Removing front window %s\n", window->name);
     } else {
         /* Find the window before the one we want to remove. */
         struct window* i;
-        for (i = wm->windows; i && i->next != window; i = i->next);
-        if (i) i->next = window->next;
+        for (i = wm->windows; i != NULL && i->next != window; i = i->next);
+        if (i){
+            dbgprintf("Removing window %s\n", window->name);
+            i->next = window->next;
+        }
     }
 
     if(wm->windows) {
@@ -118,7 +120,7 @@ static int wm_default_remove(struct windowmanager* wm, struct window* window)
 
     spin_unlock(&wm->spinlock);
 
-    return ERROR_OK;
+    return ERROR_OK; 
 }
 
 /**
@@ -136,7 +138,9 @@ static int wm_default_push_front(struct windowmanager* wm, struct window* window
         return ERROR_OK;
     }
 
-    RETURN_ON_ERR(wm->ops->remove(wm, window));
+    dbgprintf("Pushing window %s to front\n", window->name);
+
+    PANIC_ON_ERR(wm->ops->remove(wm, window));
 
     spin_lock(&wm->spinlock);
     /* Replace wm->windows with window, pushing original wm->windows back. */
@@ -146,6 +150,7 @@ static int wm_default_push_front(struct windowmanager* wm, struct window* window
     wm->windows->in_focus = 1;
 
     window->changed = 1;
+    wm->window_count++;
 
     spin_unlock(&wm->spinlock);
 
@@ -164,6 +169,7 @@ static int wm_default_push_front(struct windowmanager* wm, struct window* window
 static int wm_default_draw(struct windowmanager* wm, struct window* window)
 {
     ERR_ON_NULL(wm);
+    ERR_ON_NULL(window);
 
     if (wm->window_count == 0 || window == NULL) {
         return ERROR_OK;
@@ -194,11 +200,12 @@ static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char f
             if((flags & MOUSE_LEFT) && wm->mouse_state == 0){
                 wm->mouse_state = 1;
                 i->ops->mousedown(i, x, y);
-
+                
                 /* If clicked window is not in front, push it. */
                 if(i != wm->windows){
                     wm->ops->push_front(wm, i);
                 }
+
             } else if(!(flags & MOUSE_LEFT) && wm->mouse_state == 1) {
                 /* If mouse state is "down" send click event */
                 wm->mouse_state = 0;

@@ -316,6 +316,13 @@ int kernel_gfx_draw_format_text(struct window* w, int x, int y, unsigned char co
 	va_start(args, fmt);
 
 	while (*fmt != '\0') {
+
+		if(x+(x_offset*PIXELS_PER_CHAR) >= w->inner_width){
+			y += 8;
+			written += x_offset;
+			x_offset = 0;
+		}
+
 		switch (*fmt)
 		{
 			case '%':
@@ -368,11 +375,12 @@ int kernel_gfx_draw_format_text(struct window* w, int x, int y, unsigned char co
 				fmt++;
 				break;
 			case '\n':
-				y++;
+				y += 8;
 				written += x_offset;
 				x_offset = 0;
 				break;
 			default:  
+
 				kernel_gfx_draw_char(w, x+(x_offset*PIXELS_PER_CHAR), y, *fmt, color);
 				x_offset++;
 				written++;

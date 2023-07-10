@@ -52,11 +52,13 @@ struct scheduler {
 };
 
 
+error_t sched_init_default(struct scheduler* sched, sched_flag_t flags);
 
+/* asm functions */
 void pcb_restore_ctx();
 void pcb_save_ctx();
 
 /* Temporary */
-struct scheduler* get_default_scheduler();
+struct scheduler* get_scheduler();
 
 #endif

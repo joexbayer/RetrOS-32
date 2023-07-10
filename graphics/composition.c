@@ -30,6 +30,8 @@
 #include <net/net.h>
 #include <arch/interrupts.h>
 
+#include <windowmanager.h>
+
 #include <fs/ext.h>
 
 #include <diskdev.h>
@@ -39,7 +41,10 @@ static struct window_server {
     uint8_t sleep_time;
     uint8_t* composition_buffer;
     struct window* order;
-    mutex_t order_lock;
+    mutex_t lock;
+
+    struct windowmanager wm;
+
 } wind = {
     .sleep_time = 2
 };
@@ -59,47 +64,6 @@ int gfx_check_changes(struct window* w)
     return 0;
 }
 
-void gfx_recursive_draw(struct window* w)
-{
-    if(w->next != NULL)
-        gfx_recursive_draw(w->next);
-    
-    gfx_draw_window(wind.composition_buffer, w);
-}
-
-/**
- * @brief Push a window to the front of "wind.order" list.
- * Changing its z-axis position in the framebuffer.
- * 
- * Assuming w is NOT already the first element.
- * @param w 
- */
-static void gfx_window_push_front(struct window* w)
-{
-    acquire(&wind.order_lock);
-
-    assert(w != wind.order);
-
-    /* remove w from wind.order list */
-    for (struct window* i = wind.order; i != NULL; i = i->next){
-        if(i->next == w){
-            i->next = w->next;
-            break;
-        }
-    }
-    
-    /* Replace wind.order with w, pushing old wind.order back. */
-    wind.order->in_focus = 0;
-    struct window* save = wind.order;
-    wind.order = w;
-    w->next = save;
-    wind.order->in_focus = 1;
-
-    w->changed = 1;
-
-    release(&wind.order_lock);
-}
-
 /**
  * @brief Removes a window from the "wind.order" list.
  * Important keep the wind.order list intact even if removing the first element.
@@ -107,31 +71,9 @@ static void gfx_window_push_front(struct window* w)
  */
 void gfx_composition_remove_window(struct window* w)
 {
-    acquire(&wind.order_lock);
-
-    if(wind.order == w)
-    {
-        wind.order = w->next;
-        if(wind.order != NULL){
-            wind.order->changed = 1;
-            wind.order->in_focus = 1;
-        }
-        goto gfx_composition_remove_window_exit;
-    }
-
-    struct window* iter = wind.order;
-    while(iter != NULL && iter->next != w)
-        iter = iter->next;
-    if(iter == NULL){
-        goto gfx_composition_remove_window_exit;
-    }
-
-    iter->next = w->next;
+    while (wind.wm.state != WM_INITIALIZED);
     
-gfx_composition_remove_window_exit:
-
-    dbgprintf("[GFX] Removing window\n");
-    release(&wind.order_lock);
+    wind.wm.ops->remove(&wind.wm, w);
 }
 
 /**
@@ -141,76 +83,16 @@ gfx_composition_remove_window_exit:
  */
 void gfx_composition_add_window(struct window* w)
 {
-    acquire(&wind.order_lock);
+    while (wind.wm.state != WM_INITIALIZED);
 
-    if(wind.order == NULL){
-        wind.order = w;
-        wind.order->in_focus = 1;
-        release(&wind.order_lock);
-        return;
-    }
-    
-    struct window* iter = wind.order;
-    wind.order->in_focus = 0;
-    wind.order = w;
-
-    wind.order->in_focus = 1;
-    wind.order->next = iter;
-
-    release(&wind.order_lock);
+    wind.wm.ops->add(&wind.wm, w);
 }
 
-/**
- * @brief raw mouse event handler for window API.
- * 
- * @param x 
- * @param y 
- * @param flags 
- */
-void gfx_mouse_event(int x, int y, char flags)
-{
-    for (struct window* i = wind.order; i != NULL; i = i->next)
-        if(gfx_point_in_rectangle(i->x, i->y, i->x+i->width, i->y+i->height, x, y)){
-            /* on click when left mouse down */
-            if(flags & 1 && gfx_mouse_state == 0){
-                gfx_mouse_state = 1;
-                i->ops->mousedown(i, x, y);
-
-                /* If clicked window is not in front, push it. */
-                if(i != wind.order){
-                    gfx_window_push_front(i);
-                }
-
-                /* TODO: push mouse gfx event to window */
-
-            } else if(!(flags & 1) && gfx_mouse_state == 1) {
-                /* If mouse state is "down" send click event */
-                gfx_mouse_state = 0;
-                i->ops->click(i, x, y);
-                i->ops->mouseup(i, x, y);
-
-                uint16_t new_x = CLAMP( (x - (i->x+8)), 0,  i->inner_width);
-                uint16_t new_y = CLAMP( (y - (i->y+8)), 0,  i->inner_height);
-
-                struct gfx_event e = {
-                    .data = new_x,
-                    .data2 = new_y,
-                    .event = GFX_EVENT_MOUSE
-                };
-                gfx_push_event(wind.order, &e);
-            }
-
-            i->ops->hover(i, x, y);
-            return;
-        }
-    
-    /* No window was clicked. */
-}
 static int __is_fullscreen = 0;
 static void* inner_window_save;
 void gfx_set_fullscreen(struct window* w)
 {
-    if(w != wind.order){
+    if(w != wind.wm.windows){
         dbgprintf("Cannot fullscreen window that isnt in focus\n");
         return;
     }
@@ -232,7 +114,7 @@ void gfx_set_fullscreen(struct window* w)
 
 void gfx_unset_fullscreen(struct window* w)
 {
-    if(w != wind.order){
+    if(w != wind.wm.windows){
         dbgprintf("Cannot fullscreen window that isnt in focus\n");
         return;
     }
@@ -312,11 +194,10 @@ void gfx_compositor_main()
     wind.composition_buffer = (uint8_t*) palloc(buffer_size);
     background = (uint8_t*) kalloc(buffer_size);
 
+    PANIC_ON_ERR(init_windowmanager(&wind.wm, 0));
+    wind.wm.composition_buffer = wind.composition_buffer;
 
     gfx_decode_background_image(background, vbe_info->width, vbe_info->height);
-
-    //create_checkerboard(background, vbe_info->width, vbe_info->height, 50, COLOR_VGA_GREEN, COLOR_VGA_MISC);
-    //create_circle_pattern(background, vbe_info->width, vbe_info->height, vbe_info->width/2, vbe_info->height/2, 100, COLOR_VGA_MISC);
 
     /* Main composition loop */
     while(1){
@@ -331,26 +212,26 @@ void gfx_compositor_main()
         //ENTER_CRITICAL();
         int test = rdtsc();
         int mouse_changed = mouse_get_event(&m);
-        int window_changed = gfx_check_changes(wind.order);
+        
+        int window_changed = gfx_check_changes(wind.wm.windows);
+
         struct time time;
         get_current_time(&time);
         
-        
         unsigned char key = kb_get_char();
         if(key != 0){
-
             if(key == F10){
                 if(!__is_fullscreen) {
-                    gfx_set_fullscreen(wind.order);
+                    gfx_set_fullscreen(wind.wm.windows);
                 } else {
-                    gfx_unset_fullscreen(wind.order);
+                    gfx_unset_fullscreen(wind.wm.windows);
                 }
                 struct gfx_event e = {
-                    .data = wind.order->inner_width,
-                    .data2 = wind.order->inner_height,
+                    .data = wind.wm.windows->inner_width,
+                    .data2 = wind.wm.windows->inner_height,
                     .event = GFX_EVENT_RESOLUTION
                 };
-                gfx_push_event(wind.order, &e);
+                gfx_push_event(wind.wm.windows, &e);
             } if (key == F5) {
                 start("shell");
             } else {
@@ -358,10 +239,11 @@ void gfx_compositor_main()
                     .data = key,
                     .event = GFX_EVENT_KEYBOARD
                 };
-                gfx_push_event(wind.order, &e);
+                gfx_push_event(wind.wm.windows, &e);
             }
         }
 
+        
         if(window_changed && !__is_fullscreen){
             
             //memset(wind.composition_buffer, theme->os.background/*41*/, buffer_size);
@@ -373,20 +255,29 @@ void gfx_compositor_main()
 
             vesa_printf(wind.composition_buffer, 4, 4, 0, "%s", "HOME");
             /* open text */
-            vesa_printf(wind.composition_buffer, 40, 4, 0, "%s", "Open");
+            vesa_printf(wind.composition_buffer, 60, 4, 0, "%s", "Open");
+
+            vesa_printf(wind.composition_buffer, 120, 4, 0, "%s", "File");
+
+                
+            PANIC_ON_ERR(wind.wm.ops->draw(&wind.wm, wind.wm.windows));
+
+
+            /* performance */
+            int usage;
+            int ret;
+            vesa_printf(wind.composition_buffer, 4, 16, 0, "%s", "PID   Usage   Type      State   Name");
+            for (int i = 1; i < MAX_NUM_OF_PCBS; i++){
+                struct pcb_info info;
+                ret = pcb_get_info(i, &info);
+                if(ret < 0) continue;
+                usage = (int)(info.usage*100);
+                vesa_printf(wind.composition_buffer, 4, 16+((i+1)*8), 0, "%d  %d/%d (%d) %s", info.pid, (pcb_get_by_pid(i)->preempts), pcb_total_usage(), timer_get_tick(), info.name);
+            }
         }
         
         vesa_fillrect(wind.composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 4, strlen("00:00:00 00/00/00")*8, 8, theme->window.background);
         vesa_printf(wind.composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 4 ,  0, "%s%d:%s%d:%s%d %s%d/%s%d/%d", TIME_PREFIX(time.hour), time.hour, TIME_PREFIX(time.minute), time.minute, TIME_PREFIX(time.second), time.second, TIME_PREFIX(time.day), time.day, TIME_PREFIX(time.month), time.month, time.year);
-
- 
-
-        //LEAVE_CRITICAL();
-        if(__is_fullscreen){
-        } else {
-            gfx_recursive_draw(wind.order);
-        }
-
 
         kernel_yield();
 
@@ -395,9 +286,9 @@ void gfx_compositor_main()
         memcpy((uint8_t*)vbe_info->framebuffer, wind.composition_buffer, buffer_size-1);
         LEAVE_CRITICAL();
         /* Copy buffer over to framebuffer. */
-
+        
         if(mouse_changed){
-            gfx_mouse_event(m.x, m.y, m.flags);
+            wind.wm.ops->mouse_event(&wind.wm, m.x, m.y, m.flags);
         }
         vesa_put_icon16((uint8_t*)vbe_info->framebuffer, m.x, m.y);
     }
@@ -405,5 +296,5 @@ void gfx_compositor_main()
 
 void gfx_init()
 {
-    mutex_init(&wind.order_lock);
+    mutex_init(&wind.lock);
 }

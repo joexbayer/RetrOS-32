@@ -48,12 +48,12 @@ void acquire(mutex_t* l)
     ENTER_CRITICAL();
     switch (l->state){
     case LOCKED:
-        current = get_default_scheduler()->ops->consume(get_default_scheduler());
+        current = get_scheduler()->ops->consume(get_scheduler());
         l->blocked->ops->push(l->blocked, current);
 
         dbgprintf("Locking 0x%x (%d: %s)\n", l, current->pid, current->name);
 
-        get_default_scheduler()->ops->block(get_default_scheduler(), current);
+        get_scheduler()->ops->block(get_scheduler(), current);
         break;
     
     case UNLOCKED:
@@ -80,7 +80,7 @@ void release(mutex_t* l)
     ENTER_CRITICAL();
     struct pcb* blocked = l->blocked->ops->pop(l->blocked);
     if(blocked != NULL){
-        get_default_scheduler()->ops->add(get_default_scheduler(), blocked);
+        get_scheduler()->ops->add(get_scheduler(), blocked);
         blocked->state = RUNNING;
 
         assert(l->state == LOCKED);

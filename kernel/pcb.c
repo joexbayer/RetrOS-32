@@ -491,7 +491,7 @@ error_t pcb_create_process(char* program, int args, char** argv, pcb_flag_t flag
 	/* Memory map data */
 	vmem_init_process(pcb, buf, read);
 
-	get_default_scheduler()->ops->add(get_default_scheduler(), &pcb_table[i]);
+	get_scheduler()->ops->add(get_scheduler(), &pcb_table[i]);
 	//running->ops->add(running, pcb);
 
 	pcb_count++;
@@ -527,7 +527,7 @@ error_t pcb_create_kthread(void (*entry)(), char* name)
 	int ret = pcb_init_kthread(i, &pcb_table[i], entry, name);
 	assert(ret);
 
-	get_default_scheduler()->ops->add(get_default_scheduler(), &pcb_table[i]);
+	get_scheduler()->ops->add(get_scheduler(), &pcb_table[i]);
 	//running->ops->push(running, &pcb_table[i]);
 
 	pcb_count++;

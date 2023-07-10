@@ -14,6 +14,7 @@ static struct work* get_new_work() {
     struct work* new = NULL;
 
     CRITICAL_SECTION({
+
         for (int i = 0; i < WORK_POOL_SIZE; i++){
             if(__work_pool[i].in_use == 0){
                 __work_pool[i].in_use = 1;
@@ -21,6 +22,7 @@ static struct work* get_new_work() {
                 break;
             }
         }
+        
     });
     
     return new;
@@ -40,13 +42,15 @@ static struct work_queue queue = {
  * @param arg argument to work_fn
  * @param callback with return value of work_fn
  */
-int work_queue_add(int (*work_fn)(void*), void* arg, void(*callback)(int))
+int work_queue_add(void* fn, void* arg, void(*callback)(int))
 {
     struct work* work = get_new_work();
     if(work == NULL){
-        dbgprintf("Out of works\n");
+        warningf("Out of works\n");
         return -ERROR_WORK_QUEUE_FULL;
     }
+
+    int (*work_fn)(void*) = (int (*)(void*)) fn;
 
     work->work_fn = work_fn;
     work->arg = arg;

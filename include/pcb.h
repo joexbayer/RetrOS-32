@@ -150,6 +150,8 @@ struct pcb_queue* pcb_new_queue();
 void _start_pcb(struct pcb* pcb);
 void context_switch_entry();
 
+struct pcb* pcb_get_by_pid(int pid);
+
 /* declaration in helpers.s */
 void pcb_restore_context();
 void pcb_save_context();
