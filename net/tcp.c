@@ -269,9 +269,20 @@ int tcp_recv_syn(struct sock* sock, struct sk_buff* skb)
 {
 	/* Cant really assert this as we dont want to panic if its not true. */
 	assert(sock->tcp->state == TCP_LISTEN);
-	sock->tcp->state = TCP_SYN_RCVD;
 
 	/* send syn ack & more*/
+	struct tcp_header hdr = {
+		.source = sock->bound_port,
+		.dest = sock->recv_addr.sin_port,
+		.window = 1500,
+		.seq = sock->tcp->sequence,
+		.ack_seq = htonl(skb->hdr.tcp->seq)+1,
+		.doff = 0x05,
+		.syn = 1,
+		.ack = 1
+	};
+
+	sock->tcp->state = TCP_SYN_RCVD;
 	return 1;
 }
 
@@ -310,7 +321,7 @@ int tcp_close_connection(struct sock* sock)
 
 int tcp_parse(struct sk_buff* skb)
 {
-		/* Look if there is an active TCP connection, if not look for accept. */
+	/* Look if there is an active TCP connection, if not look for accept. */
 
 	struct tcp_header* hdr = (struct tcp_header* ) skb->data;
 	skb->hdr.tcp = hdr;
@@ -331,7 +342,6 @@ int tcp_parse(struct sk_buff* skb)
 			return tcp_recv_syn(sk, skb);
 		}
 		break;
-	
 	case TCP_SYN_RCVD:
 		if(hdr->syn == 0 && hdr->ack == 1){
 			/* Handle syn / ack */
@@ -357,8 +367,6 @@ int tcp_parse(struct sk_buff* skb)
 	case TCP_ESTABLISHED:
 		if(hdr->syn == 0 && hdr->ack == 1){
 			dbgprintf("Socket %d received data for %d\n", sk, hdr->ack_seq);
-			//tcp_recv_segment(sk, hdr, skb);
-
 			/**
 			 * @brief This is where we should check if the packet is in order.
 			 * @see https://github.com/joexbayer/NETOS/issues/34
