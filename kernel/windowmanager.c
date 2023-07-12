@@ -193,7 +193,7 @@ static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char f
     /* NOTE: no spinlock needed as windows are not changed */
 
     /* iterate over windows and check if a window was clicked, from front to back. */
-    for (struct window* i = wm->windows; i != NULL; i = i->next){   
+    for (struct window* i = wm->windows; i != NULL; i = i->next){
         /* if mouse is in window */
         if(gfx_point_in_rectangle(i->x, i->y, i->x+i->width, i->y+i->height, x, y)){
             /* on click when left mouse down */
@@ -212,8 +212,10 @@ static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char f
                 i->ops->click(i, x, y);
                 i->ops->mouseup(i, x, y);
 
-                uint16_t x2 = CLAMP( (x - (i->x+8)), 0,  i->inner_width);
-                uint16_t y2 = CLAMP( (y - (i->y+8)), 0,  i->inner_height);
+                int offset = HAS_FLAG(i->flags, GFX_HIDE_HEADER) ? 0 : 8;
+
+                uint16_t x2 = CLAMP( (x - (i->x+offset)), 0,  i->inner_width);
+                uint16_t y2 = CLAMP( (y - (i->y+offset)), 0,  i->inner_height);
 
                 /* Send mouse event */
                 struct gfx_event e = {
@@ -226,6 +228,7 @@ static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char f
 
             /* always send a hover event */
             i->ops->hover(i, x, y);
+
             return ERROR_OK;
         }
     }

@@ -25,7 +25,6 @@ void __kthread_entry kclock()
     }
 
     w->ops->move(w, 450, 50);
-
     while (1)
     {
         theme = kernel_gfx_current_theme();

@@ -24,13 +24,11 @@ void logd_attach_by_pid(int pid)
 
 void __kthread_entry logd()
 {
-    struct window* w = gfx_new_window(320, 200, 0);
+    struct window* w = gfx_new_window(400, 300, 0);
     if(w == NULL){
         warningf("Failed to create window for logd");
         return;
     }
-
-    terminal_attach(&term);
 
     w->ops->move(w, 50, 50);
 

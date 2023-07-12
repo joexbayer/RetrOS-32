@@ -162,6 +162,8 @@ int kernel_gfx_draw_text(struct window* w, int x, int y, char* str, unsigned cha
 		kernel_gfx_draw_char(w, x+(i*8), y, str[i], color);
 	}
 
+	gfx_commit();
+
 	return 0;
 }
 
@@ -388,5 +390,6 @@ int kernel_gfx_draw_format_text(struct window* w, int x, int y, unsigned char co
 		fmt++;
 	}
 	written += x_offset;
+	gfx_commit();
 	return written;
 }

@@ -17,7 +17,7 @@ struct Point2D {
 
 class CubeDemo : public Window {
 public:
-    CubeDemo(int width, int height) : Window(200, 200, "Cube", 0) {
+    CubeDemo(int width, int height) : Window(200, 200, "Cube", 1) {
         this->angle = 0;
         this->width = width;
         this->height = height;

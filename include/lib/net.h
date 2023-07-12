@@ -77,6 +77,7 @@ void close(int socket);
 
 #ifdef __cplusplus
 #include "../../apps/utils/cppUtils.hpp"
+#include <util.h>
 
 inline unsigned short htons(unsigned short data)
 {

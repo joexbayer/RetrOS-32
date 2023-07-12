@@ -55,46 +55,61 @@ static struct window_draw_ops default_window_draw_ops = {
  */
 void gfx_draw_window(uint8_t* buffer, struct window* window)
 {
+    if(HAS_FLAG(window->flags, GFX_IS_HIDDEN)) return;
+
     struct gfx_theme* theme = kernel_gfx_current_theme();
 
     int background_color = window->in_focus ? window->color.border == 0 ? theme->window.border : window->color.border : theme->window.border;
-    /* Draw main frame of window with title bar and borders */
-    vesa_fillrect(buffer, window->x, window->y-4, window->width, 14, theme->window.background);
 
     /* Copy inner window framebuffer to given buffer with relativ pitch. */
+    int padding = HAS_FLAG(window->flags, GFX_HIDE_HEADER) ? 0 : 8;
     if(window->inner != NULL){
         int i, j, c = 0;
-        for (j = window->y+8; j < (window->y+8+window->inner_height); j++)
-            for (i = window->x+8; i < (window->x+8+window->inner_width); i++)
+        for (j = window->y+padding; j < (window->y+padding+window->inner_height); j++)
+            for (i = window->x+padding; i < (window->x+padding+window->inner_width); i++){
+                if(HAS_FLAG(window->flags, GFX_IS_TRANSPARENT) && window->inner[c] == 255){
+                    c++;
+                    continue;
+                }
                 putpixel(buffer, i, j, window->inner[c++], vbe_info->pitch);
-    }
-    /* bottom */
-    vesa_fillrect(buffer, window->x, window->y+window->height-8, window->width, 8, theme->window.background);
-    vesa_line_horizontal(buffer, window->x, window->y+window->height, window->width, COLOR_VGA_DARKEST_GRAY);
-    vesa_line_horizontal(buffer, window->x, window->y+window->height-8, window->width, background_color);
-    
-    /* left */
-    vesa_fillrect(buffer, window->x, window->y, 8, window->height, theme->window.background);
-    vesa_line_vertical(buffer, window->x, window->y-4, window->height+4, background_color);
-    vesa_line_vertical(buffer, window->x+7, window->y-4, window->height-4, background_color);
-
-    /* right */
-    vesa_fillrect(buffer, window->x+window->width-8, window->y, 8, window->height, theme->window.background);
-    vesa_line_vertical(buffer, window->x+window->width, window->y-4, window->height+4, COLOR_VGA_DARKEST_GRAY);
-    vesa_line_vertical(buffer, window->x+window->width-8, window->y-4, window->height-4, background_color);
-    
-    /* Header */
-    for (int i = 0; i < 6; i++){
-        vesa_line_horizontal(buffer, window->x, window->y-4+i*2, window->width, background_color);
+            }
     }
 
-    /* Exit */
-    vesa_fillrect(buffer,  window->x+window->width-24,  window->y-2, strlen("[X]")*8 - 2, 8, theme->window.background);
-    vesa_write_str(buffer, window->x+window->width-24,  window->y-2, "[X]", COLOR_VGA_DARK_GRAY);
+    if(!HAS_FLAG(window->flags, GFX_HIDE_BORDER)){
+         /* bottom */
+        vesa_fillrect(buffer, window->x, window->y+window->height-8, window->width, 8, theme->window.background);
+        vesa_line_horizontal(buffer, window->x, window->y+window->height, window->width, COLOR_VGA_DARKEST_GRAY);
+        vesa_line_horizontal(buffer, window->x, window->y+window->height-8, window->width, background_color);
+        
+        /* left */
+        vesa_fillrect(buffer, window->x, window->y, 8, window->height, theme->window.background);
+        vesa_line_vertical(buffer, window->x, window->y-4, window->height+4, background_color);
+        vesa_line_vertical(buffer, window->x+7, window->y-4, window->height-4, background_color);
 
-    /* Title */
-    vesa_fillrect(buffer, window->x+8, window->y-2, strlen(window->name)*8 + 4, 8, theme->window.background);
-    vesa_write_str(buffer, window->x+8+4, window->y-2, window->name, COLOR_VGA_DARK_GRAY);
+        /* right */
+        vesa_fillrect(buffer, window->x+window->width-8, window->y, 8, window->height, theme->window.background);
+        vesa_line_vertical(buffer, window->x+window->width, window->y-4, window->height+4, COLOR_VGA_DARKEST_GRAY);
+        vesa_line_vertical(buffer, window->x+window->width-8, window->y-4, window->height-4, background_color);
+    }
+    
+    if(!HAS_FLAG(window->flags, GFX_HIDE_HEADER)){
+          /* Header */
+            
+        /* Draw main frame of window with title bar and borders */
+        vesa_fillrect(buffer, window->x, window->y-4, window->width, 14, theme->window.background);
+
+        for (int i = 0; i < 6; i++){
+            vesa_line_horizontal(buffer, window->x, window->y-4+i*2, window->width, background_color);
+        }
+
+        /* Exit */
+        vesa_fillrect(buffer,  window->x+window->width-24,  window->y-2, strlen("[X]")*8 - 2, 8, theme->window.background);
+        vesa_write_str(buffer, window->x+window->width-24,  window->y-2, "[X]", COLOR_VGA_DARK_GRAY);
+
+        /* Title */
+        vesa_fillrect(buffer, window->x+8, window->y-2, strlen(window->name)*8 + 4, 8, theme->window.background);
+        vesa_write_str(buffer, window->x+8+4, window->y-2, window->name, COLOR_VGA_DARK_GRAY);
+    }
 
     window->changed = 0;
     return;
@@ -197,7 +212,7 @@ static void gfx_default_click(struct window* window, int x, int y)
 
 static void gfx_default_hover(struct window* window, int x, int y)
 {
-    if(window->is_moving.state == GFX_WINDOW_MOVING){
+    if(window->is_moving.state == GFX_WINDOW_MOVING && !HAS_FLAG(window->flags, GFX_IS_IMMUATABLE)){
 
         if(window->x - (window->is_moving.x - x) < 0 || window->x - (window->is_moving.x - x) + window->width > vbe_info->width)
             return;
@@ -298,8 +313,12 @@ struct window* gfx_new_window(int width, int height, window_flag_t flags)
         kfree(w);
         return NULL;
     }
-    memset(w->inner, 0, width*height);
+    memset(w->inner, HAS_FLAG(flags, GFX_IS_TRANSPARENT) ? 255 : 0, width*height);
     memset(w->events.list, 0, sizeof(struct gfx_event)*GFX_MAX_EVENTS);
+
+    w->flags = flags;
+
+    dbgprintf("Window flags: %x\n", flags);
 
     /* Set default ops */
     w->ops = &default_window_ops;
@@ -307,8 +326,15 @@ struct window* gfx_new_window(int width, int height, window_flag_t flags)
 
     w->inner_height = height;
     w->inner_width = width;
-    w->width = width + 16;
-    w->height = height + 16;
+
+    w->width = width;
+    w->height = height;
+
+    if(!HAS_FLAG(w->flags, GFX_HIDE_HEADER)){
+        w->width += 16;
+        w->height += 16;
+    }
+
     w->pitch = w->inner_width;
     w->x = 16;
     w->y = 16;

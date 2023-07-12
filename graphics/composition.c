@@ -249,15 +249,15 @@ void gfx_compositor_main()
             //memset(wind.composition_buffer, theme->os.background/*41*/, buffer_size);
             memcpy(wind.composition_buffer, background, buffer_size);
 
-            vesa_fillrect(wind.composition_buffer, 0, 0, vbe_info->width, 16, theme->window.background);
-            /* black line under rect */
-            vesa_fillrect(wind.composition_buffer, 0, 16, vbe_info->width, 1, 0);
+            // vesa_fillrect(wind.composition_buffer, 0, 0, vbe_info->width, 16, theme->window.background);
+            // /* black line under rect */
+            // vesa_fillrect(wind.composition_buffer, 0, 16, vbe_info->width, 1, 0);
 
-            vesa_printf(wind.composition_buffer, 4, 4, 0, "%s", "HOME");
-            /* open text */
-            vesa_printf(wind.composition_buffer, 60, 4, 0, "%s", "Open");
+            // vesa_printf(wind.composition_buffer, 4, 4, 0, "%s", "HOME");
+            // /* open text */
+            // vesa_printf(wind.composition_buffer, 60, 4, 0, "%s", "Open");
 
-            vesa_printf(wind.composition_buffer, 120, 4, 0, "%s", "File");
+            // vesa_printf(wind.composition_buffer, 120, 4, 0, "%s", "File");
 
                 
             PANIC_ON_ERR(wind.wm.ops->draw(&wind.wm, wind.wm.windows));
@@ -275,9 +275,7 @@ void gfx_compositor_main()
                 vesa_printf(wind.composition_buffer, 4, 16+((i+1)*8), 0, "%d  %d/%d (%d) %s", info.pid, (pcb_get_by_pid(i)->preempts), pcb_total_usage(), timer_get_tick(), info.name);
             }
         }
-        
-        vesa_fillrect(wind.composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 4, strlen("00:00:00 00/00/00")*8, 8, theme->window.background);
-        vesa_printf(wind.composition_buffer, vbe_info->width-strlen("00:00:00 00/00/00")*8 - 16, 4 ,  0, "%s%d:%s%d:%s%d %s%d/%s%d/%d", TIME_PREFIX(time.hour), time.hour, TIME_PREFIX(time.minute), time.minute, TIME_PREFIX(time.second), time.second, TIME_PREFIX(time.day), time.day, TIME_PREFIX(time.month), time.month, time.year);
+    
 
         kernel_yield();
 

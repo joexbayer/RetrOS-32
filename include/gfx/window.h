@@ -25,6 +25,10 @@ typedef enum window_flags {
     GFX_IS_RESIZABLE = 1 << 0,
     GFX_IS_IMMUATABLE = 1 << 1,
     GFX_IS_MOVABLE = 1 << 2,
+    GFX_IS_TRANSPARENT = 1 << 3,
+    GFX_IS_HIDDEN = 1 << 4,
+    GFX_HIDE_HEADER = 1 << 5,
+    GFX_HIDE_BORDER = 1 << 6,
 } window_flag_t;
 
 /* window ops */
@@ -96,6 +100,7 @@ struct window {
 
     uint8_t in_focus;
 
+    unsigned char flags;
     char changed;
 };
 

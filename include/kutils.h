@@ -64,6 +64,11 @@ extern int cli_cnt;
      asm ("cli");\
      while(1)\
 
+/* validate flag */
+#define SET_FlAG(flags, flag) (flags |= flag)
+#define CLEAR_FLAG(flags, flag) (flags &= ~flag)
+#define HAS_FLAG(flags, flag) (flags & flag)
+
 /**
  * @brief CRITICAL_SECTION
  * Enters critical section before the
