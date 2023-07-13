@@ -196,6 +196,17 @@ static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char f
     for (struct window* i = wm->windows; i != NULL; i = i->next){
         /* if mouse is in window */
         if(gfx_point_in_rectangle(i->x, i->y, i->x+i->width, i->y+i->height, x, y)){
+
+            /* get coordinates inside of the window */
+            int offset = HAS_FLAG(i->flags, GFX_HIDE_HEADER) ? 0 : 8;
+            uint16_t x2 = CLAMP( (x - (i->x+offset)), 0,  i->inner_width);
+            uint16_t y2 = CLAMP( (y - (i->y+offset)), 0,  i->inner_height);
+            
+            /* check if the pixel is transparent (255) */
+            if(WINDOW_GET_PIXEL(i, x2, y2) == 255 && HAS_FLAG(i->flags, GFX_IS_TRANSPARENT)){
+                continue;
+            }
+
             /* on click when left mouse down */
             if((flags & MOUSE_LEFT) && wm->mouse_state == 0){
                 wm->mouse_state = 1;
@@ -211,11 +222,6 @@ static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char f
                 wm->mouse_state = 0;
                 i->ops->click(i, x, y);
                 i->ops->mouseup(i, x, y);
-
-                int offset = HAS_FLAG(i->flags, GFX_HIDE_HEADER) ? 0 : 8;
-
-                uint16_t x2 = CLAMP( (x - (i->x+offset)), 0,  i->inner_width);
-                uint16_t y2 = CLAMP( (y - (i->y+offset)), 0,  i->inner_height);
 
                 /* Send mouse event */
                 struct gfx_event e = {

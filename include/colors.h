@@ -19,7 +19,7 @@ enum grays {
     COLOR_VGA_LIGHTEST_GRAY = 31
 };
 
-
+#define COLOR_TRANSPARENT 0xFF // 255
 
 #define COLOR_VGA_BG 18
 #define COLOR_VGA_FG 90

@@ -184,9 +184,9 @@ void kernel(uint32_t magic)
 	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Graphics initialized.");
 
 	start("idled");
+	start("wind");
 	start("workd");
 	//start("workd");
-	start("wind");
 	//start("netd");
   	start("kclock");
 	start("taskbar");

@@ -16,6 +16,8 @@ struct window;
 #define GFX_WINDOW_TITLE_HEIGHT 12
 #define GFX_MAX_EVENTS 10
 
+#define WINDOW_GET_PIXEL(w, x, y) w->inner[x + y * w->pitch]
+
 typedef enum window_states {
     GFX_WINDOW_MOVING,
     GFX_WINDOW_STATIC

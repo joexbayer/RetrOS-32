@@ -7,20 +7,36 @@
 #include <rtc.h>
 #include <timer.h>
 #include <gfx/component.h>
+#include <kutils.h>
+#include <kthreads.h>
 
 #define TASKBAR_MAX_OPTIONS 10
-#define TASKBAR_MAX_HEADERS 4
+#define TASKBAR_MAX_HEADERS 5
+
+#define TASKBAR_EXTENDED_OPTION_WIDTH 100
+#define TASKBAR_EXTENDED_OPTION_HEIGHT 100
+
 #define TIME_PREFIX(unit) unit < 10 ? "0" : ""
 
+void __callback taskbar_terminal()
+{
+    start("shell");
+}
+
 struct taskbar_option {
-    struct {
-        const char* name;
-        struct {
-            const char* name;
-            const char* path; 
-        } options[TASKBAR_MAX_OPTIONS];
-        int x, y, w, h;
-    } headers[TASKBAR_MAX_HEADERS];
+    char name[50];
+    void (*callback)(void);
+
+};
+struct taskbar_header {
+    char name[50];
+    int x, y, w, h;
+    bool_t extended;
+    struct taskbar_option options[TASKBAR_MAX_OPTIONS];
+};
+
+struct taskbar_options {
+    struct taskbar_header headers[TASKBAR_MAX_HEADERS];
 } default_taskbar = {
     .headers = {
         {
@@ -31,8 +47,8 @@ struct taskbar_option {
             .name = "Home",
             .options = {
                 {
-                    .name = "Shutdown",
-                    .path = "/"
+                    .name = "> Shutdown",
+                    .callback = NULL
                 },
             }
         },
@@ -44,8 +60,8 @@ struct taskbar_option {
             .name = "Open",
             .options = {
                 {
-                    .name = "Terminal",
-                    .path = "/home"
+                    .name = "> Terminal",
+                    .callback = &taskbar_terminal
                 },
             }
 
@@ -58,17 +74,80 @@ struct taskbar_option {
             .name = "Help",
             .options = {
                 {
-                    .name = "Test",
-                    .path = "/"
+                    .name = "> Test",
+                    .callback = NULL
+                },
+                {
+                    .name = "> Test",
+                    .callback = NULL
+                },
+                {
+                    .name = "> Test",
+                   .callback = NULL
                 },
             }
         },
     }
 };
 
+/**
+ * @brief taskbar_header_event handles mouse events for a header
+ * Draws the extended options if the mouse has clicked on the header
+ * @param w window
+ * @param header header
+ * @param x x position of mouse
+ * @param y y position of mouse
+ */
+void taskbar_header_event(struct window* w, struct taskbar_header* header, int x, int y)
+{
+    /* check if mouse event is inside a header */
+    if(gfx_point_in_rectangle(header->x,header->y, header->x + header->w, header->y + header->h, x, y)){
+        /* draw header */
+        dbgprintf("Clicked header %s\n", header->name);
+
+        w->draw->rect(w, header->x, header->y+18, TASKBAR_EXTENDED_OPTION_WIDTH, TASKBAR_EXTENDED_OPTION_HEIGHT, COLOR_VGA_LIGHTER_GRAY);
+        /* draw border around previous rect in light gray */
+        w->draw->rect(w, header->x, header->y+18+TASKBAR_EXTENDED_OPTION_HEIGHT-2, TASKBAR_EXTENDED_OPTION_WIDTH, 1, COLOR_VGA_DARK_GRAY);
+        w->draw->rect(w, header->x, header->y+18, 1, TASKBAR_EXTENDED_OPTION_HEIGHT, COLOR_VGA_DARK_GRAY);
+        w->draw->rect(w, header->x+TASKBAR_EXTENDED_OPTION_WIDTH-1, header->y+18, 1, TASKBAR_EXTENDED_OPTION_HEIGHT, COLOR_VGA_DARK_GRAY);
+        
+        header->extended = true;
+
+        /* draw options */
+        for (int j = 0; j < TASKBAR_MAX_OPTIONS; j++){
+            if(header->options[j].name == NULL) break;
+            w->draw->text(w, header->x+4, header->y+18 + (j*10) + 4, header->options[j].name, COLOR_BLACK);
+            //w->draw->rect(w, header->x, header->y+18 + (j*8) +4+9, TASKBAR_EXTENDED_OPTION_WIDTH, 1, COLOR_VGA_DARK_GRAY);
+        }
+    }
+}
+
+/**
+ * @brief taskbar_header_options_event handles mouse events for a header's options
+ * @param w window
+ * @param header header
+ * @param x x position of mouse
+ * @param y y position of mouse
+ */
+void taskbar_header_options_event(struct window* w, struct taskbar_header* header, int x, int y)
+{
+    for (int j = 0; j < TASKBAR_MAX_OPTIONS; j++){
+        if(header->options[j].name == NULL) break;
+        
+        if(gfx_point_in_rectangle(header->x+4, header->y+18 + (j*10) + 4, header->x+4 + TASKBAR_EXTENDED_OPTION_WIDTH, header->y+18 + (j*10) + 4 + TASKBAR_EXTENDED_OPTION_HEIGHT, x, y)){
+            dbgprintf("Clicked option %s\n", header->options[j].name);
+            
+            if(header->options[j].callback != NULL){
+                header->options[j].callback();
+            }
+            return;
+        }
+    }
+}
+
 void __kthread_entry taskbar()
 {
-    struct window* w = gfx_new_window(800, 100, GFX_IS_IMMUATABLE | GFX_HIDE_HEADER | GFX_HIDE_BORDER | GFX_IS_TRANSPARENT);
+    struct window* w = gfx_new_window(800, 200, GFX_IS_IMMUATABLE | GFX_HIDE_HEADER | GFX_HIDE_BORDER | GFX_IS_TRANSPARENT);
     if(w == NULL){
         warningf("Failed to create window for taskbar");
         return;
@@ -83,8 +162,10 @@ void __kthread_entry taskbar()
     struct gfx_event event;
     while (1){
 
+        /* draw background */
         w->draw->rect(w, 0, 1, 800, 16, COLOR_VGA_LIGHTER_GRAY);
 
+        /* draw time */
         get_current_time(&time);
         w->draw->textf(w, w->inner_width - 22*8, 5, COLOR_BLACK, "%s%d:%s%d:%s%d %s%d/%s%d/%d", TIME_PREFIX(time.hour), time.hour, TIME_PREFIX(time.minute), time.minute, TIME_PREFIX(time.second), time.second, TIME_PREFIX(time.day), time.day, TIME_PREFIX(time.month), time.month, time.year);
 
@@ -93,29 +174,34 @@ void __kthread_entry taskbar()
             w->draw->text(w, default_taskbar.headers[i].x + 4, 5, default_taskbar.headers[i].name, COLOR_BLACK);
         }
 
+        /* draw options */
         gfx_event_loop(&event, GFX_EVENT_BLOCKING);
         switch (event.event){
         case GFX_EVENT_MOUSE:{
-                /* check if mouse event is inside a header using int gfx_point_in_rectangle(int x1, int y1, int x2, int y2, int x, int y); */
+                /* check if mouse event is inside a header */
                 for (int i = 0; i < TASKBAR_MAX_HEADERS; i++){
-                    if(gfx_point_in_rectangle(default_taskbar.headers[i].x, default_taskbar.headers[i].y, default_taskbar.headers[i].x + default_taskbar.headers[i].w, default_taskbar.headers[i].y + default_taskbar.headers[i].h, event.data, event.data2)){
-                        /* draw header */
-                        dbgprintf("Clicked header %s\n", default_taskbar.headers[i].name);
-                        w->draw->rect(w, default_taskbar.headers[i].x, default_taskbar.headers[i].y, 50, 50, COLOR_VGA_LIGHT_GRAY);
-                        w->draw->text(w, default_taskbar.headers[i].x + 4, 5, default_taskbar.headers[i].name, COLOR_BLACK);
-
-                        /* draw options */
-                        for (int j = 0; j < TASKBAR_MAX_OPTIONS; j++){
-                            if(default_taskbar.headers[i].options[j].name == NULL) break;
-                            w->draw->text(w, default_taskbar.headers[i].x + 4, 5, default_taskbar.headers[i].options[j].name, COLOR_BLACK);
-                        }
-                    } else {
-                        /* draw header */
-                        w->draw->rect(w, default_taskbar.headers[i].x, default_taskbar.headers[i].y, default_taskbar.headers[i].w, default_taskbar.headers[i].h, COLOR_VGA_LIGHTER_GRAY);
-                        w->draw->text(w, default_taskbar.headers[i].x + 4, 5, default_taskbar.headers[i].name, COLOR_BLACK);
+                    if(default_taskbar.headers[i].name == NULL) continue;
+                    /* clear all extended options*/
+                    if(default_taskbar.headers[i].extended){
+                        taskbar_header_options_event(w, &default_taskbar.headers[i], event.data, event.data2);
+                        default_taskbar.headers[i].extended = false;
+                        w->draw->rect(w, default_taskbar.headers[i].x, default_taskbar.headers[i].y+18, TASKBAR_EXTENDED_OPTION_WIDTH, TASKBAR_EXTENDED_OPTION_HEIGHT, COLOR_TRANSPARENT);
                     }
                 }
 
+                for (int i = 0; i < TASKBAR_MAX_HEADERS; i++){
+                    /* continue for empty headers */
+                    if(default_taskbar.headers[i].name == NULL) continue;
+
+                    dbgprintf("Checking header %x\n", default_taskbar.headers[i].name);
+
+                    /* I have no idea why this needs to be here... :/ */
+                    if(default_taskbar.headers[i].extended){
+                        taskbar_header_options_event(w, &default_taskbar.headers[i], event.data, event.data2);
+                    }
+
+                    taskbar_header_event(w, &default_taskbar.headers[i], event.data, event.data2);
+                }
             }
             dbgprintf("Mouse event: %d %d\n", event.data, event.data2);
             break;

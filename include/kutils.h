@@ -26,6 +26,7 @@ extern char _kctor_table_size[];
 #define __int_handler //__attribute__((interrupt))
 /* This is a async callback function */
 #define __async_callback
+#define __callback
 /* This is a thread entry function */
 #define __kthread_entry
 /* This function does not return */
