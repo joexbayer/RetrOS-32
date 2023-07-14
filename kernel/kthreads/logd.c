@@ -35,7 +35,7 @@ void __kthread_entry logd()
 
     while (1)
     {
-        //terminal_commit();
+        terminal_commit();
 
         //kernel_sleep(100);
         kernel_yield();

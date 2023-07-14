@@ -13,29 +13,34 @@
 #define TASKBAR_MAX_OPTIONS 10
 #define TASKBAR_MAX_HEADERS 5
 
-#define TASKBAR_EXTENDED_OPTION_WIDTH 100
-#define TASKBAR_EXTENDED_OPTION_HEIGHT 100
+#define TASKBAR_EXT_OPT_WIDTH 100
+#define TASKBAR_EXT_OPT_HEIGHT 100
 
 #define TIME_PREFIX(unit) unit < 10 ? "0" : ""
 
-void __callback taskbar_terminal()
-{
-    start("shell");
-}
+/* prototypes to callbacks */
+static void __callback taskbar_terminal();
+static void __callback taskbar_editor();
+static void __callback taskbar_cube();
+static void __callback taskbar_colors();
+static void __callback taskbar_clock();
 
-struct taskbar_option {
+/* prototype to taskbar thread */
+static void __kthread_entry taskbar(void);
+
+static struct taskbar_option {
     char name[50];
     void (*callback)(void);
 
 };
-struct taskbar_header {
+static struct taskbar_header {
     char name[50];
     int x, y, w, h;
     bool_t extended;
     struct taskbar_option options[TASKBAR_MAX_OPTIONS];
 };
 
-struct taskbar_options {
+static struct taskbar_options {
     struct taskbar_header headers[TASKBAR_MAX_HEADERS];
 } default_taskbar = {
     .headers = {
@@ -63,6 +68,23 @@ struct taskbar_options {
                     .name = "> Terminal",
                     .callback = &taskbar_terminal
                 },
+                {
+                    .name = "> Editor",
+                    .callback = &taskbar_editor
+                },
+                {
+                    .name = "> Cube",
+                    .callback = &taskbar_cube
+                },
+                {
+                    .name = "> Colors",
+                    .callback = &taskbar_colors
+                },
+                {
+                    .name = "> Clock",
+                    .callback = &taskbar_clock
+                },
+                
             }
 
         },
@@ -91,25 +113,25 @@ struct taskbar_options {
 };
 
 /**
- * @brief taskbar_header_event handles mouse events for a header
+ * @brief taskbar_hdr_event handles mouse events for a header
  * Draws the extended options if the mouse has clicked on the header
  * @param w window
  * @param header header
  * @param x x position of mouse
  * @param y y position of mouse
  */
-void taskbar_header_event(struct window* w, struct taskbar_header* header, int x, int y)
+static void taskbar_hdr_event(struct window* w, struct taskbar_header* header, int x, int y)
 {
     /* check if mouse event is inside a header */
     if(gfx_point_in_rectangle(header->x,header->y, header->x + header->w, header->y + header->h, x, y)){
         /* draw header */
         dbgprintf("Clicked header %s\n", header->name);
 
-        w->draw->rect(w, header->x, header->y+18, TASKBAR_EXTENDED_OPTION_WIDTH, TASKBAR_EXTENDED_OPTION_HEIGHT, COLOR_VGA_LIGHTER_GRAY);
+        w->draw->rect(w, header->x, header->y+18, TASKBAR_EXT_OPT_WIDTH, TASKBAR_EXT_OPT_HEIGHT, COLOR_VGA_LIGHTER_GRAY);
         /* draw border around previous rect in light gray */
-        w->draw->rect(w, header->x, header->y+18+TASKBAR_EXTENDED_OPTION_HEIGHT-2, TASKBAR_EXTENDED_OPTION_WIDTH, 1, COLOR_VGA_DARK_GRAY);
-        w->draw->rect(w, header->x, header->y+18, 1, TASKBAR_EXTENDED_OPTION_HEIGHT, COLOR_VGA_DARK_GRAY);
-        w->draw->rect(w, header->x+TASKBAR_EXTENDED_OPTION_WIDTH-1, header->y+18, 1, TASKBAR_EXTENDED_OPTION_HEIGHT, COLOR_VGA_DARK_GRAY);
+        w->draw->rect(w, header->x, header->y+18+TASKBAR_EXT_OPT_HEIGHT-2, TASKBAR_EXT_OPT_WIDTH, 1, COLOR_VGA_DARK_GRAY);
+        w->draw->rect(w, header->x, header->y+18, 1, TASKBAR_EXT_OPT_HEIGHT, COLOR_VGA_DARK_GRAY);
+        w->draw->rect(w, header->x+TASKBAR_EXT_OPT_WIDTH-1, header->y+18, 1, TASKBAR_EXT_OPT_HEIGHT, COLOR_VGA_DARK_GRAY);
         
         header->extended = true;
 
@@ -117,24 +139,30 @@ void taskbar_header_event(struct window* w, struct taskbar_header* header, int x
         for (int j = 0; j < TASKBAR_MAX_OPTIONS; j++){
             if(header->options[j].name == NULL) break;
             w->draw->text(w, header->x+4, header->y+18 + (j*10) + 4, header->options[j].name, COLOR_BLACK);
-            //w->draw->rect(w, header->x, header->y+18 + (j*8) +4+9, TASKBAR_EXTENDED_OPTION_WIDTH, 1, COLOR_VGA_DARK_GRAY);
+            //w->draw->rect(w, header->x, header->y+18 + (j*8) +4+9, TASKBAR_EXT_OPT_WIDTH, 1, COLOR_VGA_DARK_GRAY);
         }
     }
 }
 
 /**
- * @brief taskbar_header_options_event handles mouse events for a header's options
+ * @brief taskbar_hdr_opt_event handles mouse events for a header's options
  * @param w window
  * @param header header
  * @param x x position of mouse
  * @param y y position of mouse
  */
-void taskbar_header_options_event(struct window* w, struct taskbar_header* header, int x, int y)
+static void taskbar_hdr_opt_event(struct window* w, struct taskbar_header* header, int x, int y)
 {
     for (int j = 0; j < TASKBAR_MAX_OPTIONS; j++){
         if(header->options[j].name == NULL) break;
         
-        if(gfx_point_in_rectangle(header->x+4, header->y+18 + (j*10) + 4, header->x+4 + TASKBAR_EXTENDED_OPTION_WIDTH, header->y+18 + (j*10) + 4 + TASKBAR_EXTENDED_OPTION_HEIGHT, x, y)){
+        if(gfx_point_in_rectangle(
+                header->x+4, /* x, 4 padding */
+                header->y+18 + (j*10) + 4, /* y, 18 offset from header */
+                header->x+4 + TASKBAR_EXT_OPT_WIDTH, /* width */
+                header->y+18 + (j*10) + 4 + 8, /* height */
+                x, y) /* mouse position */
+            ){
             dbgprintf("Clicked option %s\n", header->options[j].name);
             
             if(header->options[j].callback != NULL){
@@ -145,7 +173,10 @@ void taskbar_header_options_event(struct window* w, struct taskbar_header* heade
     }
 }
 
-void __kthread_entry taskbar()
+/**
+ * @brief taskbar is the main taskbar thread
+ */
+static void __kthread_entry taskbar(void)
 {
     struct window* w = gfx_new_window(800, 200, GFX_IS_IMMUATABLE | GFX_HIDE_HEADER | GFX_HIDE_BORDER | GFX_IS_TRANSPARENT);
     if(w == NULL){
@@ -154,7 +185,6 @@ void __kthread_entry taskbar()
     }
 
     w->ops->move(w, 0, 0);
-    w->draw->rect(w, 0, 0, 800, 18, COLOR_VGA_LIGHTER_GRAY);
     w->draw->rect(w, 0, 17, 800, 1, COLOR_VGA_DARK_GRAY);
     w->draw->rect(w, 0, 0, 800, 2, 0xf);
 
@@ -167,7 +197,12 @@ void __kthread_entry taskbar()
 
         /* draw time */
         get_current_time(&time);
-        w->draw->textf(w, w->inner_width - 22*8, 5, COLOR_BLACK, "%s%d:%s%d:%s%d %s%d/%s%d/%d", TIME_PREFIX(time.hour), time.hour, TIME_PREFIX(time.minute), time.minute, TIME_PREFIX(time.second), time.second, TIME_PREFIX(time.day), time.day, TIME_PREFIX(time.month), time.month, time.year);
+        w->draw->textf(w, w->inner_width - 22*8, 5, COLOR_BLACK,
+            "%s%d:%s%d:%s%d %s%d/%s%d/%d",
+            TIME_PREFIX(time.hour), time.hour, TIME_PREFIX(time.minute),time.minute,
+            TIME_PREFIX(time.second), time.second, TIME_PREFIX(time.day), time.day,
+            TIME_PREFIX(time.month), time.month, time.year
+        );
 
         /* print text for all headers */
         for (int i = 0; i < TASKBAR_MAX_HEADERS; i++){
@@ -183,9 +218,15 @@ void __kthread_entry taskbar()
                     if(default_taskbar.headers[i].name == NULL) continue;
                     /* clear all extended options*/
                     if(default_taskbar.headers[i].extended){
-                        taskbar_header_options_event(w, &default_taskbar.headers[i], event.data, event.data2);
+                        taskbar_hdr_opt_event(w, &default_taskbar.headers[i], event.data, event.data2);
                         default_taskbar.headers[i].extended = false;
-                        w->draw->rect(w, default_taskbar.headers[i].x, default_taskbar.headers[i].y+18, TASKBAR_EXTENDED_OPTION_WIDTH, TASKBAR_EXTENDED_OPTION_HEIGHT, COLOR_TRANSPARENT);
+                        w->draw->rect(w,
+                            default_taskbar.headers[i].x,
+                            default_taskbar.headers[i].y+18,
+                            TASKBAR_EXT_OPT_WIDTH, 
+                            TASKBAR_EXT_OPT_HEIGHT,
+                            COLOR_TRANSPARENT
+                        );
                     }
                 }
 
@@ -197,10 +238,10 @@ void __kthread_entry taskbar()
 
                     /* I have no idea why this needs to be here... :/ */
                     if(default_taskbar.headers[i].extended){
-                        taskbar_header_options_event(w, &default_taskbar.headers[i], event.data, event.data2);
+                        taskbar_hdr_opt_event(w, &default_taskbar.headers[i], event.data, event.data2);
                     }
 
-                    taskbar_header_event(w, &default_taskbar.headers[i], event.data, event.data2);
+                    taskbar_hdr_event(w, &default_taskbar.headers[i], event.data, event.data2);
                 }
             }
             dbgprintf("Mouse event: %d %d\n", event.data, event.data2);
@@ -213,3 +254,37 @@ void __kthread_entry taskbar()
     }
 }
 EXPORT_KTHREAD(taskbar);
+
+
+static void __callback taskbar_terminal()
+{
+    start("shell");
+}
+
+static void __callback taskbar_editor()
+{
+    int pid = pcb_create_process("/bin/edit.o", 0, NULL, 0);
+	if(pid < 0)
+		dbgprintf("%s does not exist\n", "edit.o");
+}
+
+static void __callback taskbar_cube()
+{
+    int pid = pcb_create_process("/bin/cube", 0, NULL, 0);
+    if(pid < 0)
+        dbgprintf("%s does not exist\n", "cube");
+}
+
+static void __callback taskbar_colors()
+{
+    int pid = pcb_create_process("/bin/colors.o", 0, NULL, 0);
+    if(pid < 0)
+        dbgprintf("%s does not exist\n", "colors");
+}
+
+static void __callback taskbar_clock()
+{
+    int pid = pcb_create_process("/bin/clock", 0, NULL, 0);
+    if(pid < 0)
+        dbgprintf("%s does not exist\n", "clock");
+}

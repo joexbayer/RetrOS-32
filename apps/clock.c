@@ -21,28 +21,26 @@ static char* months[] = {"NAN", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
 
 int main()
 {   
-    struct time current_time;
+    struct time now;
     gfx_create_window(110, 140, 0);
     gfx_set_title("Clock");
 
     printf("Clock started\n");
-    while (1)
-    {
-        get_current_time(&current_time);
+    while (1){
+        get_current_time(&now);
 
-        gfx_draw_rectangle(0, 0, 110, 140, COLOR_VGA_BG);
+        gfx_draw_rectangle(0, 0, 110, 140, 30);
 
-        int angle_id = (0.5 * (current_time.hour%12 * 60 + current_time.minute) / 6);
+        int angle_id = (0.5 * (now.hour%12 * 60 + now.minute) / 6);
         gfx_draw_circle(55, 55, 50, 0xf, 1);
         gfx_draw_circle(55, 55, 50, 0, 0);
 
-		gfx_draw_line(55, 55, 55 + (50*sin_60[angle_id])/1.5, 55+ (50*cos_60[angle_id])/1.5, COLOR_VGA_FG);
-		gfx_draw_line(55, 55, 55 + (50*sin_60[current_time.minute])/1.1, 55+ (50*cos_60[current_time.minute])/1.1, COLOR_VGA_FG);
-		gfx_draw_line(55, 55, 55 + (50*sin_60[current_time.second])/1.1, 55+ (50*cos_60[current_time.second])/1.1, COLOR_VGA_RED);
+		gfx_draw_line(55, 55, 55 + (50*sin_60[angle_id])/1.5, 55+ (50*cos_60[angle_id])/1.5, COLOR_VGA_MEDIUM_GRAY);
+		gfx_draw_line(55, 55, 55 + (50*sin_60[now.minute])/1.1, 55+ (50*cos_60[now.minute])/1.1, COLOR_VGA_MEDIUM_GRAY);
+		gfx_draw_line(55, 55, 55 + (50*sin_60[now.second])/1.1, 55+ (50*cos_60[now.second])/1.1, COLOR_VGA_RED);
 
-
-        gfx_draw_format_text(center_x(5), 112, COLOR_VGA_FG, "%s%d:%s%d", current_time.hour > 9 ? "" : "0", current_time.hour, current_time.minute > 9 ? "" : "0", current_time.minute);
-        gfx_draw_format_text(center_x(6), 124, COLOR_VGA_FG, "%d. %s", current_time.day, months[current_time.month]);
+        gfx_draw_format_text(center_x(5), 112, COLOR_VGA_MEDIUM_GRAY, "%s%d:%s%d", now.hour > 9 ? "" : "0", now.hour, now.minute > 9 ? "" : "0", now.minute);
+        gfx_draw_format_text(center_x(6), 124, COLOR_VGA_MEDIUM_GRAY, "%d. %s", now.day, months[now.month]);
 
         sleep(100);
     }
