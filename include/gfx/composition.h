@@ -6,7 +6,7 @@
 void gfx_composition_add_window(struct window* w);
 void gfx_composition_remove_window(struct window* w);
 
-void gfx_init();
+int gfx_decode_background_image(const char* file);
 
 void gfx_compositor_main();
 void gfx_mouse_event(int x, int y, char flags);

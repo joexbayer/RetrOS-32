@@ -93,7 +93,6 @@ void kernel(uint32_t magic)
 
 	init_interrupts();
 	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Interrupts initialized.");
-	gfx_init();
 	init_keyboard();
 	mouse_init();
 	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Peripherals initialized.");

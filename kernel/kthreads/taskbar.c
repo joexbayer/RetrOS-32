@@ -9,6 +9,7 @@
 #include <gfx/component.h>
 #include <kutils.h>
 #include <kthreads.h>
+#include <gfx/composition.h>
 
 #define TASKBAR_MAX_OPTIONS 10
 #define TASKBAR_MAX_HEADERS 5
@@ -24,15 +25,19 @@ static void __callback taskbar_editor();
 static void __callback taskbar_cube();
 static void __callback taskbar_colors();
 static void __callback taskbar_clock();
+static void __callback taskbar_bg_tolkien();
+static void __callback taskbar_bg_notmacos();
 
 /* prototype to taskbar thread */
 static void __kthread_entry taskbar(void);
 
+/* taskbar options */
 static struct taskbar_option {
     char name[50];
     void (*callback)(void);
-
 };
+
+/* taskbar header */
 static struct taskbar_header {
     char name[50];
     int x, y, w, h;
@@ -40,6 +45,7 @@ static struct taskbar_header {
     struct taskbar_option options[TASKBAR_MAX_OPTIONS];
 };
 
+/* taskbar options config */
 static struct taskbar_options {
     struct taskbar_header headers[TASKBAR_MAX_HEADERS];
 } default_taskbar = {
@@ -93,15 +99,15 @@ static struct taskbar_options {
             .y = 0,
             .w = 60,
             .h = 18,
-            .name = "Help",
+            .name = "Wallpaper",
             .options = {
                 {
-                    .name = "> Test",
-                    .callback = NULL
+                    .name = "> Tolkien",
+                    .callback = &taskbar_bg_tolkien
                 },
                 {
-                    .name = "> Test",
-                    .callback = NULL
+                    .name = "> NotMacOS",
+                    .callback = &taskbar_bg_notmacos
                 },
                 {
                     .name = "> Test",
@@ -287,4 +293,14 @@ static void __callback taskbar_clock()
     int pid = pcb_create_process("/bin/clock", 0, NULL, 0);
     if(pid < 0)
         dbgprintf("%s does not exist\n", "clock");
+}
+
+static void __callback taskbar_bg_notmacos()
+{
+    gfx_decode_background_image("bg.bin");
+}
+
+static void __callback taskbar_bg_tolkien()
+{
+    gfx_decode_background_image("bg2.bin");
 }
