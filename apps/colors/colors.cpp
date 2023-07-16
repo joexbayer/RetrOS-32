@@ -3,8 +3,6 @@
 #include <gfx/events.h>
 #include <colors.h>
 
-#include <lib/net.h>
-
 #define PIXELS_PER_BLOCK 8
 #define WIDTH (16*PIXELS_PER_BLOCK)
 #define HEIGHT ((255/16) * PIXELS_PER_BLOCK) + 32

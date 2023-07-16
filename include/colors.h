@@ -53,7 +53,7 @@ enum grays {
 #define COLOR_CYAN       0x1F
 #define COLOR_MAGENTA    0xE3
 #define COLOR_YELLOW     0xFC
-#define COLOR_WHITE      0xFF
+#define COLOR_WHITE      0x0F
 
 #define COLOR_ORANGE     0xFC
 #define COLOR_PINK       0xFC
