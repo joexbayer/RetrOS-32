@@ -28,7 +28,7 @@ DEPENDS = bin/finder.o
 ########################
 
 OUTPUTDIR = ./bin/
-COMMON = ../../bin/syscall.o ../../bin/util.o ../../bin/graphics.o ../bin/StringHelper.o
+COMMON = ../../bin/syscall.o ../../bin/util.o ../../bin/graphics.o ../bin/cppUtils.o
 
 .PHONY: all new programs
 all: new bin $(OUTPUT)

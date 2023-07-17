@@ -22,6 +22,7 @@
 /* prototypes to callbacks */
 static void __callback taskbar_terminal();
 static void __callback taskbar_editor();
+static void __callback taskbar_finder();
 static void __callback taskbar_cube();
 static void __callback taskbar_colors();
 static void __callback taskbar_clock();
@@ -73,6 +74,10 @@ static struct taskbar_options {
                 {
                     .name = "> Terminal",
                     .callback = &taskbar_terminal
+                },
+                {
+                    .name = "> Finder",
+                    .callback = &taskbar_finder
                 },
                 {
                     .name = "> Editor",
@@ -179,6 +184,8 @@ static void taskbar_hdr_opt_event(struct window* w, struct taskbar_header* heade
     }
 }
 
+
+
 /**
  * @brief taskbar is the main taskbar thread
  */
@@ -265,6 +272,13 @@ EXPORT_KTHREAD(taskbar);
 static void __callback taskbar_terminal()
 {
     start("shell");
+}
+
+static void __callback taskbar_finder()
+{
+    int pid = pcb_create_process("/bin/finder.o", 0, NULL, 0);
+    if(pid < 0)
+        dbgprintf("%s does not exist\n", "finder.o");
 }
 
 static void __callback taskbar_editor()

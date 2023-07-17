@@ -74,7 +74,7 @@ int gfx_set_header(const char* header)
     return invoke_syscall(SYSCALL_GFX_SET_HEADER, (int)header, 0, 0);
 }
 
-int open(char* name, int flags)
+int open(const char* name, int flags)
 {
     return invoke_syscall(SYSCALL_OPEN, (int)name, flags, 0);
 }

@@ -54,13 +54,14 @@ void acquire(mutex_t* l)
         dbgprintf("Locking 0x%x (%d: %s)\n", l, current->pid, current->name);
 
         get_scheduler()->ops->block(get_scheduler(), current);
-        break;
+        break;  
     
     case UNLOCKED:
         l->state = LOCKED;
         break;
     
     default:
+        warningf("Invalid lock state: %d\n", l->state);
         assert(0);
         break;
     }
