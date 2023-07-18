@@ -46,6 +46,8 @@ int gfx_push_event(struct window* w, struct gfx_event* e)
 
 int gfx_event_loop(struct gfx_event* event, gfx_event_flag_t flags)
 {
+
+	ERR_ON_NULL(current_running->gfx_window);
 	/**
 	 * The gfx event loop is PCB specific,
 	 * checks if there is an event if true return.
@@ -96,6 +98,19 @@ int kernel_gfx_draw_rectangle(struct window* w, int x, int y, int width, int hei
 	for (j = y; j < (y+height); j++)
 		for (i = x; i < (x+width); i++)
 			putpixel(w->inner, i, j, color, w->pitch);
+
+	return 0;
+}
+
+int kernel_gfx_draw_pixel(struct window* w, int x, int y, color_t color)
+{
+	ERR_ON_NULL(w);
+
+	/* only draw rectangle inside window */
+	if(x < 0 || y < 0 || x > w->inner_width || y > w->inner_height)
+		return -2;
+
+	putpixel(w->inner, x, y, color, w->pitch);
 
 	return 0;
 }

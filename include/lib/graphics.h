@@ -26,7 +26,13 @@ enum gfx_lib_api_options {
     GFX_DRAW_RECTANGLE_OPT,
     GFX_DRAW_CIRCLE_OPT,
     GFX_DRAW_LINE_OPT,
-    GFX_EVEN_LOOP_OPT
+    GFX_EVEN_LOOP_OPT,
+    GFX_DRAW_PIXEL
+};
+
+struct gfx_pixel {
+    int x, y;
+    unsigned char color;
 };
 
 struct gfx_rectangle {
@@ -65,6 +71,7 @@ int gfx_draw_rectangle(int x, int y, int width, int height, unsigned char color)
 int gfx_draw_circle(int x, int y, int r, unsigned char color, char fill);
 int gfx_draw_line(int x0, int y0, int x1, int y1, unsigned char color);
 int gfx_get_event(struct gfx_event*, gfx_event_flag_t flags);
+int gfx_draw_pixel(int x, int y, unsigned char color);
 
 #ifdef __cplusplus
 /**
@@ -110,6 +117,11 @@ public:
         va_start(args, fmt);
         gfx_draw_format_text(x, y, color, fmt, args);
         va_end(args);
+    }
+
+    void drawPixel(int x, int y, unsigned char color)
+    {
+        gfx_draw_pixel(x, y, color);
     }
 	
 	void setTitle(char* name){

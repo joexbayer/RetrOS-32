@@ -220,6 +220,9 @@ int ext_read(inode_t i, void* buf, int size)
 {
 	char* buffer = (char*)buf;
 	struct inode* inode = inode_get(i, &superblock);
+	if(inode == NULL)
+		return -ERROR_NULL_POINTER;
+
 	int ret = inode_read(buffer, size, inode, &superblock);
 	
 	dbgprintf("Read %d bytes from %d\n", ret, i);
@@ -262,6 +265,10 @@ int ext_write(inode_t i, void* buf, int size)
 void ext_close(inode_t inode)
 {
 	struct inode* inode_disk = inode_get(inode, &superblock);
+	if(inode_disk == NULL)
+		return;
+
+	dbgprintf("[FS] Closing inode %d\n", inode_disk->inode);
 	inode_disk->nlink--;
 }
 
@@ -275,9 +282,14 @@ inode_t ext_open_from_directory(char* name, inode_t i)
 	if(strlen(name)+1 > FS_DIRECTORY_NAME_SIZE)
 		return -FS_ERR_NAME_SIZE;
 
-	while (size < inode->size)
+	while (size <= inode->size)
 	{
 		int ret = inode_read((char*) &entry, sizeof(struct directory_entry), inode, &superblock);
+		if(ret <= 0){
+			return 0;
+		}
+		
+		dbgprintf("[FS] Read %d / %d\n", size, inode->size);
 		int mem_ret = memcmp((void*)entry.name, (void*)name, strlen(entry.name));
 		if(mem_ret == 0)
 			goto ext_open_done;
@@ -311,6 +323,14 @@ inode_t ext_open(char* name, ext_flag_t flags)
 		ext_create(name);
 		return inode_from_path(name);
 	}
+
+	struct inode* inode = inode_get(ret, &superblock);
+	if(inode == NULL)
+		return -FS_ERR_FILE_MISSING;
+
+	inode->nlink++;
+	inode->pos = 0;
+
 	return ret;
 
 }

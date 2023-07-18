@@ -68,6 +68,9 @@ inode_t inode_from_path(char* path)
     case '/':
         index = 1;
         dir = ext_get_root();
+        if(path[1] == 0) {
+            return dir;
+        }
         break;
     case '.':
         if(path[1] == '/')

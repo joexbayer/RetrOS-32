@@ -20,6 +20,19 @@ int gfx_draw_char(int x, int y, char data, unsigned char color)
     return 0;
 }
 
+int gfx_draw_pixel(int x, int y, unsigned char color)
+{
+	struct gfx_pixel p = {
+		.x = x,
+		.y = y,
+		.color = color
+	};
+
+	gfx_draw_syscall(GFX_DRAW_PIXEL, &p, 0);
+
+	return 0;
+}
+
 int gfx_draw_circle(int x, int y, int r, unsigned char color, char fill)
 {
 	struct gfx_circle c = {

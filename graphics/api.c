@@ -29,6 +29,11 @@ int gfx_syscall_hook(int option, void* data, int flags)
         kernel_gfx_draw_line(current_running->gfx_window, line->x0, line->y0, line->x1, line->y1, line->color);
         break;
     
+    case GFX_DRAW_PIXEL:;
+        struct gfx_pixel* pixel = (struct gfx_pixel*)data;
+        kernel_gfx_draw_pixel(current_running->gfx_window, pixel->x, pixel->y, pixel->color);
+        break;
+
     case GFX_EVEN_LOOP_OPT:
         return gfx_event_loop((struct gfx_event*)data, flags);
 

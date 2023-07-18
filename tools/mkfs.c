@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <dirent.h>
 #include <unistd.h>
-
+#include <stdarg.h>
 
 
 #define FS_SIZE 1000000
@@ -76,6 +76,10 @@ int get_current_time(struct time* time_s){
 /* Functions needed for inode and bitmap to work. */
 int32_t dbgprintf(char* fmt, ...)
 {
+    va_list argptr;
+            va_start(argptr, fmt);
+            vfprintf(stderr, fmt, argptr);
+            va_end(argptr);
     return 0;
 }
 

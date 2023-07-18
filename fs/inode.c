@@ -119,7 +119,14 @@ struct inode* inode_get(inode_t inode, struct superblock* sb)
  */
 int inode_read(void* buf, int size, struct inode* inode, struct superblock* sb)
 {
+	if(inode->pos >= inode->size){
+		dbgprintf("Trying to read past end of file.\n");
+		return 0;
+	}
+
 	dbgprintf("Reading %d from inode: %d (%d)\n", size, inode->size, inode->pos);
+
+
 	int left = size > inode->size ? inode->size : size;
 	int new_pos = inode->pos % BLOCK_SIZE;
 	int block = (inode->pos) / BLOCK_SIZE;
@@ -239,7 +246,8 @@ inode_t alloc_inode(struct superblock* sb, char TYPE)
 	struct inode inode_disk = {
 		.inode = inode,
 		.size = 0,
-		.type = TYPE
+		.type = TYPE,
+		.pos = 0,
 	};
 	get_current_time(&inode_disk.time);
 	mutex_init(&inode_disk.lock);

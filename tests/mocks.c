@@ -18,7 +18,7 @@
 #include <fs/directory.h>
 
 
-#define DEBUG 0
+#define DEBUG 1
 #define DISKSIZE 1000000
 
 

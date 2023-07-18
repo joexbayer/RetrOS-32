@@ -43,6 +43,8 @@ void mutex_init(mutex_t* l)
  */
 void acquire(mutex_t* l)
 {
+    dbgprintf("Locking 0x%x\n", l);
+
     struct pcb* current;
 
     ENTER_CRITICAL();
@@ -51,7 +53,7 @@ void acquire(mutex_t* l)
         current = get_scheduler()->ops->consume(get_scheduler());
         l->blocked->ops->push(l->blocked, current);
 
-        dbgprintf("Locking 0x%x (%d: %s)\n", l, current->pid, current->name);
+        dbgprintf("Blocking on lock 0x%x (%d: %s)\n", l, current->pid, current->name);
 
         get_scheduler()->ops->block(get_scheduler(), current);
         break;  
@@ -77,6 +79,11 @@ void acquire(mutex_t* l)
  */
 void release(mutex_t* l)
 {
+
+    dbgprintf("Unlocking 0x%x\n", l);
+    if(l->state == UNLOCKED){
+        warningf("Lock 0x%x is already unlocked\n", l);
+    }
 
     ENTER_CRITICAL();
     struct pcb* blocked = l->blocked->ops->pop(l->blocked);
