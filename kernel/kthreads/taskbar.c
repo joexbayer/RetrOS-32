@@ -26,8 +26,8 @@ static void __callback taskbar_finder();
 static void __callback taskbar_cube();
 static void __callback taskbar_colors();
 static void __callback taskbar_clock();
-static void __callback taskbar_bg_tolkien();
-static void __callback taskbar_bg_notmacos();
+static void __callback taskbar_bg_lotr();
+static void __callback taskbar_bg_default();
 
 /* prototype to taskbar thread */
 static void __kthread_entry taskbar(void);
@@ -107,12 +107,12 @@ static struct taskbar_options {
             .name = "Wallpaper",
             .options = {
                 {
-                    .name = "> Tolkien",
-                    .callback = &taskbar_bg_tolkien
+                    .name = "> LOTR",
+                    .callback = &taskbar_bg_lotr
                 },
                 {
-                    .name = "> NotMacOS",
-                    .callback = &taskbar_bg_notmacos
+                    .name = "> Default",
+                    .callback = &taskbar_bg_default
                 },
                 {
                     .name = "> Test",
@@ -309,12 +309,12 @@ static void __callback taskbar_clock()
         dbgprintf("%s does not exist\n", "clock");
 }
 
-static void __callback taskbar_bg_notmacos()
+static void __callback taskbar_bg_default()
 {
-    gfx_decode_background_image("bg.bin");
+    gfx_decode_background_image("default.img");
 }
 
-static void __callback taskbar_bg_tolkien()
+static void __callback taskbar_bg_lotr()
 {
-    gfx_decode_background_image("bg2.bin");
+    gfx_decode_background_image("lotr.img");
 }

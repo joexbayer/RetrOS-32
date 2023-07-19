@@ -5,9 +5,6 @@
 #include <rtc.h>
 #include <sync.h>
 
-#define FS_FILE 1
-#define FS_DIRECTORY 2
-
 #define MAX_FILE_SIZE 4096*8
 #define NDIRECT MAX_FILE_SIZE / 512
 

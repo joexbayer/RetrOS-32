@@ -126,7 +126,7 @@ void ext_create_file_system()
 	dbgprintf("[FS]: And total of %d blocks\n", superblock.nblocks);
 	dbgprintf("[FS]: Max file size: %d bytes\n", NDIRECT*BLOCK_SIZE);
 
-	inode_t root_inode = alloc_inode(&superblock, FS_DIRECTORY);
+	inode_t root_inode = alloc_inode(&superblock, FS_TYPE_DIRECTORY);
 	root_dir = inode_get(root_inode, &superblock);
 	root_dir->nlink++;
 
@@ -134,12 +134,15 @@ void ext_create_file_system()
 
 	struct directory_entry self = {
 		.inode = root_inode,
-		.name = "."
+		.name = ".",
+		.flags = FS_DIR_FLAG_DIRECTORY
+
 	};
 
 	struct directory_entry back = {
 		.inode = root_inode,
-		.name = ".."
+		.name = "..",
+		.flags = FS_DIR_FLAG_DIRECTORY
 	};
 
 	current_dir = root_dir;
@@ -150,12 +153,13 @@ void ext_create_file_system()
 	inode_t bin_dir = ext_create_directory("bin", root_inode);
 	struct inode* bin_dir_inode = inode_get(bin_dir, &superblock);
 
-	inode_t test_file_inode = alloc_inode(&superblock, FS_FILE);
+	inode_t test_file_inode = alloc_inode(&superblock, FS_TYPE_FILE);
 	struct inode* test_file_disk_inode = inode_get(test_file_inode, &superblock);
 
 	struct directory_entry hello_c = {
 		.inode = test_file_inode,
-		.name = "add.c"
+		.name = "add.c",
+		.flags = FS_DIR_FLAG_FILE
 	};
 
 	char* test_file_text = "\n\
@@ -176,12 +180,13 @@ void ext_create_file_system()
 	inode_write(test_file_text, strlen(test_file_text)+1, test_file_disk_inode, &superblock);
 
 	/* Editor */
-	inode_t home_inode = alloc_inode(&superblock, FS_FILE);
+	inode_t home_inode = alloc_inode(&superblock, FS_TYPE_FILE);
 	struct inode* home_disk_inode = inode_get(home_inode, &superblock);
 
 	struct directory_entry home = {
 		.inode = home_inode,
-		.name = "edit.o"
+		.name = "edit.o",
+		.flags = FS_DIR_FLAG_FILE
 	};
 
 	inode_write(apps_editor_edit_o, apps_editor_edit_o_len, home_disk_inode, &superblock);
@@ -198,7 +203,7 @@ int ext_create(char* name)
 	if(strlen(name)+1 > FS_DIRECTORY_NAME_SIZE)
 		return -FS_ERR_NAME_SIZE;
 
-	inode_t inode_index = alloc_inode(&superblock, FS_FILE);
+	inode_t inode_index = alloc_inode(&superblock, FS_TYPE_FILE);
 	if(inode_index == 0){
 		return -FS_ERR_CREATE;
 	}
@@ -206,7 +211,8 @@ int ext_create(char* name)
 	struct inode* inode = inode_get(inode_index, &superblock);
 
 	struct directory_entry new = {
-		.inode = inode->inode
+		.inode = inode->inode,
+		.flags = FS_DIR_FLAG_FILE
 	};
 	memcpy(new.name, name, strlen(name));
 	__inode_add_dir(&new, current_dir, &superblock);
@@ -222,6 +228,11 @@ int ext_read(inode_t i, void* buf, int size)
 	struct inode* inode = inode_get(i, &superblock);
 	if(inode == NULL)
 		return -ERROR_NULL_POINTER;
+
+	if(inode->nlink == 0){
+		dbgprintf("[FS] Tried to read inode %d with no links.\n", inode->inode);
+		return -FS_ERR_FILE_MISSING;
+	}
 
 	int ret = inode_read(buffer, size, inode, &superblock);
 	
@@ -254,6 +265,12 @@ int ext_write(inode_t i, void* buf, int size)
 {
 	char* buffer = (char*) buf;
 	struct inode* inode = inode_get(i, &superblock);
+	if(inode == NULL)
+		return -ERROR_NULL_POINTER;
+	
+	if(inode->nlink == 0)
+		return -FS_ERR_FILE_MISSING;
+
 	inode->pos = 0; /* Should not set pos = 0*/
 	
 	dbgprintf("[FS] writing %d from inode %d\n", size, i);
@@ -267,6 +284,11 @@ void ext_close(inode_t inode)
 	struct inode* inode_disk = inode_get(inode, &superblock);
 	if(inode_disk == NULL)
 		return;
+	
+	if(inode_disk->nlink == 0){
+		dbgprintf("[FS] Tried to close inode %d with no links.\n", inode_disk->inode);
+		return;
+	}
 
 	dbgprintf("[FS] Closing inode %d\n", inode_disk->inode);
 	inode_disk->nlink--;
@@ -304,10 +326,6 @@ ext_open_done:
 	inode = inode_get(entry.inode, &superblock);
 	if(inode == NULL)
 		return -FS_ERR_FILE_MISSING;
-
-	inode->nlink++;
-	inode->pos = 0;
-
 	
 	return entry.inode;
 }
@@ -315,6 +333,8 @@ ext_open_done:
 inode_t ext_open(char* name, ext_flag_t flags)
 {
 	CHECK_DISK();
+
+	dbgprintf("[FS] Opening file %s\n", name);
 
 	/* TODO: check flags for read / write access */
 
@@ -328,8 +348,8 @@ inode_t ext_open(char* name, ext_flag_t flags)
 	if(inode == NULL)
 		return -FS_ERR_FILE_MISSING;
 
-	inode->nlink++;
 	inode->pos = 0;
+	inode->nlink++;
 
 	return ret;
 
@@ -345,7 +365,7 @@ inode_t change_directory(char* path)
 {
 	inode_t ret = ext_open(path, 0);
 	struct inode* inode = inode_get(ret, &superblock);
-	if(inode->type != FS_DIRECTORY){
+	if(inode->type != FS_TYPE_DIRECTORY){
 		return -FS_ERR_NOT_DIRECTORY;
 	}
 
@@ -364,7 +384,7 @@ inode_t ext_create_directory(char* name, inode_t current)
 	if(strlen(name)+1 > FS_DIRECTORY_NAME_SIZE)
 		return -FS_ERR_NAME_SIZE;
 
-	inode_t inode_index = alloc_inode(&superblock, FS_DIRECTORY);
+	inode_t inode_index = alloc_inode(&superblock, FS_TYPE_DIRECTORY);
 	if(inode_index == 0){
 		return -FS_ERR_CREATE_INODE;
 	}
@@ -376,16 +396,19 @@ inode_t ext_create_directory(char* name, inode_t current)
 
 	struct directory_entry self = {
 		.inode = inode->inode,
-		.name = "."
+		.name = ".",
+		.flags = FS_DIR_FLAG_DIRECTORY
 	};
 
 	struct directory_entry back = {
 		.inode = current_dir->inode,
-		.name = ".."
+		.name = "..",
+		.flags = FS_DIR_FLAG_DIRECTORY
 	};
 
 	struct directory_entry new = {
-		.inode = inode->inode
+		.inode = inode->inode,
+		.flags = FS_DIR_FLAG_DIRECTORY
 	};
 	memcpy(new.name, name, strlen(name));
 
@@ -420,7 +443,7 @@ void listdir()
 			months[time->month],
 			time->day, time->hour, time->minute,
 			entry.name,
-			inode->type == FS_DIRECTORY ? "/" : ""
+			inode->type == FS_TYPE_DIRECTORY ? "/" : ""
 		);
 		size += ret;
 	}

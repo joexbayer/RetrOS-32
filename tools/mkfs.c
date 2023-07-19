@@ -204,14 +204,17 @@ int add_file(struct superblock* sb, struct inode* current_dir, char* program)
     name_offset++;
 
      /* Create a inode and write the contents of the given program.*/
-    inode_t file_inode = alloc_inode(sb, FS_FILE);
+    inode_t file_inode = alloc_inode(sb, FS_TYPE_FILE);
+    //inode_t file_inode = alloc_inode(sb, FS_TYPE_FILE);
     printf(" INODE: %d\n", current_dir->inode);
     struct inode* file_inode_disk = inode_get(file_inode, sb);
     inode_write(buf, ext_size, file_inode_disk, sb);
 
+
     /* Add file to current dir */
     struct directory_entry file_dir_entry = {
         .inode = file_inode,
+		.flags = FS_DIR_FLAG_FILE
     };
     memcpy(file_dir_entry.name, &program[name_offset], strlen(&program[name_offset])+1);
 
@@ -249,7 +252,7 @@ int add_userspace_program(struct superblock* sb, struct inode* current_dir, char
     }
 
     /* Create a inode and write the contents of the given program.*/
-    inode_t file_inode = alloc_inode(sb, FS_FILE);
+    inode_t file_inode = alloc_inode(sb, FS_TYPE_FILE);
     struct inode* file_inode_disk = inode_get(file_inode, sb);
     inode_write(buf, ext_size, file_inode_disk, sb);
     
@@ -257,6 +260,7 @@ int add_userspace_program(struct superblock* sb, struct inode* current_dir, char
     /* Add file to current dir */
     struct directory_entry file_dir_entry = {
         .inode = file_inode,
+		.flags = FS_DIR_FLAG_FILE
     };
     __inode_add_dir(&file_dir_entry, current_dir, sb);
 
@@ -270,22 +274,25 @@ int add_userspace_program(struct superblock* sb, struct inode* current_dir, char
 int add_directory(struct superblock* sb, struct inode* parent, char* name)
 {
     /* Create a root directory inode. */
-    inode_t dir_inode = alloc_inode(sb, FS_DIRECTORY);
+    inode_t dir_inode = alloc_inode(sb, FS_TYPE_DIRECTORY);
     struct inode* dir_inode_disk = inode_get(dir_inode,sb);
 
     /* Basic directories */
     struct directory_entry self = {
         .inode = dir_inode,
-        .name = "."
+        .name = ".",
+		.flags = FS_DIR_FLAG_DIRECTORY
     };
 
     struct directory_entry back = {
         .inode = parent->inode,
-        .name = ".."
+        .name = "..",
+		.flags = FS_DIR_FLAG_DIRECTORY
     };
 
     struct directory_entry in_parent = {
         .inode = dir_inode,
+		.flags = FS_DIR_FLAG_DIRECTORY
     };
     memcpy(in_parent.name, name, strlen(name)+1);
 
@@ -304,6 +311,7 @@ void traverseDirectories(struct inode* root, struct superblock* superblock, cons
     DIR *dir;
     struct dirent *entry;
     inode_t iroot = root->inode;
+    root->nlink++;
 
     // Open the directory
     dir = opendir(basePath);
@@ -345,6 +353,8 @@ void traverseDirectories(struct inode* root, struct superblock* superblock, cons
         }
     }
 
+    root->nlink--;
+
 
     // Close the directory
     closedir(dir);
@@ -359,19 +369,21 @@ int main(int argc, char* argv[])
     ext_setup_superblock(&superblock, 1000000);
 
     /* Create a root directory inode. */
-    inode_t root_inode = alloc_inode(&superblock, FS_DIRECTORY);
+    inode_t root_inode = alloc_inode(&superblock, FS_TYPE_DIRECTORY);
     struct inode* root = inode_get(root_inode, &superblock);
     superblock.root_inode = root_inode;
 
     /* Basic directories */
     struct directory_entry self = {
         .inode = root_inode,
-        .name = "."
+        .name = ".",
+		.flags = FS_DIR_FLAG_DIRECTORY
     };
 
     struct directory_entry back = {
         .inode = root_inode,
-        .name = ".."
+        .name = "..",
+		.flags = FS_DIR_FLAG_DIRECTORY
     };
 
     root_dir = root;

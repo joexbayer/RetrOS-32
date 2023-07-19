@@ -7,7 +7,7 @@
 #include <util.h>
 #include <diskdev.h>
 
-#define INODE_CACHE_SIZE 10
+#define INODE_CACHE_SIZE 100
 #define INODE_TO_BLOCK(inode) (INODE_BLOCK(inode))
 #define INODE_BLOCK_OFFSET(block, i) ((i-(block*INODES_PER_BLOCK))*sizeof(struct inode))
 
@@ -18,6 +18,10 @@ static void __inode_sync(struct inode* inode, struct superblock* sb)
 	int inode_int = inode->inode;
 	int block_inode = INODE_TO_BLOCK(inode->inode);
 	int inode_loc = INODE_BLOCK_OFFSET(block_inode, inode_int);
+
+	if(inode->nlink != 0){
+		dbgprintf("[sync] inode %d has %d active links!.\n", inode_int, inode->nlink);
+	}
 
 	write_block_offset((char*) inode, sizeof(*inode), inode_loc, sb->inodes_start+block_inode);
 	dbgprintf("[sync] Synchronizing inode %d\n", inode_int);
@@ -30,7 +34,7 @@ static int __inode_cache_insert(struct inode* inode, struct superblock* sb)
 	int lowest_cache_entry = 0;
 
 	/* Check if there is a free cache slot and find cache with lowest nlink */
-	for (i = 0; i < 10; i++){
+	for (i = 0; i < INODE_CACHE_SIZE; i++){
 		if(__inode_cache[i].type == 0){
 			dbgprintf("[FS] Caching inode %d.\n", inode->inode);
 			memcpy(&__inode_cache[i], inode, sizeof(struct inode));
@@ -43,21 +47,23 @@ static int __inode_cache_insert(struct inode* inode, struct superblock* sb)
 	}
 
 	/* if no free slot check if any file has been closed. */
-	for (i = 0; i < 10; i++)
+	for (i = 0; i < INODE_CACHE_SIZE; i++){
 		if(__inode_cache[i].nlink == 0){
 			__inode_sync(&__inode_cache[i], sb);
 			dbgprintf("[FS] Saving inode %d to disk..\n", __inode_cache[i].inode);
 			dbgprintf("[FS] Caching inode %d.\n", inode->inode);
 			memcpy(&__inode_cache[i], inode, sizeof(struct inode));
 			return i;
+		}
 	}
 
 	/* if all else fails, evict the inode with least nlinks */
-	__inode_sync(&__inode_cache[lowest_cache_entry], sb);
-	dbgprintf("[FS] Saving inode %d to disk..\n", __inode_cache[lowest_cache_entry].inode);
-	dbgprintf("[FS] Caching inode %d.\n", inode->inode);
-	memcpy(&__inode_cache[lowest_cache_entry], inode, sizeof(struct inode));
-	return i;
+	// __inode_sync(&__inode_cache[lowest_cache_entry], sb);
+	// dbgprintf("[FS] Saving inode %d to disk..\n", __inode_cache[lowest_cache_entry].inode);
+	// dbgprintf("[FS] Caching inode %d.\n", inode->inode);
+	// memcpy(&__inode_cache[lowest_cache_entry], inode, sizeof(struct inode));
+	dbgprintf("[FS] Cache is full with opened inodes!\n");
+	return -1;
 }
 
 static int __inode_load(inode_t inode, struct superblock* sb)
@@ -71,9 +77,9 @@ static int __inode_load(inode_t inode, struct superblock* sb)
 	dbgprintf("[FS] Loaded inode %d from disk. block: %d, inode_loc: %d\n", disk_inode.inode, sb->inodes_start+block_inode, inode_loc);
 	mutex_init(&disk_inode.lock);
 
-	int ret = __inode_cache_insert(&disk_inode, sb);
+	disk_inode.nlink = 0;
 
-	return ret;
+	return __inode_cache_insert(&disk_inode, sb);
     
 }
 
@@ -96,9 +102,10 @@ void inodes_sync(struct superblock* sb)
 
 struct inode* inode_get(inode_t inode, struct superblock* sb)
 {
-	for (int i = 0; i < INODE_CACHE_SIZE; i++)
+	for (int i = 0; i < INODE_CACHE_SIZE; i++){
 		if(__inode_cache[i].inode == inode){
 			return &__inode_cache[i];
+		}
 	}
 
 	int ret = __inode_load(inode, sb);
@@ -125,7 +132,6 @@ int inode_read(void* buf, int size, struct inode* inode, struct superblock* sb)
 	}
 
 	dbgprintf("Reading %d from inode: %d (%d)\n", size, inode->size, inode->pos);
-
 
 	int left = size > inode->size ? inode->size : size;
 	int new_pos = inode->pos % BLOCK_SIZE;
@@ -238,7 +244,7 @@ int inode_write(void* buf, int size, struct inode* inode, struct superblock* sb)
 
 inode_t alloc_inode(struct superblock* sb, char TYPE)
 {
-	if(TYPE != FS_FILE && TYPE != FS_DIRECTORY)
+	if(TYPE != FS_TYPE_FILE && TYPE != FS_TYPE_DIRECTORY)
 		return -1;
 
 	inode_t inode = __new_inode(sb);

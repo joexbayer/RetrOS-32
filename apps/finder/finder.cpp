@@ -8,6 +8,7 @@
 
 #define WIDTH 400
 #define HEIGHT 300
+#define ICON_SIZE 32
 
 /* todo add to file */
 
@@ -16,55 +17,66 @@ class Finder : public Window
 public:
     Finder() : Window(WIDTH, HEIGHT, "Finder", 0){
         drawRect(0, 0, WIDTH, HEIGHT, COLOR_WHITE);
-        setHeader(cwd.getData());
 
         for(int i = 0; i < 5; i++){
-            icon[i] = (const unsigned char*)malloc(32*32);
+            icon[i] = (const unsigned char*)malloc(ICON_SIZE*ICON_SIZE);
         }
-        int fd = open("afolder.ico", FS_FLAG_READ);
-        read(fd, (void*)icon[0], 32*32);
-        fclose(fd);
 
-        fd = open("afile.ico", FS_FLAG_READ);
-        read(fd, (void*)icon[1], 32*32);
-        fclose(fd);
+        loadIcon("folder.ico", 0);
+        loadIcon("text.ico", 1);
+    }
 
-        drawIcon(8, 8, icon[0]);
-        drawIcon(40, 8, icon[1]);   
+    void loadIcon(const char* path, int index){
+        int fd = open(path, FS_FLAG_READ);
+        read(fd, (void*)icon[index], ICON_SIZE*ICON_SIZE);
+        fclose(fd);
     }
 
     void drawIcon(int x, int y, const unsigned char* icon){
-        for (int i = 0; i < 32*32; i++){
+        for (int i = 0; i < ICON_SIZE*ICON_SIZE; i++){
             if(icon[i] == 0xff) continue;
-            drawPixel(x + i%32, y + i/32, icon[i]);
+            drawPixel(x + i%ICON_SIZE, y + i/ICON_SIZE, icon[i]);
         }
     }
 
     ~Finder();
 
     int changeDirectory(const char* path){
-        cwd.concat(path);
-        setHeader(cwd.getData());
+        
     }
 
     int showFiles(){
         int ret;
         struct directory_entry entry;
-        int i = 0;
 
         if(m_fd != 0) fclose(m_fd);
 
-        m_fd = open(cwd.getData(), FS_FLAG_READ);
-        if(m_fd <= 0){
-            m_fd = 0;
-            return -1;
-        }
+        m_fd = open("/", FS_FLAG_READ);
+        if(m_fd <= -1) return -1;
 
-        while (1){
-            ret = read(m_fd, &entry, sizeof(struct directory_entry));
-            if(ret <= 0) break;
+        int j = 0, i = 0;
+        while (1) {
+            int ret = read(m_fd, &entry, sizeof(struct directory_entry));
+            if (ret <= 0) {
+                break;
+            }
 
-            drawText(0, (i++)*8, entry.name, COLOR_BLACK);
+            /* draw icon based on type */
+            int xOffset = 4 + j * WIDTH / 2;
+            int yOffset = 4 + i * ICON_SIZE;
+
+            if (entry.flags & FS_DIR_FLAG_DIRECTORY) {
+                drawIcon(xOffset, yOffset, icon[0]);
+            } else {
+                drawIcon(xOffset, yOffset, icon[1]);
+            }
+
+            drawText(40 + j * WIDTH / 2, 16 + (i++) * ICON_SIZE, entry.name, COLOR_BLACK);
+
+            if (i * ICON_SIZE > HEIGHT - ICON_SIZE) {
+                i = 0;
+                ++j;
+            }
         }
 
         fclose(m_fd);
@@ -97,8 +109,6 @@ public:
 
 private:
     int m_fd = 0;
-
-    String cwd = "/";
     const unsigned char* icon[5];
 };
 

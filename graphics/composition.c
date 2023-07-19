@@ -218,7 +218,7 @@ void __kthread_entry gfx_compositor_main()
         
 
         wind.flags &= ~WINDOW_SERVER_UNINITIALIZED;
-        gfx_decode_background_image("bg.bin");
+        gfx_decode_background_image("default.img");
         dbgprintf("[WSERVER] %d bytes allocated for composition buffer.\n", wind.buffer_size);
     }
 
