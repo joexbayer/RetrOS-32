@@ -209,6 +209,8 @@ int ext_create(char* name)
 	}
 
 	struct inode* inode = inode_get(inode_index, &superblock);
+	if(inode == NULL)
+		return -FS_ERR_INODE_MISSING;
 
 	struct directory_entry new = {
 		.inode = inode->inode,
@@ -252,6 +254,8 @@ int ext_read(inode_t i, void* buf, int size)
 int ext_seek(inode_t i, int pos, int opt)
 {
 	struct inode* inode = inode_get(i, &superblock);
+	if(inode == NULL)
+		return -ERROR_NULL_POINTER;
 	
 	if(pos > inode->size)
 		return -1;
@@ -298,6 +302,9 @@ inode_t ext_open_from_directory(char* name, inode_t i)
 {
 	struct directory_entry entry;
 	struct inode* inode = inode_get(i, &superblock);
+	if(inode == NULL)
+		return -FS_ERR_INODE_MISSING;
+
 	inode->pos = 0;
 	int size = 0;
 
@@ -358,6 +365,9 @@ inode_t ext_open(char* name, ext_flag_t flags)
 int ext_size(inode_t i)
 {
 	struct inode* inode = inode_get(i, &superblock);
+	if(inode == NULL)
+		return -ERROR_NULL_POINTER;
+
 	return inode->size;
 }
 
@@ -365,6 +375,9 @@ inode_t change_directory(char* path)
 {
 	inode_t ret = ext_open(path, 0);
 	struct inode* inode = inode_get(ret, &superblock);
+	if(inode == NULL)
+		return -FS_ERR_FILE_MISSING;
+
 	if(inode->type != FS_TYPE_DIRECTORY){
 		return -FS_ERR_NOT_DIRECTORY;
 	}
@@ -390,6 +403,9 @@ inode_t ext_create_directory(char* name, inode_t current)
 	}
 
 	struct inode* inode = inode_get(inode_index, &superblock);
+	if(inode == NULL)
+		return -FS_ERR_INODE_MISSING;
+
 	struct inode* current_dir = inode_get(current, &superblock);
 	if(inode == NULL)
 		return -FS_ERR_INODE_MISSING;
@@ -429,6 +445,9 @@ void listdir()
 
 	struct directory_entry entry;
 	struct inode* current_dir = inode_get(ext_get_current_dir(), &superblock);
+	if(current_dir == NULL)
+		return;
+
 	int size = 0;
 
 	twritef("Size  Date    Time    Name\n");
