@@ -109,6 +109,13 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
         /* Title */
         vesa_fillrect(buffer, window->x+8, window->y-2, strlen(window->name)*8 + 4, 8, theme->window.background);
         vesa_write_str(buffer, window->x+8+4, window->y-2, window->name, COLOR_VGA_DARK_GRAY);
+
+            /* Header */
+        if(window->header != 0){
+            int header_position = (window->width/2) - ((strlen(window->header)*8)/2);
+            vesa_fillrect(buffer, window->x+header_position, window->y, strlen(window->header)*8 + 4, 8, background_color);
+            vesa_write_str(buffer, window->x+header_position+4, window->y, window->header, window->color.text == 0 ? theme->window.background : window->color.text);
+        }
     }
 
     window->changed = 0;
@@ -133,13 +140,6 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
     /* Title */
     vesa_fillrect(buffer, window->x+8, window->y, strlen(window->name)*8 + 4, 8, background_color);
     vesa_write_str(buffer, window->x+8+4, window->y, window->name, window->color.text == 0 ? theme->window.background : window->color.text);
-
-    /* Header */
-    if(window->header != 0){
-        int header_position = (window->width/2) - ((strlen(window->header)*8)/2);
-        vesa_fillrect(buffer, window->x+header_position, window->y, strlen(window->header)*8 + 4, 8, background_color);
-        vesa_write_str(buffer, window->x+header_position+4, window->y, window->header, window->color.text == 0 ? theme->window.background : window->color.text);
-    }
 
     if(window->is_resizable)
         vesa_fillrect(buffer,  window->x+window->width-8,  window->y+window->height-8, 6, 6, background_color);

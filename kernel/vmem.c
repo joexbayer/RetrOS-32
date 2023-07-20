@@ -154,6 +154,90 @@ void vmem_free_allocation(struct allocation* allocation)
 	dbgprintf("Done Freeing %d pages\n", num_pages);
 }
 
+void vmem_stack_free(struct pcb* pcb, void* ptr)
+{
+	if(ptr == pcb->allocations->address){
+		struct allocation* old = pcb->allocations;
+		pcb->allocations = pcb->allocations->next;
+		pcb->used_memory -= old->size;
+		
+		dbgprintf("[1] Free %d bytes of data from 0x%x\n", old->size, old->address);
+		vmem_free_allocation(old);
+		dbgprintf("Done\n");
+		return;
+	}
+
+	struct allocation* iter = pcb->allocations;
+	while(iter->next != NULL){
+		if(iter->next->address == ptr){
+			
+			struct allocation* save = iter->next;
+			iter->next = iter->next->next;
+			pcb->used_memory -= save->size;
+
+			dbgprintf("[2] Free %d bytes of data from 0x%x\n", save->size, save->address);
+			vmem_free_allocation(save);
+			dbgprintf("Done\n");
+			return;
+		}
+	}
+}
+
+void* vmem_stack_alloc(struct pcb* pcb, int size)
+{
+/* For rewrite with pages. */
+	int ret;
+	int num_pages = (size + PAGE_SIZE - 1) / PAGE_SIZE;
+	struct allocation* allocation = kalloc(sizeof(struct allocation));
+	allocation->bits = kalloc(sizeof(int)*num_pages);
+	allocation->size = size;
+
+	if(pcb->allocations == NULL){
+		
+		allocation->address = (uint32_t*) VMEM_HEAP;
+		allocation->size = size;
+
+		vmem_continious_allocation_map(allocation, allocation->address, num_pages, USER);
+		
+		allocation->next = NULL;
+
+		pcb->allocations = allocation;
+		pcb->used_memory += size;
+
+		dbgprintf("[1] Allocated %d bytes of data to 0x%x\n", size, allocation->address);
+		return (void*) allocation->address;
+	}
+
+	struct allocation* iter = pcb->allocations;
+	while(iter->next != NULL){
+		if((uint32_t)(iter->next->address) - ((uint32_t)(iter->address)+iter->size) >= size){
+			/* Found spot for allocation */
+			allocation->address = (uint32_t)(iter->address)+iter->size;
+
+			struct allocation* next = iter->next;
+			iter->next = allocation;
+			allocation->next = next;
+
+			vmem_continious_allocation_map(allocation, allocation->address, num_pages, USER);
+
+			pcb->used_memory += size;
+
+			dbgprintf("[2] Allocated %d bytes of data to 0x%x\n", size, allocation->address);
+			return (void*) allocation->address;
+		}
+		iter = iter->next;
+	}
+
+	allocation->address = (uint32_t*)((uint32_t)(iter->address)+iter->size);
+	vmem_continious_allocation_map(allocation, allocation->address, num_pages, USER);
+	allocation->next = NULL;
+
+	iter->next = allocation;
+
+	dbgprintf("[3] Allocated %d bytes of data to 0x%x\n", size, allocation->address);
+	return (void*) allocation->address;
+}
+
 void vmem_init_process(struct pcb* pcb, char* data, int size)
 {
 	/* Allocate directory and tables for data and stack */

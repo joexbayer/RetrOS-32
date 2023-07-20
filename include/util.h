@@ -52,6 +52,11 @@ int rand(void);
 
 typedef volatile int signal_value_t;
 
+struct args {
+    int argc;
+    char argv[10][100];
+};
+
 #define SAVE_AND_RESTORE(x, code_block) \
 do { \
     decltype(x) _temp = x; \

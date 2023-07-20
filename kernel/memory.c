@@ -25,90 +25,24 @@ void kfree(void* ptr);
 static int memory_process_used = 0;
 void free(void* ptr)
 {
-	if(ptr == current_running->allocations->address){
-		struct allocation* old = current_running->allocations;
-		current_running->allocations = current_running->allocations->next;
-		current_running->used_memory -= old->size;
-		memory_process_used -= old->size;
-		
-		dbgprintf("[1] Free %d bytes of data from 0x%x\n", old->size, old->address);
-		vmem_free_allocation(old);
-		dbgprintf("Done\n");
+	if(ptr == NULL)
 		return;
-	}
 
-	struct allocation* iter = current_running->allocations;
-	while(iter->next != NULL){
-		if(iter->next->address == ptr){
-			
-			struct allocation* save = iter->next;
-			iter->next = iter->next->next;
-			current_running->used_memory -= save->size;
-			memory_process_used -= save->size;
-
-			dbgprintf("[2] Free %d bytes of data from 0x%x\n", save->size, save->address);
-			vmem_free_allocation(save);
-			dbgprintf("Done\n");
-			return;
-		}
-	}
+	vmem_stack_free(current_running, ptr);
 }
 
 void* malloc(unsigned int size)
 {	
-	assert(size > 0);
-	/* For rewrite with pages. */
-	int ret;
-	int num_pages = (size + PAGE_SIZE - 1) / PAGE_SIZE;
-	struct allocation* allocation = kalloc(sizeof(struct allocation));
-	allocation->bits = kalloc(sizeof(int)*num_pages);
-	allocation->size = size;
-
-	if(current_running->allocations == NULL){
-		
-		allocation->address = (uint32_t*) VMEM_HEAP;
-		allocation->size = size;
-
-		vmem_continious_allocation_map(allocation, allocation->address, num_pages, USER);
-		
-		allocation->next = NULL;
-
-		current_running->allocations = allocation;
-		current_running->used_memory += size;
-		
-		memory_process_used += size;
-		dbgprintf("[1] Allocated %d bytes of data to 0x%x\n", size, allocation->address);
-		return (void*) allocation->address;
+	if (size <= 0){
+		return NULL;
+	}
+	
+	void* ptr = vmem_stack_alloc(current_running, size);
+	if(ptr == NULL){
+		return NULL;
 	}
 
-	struct allocation* iter = current_running->allocations;
-	while(iter->next != NULL){
-		if((uint32_t)(iter->next->address) - ((uint32_t)(iter->address)+iter->size) >= size){
-			/* Found spot for allocation */
-			allocation->address = (uint32_t)(iter->address)+iter->size;
-
-			struct allocation* next = iter->next;
-			iter->next = allocation;
-			allocation->next = next;
-
-			vmem_continious_allocation_map(allocation, allocation->address, num_pages, USER);
-
-			current_running->used_memory += size;
-			memory_process_used += size;
-			dbgprintf("[2] Allocated %d bytes of data to 0x%x\n", size, allocation->address);
-			return (void*) allocation->address;
-		}
-		iter = iter->next;
-	}
-
-	allocation->address = (uint32_t*)((uint32_t)(iter->address)+iter->size);
-	vmem_continious_allocation_map(allocation, allocation->address, num_pages, USER);
-	allocation->next = NULL;
-
-	iter->next = allocation;
-	memory_process_used += size;
-	dbgprintf("[3] Allocated %d bytes of data to 0x%x\n", size, allocation->address);
-	return (void*) allocation->address;
+	return ptr;
 }
 
 void* calloc(int size, int val)

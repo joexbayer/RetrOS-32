@@ -6,18 +6,26 @@
 
 class String {
 private:
-    char* m_data;
-    int m_length;
 
 public:
+    char* m_data = nullptr;
+    int m_length;
     String(const char* str) {
-        m_length = strlen(str);
-        m_data = new char[m_length + 1];
-        memcpy(m_data, str, strlen(str));
+        m_length = strlen(str)+1;
+        m_data = (char*)malloc(m_length+1);
+        setString(str);
+    }
+
+    void setString(const char* str)
+    {
+        for(int i = 0; i < strlen(str); i++){
+            m_data[i] = str[i];
+        }
     }
 
     ~String() {
-        delete[] m_data;
+        if(m_data != nullptr)
+            free(m_data);
     }
 
     const char* getData() const {

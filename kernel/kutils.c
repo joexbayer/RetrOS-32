@@ -55,30 +55,24 @@ unsigned char* run_length_decode(const unsigned char* encodedData, int encodedLe
 
 int exec_cmd(char* str)
 {
-    char* argv[5];
-	for (int i = 0; i < 5; i++) {
-		argv[i] = (char*)kalloc(100);
-		memset(argv[i], 0, 100);
-	}
+    struct args args = {
+        .argc = 0,
+    };
 
     dbgprintf("%s\n", str);
-	int argc = parse_arguments(str, argv);
-	if(argc == 0) return -1;
+	args.argc = parse_arguments(str, args.argv);
+	if(args.argc == 0) return -1;
 
-    dbgprintf("%s %s\n", argv[0], str);
+    dbgprintf("%s %s\n", args.argv[0], str);
 
-	void (*ptr)(int argc, char* argv[]) = (void (*)(int argc, char* argv[])) ksyms_resolve_symbol(argv[0]);
+	void (*ptr)(int argc, char* argv[]) = (void (*)(int argc, char* argv[])) ksyms_resolve_symbol(args.argv[0]);
 	if(ptr == NULL){
 		return -1;
 	}
 
-	ptr(argc, argv);
+	ptr(args.argc, args.argv);
 	gfx_commit();
 
-    for (int i = 0; i < 5; i++) {
-		kfree(argv[i]);
-	}
-    //free(argv);
 
 	return 0;
 }

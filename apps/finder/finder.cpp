@@ -10,8 +10,8 @@
 #define HEIGHT 300
 #define ICON_SIZE 32
 
-/* todo add to file */
 
+/* todo add to file */
 class Finder : public Window
 {
 public:
@@ -19,11 +19,13 @@ public:
         drawRect(0, 0, WIDTH, HEIGHT, COLOR_WHITE);
 
         for(int i = 0; i < 5; i++){
-            icon[i] = (const unsigned char*)malloc(ICON_SIZE*ICON_SIZE);
+            icon[i] = (unsigned char*)malloc(ICON_SIZE*ICON_SIZE);
         }
 
         loadIcon("folder.ico", 0);
         loadIcon("text.ico", 1);
+
+        m_path = new String("/");
     }
 
     void loadIcon(const char* path, int index){
@@ -51,7 +53,9 @@ public:
 
         if(m_fd != 0) fclose(m_fd);
 
-        m_fd = open("/", FS_FLAG_READ);
+        gfx_draw_format_text(4, 4, COLOR_BLACK, "Path: %s", m_path->getData());
+
+        m_fd = open(m_path->getData(), FS_FLAG_READ);
         if(m_fd <= -1) return -1;
 
         int j = 0, i = 0;
@@ -109,7 +113,9 @@ public:
 
 private:
     int m_fd = 0;
-    const unsigned char* icon[5];
+    unsigned char* icon[5];
+
+    String* m_path;
 };
 
 
