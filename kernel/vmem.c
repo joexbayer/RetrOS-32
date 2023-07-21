@@ -51,9 +51,9 @@ struct virtual_memory_allocator __vmem_manager;
 struct virtual_memory_allocator* vmem_manager = &__vmem_manager;
 
 /* HELPER FUNCTIONS */
-static inline uint32_t* vmem_get_page_table(uint32_t addr)
+static inline uint32_t* vmem_get_page_table(struct pcb* pcb, uint32_t addr)
 {
-	return (uint32_t*)(current_running->page_dir[DIRECTORY_INDEX(addr)] & ~PAGE_MASK);
+	return (uint32_t*)(pcb->page_dir[DIRECTORY_INDEX(addr)] & ~PAGE_MASK);
 }
 
 static inline void vmem_map(uint32_t* page_table, uint32_t vaddr, uint32_t paddr, int access)
@@ -85,7 +85,6 @@ static uint32_t* vmem_alloc(struct virtual_memory_allocator* vmem)
 		//memset(paddr, 0, PAGE_SIZE);
 
 		dbgprintf("[VMEM MANAGER] Allocated page %d at 0x%x\n", bit, paddr);
-
 	});
 
 	return paddr;
@@ -115,10 +114,10 @@ static void vmem_free(struct virtual_memory_allocator* vmem, void* addr)
 	});
 }
 
-int vmem_continious_allocation_map(struct allocation* allocation, uint32_t* address, int num, int access)
+int vmem_continious_allocation_map(struct pcb* pcb, struct allocation* allocation, uint32_t* address, int num, int access)
 {
 
-	uint32_t* heap_table = vmem_get_page_table(VMEM_HEAP);
+	uint32_t* heap_table = vmem_get_page_table(pcb, VMEM_HEAP);
 	for (int i = 0; i < num; i++){
 		/*
 			1. Allocate a page
@@ -197,7 +196,7 @@ void* vmem_stack_alloc(struct pcb* pcb, int size)
 		allocation->address = (uint32_t*) VMEM_HEAP;
 		allocation->size = size;
 
-		vmem_continious_allocation_map(allocation, allocation->address, num_pages, USER);
+		vmem_continious_allocation_map(pcb, allocation, allocation->address, num_pages, USER);
 		
 		allocation->next = NULL;
 
@@ -218,7 +217,7 @@ void* vmem_stack_alloc(struct pcb* pcb, int size)
 			iter->next = allocation;
 			allocation->next = next;
 
-			vmem_continious_allocation_map(allocation, allocation->address, num_pages, USER);
+			vmem_continious_allocation_map(pcb, allocation, allocation->address, num_pages, USER);
 
 			pcb->used_memory += size;
 
@@ -229,7 +228,7 @@ void* vmem_stack_alloc(struct pcb* pcb, int size)
 	}
 
 	allocation->address = (uint32_t*)((uint32_t)(iter->address)+iter->size);
-	vmem_continious_allocation_map(allocation, allocation->address, num_pages, USER);
+	vmem_continious_allocation_map(pcb, allocation, allocation->address, num_pages, USER);
 	allocation->next = NULL;
 
 	iter->next = allocation;

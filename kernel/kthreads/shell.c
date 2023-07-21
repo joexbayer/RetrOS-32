@@ -191,7 +191,7 @@ void run(int argc, char* argv[])
 		return;
 	}
 
-	int pid = pcb_create_process(optarg, argc, NULL, kpriv ? PCB_FLAG_KERNEL : 0);
+	int pid = pcb_create_process(optarg, argc+2, &argv[2], kpriv ? PCB_FLAG_KERNEL : 0);
 	if(pid < 0)
 		twritef("%s does not exist\n", file);
 	

@@ -365,11 +365,12 @@ void Editor::putChar(unsigned char c)
 	}
 }
 
-int main(/* int argc, char* argv[]*/)
+int main(int argc, char* argv[])
 {
-	//for (int i = 0; i < argc; i++){
-	//	printf("argv: %s\n", argv[i]);
-	//}
+	printf("argc: %d\n", argc);
+	for (int i = 0; i < argc; i++){
+		printf("argv: %s\n", argv[i]);
+	}
 
 	Editor s1;
 	s1.FileChooser();

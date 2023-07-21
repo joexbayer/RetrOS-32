@@ -97,6 +97,5 @@ void vmem_stack_free(struct pcb* pcb, void* ptr);
 void* vmem_stack_alloc(struct pcb* pcb, int size);
 
 void vmem_free_allocation(struct allocation* allocation);
-int vmem_continious_allocation_map(struct allocation* allocation, uint32_t* address, int num, int access);
-
+int vmem_continious_allocation_map(struct pcb* pcb, struct allocation* allocation, uint32_t* address, int num, int access);
 #endif

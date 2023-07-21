@@ -3,29 +3,31 @@
 
 #include <util.h>
 #include "cppUtils.hpp"
+#include <lib/syscall.h>
 
 class String {
 private:
 
 public:
-    char* m_data = nullptr;
+    char* m_data;
     int m_length;
     String(const char* str) {
-        m_length = strlen(str)+1;
+        m_length = strlen(str);
         m_data = (char*)malloc(m_length+1);
         setString(str);
     }
 
     void setString(const char* str)
     {
-        for(int i = 0; i < strlen(str); i++){
+        int len = strlen(str);
+        for(int i = 0; i < len; i++){
             m_data[i] = str[i];
         }
+        m_data[len] = '\0';
     }
 
     ~String() {
-        if(m_data != nullptr)
-            free(m_data);
+        free(m_data);
     }
 
     const char* getData() const {

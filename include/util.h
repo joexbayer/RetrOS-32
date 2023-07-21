@@ -38,7 +38,7 @@ uint32_t memcmp(const void* ptr, const void* ptr2, uint32_t len);
 void* memset (void *dest, int val, int len);
 void* memcpy(void *dest, const void *src, int n);
 
-int parse_arguments(const char *input_string, char *tokens[]);
+int parse_arguments(const char *input_string, char tokens[10][100]);
 
 void hexdump(const void *data, int size);
 
@@ -54,7 +54,8 @@ typedef volatile int signal_value_t;
 
 struct args {
     int argc;
-    char argv[10][100];
+    char* argv[10];
+    char data[10][100];
 };
 
 #define SAVE_AND_RESTORE(x, code_block) \
