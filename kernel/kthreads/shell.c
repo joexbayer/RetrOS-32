@@ -154,46 +154,19 @@ void ed()
 }
 EXPORT_KSYMBOL(ed);
 
+
 void run(int argc, char* argv[])
 {
-	char* optarg = NULL;
-	char* file = NULL;
-    int opt = 0;
-	int kpriv = 0;
-
-	while ((opt = getopt(argc, argv, "hkc:", &optarg)) != -1) {
-		dbgprintf("%c\n", opt);
-        switch (opt) {
-            case 'h':
-                twritef("run [hn]\n  n - name\n  h - help\nk - launch with kernel permissions\n  example: run -c /bin/clock\n");
-                return;
-			case 'k':
-				kpriv = 1;
-				break;
-			case 'c':
-				file = optarg;
-				break;
-            case '?':
-                twritef("Invalid option\n");
-				return;
-            case ':':
-                twritef("Missing option argument\n");
-				return;
-            default:
-                twritef("Unknown option %c\n", opt);
-				return;
-        }
-	}
-
-	int r = start(optarg);
+	int r = start(argv[1]);
 	if(r >= 0){
 		twritef("Kernel thread started\n");
 		return;
 	}
 
-	int pid = pcb_create_process(optarg, argc, NULL, kpriv ? PCB_FLAG_KERNEL : 0);
-	if(pid < 0)
-		twritef("%s does not exist\n", file);
+	int pid = pcb_create_process(argv[1], argc, NULL, /*PCB_FLAG_KERNEL*/ 0);
+	if(pid < 0){
+		twritef("%s does not exist\n", argv[1]);
+	}
 	
     return;
 }
@@ -216,7 +189,6 @@ EXPORT_KSYMBOL(run);
 
 void ths()
 {
-	dbgprintf("%d\n", 0x1337);
 	int total_themes = gfx_total_themes();
 	for (int i = 0; i < total_themes; i++){
 		twritef("%d) %s\n", i, kernel_gfx_get_theme(i)->name);
