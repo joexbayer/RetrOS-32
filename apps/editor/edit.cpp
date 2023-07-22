@@ -124,8 +124,8 @@ void Editor::FileChooser()
 		fclose(m_fd);
 	}
 
-	gfx_draw_rectangle(24, c_height-8, c_width-24, 8, COLOR_BG);
-	gfx_draw_format_text(24, c_height-8, COLOR_VGA_YELLOW, "Open file: ");
+	gfx_draw_rectangle(24, c_height/2-4, c_width-24, 8, COLOR_BG);
+	gfx_draw_format_text(24, c_height/2-4, COLOR_BLACK, "Open file: ");
 
 	while (1){
 		struct gfx_event event;
@@ -365,14 +365,19 @@ void Editor::putChar(unsigned char c)
 	}
 }
 
-int main(/* int argc, char* argv[]*/)
+int main(int argc, char* argv[])
 {
-	//for (int i = 0; i < argc; i++){
-	//	printf("argv: %s\n", argv[i]);
-	//}
+	printf("argc: %d\n", argc);
+	for (int i = 0; i < argc; i++){
+		printf("argv: %s\n", argv[i]);
+	}
 
 	Editor s1;
-	s1.FileChooser();
+	if(argc > 1){
+		s1.Open(argv[1]);
+	} else {
+		s1.FileChooser();
+	}
 	s1.EditorLoop();
 
 	printf("Done\n");

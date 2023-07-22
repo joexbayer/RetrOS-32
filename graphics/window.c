@@ -113,8 +113,8 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
             /* Header */
         if(window->header != 0){
             int header_position = (window->width/2) - ((strlen(window->header)*8)/2);
-            vesa_fillrect(buffer, window->x+header_position, window->y, strlen(window->header)*8 + 4, 8, background_color);
-            vesa_write_str(buffer, window->x+header_position+4, window->y, window->header, window->color.text == 0 ? theme->window.background : window->color.text);
+            vesa_fillrect(buffer, window->x+header_position, window->y-2, strlen(window->header)*8 + 4, 8, background_color);
+            vesa_write_str(buffer, window->x+header_position+4, window->y-2, window->header, window->color.text == 0 ? theme->window.background : window->color.text);
         }
     }
 

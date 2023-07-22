@@ -49,7 +49,7 @@ inline inline uint32_t memcmp(const void* ptr, const void* ptr2, uint32_t len)
 }
 
 #define MAX_ARGS 5
-int parse_arguments(const char *input_string, char *tokens[]) {
+int parse_arguments(const char *input_string, char tokens[10][100]) {
     int num_tokens = 0;  /* Number of arguments */
     int token_start = -1;  /* Index of start of current token */
     int token_end = -1;  /* Index of end of current token */

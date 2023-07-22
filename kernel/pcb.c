@@ -18,6 +18,7 @@
 #include <assert.h>
 #include <kthreads.h>
 #include <kutils.h>
+#include <util.h>
 #include <errors.h>
 
 //#include <gfx/gfxlib.h>
@@ -358,13 +359,6 @@ int pcb_cleanup_routine(int pid)
 	dbgprintf("[PCB] Cleanup on PID %d stack: 0x%x (original: 0x%x)\n", pid, pcb_table[pid].ctx.esp, pcb_table[pid].stack_ptr+PCB_STACK_SIZE-1);
 
 	gfx_destory_window(pcb_table[pid].gfx_window);
-
-	/* Free potential arguments */
-	if(pcb_table[pid].argv != NULL){
-		for (int i = 0; i < 5 /* Change to MAX_ARGS */; i++)
-			kfree(pcb_table[pid].argv[i]);
-		kfree(pcb_table[pid].argv);
-	}
 	
 	if(pcb_table[pid].is_process){
 		vmem_cleanup_process(&pcb_table[pid]);
@@ -436,7 +430,13 @@ error_t pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 	return 1;
 }
 
-error_t pcb_create_process(char* program, int args, char** argv, pcb_flag_t flags)
+void flush_tlb() {
+    uint32_t cr3;
+    asm volatile ("movl %%cr3, %0" : "=r" (cr3));
+    asm volatile ("movl %0, %%cr3" : : "r" (cr3));
+}
+
+error_t pcb_create_process(char* program, int argc, char** argv, pcb_flag_t flags)
 {
 	ENTER_CRITICAL();
 	/* Load process from disk */
@@ -474,7 +474,7 @@ error_t pcb_create_process(char* program, int args, char** argv, pcb_flag_t flag
 	pcb->is_process = 1;
 	pcb->kallocs = 0;
 	pcb->preempts = 0;
-	pcb->args = args;
+	pcb->args = argc;
 	pcb->argv = argv;
 	pcb->current_directory = current_running->current_directory;
 	pcb->yields = 0;
@@ -490,6 +490,23 @@ error_t pcb_create_process(char* program, int args, char** argv, pcb_flag_t flag
 
 	/* Memory map data */
 	vmem_init_process(pcb, buf, read);
+
+	struct args* virtual_args = vmem_stack_alloc(pcb, sizeof(struct args));
+
+	/* get physical address */
+	uint32_t heap_table = (uint32_t*)(pcb->page_dir[DIRECTORY_INDEX(VMEM_HEAP)] & ~PAGE_MASK);
+	uint32_t heap_page = (uint32_t)((uint32_t*)heap_table)[TABLE_INDEX((uint32_t)virtual_args)]& ~PAGE_MASK;
+ 
+	struct args* _args = (struct args*)(heap_page);
+	/* copy over args */
+	_args->argc = pcb->args;
+	for (int i = 0; i < pcb->args; i++){
+		memcpy(_args->data[i], pcb->argv[i], strlen(pcb->argv[i])+1);
+		_args->argv[i] = virtual_args->data[i];
+		dbgprintf("Arg %d: %s (0x%x)\n", i, _args->data[i], _args->argv[i]);
+	}
+	pcb->args = _args->argc;
+	pcb->argv = virtual_args->argv;
 
 	get_scheduler()->ops->add(get_scheduler(), &pcb_table[i]);
 	//running->ops->add(running, pcb);
@@ -538,6 +555,7 @@ error_t pcb_create_kthread(void (*entry)(), char* name)
 
 void __noreturn start_pcb(struct pcb* pcb)
 {   
+
 	pcb->state = RUNNING;
 	dbgprintf("[START PCB] Starting pcb!\n");
 	//pcb_dbg_print(current_running);

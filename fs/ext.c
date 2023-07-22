@@ -341,7 +341,8 @@ inode_t ext_open(char* name, ext_flag_t flags)
 {
 	CHECK_DISK();
 
-	dbgprintf("[FS] Opening file %s\n", name);
+	dbgprintf("[FS] Opening file %s (0x%x)\n", name, name);
+	dbgprintf("[FS] %x\n", name[0]);
 
 	/* TODO: check flags for read / write access */
 
@@ -359,7 +360,6 @@ inode_t ext_open(char* name, ext_flag_t flags)
 	inode->nlink++;
 
 	return ret;
-
 }
 
 int ext_size(inode_t i)

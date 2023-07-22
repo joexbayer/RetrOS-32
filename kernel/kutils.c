@@ -56,12 +56,20 @@ unsigned char* run_length_decode(const unsigned char* encodedData, int encodedLe
 int exec_cmd(char* str)
 {
     struct args args = {
-        .argc = 0,
+        .argc = 0
     };
-
-    dbgprintf("%s\n", str);
-	args.argc = parse_arguments(str, args.argv);
+    for (int i = 0; i < 10; i++){
+        args.argv[i] = args.data[i];
+    }
+    
+	args.argc = parse_arguments(str, args.data);
 	if(args.argc == 0) return -1;
+
+    for (int i = 0; i < args.argc; i++)
+    {
+        dbgprintf("%d: %s\n", args.argc, args.argv[i]);
+    }
+    
 
     dbgprintf("%s %s\n", args.argv[0], str);
 

@@ -25,7 +25,12 @@ public:
         loadIcon("folder.ico", 0);
         loadIcon("text.ico", 1);
 
-        m_path = new String("/");
+        path = (char*)malloc(256);
+        memset(path, 0, 256);
+
+        path[0] = '/';
+
+        setHeader(path);
     }
 
     void loadIcon(const char* path, int index){
@@ -53,9 +58,7 @@ public:
 
         if(m_fd != 0) fclose(m_fd);
 
-        gfx_draw_format_text(4, 4, COLOR_BLACK, "Path: %s", m_path->getData());
-
-        m_fd = open(m_path->getData(), FS_FLAG_READ);
+        m_fd = open(path, FS_FLAG_READ);
         if(m_fd <= -1) return -1;
 
         int j = 0, i = 0;
@@ -115,7 +118,7 @@ private:
     int m_fd = 0;
     unsigned char* icon[5];
 
-    String* m_path;
+    char* path;
 };
 
 
