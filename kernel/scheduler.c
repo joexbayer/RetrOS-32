@@ -64,7 +64,6 @@ error_t sched_init_default(struct scheduler* sched, sched_flag_t flags)
         return -ERROR_PCB_QUEUE_CREATE;
     }
 
-
     sched->queue = pcb_new_queue();
     if(sched->queue == NULL){
         return -ERROR_PCB_QUEUE_CREATE;

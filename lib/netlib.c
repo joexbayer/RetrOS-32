@@ -37,7 +37,7 @@ int listen(int socket, int backlog)
 
 int recv(int socket, void *buffer, int length, int flags)
 {
-    ERR_ON_NULL(buffer);
+    
     struct net_buffer net_buffer = {
         .buffer = buffer,
         .length = length,
@@ -48,8 +48,8 @@ int recv(int socket, void *buffer, int length, int flags)
 
 int recvfrom(int socket, void *buffer, int length, int flags, struct sockaddr *address, socklen_t *address_len)
 {
-    ERR_ON_NULL(buffer);
-    ERR_ON_NULL(address);
+    
+    
     struct net_buffer net_buffer = {
         .buffer = buffer,
         .length = length,
@@ -61,7 +61,7 @@ int recvfrom(int socket, void *buffer, int length, int flags, struct sockaddr *a
 
 int recv_timeout(int socket, void *buffer, int length, int flags, int timeout)
 {
-    ERR_ON_NULL(buffer);
+    
     struct net_buffer net_buffer = {
         .buffer = buffer,
         .length = length,
@@ -73,7 +73,7 @@ int recv_timeout(int socket, void *buffer, int length, int flags, int timeout)
 
 int send(int socket, const void *message, int length, int flags)
 {
-    ERR_ON_NULL(message);
+    
     struct net_buffer net_buffer = {
         .buffer = message,
         .length = length,
@@ -84,8 +84,8 @@ int send(int socket, const void *message, int length, int flags)
 
 int sendto(int socket, const void *message, int length, int flags, const struct sockaddr *dest_addr, socklen_t dest_len)
 {
-    ERR_ON_NULL(message);
-    ERR_ON_NULL(dest_addr);
+    
+    
     struct net_buffer net_buffer = {
         .buffer = message,
         .length = length,

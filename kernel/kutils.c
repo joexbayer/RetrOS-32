@@ -58,7 +58,7 @@ int exec_cmd(char* str)
     struct args args = {
         .argc = 0
     };
-    
+
     for (int i = 0; i < 10; i++){
         args.argv[i] = args.data[i];
     }

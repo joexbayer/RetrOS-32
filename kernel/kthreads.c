@@ -74,8 +74,7 @@ error_t start(char* name)
 
     for (int i = 0; i < total_kthreads; i++){
         if(memcmp(name, kthread_table[i].name, strlen(kthread_table[i].name)) == 0){
-            int pid = pcb_create_kthread(kthread_table[i].entry, kthread_table[i].name);
-            return pid;
+            return pcb_create_kthread(kthread_table[i].entry, kthread_table[i].name);
         }
     }
 

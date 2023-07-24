@@ -95,6 +95,7 @@ void Editor::Quit()
 
 void Editor::Open(char* path)
 {
+
 	m_fd = open(path, FS_FLAG_CREATE);
 	if(m_fd <= 0)
 		return;
@@ -106,12 +107,20 @@ void Editor::Open(char* path)
 	reDraw(0, m_bufferHead);
 }
 
+void Editor::setFd(int fd)
+{
+	m_fd = fd;
+}
+
 void Editor::Save()
 {
-	if(m_fd <= 0)
+	if(m_fd <= 0){
 		return;
+	}
 	
 	write(m_fd, m_textBuffer, m_bufferSize);
+	gfx_draw_rectangle(24, c_height-8, c_width-24, 8, COLOR_BG);
+	gfx_draw_format_text(24, c_height-8, COLOR_VGA_MEDIUM_DARK_GRAY, "Saved.");
 }
 
 void Editor::FileChooser()
@@ -367,14 +376,12 @@ void Editor::putChar(unsigned char c)
 
 int main(int argc, char* argv[])
 {
-	printf("argc: %d\n", argc);
-	for (int i = 0; i < argc; i++){
-		printf("argv: %s\n", argv[i]);
-	}
-
 	Editor s1;
 	if(argc > 1){
-		s1.Open(argv[1]);
+		int fd = open(argv[1], FS_FLAG_CREATE);
+		if(fd > 0){
+			s1.setFd(fd);
+		}
 	} else {
 		s1.FileChooser();
 	}

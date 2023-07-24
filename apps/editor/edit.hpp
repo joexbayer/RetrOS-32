@@ -51,6 +51,7 @@ public:
 	void putChar(unsigned char c);
 	void Lex();
 	void Quit();
+	void setFd(int fd);
 	
 	void drawChar(unsigned char c, color_t bg);
 	void EditorLoop();

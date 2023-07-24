@@ -31,22 +31,18 @@ void init_gdt()
 
 	/* Code segment for the kernel */
 	gdt_set_segment(gdt + GDT_KERNEL_CODE, 0, 0xfffff, GDT_CODE_SEGMENT, KERNEL_PRIVILEGE, MEMORY);
-
 	/* Data segment for the kernel */
 	gdt_set_segment(gdt + GDT_KERNEL_DATA, 0, 0xfffff, GDT_DATA_SEGMENT, KERNEL_PRIVILEGE, MEMORY);
-
 	/* Code segment for processes */
 	gdt_set_segment(gdt + GDT_PROCESS_CODE, 0, 0xfffff, GDT_CODE_SEGMENT, PROCESSS_PRIVILEGE, MEMORY);
-
 	/* Data segment for processes */
 	gdt_set_segment(gdt + GDT_PROCESS_DATA, 0, 0xfffff, GDT_DATA_SEGMENT, PROCESSS_PRIVILEGE, MEMORY);
-
 	/* TSS segment */
 	gdt_set_segment(gdt + GDT_TSS_INDEX, (uint32_t)&tss, TSS_SIZE, GDT_TSS_SEGMENT, KERNEL_PRIVILEGE, SYSTEM); /* is a system segment */
 
 	FLUSH_GDT();
 
-	/* Reload the Segment registers to refresh the hidden portions */
+	/* Reload the Segment registers*/
 	asm volatile ("pushl %ds");
 	asm volatile ("popl %ds");
 
