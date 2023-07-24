@@ -56,7 +56,7 @@ struct pcb {
     pcb_state_t state;
     int16_t pid;
     uint16_t sleep;
-    uint32_t stack_ptr;
+    uint32_t stackptr;
     uint32_t* page_dir;
     uint32_t data_size;
 

@@ -342,7 +342,7 @@ struct pcb* pcb_get_by_pid(int pid)
 void pcb_dbg_print(struct pcb* pcb)
 {
 	dbgprintf("\n###### PCB ######\npid: %d\nname: %s\nesp: 0x%x\nebp: 0x%x\nkesp: 0x%x\nkebp: 0x%x\neip: 0x%x\nstate: %s\nstack limit: 0x%x\nstack size: 0x%x (0x%x - 0x%x)\nPage Directory: 0x%x\nCS: %d\nDS:%d\n",
-		pcb->pid, pcb->name, pcb->ctx.esp, pcb->ctx.ebp, pcb->kesp, pcb->kebp, pcb->ctx.eip, pcb_status[pcb->state], pcb->stack_ptr, (int)((pcb->stack_ptr+PCB_STACK_SIZE-1) - pcb->ctx.esp), (pcb->stack_ptr+PCB_STACK_SIZE-1), pcb->ctx.esp,  pcb->page_dir, pcb->cs, pcb->ds
+		pcb->pid, pcb->name, pcb->ctx.esp, pcb->ctx.ebp, pcb->kesp, pcb->kebp, pcb->ctx.eip, pcb_status[pcb->state], pcb->stackptr, (int)((pcb->stackptr+PCB_STACK_SIZE-1) - pcb->ctx.esp), (pcb->stackptr+PCB_STACK_SIZE-1), pcb->ctx.esp,  pcb->page_dir, pcb->cs, pcb->ds
 	);
 }
 
@@ -356,22 +356,15 @@ int pcb_cleanup_routine(int pid)
 {
 	assert(pid != current_running->pid && !(pid < 0 || pid > MAX_NUM_OF_PCBS));
 
-	dbgprintf("[PCB] Cleanup on PID %d stack: 0x%x (original: 0x%x)\n", pid, pcb_table[pid].ctx.esp, pcb_table[pid].stack_ptr+PCB_STACK_SIZE-1);
+	dbgprintf("[PCB] Cleanup on PID %d stack: 0x%x (original: 0x%x)\n", pid, pcb_table[pid].ctx.esp, pcb_table[pid].stackptr+PCB_STACK_SIZE-1);
 
 	gfx_destory_window(pcb_table[pid].gfx_window);
-
-	/* Free potential arguments */
-	if(pcb_table[pid].argv != NULL){
-		for (int i = 0; i < 5 /* Change to MAX_ARGS */; i++)
-			kfree(pcb_table[pid].argv[i]);
-		kfree(pcb_table[pid].argv);
-	}
 	
 	if(pcb_table[pid].is_process){
 		vmem_cleanup_process(&pcb_table[pid]);
 	}
-	dbgprintf("[PCB] Freeing stack (0x%x)\n", pcb_table[pid].stack_ptr+PCB_STACK_SIZE-1);
-	kfree((void*)pcb_table[pid].stack_ptr);
+	dbgprintf("[PCB] Freeing stack (0x%x)\n", pcb_table[pid].stackptr+PCB_STACK_SIZE-1);
+	kfree((void*)pcb_table[pid].stackptr);
 
 	pcb_count--;
 
@@ -413,7 +406,7 @@ error_t pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 	pcb->ctx.eip = (uint32_t)&kthread_entry;
 	pcb->state = PCB_NEW;
 	pcb->pid = pid;
-	pcb->stack_ptr = stack;
+	pcb->stackptr = stack;
 	pcb->allocations = NULL;
 	pcb->used_memory = 0;
 	pcb->kallocs = 0;
@@ -472,9 +465,9 @@ error_t pcb_create_process(char* program, int argc, char** argv, pcb_flag_t flag
 	memcpy(pcb->name, program, strlen(program)+1);
 	pcb->ctx.esp = 0xEFFFFFF0;
 	pcb->ctx.ebp = pcb->ctx.esp;
-	pcb->stack_ptr = (uint32_t) kalloc(PCB_STACK_SIZE);
-	memset((void*)pcb->stack_ptr, 0, PCB_STACK_SIZE);
-	pcb->kesp = pcb->stack_ptr+PCB_STACK_SIZE-1;
+	pcb->stackptr = (uint32_t) kalloc(PCB_STACK_SIZE);
+	memset((void*)pcb->stackptr, 0, PCB_STACK_SIZE);
+	pcb->kesp = pcb->stackptr+PCB_STACK_SIZE-1;
 	dbgprintf("[INIT PROCESS] Setup PCB %d for %s\n", i, program);
 	pcb->kebp = pcb->kesp;
 	pcb->term = current_running->term;

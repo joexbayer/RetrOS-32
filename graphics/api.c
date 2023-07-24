@@ -3,10 +3,15 @@
 #include <lib/graphics.h>
 #include <gfx/events.h>
 #include <assert.h>
+#include <errors.h>
 
 int gfx_syscall_hook(int option, void* data, int flags)
 {
-    assert(flags >= 0 && flags < 255);
+    if(option >= GFX_DRAW_UNUSED || option < 0) return -1;
+    if(!(flags >= 0 && flags < 255))return -1;
+
+    ERR_ON_NULL(data);
+    ERR_ON_NULL(current_running);
 
     switch (option)
     {
@@ -43,5 +48,5 @@ int gfx_syscall_hook(int option, void* data, int flags)
 
     gfx_commit();
 
-    return 0;
+    return ERROR_OK;
 }

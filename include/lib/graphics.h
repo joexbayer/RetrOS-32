@@ -27,7 +27,8 @@ enum gfx_lib_api_options {
     GFX_DRAW_CIRCLE_OPT,
     GFX_DRAW_LINE_OPT,
     GFX_EVEN_LOOP_OPT,
-    GFX_DRAW_PIXEL
+    GFX_DRAW_PIXEL,
+    GFX_DRAW_UNUSED,
 };
 
 struct gfx_pixel {

@@ -162,8 +162,7 @@ void ext_create_file_system()
 		.flags = FS_DIR_FLAG_FILE
 	};
 
-	char* test_file_text = "\n\
-		\n\
+	char* test_file_text = "\
 		int add(int a, int b)\n\
 		{\n\
 			return a+b;\n\
