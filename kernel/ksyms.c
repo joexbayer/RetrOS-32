@@ -42,6 +42,7 @@ void ksyms_add_symbol(const char* name, uintptr_t addr) {
  */
 uintptr_t ksyms_resolve_symbol(const char* name)
 {
+    ERR_ON_NULL(name);
     for (int i = 0; i < __ksyms.num_symbols; i++) {
         int ksym_namelen = strlen(__ksyms.symtable[i].name);
         int namelen = strlen(name);

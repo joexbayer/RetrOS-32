@@ -58,6 +58,7 @@ int exec_cmd(char* str)
     struct args args = {
         .argc = 0
     };
+    
     for (int i = 0; i < 10; i++){
         args.argv[i] = args.data[i];
     }
@@ -70,7 +71,6 @@ int exec_cmd(char* str)
         dbgprintf("%d: %s\n", args.argc, args.argv[i]);
     }
     
-
     dbgprintf("%s %s\n", args.argv[0], str);
 
 	void (*ptr)(int argc, char* argv[]) = (void (*)(int argc, char* argv[])) ksyms_resolve_symbol(args.argv[0]);

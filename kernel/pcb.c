@@ -498,22 +498,25 @@ error_t pcb_create_process(char* program, int argc, char** argv, pcb_flag_t flag
 	/* Memory map data */
 	vmem_init_process(pcb, buf, read);
 
-	struct args* virtual_args = vmem_stack_alloc(pcb, sizeof(struct args));
+	if(argc > 0){
+		struct args* virtual_args = vmem_stack_alloc(pcb, sizeof(struct args));
 
-	/* get physical address */
-	uint32_t heap_table = (uint32_t*)(pcb->page_dir[DIRECTORY_INDEX(VMEM_HEAP)] & ~PAGE_MASK);
-	uint32_t heap_page = (uint32_t)((uint32_t*)heap_table)[TABLE_INDEX((uint32_t)virtual_args)]& ~PAGE_MASK;
- 
-	struct args* _args = (struct args*)(heap_page);
-	/* copy over args */
-	_args->argc = pcb->args;
-	for (int i = 0; i < pcb->args; i++){
-		memcpy(_args->data[i], pcb->argv[i], strlen(pcb->argv[i])+1);
-		_args->argv[i] = virtual_args->data[i];
-		dbgprintf("Arg %d: %s (0x%x)\n", i, _args->data[i], _args->argv[i]);
+		/* get physical address */
+		uint32_t heap_table = (uint32_t*)(pcb->page_dir[DIRECTORY_INDEX(VMEM_HEAP)] & ~PAGE_MASK);
+		uint32_t heap_page = (uint32_t)((uint32_t*)heap_table)[TABLE_INDEX((uint32_t)virtual_args)]& ~PAGE_MASK;
+	
+		struct args* _args = (struct args*)(heap_page);
+		/* copy over args */
+		_args->argc = pcb->args;
+		for (int i = 0; i < pcb->args; i++){
+			memcpy(_args->data[i], pcb->argv[i], strlen(pcb->argv[i])+1);
+			_args->argv[i] = virtual_args->data[i];
+			dbgprintf("Arg %d: %s (0x%x)\n", i, _args->data[i], _args->argv[i]);
+		}
+		pcb->args = _args->argc;
+		pcb->argv = virtual_args->argv;
 	}
-	pcb->args = _args->argc;
-	pcb->argv = virtual_args->argv;
+
 
 	get_scheduler()->ops->add(get_scheduler(), &pcb_table[i]);
 	//running->ops->add(running, pcb);
@@ -544,9 +547,11 @@ error_t pcb_create_kthread(void (*entry)(), char* name)
 	}
 
 	int i; /* Find a pcb is that is "free" */
-	for(i = 0; i < MAX_NUM_OF_PCBS; i++)
-		if(pcb_table[i].state == STOPPED)
+	for(i = 0; i < MAX_NUM_OF_PCBS; i++){
+		if(pcb_table[i].state == STOPPED){
 			break;
+		}
+	}
 	
 	int ret = pcb_init_kthread(i, &pcb_table[i], entry, name);
 	assert(ret);

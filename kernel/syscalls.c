@@ -14,7 +14,10 @@ void add_system_call(int index, syscall_t fn)
 int system_call(int index, int arg1, int arg2, int arg3)
 {
 	/* Call system call function based on index. */
-	assert(index < 255 || index > 255);
+	if(index < 0 || index > 255){
+		return -1;
+	}
+
 	syscall_t fn = syscall[index];
 	//dbgprintf("[SYSCALL] %s Entering %d: %d %d %d\n", current_running->name, index, arg1, arg2, arg3);
 	//ENTER_CRITICAL();

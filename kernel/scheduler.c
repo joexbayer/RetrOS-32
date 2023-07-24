@@ -52,6 +52,7 @@ static struct scheduler sched_default_instance = {
  */
 error_t sched_init_default(struct scheduler* sched, sched_flag_t flags)
 {
+    ERR_ON_NULL(sched);
     if(sched->flags & SCHED_INITIATED){
         return -ERROR_SCHED_EXISTS;
     }
@@ -83,6 +84,7 @@ error_t sched_init_default(struct scheduler* sched, sched_flag_t flags)
  */
 static int sched_sleep(struct scheduler* sched, int time)
 {
+    ERR_ON_NULL(sched);
     SCHED_VALIDATE(sched);
 
     assert(sched->ctx.running != NULL);
@@ -104,6 +106,8 @@ static int sched_sleep(struct scheduler* sched, int time)
  */
 static int sched_prioritize(struct scheduler* sched, struct pcb* pcb)
 {
+    ERR_ON_NULL(sched);
+    ERR_ON_NULL(pcb);
     SCHED_VALIDATE(sched);
 
     /* Add pcb to priority queue */
@@ -121,6 +125,7 @@ static int sched_prioritize(struct scheduler* sched, struct pcb* pcb)
  */
 static struct pcb* sched_consume(struct scheduler* sched)
 {
+    ERR_ON_NULL(sched);
     SCHED_VALIDATE(sched);
 
     /* Consume the current running pcb and return it */ 
@@ -138,6 +143,8 @@ static struct pcb* sched_consume(struct scheduler* sched)
  */
 static int sched_block(struct scheduler* sched, struct pcb* pcb)
 {
+    ERR_ON_NULL(sched);
+    ERR_ON_NULL(pcb);
     SCHED_VALIDATE(sched);
 
     /* At this point current running should have been consumed? */
@@ -166,7 +173,8 @@ static int sched_block(struct scheduler* sched, struct pcb* pcb)
 static int sched_round_robin(struct scheduler* sched)
 {
     struct pcb* next;
- 
+    
+    ERR_ON_NULL(sched);
     SCHED_VALIDATE(sched);
     ASSERT_CRITICAL();
 
@@ -260,6 +268,7 @@ static int sched_round_robin(struct scheduler* sched)
 /* Default round robin scheduler behavior */
 static int sched_default(struct scheduler* sched)
 {
+    ERR_ON_NULL(sched);
     SCHED_VALIDATE(sched);
 
     /* If no running process, get one from queue */
@@ -295,6 +304,7 @@ static int sched_default(struct scheduler* sched)
  */
 static int sched_exit(struct scheduler* sched)
 {
+    ERR_ON_NULL(sched);
     SCHED_VALIDATE(sched);
 
     sched->exits++;  

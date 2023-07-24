@@ -28,7 +28,7 @@ void free(void* ptr)
 	if(ptr == NULL)
 		return;
 
-	vmem_stack_free(current_running, ptr);
+	return vmem_stack_free(current_running, ptr);
 }
 
 void* malloc(unsigned int size)
