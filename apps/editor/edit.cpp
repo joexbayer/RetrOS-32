@@ -374,18 +374,29 @@ void Editor::putChar(unsigned char c)
 	}
 }
 
-int main(int argc, char* argv[])
+extern "C" int main(int argc, char* argv[])
 {
-	Editor s1;
-	if(argc > 1){
-		int fd = open(argv[1], FS_FLAG_CREATE);
-		if(fd > 0){
-			s1.setFd(fd);
-		}
-	} else {
-		s1.FileChooser();
+	char* t = (char*) malloc(1000);
+	printf("Starting editor...\n");
+	printf("argc: %d\n", argc);
+	for(int i = 0; i < argc; i++){
+		printf("argv[%d]: %s\n", i, argv[i]);
 	}
-	s1.EditorLoop();
+
+
+
+	Editor* s1 = new Editor();
+	if(argc > 1){
+		s1->Open(argv[1]);
+	} else {
+		//s1->FileChooser();
+	}
+	//s1->EditorLoop();
+	while (1)
+	{
+		/* code */
+	}
+	
 
 	printf("Done\n");
 	return 0;

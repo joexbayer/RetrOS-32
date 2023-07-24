@@ -191,8 +191,10 @@ void* vmem_stack_alloc(struct pcb* pcb, int size)
 	allocation->bits = kalloc(sizeof(int)*num_pages);
 	allocation->size = size;
 
+	dbgprintf(" ------- Memory Stack --------\n");
+
 	if(pcb->allocations == NULL){
-		
+
 		allocation->address = (uint32_t*) VMEM_HEAP;
 		allocation->size = size;
 
@@ -203,7 +205,9 @@ void* vmem_stack_alloc(struct pcb* pcb, int size)
 		pcb->allocations = allocation;
 		pcb->used_memory += size;
 
-		dbgprintf("[1] Allocated %d bytes of data to 0x%x\n", size, allocation->address);
+		dbgprintf(" 0x%x --- size %d\n", allocation->address, allocation->size);
+
+		//dbgprintf("[1] Allocated %d bytes of data to 0x%x\n", size, allocation->address);
 		return (void*) allocation->address;
 	}
 
@@ -221,9 +225,12 @@ void* vmem_stack_alloc(struct pcb* pcb, int size)
 
 			pcb->used_memory += size;
 
-			dbgprintf("[2] Allocated %d bytes of data to 0x%x\n", size, allocation->address);
+			dbgprintf(" 0x%x --- size %d\n", allocation->address, allocation->size);
+			//dbgprintf("[2] Allocated %d bytes of data to 0x%x\n", size, allocation->address);
+			dbgprintf(" ------- End --------\n");
 			return (void*) allocation->address;
 		}
+		dbgprintf(" 0x%x --- size %d\n", iter->address, iter->size);
 		iter = iter->next;
 	}
 
@@ -232,8 +239,8 @@ void* vmem_stack_alloc(struct pcb* pcb, int size)
 	allocation->next = NULL;
 
 	iter->next = allocation;
-
-	dbgprintf("[3] Allocated %d bytes of data to 0x%x\n", size, allocation->address);
+	dbgprintf(" 0x%x --- size %d\n", allocation->address, allocation->size);
+	//dbgprintf("[3] Allocated %d bytes of data to 0x%x\n", size, allocation->address);
 	return (void*) allocation->address;
 }
 

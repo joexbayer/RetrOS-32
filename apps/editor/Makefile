@@ -28,7 +28,7 @@ DEPENDS = bin/edit.o
 ########################
 
 OUTPUTDIR = ./bin/
-COMMON = ../../bin/syscall.o ../../bin/util.o ../../bin/printf.o ../../bin/graphics.o ../../bin/lex.o
+COMMON = ../../bin/syscall.o ../../bin/util.o ../../bin/printf.o ../../bin/graphics.o ../../bin/lex.o ../bin/cppUtils.o
 
 .PHONY: all new programs
 all: new bin $(OUTPUT)
