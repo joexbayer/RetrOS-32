@@ -192,7 +192,6 @@ public:
                 if (file->flags & FS_DIR_FLAG_DIRECTORY) {
                     /* change directory */
                     changeDirectory(file->getName());
-                    loadFiles();
                     return 0;
                 } else {
                     /* open file */

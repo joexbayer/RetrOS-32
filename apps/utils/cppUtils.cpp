@@ -22,6 +22,12 @@ void operator delete[](void *p)
     free(p);
 }
 
+void operator delete(void* p, unsigned int index)
+{
+    void* ptr = (void*)((uint32_t)p + index);
+    free(ptr);
+}
+
 template <typename T>
 class UniquePtr {
 private:
