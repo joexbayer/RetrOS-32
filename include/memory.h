@@ -95,6 +95,7 @@ void vmem_cleanup_process(struct pcb* pcb);
 void vmem_init_process(struct pcb* pcb, char* data, int size);
 void vmem_stack_free(struct pcb* pcb, void* ptr);
 void* vmem_stack_alloc(struct pcb* pcb, int size);
+void vmem_dump_heap(struct allocation* allocation);
 
 void vmem_free_allocation(struct allocation* allocation);
 int vmem_continious_allocation_map(struct pcb* pcb, struct allocation* allocation, uint32_t* address, int num, int access);

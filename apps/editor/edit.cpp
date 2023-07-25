@@ -389,9 +389,9 @@ extern "C" int main(int argc, char* argv[])
 	if(argc > 1){
 		s1->Open(argv[1]);
 	} else {
-		//s1->FileChooser();
+		s1->FileChooser();
 	}
-	//s1->EditorLoop();
+	s1->EditorLoop();
 	while (1)
 	{
 		/* code */

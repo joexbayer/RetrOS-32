@@ -10,6 +10,83 @@
 #define HEIGHT 300
 #define ICON_SIZE 32
 
+int strcmp(const char* str1, const char* str2){
+    int i = 0;
+    while(str1[i] != '\0' && str2[i] != '\0'){
+        if(str1[i] != str2[i]) return 1;
+        i++;
+    }
+    return 0;
+}
+
+class File {
+public:
+    File(const char* name, int flags, int x, int y, int w, int h) {
+        this->name = new String(name);
+        this->flags = flags;
+        this->x = x;
+        this->y = y;
+        this->w = w;
+        this->h = h;
+    }
+
+    ~File() {
+        delete name;
+    }
+
+    const char* getName() const {
+        return name->getData();
+    }
+
+    int flags;
+private:
+    String* name;
+    int x,y,w,h;
+};
+
+class FileCache {
+public:
+    FileCache() {
+        m_size = 0;
+    }
+
+    ~FileCache() {
+        clear();
+    }
+
+    int getSize() const {
+        return m_size;
+    }
+
+    File* getByIndex(int index) const {
+        return m_files[index];
+    }
+
+    File* getFile(const char* path) {
+        for(int i = 0; i < m_size; i++){
+            if(strcmp(m_files[i]->getName(), path) == 0){
+                return m_files[i];
+            }
+        }
+        return 0;
+    }
+
+    void addFile(File* file) {
+        m_files[m_size++] = file;
+    }
+
+    void clear(){
+        for(int i = 0; i < m_size; i++){
+            if(m_files[i] != 0)
+                delete m_files[i];
+        }
+        m_size = 0;
+    }
+
+private:
+    File* m_files[100];
+    int m_size;
+};
 
 /* todo add to file */
 class Finder : public Window
@@ -25,15 +102,21 @@ public:
         loadIcon("folder.ico", 0);
         loadIcon("text.ico", 1);
 
-        path = (char*)malloc(256);
-        memset(path, 0, 256);
+        path = new String("/");
+        m_cache = new FileCache();
 
-        path[0] = '/';
-
-        setHeader(path);
+        setHeader(path->getData());
     }
 
-    void loadIcon(const char* path, int index){
+    ~Finder(){
+        for(int i = 0; i < 5; i++){
+            free(icon[i]);
+        }
+        delete path;
+        delete m_cache;
+    }
+
+    void loadIcon(char* path, int index){
         int fd = open(path, FS_FLAG_READ);
         read(fd, (void*)icon[index], ICON_SIZE*ICON_SIZE);
         fclose(fd);
@@ -46,44 +129,82 @@ public:
         }
     }
 
-    ~Finder();
-
-    int changeDirectory(const char* path){
-        
+    int changeDirectory(const char* strpath){
+        path->concat(strpath);
+        setHeader(path->getData());
     }
 
-    int showFiles(){
-        int ret;
+    int loadFiles(){
         struct directory_entry entry;
+
 
         if(m_fd != 0) fclose(m_fd);
 
-        m_fd = open(path, FS_FLAG_READ);
+        m_cache->clear();
+
+        m_fd = open(path->getData(), FS_FLAG_READ);
         if(m_fd <= -1) return -1;
 
-        int j = 0, i = 0;
         while (1) {
             int ret = read(m_fd, &entry, sizeof(struct directory_entry));
             if (ret <= 0) {
                 break;
             }
 
+            File* file = m_cache->getFile(entry.name);
+            if(file == 0){
+                file = new File(entry.name, entry.flags, 0, 0, 0, 0);
+                m_cache->addFile(file);
+            }
+        }
+
+        fclose(m_fd);
+        m_fd = 0;
+
+        return 0;
+    }
+
+    int showFiles(int x, int y){
+        drawRect(0, 0, WIDTH, HEIGHT, COLOR_WHITE);
+        
+        File* file;
+        int iter = 0;
+        int j = 0, i = 0;
+        int size = m_cache->getSize();
+        while (iter < size){
+            file = m_cache->getByIndex(i);
+            if(file == 0) continue;
+
             /* draw icon based on type */
             int xOffset = 4 + j * WIDTH / 2;
             int yOffset = 4 + i * ICON_SIZE;
 
-            if (entry.flags & FS_DIR_FLAG_DIRECTORY) {
+            if (file->flags & FS_DIR_FLAG_DIRECTORY) {
                 drawIcon(xOffset, yOffset, icon[0]);
             } else {
                 drawIcon(xOffset, yOffset, icon[1]);
             }
 
-            drawText(40 + j * WIDTH / 2, 16 + (i++) * ICON_SIZE, entry.name, COLOR_BLACK);
+            drawText(40 + j * WIDTH / 2, 16 + (i++) * ICON_SIZE, file->getName(), COLOR_BLACK);
+
+            /* check if x,y is inside box */
+            if (x > xOffset && x < xOffset + ICON_SIZE && y > yOffset && y < yOffset + ICON_SIZE) {
+                if (file->flags & FS_DIR_FLAG_DIRECTORY) {
+                    /* change directory */
+                    changeDirectory(file->getName());
+                    loadFiles();
+                    return 0;
+                } else {
+                    /* open file */
+                }
+            }
+
 
             if (i * ICON_SIZE > HEIGHT - ICON_SIZE) {
                 i = 0;
                 ++j;
             }
+            iter++;
         }
 
         fclose(m_fd);
@@ -94,7 +215,8 @@ public:
 
     void Run(){
         /* event loop */
-        showFiles();
+        loadFiles();
+        showFiles(0, 0);
 
         struct gfx_event event;
         while (1){
@@ -102,7 +224,10 @@ public:
             if(ret == -1) continue;
 
             switch (event.event){
-            case GFX_EVENT_MOUSE:
+            case GFX_EVENT_MOUSE:{
+                    /* check if a mouse click is inside of a file */
+                    showFiles(event.data, event.data2);
+                }
                 break;
             case GFX_EVENT_EXIT:
                 if(m_fd != 0 ) fclose(m_fd);
@@ -117,8 +242,8 @@ public:
 private:
     int m_fd = 0;
     unsigned char* icon[5];
-
-    char* path;
+    FileCache* m_cache;
+    String* path;
 };
 
 

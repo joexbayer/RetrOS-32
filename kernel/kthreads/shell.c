@@ -154,7 +154,6 @@ void ed()
 }
 EXPORT_KSYMBOL(ed);
 
-
 void run(int argc, char* argv[])
 {
 	int r = start(argv[1]);
@@ -163,7 +162,7 @@ void run(int argc, char* argv[])
 		return;
 	}
 
-	int pid = pcb_create_process(argv[1], argc-1, &argv[1], /*PCB_FLAG_KERNEL*/ 0);
+	int pid = pcb_create_process(argv[1], argc-1, &argv[1], PCB_FLAG_KERNEL);
 	if(pid < 0){
 		twritef("%s does not exist\n", argv[1]);
 	}

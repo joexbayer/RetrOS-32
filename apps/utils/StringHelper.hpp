@@ -97,13 +97,15 @@ public:
         }
     }
 
-    String concat(const String& str) const {
+    void concat(const char* str) {
         int len1 = m_length;
-        int len2 = str.getLength();
+        int len2 = strlen(str);
         char* result = new char[len1 + len2 + 1];
         memcpy(result, m_data, strlen(m_data));
-        memcpy(result + len1, str.getData(), str.getLength());
-        return String(result);
+        memcpy(result + len1, str, len2);
+        delete[] m_data;
+        result[len1 + len2] = '\0';
+        m_data = result;
     }
 };
 

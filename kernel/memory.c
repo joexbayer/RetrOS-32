@@ -22,13 +22,12 @@ void* kalloc(int size);
 void kfree(void* ptr);
 /* ... */
 
-static int memory_process_used = 0;
 void free(void* ptr)
 {
+	dbgprintf("Freeing %x\n", ptr);
 	if(ptr == NULL)
 		return;
-
-	return vmem_stack_free(current_running, ptr);
+	vmem_stack_free(current_running, ptr);
 }
 
 void* malloc(unsigned int size)
@@ -42,6 +41,7 @@ void* malloc(unsigned int size)
 		return NULL;
 	}
 
+	vmem_dump_heap(current_running->allocations);
 	return ptr;
 }
 
