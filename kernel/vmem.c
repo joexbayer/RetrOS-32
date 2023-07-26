@@ -44,10 +44,10 @@ struct virtual_memory_allocator {
 	mutex_t lock;
 };
 
-struct virtual_memory_allocator __vmem_default;
+static struct virtual_memory_allocator __vmem_default;
 struct virtual_memory_allocator* vmem_default = &__vmem_default;
 
-struct virtual_memory_allocator __vmem_manager;
+static struct virtual_memory_allocator __vmem_manager;
 struct virtual_memory_allocator* vmem_manager = &__vmem_manager;
 
 /* HELPER FUNCTIONS */
@@ -59,6 +59,11 @@ static inline uint32_t* vmem_get_page_table(struct pcb* pcb, uint32_t addr)
 static inline void vmem_map(uint32_t* page_table, uint32_t vaddr, uint32_t paddr, int access)
 {
 	page_table[TABLE_INDEX(vaddr)] = (paddr & ~PAGE_MASK) | (access == 0 ? vmem_default_permissions : vmem_user_permissions);
+}
+
+static inline void vmem_unmap(uint32_t* page_table, uint32_t vaddr)
+{
+	page_table[TABLE_INDEX(vaddr)] = 0;
 }
 
 static inline void vmem_add_table(uint32_t* directory, uint32_t vaddr, uint32_t* table, int access)
@@ -106,6 +111,25 @@ static int vmem_page_align_size(int size)
 	return closest;
 }
 
+static struct vmem_page_allocation* vmem_create_page_allocation(int num)
+{
+	struct vmem_page_allocation* allocation = kalloc(sizeof(struct vmem_page_allocation));
+	allocation->bits = kalloc(sizeof(int)*num);
+	allocation->refs = 0;
+	allocation->size = num;
+	allocation->used = 0;
+
+	return allocation;
+}
+
+static int vmem_page_alloc(struct vmem_page_allocation* pages, int size)
+{
+	pages->used += size;
+	pages->refs++;
+}
+
+static void vmem_free_page_allocation(struct vmem_page_allocation* physical);
+
 /**
  * Frees the virtual memory page at the given address in the given virtual memory allocator.
  * @param struct virtual_memory_allocator* vmem: pointer to virtual memory allocator
@@ -130,15 +154,25 @@ static void vmem_free(struct virtual_memory_allocator* vmem, void* addr)
 	});
 }
 
+/**
+ * @brief Allocates a chunk of virtual memory for the specified process control block (PCB).
+ * The vmem_continious_allocation_map() function is responsible for allocating a contiguous block of virtual memory for the given PCB.
+ * @param pcb A pointer to the process control block (PCB) for which memory needs to be allocated.
+ * @param allocation A pointer to the allocation structure that contains the allocation information.
+ * @param address A pointer to the start of the allocated memory block.
+ * @param num The number of pages to be allocated.
+ * @param access The access permissions for the allocated pages.
+ * @return int 0 if the allocation succeeds, or -1 if the allocation fails.
+ */
 int vmem_continious_allocation_map(struct pcb* pcb, struct allocation* allocation, uint32_t* address, int num, int access)
 {
 	uint32_t* heap_table = vmem_get_page_table(pcb, VMEM_HEAP);
 	for (int i = 0; i < num; i++){
 		/*
-			1. Allocate a page
-			2. Map it to virtual heap
-			3. add it to bits
-		*/
+		 * 1. Allocate a page
+		 * 2. Map it to virtual heap
+		 * 3. add it to bits
+		 */
 		uint32_t paddr = (uint32_t)vmem_default->ops->alloc(vmem_default);
 		if(paddr == 0){
 			/* TODO: cleanup allocated pages */
@@ -158,7 +192,10 @@ void vmem_free_allocation(struct allocation* allocation)
 	int num_pages = (allocation->size + PAGE_SIZE - 1) / PAGE_SIZE;
 	dbgprintf("Freeing %d pages\n", num_pages);
 	for (int i = 0; i < num_pages; i++){
-		vmem_default->ops->free(vmem_default, (void*) (VMEM_START_ADDRESS + (allocation->bits[i] * PAGE_SIZE)));
+		if(allocation->bits[i] == 0) continue;
+		void* vaddr = VMEM_START_ADDRESS + (allocation->bits[i] * PAGE_SIZE);
+		vmem_default->ops->free(vmem_default, (void*) vaddr);
+		vmem_unmap(vmem_get_page_table(current_running, vaddr), (uint32_t) vaddr);
 	}
 
 	kfree(allocation->bits);
@@ -197,15 +234,36 @@ void vmem_stack_free(struct pcb* pcb, void* ptr)
 	}
 }
 
+/**
+ * 
+ * @brief Allocates a chunk of virtual memory for the specified process control block (PCB).
+ * The vmem_stack_alloc() function is responsible for allocating a contiguous block of virtual memory for the given PCB.
+ * It uses a page-aligned size and ensures that the allocation aligns with page boundaries for efficient memory management.
+ * If the PCB's allocations list is empty, the function allocates memory from the beginning of the virtual memory heap.
+ * Otherwise, it traverses the list of existing allocations to find a suitable gap for the new allocation. If a suitable space is found,
+ * the function inserts the new allocation into the list and updates the memory map accordingly.
+ * In case no suitable gap is found in the existing allocations, the function adds the new allocation at the end, extending the virtual memory heap.
+ * It then updates the memory map to include the newly allocated pages.
+ * @param pcb A pointer to the process control block (PCB) for which memory needs to be allocated.
+ * @param _size The size of memory to be allocated in bytes.
+ * @return A pointer to the start of the allocated memory block, or NULL if the allocation fails.
+ * @note The function uses page-aligned sizes and ensures efficient memory utilization.
+ * @note The function assumes that the vmem_continious_allocation_map() function is defined and handles memory mapping.
+ * @note The function uses kalloc() to allocate memory for internal data structures (e.g., struct allocation and bits array).
+ */
 void* vmem_stack_alloc(struct pcb* pcb, int _size)
 {
-	/* For rewrite with pages. */
 	int size = vmem_page_align_size(_size);
 	int num_pages = size / PAGE_SIZE;
 	struct allocation* allocation = kalloc(sizeof(struct allocation));
 	allocation->bits = kalloc(sizeof(int)*num_pages);
 	allocation->size = size;
+	allocation->used = _size;
 
+	/**
+	 * @brief Part1: Default case
+	 * If no allocations yet, allocate from start of heap.
+	 */
 	if(pcb->allocations == NULL){
 
 		allocation->address = (uint32_t*) VMEM_HEAP;
@@ -222,11 +280,33 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 		return (void*) allocation->address;
 	}
 
+	/**
+	 * @brief Part 1.5: If first allocation is freed, allocate from start of heap.
+	 */
+	if(pcb->allocations->address > (uint32_t*) VMEM_HEAP && pcb->allocations->address <= (uint32_t*) VMEM_HEAP+size){
+		allocation->address = (uint32_t*) VMEM_HEAP;
+		allocation->size = size;
+
+		vmem_continious_allocation_map(pcb, allocation, allocation->address, num_pages, USER);
+		
+		allocation->next = pcb->allocations;
+		pcb->allocations = allocation;
+		pcb->used_memory += size;
+
+		dbgprintf("[1] Allocated %d bytes of data to 0x%x\n", size, allocation->address);
+		return (void*) allocation->address;
+	}
+
+	/**
+	 * @brief Part 2: Find spot for allocation.
+	 * Iterate over all allocations and find a spot where the next allocation is far enough away.
+	 */
 	struct allocation* iter = pcb->allocations;
 	while(iter->next != NULL){
+
 		if((uint32_t)(iter->next->address) - ((uint32_t)(iter->address)+iter->size) >= (uint32_t)size){
 			/* Found spot for allocation */
-			allocation->address = (uint32_t*)((uint32_t)(iter->address)+iter->size+1);
+			allocation->address = (uint32_t*)((uint32_t)(iter->address)+iter->size);
 
 			struct allocation* next = iter->next;
 			iter->next = allocation;
@@ -248,10 +328,14 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 		iter = iter->next;
 	}
 
+	/**
+	 * @brief Part 3: No spot found, allocate at end of heap.
+	 */
 	allocation->address = (uint32_t*)((uint32_t)(iter->address)+iter->size);
 	vmem_continious_allocation_map(pcb, allocation, allocation->address, num_pages, USER);
 	allocation->next = NULL;
 
+	pcb->used_memory += size;
 	iter->next = allocation;
 	dbgprintf("[3] Allocated %d bytes of data to 0x%x\n", size, allocation->address);
 	return (void*) allocation->address;
@@ -262,7 +346,7 @@ void vmem_dump_heap(struct allocation* allocation)
 	dbgprintf(" ------- Memory Stack --------\n");
 	struct allocation* iter = allocation;
 	while(iter != NULL){
-		dbgprintf(" 0x%x --- size %d\n", iter->address, iter->size);
+		dbgprintf(" 0x%x --- size %d/%d\n", iter->address, iter->used, iter->size);
 		iter = iter->next;
 	}
 	dbgprintf(" -------     &End     --------\n");

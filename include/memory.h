@@ -54,10 +54,22 @@ struct mem_info {
 	}permanent;
 };
 
+struct vmem_page_allocation {
+	int* bits;
+	uint32_t* basevaddr;
+	int refs;
+
+	int size;
+	int used;
+};
+
+
 struct allocation {
 	int* bits;
 	uint32_t* address;
 	int size;
+	int used;
+	struct physical_allocation* physical;
 	struct allocation* next;
 };
 

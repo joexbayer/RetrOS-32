@@ -24,7 +24,7 @@ void operator delete[](void *p)
 
 void operator delete(void* p, unsigned int index)
 {
-    void* ptr = (void*)((uint32_t)p + index);
+    void* ptr = (void*)((uint32_t)p);
     free(ptr);
 }
 

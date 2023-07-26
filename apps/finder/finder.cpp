@@ -5,19 +5,11 @@
 #include "../utils/StringHelper.hpp"
 #include <fs/ext.h>
 #include <fs/directory.h>
+#include <lib/printf.h>
 
 #define WIDTH 400
 #define HEIGHT 300
 #define ICON_SIZE 32
-
-int strcmp(const char* str1, const char* str2){
-    int i = 0;
-    while(str1[i] != '\0' && str2[i] != '\0'){
-        if(str1[i] != str2[i]) return 1;
-        i++;
-    }
-    return 0;
-}
 
 class File {
 public:
@@ -31,6 +23,7 @@ public:
     }
 
     ~File() {
+        name->~String();
         delete name;
     }
 
@@ -64,7 +57,7 @@ public:
 
     File* getFile(const char* path) {
         for(int i = 0; i < m_size; i++){
-            if(strcmp(m_files[i]->getName(), path) == 0){
+            if(String::strcmp(m_files[i]->getName(), path) == 0){
                 return m_files[i];
             }
         }
@@ -77,15 +70,16 @@ public:
 
     void clear(){
         for(int i = 0; i < m_size; i++){
-            if(m_files[i] != 0)
-                delete m_files[i];
+            File* file = (File*) m_files[i];
+            file->~File();
+            delete file;
         }
         m_size = 0;
     }
 
 private:
     File* m_files[100];
-    int m_size;
+    int m_size = 0;
 };
 
 /* todo add to file */
@@ -130,8 +124,7 @@ public:
     }
 
     int changeDirectory(const char* strpath){
-        path->concat(strpath);
-        setHeader(path->getData());
+
     }
 
     int loadFiles(){
@@ -151,11 +144,8 @@ public:
                 break;
             }
 
-            File* file = m_cache->getFile(entry.name);
-            if(file == 0){
-                file = new File(entry.name, entry.flags, 0, 0, 0, 0);
-                m_cache->addFile(file);
-            }
+            File* file = new File(entry.name, entry.flags, 0, 0, 0, 0);
+            m_cache->addFile(file);
         }
 
         fclose(m_fd);
@@ -165,7 +155,8 @@ public:
     }
 
     int showFiles(int x, int y){
-        drawRect(0, 0, WIDTH, HEIGHT, COLOR_WHITE);
+        if(x == 0 && y == 0 )
+            drawRect(0, 0, WIDTH, HEIGHT, COLOR_WHITE);
         
         File* file;
         int iter = 0;
@@ -191,13 +182,17 @@ public:
             if (x > xOffset && x < xOffset + ICON_SIZE && y > yOffset && y < yOffset + ICON_SIZE) {
                 if (file->flags & FS_DIR_FLAG_DIRECTORY) {
                     /* change directory */
-                    changeDirectory(file->getName());
+
+                    path->concat(file->getName());
+                    setHeader(path->getData());
+                    loadFiles();
+                    showFiles(0, 0);
+                    printf("change directory to %s\n", path->getData());
                     return 0;
                 } else {
                     /* open file */
                 }
             }
-
 
             if (i * ICON_SIZE > HEIGHT - ICON_SIZE) {
                 i = 0;
