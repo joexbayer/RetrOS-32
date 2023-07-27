@@ -190,7 +190,7 @@ IBM Thinkpad a21p
   - [x] Mouse events
   - [x] Dynamic resize
   - [x] Fullscreen
-- [x] Terminal, Window Server, Process Informtaion.
+- [x] Terminal, Window Server, Process Informtaion, Finder.
 - [x] Library (printf, memcpy, etc)
 - [ ] IPC
 - [x] System calls
