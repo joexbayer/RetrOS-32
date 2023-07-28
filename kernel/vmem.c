@@ -14,6 +14,7 @@
 #include <bitmap.h>
 #include <assert.h>
 #include <vbe.h>
+
 struct virtual_memory_allocator;
 
 static uint32_t* vmem_alloc(struct virtual_memory_allocator* vmem);
@@ -87,7 +88,6 @@ static uint32_t* vmem_alloc(struct virtual_memory_allocator* vmem)
 
 		paddr = (uint32_t*) (vmem->start + (bit * PAGE_SIZE));
 		vmem->used_pages++;
-		//memset(paddr, 0, PAGE_SIZE);
 
 		dbgprintf("[VMEM MANAGER] Allocated page %d at 0x%x\n", bit, paddr);
 	});
@@ -111,24 +111,70 @@ static int vmem_page_align_size(int size)
 	return closest;
 }
 
-static struct vmem_page_allocation* vmem_create_page_allocation(int num)
+static struct vmem_page_allocation* vmem_create_page_allocation(struct pcb* pcb, void* base, int num, int access)
 {
 	struct vmem_page_allocation* allocation = kalloc(sizeof(struct vmem_page_allocation));
+	if(allocation == NULL){
+		return NULL;
+	}
+
 	allocation->bits = kalloc(sizeof(int)*num);
 	allocation->refs = 0;
-	allocation->size = num;
+	allocation->size = num*PAGE_SIZE;
 	allocation->used = 0;
+	allocation->basevaddr = base;
+
+	uint32_t* heap_table = vmem_get_page_table(pcb, VMEM_HEAP);
+	for (int i = 0; i < num; i++){
+		/*
+		 * 1. Allocate a page
+		 * 2. Map it to virtual heap
+		 * 3. add it to bits
+		 */
+		uint32_t paddr = (uint32_t)vmem_default->ops->alloc(vmem_default);
+		if(paddr == 0){
+			/* TODO: cleanup allocated pages */
+			return NULL;
+		}
+		int bit = (paddr - VMEM_START_ADDRESS)/PAGE_SIZE;
+		allocation->bits[i] = bit;
+		//dbgprintf("Allocating %d continious blocks on heap 0x%x.\n", num, heap_table);
+		vmem_map(heap_table, (uint32_t)allocation->basevaddr+(i*PAGE_SIZE), paddr, access);
+	}
 
 	return allocation;
 }
 
 static int vmem_page_alloc(struct vmem_page_allocation* pages, int size)
 {
+	ERR_ON_NULL(pages);
+
 	pages->used += size;
 	pages->refs++;
 }
 
-static void vmem_free_page_allocation(struct vmem_page_allocation* physical);
+static int vmem_free_page_allocation(struct vmem_page_allocation* physical)
+{
+	ERR_ON_NULL(physical);
+	if(physical->refs > 0){
+		physical->refs--;
+		return 0;
+	}
+
+	int num_pages = physical->size / PAGE_SIZE;
+	dbgprintf("Freeing %d pages\n", num_pages);
+	for (int i = 0; i < num_pages; i++){
+		if(physical->bits[i] == 0) continue;
+		void* vaddr = VMEM_START_ADDRESS + (physical->bits[i] * PAGE_SIZE);
+		vmem_default->ops->free(vmem_default, (void*) vaddr);
+		vmem_unmap(vmem_get_page_table(current_running, vaddr), (uint32_t) vaddr);
+	}
+
+	kfree(physical->bits);
+	kfree(physical);
+
+	return 0;
+}
 
 /**
  * Frees the virtual memory page at the given address in the given virtual memory allocator.
@@ -166,41 +212,18 @@ static void vmem_free(struct virtual_memory_allocator* vmem, void* addr)
  */
 int vmem_continious_allocation_map(struct pcb* pcb, struct allocation* allocation, uint32_t* address, int num, int access)
 {
-	uint32_t* heap_table = vmem_get_page_table(pcb, VMEM_HEAP);
-	for (int i = 0; i < num; i++){
-		/*
-		 * 1. Allocate a page
-		 * 2. Map it to virtual heap
-		 * 3. add it to bits
-		 */
-		uint32_t paddr = (uint32_t)vmem_default->ops->alloc(vmem_default);
-		if(paddr == 0){
-			/* TODO: cleanup allocated pages */
-			warningf("Out of heap memory\n");
-			return -1;
-		}
-		int bit = (paddr - VMEM_START_ADDRESS)/PAGE_SIZE;
-		allocation->bits[i] = bit;
-		//dbgprintf("Allocating %d continious blocks on heap 0x%x.\n", num, heap_table);
-		vmem_map(heap_table, (uint32_t)allocation->address+(i*PAGE_SIZE), paddr, access);
-	}
+
 	return 0;
 }
 
+/**
+ * @brief Frees a chunk of virtual memory for the specified process control block (PCB).
+ * 
+ * @param allocation 
+ */
 void vmem_free_allocation(struct allocation* allocation)
 {
-	int num_pages = (allocation->size + PAGE_SIZE - 1) / PAGE_SIZE;
-	dbgprintf("Freeing %d pages\n", num_pages);
-	for (int i = 0; i < num_pages; i++){
-		if(allocation->bits[i] == 0) continue;
-		void* vaddr = VMEM_START_ADDRESS + (allocation->bits[i] * PAGE_SIZE);
-		vmem_default->ops->free(vmem_default, (void*) vaddr);
-		vmem_unmap(vmem_get_page_table(current_running, vaddr), (uint32_t) vaddr);
-	}
 
-	kfree(allocation->bits);
-	kfree(allocation);
-	dbgprintf("Done Freeing %d pages\n", num_pages);
 }
 
 void vmem_stack_free(struct pcb* pcb, void* ptr)
@@ -256,21 +279,33 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 	int size = vmem_page_align_size(_size);
 	int num_pages = size / PAGE_SIZE;
 	struct allocation* allocation = kalloc(sizeof(struct allocation));
-	allocation->bits = kalloc(sizeof(int)*num_pages);
+	if(allocation == NULL){
+		warningf("Out memory\n");
+		return NULL;
+	}
+	
 	allocation->size = size;
 	allocation->used = _size;
 
 	/**
 	 * @brief Part1: Default case
-	 * If no allocations yet, allocate from start of heap.
+	 * Create a physical page allocation and attach it to the virtual allocation.
+	 * Setup the allocation size and adress and add it to the pcb.
 	 */
 	if(pcb->allocations == NULL){
 
+		struct vmem_page_allocation* physical = vmem_create_page_allocation(pcb, (void*)VMEM_HEAP, num_pages, USER);
+		if(physical == NULL){
+			kfree(allocation);
+			warningf("Out of heap memory\n");
+			return -1;
+		}
+		allocation->physical = physical;
+		
+		vmem_page_alloc(physical, _size);
+
 		allocation->address = (uint32_t*) VMEM_HEAP;
 		allocation->size = size;
-
-		vmem_continious_allocation_map(pcb, allocation, allocation->address, num_pages, USER);
-		
 		allocation->next = NULL;
 
 		pcb->allocations = allocation;
@@ -284,14 +319,21 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 	 * @brief Part 1.5: If first allocation is freed, allocate from start of heap.
 	 */
 	if(pcb->allocations->address > (uint32_t*) VMEM_HEAP && pcb->allocations->address <= (uint32_t*) VMEM_HEAP+size){
+
+		/* TODO: Clean this up, redudent code */
+		struct vmem_page_allocation* physical = vmem_create_page_allocation(pcb, (void*)VMEM_HEAP, num_pages, USER);
+		if(physical == NULL){
+			kfree(allocation);
+			warningf("Out of heap memory\n");
+			return -1;
+		}
+		allocation->physical = physical;
+		
+		vmem_page_alloc(physical, _size);
+
 		allocation->address = (uint32_t*) VMEM_HEAP;
 		allocation->size = size;
-
-		vmem_continious_allocation_map(pcb, allocation, allocation->address, num_pages, USER);
-		
-		allocation->next = pcb->allocations;
-		pcb->allocations = allocation;
-		pcb->used_memory += size;
+		allocation->next = NULL;
 
 		dbgprintf("[1] Allocated %d bytes of data to 0x%x\n", size, allocation->address);
 		return (void*) allocation->address;
@@ -300,9 +342,56 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 	/**
 	 * @brief Part 2: Find spot for allocation.
 	 * Iterate over all allocations and find a spot where the next allocation is far enough away.
+	 * Two options, first option is finding a free allocation inside a already allocated phsyical page region.
+	 * Then we can simply add new allocation to the exisitng one physical one.
+	 * Second option is we need to allocate a new physical page allocation, between two existing ones.
 	 */
 	struct allocation* iter = pcb->allocations;
 	while(iter->next != NULL){
+
+		/**
+		 * @brief This case checks if there is space inside a single physical allocation (between virtual allocations).
+		 * Also, means the physical area is already mapped so we can attach to the existing one.
+		 */
+		if((uint32_t)(iter->next->address) - ((uint32_t)(iter->address)+iter->size) >= (uint32_t)size && iter->physical == iter->next->physical){
+			
+			/* Found spot for allocation */
+			allocation->address = (uint32_t*)((uint32_t)(iter->address)+iter->size);
+			allocation->physical = iter->physical;
+
+			struct allocation* next = iter->next;
+			iter->next = allocation;
+			allocation->next = next;
+
+			vmem_page_alloc(iter->physical, _size);
+
+			return (void*) allocation->address;
+		}
+
+		/**
+		 * @brief This case checks if there is space at the end of a phsyical region.
+		 * Only is possible if the next allocation is in a different physical region.
+		 */
+		int space_at_end = (uint32_t)(iter->physical->basevaddr+iter->physical->size) - ((uint32_t)(iter->address)+iter->size);
+		if(iter->physical != iter->next->physical && space_at_end >= (uint32_t)size)
+		{
+			/* Found spot for allocation */
+			allocation->address = (uint32_t*)((uint32_t)(iter->address)+iter->size);
+			allocation->physical = iter->physical;
+
+			struct allocation* next = iter->next;
+			iter->next = allocation;
+			allocation->next = next;
+
+			vmem_page_alloc(iter->physical, _size);
+
+			return (void*) allocation->address;
+
+		}
+
+
+		if((uint32_t)(iter->next->address) - ((uint32_t)(iter->address)+iter->size) >= (uint32_t)size && iter->physical != iter->next->physical){
+		}
 
 		if((uint32_t)(iter->next->address) - ((uint32_t)(iter->address)+iter->size) >= (uint32_t)size){
 			/* Found spot for allocation */

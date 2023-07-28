@@ -69,7 +69,7 @@ struct allocation {
 	uint32_t* address;
 	int size;
 	int used;
-	struct physical_allocation* physical;
+	struct vmem_page_allocation* physical;
 	struct allocation* next;
 };
 
