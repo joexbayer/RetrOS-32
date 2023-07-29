@@ -182,7 +182,7 @@ IBM Thinkpad a21p
 - [x] Memory
   - [x] 32bit Virtual Memory
   - [x] kalloc / kfree (kernel)
-  - [x] malloc / free (process) 
+  - [x] malloc / free (userspace) 
 - [x] Graphics
   - [x] Window Manager
   - [x] GFXLib
