@@ -278,13 +278,14 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 {
 	int size = vmem_page_align_size(_size);
 	int num_pages = size / PAGE_SIZE;
+
 	struct allocation* allocation = kalloc(sizeof(struct allocation));
 	if(allocation == NULL){
 		warningf("Out memory\n");
 		return NULL;
 	}
 	
-	allocation->size = size;
+	allocation->size = _size;
 	allocation->used = _size;
 
 	/**
@@ -305,13 +306,13 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 		vmem_page_alloc(physical, _size);
 
 		allocation->address = (uint32_t*) VMEM_HEAP;
-		allocation->size = size;
+		allocation->size = _size;
 		allocation->next = NULL;
 
 		pcb->allocations = allocation;
 		pcb->used_memory += size;
 
-		dbgprintf("[1] Allocated %d bytes of data to 0x%x\n", size, allocation->address);
+		dbgprintf("[1] Allocated %d bytes of data to 0x%x\n", _size, allocation->address);
 		return (void*) allocation->address;
 	}
 
@@ -332,10 +333,10 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 		vmem_page_alloc(physical, _size);
 
 		allocation->address = (uint32_t*) VMEM_HEAP;
-		allocation->size = size;
+		allocation->size = _size;
 		allocation->next = NULL;
 
-		dbgprintf("[1] Allocated %d bytes of data to 0x%x\n", size, allocation->address);
+		dbgprintf("[1.5] Allocated %d bytes of data to 0x%x\n", _size, allocation->address);
 		return (void*) allocation->address;
 	}
 
@@ -353,7 +354,7 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 		 * @brief This case checks if there is space inside a single physical allocation (between virtual allocations).
 		 * Also, means the physical area is already mapped so we can attach to the existing one.
 		 */
-		if((uint32_t)(iter->next->address) - ((uint32_t)(iter->address)+iter->size) >= (uint32_t)size && iter->physical == iter->next->physical){
+		if((uint32_t)(iter->next->address) - ((uint32_t)(iter->address)+iter->size) >= (uint32_t)_size && iter->physical == iter->next->physical){
 			
 			/* Found spot for allocation */
 			allocation->address = (uint32_t*)((uint32_t)(iter->address)+iter->size);
@@ -364,16 +365,18 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 			allocation->next = next;
 
 			vmem_page_alloc(iter->physical, _size);
+			dbgprintf("[2] Allocated %d bytes of data to 0x%x\n", _size, allocation->address);
 
 			return (void*) allocation->address;
 		}
-
+	
 		/**
 		 * @brief This case checks if there is space at the end of a phsyical region.
 		 * Only is possible if the next allocation is in a different physical region.
+		 * @note This is mostly for reusing the virtual heap address space.
 		 */
-		int space_at_end = (uint32_t)(iter->physical->basevaddr+iter->physical->size) - ((uint32_t)(iter->address)+iter->size);
-		if(iter->physical != iter->next->physical && space_at_end >= (uint32_t)size)
+		int space_at_end = ((uint32_t)(iter->physical->basevaddr)+iter->physical->size) - ((uint32_t)(iter->address)+iter->size);
+		if(iter->physical != iter->next->physical && space_at_end >= _size)
 		{
 			/* Found spot for allocation */
 			allocation->address = (uint32_t*)((uint32_t)(iter->address)+iter->size);
@@ -385,48 +388,55 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 
 			vmem_page_alloc(iter->physical, _size);
 
+			dbgprintf("[2.5] Allocated %d bytes of data to 0x%x\n", _size, allocation->address);
 			return (void*) allocation->address;
 
 		}
 
-
-		if((uint32_t)(iter->next->address) - ((uint32_t)(iter->address)+iter->size) >= (uint32_t)size && iter->physical != iter->next->physical){
-		}
-
-		if((uint32_t)(iter->next->address) - ((uint32_t)(iter->address)+iter->size) >= (uint32_t)size){
-			/* Found spot for allocation */
-			allocation->address = (uint32_t*)((uint32_t)(iter->address)+iter->size);
-
-			struct allocation* next = iter->next;
-			iter->next = allocation;
-			allocation->next = next;
-
-			/**
-			 * @brief Should allocate new pages if needed.
-			 * TODO: Calucalte if new size is still inside page boundaries.
-			 * In that case we can just allocate that area and skip the rest.
-			 */
-			vmem_continious_allocation_map(pcb, allocation, allocation->address, num_pages, USER);
-
-			pcb->used_memory += size;
-
-			dbgprintf("[2] Allocated %d bytes of data to 0x%x\n", size, allocation->address);
-			
-			return (void*) allocation->address;
-		}
 		iter = iter->next;
 	}
 
 	/**
-	 * @brief Part 3: No spot found, allocate at end of heap.
+	 * @brief Part 2.5: Check if there is space at the end of the last allocation.
 	 */
-	allocation->address = (uint32_t*)((uint32_t)(iter->address)+iter->size);
-	vmem_continious_allocation_map(pcb, allocation, allocation->address, num_pages, USER);
+	int space_at_end = ((uint32_t)(iter->physical->basevaddr)+iter->physical->size) - ((uint32_t)(iter->address)+iter->size);
+	if(space_at_end >= _size)
+	{
+		/* Found spot for allocation */
+		allocation->address = (uint32_t*)((uint32_t)(iter->address)+iter->size);
+		allocation->physical = iter->physical;
+
+		struct allocation* next = iter->next;
+		iter->next = allocation;
+		allocation->next = next;
+
+		vmem_page_alloc(iter->physical, _size);
+
+		dbgprintf("[3] Allocated %d bytes of data to 0x%x\n", _size, allocation->address);
+		return (void*) allocation->address;
+	}
+
+	/**
+	 * @brief Part 3: No spot found, allocate at end of heap.
+	 * At this point we have not found a spot inbetween exisitng allocations, so append at the end.
+	 * This means we need to allocate a new physical page allocation.
+	 * @note "iter" will point to the last element in the allocation list.
+	 */
+	struct vmem_page_allocation* physical = vmem_create_page_allocation(pcb, (void*)iter->physical->basevaddr + iter->physical->size, num_pages, USER);
+	if(physical == NULL){
+		kfree(allocation);
+		warningf("Out of heap memory\n");
+		return -1;
+	}
+	allocation->physical = physical;
+
+	allocation->address = (uint32_t*)((uint32_t)(iter->physical->basevaddr)+iter->physical->size);
+	vmem_page_alloc(allocation->physical, _size);
 	allocation->next = NULL;
 
 	pcb->used_memory += size;
 	iter->next = allocation;
-	dbgprintf("[3] Allocated %d bytes of data to 0x%x\n", size, allocation->address);
+	dbgprintf("[3.5] Allocated %d bytes of data to 0x%x\n", _size, allocation->address);
 	return (void*) allocation->address;
 }
 
@@ -434,8 +444,13 @@ void vmem_dump_heap(struct allocation* allocation)
 {
 	dbgprintf(" ------- Memory Stack --------\n");
 	struct allocation* iter = allocation;
+	struct vmem_page_allocation* physical = NULL;
 	while(iter != NULL){
-		dbgprintf(" 0x%x --- size %d/%d\n", iter->address, iter->used, iter->size);
+		if(physical != iter->physical){
+			physical = iter->physical;
+			dbgprintf(" ------- Region 0x%x (%d/%d) --------\n", physical->basevaddr, physical->used, physical->size);
+		}
+		dbgprintf("     0x%x --- size %d\n", iter->address, iter->used);
 		iter = iter->next;
 	}
 	dbgprintf(" -------     &End     --------\n");
