@@ -21,6 +21,8 @@ extern char _start_kctor_table[];
 extern char _stop_kctor_table[];
 extern char _kctor_table_size[];
 
+typedef char byte_t;
+typedef unsigned char ubyte_t;
 
 /* This is a interupt handler function */
 #define __int_handler //__attribute__((interrupt))
@@ -31,6 +33,7 @@ extern char _kctor_table_size[];
 #define __kthread_entry
 /* This function does not return */
 #define __noreturn //__attribute__((noreturn))
+#define __deprecated //__attribute__((deprecated))
 
 /**
  * @brief EXPORT_KCTOR

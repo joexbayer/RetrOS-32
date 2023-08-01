@@ -17,6 +17,7 @@
 
 struct virtual_memory_allocator;
 
+/* allocator prototypes */
 static uint32_t* vmem_alloc(struct virtual_memory_allocator* vmem);
 static void vmem_free(struct virtual_memory_allocator* vmem, void* addr);
 
@@ -111,9 +112,9 @@ static int vmem_page_align_size(int size)
 	return closest;
 }
 
-static struct vmem_page_allocation* vmem_create_page_allocation(struct pcb* pcb, void* base, int num, int access)
+static struct vmem_page_region* vmem_create_page_region(struct pcb* pcb, void* base, int num, int access)
 {
-	struct vmem_page_allocation* allocation = kalloc(sizeof(struct vmem_page_allocation));
+	struct vmem_page_region* allocation = kalloc(sizeof(struct vmem_page_region));
 	if(allocation == NULL){
 		return NULL;
 	}
@@ -133,7 +134,10 @@ static struct vmem_page_allocation* vmem_create_page_allocation(struct pcb* pcb,
 		 */
 		uint32_t paddr = (uint32_t)vmem_default->ops->alloc(vmem_default);
 		if(paddr == 0){
-			/* TODO: cleanup allocated pages */
+			kfree(allocation->bits);
+			for (int j = 0; j < i; j++){
+				vmem_default->ops->free(vmem_default, (void*) (VMEM_START_ADDRESS + (allocation->bits[j] * PAGE_SIZE)));
+			}
 			return NULL;
 		}
 		int bit = (paddr - VMEM_START_ADDRESS)/PAGE_SIZE;
@@ -145,7 +149,7 @@ static struct vmem_page_allocation* vmem_create_page_allocation(struct pcb* pcb,
 	return allocation;
 }
 
-static int vmem_page_alloc(struct vmem_page_allocation* pages, int size)
+static int vmem_page_region_alloc(struct vmem_page_region* pages, int size)
 {
 	ERR_ON_NULL(pages);
 
@@ -153,25 +157,26 @@ static int vmem_page_alloc(struct vmem_page_allocation* pages, int size)
 	pages->refs++;
 }
 
-static int vmem_free_page_allocation(struct vmem_page_allocation* physical)
+static int vmem_free_page_region(struct vmem_page_region* region, int size)
 {
-	ERR_ON_NULL(physical);
-	if(physical->refs > 0){
-		physical->refs--;
+	ERR_ON_NULL(region);
+	if(region->refs > 0){
+		region->refs--;
+		region->used -= size;
 		return 0;
 	}
 
-	int num_pages = physical->size / PAGE_SIZE;
+	int num_pages = region->size / PAGE_SIZE;
 	dbgprintf("Freeing %d pages\n", num_pages);
 	for (int i = 0; i < num_pages; i++){
-		if(physical->bits[i] == 0) continue;
-		void* vaddr = VMEM_START_ADDRESS + (physical->bits[i] * PAGE_SIZE);
+		if(region->bits[i] == 0) continue;
+		void* vaddr = VMEM_START_ADDRESS + (region->bits[i] * PAGE_SIZE);
 		vmem_default->ops->free(vmem_default, (void*) vaddr);
 		vmem_unmap(vmem_get_page_table(current_running, vaddr), (uint32_t) vaddr);
 	}
 
-	kfree(physical->bits);
-	kfree(physical);
+	kfree(region->bits);
+	kfree(region);
 
 	return 0;
 }
@@ -210,10 +215,10 @@ static void vmem_free(struct virtual_memory_allocator* vmem, void* addr)
  * @param access The access permissions for the allocated pages.
  * @return int 0 if the allocation succeeds, or -1 if the allocation fails.
  */
-int vmem_continious_allocation_map(struct pcb* pcb, struct allocation* allocation, uint32_t* address, int num, int access)
+int __deprecated vmem_continious_allocation_map(struct pcb* pcb, struct allocation* allocation, uint32_t* address, int num, int access)
 {
 
-	return 0;
+	return -1;
 }
 
 /**
@@ -221,7 +226,7 @@ int vmem_continious_allocation_map(struct pcb* pcb, struct allocation* allocatio
  * 
  * @param allocation 
  */
-void vmem_free_allocation(struct allocation* allocation)
+void __deprecated vmem_free_allocation(struct allocation* allocation)
 {
 
 }
@@ -232,25 +237,23 @@ void vmem_stack_free(struct pcb* pcb, void* ptr)
 		struct allocation* old = pcb->allocations;
 		pcb->allocations = pcb->allocations->next;
 		pcb->used_memory -= old->size;
+
+		vmem_free_page_region(old->region, old->size);
 		
 		dbgprintf("[1] Free %d bytes of data from 0x%x\n", old->size, old->address);
-		vmem_free_allocation(old);
-		dbgprintf("Done\n");
 		return;
 	}
 
 	struct allocation* iter = pcb->allocations;
 	while(iter->next != NULL){
-		dbgprintf("0x%x =? 0x%x\n", iter->next->address, ptr);
 		if(iter->next->address == ptr){
 			
 			struct allocation* save = iter->next;
 			iter->next = iter->next->next;
 			pcb->used_memory -= save->size;
 
+			vmem_free_page_region(save->region, save->size);
 			dbgprintf("[2] Free %d bytes of data from 0x%x\n", save->size, save->address);
-			vmem_free_allocation(save);
-			dbgprintf("Done\n");
 			return;
 		}
 		iter = iter->next;
@@ -295,15 +298,15 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 	 */
 	if(pcb->allocations == NULL){
 
-		struct vmem_page_allocation* physical = vmem_create_page_allocation(pcb, (void*)VMEM_HEAP, num_pages, USER);
+		struct vmem_page_region* physical = vmem_create_page_region(pcb, (void*)VMEM_HEAP, num_pages, USER);
 		if(physical == NULL){
 			kfree(allocation);
 			warningf("Out of heap memory\n");
 			return -1;
 		}
-		allocation->physical = physical;
+		allocation->region = physical;
 		
-		vmem_page_alloc(physical, _size);
+		vmem_page_region_alloc(physical, _size);
 
 		allocation->address = (uint32_t*) VMEM_HEAP;
 		allocation->size = _size;
@@ -322,15 +325,15 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 	if(pcb->allocations->address > (uint32_t*) VMEM_HEAP && pcb->allocations->address <= (uint32_t*) VMEM_HEAP+size){
 
 		/* TODO: Clean this up, redudent code */
-		struct vmem_page_allocation* physical = vmem_create_page_allocation(pcb, (void*)VMEM_HEAP, num_pages, USER);
+		struct vmem_page_region* physical = vmem_create_page_region(pcb, (void*)VMEM_HEAP, num_pages, USER);
 		if(physical == NULL){
 			kfree(allocation);
 			warningf("Out of heap memory\n");
 			return -1;
 		}
-		allocation->physical = physical;
+		allocation->region = physical;
 		
-		vmem_page_alloc(physical, _size);
+		vmem_page_region_alloc(physical, _size);
 
 		allocation->address = (uint32_t*) VMEM_HEAP;
 		allocation->size = _size;
@@ -354,19 +357,18 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 		 * @brief This case checks if there is space inside a single physical allocation (between virtual allocations).
 		 * Also, means the physical area is already mapped so we can attach to the existing one.
 		 */
-		if((uint32_t)(iter->next->address) - ((uint32_t)(iter->address)+iter->size) >= (uint32_t)_size && iter->physical == iter->next->physical){
+		if((uint32_t)(iter->next->address) - ((uint32_t)(iter->address)+iter->size) >= (uint32_t)_size && iter->region == iter->next->region){
 			
 			/* Found spot for allocation */
 			allocation->address = (uint32_t*)((uint32_t)(iter->address)+iter->size);
-			allocation->physical = iter->physical;
+			allocation->region = iter->region;
 
 			struct allocation* next = iter->next;
 			iter->next = allocation;
 			allocation->next = next;
 
-			vmem_page_alloc(iter->physical, _size);
+			vmem_page_region_alloc(iter->region, _size);
 			dbgprintf("[2] Allocated %d bytes of data to 0x%x\n", _size, allocation->address);
-
 			return (void*) allocation->address;
 		}
 	
@@ -375,18 +377,18 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 		 * Only is possible if the next allocation is in a different physical region.
 		 * @note This is mostly for reusing the virtual heap address space.
 		 */
-		int space_at_end = ((uint32_t)(iter->physical->basevaddr)+iter->physical->size) - ((uint32_t)(iter->address)+iter->size);
-		if(iter->physical != iter->next->physical && space_at_end >= _size)
+		int space_at_end = ((uint32_t)(iter->region->basevaddr)+iter->region->size) - ((uint32_t)(iter->address)+iter->size);
+		if(iter->region != iter->next->region && space_at_end >= _size)
 		{
 			/* Found spot for allocation */
 			allocation->address = (uint32_t*)((uint32_t)(iter->address)+iter->size);
-			allocation->physical = iter->physical;
+			allocation->region = iter->region;
 
 			struct allocation* next = iter->next;
 			iter->next = allocation;
 			allocation->next = next;
 
-			vmem_page_alloc(iter->physical, _size);
+			vmem_page_region_alloc(iter->region, _size);
 
 			dbgprintf("[2.5] Allocated %d bytes of data to 0x%x\n", _size, allocation->address);
 			return (void*) allocation->address;
@@ -399,18 +401,18 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 	/**
 	 * @brief Part 2.5: Check if there is space at the end of the last allocation.
 	 */
-	int space_at_end = ((uint32_t)(iter->physical->basevaddr)+iter->physical->size) - ((uint32_t)(iter->address)+iter->size);
+	int space_at_end = ((uint32_t)(iter->region->basevaddr)+iter->region->size) - ((uint32_t)(iter->address)+iter->size);
 	if(space_at_end >= _size)
 	{
 		/* Found spot for allocation */
 		allocation->address = (uint32_t*)((uint32_t)(iter->address)+iter->size);
-		allocation->physical = iter->physical;
+		allocation->region = iter->region;
 
 		struct allocation* next = iter->next;
 		iter->next = allocation;
 		allocation->next = next;
 
-		vmem_page_alloc(iter->physical, _size);
+		vmem_page_region_alloc(iter->region, _size);
 
 		dbgprintf("[3] Allocated %d bytes of data to 0x%x\n", _size, allocation->address);
 		return (void*) allocation->address;
@@ -422,16 +424,16 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 	 * This means we need to allocate a new physical page allocation.
 	 * @note "iter" will point to the last element in the allocation list.
 	 */
-	struct vmem_page_allocation* physical = vmem_create_page_allocation(pcb, (void*)iter->physical->basevaddr + iter->physical->size, num_pages, USER);
+	struct vmem_page_region* physical = vmem_create_page_region(pcb, (void*)iter->region->basevaddr + iter->region->size, num_pages, USER);
 	if(physical == NULL){
 		kfree(allocation);
 		warningf("Out of heap memory\n");
 		return -1;
 	}
-	allocation->physical = physical;
+	allocation->region = physical;
 
-	allocation->address = (uint32_t*)((uint32_t)(iter->physical->basevaddr)+iter->physical->size);
-	vmem_page_alloc(allocation->physical, _size);
+	allocation->address = (uint32_t*)((uint32_t)(iter->region->basevaddr)+iter->region->size);
+	vmem_page_region_alloc(allocation->region, _size);
 	allocation->next = NULL;
 
 	pcb->used_memory += size;
@@ -440,15 +442,16 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 	return (void*) allocation->address;
 }
 
+
 void vmem_dump_heap(struct allocation* allocation)
 {
-	dbgprintf(" ------- Memory Stack --------\n");
+	dbgprintf(" ------- Memory Heap --------\n");
 	struct allocation* iter = allocation;
-	struct vmem_page_allocation* physical = NULL;
+	struct vmem_page_region* region = NULL;
 	while(iter != NULL){
-		if(physical != iter->physical){
-			physical = iter->physical;
-			dbgprintf(" ------- Region 0x%x (%d/%d) --------\n", physical->basevaddr, physical->used, physical->size);
+		if(region != iter->region){
+			region = iter->region;
+			dbgprintf(" ------- Region 0x%x (%d/%d) %d refs --------\n", region->basevaddr, region->used, region->size, region->refs);
 		}
 		dbgprintf("     0x%x --- size %d\n", iter->address, iter->used);
 		iter = iter->next;
@@ -456,16 +459,17 @@ void vmem_dump_heap(struct allocation* allocation)
 	dbgprintf(" -------     &End     --------\n");
 }
 
-void vmem_init_process(struct pcb* pcb, char* data, int size)
+void vmem_init_process(struct pcb* pcb, byte_t* data, int size)
 {
 	/* Allocate directory and tables for data and stack */
 	uint32_t* process_directory = vmem_manager->ops->alloc(vmem_manager);
-	dbgprintf("[INIT PROCESS] Directory: 0x%x\n", process_directory);
 	uint32_t* process_data_table = vmem_manager->ops->alloc(vmem_manager);
-	dbgprintf("[INIT PROCESS] Data: 	 0x%x\n", process_data_table);
 	uint32_t* process_stack_table = vmem_manager->ops->alloc(vmem_manager);
-	dbgprintf("[INIT PROCESS] Stack:	 0x%x\n", process_stack_table);
 	uint32_t* process_heap_table = vmem_manager->ops->alloc(vmem_manager);
+
+	dbgprintf("[INIT PROCESS] Directory: 0x%x\n", process_directory);
+	dbgprintf("[INIT PROCESS] Data: 	 0x%x\n", process_data_table);
+	dbgprintf("[INIT PROCESS] Stack:	 0x%x\n", process_stack_table);
 	dbgprintf("[INIT PROCESS] Heap: 	 0x%x\n", process_heap_table);
 
 	/* Any process should have the kernel first 4mb mapped */
@@ -477,12 +481,14 @@ void vmem_init_process(struct pcb* pcb, char* data, int size)
 	/* Map the process data to a page */
 	int i = 0;
 	while (size > PAGE_SIZE){
-		process_data_page = vmem_default->ops->alloc(vmem_default);;
+		process_data_page = vmem_default->ops->alloc(vmem_default);
+		/* copy in process data. */
 		memcpy(process_data_page, &data[i*PAGE_SIZE], PAGE_SIZE);
 		vmem_map(process_data_table, VMEM_DATA+(i*PAGE_SIZE), (uint32_t) process_data_page, USER);
 		size -= PAGE_SIZE;
 		i++;
 	}
+	/* fill in rest. */
 	process_data_page = vmem_default->ops->alloc(vmem_default);;
 	memcpy(process_data_page, &data[i*PAGE_SIZE], size);
 	vmem_map(process_data_table, VMEM_DATA+(i*PAGE_SIZE), (uint32_t) process_data_page, USER);
@@ -507,6 +513,14 @@ void vmem_init_process(struct pcb* pcb, char* data, int size)
 	pcb->page_dir = (uint32_t*)process_directory;
 }
 
+/**
+ * @brief Frees all virtual memory pages allocated for the specified process control block (PCB).
+ * The vmem_cleanup_process() function is responsible for freeing all virtual memory pages allocated for the given PCB.
+ * It first frees all data pages, then the stack pages, and finally the heap pages.
+ * @param pcb A pointer to the process control block (PCB) for which memory needs to be freed.
+ * @return void
+ * @note The function uses the vmem_default_ops structure to free the virtual memory pages.
+ */
 void vmem_cleanup_process(struct pcb* pcb)
 {
 	dbgprintf("[Memory] Cleaning up pages from pcb.\n");
@@ -574,21 +588,27 @@ void vmem_cleanup_process(struct pcb* pcb)
 	dbgprintf("[Memory] Cleaning up pages from pcb [DONE].\n");
 }
 
+/**
+ * @brief Initializes the virtual memory for the kernel.
+ * The vmem_init_kernel() function is responsible for initializing the virtual memory for the kernel.
+ * It first allocates a page directory and a page table for the kernel.
+ * It then maps the first 4MB of the virtual memory to the first 4MB of the physical memory.
+ * It then maps the virtual memory heap to the virtual memory address space.
+ * @return void
+ * @note The function uses the vmem_default_ops structure to initialize the virtual memory allocator for the kernel.
+ */
 void vmem_init_kernel()
 {	
 	kernel_page_dir = vmem_manager->ops->alloc(vmem_manager);
-	dbgprintf("[INIT KERNEL] Directory: 		0x%x\n", kernel_page_dir);
 
 	uint32_t* kernel_page_table = vmem_default->ops->alloc(vmem_default);
 	for (int addr = 0; addr < 0x400000; addr += PAGE_SIZE){
 		vmem_map(kernel_page_table, addr, addr, SUPERVISOR);
 	}
-	dbgprintf("[INIT KERNEL] 0x0 - 0x400000: 	0x%x\n", kernel_page_table);
 
 	int start = VMEM_HEAP;
 	uint32_t* kernel_heap_memory_table = vmem_default->ops->alloc(vmem_default);;
 	vmem_add_table(kernel_page_dir, start, kernel_heap_memory_table, SUPERVISOR);
-	dbgprintf("[INIT KERNEL] Heap (Kthreads): 	0x%x\n", kernel_heap_memory_table);
 
 	for (int i = 1; i < 7; i++){
 		uint32_t* kernel_page_table_memory = vmem_default->ops->alloc(vmem_default);;
@@ -608,6 +628,10 @@ void vmem_init_kernel()
 	vmem_add_table(kernel_page_dir, 0, kernel_page_table, SUPERVISOR);
 
 	vmem_add_table(kernel_page_dir, vbe_info->framebuffer, kernel_page_table_vesa, SUPERVISOR); 
+	
+	dbgprintf("[INIT KERNEL] Directory: 		0x%x\n", kernel_page_dir);
+	dbgprintf("[INIT KERNEL] 0x0 - 0x400000: 	0x%x\n", kernel_page_table);
+	dbgprintf("[INIT KERNEL] Heap (Kthreads): 	0x%x\n", kernel_heap_memory_table);
 }
 
 int vmem_allocator_create(struct virtual_memory_allocator* allocator, int from, int to)
@@ -620,23 +644,29 @@ int vmem_allocator_create(struct virtual_memory_allocator* allocator, int from, 
 	allocator->pages = create_bitmap(allocator->total_pages);
 	mutex_init(&allocator->lock);
 	dbgprintf("Created new allocator\n");
-
-
 	return 0;
 }
 
 void vmem_map_driver_region(uint32_t addr, int size)
 {
-	uint32_t* kernel_page_table_e1000 = vmem_default->ops->alloc(vmem_default);;
+	uint32_t* kernel_page_table_driver = vmem_default->ops->alloc(vmem_default);;
 	for (int i = 0; i < size; i++)
-		vmem_map(kernel_page_table_e1000, (uint32_t) addr+(PAGE_SIZE*i), (uint32_t) addr+(PAGE_SIZE*i), SUPERVISOR);
+		vmem_map(kernel_page_table_driver, (uint32_t) addr+(PAGE_SIZE*i), (uint32_t) addr+(PAGE_SIZE*i), SUPERVISOR);
 	
 	dbgprintf("[mmap] Page for 0x%x set\n", addr);
 
-	vmem_add_table(kernel_page_dir,  addr, kernel_page_table_e1000, SUPERVISOR);
+	vmem_add_table(kernel_page_dir,  addr, kernel_page_table_driver, SUPERVISOR);
 	return;
 }
-
+/**
+ * @brief Initializes the virtual memory module.
+ * The vmem_init() function is responsible for initializing the virtual memory module.
+ * It first initializes the virtual memory allocator for the kernel and then initializes the virtual memory allocator for the process manager.
+ * @return void
+ * @note The function uses kalloc() to allocate memory for the virtual memory allocators.
+ * @note The function uses the vmem_default_ops structure to initialize the virtual memory allocator for the kernel.
+ * @note The function uses the vmem_manager_ops structure to initialize the virtual memory allocator for the process manager.
+ */
 void vmem_init()
 {
 	vmem_allocator_create(vmem_default, VMEM_START_ADDRESS, VMEM_MAX_ADDRESS);

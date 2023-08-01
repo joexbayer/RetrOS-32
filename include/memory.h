@@ -4,8 +4,9 @@
 #include <stdint.h>
 #include <pcb.h>
 #include <errors.h>
+#include <kutils.h>
 
-extern char _code[], _end[], _code_end[], _ro_s[], _ro_e[], _data_s[], _data_e[], _bss_s[], _bss_e[], _bss_size[];
+extern byte_t _code[], _end[], _code_end[], _ro_s[], _ro_e[], _data_s[], _data_e[], _bss_s[], _bss_e[], _bss_size[];
 extern int kernel_size;
 
 #define PERMANENT_KERNEL_MEMORY_START 0x100000
@@ -54,7 +55,7 @@ struct mem_info {
 	}permanent;
 };
 
-struct vmem_page_allocation {
+struct vmem_page_region {
 	int* bits;
 	uint32_t* basevaddr;
 	int refs;
@@ -69,7 +70,7 @@ struct allocation {
 	uint32_t* address;
 	int size;
 	int used;
-	struct vmem_page_allocation* physical;
+	struct vmem_page_region* region;
 	struct allocation* next;
 };
 
@@ -104,7 +105,7 @@ void enable_paging();
 void vmem_map_driver_region(uint32_t addr, int size);
 void vmem_init_kernel();
 void vmem_cleanup_process(struct pcb* pcb);
-void vmem_init_process(struct pcb* pcb, char* data, int size);
+void vmem_init_process(struct pcb* pcb, byte_t* data, int size);
 void vmem_stack_free(struct pcb* pcb, void* ptr);
 void* vmem_stack_alloc(struct pcb* pcb, int size);
 void vmem_dump_heap(struct allocation* allocation);
