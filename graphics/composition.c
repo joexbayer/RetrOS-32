@@ -50,14 +50,14 @@ static struct window_server {
 
     struct windowmanager wm;
 
-    char flags;
+    byte_t flags;
 
 } wind = {
     .sleep_time = 2,
     .flags = WINDOW_SERVER_UNINITIALIZED
 };
 
-static char* background = NULL;
+static ubyte_t* background = NULL;
 
 static inline int gfx_check_changes(struct window* w)
 {
@@ -145,7 +145,7 @@ int gfx_decode_background_image(const char* file)
         return -1;
     }
 
-    char* temp = (char*) kalloc(5000);
+    byte_t* temp = (byte_t*) kalloc(5000);
     inode_t inode = ext_open(file, 0);
     if(inode == 0){
         dbgprintf("[WSERVER] Could not open background file.\n");
@@ -263,6 +263,8 @@ void __kthread_entry gfx_compositor_main()
         /* This code runs only if a window has changed */
         if(window_changed && !__is_fullscreen){
             memcpy(wind.composition_buffer, background, wind.buffer_size);
+            int len = strlen("NETOS Development Build");
+            vesa_printf(wind.composition_buffer, (vbe_info->width/2) - (len/2)*8, vbe_info->height-8, COLOR_BLACK, "%s", "NETOS Development Build");
                 
             PANIC_ON_ERR(wind.wm.ops->draw(&wind.wm, wind.wm.windows));
 

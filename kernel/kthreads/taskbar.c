@@ -138,11 +138,18 @@ static void taskbar_hdr_event(struct window* w, struct taskbar_header* header, i
         /* draw header */
         dbgprintf("Clicked header %s\n", header->name);
 
-        w->draw->rect(w, header->x, header->y+18, TASKBAR_EXT_OPT_WIDTH, TASKBAR_EXT_OPT_HEIGHT, COLOR_VGA_LIGHTER_GRAY);
+        w->draw->rect(w, header->x, header->y+18, TASKBAR_EXT_OPT_WIDTH, TASKBAR_EXT_OPT_HEIGHT, 30);
+        w->draw->rect(w, header->x, header->y+18, TASKBAR_EXT_OPT_WIDTH, 1, COLOR_VGA_LIGHTER_GRAY+1);
         /* draw border around previous rect in light gray */
-        w->draw->rect(w, header->x, header->y+18+TASKBAR_EXT_OPT_HEIGHT-2, TASKBAR_EXT_OPT_WIDTH, 1, COLOR_VGA_DARK_GRAY);
+        /* bottom */
+        w->draw->rect(w, header->x, header->y+19+TASKBAR_EXT_OPT_HEIGHT-2, TASKBAR_EXT_OPT_WIDTH, 1, COLOR_VGA_DARK_GRAY);
+        w->draw->rect(w, header->x, header->y+18+TASKBAR_EXT_OPT_HEIGHT-2, TASKBAR_EXT_OPT_WIDTH, 1, COLOR_VGA_DARK_GRAY+8);
+
         w->draw->rect(w, header->x, header->y+18, 1, TASKBAR_EXT_OPT_HEIGHT, COLOR_VGA_DARK_GRAY);
+        w->draw->rect(w, header->x+1, header->y+18, 1, TASKBAR_EXT_OPT_HEIGHT-1, COLOR_VGA_LIGHTER_GRAY+1);
+
         w->draw->rect(w, header->x+TASKBAR_EXT_OPT_WIDTH-1, header->y+18, 1, TASKBAR_EXT_OPT_HEIGHT, COLOR_VGA_DARK_GRAY);
+        w->draw->rect(w, header->x+TASKBAR_EXT_OPT_WIDTH-2, header->y+18, 1, TASKBAR_EXT_OPT_HEIGHT, COLOR_VGA_DARK_GRAY+8);
         
         header->extended = true;
 
@@ -206,7 +213,10 @@ static void __kthread_entry taskbar(void)
     while (1){
 
         /* draw background */
-        w->draw->rect(w, 0, 1, 800, 16, COLOR_VGA_LIGHTER_GRAY);
+        w->draw->rect(w, 0, 1, 800, 16, 30);
+        w->draw->rect(w, 0, 0, 800, 2, COLOR_VGA_LIGHTER_GRAY+1);
+        w->draw->rect(w, 0, 16, 800, 1, COLOR_VGA_LIGHT_GRAY);
+        w->draw->rect(w, 0, 17, 800, 1, 0);
 
         /* draw time */
         get_current_time(&time);

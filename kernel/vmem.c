@@ -567,16 +567,8 @@ void vmem_cleanup_process(struct pcb* pcb)
 		struct allocation* old = iter;
 		iter = iter->next;
 
-		dbgprintf("[PCB] Cleaning up virtual allocation 0x%x\n", old->address);
-
-		int num_pages = (old->size + PAGE_SIZE - 1) / PAGE_SIZE;
-		for (int i = 0; i < num_pages; i++)
-		{
-			//dbgprintf("[PCB] Cleaning up continious virtual allocation 0x%x\n",  old->address);
-			vmem_default->ops->free(vmem_default, (void*) (VMEM_START_ADDRESS + (old->bits[i] * PAGE_SIZE)));
-		}
+		vmem_free_page_region(old->region, old->size);
 	
-		kfree(old->bits);
 		kfree(old);
 	}
 	vmem_manager->ops->free(vmem_default, (void*) heap_table);
