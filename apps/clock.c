@@ -23,7 +23,7 @@ int main()
 {   
     struct time now;
     gfx_create_window(110, 140, 0);
-    gfx_set_title("Clock");
+    gfx_set_title("Time & Date");
 
     printf("Clock started\n");
     while (1){

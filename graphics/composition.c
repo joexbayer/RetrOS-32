@@ -153,7 +153,7 @@ int gfx_decode_background_image(const char* file)
     }
 
     int ret = ext_read(inode, temp, 5000);
-    if(ret == 0){
+    if(ret <= 0){
         dbgprintf("[WSERVER] Could not read background file.\n");
         return -1;
     }
@@ -218,7 +218,7 @@ void __kthread_entry gfx_compositor_main()
         
 
         wind.flags &= ~WINDOW_SERVER_UNINITIALIZED;
-        gfx_decode_background_image("default.img");
+        gfx_decode_background_image("circles.img");
         dbgprintf("[WSERVER] %d bytes allocated for composition buffer.\n", wind.buffer_size);
     }
 

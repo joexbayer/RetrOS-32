@@ -3,12 +3,13 @@
 #include <gfx/events.h>
 #include <colors.h>
 #include "../utils/StringHelper.hpp"
+#include "../utils/StdLib.hpp"
 #include <fs/ext.h>
 #include <fs/directory.h>
 #include <lib/printf.h>
 
-#define WIDTH 400
-#define HEIGHT 300
+#define WIDTH 300
+#define HEIGHT 200
 #define ICON_SIZE 32
 
 class File {
@@ -87,7 +88,7 @@ class Finder : public Window
 {
 public:
     Finder() : Window(WIDTH, HEIGHT, "Finder", 0){
-        drawRect(0, 0, WIDTH, HEIGHT, COLOR_WHITE);
+        drawRect(0, 0, WIDTH, HEIGHT, 30);
 
         for(int i = 0; i < 5; i++){
             icon[i] = (unsigned char*)malloc(ICON_SIZE*ICON_SIZE);
@@ -155,20 +156,34 @@ public:
     }
 
     int showFiles(int x, int y){
-        if(x == 0 && y == 0 )
+        if(x == 0 && y == 0 ){
             drawRect(0, 0, WIDTH, HEIGHT, COLOR_WHITE);
+            drawRect(0, 0, WIDTH, 10, 30);
+
+            drawRect(1, 1, WIDTH-1, 1, 30+1);
+            drawRect(1, 1, 1, 10, 30+1);
+
+            drawRect(1+WIDTH-2, 1, 1, 10, COLOR_VGA_MEDIUM_DARK_GRAY+5);
+            drawRect(1, 10, WIDTH-1, 1, COLOR_VGA_MEDIUM_DARK_GRAY+5); 
+            drawRect(1, 11, WIDTH-1, 1, COLOR_BLACK);
+            drawRect(1, 12, WIDTH-1, 1, 30+1); 
+
+            gfx_draw_format_text(2, 2, COLOR_BLACK, "< >");
+            gfx_draw_format_text(WIDTH/2 - (path->getLength()*8)/2, 2, COLOR_BLACK, "%s", path->getData());
+            gfx_draw_format_text(WIDTH-strlen("XXX items")*8, 2, COLOR_BLACK, "%d items", m_cache->getSize());
+        }
         
         File* file;
         int iter = 0;
         int j = 0, i = 0;
         int size = m_cache->getSize();
         while (iter < size){
-            file = m_cache->getByIndex(i);
+            file = m_cache->getByIndex(iter);
             if(file == 0) continue;
 
             /* draw icon based on type */
-            int xOffset = 4 + j * WIDTH / 2;
-            int yOffset = 4 + i * ICON_SIZE;
+            int xOffset = 12 + j * WIDTH / 2;
+            int yOffset = 12 + i * ICON_SIZE;
 
             if (file->flags & FS_DIR_FLAG_DIRECTORY) {
                 drawIcon(xOffset, yOffset, icon[0]);
@@ -176,7 +191,7 @@ public:
                 drawIcon(xOffset, yOffset, icon[1]);
             }
 
-            drawText(40 + j * WIDTH / 2, 16 + (i++) * ICON_SIZE, file->getName(), COLOR_BLACK);
+            drawText(48 + j * WIDTH / 2, 24 + (i++) * ICON_SIZE, file->getName(), COLOR_BLACK);
 
             /* check if x,y is inside box */
             if (x > xOffset && x < xOffset + ICON_SIZE && y > yOffset && y < yOffset + ICON_SIZE) {

@@ -29,6 +29,8 @@ static int prevNewline(unsigned char* str, unsigned char* limit)
 void Editor::Reset()
 {
 	for (int i = 0; i < this->m_bufferSize; i++) this->m_textBuffer[i] = 0;
+	this->m_textBuffer[1] = '\n';
+	this->m_bufferHead = 2;
 	gfx_draw_rectangle(0, 0, this->c_width, this->c_height, COLOR_BG);
 	gfx_draw_line(0, 17, this->c_height, 17, COLOR_VGA_MEDIUM_GRAY);
 	for (int i = 0; i < this->c_height/8; i++)gfx_draw_format_text(0, i*8, COLOR_VGA_MEDIUM_GRAY, "%s%d ", i < 10 ? " " : "", i);
@@ -103,6 +105,9 @@ void Editor::Open(char* path)
 	setHeader(path);
 
 	m_bufferHead = read(m_fd, m_textBuffer, 1000);
+	if(m_bufferHead < 0){
+		m_bufferHead = 0;
+	}
 	m_fileSize = m_bufferHead;
 	reDraw(0, m_bufferHead);
 }
@@ -342,20 +347,19 @@ void Editor::putChar(unsigned char c)
 	case KEY_F3:
 		Save();
 		return;
-	
 	case KEY_F2:
 		Lex();
 		return;
 	case KEY_F1:{
-			FileChooser();
+			reDraw(0, m_bufferHead);
 		}
 		return;
 	default: /* Default add character to buffer and draw it */
 		if(c == 0) break;
 
 		if(m_bufferEdit < m_bufferHead-1){
-			int diff = m_bufferHead-m_bufferEdit;
-			/* move all characters forward. */
+			int diff = m_bufferHead-m_bufferEdit+1;
+			/* move all characters in m_textBuffer forward */
 			for (int i = 0; i < diff; i++){m_textBuffer[m_bufferHead-i] = m_textBuffer[m_bufferHead-i-1];}
 		}
 

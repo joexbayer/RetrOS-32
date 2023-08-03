@@ -28,6 +28,7 @@ static void __callback taskbar_colors();
 static void __callback taskbar_clock();
 static void __callback taskbar_bg_lotr();
 static void __callback taskbar_bg_default();
+static void __callback taskbar_bg_circles();
 
 /* prototype to taskbar thread */
 static void __kthread_entry taskbar(void);
@@ -115,8 +116,8 @@ static struct taskbar_options {
                     .callback = &taskbar_bg_default
                 },
                 {
-                    .name = "> Test",
-                   .callback = NULL
+                    .name = "> Circles",
+                   .callback = taskbar_bg_circles
                 },
             }
         },
@@ -198,29 +199,30 @@ static void taskbar_hdr_opt_event(struct window* w, struct taskbar_header* heade
  */
 static void __kthread_entry taskbar(void)
 {
-    struct window* w = gfx_new_window(800, 200, GFX_IS_IMMUATABLE | GFX_HIDE_HEADER | GFX_HIDE_BORDER | GFX_IS_TRANSPARENT);
+    struct window* w = gfx_new_window(vbe_info->width, 200, GFX_IS_IMMUATABLE | GFX_HIDE_HEADER | GFX_HIDE_BORDER | GFX_IS_TRANSPARENT);
     if(w == NULL){
         warningf("Failed to create window for taskbar");
         return;
     }
 
     w->ops->move(w, 0, 0);
-    w->draw->rect(w, 0, 17, 800, 1, COLOR_VGA_DARK_GRAY);
-    w->draw->rect(w, 0, 0, 800, 2, 0xf);
+    w->draw->rect(w, 0, 17, vbe_info->width, 1, COLOR_VGA_DARK_GRAY);
+    w->draw->rect(w, 0, 0, vbe_info->width, 2, 0xf);
 
     struct time time;
     struct gfx_event event;
+    int timedate_length = strlen("00:00:00 00/00/0000");
     while (1){
 
         /* draw background */
-        w->draw->rect(w, 0, 1, 800, 16, 30);
-        w->draw->rect(w, 0, 0, 800, 2, COLOR_VGA_LIGHTER_GRAY+1);
-        w->draw->rect(w, 0, 16, 800, 1, COLOR_VGA_LIGHT_GRAY);
-        w->draw->rect(w, 0, 17, 800, 1, 0);
+        w->draw->rect(w, 0, 1, vbe_info->width, 16, 30);
+        w->draw->rect(w, 0, 0, vbe_info->width, 2, COLOR_VGA_LIGHTER_GRAY+1);
+        w->draw->rect(w, 0, 16, vbe_info->width, 1, COLOR_VGA_LIGHT_GRAY);
+        w->draw->rect(w, 0, 17, vbe_info->width, 1, 0);
 
         /* draw time */
         get_current_time(&time);
-        w->draw->textf(w, w->inner_width - 22*8, 5, COLOR_BLACK,
+        w->draw->textf(w, w->inner_width - (timedate_length*8), 5, COLOR_BLACK,
             "%s%d:%s%d:%s%d %s%d/%s%d/%d",
             TIME_PREFIX(time.hour), time.hour, TIME_PREFIX(time.minute),time.minute,
             TIME_PREFIX(time.second), time.second, TIME_PREFIX(time.day), time.day,
@@ -327,4 +329,9 @@ static void __callback taskbar_bg_default()
 static void __callback taskbar_bg_lotr()
 {
     gfx_decode_background_image("lotr.img");
+}
+
+static void __callback taskbar_bg_circles()
+{
+    gfx_decode_background_image("circles.img");
 }

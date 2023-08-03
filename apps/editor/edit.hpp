@@ -31,6 +31,8 @@ public:
 
 		m_bufferSize = (c_width/8)*(c_height/8);
 		for (int i = 0; i < m_bufferSize; i++) m_textBuffer[i] = 0;
+		m_textBuffer[1] = '\n';
+		m_bufferHead = 1;
 
 		gfx_draw_rectangle(0, 0, c_width+24, c_height, COLOR_BG);
 		gfx_draw_line(0, 17, c_height, 17, COLOR_BG+2);

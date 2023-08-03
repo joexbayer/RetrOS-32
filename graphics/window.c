@@ -136,31 +136,6 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
 
     window->changed = 0;
     return;
-
-
-    /* Shadow horizontal */
-    vesa_line_horizontal(buffer, window->x+6, window->y+window->height-5, window->inner_width+6, 0);
-    vesa_line_horizontal(buffer, window->x+6, window->y+window->height-4, window->inner_width+6, 0);
-
-
-    vesa_line_vertical(buffer, window->x+7, window->y, window->inner_height+9, background_color);
-    vesa_line_vertical(buffer, window->x+6, window->y, window->inner_height+9, background_color);
-
-    vesa_line_vertical(buffer, window->x+window->width-7, window->y, window->inner_height+9, background_color);
-    vesa_line_vertical(buffer, window->x+window->width-6, window->y, window->inner_height+9, background_color);
-
-    /* Shadow vertical */
-    vesa_line_vertical(buffer, window->x+window->width-5, window->y, window->inner_height+12, 0);
-    vesa_line_vertical(buffer, window->x+window->width-4, window->y, window->inner_height+12, 0);
-
-    /* Title */
-    vesa_fillrect(buffer, window->x+8, window->y, strlen(window->name)*8 + 4, 8, background_color);
-    vesa_write_str(buffer, window->x+8+4, window->y, window->name, window->color.text == 0 ? theme->window.background : window->color.text);
-
-    if(window->is_resizable)
-        vesa_fillrect(buffer,  window->x+window->width-8,  window->y+window->height-8, 6, 6, background_color);
-    
-    window->changed = 0;
 }   
 
 void gfx_window_set_resizable()
