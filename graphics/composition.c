@@ -268,16 +268,18 @@ void __kthread_entry gfx_compositor_main()
                 
             PANIC_ON_ERR(wind.wm.ops->draw(&wind.wm, wind.wm.windows));
 
-            /* performance */
-            int usage;
-            int ret;
-            vesa_printf(wind.composition_buffer, 4, 300, 0, "%s", "PID   Usage   Type      State   Name");
-            for (int i = 1; i < MAX_NUM_OF_PCBS; i++){
-                struct pcb_info info;
-                ret = pcb_get_info(i, &info);
-                if(ret < 0) continue;
-                usage = (int)(info.usage*100);
-                vesa_printf(wind.composition_buffer, 4, 300+((i+1)*8), 0, "%d  %d/%d (%d) %s", info.pid, (pcb_get_by_pid(i)->preempts), pcb_total_usage(), timer_get_tick(), info.name);
+            if(0){
+                /* performance */
+                int usage;
+                int ret;
+                vesa_printf(wind.composition_buffer, 4, 300, 0, "%s", "PID   Usage   Type      State   Name");
+                for (int i = 1; i < MAX_NUM_OF_PCBS; i++){
+                    struct pcb_info info;
+                    ret = pcb_get_info(i, &info);
+                    if(ret < 0) continue;
+                    usage = (int)(info.usage*100);
+                    vesa_printf(wind.composition_buffer, 4, 300+((i+1)*8), 0, "%d  %d/%d (%d) %s", info.pid, (pcb_get_by_pid(i)->preempts), pcb_total_usage(), timer_get_tick(), info.name);
+                }
             }
         }
     
