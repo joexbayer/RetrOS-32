@@ -66,9 +66,12 @@
 
 <!-- ABOUT THE PROJECT -->
 <p align="center">
-<img src="https://github.com/joexbayer/NETOS/blob/main/graphics/screenshot.png?raw=true">)
+  <img src="https://github.com/joexbayer/NETOS/blob/main/graphics/screenshot2.png?raw=true">
 </p>
 
+| | |
+|:-------------------------:|:-------------------------:|
+| <img src="https://github.com/joexbayer/NETOS/blob/main/graphics/screenshot1.png?raw=true"> | <img src="https://github.com/joexbayer/NETOS/blob/main/graphics/screenshot3.png?raw=true">
 ## About The Project
 
 <p align="center">32bit Hobby Operatingsystem with graphics, multitasking and networking!</p>
