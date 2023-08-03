@@ -125,7 +125,7 @@ static int sched_prioritize(struct scheduler* sched, struct pcb* pcb)
 static struct pcb* sched_consume(struct scheduler* sched)
 {
     ERR_ON_NULL(sched);
-    //SCHED_VALIDATE(sched);
+    SCHED_VALIDATE(sched);
 
     /* Consume the current running pcb and return it */ 
     struct pcb* pcb = sched->ctx.running;
@@ -203,7 +203,7 @@ static int sched_round_robin(struct scheduler* sched)
         case PCB_NEW:{
                 /**
                  * @brief This is where the new process is started
-                 * This calls the pcb_dispatch function and sets up the page directory.
+                 * This calls the start_pcb function and sets up the page directory.
                  * Should only be called once for each pcb.
                  */
 
@@ -216,7 +216,7 @@ static int sched_round_robin(struct scheduler* sched)
                 current_running = next;
                 load_page_directory(next->page_dir);
                 //load_data_segments(GDT_KERNEL_DS);
-                pcb_dispatch(next);
+                start_pcb(next);
                 return ERROR_OK; /* not sure if it should return or break */
             }
             break; /* Never reached. */
@@ -370,5 +370,6 @@ void block()
 
 void unblock(int pid)
 {
+    //pcb_set_running(pid);
 }
 

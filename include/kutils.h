@@ -4,8 +4,6 @@
 #ifndef X86_REGISTERS_H
 #define X86_REGISTERS_H
 
-#define DEVELOPMENT 0
-
 #define ESP ({ unsigned int esp; __asm__ __volatile__ ("mov %%esp, %0" : "=r" (esp)); esp; })
 #define EIP ({ unsigned int eip; __asm__ __volatile__ ("call 1f\n1: pop %0" : "=r" (eip)); eip; })
 #define EAX ({ unsigned int eax; __asm__ __volatile__ ("mov %%eax, %0" : "=r" (eax)); eax; })
