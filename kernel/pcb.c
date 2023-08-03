@@ -21,8 +21,6 @@
 #include <util.h>
 #include <errors.h>
 
-//#include <gfx/gfxlib.h>
-
 #define PCB_STACK_SIZE 0x2000
 const char* pcb_status[] = {"stopped ", "running ", "new     ", "blocked ", "sleeping", "zombie"};
 static struct pcb pcb_table[MAX_NUM_OF_PCBS];
@@ -43,10 +41,6 @@ static struct pcb_queue_operations pcb_queue_default_ops = {
 	.pop = &__pcb_queue_pop,
 	.peek = &__pcb_queue_peek
 };
-
-/* Global running and blocked queue */
-struct pcb_queue* running;
-struct pcb_queue* blocked;
 
 /**
  * Current running PCB, used for context aware
@@ -109,8 +103,6 @@ static error_t __pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb)
 		current->next = pcb;
 		pcb->next = NULL;
 		queue->total++;
-
-
 	});
 
 	return ERROR_OK;
@@ -239,29 +231,11 @@ static struct pcb* __pcb_queue_peek(struct pcb_queue* queue)
 	return front;
 }
 
-
-/**
- * @brief Wrapper function to push to running queue
- * 
- * @param pcb 
- */
-void pcb_queue_push_running(struct pcb* pcb)
-{
-	running->ops->push(running, pcb);
-}
-
-void pcb_queue_remove_running(struct pcb* pcb)
-{
-	running->ops->remove(running, pcb);
-}
-
-
 int pcb_total_usage()
 {
 	int total = 0;
 	/* Do not include idle task at pid 0 */
-	for (int i = 1; i < MAX_NUM_OF_PCBS; i++)
-	{
+	for (int i = 1; i < MAX_NUM_OF_PCBS; i++){
 		total += pcb_table[i].preempts;
 	}
 
@@ -270,8 +244,9 @@ int pcb_total_usage()
 
 error_t pcb_get_info(int pid, struct pcb_info* info)
 {
-	if(pid < 0 || pid > MAX_NUM_OF_PCBS || pcb_table[pid].state == STOPPED)
+	if(pid < 0 || pid > MAX_NUM_OF_PCBS || pcb_table[pid].state == STOPPED){
 		return -ERROR_INDEX;
+	}
 
 	struct pcb_info _info = {
 		.pid = pid,
@@ -287,12 +262,6 @@ error_t pcb_get_info(int pid, struct pcb_info* info)
 	*info = _info;
 
 	return ERROR_OK;
-}
-
-struct pcb* pcb_get_new_running()
-{
-	assert(running->_list != NULL);
-	return running->_list;
 }
 
 void pcb_kill(int pid)
@@ -323,14 +292,6 @@ void dummytask(){
 
 	kernel_exit();
 	UNREACHABLE();
-}
-
-void pcb_set_running(int pid)
-{
-	if(pid < 0 || pid > MAX_NUM_OF_PCBS)
-		return;
-
-	pcb_table[pid].state = RUNNING;
 }
 
 struct pcb* pcb_get_by_pid(int pid)
@@ -391,9 +352,10 @@ int pcb_cleanup_routine(int pid)
 error_t pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 {
 	dbgprintf("Initiating new kernel thread!\n");
+
 	uint32_t stack = (uint32_t) kalloc(PCB_STACK_SIZE);
 	if((void*)stack == NULL){
-		dbgprintf("[PCB] STACK == NULL");
+		warningf("Out of memory!\n");
 		return -ERROR_ALLOC;
 	}
 	memset((void*)stack, 0, PCB_STACK_SIZE);
@@ -455,15 +417,17 @@ error_t pcb_create_process(char* program, int argc, char** argv, pcb_flag_t flag
 		if(pcb_table[i].state == STOPPED)
 			break;
 		
-	assert(pcb_table[i].state == STOPPED);
+	if(pcb_table[i].state != STOPPED){
+		return -ERROR_PCB_FULL;
+	}
 	
 	struct pcb* pcb = &pcb_table[i];
 
-	pcb->ctx.eip = 0x1000000; /* External programs start */
+	pcb->ctx.eip = VMEM_DATA; /* External programs start */
 	pcb->pid = i;
 	pcb->data_size = read;
 	memcpy(pcb->name, program, strlen(program)+1);
-	pcb->ctx.esp = 0xEFFFFFF0;
+	pcb->ctx.esp = VMEM_STACK;
 	pcb->ctx.ebp = pcb->ctx.esp;
 	pcb->stackptr = (uint32_t) kalloc(PCB_STACK_SIZE);
 	memset((void*)pcb->stackptr, 0, PCB_STACK_SIZE);
@@ -510,9 +474,7 @@ error_t pcb_create_process(char* program, int argc, char** argv, pcb_flag_t flag
 		pcb->argv = virtual_args->argv;
 	}
 
-
 	get_scheduler()->ops->add(get_scheduler(), &pcb_table[i]);
-	//running->ops->add(running, pcb);
 
 	pcb_count++;
 	LEAVE_CRITICAL();
@@ -545,12 +507,15 @@ error_t pcb_create_kthread(void (*entry)(), char* name)
 			break;
 		}
 	}
+
+	if(pcb_table[i].state != STOPPED){
+		return -ERROR_PCB_FULL;
+	}
 	
 	int ret = pcb_init_kthread(i, &pcb_table[i], entry, name);
 	assert(ret);
 
 	get_scheduler()->ops->add(get_scheduler(), &pcb_table[i]);
-	//running->ops->push(running, &pcb_table[i]);
 
 	pcb_count++;
 	dbgprintf("Added %s, PID: %d, Stack: 0x%x\n", name, i, pcb_table[i].kesp);
@@ -558,11 +523,11 @@ error_t pcb_create_kthread(void (*entry)(), char* name)
 	return i;
 }
 
-void __noreturn start_pcb(struct pcb* pcb)
+void __noreturn pcb_dispatch(struct pcb* pcb)
 {   
 
 	pcb->state = RUNNING;
-	dbgprintf("[START PCB] Starting pcb!\n");
+	dbgprintf("Starting new pcb!\n");
 	//pcb_dbg_print(current_running);
 	_start_pcb(pcb); /* asm function */
 	
@@ -582,15 +547,7 @@ void init_pcbs()
 		pcb_table[i].next = NULL;
 	}
 
-	running = pcb_new_queue();
-	blocked = pcb_new_queue();
-
-	//int ret = pcb_create_kthread(&Genesis, "Genesis");
-	//if(ret < 0) return; // error
-
 	current_running = &pcb_table[0];
-
-	//running->_list = current_running;
 
 	dbgprintf("[PCB] All process control blocks are ready.\n");
 

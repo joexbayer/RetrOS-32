@@ -127,23 +127,18 @@ struct pcb_queue {
 
 void init_pcbs();
 void pcb_start();
-void start_pcb(struct pcb* pcb);
+void pcb_dispatch(struct pcb* pcb);
 error_t pcb_create_kthread( void (*entry)(), char* name);
 error_t pcb_create_process(char* program, int args, char** argv, pcb_flag_t flags);
 
-void pcb_set_running(int pid);
 void pcb_kill(int pid);
 
 void pcb_dbg_print(struct pcb* pcb);
-
-void pcb_queue_remove_running(struct pcb* pcb);
-void pcb_queue_push_running(struct pcb* pcb);
 
 int pcb_cleanup_routine(int pid);
 
 error_t pcb_get_info(int pid, struct pcb_info* info);
 
-struct pcb* pcb_get_new_running();
 struct pcb_queue* pcb_new_queue();
 
 /* functions in entry.s */
