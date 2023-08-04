@@ -40,7 +40,7 @@
 
 #include <multiboot.h>
 
-#define USE_MULTIBOOT 1
+#define USE_MULTIBOOT 0
 
 struct kernel_context {
 	struct scheduler sched_ctx;
@@ -67,11 +67,10 @@ void kernel(uint32_t magic)
 	vbe_info = (struct vbe_mode_info_structure*) magic;
     init_serial();
 #endif
-	//init_serial();
 	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Booting OS...");
 	/* Clear memory and BSS */
 	//memset((char*)_bss_s, 0, (unsigned int) _bss_size);
-    memset((char*)0x100000, 0, 0x800000-0x100000);
+    //memset((char*)0x100000, 0, 0x800000-0x100000);
 	ENTER_CRITICAL();
 
 	kernel_size = _end-_code;
@@ -198,14 +197,13 @@ void kernel(uint32_t magic)
 
 	dbgprintf("[ENTER_CRITICAL] %d\n", cli_cnt);
 
-	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Starting OS.");
 
 	init_pit(1);
 	pcb_start();
-
+	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Starting OS. %d", cli_cnt);
 	LEAVE_CRITICAL();
 	
-	while (1);
+	PANIC_ON_ERR(0);
 	
 }
 

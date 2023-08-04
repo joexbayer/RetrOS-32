@@ -33,10 +33,13 @@ static struct kthread {
  */
 void __noreturn kthread_entry(int argc, char* args[])
 {   
-    assert(!current_running->is_process);
+    if(current_running->is_process){
+        kernel_exit();
+    }
 
     void (*entry)() = current_running->thread_eip;
     entry();
+
     kernel_exit();
     UNREACHABLE();
 }

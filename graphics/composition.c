@@ -266,13 +266,13 @@ void __kthread_entry gfx_compositor_main()
             int len = strlen("NETOS Development Build");
             vesa_printf(wind.composition_buffer, (vbe_info->width/2) - (len/2)*8, vbe_info->height-8, COLOR_BLACK, "%s", "NETOS Development Build");
                 
-            PANIC_ON_ERR(wind.wm.ops->draw(&wind.wm, wind.wm.windows));
+            wind.wm.ops->draw(&wind.wm, wind.wm.windows);
 
-            if(0){
+            if(1){
                 /* performance */
                 int usage;
                 int ret;
-                vesa_printf(wind.composition_buffer, 4, 300, 0, "%s", "PID   Usage   Type      State   Name");
+                vesa_printf(wind.composition_buffer, 4, 300, COLOR_WHITE, "%s", "PID   Usage   Type      State   Name");
                 for (int i = 1; i < MAX_NUM_OF_PCBS; i++){
                     struct pcb_info info;
                     ret = pcb_get_info(i, &info);
@@ -282,11 +282,12 @@ void __kthread_entry gfx_compositor_main()
                 }
             }
         }
+        
     
         kernel_yield();
 
         ENTER_CRITICAL();
-
+        
         /* Copy buffer over to framebuffer. */
         memcpy((uint8_t*)vbe_info->framebuffer, wind.composition_buffer, wind.buffer_size-1);
 

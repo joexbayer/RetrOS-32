@@ -174,9 +174,9 @@ static int wm_default_draw(struct windowmanager* wm, struct window* window)
     if (wm->window_count == 0 || window == NULL) {
         return ERROR_OK;
     }
-
-    if(window->next != NULL)
+    if(window->next != NULL){
         wm->ops->draw(wm, window->next);
+    }
     
     gfx_draw_window(wm->composition_buffer, window);
 

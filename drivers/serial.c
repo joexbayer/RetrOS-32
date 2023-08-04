@@ -21,6 +21,7 @@ static int serial_init_done = 0;
 
 void serial_put(char a)
 {
+	if(!serial_init_done) return;
     while ((inportb(PORT + 5) & 0x20) == 0){};
 
    	outportb(PORT, a);
@@ -28,6 +29,7 @@ void serial_put(char a)
 
 void serial_write(char* str)
 {
+	if(!serial_init_done) return;
 	for (int i = 0; i < strlen(str); i++)
 		serial_put(str[i]);
 }
@@ -44,10 +46,10 @@ void serial_write(char* str)
  */
 int32_t serial_printf(char* fmt, ...)
 {
-	if(!serial_init_done) return -1;
 
 	int written = 0;
-	#ifdef _KDEBUG
+#ifdef _KDEBUG
+
 	ENTER_CRITICAL();
 	va_list args;
 
@@ -55,7 +57,6 @@ int32_t serial_printf(char* fmt, ...)
 	int num = 0;
 
 	va_start(args, fmt);
-
 	while (*fmt != '\0') {
 		switch (*fmt)
 		{
@@ -116,7 +117,7 @@ int32_t serial_printf(char* fmt, ...)
         fmt++;
     }
 	LEAVE_CRITICAL();
-	#endif
+#endif
 	return written;
 }
 
@@ -139,6 +140,6 @@ void init_serial()
 
     outportb(PORT + 4, 0x0F);
 
-	serial_printf("[%s] Serial debugging activated %d!\n", "Serial", 20);
+	// serial_printf("[%s] Serial debugging activated %d!\n", "Serial", 20);
 	serial_init_done = 1;
 }
