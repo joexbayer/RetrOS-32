@@ -166,6 +166,7 @@ IBM Thinkpad a21p
 ## Roadmap
 
 - [x] Custom Bootloader & GRUB compatible
+- [x] Wallpapers
 - [x] Multi-threaded pre-emptive scheduling
 - [x] GDT & TSS kernel / userspace separation
 - [x] Interrupt handling
