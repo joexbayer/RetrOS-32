@@ -228,7 +228,7 @@ void Editor::drawChar(unsigned char c, color_t bg)
 	if(m_x*8 > c_width || m_y*8 > c_height) return;
 
 	if(c == '\n'){
-		gfx_draw_rectangle(24 + m_x*8, m_y*8, c_width-(24 + m_x*8), 8, bg);
+		gfx_draw_rectangle(24 + m_x*8, m_y*8, c_width-(24 + m_x*8), 8, COLOR_BG);
 		//gfx_draw_char(24 + m_x*8, m_y*8, '\\', m_textColor);
 		m_x = 0;
 		m_y++;
@@ -357,7 +357,7 @@ void Editor::putChar(unsigned char c)
 	default: /* Default add character to buffer and draw it */
 		if(c == 0) break;
 
-		if(m_bufferEdit < m_bufferHead-1){
+		if(m_bufferEdit < m_bufferHead){
 			int diff = m_bufferHead-m_bufferEdit+1;
 			/* move all characters in m_textBuffer forward */
 			for (int i = 0; i < diff; i++){m_textBuffer[m_bufferHead-i] = m_textBuffer[m_bufferHead-i-1];}
