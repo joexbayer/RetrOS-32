@@ -102,7 +102,7 @@ void Editor::Open(char* path)
 	if(m_fd <= 0)
 		return;
 	
-	setHeader(path);
+	setTitle(path);
 
 	m_bufferHead = read(m_fd, m_textBuffer, 1000);
 	if(m_bufferHead < 0){
