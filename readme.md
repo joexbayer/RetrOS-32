@@ -205,7 +205,7 @@ IBM Thinkpad a21p
   - [x] Build
   - [x] mkfs
   - [x] Testing
-  - [ ] 
+  - [ ] Create & Encode icons and wallpapers
 
 See the [open issues](https://github.com/joexbayer/NETOS/issues) for a full list of proposed features (and known issues).
 
