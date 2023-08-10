@@ -40,6 +40,7 @@ programs: bin/crt0.o ${USROBJS}
 	@make -C editor/
 	@make -C colors/
 	@make -C finder/
+	@make -C calculator/
 	@echo [USR] All user programs created and linked!
 
 bin/%.o: %.c bin/crt0.o
@@ -74,4 +75,6 @@ clean:
 	rm -f ./bin/*
 	make -C editor/ clean
 	make -C colors/ clean
+	make -C finder/ clean
+	make -C calculator/ clean
 	rm -f .depend

@@ -1,5 +1,7 @@
 #include "edit.hpp"
 
+#define HEADER_OFFSET 13
+
 /* Helper functions */
 static int isAlpha(unsigned char c) {
     return ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'));
@@ -26,14 +28,24 @@ static int prevNewline(unsigned char* str, unsigned char* limit)
 }
 
 
+void Editor::reDrawHeader()
+{
+	gfx_draw_rectangle(0, 0, this->c_width, this->c_height, COLOR_BG);
+	gfx_draw_line(0, 17, this->c_height, 17, COLOR_VGA_MEDIUM_GRAY);
+	for (int i = 0; i < this->c_height/8; i++)gfx_draw_format_text(0, HEADER_OFFSET+ i*8, COLOR_VGA_MEDIUM_GRAY, "%s%d ", i < 10 ? " " : "", i);
+
+	drawHeaderTable(c_width+24);
+	gfx_draw_format_text(2, 2, COLOR_BLACK, "< >");
+	gfx_draw_format_text(c_width+24-strlen("Save")*8, 2, COLOR_BLACK, "%s", "Save");
+}
+
+
 void Editor::Reset()
 {
 	for (int i = 0; i < this->m_bufferSize; i++) this->m_textBuffer[i] = 0;
 	this->m_textBuffer[1] = '\n';
 	this->m_bufferHead = 2;
-	gfx_draw_rectangle(0, 0, this->c_width, this->c_height, COLOR_BG);
-	gfx_draw_line(0, 17, this->c_height, 17, COLOR_VGA_MEDIUM_GRAY);
-	for (int i = 0; i < this->c_height/8; i++)gfx_draw_format_text(0, i*8, COLOR_VGA_MEDIUM_GRAY, "%s%d ", i < 10 ? " " : "", i);
+	reDrawHeader();
 }
 
 void Editor::reDraw(int from, int to)
@@ -70,7 +82,7 @@ void Editor::reDraw(int from, int to)
 	}
 	
 	gfx_draw_rectangle(24, c_height-8, c_width-24, 8, COLOR_BG);
-	gfx_draw_format_text(24, c_height-8, COLOR_VGA_MEDIUM_DARK_GRAY, "W:%p Line:%p Col:%p\n", m_bufferHead, line, col);
+	gfx_draw_format_text(24, c_height-8, COLOR_VGA_MEDIUM_DARK_GRAY, "W:%p/%p Line:%p Col:%p\n", m_bufferHead, m_bufferEdit, line, col);
 }
 
 void Editor::Lex()
@@ -155,13 +167,13 @@ void Editor::FileChooser()
 					}
 					break;
 				case '\b':
-					gfx_draw_rectangle(24 + (11*8) + (i*8), c_height-8, 8, 8, COLOR_BG);
+					gfx_draw_rectangle(24 + (11*8) + (i*8), c_height/2-4, 8, 8, COLOR_BG);
 					filename[i--] = 0;
 					break;
 				default:
 					if(i == 127) return;
 					filename[i++] = event.data;
-					gfx_draw_char(24 + (11*8) + (i*8), c_height-8, event.data, COLOR_TEXT);
+					gfx_draw_char(24 + (11*8) + (i*8), c_height/2-4, event.data, COLOR_TEXT);
 					break;
 				}
 			}
@@ -169,12 +181,7 @@ void Editor::FileChooser()
 		case GFX_EVENT_RESOLUTION:
 			c_width = event.data;
 			c_height = event.data2;
-			gfx_draw_rectangle(0, 0, c_width, c_height, COLOR_BG);
-			gfx_draw_format_text(24, c_height-8, COLOR_VGA_YELLOW, "Open file: ");
-
-			for (int j = 0; j < i; j++){
-				gfx_draw_char(24 + (11*8) + (i*8), c_height-8, filename[i], COLOR_TEXT);
-			}
+			reDrawHeader();
 			break;
 		case GFX_EVENT_EXIT:
 			Quit();
@@ -186,9 +193,6 @@ void Editor::FileChooser()
 
 void Editor::EditorLoop()
 {
-	gfx_draw_rectangle(0, 0, 24, c_height, COLOR_BG);
-	gfx_draw_line(0, 17, c_height, 17, COLOR_BG+2);
-	for (int i = 0; i < c_height/8; i++)gfx_draw_format_text(0, i*8, COLOR_BG+4, "%s%d ", i < 10 ? " " : "", i);
 
 	while (1){
 		struct gfx_event event;
@@ -203,9 +207,7 @@ void Editor::EditorLoop()
 		case GFX_EVENT_RESOLUTION:
 			c_width = event.data;
 			c_height = event.data2;
-			gfx_draw_rectangle(0, 0, c_width, c_height, COLOR_BG);
-			gfx_draw_line(0, 17, c_height, 17, COLOR_BG+2);
-			for (int i = 0; i < c_height/8; i++)gfx_draw_format_text(0, i*8, COLOR_BG+4, "%s%d ", i < 10 ? " " : "", i);
+			reDrawHeader();
 
 			reDraw(0, m_bufferSize);
 			break;;
@@ -228,13 +230,13 @@ void Editor::drawChar(unsigned char c, color_t bg)
 	if(m_x*8 > c_width || m_y*8 > c_height) return;
 
 	if(c == '\n'){
-		gfx_draw_rectangle(24 + m_x*8, m_y*8, c_width-(24 + m_x*8), 8, COLOR_BG);
-		//gfx_draw_char(24 + m_x*8, m_y*8, '\\', m_textColor);
+		gfx_draw_rectangle(24 + m_x*8, HEADER_OFFSET+ m_y*8, c_width-(24 + m_x*8), 8, COLOR_BG);
+		gfx_draw_rectangle(24 + m_x*8, HEADER_OFFSET+ m_y*8, 8, 8, bg);
 		m_x = 0;
 		m_y++;
 	} else {
-		gfx_draw_rectangle(24 + m_x*8, m_y*8, 8, 8, bg);
-		gfx_draw_char(24 + m_x*8, m_y*8, c, m_textColor);
+		gfx_draw_rectangle(24 + m_x*8,HEADER_OFFSET+ m_y*8, 8, 8, bg);
+		gfx_draw_char(24 + m_x*8, HEADER_OFFSET+m_y*8, c, m_textColor);
 		m_x++;
 		if(m_x >= ((c_width-24)/8)){
 			m_x = 0;
@@ -308,6 +310,10 @@ void Editor::putChar(unsigned char c)
 		return;
 	case KEY_LEFT: /* LEFT */
 		if(m_bufferEdit == 0) return;
+		if(m_bufferEdit < 0){
+			m_bufferEdit = 0;
+			return;
+		}
 
 		m_bufferEdit--;
 
@@ -317,6 +323,10 @@ void Editor::putChar(unsigned char c)
 		return;
 	case KEY_RIGHT: /* RIGHT */
 		if(m_bufferEdit == m_bufferHead) return;
+		if(m_bufferEdit > m_bufferHead) {
+			m_bufferEdit = m_bufferHead;
+			return;
+		}
 
 		m_bufferEdit++;
 
@@ -326,6 +336,10 @@ void Editor::putChar(unsigned char c)
 		return;
 	case KEY_DOWN:{
 			if(m_bufferEdit == m_bufferHead) break;
+			if(m_bufferEdit > m_bufferHead) {
+				m_bufferEdit = m_bufferHead;
+				return;
+			}
 
 			int moveto = nextNewline(&m_textBuffer[m_bufferEdit]);
 			m_bufferEdit += moveto;
@@ -368,7 +382,7 @@ void Editor::putChar(unsigned char c)
 		m_bufferHead++;
 
 		if(c == '\n'){
-			reDraw(m_bufferEdit-1, m_bufferHead);
+			reDraw(m_bufferEdit-2, m_bufferHead);
 			break;
 		}
 

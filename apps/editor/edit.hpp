@@ -20,7 +20,7 @@ struct keyword {
 
 class Editor : public Window {  
 public:  
-	Editor() : Window(288, 248, "Editor", 1) {
+	Editor() : Window(288, 248+12, "Editor", 1) {
 		m_x = 0;
 		m_y = 0;
 		
@@ -60,6 +60,7 @@ public:
 	void FileChooser();
 	void setColor(color_t color);
 	void Reset();
+	void reDrawHeader();
 
 private:
 	void highlightSyntax(unsigned char* start);
@@ -93,7 +94,7 @@ private:
 
 	/* Size is based on the fact that our filesystem can only handle 8kb files */
 	int c_width = (288)-24;
-	int c_height = (248);
+	int c_height = (248)+12;
 
 	void reDraw(int from, int to);
 };

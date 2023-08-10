@@ -12,6 +12,7 @@ extern "C" {
 
 #ifdef __cplusplus
 #include <lib/syscall.h>
+#include <colors.h>
 #include <args.h>
 
 
@@ -110,6 +111,36 @@ public:
     void drawChar(int x, int y, char data, unsigned char color)
     {
         gfx_draw_char(x, y, data, color);
+    }
+
+    void drawHeaderTable(int width)
+    {
+        drawRect(0, 0, width, 10, 30);
+
+        drawRect(1, 1, width-1, 1, 30+1);
+        drawRect(1, 1, 1, 10, 30+1);
+
+        drawRect(1+width-2, 1, 1, 10, COLOR_VGA_MEDIUM_DARK_GRAY+5);
+        drawRect(1, 10, width-1, 1, COLOR_VGA_MEDIUM_DARK_GRAY+5); 
+        drawRect(1, 11, width-1, 1, COLOR_BLACK);
+        drawRect(1, 12, width-1, 1, 30+1); 
+    }
+
+    void drawContouredRect(int x, int y, int width, int height) {
+        drawRect(x, y, width, height, 30);
+        
+        // Top Inner Border
+        drawRect(x, y, width-1, 1, 31);
+        
+        // Left Inner Border
+        drawRect(x, y, 1, height, 31);
+        
+        // Right Inner Border
+        drawRect(x+width-1, y, 1, height, COLOR_VGA_MEDIUM_DARK_GRAY+5);
+        
+        // Bottom Inner Borders
+        drawRect(x, y+height-1, width-1, 1, COLOR_VGA_MEDIUM_DARK_GRAY+5);
+        drawRect(x, y+height, width-1, 1, 31);
     }
 
     void drawFormatText(int x, int y, unsigned char color, const char* fmt, ...)
