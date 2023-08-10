@@ -265,8 +265,6 @@ void __kthread_entry gfx_compositor_main()
             memcpy(wind.composition_buffer, background, wind.buffer_size);
             int len = strlen("NETOS Development Build");
             vesa_printf(wind.composition_buffer, (vbe_info->width/2) - (len/2)*8, vbe_info->height-8, COLOR_BLACK, "%s", "NETOS Development Build");
-                
-            wind.wm.ops->draw(&wind.wm, wind.wm.windows);
 
             if(1){
                 /* performance */
@@ -281,6 +279,8 @@ void __kthread_entry gfx_compositor_main()
                     vesa_printf(wind.composition_buffer, 4, 300+((i+1)*8), 0, "%d  %d/%d (%d) %s", info.pid, (pcb_get_by_pid(i)->preempts), pcb_total_usage(), timer_get_tick(), info.name);
                 }
             }
+                
+            wind.wm.ops->draw(&wind.wm, wind.wm.windows);
         }
         
     

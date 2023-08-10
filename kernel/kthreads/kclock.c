@@ -4,6 +4,7 @@
 #include <gfx/gfxlib.h>
 #include <gfx/theme.h>
 #include <gfx/window.h>
+#include <gfx/events.h>
 #include <timer.h>
 #include <terminal.h>
 #include <kutils.h>
@@ -17,6 +18,7 @@ void __kthread_entry kclock()
     int angle_id;
     struct time now;
     struct gfx_theme* theme;
+    struct gfx_event event;
     
     struct window* w = gfx_new_window(110, 140, 0);
     if(w == NULL){
@@ -46,7 +48,18 @@ void __kthread_entry kclock()
 
         kernel_sleep(100);
 
-        twritef("Time: %d:%d:%d\n", now.hour, now.minute, now.second);
+        struct gfx_event event;
+			int ret = gfx_event_loop(&event, GFX_EVENT_NONBLOCKING);
+			if(ret == -1) continue;
+
+			switch (event.event){
+			case GFX_EVENT_EXIT:
+				kernel_exit();
+				break;
+			default:
+				break;
+			}
+
     }
 }
 EXPORT_KTHREAD(kclock);

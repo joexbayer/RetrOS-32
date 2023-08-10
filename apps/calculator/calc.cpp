@@ -21,7 +21,7 @@ public:
         drawUI();
     }
 
-    void drawUI() {
+        void drawUI() {
         // Draw keypad
         drawRect(0, 0, WIDTH, HEIGHT, COLOR_WHITE);
         for (int i = 0; i < 3; i++) {

@@ -92,8 +92,8 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
         }
 
         /* Exit */
-        vesa_fillrect(buffer,  window->x+window->width-24,  window->y-2, strlen("X")*8 - 2, 8, theme->window.background);
-        vesa_write_str(buffer, window->x+window->width-24,  window->y-2, "X", COLOR_VGA_DARK_GRAY);
+        vesa_fillrect(buffer,  window->x+window->width-20,  window->y-2, strlen("X")*8 - 2, 8, theme->window.background);
+        vesa_write_str(buffer, window->x+window->width-20,  window->y-2, "X", COLOR_VGA_DARK_GRAY);
 
         /* Title */
         int title_position = (window->width/2) - ((strlen(window->name)*8)/2);

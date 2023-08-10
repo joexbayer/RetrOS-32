@@ -29,6 +29,7 @@ static void __callback taskbar_clock();
 static void __callback taskbar_bg_lotr();
 static void __callback taskbar_bg_default();
 static void __callback taskbar_bg_circles();
+static void __callback taskbar_bg_calc();
 
 /* prototype to taskbar thread */
 static void __kthread_entry taskbar(void);
@@ -95,6 +96,10 @@ static struct taskbar_options {
                 {
                     .name = "> Clock",
                     .callback = &taskbar_clock
+                },
+                {
+                    .name = "> Calculator",
+                    .callback = &taskbar_bg_calc
                 },
                 
             }
@@ -334,4 +339,11 @@ static void __callback taskbar_bg_lotr()
 static void __callback taskbar_bg_circles()
 {
     gfx_decode_background_image("circles.img");
+}
+
+static void __callback taskbar_bg_calc()
+{
+    int pid = pcb_create_process("/bin/calc.o", 0, NULL, 0);
+    if(pid < 0)
+        dbgprintf("%s does not exist\n", "calc.o");
 }

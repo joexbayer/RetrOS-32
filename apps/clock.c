@@ -11,6 +11,7 @@
  */
 #include <lib/printf.h>
 #include <lib/graphics.h>
+#include <gfx/events.h>
 #include <colors.h>
 #include <rtc.h>
 #include <util.h>
@@ -22,6 +23,7 @@ static char* months[] = {"NAN", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
 int main()
 {   
     struct time now;
+    struct gfx_event event;
     gfx_create_window(110, 140, 0);
     gfx_set_title("Time & Date");
 
@@ -43,6 +45,18 @@ int main()
         gfx_draw_format_text(center_x(6), 124, COLOR_VGA_MEDIUM_GRAY, "%d. %s", now.day, months[now.month]);
 
         sleep(100);
+
+        int ret = gfx_get_event(&event, GFX_EVENT_NONBLOCKING);
+        if(ret == -1) continue;
+
+        switch (event.event){
+        case GFX_EVENT_EXIT:
+            exit();
+            break;
+        default:
+            break;
+        }
+
     }
     
 	return 0;
