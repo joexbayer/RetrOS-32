@@ -200,7 +200,8 @@ IBM Thinkpad a21p
 - [x] System calls
 - [x] C Compiler / interpreter to bytecode
 - [x] Custom VM to run bytecode.
-- [x] Editor with Syntax Highlighting 
+- [x] Editor with Syntax Highlighting
+- [x] Calculator
 - [x] Tools
   - [x] Build
   - [x] mkfs
