@@ -355,7 +355,7 @@ void Editor::putChar(unsigned char c)
 			m_bufferEdit -= moveto+1;
 
 			line_end = prevNewline(&m_textBuffer[m_bufferEdit], m_textBuffer);
-			reDraw(m_bufferEdit-line_end, m_bufferEdit+moveto+3);
+			reDraw(m_bufferEdit-line_end+1, m_bufferEdit+moveto+3);
 		}
 		return;
 	case KEY_F3:
