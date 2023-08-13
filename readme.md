@@ -179,6 +179,7 @@ IBM Thinkpad a21p
   - [x] DNS
   - [x] TCP
   - [ ] HTTP
+  - [ ] HTML
 - [x] ATA IDE Driver
   - [x] Ext2 (like) Filesystem
   - [ ] FAT16
