@@ -172,6 +172,7 @@ IBM Thinkpad a21p
 - [x] Interrupt handling
 - [x] PS/2 Keyboard & Mouse, PIT, VESA (640x480x8), RTC, Serial drivers, E1000
 - [x] PCI.
+- [x] Filesystem
 - [x] Networkstack
   - [x] Ethernet, IP, ARP, UDP
   - [x] Socket API
