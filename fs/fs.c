@@ -3,6 +3,9 @@
 #include <serial.h>
 #include <errors.h>
 
+/* This determines the maximum of simultaneously open files */
+#define FS_MAX_FILES 256
+
 /* filesystem macros */
 
 /* prototype functions for struct filesystem_ops */
@@ -39,6 +42,9 @@ static struct filesystem default_fs = {
     .version = 0
 };
 
+/* filesystem table */
+static struct file fs_file_table[FS_MAX_FILES] = {0};
+
 /* default filesystem functions */
 static int default_write(struct filesystem* fs, struct file file, const void* buf, int size)
 {
@@ -56,6 +62,25 @@ static int default_read(struct filesystem* fs, struct file file, void* buf, int 
 static int default_open(struct filesystem* fs, const char* path, int flags)
 {
     ERR_ON_NULL(fs);
+    struct file* file = NULL;
+
+    /* find a free file */
+    for(int i = 0; i < FS_MAX_FILES; i++){
+        if(fs_file_table[i].nlinks == 0){
+            file = &fs_file_table[i];
+            break;
+        }
+    }
+
+    if(!file){
+        return -1;
+    }
+
+    file->nlinks++;
+    file->flags = flags;
+    file->offset = 0;
+
+
     return -1;
 }
 
