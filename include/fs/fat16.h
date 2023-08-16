@@ -1,5 +1,14 @@
 #include <stdint.h>
 
+/**
+ * @brief FAT16 Filesystem
+ * DISK::
+ * | Boot Sector | FAT1 | FAT2 | Root Directory | Data Clusters |
+ * 
+ * FAT:
+ * | Entry 0 | Entry 1 | Entry 2 | ... | Entry N |
+ */
+
 typedef enum {
     FAT16_FLAG_READ_ONLY = 1 << 0,         /* Indicates that the file is read-only */
     FAT16_FLAG_HIDDEN = 1 << 1,            /* Indicates a hidden file */
@@ -10,7 +19,6 @@ typedef enum {
     FAT16_FLAG_UNUSED1 = 1 << 6,           /* Not used; must be set to 0 */
     FAT16_FLAG_UNUSED2 = 1 << 7            /* Not used; must be set to 0 */
 } fat16_flag_t;
-
 
 #define FAT_BOOT_TABLE_SIZE 64
 
@@ -44,12 +52,40 @@ struct fat16_directory_entry {
     uint16_t created_time;              /* 2 bytes - Created time */
     uint16_t created_date;              /* 2 bytes - Created date */
     uint16_t last_access_date;          /* 2 bytes - Last access date */
-    uint16_t first_cluster_high;        /* 2 bytes - High 16 bits of the cluster number */
+    uint16_t first_cluster;             /* 2 bytes - Cluster number */
     uint16_t modified_time;             /* 2 bytes - Modified time */
     uint16_t modified_date;             /* 2 bytes - Modified date */
-    uint16_t first_cluster_low;         /* 2 bytes - Low 16 bits of the cluster number */
     uint32_t file_size;                 /* 4 bytes - File size in bytes */
 };
 
 void fat16_set_time(uint16_t *time, uint8_t hours, uint8_t minutes, uint8_t seconds);
 void fat16_set_date(uint16_t *date, uint16_t year, uint8_t month, uint8_t day);
+
+/* Initialize the file system. Returns 0 on success, and a negative value on error. */
+int fat16_initialize();
+
+/* Open a file. Returns a file descriptor or a negative value on error. */
+int fat16_open(const char *path);
+
+/* Read from an open file. Returns the number of bytes read. */
+int fat16_read(int fd, void *buffer, size_t count);
+
+/* Write to an open file. Returns the number of bytes written. */
+int fat16_write(int fd, const void *buffer, size_t count);
+
+/* Close an open file. Returns 0 on success, and a negative value on error. */
+int fat16_close(int fd);
+
+/* Create a new directory. Returns 0 on success, and a negative value on error. */
+int fat16_mkdir(const char *path);
+
+/* Delete a file or directory. Returns 0 on success, and a negative value on error. */
+int fat16_remove(const char *path);
+
+/* List the contents of a directory. */
+int fat16_listdir(const char *path, void (*callback)(const char *name, int is_directory));
+
+/* Utility functions */
+uint32_t fat16_get_first_free_cluster();
+void fat16_allocate_cluster(uint32_t cluster);
+void fat16_free_cluster(uint32_t cluster);
