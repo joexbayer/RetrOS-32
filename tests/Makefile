@@ -17,17 +17,21 @@ else
 endif
 
 FSBOJS = ../fs/bin/ext.o ../fs/bin/path.o ../fs/bin/inode.o
+FATOBJS = ../fs/bin/fat16.o
 MOCK = mocks.c
 
 .PHONY: bin
 
-all: ext_test mem_test run
+all: ext_test fat16_test mem_test run
 
 bin:
 	@mkdir -p bin
 
 ext_test: bin ext_test.c
 	@$(CC) ext_test.c -D__FS_TEST ../bin/bitmap.o $(FSBOJS) -D__NETOS_MOCK $(MOCK) -I ../include/ -I ./include/  -O2 -m32 -Wall -g --no-builtin -D__KERNEL -o ./bin/ext_test.o
+
+fat16_test: bin ext_test.c
+	@$(CC) fat16_test.c -D__FS_TEST ../bin/bitmap.o $(FATOBJS) -D__NETOS_MOCK $(MOCK) -I ../include/ -I ./include/  -O2 -m32 -Wall -g --no-builtin -D__KERNEL -o ./bin/fat16_test.o
 
 mem_test: bin mem_test.c
 	@$(CC) mem_test.c -D__MEM_TEST ../bin/bitmap.o ../bin/kmem.o  -D__NETOS_MOCK $(MOCK) -I ../include/ -I ./include/  -O2 -m32 -Wall -g --no-builtin -o ./bin/mem_test.o

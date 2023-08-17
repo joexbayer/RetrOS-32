@@ -84,8 +84,3 @@ int fat16_remove(const char *path);
 
 /* List the contents of a directory. */
 int fat16_listdir(const char *path, void (*callback)(const char *name, int is_directory));
-
-/* Utility functions */
-uint32_t fat16_get_first_free_cluster();
-void fat16_allocate_cluster(uint32_t cluster);
-void fat16_free_cluster(uint32_t cluster);
