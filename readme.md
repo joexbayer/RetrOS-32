@@ -183,7 +183,7 @@ IBM Thinkpad a21p
   - [ ] HTML
 - [x] ATA IDE Driver
   - [x] Ext2 (like) Filesystem
-  - [ ] FAT16
+  - [ ] FAT16 (like)
   - [x] read / write
 - [x] Memory
   - [x] 32bit Virtual Memory
