@@ -13,11 +13,24 @@
 
 #include <mocks.h>
 
-#define DEBUG 0
+#define DEBUG 1
+
+/* needed by mocks.c */
+FILE* filesystem = NULL;
 
 int main(int argc, char const *argv[])
 {
 
+    filesystem = fopen("filesystem.test", "w+");
+    if(filesystem == NULL){
+        printf("Unable to open mock filesystem.");
+        return -1;
+    }
+
+    fat16_format();
+
+    
+    print_root_directory();
     
     return 0;
 }

@@ -67,7 +67,7 @@ static void fat16_sync_fat_table()
         return;
     }
 
-    int start_block = get_fat1_start_block();
+    int start_block = get_fat_start_block();
     for (uint16_t i = 0; i < boot_table.fat_blocks; i++) {
         write_block(fat_table_memory + i * 512, start_block + i);
     }
@@ -160,7 +160,7 @@ int fat16_format()
     /* Load FAT table into memory. */
     fat_table_memory = (byte_t*)kalloc((boot_table.fat_blocks * 512));  /* Allocate memory for the FAT table */
     for (uint16_t i = 0; i < boot_table.fat_blocks; i++) {
-        read_block(fat_table_memory + i * 512, get_fat1_start_block() + i);
+        read_block(fat_table_memory + i * 512, get_fat_start_block() + i);
     }
 
     return 0;  /* assume success */
@@ -213,6 +213,25 @@ void fat16_print_root_directory(struct fat16_directory_entry* buffer)
     }
 }
 
+void print_root_directory() {
+    /* Allocate memory for root directory entries buffer */
+    uint16_t root_directory_blocks = (boot_table.root_dir_entries + ENTRIES_PER_BLOCK - 1) / ENTRIES_PER_BLOCK;
+    struct fat16_directory_entry* buffer = (struct fat16_directory_entry*)kalloc(root_directory_blocks * 512);
+
+    if (buffer == NULL) {
+        dbgprintf("Error: Unable to allocate memory for root directory buffer.\n");
+        return;
+    }
+
+    /* Read the root directory entries into the buffer */
+    fat16_read_root_directory(buffer);
+
+    /* Print the root directory entries from the buffer */
+    fat16_print_root_directory(buffer);
+
+    /* Free the allocated memory for the buffer */
+    kfree(buffer);
+}
 
 
 void fat16_set_time(uint16_t *time, ubyte_t hours, ubyte_t minutes, ubyte_t seconds)
