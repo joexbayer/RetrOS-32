@@ -29,8 +29,39 @@ int main(int argc, char const *argv[])
 
     fat16_format();
 
+
+    fat16_create_file("sample", "txt", "Hello, FAT16!", strlen("Hello, FAT16!")+1);
+
+    char buf1[512];
+    int ret1 = fat16_read_file("sample", "txt", buf1, 14);
+    if (ret1 <= 0) {
+        printf("Unable to read file (sample.txt).\n");
+        return -1;
+    }
+    printf("%s (%d)\n", buf1, ret1);  // Expected Output: Hello, FAT16!
+
+
     
-    print_root_directory();
+    char buf2[1512];
+    for (int i = 0; i < 1512; i++){
+        buf2[i] = i % 111;
+    }
+    fat16_create_file("sample2", "txt", buf2, 1512);
+
+    char buf3[1512];
+    int ret2 = fat16_read_file("sample2", "txt", buf3, 1512);
+    if (ret2 <= 0) {
+        printf("Unable to read file (sample2.txt).\n");
+        return -1;
+    }
+
+    int mem_ret = memcmp(buf2, buf3, 1512);
+    if (mem_ret != 0) {
+        printf("Incorrect content of sample2.txt.\n");
+        return -1;
+    }
+    
+    fat16_print_root_directory_entries();
     
     return 0;
 }

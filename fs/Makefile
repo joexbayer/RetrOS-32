@@ -39,7 +39,7 @@ endif
 
 OUTPUTDIR = ../bin/
 
-FSOBJS = path.o ext.o inode.o vfs.o fat16.o
+FSOBJS = path.o ext.o inode.o vfs.o fat16_read.o fat16_write.o fat16.o
 
 .PHONY: all new fs clean bindir
 all: new

@@ -3,11 +3,16 @@
 /**
  * @brief FAT16 Filesystem
  * DISK::
- * | Boot Sector | FAT1 | FAT2 | Root Directory | Data Clusters |
+ * | Boot Sector | FAT1 | Root Directory | Data Clusters |
  * 
  * FAT:
  * | Entry 0 | Entry 1 | Entry 2 | ... | Entry N |
  */
+
+#define BOOT_BLOCK 0
+#define ENTRIES_PER_BLOCK (512 / sizeof(struct fat16_directory_entry))
+
+#define FAT_BLOCKS (65536*sizeof(uint16_t)/512)
 
 typedef enum {
     FAT16_FLAG_READ_ONLY = 1 << 0,         /* Indicates that the file is read-only */
@@ -58,6 +63,19 @@ struct fat16_directory_entry {
     uint32_t file_size;                 /* 4 bytes - File size in bytes */
 };
 
+/* internal fat16 utility functions */
+uint16_t get_fat_start_block(void);
+uint16_t get_root_directory_start_block(void);
+uint16_t fat16_get_fat_entry(uint32_t cluster);
+void fat16_set_fat_entry(uint32_t cluster, uint16_t value);
+void fat16_sync_fat_table(void);
+void fat16_allocate_cluster(uint32_t cluster);
+void fat16_free_cluster(uint32_t cluster);
+uint32_t fat16_get_free_cluster(void);
+
+int fat16_read(struct fat16_directory_entry* entry, uint32_t start_offset, void* _buffer, int buffer_length);
+int fat16_write(struct fat16_directory_entry* entry, int offset, void* data, int data_length);
+
 void fat16_set_time(uint16_t *time, uint8_t hours, uint8_t minutes, uint8_t seconds);
 void fat16_set_date(uint16_t *date, uint16_t year, uint8_t month, uint8_t day);
 
@@ -66,13 +84,6 @@ int fat16_initialize();
 
 /* Open a file. Returns a file descriptor or a negative value on error. */
 int fat16_open(const char *path);
-
-/* Read from an open file. Returns the number of bytes read. */
-int fat16_read(int fd, void *buffer, size_t count);
-
-/* Write to an open file. Returns the number of bytes written. */
-int fat16_write(int fd, const void *buffer, size_t count);
-
 /* Close an open file. Returns 0 on success, and a negative value on error. */
 int fat16_close(int fd);
 
