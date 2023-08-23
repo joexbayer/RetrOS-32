@@ -41,21 +41,22 @@ int main(int argc, char const *argv[])
     printf("%s (%d)\n", buf1, ret1);  // Expected Output: Hello, FAT16!
 
 
+    int size = 10*1024*1024;
     
-    char buf2[1512];
-    for (int i = 0; i < 1512; i++){
+    char* buf2 = malloc(size);
+    for (int i = 0; i < size; i++){
         buf2[i] = i % 111;
     }
-    fat16_create_file("sample2", "txt", buf2, 1512);
+    fat16_create_file("sample2", "txt", buf2, size);
 
-    char buf3[1512];
-    int ret2 = fat16_read_file("sample2", "txt", buf3, 1512);
+    char* buf3 = malloc(size);
+    int ret2 = fat16_read_file("sample2", "txt", buf3, size);
     if (ret2 <= 0) {
         printf("Unable to read file (sample2.txt).\n");
         return -1;
     }
 
-    int mem_ret = memcmp(buf2, buf3, 1512);
+    int mem_ret = memcmp(buf2, buf3, size);
     if (mem_ret != 0) {
         printf("Incorrect content of sample2.txt.\n");
         return -1;

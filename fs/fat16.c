@@ -82,7 +82,7 @@ uint32_t fat16_get_free_cluster()
             return i;
         }
     }
-    return 0;  /* no free cluster found */
+    return -1;  /* no free cluster found */
 }
 
 /**
@@ -186,11 +186,13 @@ int fat16_add_root_directory_entry(const char *filename, const char *extension, 
     byte_t buffer[512];
 
     for (uint16_t block = 0; block < root_blocks; block++) {
-        read_block(buffer, root_start_block + block);
+        if(read_block(buffer, root_start_block + block) < 0){
+            return -1;  /* error reading block */
+        }
 
         for (int entry = 0; entry < ENTRIES_PER_BLOCK; entry++) {
-            struct fat16_directory_entry* dir_entry = (struct fat16_directory_entry*)(buffer + entry * sizeof(struct fat16_directory_entry));
 
+            struct fat16_directory_entry* dir_entry = (struct fat16_directory_entry*)(buffer + entry * sizeof(struct fat16_directory_entry));
             if (dir_entry->filename[0] == 0x00 || dir_entry->filename[0] == 0xE5) {  /* empty or deleted entry */
                 /* Fill in the directory entry */
                 memset(dir_entry, 0, sizeof(struct fat16_directory_entry));  /* Clear the entry */
@@ -226,6 +228,11 @@ int fat16_read_file(const char *filename, const char* ext, void *buffer, int buf
 int fat16_create_file(const char *filename, const char* ext, const void *data, int data_length)
 {
     int first_cluster = fat16_get_free_cluster();  
+    if (first_cluster < 0) {
+        dbgprintf("No free cluster found\n");
+        return -1;  /* No free cluster found */
+    }
+
     struct fat16_directory_entry entry = {
         .first_cluster = first_cluster,
     };
@@ -265,7 +272,8 @@ void fat16_print_root_directory_entries()
 
 int fat16_format()
 {
-    int total_blocks = disk_size()/512;
+    int total_blocks = (disk_size()/512)-1;
+    dbgprintf("Total blocks: %d (%d/512)\n", total_blocks, disk_size());
 
     struct fat_boot_table new_boot_table = {
         .manufacturer = "NETOS   ",  /* This can be any 8-character string */
@@ -276,7 +284,7 @@ int fat16_format()
         .root_dir_entries = 32,     /* This means the root directory occopies 2 blocks TODO: Currently hardcoded*/
         .total_blocks = total_blocks,
         .media_descriptor = 0xF8,    /* Fixed disk  */
-        .fat_blocks = FAT_BLOCKS,
+        .fat_blocks = (total_blocks*sizeof(uint16_t)/512),
         /* ... other fields ... */
         .file_system_identifier = "FAT16   "
     };
@@ -352,6 +360,19 @@ void fat16_set_date(uint16_t *date, uint16_t year, ubyte_t month, ubyte_t day)
 int fat16_initialize()
 {
     /* load the bootblock */
+    read_block((byte_t*)&boot_table, BOOT_BLOCK);
+
+    /* confirm that bootblock is correct */
+    if (memcmp(boot_table.manufacturer, "NETOS   ", 8) != 0) {
+        dbgprintf("Bootblock manufacturer is not NETOS\n");
+        return -1;
+    }
+
+    /* Load FAT table into memory. */
+    fat_table_memory = (byte_t*)kalloc((boot_table.fat_blocks * 512));  /* Allocate memory for the FAT table */
+    for (uint16_t i = 0; i < boot_table.fat_blocks; i++) {
+        read_block(fat_table_memory + i * 512, get_fat_start_block() + i);
+    }
 
     return -1;
 }
@@ -370,6 +391,3 @@ int fat16_remove(const char *path);
 
 /* List the contents of a directory. */
 int fat16_listdir(const char *path, void (*callback)(const char *name, int is_directory));
-
-
-/* Blocks before ROOT directory: (size of FAT)*(number of FATs) + 1 */

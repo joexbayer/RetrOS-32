@@ -19,7 +19,7 @@
 
 
 #define DEBUG 1
-#define DISKSIZE 1000000
+#define DISKSIZE (32*1024*1024)
 
 
 int disk_attached()
