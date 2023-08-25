@@ -41,7 +41,7 @@ int main(int argc, char const *argv[])
     printf("%s (%d)\n", buf1, ret1);  // Expected Output: Hello, FAT16!
 
 
-    int size = 10*1024*1024;
+    int size = 8*1024*1024;
     
     char* buf2 = malloc(size);
     for (int i = 0; i < size; i++){
