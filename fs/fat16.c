@@ -15,6 +15,7 @@
 #include <diskdev.h>
 #include <memory.h>
 
+
 static struct fat_boot_table boot_table = {0};
 static byte_t* fat_table_memory = NULL;  /* pointer to the in-memory FAT table */
 
@@ -130,6 +131,27 @@ static int fat16_read_root_directory_entry(uint32_t index, struct fat16_director
         return -1;  /* index out of range */
 
     uint16_t block_num = get_root_directory_start_block() + (index / ENTRIES_PER_BLOCK);
+    byte_t buffer[512];
+    if(read_block(buffer, block_num) < 0){
+        dbgprintf("Error reading block\n");
+        return -2;  /* error reading block */
+    }
+
+    struct fat16_directory_entry* dir_entry = (struct fat16_directory_entry*)(buffer + index * sizeof(struct fat16_directory_entry));
+
+    /* Copy the directory entry to the output */
+    memcpy(entry_out, &buffer[(index % ENTRIES_PER_BLOCK) * sizeof(struct fat16_directory_entry)], sizeof(struct fat16_directory_entry));
+    
+    return 0;  /* success */
+}
+
+/* Will replace fat16_read_root_directory_entry eventually. */
+static int fat16_read_directory_entry(uint32_t block, uint32_t index, struct fat16_directory_entry* entry_out)
+{
+    if(index >= ENTRIES_PER_BLOCK)
+        return -1;  /* index out of range */
+
+    uint16_t block_num = block;
     byte_t buffer[512];
     if(read_block(buffer, block_num) < 0){
         dbgprintf("Error reading block\n");
