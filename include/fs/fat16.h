@@ -28,6 +28,7 @@ typedef enum {
 #define FAT_BOOT_TABLE_SIZE 64
 
 struct fat_boot_table {
+    uint8_t jmp[3];                     /* 3 bytes - Jump instruction */
     uint8_t manufacturer[8];            /* 8 bytes - Optional manufacturer description */
     uint16_t bytes_per_plock;           /* 2 bytes - Number of bytes per block */
     uint8_t blocks_per_allocation;      /* 1 byte - Number of blocks per allocation unit */

@@ -19,11 +19,14 @@
 static struct fat_boot_table boot_table = {0};
 static byte_t* fat_table_memory = NULL;  /* pointer to the in-memory FAT table */
 
+/* Temporary "current" directory */
+static uint16_t current_dir_block = 0;
+
 /* HELPER FUNCTIONS */
 
 uint16_t get_fat_start_block()
 {
-    return BOOT_BLOCK + 1;  /* FAT starts right after the boot block */
+    return BOOT_BLOCK + boot_table.reserved_blocks;  /* FAT starts right after the boot block and reserved blocks. */
 }
 
 uint16_t get_root_directory_start_block()
@@ -93,28 +96,13 @@ uint32_t fat16_get_free_cluster()
  * @param entry: Pointer to the directory entry data to be written.
  * @return 0 on success, negative value on error.
  */
-static int fat16_sync_root_directory_entry(uint32_t index, const struct fat16_directory_entry* entry)
+static int fat16_sync_directory_entry(uint16_t block, uint32_t index, const struct fat16_directory_entry* entry)
 {
     if(index >= boot_table.root_dir_entries)
         return -1;  /* index out of range */
 
-    uint16_t block_num = get_root_directory_start_block() + (index / ENTRIES_PER_BLOCK);
-    byte_t buffer[512];
-
-    /* Read the block containing the directory entry to be updated */
-    if(read_block(buffer, block_num) < 0){
-        dbgprintf("Error reading block\n");
-        return -2;  /* error reading block */
-    }
-
-    /* Copy the provided directory entry to the correct position in the buffer */
-    memcpy(&buffer[(index % ENTRIES_PER_BLOCK) * sizeof(struct fat16_directory_entry)], entry, sizeof(struct fat16_directory_entry));
-
-    /* Write the updated block back to the disk */
-    if(write_block(buffer, block_num) < 0) {
-        dbgprintf("Error writing block\n");
-        return -3;  /* error writing block */
-    }
+    uint32_t offset = (index % ENTRIES_PER_BLOCK) * sizeof(struct fat16_directory_entry);
+    write_block_offset((byte_t*)entry, sizeof(struct fat16_directory_entry), offset, block);
 
     return 0;  /* success */
 }
@@ -151,9 +139,8 @@ static int fat16_read_directory_entry(uint32_t block, uint32_t index, struct fat
     if(index >= ENTRIES_PER_BLOCK)
         return -1;  /* index out of range */
 
-    uint16_t block_num = block;
     byte_t buffer[512];
-    if(read_block(buffer, block_num) < 0){
+    if(read_block(buffer, block) < 0){
         dbgprintf("Error reading block\n");
         return -2;  /* error reading block */
     }
@@ -180,7 +167,7 @@ static int fat16_find_file_entry(const char *filename, const char* ext, struct f
     for (int i = 0; i < boot_table.root_dir_entries; i++) {
         struct fat16_directory_entry entry;
 
-        fat16_read_root_directory_entry(i, &entry);
+        fat16_read_directory_entry(current_dir_block ,i, &entry);
         if (memcmp(entry.filename, filename, 8) == 0 && memcmp(entry.extension, ext, 3) == 0) {
             if (entry_out) {
                 *entry_out = entry;
@@ -200,10 +187,11 @@ static int fat16_find_file_entry(const char *filename, const char* ext, struct f
  * @param file_size The size of the file in bytes.
  * @return 0 on success, or a negative value on error.
  */
-int fat16_add_root_directory_entry(const char *filename, const char *extension, byte_t attributes, uint16_t start_cluster, uint32_t file_size)
+int fat16_add_directory_entry(uint16_t block, char *filename, const char *extension, byte_t attributes, uint16_t start_cluster, uint32_t file_size)
 {
-    uint16_t root_start_block = get_root_directory_start_block();
-    uint16_t root_blocks = (boot_table.root_dir_entries * sizeof(struct fat16_directory_entry)) / 512;
+    uint16_t root_start_block = block;
+    //uint16_t root_blocks = (ENTRIES_PER_BLOCK * sizeof(struct fat16_directory_entry)) / 512;
+    uint16_t root_blocks = 1;
 
     byte_t buffer[512];
 
@@ -262,19 +250,19 @@ int fat16_create_file(const char *filename, const char* ext, const void *data, i
     fat16_write(&entry, 0, data, data_length);
 
 
-    fat16_add_root_directory_entry(filename, ext, 0x20, first_cluster, data_length);
+    fat16_add_directory_entry(current_dir_block,filename, ext, 0x20, first_cluster, data_length);
     fat16_sync_fat_table();
 
-    return 0;  /* Success */
+    return 0;  /* Success */ 
 }
 
-void fat16_print_root_directory_entries()
+void fat16_root_directory_entries(uint16_t block)
 {
-    for (int i = 0; i < boot_table.root_dir_entries; i++) {
+    for (int i = 0; i < ENTRIES_PER_BLOCK; i++) {
         struct fat16_directory_entry entry;
         struct fat16_directory_entry* dir_entry = &entry;
 
-        fat16_read_root_directory_entry(i, &entry);
+        fat16_read_directory_entry(block, i, &entry);
         /* Check if the entry is used (filename's first byte is not 0x00 or 0xE5) */
         if (dir_entry->filename[0] != 0x00 && dir_entry->filename[0] != 0xE5) {
             /* Print the filename (you might need to format it further depending on your needs) */
@@ -292,8 +280,20 @@ void fat16_print_root_directory_entries()
     }
 }
 
-int fat16_format()
+/**
+ * Formats the disk with the FAT16 filesystem.
+ * @param label The volume label (up to 11 characters).
+ * 
+ * @warning This will erase all data on the disk.
+ * @return 0 on success, or a negative value on error.
+ */
+int fat16_format(char* label)
 {
+    if(disk_attached() == 0){
+        dbgprintf("No disk attached\n");
+        return -1;
+    }
+
     int total_blocks = (disk_size()/512)-1;
     dbgprintf("Total blocks: %d (%d/512)\n", total_blocks, disk_size());
 
@@ -301,15 +301,18 @@ int fat16_format()
         .manufacturer = "NETOS   ",  /* This can be any 8-character string */
         .bytes_per_plock = 512,      /* Standard block size */
         .blocks_per_allocation = 1,  /* Usually 1 for small devices */
-        .reserved_blocks = 1,        /* The boot block */
+        .reserved_blocks = 1,        /* The boot block, will also include kernel? */
         .num_FATs = 1,               /* Standard for FAT16 */
-        .root_dir_entries = 32,     /* This means the root directory occopies 2 blocks TODO: Currently hardcoded*/
+        .root_dir_entries = 16,     /* This means the root directory occopies 1 block TODO: Currently hardcoded*/
         .total_blocks = total_blocks,
         .media_descriptor = 0xF8,    /* Fixed disk  */
         .fat_blocks = (total_blocks*sizeof(uint16_t)/512),
+        .volume_serial_number = 0x12345678,  /* TODO: Randomize */
+        .extended_signature = 0x29,  /* Extended boot record signature */
         /* ... other fields ... */
         .file_system_identifier = "FAT16   "
     };
+    memcpy(new_boot_table.volume_label, label, 11);
 
     /* dbgprint out bootblock information: */
     dbgprintf("bootblock information:\n");
@@ -328,7 +331,10 @@ int fat16_format()
     boot_table = new_boot_table;
 
     /* Write the boot table to the boot block */
-    write_block((byte_t* )&new_boot_table, BOOT_BLOCK);
+    if(write_block((byte_t* )&new_boot_table, BOOT_BLOCK) < 0){
+        dbgprintf("Error writing boot block\n");
+        return -2;
+    }
 
     /* Clear out the FAT tables */
     byte_t zero_block[512];
@@ -348,6 +354,8 @@ int fat16_format()
     for (uint16_t i = 0; i < boot_table.fat_blocks; i++) {
         read_block(fat_table_memory + i * 512, get_fat_start_block() + i);
     }
+
+    current_dir_block = get_root_directory_start_block();
 
     return 0;  /* assume success */
 }
@@ -395,6 +403,8 @@ int fat16_initialize()
     for (uint16_t i = 0; i < boot_table.fat_blocks; i++) {
         read_block(fat_table_memory + i * 512, get_fat_start_block() + i);
     }
+
+    current_dir_block = get_root_directory_start_block();
 
     return -1;
 }
