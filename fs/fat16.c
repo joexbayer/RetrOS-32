@@ -280,6 +280,11 @@ void fat16_root_directory_entries(uint16_t block)
     }
 }
 
+void fat16_print_root_directory_entries()
+{
+    fat16_root_directory_entries(get_root_directory_start_block());
+}
+
 /**
  * Formats the disk with the FAT16 filesystem.
  * @param label The volume label (up to 11 characters).
