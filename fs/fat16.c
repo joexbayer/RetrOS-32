@@ -14,6 +14,7 @@
 #include <kutils.h>
 #include <diskdev.h>
 #include <memory.h>
+#include <sync.h>
 
 
 static struct fat_boot_table boot_table = {0};
@@ -21,6 +22,11 @@ static byte_t* fat_table_memory = NULL;  /* pointer to the in-memory FAT table *
 
 /* Temporary "current" directory */
 static uint16_t current_dir_block = 0;
+
+/* locks for read / write and management */
+static mutex_t fat16_table_lock; 
+static mutex_t fat16_write_lock;
+static mutex_t fat16_management_lock;
 
 /* HELPER FUNCTIONS */
 
@@ -50,8 +56,12 @@ void fat16_set_fat_entry(uint32_t cluster, uint16_t value)
         return;
     }
 
+    acquire(&fat16_table_lock);
+
     uint32_t fat_offset = cluster * 2;  /* Each entry is 2 bytes */
     *(uint16_t*)(fat_table_memory + fat_offset) = value;
+
+    release(&fat16_table_lock);
 }
 
 void fat16_sync_fat_table()
@@ -60,10 +70,14 @@ void fat16_sync_fat_table()
         return;
     }
 
+    acquire(&fat16_table_lock);
+
     int start_block = get_fat_start_block();
     for (uint16_t i = 0; i < boot_table.fat_blocks; i++) {
         write_block(fat_table_memory + i * 512, start_block + i);
     }
+
+    release(&fat16_table_lock);
 }
 
 /* wrapper functions TODO: inline replace */
@@ -79,13 +93,19 @@ void fat16_free_cluster(uint32_t cluster)
 
 uint32_t fat16_get_free_cluster()
 {
+    acquire(&fat16_table_lock);
+
     for (int i = 2; i < 65536; i++) {  /* Start from 2 as 0 and 1 are reserved entries */
         if (fat16_get_fat_entry(i) == 0x0000) {
 
             fat16_allocate_cluster(i);
+
+            release(&fat16_table_lock);
             return i;
         }
     }
+
+    release(&fat16_table_lock);
     return -1;  /* no free cluster found */
 }
 
@@ -408,6 +428,11 @@ int fat16_initialize()
     for (uint16_t i = 0; i < boot_table.fat_blocks; i++) {
         read_block(fat_table_memory + i * 512, get_fat_start_block() + i);
     }
+
+    /* init mutexes */
+    mutex_init(&fat16_table_lock);
+    mutex_init(&fat16_write_lock);
+    mutex_init(&fat16_management_lock);
 
     current_dir_block = get_root_directory_start_block();
 
