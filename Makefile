@@ -184,8 +184,8 @@ fat16reset:
 	dd if=/dev/zero of=fatfs.img bs=16M count=2
 	mkfs.fat -F 16 -v -n FAT16 fatfs.img
 
-fat16mount:
-	sudo mount fatfs.img ./mnt
+mount:
+	sudo mount tests/filesystem.test ./mnt
 
 fat16test:
 	gcc tools/fat.c -o ./bin/fattest.o

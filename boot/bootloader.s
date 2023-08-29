@@ -5,28 +5,7 @@
 .global _start
 _start:
     jmp main
-    .space 3 - (.-_start)
-    
-    /* Configuration for a 2.88MB floppy using FAT 12, needed when booting with USB on real hardware. */
-    OEMname:            .ascii      "MYBOOT  "
-    bytesPerSector:     .word       512
-    sectPerCluster:     .byte       1
-    reservedSectors:    .word       1
-    numFAT:             .byte       2
-    numRootDirEntries:  .word       240
-    numSectors:         .word       5760
-    mediaType:          .byte       0x80 /* This field is important, it makes USB emulate as HDD. */
-    numFATsectors:      .word       9
-    sectorsPerTrack:    .word       36
-    numHeads:           .word       2
-    numHiddenSectors:   .long       0
-    numSectorsHuge:     .long       0
-    driveNum:           .byte       0
-    reserved:           .byte       0x00
-    signature:          .byte       0x29
-    volumeID:           .long       0x54428E71
-    volumeLabel:        .ascii      "NO NAME    "
-    fileSysType:        .ascii      "FAT12   "
+    .space 62 /* space for fat16 info */
 
 main:
     cli

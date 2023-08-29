@@ -40,6 +40,12 @@ uint16_t get_root_directory_start_block()
     return get_fat_start_block() + boot_table.fat_blocks;  /* Root directory starts after FAT */
 }
 
+uint16_t get_data_start_block()
+{
+    return get_root_directory_start_block()+1;  /* Data starts after Root directory */
+}
+
+
 uint16_t fat16_get_fat_entry(uint32_t cluster)
 {
     if(fat_table_memory == NULL){
@@ -78,6 +84,8 @@ void fat16_sync_fat_table()
     }
 
     release(&fat16_table_lock);
+
+    fat16_dump_fat_table();
 }
 
 /* wrapper functions TODO: inline replace */
@@ -95,7 +103,7 @@ uint32_t fat16_get_free_cluster()
 {
     acquire(&fat16_table_lock);
 
-    for (int i = 2; i < 65536; i++) {  /* Start from 2 as 0 and 1 are reserved entries */
+    for (int i = 0; i < 65536; i++) {  /* Start from 2 as 0 and 1 are reserved entries */
         if (fat16_get_fat_entry(i) == 0x0000) {
 
             fat16_allocate_cluster(i);
@@ -188,10 +196,16 @@ static int fat16_find_file_entry(const char *filename, const char* ext, struct f
         struct fat16_directory_entry entry;
 
         fat16_read_directory_entry(current_dir_block ,i, &entry);
-        if (memcmp(entry.filename, filename, 8) == 0 && memcmp(entry.extension, ext, 3) == 0) {
+        if (memcmp(entry.filename, filename, strlen(filename)) == 0 && memcmp(entry.extension, ext, 3) == 0) {
             if (entry_out) {
                 *entry_out = entry;
             }
+            dbgprintf("Found file at index %d\n", i);
+
+            /* print file info */
+            dbgprintf("Filename: %s.%s (%d bytes) Attributes: 0x%x Cluster: %d %s\n", entry.filename, entry.extension, entry.file_size, entry.attributes, entry.first_cluster, entry.attributes & 0x10 ? "<DIR>" : "");
+
+            //fat16_chain(entry.first_cluster);
             return i;  /* Found */
         }
     }
@@ -226,11 +240,15 @@ int fat16_add_directory_entry(uint16_t block, char *filename, const char *extens
             if (dir_entry->filename[0] == 0x00 || dir_entry->filename[0] == 0xE5) {  /* empty or deleted entry */
                 /* Fill in the directory entry */
                 memset(dir_entry, 0, sizeof(struct fat16_directory_entry));  /* Clear the entry */
+                memset(dir_entry->filename, ' ', 8);  /* Set the filename to spaces */
                 memcpy(dir_entry->filename, filename, 8);
                 memcpy(dir_entry->extension, extension, 3);
                 dir_entry->attributes = attributes;
                 dir_entry->first_cluster = start_cluster;
                 dir_entry->file_size = file_size;
+
+                fat16_set_date(&dir_entry->created_date, 2023, 5, 31);
+                fat16_set_time(&dir_entry->created_time, 12, 0, 0);
 
                 /* Write the block back to disk */
                 write_block(buffer, root_start_block + block);
@@ -270,10 +288,18 @@ int fat16_create_file(const char *filename, const char* ext, const void *data, i
     fat16_write(&entry, 0, data, data_length);
 
 
-    fat16_add_directory_entry(current_dir_block,filename, ext, 0x20, first_cluster, data_length);
+    fat16_add_directory_entry(current_dir_block, filename, ext, FAT16_FLAG_ARCHIVE, first_cluster, data_length);
     fat16_sync_fat_table();
 
     return 0;  /* Success */ 
+}
+
+void fat16_dump_fat_table()
+{
+    for (int i = 0; i < 10; i++) {
+        uint16_t entry = fat16_get_fat_entry(i);
+        dbgprintf("0x%x -> 0x%x\n", i, entry);
+    }
 }
 
 void fat16_root_directory_entries(uint16_t block)
@@ -300,9 +326,67 @@ void fat16_root_directory_entries(uint16_t block)
     }
 }
 
+int fat16_mbr_add_entry(uint8_t bootable, uint8_t type, uint32_t start, uint32_t size)
+{
+    byte_t mbr[512];
+    if(read_block(mbr, 0) < 0){
+        dbgprintf("Error reading block\n");
+        return -1;  /* error reading block */
+    }
+
+    for(int i = 0; i < 4; i++) {
+        struct mbr_partition_entry *entry = (struct mbr_partition_entry *)&mbr[446 + (i * sizeof(struct mbr_partition_entry))];
+        if(entry->type == 0x00) {
+            entry->status = bootable;
+            entry->type = type;
+            entry->lba_start = start;
+            entry->num_sectors = size;
+
+            dbgprintf("MBR entry added\n");
+            write_block(mbr, 0);
+            return 0;
+        }
+    }
+
+    dbgprintf("No empty slot found in the MBR\n");
+
+    return -1;
+}
+
 void fat16_print_root_directory_entries()
 {
     fat16_root_directory_entries(get_root_directory_start_block());
+}
+
+void fat16_chain(uint16_t start)
+{
+    uint16_t cluster = start;
+    while (cluster != 0xFFFF) {
+        dbgprintf("%d -> ", cluster);
+        cluster = fat16_get_fat_entry(cluster);
+    }
+    dbgprintf("END\n");
+}
+
+
+void fat16_bootblock_info()
+{
+        /* dbgprint out bootblock information: */
+    dbgprintf("bootblock information:\n");
+    dbgprintf("manufacturer: %s\n", boot_table.manufacturer);
+    dbgprintf("bytes_per_plock: %d\n", boot_table.bytes_per_plock);
+    dbgprintf("blocks_per_allocation: %d\n", boot_table.blocks_per_allocation);
+    dbgprintf("reserved_blocks: %d\n", boot_table.reserved_blocks);
+    dbgprintf("num_FATs: %d\n", boot_table.num_FATs);
+    dbgprintf("root_dir_entries: %d\n", boot_table.root_dir_entries);
+    dbgprintf("total_blocks: %d\n", boot_table.total_blocks);
+    dbgprintf("media_descriptor: %d\n", boot_table.media_descriptor);
+    dbgprintf("fat_blocks: %d\n", boot_table.fat_blocks);
+    dbgprintf("file_system_identifier: %s\n", boot_table.file_system_identifier);
+
+    dbgprintf("get_fat_start_block: %d\n", get_fat_start_block());
+    dbgprintf("get_root_directory_start_block: %d\n", get_root_directory_start_block());
+    dbgprintf("get_data_start_block: %d\n", get_data_start_block());
 }
 
 /**
@@ -322,38 +406,30 @@ int fat16_format(char* label)
     int total_blocks = (disk_size()/512)-1;
     dbgprintf("Total blocks: %d (%d/512)\n", total_blocks, disk_size());
 
+    int label_size = strlen(label);
+
     struct fat_boot_table new_boot_table = {
         .manufacturer = "NETOS   ",  /* This can be any 8-character string */
         .bytes_per_plock = 512,      /* Standard block size */
         .blocks_per_allocation = 1,  /* Usually 1 for small devices */
-        .reserved_blocks = 1,        /* The boot block, will also include kernel? */
+        .reserved_blocks = 10,        /* The boot block, will also include kernel? */
         .num_FATs = 1,               /* Standard for FAT16 */
         .root_dir_entries = 16,     /* This means the root directory occopies 1 block TODO: Currently hardcoded*/
         .total_blocks = total_blocks,
         .media_descriptor = 0xF8,    /* Fixed disk  */
         .fat_blocks = (total_blocks*sizeof(uint16_t)/512),
+        .volume_label = "VOLUME1    ",
         .volume_serial_number = 0x12345678,  /* TODO: Randomize */
         .extended_signature = 0x29,  /* Extended boot record signature */
         /* ... other fields ... */
-        .file_system_identifier = "FAT16   "
+        .file_system_identifier = "FAT16   ",
+        .boot_signature = 0xAA55,
     };
-    memcpy(new_boot_table.volume_label, label, 11);
-
-    /* dbgprint out bootblock information: */
-    dbgprintf("bootblock information:\n");
-    dbgprintf("manufacturer: %s\n", new_boot_table.manufacturer);
-    dbgprintf("bytes_per_plock: %d\n", new_boot_table.bytes_per_plock);
-    dbgprintf("blocks_per_allocation: %d\n", new_boot_table.blocks_per_allocation);
-    dbgprintf("reserved_blocks: %d\n", new_boot_table.reserved_blocks);
-    dbgprintf("num_FATs: %d\n", new_boot_table.num_FATs);
-    dbgprintf("root_dir_entries: %d\n", new_boot_table.root_dir_entries);
-    dbgprintf("total_blocks: %d\n", new_boot_table.total_blocks);
-    dbgprintf("media_descriptor: %d\n", new_boot_table.media_descriptor);
-    dbgprintf("fat_blocks: %d\n", new_boot_table.fat_blocks);
-    dbgprintf("file_system_identifier: %s\n", new_boot_table.file_system_identifier);
+    memcpy(new_boot_table.volume_label, label, label_size <= 11 ? label_size : 11);
 
     /* Update the boot table */
     boot_table = new_boot_table;
+    fat16_bootblock_info();
 
     /* Write the boot table to the boot block */
     if(write_block((byte_t* )&new_boot_table, BOOT_BLOCK) < 0){
@@ -366,21 +442,17 @@ int fat16_format(char* label)
     memset(zero_block, 0, sizeof(zero_block));
     for (uint16_t i = 0; i < new_boot_table.fat_blocks; i++) {
         write_block((byte_t*) zero_block, get_fat_start_block() + i);
-        /* We don't need the line for FAT2 anymore. */
     }
+
 
     /* Clear out the root directory area */
     for (uint16_t i = 0; i < new_boot_table.root_dir_entries * 32 / 512; i++) {
         write_block(zero_block, get_root_directory_start_block() + i);
     }
 
-    /* Load FAT table into memory. */
-    fat_table_memory = (byte_t*)kalloc((boot_table.fat_blocks * 512));  /* Allocate memory for the FAT table */
-    for (uint16_t i = 0; i < boot_table.fat_blocks; i++) {
-        read_block(fat_table_memory + i * 512, get_fat_start_block() + i);
-    }
+    fat16_mbr_add_entry(MBR_STATUS_ACTIVE, MBR_TYPE_FAT16_LBA, BOOT_BLOCK, total_blocks);
 
-    current_dir_block = get_root_directory_start_block();
+    dbgprintf("FAT16 formatted\n");
 
     return 0;  /* assume success */
 }
@@ -423,11 +495,18 @@ int fat16_initialize()
         return -1;
     }
 
+    fat16_bootblock_info();
+
     /* Load FAT table into memory. */
     fat_table_memory = (byte_t*)kalloc((boot_table.fat_blocks * 512));  /* Allocate memory for the FAT table */
     for (uint16_t i = 0; i < boot_table.fat_blocks; i++) {
         read_block(fat_table_memory + i * 512, get_fat_start_block() + i);
     }
+    fat16_set_fat_entry(0, 0xFF00 | 0xF8); 
+    fat16_allocate_cluster(1);
+    fat16_add_directory_entry(get_root_directory_start_block(), "VOLUME1 ", "   ", FAT16_FLAG_VOLUME_LABEL, 0, 0);
+
+    fat16_dump_fat_table();
 
     /* init mutexes */
     mutex_init(&fat16_table_lock);
@@ -436,7 +515,9 @@ int fat16_initialize()
 
     current_dir_block = get_root_directory_start_block();
 
-    return -1;
+    dbgprintf("FAT16 initialized\n");
+
+    return 0;
 }
 
 /* Open a file. Returns a file descriptor or a negative value on error. */

@@ -20,7 +20,7 @@ uint32_t fat16_find_cluster_by_offset(struct fat16_directory_entry* entry, int o
 
 int fat16_write_data_to_cluster_with_offset(uint32_t cluster, int offset, byte_t* data, int data_length)
 {
-    int block_num = get_root_directory_start_block() + cluster; /* Assuming you have a function for this. */
+    int block_num = get_data_start_block() + cluster-2; /* minus 2 because the first 2 entries in the FAT table are reserved. */
     write_block_offset(data, data_length, offset, block_num);
 
     return 0;
@@ -34,7 +34,7 @@ int fat16_write_data_to_cluster(uint32_t cluster, const void *data, int data_len
     }
 
     /* Calculate the block number based on the cluster. */
-    uint16_t block_num = get_root_directory_start_block() + cluster;
+    uint16_t block_num = get_data_start_block() + cluster;
 
     return write_block((byte_t *)data, block_num);
 }
@@ -50,12 +50,13 @@ int fat16_write(struct fat16_directory_entry* entry, int offset, void* data, int
     int next_cluster = current_cluster;
 
     while (remaining_data_length > 0){
+        dbgprintf("0x%x", next_cluster);
         /* If there is no allocated cluster or we've reached the end of the cluster chain, allocate a new one. */
-        if (!next_cluster || next_cluster == 0xFFFF || next_cluster >= 0xFFF8){
+        if (next_cluster < 0 || next_cluster == 0xFFFF || next_cluster >= 0xFFF8){
             uint32_t free_cluster = fat16_get_free_cluster();
-            if (!free_cluster) return -1;  /* Error: No free clusters */
+            if (free_cluster < 0) return -1;  /* Error: No free clusters */
 
-            if (current_cluster){
+            if (current_cluster > 0){
                 fat16_set_fat_entry(current_cluster, free_cluster);
             } else {
                 entry->first_cluster = free_cluster;  /* Update the entry's starting cluster */
@@ -74,7 +75,7 @@ int fat16_write(struct fat16_directory_entry* entry, int offset, void* data, int
             return -2;   /* Error: Couldn't write data */
         }
 
-        //dbgprintf("Wrote %d bytes to cluster %d\n", write_size, current_cluster);
+        dbgprintf("Wrote %d bytes to cluster %d\n", write_size, current_cluster);
 
         /* Update our counters and pointers. */
         remaining_data_length -= write_size;

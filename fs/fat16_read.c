@@ -16,12 +16,12 @@
 int fat16_read_data_from_cluster(uint32_t cluster, void *data, int data_length, int offset)
 {
     if (offset + data_length > 512) {  /* Assuming 512-byte clusters */
+        dbgprintf("Offset and buffer size exceed the cluster size\n");
         return -1;  /* Error: Offset and buffer size exceed the cluster size */
     }
 
     /* Calculate the block number based on the cluster. */
-    uint16_t block_num = get_root_directory_start_block() + cluster;
-
+    uint16_t block_num = get_data_start_block() + cluster-2; /* minus 2 because the first 2 clusters in the FAT table are not allocated. */
     return read_block_offset((byte_t *)data, data_length, offset, block_num);
 }
 
@@ -45,6 +45,7 @@ int fat16_read(struct fat16_directory_entry* entry, uint32_t start_offset, void*
 
     /* Skip clusters to reach the start_offset */
     while (clusters_skipped > 0 && current_cluster != 0xFFFF) {
+        dbgprintf("Skipping cluster 0x%x\n", current_cluster);
         current_cluster = fat16_get_fat_entry(current_cluster);
         clusters_skipped--;
     }
@@ -54,7 +55,7 @@ int fat16_read(struct fat16_directory_entry* entry, uint32_t start_offset, void*
         int bytes_to_read = (bytes_left_to_read > (512 - offset_within_cluster)) ? (512 - offset_within_cluster) : bytes_left_to_read;
         fat16_read_data_from_cluster(current_cluster, buf_pos, bytes_to_read, offset_within_cluster);
 
-        //dbgprintf("Read %d bytes from cluster 0x%x\n", bytes_to_read, current_cluster);
+        dbgprintf("Read %d bytes from cluster 0x%x\n", bytes_to_read, current_cluster); 
 
         buf_pos += bytes_to_read;
         bytes_left_to_read -= bytes_to_read;
