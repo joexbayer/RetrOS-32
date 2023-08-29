@@ -30,19 +30,19 @@ static mutex_t fat16_management_lock;
 
 /* HELPER FUNCTIONS */
 
-uint16_t get_fat_start_block()
+inline uint16_t get_fat_start_block()
 {
     return BOOT_BLOCK + boot_table.reserved_blocks;  /* FAT starts right after the boot block and reserved blocks. */
 }
 
-uint16_t get_root_directory_start_block()
+inline uint16_t get_root_directory_start_block()
 {
     return get_fat_start_block() + boot_table.fat_blocks;  /* Root directory starts after FAT */
 }
 
-uint16_t get_data_start_block()
+inline uint16_t get_data_start_block()
 {
-    return get_root_directory_start_block()+1;  /* Data starts after Root directory */
+    return get_root_directory_start_block()-1;  /* Data starts after Root directory */
 }
 
 
@@ -89,12 +89,12 @@ void fat16_sync_fat_table()
 }
 
 /* wrapper functions TODO: inline replace */
-void fat16_allocate_cluster(uint32_t cluster)
+inline void fat16_allocate_cluster(uint32_t cluster)
 {
     fat16_set_fat_entry(cluster, 0xFFFF);  /* marking cluster as end of file */
 }
 
-void fat16_free_cluster(uint32_t cluster)
+inline void fat16_free_cluster(uint32_t cluster)
 {
     fat16_set_fat_entry(cluster, 0x0000);  /* marking cluster as free */
 }
@@ -162,7 +162,7 @@ static int fat16_read_root_directory_entry(uint32_t index, struct fat16_director
 }
 
 /* Will replace fat16_read_root_directory_entry eventually. */
-static int fat16_read_directory_entry(uint32_t block, uint32_t index, struct fat16_directory_entry* entry_out)
+static int fat16_read_entry(uint32_t block, uint32_t index, struct fat16_directory_entry* entry_out)
 {
     if(index >= ENTRIES_PER_BLOCK)
         return -1;  /* index out of range */
@@ -189,13 +189,13 @@ static int fat16_read_directory_entry(uint32_t block, uint32_t index, struct fat
  * @param entry_out 
  * @return int index of directory
  */
-static int fat16_find_file_entry(const char *filename, const char* ext, struct fat16_directory_entry* entry_out)
+static int fat16_find_entry(const char *filename, const char* ext, struct fat16_directory_entry* entry_out)
 {
     /* Search the root directory for the file. */
     for (int i = 0; i < boot_table.root_dir_entries; i++) {
         struct fat16_directory_entry entry;
 
-        fat16_read_directory_entry(current_dir_block ,i, &entry);
+        fat16_read_entry(current_dir_block ,i, &entry);
         if (memcmp(entry.filename, filename, strlen(filename)) == 0 && memcmp(entry.extension, ext, 3) == 0) {
             if (entry_out) {
                 *entry_out = entry;
@@ -204,8 +204,6 @@ static int fat16_find_file_entry(const char *filename, const char* ext, struct f
 
             /* print file info */
             dbgprintf("Filename: %s.%s (%d bytes) Attributes: 0x%x Cluster: %d %s\n", entry.filename, entry.extension, entry.file_size, entry.attributes, entry.first_cluster, entry.attributes & 0x10 ? "<DIR>" : "");
-
-            //fat16_chain(entry.first_cluster);
             return i;  /* Found */
         }
     }
@@ -221,7 +219,7 @@ static int fat16_find_file_entry(const char *filename, const char* ext, struct f
  * @param file_size The size of the file in bytes.
  * @return 0 on success, or a negative value on error.
  */
-int fat16_add_directory_entry(uint16_t block, char *filename, const char *extension, byte_t attributes, uint16_t start_cluster, uint32_t file_size)
+int fat16_add_entry(uint16_t block, char *filename, const char *extension, byte_t attributes, uint16_t start_cluster, uint32_t file_size)
 {
     uint16_t root_start_block = block;
     //uint16_t root_blocks = (ENTRIES_PER_BLOCK * sizeof(struct fat16_directory_entry)) / 512;
@@ -263,7 +261,7 @@ int fat16_add_directory_entry(uint16_t block, char *filename, const char *extens
 int fat16_read_file(const char *filename, const char* ext, void *buffer, int buffer_length)
 {
     struct fat16_directory_entry entry;
-    int find_result = fat16_find_file_entry(filename, ext, &entry);
+    int find_result = fat16_find_entry(filename, ext, &entry);
     if (find_result < 0) {
         dbgprintf("File not found\n");
         return -1;
@@ -288,7 +286,7 @@ int fat16_create_file(const char *filename, const char* ext, const void *data, i
     fat16_write(&entry, 0, data, data_length);
 
 
-    fat16_add_directory_entry(current_dir_block, filename, ext, FAT16_FLAG_ARCHIVE, first_cluster, data_length);
+    fat16_add_entry(current_dir_block, filename, ext, FAT16_FLAG_ARCHIVE, first_cluster, data_length);
     fat16_sync_fat_table();
 
     return 0;  /* Success */ 
@@ -302,13 +300,13 @@ void fat16_dump_fat_table()
     }
 }
 
-void fat16_root_directory_entries(uint16_t block)
+void fat16_directory_entries(uint16_t block)
 {
     for (int i = 0; i < ENTRIES_PER_BLOCK; i++) {
         struct fat16_directory_entry entry;
         struct fat16_directory_entry* dir_entry = &entry;
 
-        fat16_read_directory_entry(block, i, &entry);
+        fat16_read_entry(block, i, &entry);
         /* Check if the entry is used (filename's first byte is not 0x00 or 0xE5) */
         if (dir_entry->filename[0] != 0x00 && dir_entry->filename[0] != 0xE5) {
             /* Print the filename (you might need to format it further depending on your needs) */
@@ -355,19 +353,26 @@ int fat16_mbr_add_entry(uint8_t bootable, uint8_t type, uint32_t start, uint32_t
 
 void fat16_print_root_directory_entries()
 {
-    fat16_root_directory_entries(get_root_directory_start_block());
+    fat16_directory_entries(current_dir_block);
 }
 
-void fat16_chain(uint16_t start)
+void fat16_change_directory(const char* name)
 {
-    uint16_t cluster = start;
-    while (cluster != 0xFFFF) {
-        dbgprintf("%d -> ", cluster);
-        cluster = fat16_get_fat_entry(cluster);
-    }
-    dbgprintf("END\n");
-}
+    struct fat16_directory_entry entry;
+    int find_result = fat16_find_entry(name, "   ", &entry);
+    if (find_result < 0) {
+        dbgprintf("Directory not found\n");
+        return;
+    }  /* Directory not found */
 
+    if((entry.attributes & 0x10) == 0){
+        dbgprintf("Not a directory\n");
+        return;
+    }
+
+    current_dir_block = get_data_start_block()+ entry.first_cluster;
+    dbgprintf("Changed directory to %s\n", name);
+}
 
 void fat16_bootblock_info()
 {
@@ -391,7 +396,7 @@ void fat16_bootblock_info()
 
 /**
  * Formats the disk with the FAT16 filesystem.
- * @param label The volume label (up to 11 characters).
+ * @param label The volume label (up to 11 characters). (NOT IMPLEMENTED)
  * 
  * @warning This will erase all data on the disk.
  * @return 0 on success, or a negative value on error.
@@ -425,7 +430,7 @@ int fat16_format(char* label)
         .file_system_identifier = "FAT16   ",
         .boot_signature = 0xAA55,
     };
-    memcpy(new_boot_table.volume_label, label, label_size <= 11 ? label_size : 11);
+    //memcpy(new_boot_table.volume_label, label, label_size <= 11 ? label_size : 11);
 
     /* Update the boot table */
     boot_table = new_boot_table;
@@ -504,7 +509,7 @@ int fat16_initialize()
     }
     fat16_set_fat_entry(0, 0xFF00 | 0xF8); 
     fat16_allocate_cluster(1);
-    fat16_add_directory_entry(get_root_directory_start_block(), "VOLUME1 ", "   ", FAT16_FLAG_VOLUME_LABEL, 0, 0);
+    fat16_add_entry(get_root_directory_start_block(), "VOLUME1 ", "   ", FAT16_FLAG_VOLUME_LABEL, 0, 0);
 
     fat16_dump_fat_table();
 

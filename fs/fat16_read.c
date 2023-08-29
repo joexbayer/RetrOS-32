@@ -21,7 +21,7 @@ int fat16_read_data_from_cluster(uint32_t cluster, void *data, int data_length, 
     }
 
     /* Calculate the block number based on the cluster. */
-    uint16_t block_num = get_data_start_block() + cluster-2; /* minus 2 because the first 2 clusters in the FAT table are not allocated. */
+    uint16_t block_num = get_data_start_block() + cluster; /* minus 2 because the first 2 clusters in the FAT table are not allocated. */
     return read_block_offset((byte_t *)data, data_length, offset, block_num);
 }
 

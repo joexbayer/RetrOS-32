@@ -21,20 +21,20 @@ FILE* filesystem = NULL;
 int main(int argc, char const *argv[])
 {
 
-    filesystem = fopen("filesystem.test", "w+");
+    filesystem = fopen("filesystem.test", "r" /* w+ */);
     if(filesystem == NULL){
         printf("Unable to open mock filesystem.");
         return -1;
     }
 
-    fat16_format("VOLUME1");
+    //fat16_format("VOLUME1");
     if(fat16_initialize() < 0){
         printf("Unable to initialize FAT16 filesystem.\n");
         return -1;
     }
 
 
-    fat16_create_file("FILENAME", "TXT", "Hello, FAT16!", strlen("Hello, FAT16!")+1);
+    //fat16_create_file("FILENAME", "TXT", "Hello, FAT16!", strlen("Hello, FAT16!")+1);
     char buf1[3000];
     int ret1 = fat16_read_file("FILENAME", "TXT", buf1, 14);
     if (ret1 <= 0) {
@@ -66,20 +66,24 @@ int main(int argc, char const *argv[])
     
     fat16_print_root_directory_entries();
 
-    fseek(filesystem, 0, SEEK_END);
-    int size2 = ftell(filesystem);
-    printf("Size of filesystem: %d\n", size2);
-    /* pad to 32mb */
-    if(size2 < 32*1024*1024){
-        char* buf = malloc(32*1024*1024 - size2);
-        memset(buf, 0, 32*1024*1024 - size2);
-        fwrite(buf, 32*1024*1024 - size2, 1, filesystem);
-        free(buf);
+    fat16_change_directory("DIR     ");
 
-        printf("Padded filesystem to 32mb.\n");
-    }
+    fat16_print_root_directory_entries();
 
-    fat16_sync_fat_table();
+    // fseek(filesystem, 0, SEEK_END);
+    // int size2 = ftell(filesystem);
+    // printf("Size of filesystem: %d\n", size2);
+    // /* pad to 32mb */
+    // if(size2 < 32*1024*1024){
+    //     char* buf = malloc(32*1024*1024 - size2);
+    //     memset(buf, 0, 32*1024*1024 - size2);
+    //     fwrite(buf, 32*1024*1024 - size2, 1, filesystem);
+    //     free(buf);
+
+    //     printf("Padded filesystem to 32mb.\n");
+    // }
+
+    // fat16_sync_fat_table();
     
     return 0;
 }

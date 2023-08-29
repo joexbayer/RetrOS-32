@@ -27,6 +27,9 @@ main:
     # mov $0x0, %ah
     # int $0x16
 
+    /* Read reserved_blocks */
+    # movw 13(_start), %bx
+
     /**
      * Using int 13h with 42 Extended Reac Sectors from Drive, to read inn sectors.
      * The loop will run 15 times, each time reading 0x0040 (64) * 512 bytes = 0x8000 (32768) bytes

@@ -20,7 +20,7 @@ uint32_t fat16_find_cluster_by_offset(struct fat16_directory_entry* entry, int o
 
 int fat16_write_data_to_cluster_with_offset(uint32_t cluster, int offset, byte_t* data, int data_length)
 {
-    int block_num = get_data_start_block() + cluster-2; /* minus 2 because the first 2 entries in the FAT table are reserved. */
+    int block_num = get_data_start_block() + cluster; /* minus 2 because the first 2 entries in the FAT table are reserved. */
     write_block_offset(data, data_length, offset, block_num);
 
     return 0;
