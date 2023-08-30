@@ -397,11 +397,12 @@ void fat16_bootblock_info()
 /**
  * Formats the disk with the FAT16 filesystem.
  * @param label The volume label (up to 11 characters). (NOT IMPLEMENTED)
+ * @param reserved The number of reserved blocks (usually 1).
  * 
  * @warning This will erase all data on the disk.
  * @return 0 on success, or a negative value on error.
  */
-int fat16_format(char* label)
+int fat16_format(char* label, int reserved)
 {
     if(disk_attached() == 0){
         dbgprintf("No disk attached\n");
@@ -417,7 +418,7 @@ int fat16_format(char* label)
         .manufacturer = "NETOS   ",  /* This can be any 8-character string */
         .bytes_per_plock = 512,      /* Standard block size */
         .blocks_per_allocation = 1,  /* Usually 1 for small devices */
-        .reserved_blocks = 10,        /* The boot block, will also include kernel? */
+        .reserved_blocks = reserved,        /* The boot block, will also include kernel? */
         .num_FATs = 1,               /* Standard for FAT16 */
         .root_dir_entries = 16,     /* This means the root directory occopies 1 block TODO: Currently hardcoded*/
         .total_blocks = total_blocks,

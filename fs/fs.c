@@ -1,3 +1,19 @@
+/**
+ * @file fs.c
+ * @author Joe Bayer (joexbayer)
+ * @brief In memory Filesystem abstraction implementation
+ * @version 0.1
+ * @date 2023-08-30
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ * The abstraction layer which is used by the kernel to access the filesystem.
+ * Hides which filesystem is used, and provides a common interface for the kernel.
+ * Controls the open files and their offsets, this also a "file" in the filesystem can have multiple
+ * open in memory files. As a file only cares about the offset and the flags.
+ * 
+ */
+
 #include <fs/fs.h>
 #include <assert.h>
 #include <serial.h>
@@ -80,8 +96,12 @@ static int default_open(struct filesystem* fs, const char* path, int flags)
     file->flags = flags;
     file->offset = 0;
 
+    /**
+     * @brief TODO: Based on the filesystem open a fie.
+     * Find it in "current directory" and return a file descriptor.
+     */
 
-    return -1;
+    return 0;
 }
 
 static int default_close(struct filesystem* fs, struct file file)

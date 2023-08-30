@@ -39,15 +39,20 @@ endif
 
 OUTPUTDIR = ../bin/
 
-FSOBJS = path.o ext.o inode.o vfs.o fat16_read.o fat16_write.o fat16.o
+EXTOBJS = path.o ext.o inode.o vfs.o
+FAT16OBJS = fat16_read.o fat16_write.o fat16.o
 
-.PHONY: all new fs clean bindir
+.PHONY: all new ext fat16 clean bindir
 all: new
 
-new: bindir fs
+new: bindir ext fat16
 
-fs: ${FSOBJS}
+ext: ${EXTOBJS}
 	@$(LD) -o ${OUTPUTDIR}ext.o $(addprefix ./bin/,$^) $(LDFLAGS) -r
+
+fat16: ${FAT16OBJS}
+	@$(LD) -o ${OUTPUTDIR}fat16.o $(addprefix ./bin/,$^) $(LDFLAGS) -r
+
 
 .depend: **/*.[cSh]
 	@$(CC) $(CCFLAGS) -MM -MG **/*.[cS] > $@

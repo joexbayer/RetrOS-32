@@ -10,7 +10,7 @@
 
 #include <time.h>
 #include <sync.h>
-#include <mocks.h>
+#include "include/mocks.h"
 
 #include <fs/ext.h>
 #include <fs/inode.h>

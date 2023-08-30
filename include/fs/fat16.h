@@ -92,8 +92,6 @@ struct fat16_directory_entry {
     uint32_t file_size;                 /* 4 bytes - File size in bytes */
 } __attribute__((packed));
 
-
-
 /* internal fat16 utility functions */
 uint16_t get_fat_start_block(void);
 uint16_t get_root_directory_start_block(void);
@@ -113,6 +111,9 @@ void fat16_set_date(uint16_t *date, uint16_t year, uint8_t month, uint8_t day);
 
 /* Initialize the file system. Returns 0 on success, and a negative value on error. */
 int fat16_initialize();
+
+/* format the current block device */
+int fat16_format(char* label, int reserved);
 
 /* Open a file. Returns a file descriptor or a negative value on error. */
 int fat16_open(const char *path);

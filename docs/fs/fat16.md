@@ -1,7 +1,11 @@
 ## Layout
 
 DISK:
-| Boot Sector | FAT1 | FAT2 | Root Directory | Data Clusters |
+| Boot Sector | FAT Table | | Root Directory | Data Clusters |
+
+The Boot Sector contains the FAT16 bootblock information, giving all needed information to find the FAT table and root directory.
+The FAT Table contains a list of all clusters and their status, the size is determined by the number of clusters on the disk.
+The Root Directory contains a list of all files and directories in the root directory.
 
 FAT:
 | Entry 0 | Entry 1 | Entry 2 | ... | Entry N |
