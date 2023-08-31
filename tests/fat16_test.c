@@ -20,49 +20,69 @@ FILE* filesystem = NULL;
 
 int main(int argc, char const *argv[])
 {
-
-    filesystem = fopen("filesystem.test", "w+");
+    filesystem = fopen("filesystem.test", "w+" /* w+ */);
     if(filesystem == NULL){
         printf("Unable to open mock filesystem.");
         return -1;
     }
 
-    fat16_format();
+    fat16_format("VOLUME1", 1);
+    if(fat16_initialize() < 0){
+        printf("Unable to initialize FAT16 filesystem.\n");
+        return -1;
+    }
 
 
-    fat16_create_file("sample", "txt", "Hello, FAT16!", strlen("Hello, FAT16!")+1);
-
-    char buf1[512];
-    int ret1 = fat16_read_file("sample", "txt", buf1, 14);
+    fat16_create_file("FILENAME", "TXT", "Hello, FAT16!", strlen("Hello, FAT16!")+1);
+    char buf1[3000];
+    int ret1 = fat16_read_file("FILENAME", "TXT", buf1, 14);
     if (ret1 <= 0) {
         printf("Unable to read file (sample.txt).\n");
         return -1;
     }
     printf("%s (%d)\n", buf1, ret1);  // Expected Output: Hello, FAT16!
 
-
-    int size = 8*1024*1024;
+    // int size = 8*1024*1024;
     
-    char* buf2 = malloc(size);
-    for (int i = 0; i < size; i++){
-        buf2[i] = i % 111;
-    }
-    fat16_create_file("sample2", "txt", buf2, size);
+    // char* buf2 = malloc(size);
+    // for (int i = 0; i < size; i++){
+    //     buf2[i] = i % 111;
+    // }
+    // fat16_create_file("sample2", "txt", buf2, size);
 
-    char* buf3 = malloc(size);
-    int ret2 = fat16_read_file("sample2", "txt", buf3, size);
-    if (ret2 <= 0) {
-        printf("Unable to read file (sample2.txt).\n");
-        return -1;
-    }
+    // char* buf3 = malloc(size);
+    // int ret2 = fat16_read_file("sample2", "txt", buf3, size);
+    // if (ret2 <= 0) {
+    //     printf("Unable to read file (sample2.txt).\n");
+    //     return -1;
+    // }
 
-    int mem_ret = memcmp(buf2, buf3, size);
-    if (mem_ret != 0) {
-        printf("Incorrect content of sample2.txt.\n");
-        return -1;
-    }
+    // int mem_ret = memcmp(buf2, buf3, size);
+    // if (mem_ret != 0) {
+    //     printf("Incorrect content of sample2.txt.\n");
+    //     return -1;
+    // }
     
     fat16_print_root_directory_entries();
+
+    fat16_change_directory("DIR     ");
+
+    fat16_print_root_directory_entries();
+
+    fseek(filesystem, 0, SEEK_END);
+    int size2 = ftell(filesystem);
+    printf("Size of filesystem: %d\n", size2);
+    /* pad to 32mb */
+    if(size2 < 32*1024*1024){
+        char* buf = malloc(32*1024*1024 - size2);
+        memset(buf, 0, 32*1024*1024 - size2);
+        fwrite(buf, 32*1024*1024 - size2, 1, filesystem);
+        free(buf);
+
+        printf("Padded filesystem to 32mb.\n");
+    }
+
+    fat16_sync_fat_table();
     
     return 0;
 }

@@ -36,6 +36,12 @@ fat16_test: bin ext_test.c
 mem_test: bin mem_test.c
 	@$(CC) mem_test.c -D__MEM_TEST ../bin/bitmap.o ../bin/kmem.o  -D__NETOS_MOCK $(MOCK) -I ../include/ -I ./include/  -O2 -m32 -Wall -g --no-builtin -o ./bin/mem_test.o
 
+fat16:
+	make -C ../ compile && make fat16_test && ./bin/fat16_test.o
+
+fat16ch:
+	fsck.fat -v -n filesystem.test
+
 run:
 	./bin/ext_test.o
 	./bin/mem_test.o
