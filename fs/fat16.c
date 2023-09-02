@@ -507,6 +507,11 @@ int fat16_initialize()
         return -1;
     }
 
+        /* init mutexes */
+    mutex_init(&fat16_table_lock);
+    mutex_init(&fat16_write_lock);
+    mutex_init(&fat16_management_lock);
+
     fat16_bootblock_info();
 
     /* Load FAT table into memory. */
@@ -519,11 +524,6 @@ int fat16_initialize()
     fat16_add_entry(get_root_directory_start_block(), "VOLUME1 ", "   ", FAT16_FLAG_VOLUME_LABEL, 0, 0);
 
     fat16_dump_fat_table();
-
-    /* init mutexes */
-    mutex_init(&fat16_table_lock);
-    mutex_init(&fat16_write_lock);
-    mutex_init(&fat16_management_lock);
 
     current_dir_block = get_root_directory_start_block();
 

@@ -111,7 +111,7 @@ bin/mkfs: bin/ext.o bin/bitmap.o ./tools/mkfs.c
 	@gcc tools/mkfs.c bin/bitmap.o fs/bin/inode.o -I include/  -O2 -m32 -Wall -g -D_XOPEN_SOURCE -D_FILE_OFFSET_BITS=64 -D__KERNEL -o  ./bin/mkfs
 	@echo [BUILD]      Compiling $<
 
-bin/mkfsv2: bin/fat16.o bin/bitmap.o ./tools/mkfs.c
+bin/mkfsv2: tools/mkfsv2.c bin/fat16.o bin/bitmap.o ./tools/mkfs.c ./tests/mocks.c
 	@gcc tools/mkfsv2.c bin/bitmap.o ./tests/mocks.c bin/fat16.o -I include/  -O2 -m32 -Wall -g -D__FS_TEST -D__KERNEL -o  ./bin/mkfsv2
 	@echo [BUILD]      Compiling $<
 

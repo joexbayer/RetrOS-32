@@ -38,7 +38,7 @@ int disk_size(){
 
 int write_block(char* buf, int block)
 {
-    dbgprintf("[DISK] write: 0x%x. Block %d\n", buf, block*512);
+    //dbgprintf("[DISK] write: 0x%x. Block %d\n", buf, block*512);
     return disk_device.write(buf, block, 1);
 }
 
@@ -53,7 +53,7 @@ int write_block_offset(char* usr_buf, int size, int offset, int block)
 
 int read_block(char* buf, int block)
 {
-    dbgprintf("[DISK] read: 0x%x. Block %d\n", buf, block*512);
+    //dbgprintf("[DISK] read: 0x%x. Block %d\n", buf, block*512);
     return disk_device.read(buf, block, 1);
 }
 

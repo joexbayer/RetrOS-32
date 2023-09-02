@@ -21,14 +21,20 @@ main:
     mov %dl, drive_num
 
     /* Greet user with message. */
-    movw $welcome_str, %si
-    call print
+    # movw $welcome_str, %si
+    # call print
 
     # mov $0x0, %ah
     # int $0x16
 
     /* Read reserved_blocks */
-    # movw 13(_start), %bx
+    movw _start+14, %bx
+
+    movw %bx, %ax      /* Copy %bx to %ax */
+    xorw %dx, %dx      /* Clear %dx, now DX:AX contains the value from %bx */
+    movw $64, %cx       /* Load divisor value (64 * 512) into %cx */
+    divw %cx           /* Divide AX by %cx. Quotient goes in %ax, Remainder in %dx */
+    movw %ax, %cx      /* Move the result into %cx */
 
     /**
      * Using int 13h with 42 Extended Reac Sectors from Drive, to read inn sectors.
@@ -36,7 +42,7 @@ main:
      * Loading in a total of around 500Kb staying inside of the ram we have.
      * Making sure to increase to the next segment if needed.
      */
-    movw $15, %cx /* Set cx 15 as loop variable meaning it will loop 15 times. */
+    # movw $8, %cx /* Set cx 15 as loop variable meaning it will loop 15 times. */
     movb drive_num, %dl
     movw $disk_address_packet, %si
     movw $0x1000, segment /* Load the kernel at 0x100000 -> segment 0x10000 */
@@ -120,6 +126,26 @@ kill:
     call print
     call inf 
 
+print_number:
+    movw $10, %di          # Set divisor to 10
+    xorw %si, %si          # Counter for number of digits
+print_loop:
+    xorw %dx, %dx          # Clear %dx for division
+    divw %di               # Divide %cx by 10. Quotient in %cx, remainder in %dx
+    addb $'0', %dl         # Convert remainder to ASCII
+    pushw %dx              # Save character on stack
+    incw %si               # Increment digit counter
+    testw %cx, %cx         # Test quotient
+    jnz print_loop         # If quotient is non-zero, continue loop
+
+print_digits:
+    popw %ax               # Pop character from stack
+    movb $0x0E, %ah        # Function 0x0E - TTY Print
+    int $0x10              # BIOS interrupt
+    decw %si
+    jnz print_digits       # If there are more digits, continue loop
+
+    ret                    # Return after printing
 
 .code32
 enter32:

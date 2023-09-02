@@ -16,6 +16,7 @@
 #include "../tests/include/mocks.h"
 
 FILE* filesystem = NULL;
+#define DEBUG 1
 
 int mkfsv2_load_bootloader()
 {
@@ -30,7 +31,7 @@ int mkfsv2_load_bootloader()
         return -2;
     }
 
-    write_block(0, bootblock);
+    write_block(bootblock, 0);
 
     fclose(bootloader);
     return 0;
@@ -40,8 +41,8 @@ int mkfsv2_load_kernel()
 {
     int kernel_size;
     int kernel_block_count;
-
-    FILE* kernel = fopen("bin/kernel", "r");
+    
+    FILE* kernel = fopen("bin/kernelout", "r");
     if(kernel == NULL){
         return -1;
     }
@@ -50,6 +51,7 @@ int mkfsv2_load_kernel()
     kernel_size = ftell(kernel);
     kernel_block_count = kernel_size / 512;
     fseek(kernel, 0, SEEK_SET);
+    printf("Kernel size: %d\n", kernel_size);
 
     char* kernel_data = malloc(kernel_size);
     if(kernel_data == NULL){
@@ -62,7 +64,7 @@ int mkfsv2_load_kernel()
     }
 
     for(int i = 0; i < kernel_block_count; i++){
-        write_block(i+1, kernel_data + (i*512));
+        write_block(kernel_data + (i*512), i+1);
     }
 
     fclose(kernel);
@@ -84,22 +86,37 @@ int main(int argc, char const *argv[])
 
     ret = mkfsv2_load_bootloader();
     if(ret < 0){
-        printf("Unable to load bootloader.\n");
+        printf("Unable to load bootloader: %d\n", ret);
         return -1;
     }
 
     kernel_block_count = mkfsv2_load_kernel();
     if(kernel_block_count <= 0){
-        printf("Unable to load kernel.\n");
+        printf("Unable to load kernel: %d\n", kernel_block_count);
         return -1;
     }
 
     /* We want to reserve blocks for the kernel before the filesystem starts. */
+
     fat16_format("VOLUME1", kernel_block_count);
     if(fat16_initialize() < 0){
         printf("Unable to initialize FAT16 filesystem.\n");
         return -1;
     }
+
+
+    fseek(filesystem, 0, SEEK_END);
+    int size2 = ftell(filesystem);
+    printf("Size of filesystem: %d\n", size2);
+    /* pad to 32mb */
+    if(size2 < 32*1024*1024){
+        char* buf = malloc(32*1024*1024 - size2);
+        memset(buf, 0, 32*1024*1024 - size2);
+        fwrite(buf, 32*1024*1024 - size2, 1, filesystem);
+        free(buf);
+
+        printf("Padded filesystem to 32mb.\n");
+    }   
 
     return 0;
 }
