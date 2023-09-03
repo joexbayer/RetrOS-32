@@ -25,21 +25,21 @@ int fat16_read_data_from_cluster(uint32_t cluster, void *data, int data_length, 
     return read_block_offset((byte_t *)data, data_length, offset, block_num);
 }
 
-int fat16_read(struct fat16_directory_entry* entry, uint32_t start_offset, void* _buffer, int buffer_length)
+int fat16_read_data(int first_cluster, uint32_t start_offset, void* _buffer, int buffer_length, int max_length)
 {
     byte_t* buffer = (byte_t*) _buffer;
-    if (start_offset > entry->file_size) {
+    if (start_offset > max_length) {
         dbgprintf("Start offset beyond the file size\n");
         return -1;  /* Offset exceeds file size */
     }
 
     int bytes_left_to_read = buffer_length;
-    if ((start_offset + buffer_length) > entry->file_size) {
-        bytes_left_to_read = entry->file_size - start_offset;  /* Adjust the buffer length if it exceeds the remaining file size. */
+    if ((start_offset + buffer_length) > max_length) {
+        bytes_left_to_read = max_length - start_offset;  /* Adjust the buffer length if it exceeds the remaining file size. */
     }
     int total_bytes_to_read = bytes_left_to_read;
 
-    uint32_t current_cluster = entry->first_cluster;
+    uint32_t current_cluster = first_cluster;
     int offset_within_cluster = start_offset % 512;  /* Calculate offset within the starting cluster */
     int clusters_skipped = start_offset / 512;  /* Calculate the number of clusters to skip */
 

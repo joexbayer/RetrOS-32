@@ -27,7 +27,7 @@ int main(int argc, char const *argv[])
     }
 
     fat16_format("VOLUME1", 1);
-    if(fat16_initialize() < 0){
+    if(fat16_load() < 0){
         printf("Unable to initialize FAT16 filesystem.\n");
         return -1;
     }

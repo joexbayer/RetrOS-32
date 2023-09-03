@@ -23,16 +23,19 @@ struct file {
     int offset;
     /* amount of owners */
     int nlinks;
-    int size;
     int identifier;
+    int directory;
 };
 
 /* none of the functions can ever be NULL */
 struct filesystem_ops {
-    int (*write)(struct filesystem* fs, struct file file, const void* buf, int size);
-    int (*read)(struct filesystem* fs, struct file file, void* buf, int size);
-    int (*open)(struct filesystem* fs, const char* path, int flags);
-    int (*close)(struct filesystem* fs, struct file file);
+    /* basic functionality */
+    int (*write)(struct filesystem* fs, struct file* file, const void* buf, int size);
+    int (*read)(struct filesystem* fs, struct file* file, void* buf, int size);
+    struct file* (*open)(struct filesystem* fs, const char* path, int flags);
+    int (*close)(struct filesystem* fs, struct file* file);
+
+    /* extended functionality */
     int (*remove)(struct filesystem* fs, const char* path);
     int (*mkdir)(struct filesystem* fs, const char* path);
     int (*rmdir)(struct filesystem* fs, const char* path);
@@ -52,6 +55,7 @@ struct filesystem {
     unsigned char flags;
     char name[32];
     int version;
+    int type;
 };
 
 #endif /* !__FS_MODULE_H */

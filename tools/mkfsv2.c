@@ -99,7 +99,7 @@ int main(int argc, char const *argv[])
     /* We want to reserve blocks for the kernel before the filesystem starts. */
 
     fat16_format("VOLUME1", kernel_block_count);
-    if(fat16_initialize() < 0){
+    if(fat16_load() < 0){
         printf("Unable to initialize FAT16 filesystem.\n");
         return -1;
     }

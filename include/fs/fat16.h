@@ -103,14 +103,17 @@ void fat16_allocate_cluster(uint32_t cluster);
 void fat16_free_cluster(uint32_t cluster);
 uint32_t fat16_get_free_cluster(void);
 
-int fat16_read(struct fat16_directory_entry* entry, uint32_t start_offset, void* _buffer, int buffer_length);
-int fat16_write(struct fat16_directory_entry* entry, int offset, void* data, int data_length);
+int fat16_read_data(int first_cluster, uint32_t start_offset, void* _buffer, int buffer_length, int max_length);
+int fat16_write_data(int first_cluster, int offset, void* data, int data_length);
 
 void fat16_set_time(uint16_t *time, uint8_t hours, uint8_t minutes, uint8_t seconds);
 void fat16_set_date(uint16_t *date, uint16_t year, uint8_t month, uint8_t day);
 
+int fat16_read_entry(uint32_t block, uint32_t index, struct fat16_directory_entry* entry_out);
+int fat16_sync_directory_entry(uint16_t block, uint32_t index, const struct fat16_directory_entry* entry);
+
 /* Initialize the file system. Returns 0 on success, and a negative value on error. */
-int fat16_initialize();
+int fat16_load();
 
 /* format the current block device */
 int fat16_format(char* label, int reserved);

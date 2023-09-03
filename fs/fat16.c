@@ -124,7 +124,7 @@ uint32_t fat16_get_free_cluster()
  * @param entry: Pointer to the directory entry data to be written.
  * @return 0 on success, negative value on error.
  */
-static int fat16_sync_directory_entry(uint16_t block, uint32_t index, const struct fat16_directory_entry* entry)
+int fat16_sync_directory_entry(uint16_t block, uint32_t index, const struct fat16_directory_entry* entry)
 {
     if(index >= boot_table.root_dir_entries)
         return -1;  /* index out of range */
@@ -162,7 +162,7 @@ static int fat16_read_root_directory_entry(uint32_t index, struct fat16_director
 }
 
 /* Will replace fat16_read_root_directory_entry eventually. */
-static int fat16_read_entry(uint32_t block, uint32_t index, struct fat16_directory_entry* entry_out)
+int fat16_read_entry(uint32_t block, uint32_t index, struct fat16_directory_entry* entry_out)
 {
     if(index >= ENTRIES_PER_BLOCK)
         return -1;  /* index out of range */
@@ -267,7 +267,10 @@ int fat16_read_file(const char *filename, const char* ext, void *buffer, int buf
         return -1;
     }  /* File not found */
 
-    int ret = fat16_read(&entry, 0, buffer, buffer_length);
+    int ret = fat16_read_data(&(entry.first_cluster), 0, buffer, buffer_length, entry.file_size);
+
+    /* sync directory entry? */
+
     return ret;  /* Return bytes read */
 }
 
@@ -283,7 +286,7 @@ int fat16_create_file(const char *filename, const char* ext, const void *data, i
         .first_cluster = first_cluster,
     };
 
-    fat16_write(&entry, 0, data, data_length);
+    fat16_write_data(&(entry.first_cluster), 0, data, data_length);
 
 
     fat16_add_entry(current_dir_block, filename, ext, FAT16_FLAG_ARCHIVE, first_cluster, data_length);
@@ -496,7 +499,7 @@ void fat16_set_date(uint16_t *date, uint16_t year, ubyte_t month, ubyte_t day)
     *date |= (day & 0x1F);
 }
 
-int fat16_initialize()
+int fat16_load()
 {
     /* load the bootblock */
     read_block((byte_t*)&boot_table, BOOT_BLOCK);

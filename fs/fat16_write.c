@@ -4,9 +4,9 @@
 #include <diskdev.h>
 #include <serial.h>
 
-uint32_t fat16_find_cluster_by_offset(struct fat16_directory_entry* entry, int offset, int* cluster_offset)
+uint32_t fat16_find_cluster_by_offset(int first_cluster, int offset, int* cluster_offset)
 {
-    uint32_t current_cluster = entry->first_cluster;
+    uint32_t current_cluster = first_cluster;
     int traversed_bytes = 0; 
 
     while (current_cluster < 0xFFF8 && current_cluster != 0xFFFF && traversed_bytes + 512 <= offset){
@@ -39,14 +39,14 @@ int fat16_write_data_to_cluster(uint32_t cluster, const void *data, int data_len
     return write_block((byte_t *)data, block_num);
 }
 
-int fat16_write(struct fat16_directory_entry* entry, int offset, void* data, int data_length)
+int fat16_write_data(int first_cluster, int offset, void* data, int data_length)
 {
     int remaining_data_length = data_length;
     int data_offset = 0;
 
     /* Determine the cluster and inner cluster offset where we should start writing. */
     int cluster_offset;
-    uint32_t current_cluster = fat16_find_cluster_by_offset(entry, offset, &cluster_offset);
+    uint32_t current_cluster = fat16_find_cluster_by_offset(first_cluster, offset, &cluster_offset);
     int next_cluster = current_cluster;
 
     while (remaining_data_length > 0){
@@ -59,7 +59,7 @@ int fat16_write(struct fat16_directory_entry* entry, int offset, void* data, int
             if (current_cluster > 0){
                 fat16_set_fat_entry(current_cluster, free_cluster);
             } else {
-                entry->first_cluster = free_cluster;  /* Update the entry's starting cluster */
+                return -2; /* Error: Couldn't write data */
             }
             current_cluster = free_cluster;
         }
