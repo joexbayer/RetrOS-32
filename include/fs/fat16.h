@@ -82,8 +82,13 @@ struct mbr_partition_entry {
 
 
 struct fat16_directory_entry {
-    uint8_t filename[8];                /* 8 bytes - Filename (padded with spaces) */
-    uint8_t extension[3];               /* 3 bytes - File extension (padded with spaces) */
+    union {
+        struct {
+            char filename[8];
+            char extension[3];
+        };
+        char full_name[11];
+    };
     uint8_t attributes;                 /* 1 byte - File attributes */
     uint8_t reserved[10];               /* 10 bytes - Reserved for use by Windows NT */
     uint16_t created_time;              /* 2 bytes - Time file was created */
@@ -111,23 +116,15 @@ void fat16_set_date(uint16_t *date, uint16_t year, uint8_t month, uint8_t day);
 
 int fat16_read_entry(uint32_t block, uint32_t index, struct fat16_directory_entry* entry_out);
 int fat16_sync_directory_entry(uint16_t block, uint32_t index, const struct fat16_directory_entry* entry);
+int fat16_get_directory_entry(const char* path, struct fat16_directory_entry* entry_out);
+
+int fat16_name_compare(const char *path_part, const char *full_name);
 
 /* Initialize the file system. Returns 0 on success, and a negative value on error. */
 int fat16_load();
 
 /* format the current block device */
 int fat16_format(char* label, int reserved);
-
-/* Open a file. Returns a file descriptor or a negative value on error. */
-int fat16_open(const char *path);
-/* Close an open file. Returns 0 on success, and a negative value on error. */
-int fat16_close(int fd);
-
-/* Create a new directory. Returns 0 on success, and a negative value on error. */
-int fat16_mkdir(const char *path);
-
-/* Delete a file or directory. Returns 0 on success, and a negative value on error. */
-int fat16_remove(const char *path);
 
 /* List the contents of a directory. */
 int fat16_listdir(const char *path, void (*callback)(const char *name, int is_directory));

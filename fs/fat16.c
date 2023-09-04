@@ -258,6 +258,89 @@ int fat16_add_entry(uint16_t block, char *filename, const char *extension, byte_
     return -1;  /* no empty slot found in the root directory */
 }
 
+int fat16_name_compare(const char *path_part, const char *full_name)
+{
+    int i;
+    
+    // Compare filename portion (first 8 characters)
+    for (i = 0; i < 8 && path_part[i]; i++) {
+        if (path_part[i] != full_name[i]) {
+            return 0; // Characters don't match.
+        }
+    }
+
+    // If we've exhausted the path part, compare the remaining filename characters with space.
+    for (; i < 8; i++) {
+        if (full_name[i] != ' ') {
+            return 0; // They are not the same.
+        }
+    }
+
+    // If path_part had '.' move past it
+    if (path_part[i] == '.') {
+        i++;
+    }
+
+    // Compare the extension (next 3 characters)
+    for (int j = 0; j < 3 && path_part[i]; j++, i++) {
+        if (path_part[i] != full_name[j + 8]) {
+            return 0; // Characters don't match.
+        }
+    }
+
+    // If we've exhausted the path part, compare the remaining extension characters with space.
+    for (int j = i - 8; j < 3; j++) {
+        if (full_name[j + 8] != ' ') {
+            return 0; // They are not the same.
+        }
+    }
+
+    return 1; // The names are the same.
+}
+
+
+/**
+ * @brief Retrieves a directory entry by path.
+ * 
+ * @param path The path to the file or directory.
+ * @param entry_out Pointer to the destination struct where the entry should be copied.
+ * @return 0 on success, or a negative value on error.
+ */
+int fat16_get_directory_entry(const char* path, struct fat16_directory_entry* entry_out)
+{
+    uint16_t start_block = get_root_directory_start_block();
+    uint32_t index;
+    struct fat16_directory_entry entry;
+
+    char* token = strtok((char*)path, "/");
+    while (token != NULL) {
+        int found = 0;
+
+
+        for(index = 0; index < ENTRIES_PER_BLOCK; index++) {
+            if(fat16_read_entry(start_block, index, &entry) < 0) continue;
+
+            if (fat16_name_compare(token, entry.full_name)) {
+                if (entry.attributes & FAT16_FLAG_SUBDIRECTORY || entry.attributes & FAT16_FLAG_ARCHIVE) {
+                    start_block = entry.first_cluster;
+                }
+                found = 1;
+                break;
+            }
+        }
+
+        if (!found) {
+            return -1;
+        }
+
+        token = strtok(NULL, "/");
+    }
+
+    memcpy(entry_out, &entry, sizeof(struct fat16_directory_entry));
+    return 0;
+}
+
+
 int fat16_read_file(const char *filename, const char* ext, void *buffer, int buffer_length)
 {
     struct fat16_directory_entry entry;
