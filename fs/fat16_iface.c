@@ -165,6 +165,8 @@ static int fat16_read(struct filesystem* fs, struct file* file, void* buf, int s
  */
 static struct file* fat16_open(struct filesystem* fs, const char* path, int flags)
 {
+    int directory;
+
     FS_VALIDATE(fs);
 
     /* check if the path is too long */
@@ -173,11 +175,21 @@ static struct file* fat16_open(struct filesystem* fs, const char* path, int flag
     }
 
     /* parse path */
+    struct fat16_directory_entry entry;
+    directory = fat16_get_directory_entry(path, &entry);
+    if(directory < 0){
+        return NULL;
+    }
 
-    /* check if the file is already open */
+    /* allocate new file */
     struct file* file = fs_alloc_file();
     ERR_ON_NULL(file);
 
+    file->flags = flags;
+    file->offset = 0;
+    file->directory = directory;
+    file->identifier = entry.first_cluster; 
+    file->nlinks = 1;
 
     return file;
 }

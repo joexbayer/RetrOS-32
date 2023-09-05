@@ -116,10 +116,13 @@ char* strchr(const char* str, int ch)
 
 char* strtok(char* str, const char* delim)
 {
+    static char local_buffer[128];
     static char* current = NULL;   /* Keeps track of the current position in the string */
 
     if (str != NULL) {
-        current = str;
+        memcpy(local_buffer, str, strlen(str));
+        local_buffer[strlen(str)+1] = '\0';  // Ensure null-termination
+        current = local_buffer;
     }
 
     if (current == NULL || *current == '\0') {
@@ -137,6 +140,7 @@ char* strtok(char* str, const char* delim)
         *current = '\0';   /* Null-terminate the token */
         ++current;   /* Move the current position to the next character after the delimiter */
     }
+
 
     return token;   /* Return the next token */
 }

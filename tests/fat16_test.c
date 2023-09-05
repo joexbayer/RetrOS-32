@@ -10,6 +10,7 @@
 
 #include <time.h>
 #include <sync.h>
+#include <fs/fat16.h>
 
 #include <mocks.h>
 
@@ -32,13 +33,11 @@ int main(int argc, char const *argv[])
         return -1;
     }
 
-
     fat16_create_file("FILENAME", "TXT", "Hello, FAT16!", strlen("Hello, FAT16!")+1);
     char buf1[3000];
     int ret1 = fat16_read_file("FILENAME", "TXT", buf1, 14);
     if (ret1 <= 0) {
         printf("Unable to read file (sample.txt).\n");
-        return -1;
     }
     printf("%s (%d)\n", buf1, ret1);  // Expected Output: Hello, FAT16!
 
@@ -63,11 +62,28 @@ int main(int argc, char const *argv[])
     //     return -1;
     // }
     
+    fat16_create_directory("DIR     ");
+
     fat16_print_root_directory_entries();
 
     fat16_change_directory("DIR     ");
 
+    fat16_create_directory("DIR2    ");
+
     fat16_print_root_directory_entries();
+
+    fat16_change_directory("DIR2    ");
+
+    fat16_create_file("FILENAM2", "TXT", "Hello, FAT16!", strlen("Hello, FAT16!")+1);
+
+    fat16_print_root_directory_entries();
+
+    char* path = "/DIR/DIR2/FILENAM2TXT";
+
+    struct fat16_directory_entry entry;
+    fat16_get_directory_entry(path, &entry);
+    printf("Entry: %s\n", entry.full_name);
+
 
     fseek(filesystem, 0, SEEK_END);
     int size2 = ftell(filesystem);

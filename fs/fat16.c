@@ -9,13 +9,17 @@
  * @copyright Copyright (c) 2023
  * 
  */
+#include <util.h>
 #include <stdint.h>
 #include <fs/fat16.h>
 #include <kutils.h>
 #include <diskdev.h>
 #include <memory.h>
+#include <math.h>
 #include <sync.h>
 
+#define DIRECTORY_ROOT 0
+#define GET_DIRECTORY_BLOCK(cluster) (cluster == 0 ? get_root_directory_start_block() : get_data_start_block() + cluster)  
 
 static struct fat_boot_table boot_table = {0};
 static byte_t* fat_table_memory = NULL;  /* pointer to the in-memory FAT table */
@@ -42,7 +46,7 @@ inline uint16_t get_root_directory_start_block()
 
 inline uint16_t get_data_start_block()
 {
-    return get_root_directory_start_block()-1;  /* Data starts after Root directory */
+    return get_root_directory_start_block()-1;  /* Data starts after Root directory, -1 for unused fat table entries. */
 }
 
 
@@ -173,10 +177,10 @@ int fat16_read_entry(uint32_t block, uint32_t index, struct fat16_directory_entr
         return -2;  /* error reading block */
     }
 
-    struct fat16_directory_entry* dir_entry = (struct fat16_directory_entry*)(buffer + index * sizeof(struct fat16_directory_entry));
+    struct fat16_directory_entry* dir_entry = (struct fat16_directory_entry*)(buffer + (index * sizeof(struct fat16_directory_entry)));
 
     /* Copy the directory entry to the output */
-    memcpy(entry_out, &buffer[(index % ENTRIES_PER_BLOCK) * sizeof(struct fat16_directory_entry)], sizeof(struct fat16_directory_entry));
+    memcpy(entry_out, dir_entry, sizeof(struct fat16_directory_entry));
     
     return 0;  /* success */
 }
@@ -193,7 +197,7 @@ static int fat16_find_entry(const char *filename, const char* ext, struct fat16_
 {
     /* Search the root directory for the file. */
     for (int i = 0; i < boot_table.root_dir_entries; i++) {
-        struct fat16_directory_entry entry;
+        struct fat16_directory_entry entry = {0};
 
         fat16_read_entry(current_dir_block ,i, &entry);
         if (memcmp(entry.filename, filename, strlen(filename)) == 0 && memcmp(entry.extension, ext, 3) == 0) {
@@ -225,35 +229,36 @@ int fat16_add_entry(uint16_t block, char *filename, const char *extension, byte_
     //uint16_t root_blocks = (ENTRIES_PER_BLOCK * sizeof(struct fat16_directory_entry)) / 512;
     uint16_t root_blocks = 1;
 
-    byte_t buffer[512];
+    byte_t buffer[512] = {0};
 
-    for (uint16_t block = 0; block < root_blocks; block++) {
-        if(read_block(buffer, root_start_block + block) < 0){
-            return -1;  /* error reading block */
-        }
+    if(read_block(buffer, block) < 0){
+        return -1;  /* error reading block */
+    }
 
-        for (int entry = 0; entry < ENTRIES_PER_BLOCK; entry++) {
+    for (int entry = 0; entry < ENTRIES_PER_BLOCK; entry++) {
 
-            struct fat16_directory_entry* dir_entry = (struct fat16_directory_entry*)(buffer + entry * sizeof(struct fat16_directory_entry));
-            if (dir_entry->filename[0] == 0x00 || dir_entry->filename[0] == 0xE5) {  /* empty or deleted entry */
-                /* Fill in the directory entry */
-                memset(dir_entry, 0, sizeof(struct fat16_directory_entry));  /* Clear the entry */
-                memset(dir_entry->filename, ' ', 8);  /* Set the filename to spaces */
-                memcpy(dir_entry->filename, filename, 8);
-                memcpy(dir_entry->extension, extension, 3);
-                dir_entry->attributes = attributes;
-                dir_entry->first_cluster = start_cluster;
-                dir_entry->file_size = file_size;
+        struct fat16_directory_entry* dir_entry = (struct fat16_directory_entry*)(buffer + entry * sizeof(struct fat16_directory_entry));
+        if (dir_entry->filename[0] == 0x00 || dir_entry->filename[0] == 0xE5) {  /* empty or deleted entry */
+            /* Fill in the directory entry */
+            memset(dir_entry, 0, sizeof(struct fat16_directory_entry));  /* Clear the entry */
+            memset(dir_entry->filename, ' ', 8);  /* Set the filename to spaces */
+            memcpy(dir_entry->filename, filename, 8);
+            memcpy(dir_entry->extension, extension, 3);
+            dir_entry->attributes = attributes;
+            dir_entry->first_cluster = start_cluster;
+            dir_entry->file_size = file_size;
 
-                fat16_set_date(&dir_entry->created_date, 2023, 5, 31);
-                fat16_set_time(&dir_entry->created_time, 12, 0, 0);
+            fat16_set_date(&dir_entry->created_date, 2023, 5, 31);
+            fat16_set_time(&dir_entry->created_time, 12, 0, 0);
 
-                /* Write the block back to disk */
-                write_block(buffer, root_start_block + block);
-                return 0;  /* success */
-            }
+            dbgprintf("Adding entry %s.%s (%d bytes) Attributes: 0x%x Cluster: %d %s to %d index %d\n", dir_entry->filename, dir_entry->extension, dir_entry->file_size, dir_entry->attributes, dir_entry->first_cluster, dir_entry->attributes & 0x10 ? "<DIR>" : "", block, entry);
+
+            /* Write the block back to disk */
+            write_block(buffer, block);
+            return 0;  /* success */
         }
     }
+    
 
     return -1;  /* no empty slot found in the root directory */
 }
@@ -261,9 +266,10 @@ int fat16_add_entry(uint16_t block, char *filename, const char *extension, byte_
 int fat16_name_compare(const char *path_part, const char *full_name)
 {
     int i;
-    
+    int len = strlen(path_part);
+
     // Compare filename portion (first 8 characters)
-    for (i = 0; i < 8 && path_part[i]; i++) {
+    for (i = 0; i < 8 && i < len; i++) {
         if (path_part[i] != full_name[i]) {
             return 0; // Characters don't match.
         }
@@ -282,7 +288,7 @@ int fat16_name_compare(const char *path_part, const char *full_name)
     }
 
     // Compare the extension (next 3 characters)
-    for (int j = 0; j < 3 && path_part[i]; j++, i++) {
+    for (int j = 0; j < 3 && i < len; j++, i++) {
         if (path_part[i] != full_name[j + 8]) {
             return 0; // Characters don't match.
         }
@@ -298,31 +304,71 @@ int fat16_name_compare(const char *path_part, const char *full_name)
     return 1; // The names are the same.
 }
 
+char* sstrtok(char* str, const char* delim)
+{
+    static char local_buffer[128];
+    static char* current = NULL;   /* Keeps track of the current position in the string */
+
+    if (str != NULL) {
+        memcpy(local_buffer, str, strlen(str));
+        local_buffer[strlen(str)+1] = '\0';  // Ensure null-termination
+        current = local_buffer;
+    }
+
+    if (current == NULL || *current == '\0') {
+        return NULL;   /* If there is no more string or the current position is at the end, return NULL */
+    }
+
+    char* token = current;   /* Start of the next token */
+
+    /* Find the next occurrence of any delimiter characters */
+    while (*current != '\0' && strchr(delim, *current) == NULL) {
+        ++current;
+    }
+
+    if (*current != '\0') {
+        *current = '\0';   /* Null-terminate the token */
+        ++current;   /* Move the current position to the next character after the delimiter */
+    }
+
+
+    return token;   /* Return the next token */
+}
+
 
 /**
  * @brief Retrieves a directory entry by path.
  * 
  * @param path The path to the file or directory.
  * @param entry_out Pointer to the destination struct where the entry should be copied.
- * @return 0 on success, or a negative value on error.
+ * @return directory cluster on success, or a negative value on error.
  */
-int fat16_get_directory_entry(const char* path, struct fat16_directory_entry* entry_out)
+int fat16_get_directory_entry(char* path, struct fat16_directory_entry* entry_out)
 {
-    uint16_t start_block = get_root_directory_start_block();
+    uint16_t start_block;
     uint32_t index;
-    struct fat16_directory_entry entry;
+    struct fat16_directory_entry entry = {0};
 
-    char* token = strtok((char*)path, "/");
+    dbgprintf("Searching for %s\n", path);
+    if(path[0] == '/'){
+        start_block = get_root_directory_start_block();
+        path++;
+    } else {
+        start_block = current_dir_block;
+    }
+
+    char* token = sstrtok(path, "/");
+    dbgprintf("Token: %d\n", token);
     while (token != NULL) {
         int found = 0;
 
+        //dbgprintf("Searching for %s in %d\n", token, start_block);
 
         for(index = 0; index < ENTRIES_PER_BLOCK; index++) {
             if(fat16_read_entry(start_block, index, &entry) < 0) continue;
-
             if (fat16_name_compare(token, entry.full_name)) {
-                if (entry.attributes & FAT16_FLAG_SUBDIRECTORY || entry.attributes & FAT16_FLAG_ARCHIVE) {
-                    start_block = entry.first_cluster;
+                if (entry.attributes & FAT16_FLAG_SUBDIRECTORY) {
+                    start_block = GET_DIRECTORY_BLOCK(entry.first_cluster);
                 }
                 found = 1;
                 break;
@@ -333,10 +379,42 @@ int fat16_get_directory_entry(const char* path, struct fat16_directory_entry* en
             return -1;
         }
 
-        token = strtok(NULL, "/");
+        token = sstrtok(NULL, "/");
     }
 
     memcpy(entry_out, &entry, sizeof(struct fat16_directory_entry));
+    return start_block;
+}
+
+int fat16_create_directory(const char *name)
+{
+    uint16_t start_block = current_dir_block;
+    uint16_t directory_block;
+    
+    if(strlen(name) > 8){
+        dbgprintf("Directory name too long\n");
+        return -1;
+    }
+
+    directory_block = fat16_get_free_cluster();
+
+    dbgprintf("Creating directory %s root: %d, block: %d\n", name, current_dir_block, directory_block);
+
+    fat16_add_entry(start_block, name, "   ", FAT16_FLAG_SUBDIRECTORY, directory_block, 0);
+
+    /* add .. and . directories */
+    fat16_add_entry(get_data_start_block() + directory_block, ".       ", "   ", FAT16_FLAG_SUBDIRECTORY, directory_block, 0);
+    
+    fat16_add_entry(
+        get_data_start_block() + directory_block,
+        "..      ", "   ",
+        FAT16_FLAG_SUBDIRECTORY,
+        start_block == get_root_directory_start_block() ? 0 : start_block - get_data_start_block(),
+        0
+    );
+
+    fat16_sync_fat_table();
+
     return 0;
 }
 
@@ -350,7 +428,7 @@ int fat16_read_file(const char *filename, const char* ext, void *buffer, int buf
         return -1;
     }  /* File not found */
 
-    int ret = fat16_read_data(&(entry.first_cluster), 0, buffer, buffer_length, entry.file_size);
+    int ret = fat16_read_data(entry.first_cluster, 0, buffer, buffer_length, entry.file_size);
 
     /* sync directory entry? */
 
@@ -369,7 +447,7 @@ int fat16_create_file(const char *filename, const char* ext, const void *data, i
         .first_cluster = first_cluster,
     };
 
-    fat16_write_data(&(entry.first_cluster), 0, data, data_length);
+    fat16_write_data(entry.first_cluster, 0, data, data_length);
 
 
     fat16_add_entry(current_dir_block, filename, ext, FAT16_FLAG_ARCHIVE, first_cluster, data_length);
@@ -388,8 +466,10 @@ void fat16_dump_fat_table()
 
 void fat16_directory_entries(uint16_t block)
 {
+    dbgprintf("Directory entries for block %d\n", block);
+
     for (int i = 0; i < ENTRIES_PER_BLOCK; i++) {
-        struct fat16_directory_entry entry;
+        struct fat16_directory_entry entry = {0};
         struct fat16_directory_entry* dir_entry = &entry;
 
         fat16_read_entry(block, i, &entry);
