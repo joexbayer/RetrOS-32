@@ -21,15 +21,30 @@
 
 /* This determines the maximum of simultaneously open files */
 #define FS_MAX_FILES 256
+#define FS_MAX_FILESYSTEMS 4 /* maximum number of partitons entries in MBR */
 
 /* default filesystem struct */
-static struct filesystem* current_fs = NULL;
+static struct file fs_file_table[FS_MAX_FILES];
+static struct filesystem* fs_table[FS_MAX_FILESYSTEMS];
+static struct filesystem* fs_current = &fs_table[0];
 
 /* functions used by filesystem implementations */
 struct file* fs_alloc_file()
 {
-    struct file* file = (struct file*)kmalloc(sizeof(struct file));
-    ERR_ON_NULL(file);
+    struct file* file = NULL;
+
+    /* find a free file */
+    for(int i = 0; i < FS_MAX_FILES; i++){
+        if(fs_file_table[i].flags == 0){
+            file = &fs_file_table[i];
+            break;
+        }
+    }
+
+    /* no free file found */
+    if(file == NULL){
+        return NULL;
+    }
 
     file->nlinks = 0;
     file->offset = 0;
@@ -44,7 +59,11 @@ int fs_free_file(struct file* file)
 {
     ERR_ON_NULL(file);
 
-    kfree(file);
+    file->nlinks = 0;
+    file->offset = 0;
+    file->flags = 0;
+    file->identifier = 0;
+    file->directory = 0;
 
     return 0;
 }
@@ -53,19 +72,21 @@ int fs_register(struct filesystem* fs)
 {
     ERR_ON_NULL(fs);
 
-    if(fs->ops == NULL){
+    /* check if the filesystem has ALL ops the required functions */
+    if(fs->ops->open == NULL || fs->ops->read == NULL || fs->ops->write == NULL || fs->ops->close == NULL){
         return -1;
     }
 
-    /* check if the filesystem is already registered */
-    if(current_fs != NULL){
-        return -2;
+    /* find a free filesystem slot */
+    for(int i = 0; i < FS_MAX_FILESYSTEMS; i++){
+        if(fs_table[i] == NULL){
+            fs_table[i] = fs;
+            return 0;
+        }
     }
 
-    /* set the current filesystem */
-    current_fs = fs;
-
-    return 0;
+    /* no free filesystem slot found */
+    return -1;
 }
 
 /* filesystem functions */
@@ -76,10 +97,21 @@ int fs_init()
 
 int fs_unregister(struct filesystem* fs)
 {
-    return 0;
+    ERR_ON_NULL(fs);
+
+    /* find the filesystem */
+    for(int i = 0; i < FS_MAX_FILESYSTEMS; i++){
+        if(fs_table[i] == fs){
+            fs_table[i] = NULL;
+            return 0;
+        }
+    }
+
+    /* filesystem not found */
+    return -1;
 }
 
 struct filesystem* fs_get()
 {
-    return current_fs;
+    return NULL;
 }

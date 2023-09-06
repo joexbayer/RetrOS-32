@@ -358,7 +358,6 @@ int fat16_get_directory_entry(char* path, struct fat16_directory_entry* entry_ou
     }
 
     char* token = sstrtok(path, "/");
-    dbgprintf("Token: %d\n", token);
     while (token != NULL) {
         int found = 0;
 
