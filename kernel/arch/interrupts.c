@@ -65,6 +65,7 @@ void page_fault_interrupt(unsigned long cr2, unsigned long err)
 	}
 	//kernel_panic("A critical kernel thread encountered a page fault.");
 	vesa_printf(0, 0, "Page fault: 0x%x (Stack: 0x%x) %d (%s)\n", cr2, current_running->stackptr, err, current_running->name);
+	kernel_exit();
 
 }
 

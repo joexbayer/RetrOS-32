@@ -1,7 +1,7 @@
 #ifndef __FS_MODULE_H
 #define __FS_MODULE_H
 
-#include <utils.h>
+#include <util.h>
 
 #define FS_VERSION 1
 #define FS_VALIDATE(fs) if(!fs || fs->version != FS_VERSION) return -1;
@@ -57,5 +57,14 @@ struct filesystem {
     int version;
     int type;
 };
+
+/* filesystem functions */
+int fs_register(struct filesystem* fs);
+int fs_unregister(struct filesystem* fs);
+
+struct file* fs_alloc_file();
+
+
+int fs_init();
 
 #endif /* !__FS_MODULE_H */

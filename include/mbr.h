@@ -40,4 +40,7 @@ struct mbr {
     uint16_t signature;              /* 2 bytes - Signature */
 }__attribute__((packed));
 
+int mbr_partitions_parse();
+int mbr_partition_load();
+
 #endif /* MBR_H */

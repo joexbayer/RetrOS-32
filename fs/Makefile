@@ -1,4 +1,4 @@
-CCFLAGS=-m32 -std=gnu99 -O2 \
+CCFLAGS=-m32 -std=gnu11 -O2 \
 		-g -Wall -Wextra -Wpedantic -Wstrict-aliasing -D__KERNEL \
 		-Wno-pointer-arith -Wno-unused-parameter -nostdlib \
 		-nostdinc -ffreestanding -fno-pie -fno-stack-protector \
@@ -42,10 +42,10 @@ OUTPUTDIR = ../bin/
 EXTOBJS = path.o ext.o inode.o vfs.o
 FAT16OBJS = fat16_read.o fat16_write.o fat16.o
 
-.PHONY: all new ext fat16 clean bindir
+.PHONY: all new ext fat16 clean bindir fs
 all: new
 
-new: bindir ext fat16
+new: bindir ext fat16 fs
 
 ext: ${EXTOBJS}
 	@$(LD) -o ${OUTPUTDIR}ext.o $(addprefix ./bin/,$^) $(LDFLAGS) -r
@@ -53,6 +53,8 @@ ext: ${EXTOBJS}
 fat16: ${FAT16OBJS}
 	@$(LD) -o ${OUTPUTDIR}fat16.o $(addprefix ./bin/,$^) $(LDFLAGS) -r
 
+fs: fs.o fat16_iface.o
+	@$(LD) -o ${OUTPUTDIR}fs.o $(addprefix ./bin/,$^) $(LDFLAGS) -r
 
 .depend: **/*.[cSh]
 	@$(CC) $(CCFLAGS) -MM -MG **/*.[cS] > $@

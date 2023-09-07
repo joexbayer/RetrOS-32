@@ -25,7 +25,7 @@ int fat16_read_data_from_cluster(uint32_t cluster, void *data, int data_length, 
     return read_block_offset((byte_t *)data, data_length, offset, block_num);
 }
 
-int fat16_read_data(int first_cluster, uint32_t start_offset, void* _buffer, int buffer_length, int max_length)
+int fat16_read_data(int first_cluster, uint32_t start_offset, void* _buffer, int buffer_length, uint32_t max_length)
 {
     byte_t* buffer = (byte_t*) _buffer;
     if (start_offset > max_length) {

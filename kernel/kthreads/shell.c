@@ -32,6 +32,8 @@
 #include <gfx/composition.h>
 #include <gfx/events.h>
 
+#include <fs/fs.h>
+
 #include <kutils.h>
 #include <script.h>
 
@@ -257,7 +259,20 @@ EXPORT_KSYMBOL(cat);
 
 void ls()
 {
-	listdir();
+	struct filesystem* fs = fs_get();
+	if(fs == NULL){
+		twritef("No filesystem mounted\n");
+		return;
+	}
+
+	if(fs->ops->list == NULL){
+		twritef("Filesystem does not support listing\n");
+		return;
+	}
+
+	fs->ops->list(fs, "/", NULL, 0);
+
+	//listdir();
 }
 EXPORT_KSYMBOL(ls);
 

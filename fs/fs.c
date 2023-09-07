@@ -25,8 +25,8 @@
 
 /* default filesystem struct */
 static struct file fs_file_table[FS_MAX_FILES];
-static struct filesystem* fs_table[FS_MAX_FILESYSTEMS];
-static struct filesystem* fs_current = &fs_table[0];
+static struct filesystem* fs_table[FS_MAX_FILESYSTEMS] = {NULL};
+static struct filesystem* fs_current = NULL;
 
 /* functions used by filesystem implementations */
 struct file* fs_alloc_file()
@@ -81,6 +81,8 @@ int fs_register(struct filesystem* fs)
     for(int i = 0; i < FS_MAX_FILESYSTEMS; i++){
         if(fs_table[i] == NULL){
             fs_table[i] = fs;
+
+            if(fs_current == NULL) fs_current = fs;
             return 0;
         }
     }
@@ -92,6 +94,7 @@ int fs_register(struct filesystem* fs)
 /* filesystem functions */
 int fs_init()
 {
+    
     return 0;
 }
 
@@ -113,5 +116,5 @@ int fs_unregister(struct filesystem* fs)
 
 struct filesystem* fs_get()
 {
-    return NULL;
+    return fs_current;
 }

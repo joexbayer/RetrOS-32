@@ -14,6 +14,11 @@
 #include <fs/fs.h>
 #include <kutils.h>
 #include <errors.h>
+#include <memory.h>
+
+#include <terminal.h>
+
+static char* months[] = {"NAN", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Nov", "Dec"};
 
 /* filesystem_ops prototypes */
 static int fat16_write(struct filesystem* fs, struct file* file, const void* buf, int size);
@@ -51,7 +56,7 @@ int fat16_init()
     }
 
     /* register the filesystem */
-    struct filesystem* fs = (struct filesystem*)kmalloc(sizeof(struct filesystem));
+    struct filesystem* fs = (struct filesystem*)kalloc(sizeof(struct filesystem));
     ERR_ON_NULL(fs);
 
     fs->ops = &fat16_ops;
@@ -62,6 +67,8 @@ int fat16_init()
     memcpy(fs->name, "fat16", 6);
 
     fs_register(fs);
+
+    fat16_list(fs, "/", NULL, 0);
 
     return 0;
 }
@@ -166,24 +173,24 @@ static int fat16_read(struct filesystem* fs, struct file* file, void* buf, int s
 static struct file* fat16_open(struct filesystem* fs, const char* path, int flags)
 {
     int directory;
+    struct file* file;
+    struct fat16_directory_entry entry;
 
-    FS_VALIDATE(fs);
-
-    /* check if the path is too long */
-    if(strlen(path) > 255){
+    if(fs == NULL || path == NULL || strlen(path) > 255){
         return NULL;
     }
 
     /* parse path */
-    struct fat16_directory_entry entry;
-    directory = fat16_get_directory_entry(path, &entry);
+    directory = fat16_get_directory_entry((char*)path, &entry);
     if(directory < 0){
         return NULL;
     }
 
     /* allocate new file */
-    struct file* file = fs_alloc_file();
-    ERR_ON_NULL(file);
+    file = fs_alloc_file();
+    if(file == NULL){
+        return NULL;
+    }
 
     file->flags = flags;
     file->offset = 0;
@@ -194,5 +201,157 @@ static struct file* fat16_open(struct filesystem* fs, const char* path, int flag
     return file;
 }
 
+/**
+ * @brief Closes a file.
+ * 
+ * @package fs
+ * @param fs The filesystem to use.
+ * @param file The file to close.
+ * @return int 0 on success, or a negative value on error. 
+ */
+static int fat16_close(struct filesystem* fs, struct file* file)
+{
+    FS_VALIDATE(fs);
+    ERR_ON_NULL(file);
 
+    /* check if the file is open */
+    if(file->nlinks == 0){
+        return -1;
+    }
 
+    /* close the file */
+    file->nlinks = 0;
+
+    return 0;
+}
+
+/**
+ * @brief Removes a file.
+ * 
+ * @package fs
+ * @param fs The filesystem to use.
+ * @param path The path to the file.
+ * @return int 0 on success, or a negative value on error. 
+ */
+static int fat16_remove(struct filesystem* fs, const char* path)
+{
+    return 0;
+}
+
+/**
+ * @brief Creates a directory.
+ * 
+ * @package fs
+ * @param fs The filesystem to use.
+ * @param path The path to the directory.
+ * @return int 0 on success, or a negative value on error. 
+ */
+static int fat16_mkdir(struct filesystem* fs, const char* path)
+{
+    return 0;
+}
+
+/**
+ * @brief Removes a directory.
+ * 
+ * @package fs
+ * @param fs The filesystem to use.
+ * @param path The path to the directory.
+ * @return int 0 on success, or a negative value on error. 
+ */
+static int fat16_rmdir(struct filesystem* fs, const char* path)
+{
+    return 0;
+}
+
+/**
+ * @brief Renames a file.
+ * 
+ * @package fs
+ * @param fs The filesystem to use.
+ * @param path The path to the file.
+ * @param new_path The new path to the file.
+ * @return int 0 on success, or a negative value on error. 
+ */
+static int fat16_rename(struct filesystem* fs, const char* path, const char* new_path)
+{
+    return 0;
+}
+
+/**
+ * @brief Gets the status of a file.
+ * 
+ * @package fs
+ * @param fs The filesystem to use.
+ * @param path The path to the file.
+ * @param file The file to write the status to.
+ * @return int 0 on success, or a negative value on error. 
+ */
+static int fat16_stat(struct filesystem* fs, const char* path, struct file* file)
+{
+    return 0;
+}
+
+/**
+ * @brief Lists the contents of a directory.
+ * 
+ * @package fs
+ * @param fs The filesystem to use.
+ * @param path The path to the directory.
+ * @param buf The buffer to write the contents to.
+ * @param size The size of the buffer.
+ * @return int The number of bytes written, or a negative value on error. 
+ */
+static int fat16_list(struct filesystem* fs, const char* path, char* buf, int size)
+{
+    struct fat16_directory_entry entry;
+    int directory = fat16_get_directory_entry((char*)path, &entry);
+    if(directory < 0 || entry.attributes != FAT16_FLAG_SUBDIRECTORY){
+        return -1;
+    }
+    
+    dbgprintf("Listing directory %d\n", directory);
+
+    /**
+     * @brief Should this function use twrite?
+     * This would assume there is a terminal attached to the system
+     * and would not work if there is not. Other processes such as a finder
+     * would need to use a different method to list the contents of a directory.
+     */
+
+    /* print the directory contents */
+    twritef("Size  Date    Time    Name\n");
+    for (int i = 0; i < (int)ENTRIES_PER_BLOCK; i++) {
+        struct fat16_directory_entry entry = {0};
+        struct fat16_directory_entry* dir_entry = &entry;
+
+        fat16_read_entry(directory, i, &entry);
+        dbgprintf("Entry %d: 0x%x\n", i, dir_entry);
+
+        /* Check if the entry is used (filename's first byte is not 0x00 or 0xE5) */
+        if (dir_entry->filename[0] != 0x00 && dir_entry->filename[0] != 0xE5) {
+
+            /* get time */
+            uint16_t time = dir_entry->created_time;
+            uint8_t seconds = (time & 0x1F) * 2;
+            uint8_t minutes = (time >> 5) & 0x3F;
+            uint8_t hours = (time >> 11) & 0x1F;
+
+            /* get date */
+            uint16_t date = dir_entry->created_date;
+            uint8_t day = date & 0x1F;
+            uint8_t month = (date >> 5) & 0x0F;
+            uint16_t year = 1980 + ((date >> 9) & 0x7F);
+
+            twritef("%p %s %d, %d:%d - %s%s\n",
+                dir_entry->file_size,
+                months[month],
+                day, hours, minutes,
+                dir_entry->full_name,
+                dir_entry->attributes & FAT16_FLAG_SUBDIRECTORY ? "/" : ""
+            );
+        }
+    }
+
+    return 0;
+}

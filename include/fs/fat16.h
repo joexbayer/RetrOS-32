@@ -1,3 +1,6 @@
+#ifndef _FAT16_H
+#define _FAT16_H
+
 #include <stdint.h>
 #include <mbr.h>
 
@@ -55,10 +58,10 @@ struct fat_boot_table {
 struct fat16_directory_entry {
     union {
         struct {
-            char filename[8];
-            char extension[3];
+            uint8_t filename[8];
+            uint8_t extension[3];
         };
-        char full_name[11];
+        uint8_t full_name[11];
     };
     uint8_t attributes;                 /* 1 byte - File attributes */
     uint8_t reserved[10];               /* 10 bytes - Reserved for use by Windows NT */
@@ -79,7 +82,7 @@ void fat16_allocate_cluster(uint32_t cluster);
 void fat16_free_cluster(uint32_t cluster);
 uint32_t fat16_get_free_cluster(void);
 
-int fat16_read_data(int first_cluster, uint32_t start_offset, void* _buffer, int buffer_length, int max_length);
+int fat16_read_data(int first_cluster, uint32_t start_offset, void* _buffer, int buffer_length, uint32_t max_length);
 int fat16_write_data(int first_cluster, int offset, void* data, int data_length);
 
 void fat16_set_time(uint16_t *time, uint8_t hours, uint8_t minutes, uint8_t seconds);
@@ -90,7 +93,11 @@ int fat16_sync_directory_entry(uint16_t block, uint32_t index, const struct fat1
 int fat16_get_directory_entry(char* path, struct fat16_directory_entry* entry_out);
 int fat16_create_directory(const char *name);
 
-int fat16_name_compare(const char *path_part, const char *full_name);
+int fat16_create_file(const char *filename, const char* ext, void *data, int data_length);
+
+int fat16_init();
+
+int fat16_name_compare(uint8_t* path_part, uint8_t* full_name);
 
 /* Initialize the file system. Returns 0 on success, and a negative value on error. */
 int fat16_load();
@@ -100,3 +107,5 @@ int fat16_format(char* label, int reserved);
 
 /* List the contents of a directory. */
 int fat16_listdir(const char *path, void (*callback)(const char *name, int is_directory));
+
+#endif  

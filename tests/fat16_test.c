@@ -82,7 +82,10 @@ int main(int argc, char const *argv[])
 
     struct fat16_directory_entry entry;
     fat16_get_directory_entry(path, &entry);
-    printf("Entry: %s\n", entry.full_name);
+    fat16_directory_entry_debug(&entry);
+
+    int dir = fat16_get_directory_entry("/DIR", &entry);
+    fat16_directory_entry_debug(&entry);
 
 
     fseek(filesystem, 0, SEEK_END);

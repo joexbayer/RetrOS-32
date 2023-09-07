@@ -54,7 +54,7 @@ int fat16_write_data(int first_cluster, int offset, void* data, int data_length)
         /* If there is no allocated cluster or we've reached the end of the cluster chain, allocate a new one. */
         if (next_cluster < 0 || next_cluster == 0xFFFF || next_cluster >= 0xFFF8){
             uint32_t free_cluster = fat16_get_free_cluster();
-            if (free_cluster < 0) return -1;  /* Error: No free clusters */
+            if (free_cluster == MAX_UINT16_T) return -1;  /* Error: No free clusters */
 
             if (current_cluster > 0){
                 fat16_set_fat_entry(current_cluster, free_cluster);

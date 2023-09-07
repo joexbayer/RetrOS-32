@@ -28,6 +28,7 @@
 #include <arch/gdt.h>
 #include <kutils.h>
 #include <errors.h>
+#include <mbr.h>
 
 #include <arch/tss.h>
 
@@ -72,6 +73,7 @@ void kernel(uint32_t magic)
 	//memset((char*)_bss_s, 0, (unsigned int) _bss_size);
     //memset((char*)0x100000, 0, 0x800000-0x100000);
 	ENTER_CRITICAL();
+	*((uint32_t*)0x0) = 0xBAADF00D;
 
 	kernel_size = _end-_code;
 	init_memory();
@@ -119,8 +121,7 @@ void kernel(uint32_t magic)
 		virtual_disk_attach();
 	}
 
-	init_ext();
-	fat16_load();
+	mbr_partition_load();
 
 	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Filesystem initialized.");
 
