@@ -71,6 +71,11 @@ struct fat16_directory_entry {
     uint32_t file_size;                 /* 4 bytes - File size in bytes */
 } __attribute__((packed));
 
+struct fat16_file_identifier {
+    uint16_t directory;
+    uint16_t index;
+};
+
 /* internal fat16 utility functions */
 uint16_t get_fat_start_block(void);
 uint16_t get_root_directory_start_block(void);
@@ -90,7 +95,7 @@ void fat16_set_date(uint16_t *date, uint16_t year, uint8_t month, uint8_t day);
 
 int fat16_read_entry(uint32_t block, uint32_t index, struct fat16_directory_entry* entry_out);
 int fat16_sync_directory_entry(uint16_t block, uint32_t index, const struct fat16_directory_entry* entry);
-int fat16_get_directory_entry(char* path, struct fat16_directory_entry* entry_out);
+struct fat16_file_identifier fat16_get_directory_entry(char* path, struct fat16_directory_entry* entry_out);
 int fat16_create_directory(const char *name);
 
 int fat16_create_file(const char *filename, const char* ext, void *data, int data_length);

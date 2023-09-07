@@ -28,6 +28,19 @@ static struct file fs_file_table[FS_MAX_FILES];
 static struct filesystem* fs_table[FS_MAX_FILESYSTEMS] = {NULL};
 static struct filesystem* fs_current = NULL;
 
+int fs_file2fd(struct file* file)
+{
+    ERR_ON_NULL(file);
+
+    for (int i = 0; i < FS_MAX_FILES; i++){
+        if(&fs_file_table[i] == file){
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 /* functions used by filesystem implementations */
 struct file* fs_alloc_file()
 {
@@ -83,6 +96,7 @@ int fs_register(struct filesystem* fs)
             fs_table[i] = fs;
 
             if(fs_current == NULL) fs_current = fs;
+            dbgprintf("Registered filesystem: %s\n", fs->name);
             return 0;
         }
     }
@@ -117,4 +131,117 @@ int fs_unregister(struct filesystem* fs)
 struct filesystem* fs_get()
 {
     return fs_current;
+}
+
+int fs_close(int fd)
+{
+    /* check if a filesystem is available */
+    if(fs_current == NULL){
+        return -1;
+    }
+
+    /* check if the file is open */
+    if(fd < 0 || fd >= FS_MAX_FILES || fs_file_table[fd].flags == 0){
+        return -2;
+    }
+
+    /* close the file */
+    int ret = fs_current->ops->close(fs_current, &fs_file_table[fd]);
+    if(ret < 0){
+        return -3;
+    }
+
+    fs_free_file(&fs_file_table[fd]);
+
+    return 0;
+}
+
+/* function that use the default filesystem and a "file descriptor" system, if avaiable */
+int fs_open(const char* path, int flags)
+{
+    ERR_ON_NULL(path);
+
+    /* check if a filesystem is available */
+    if(fs_current == NULL || fs_current->ops->open == NULL){
+        return -1;
+    }
+
+    /* open the file */
+    struct file* file = fs_current->ops->open(fs_current, path, flags);
+    if(file == NULL){
+        return -1;
+    }
+
+    int fd = fs_file2fd(file);
+
+    return fd;
+}
+
+int fs_seek(int fd, int offset)
+{
+    /* check if a filesystem is available */
+    if(fs_current == NULL){
+        return -1;
+    }
+
+    /* check if the file is open */
+    if(fd < 0 || fd >= FS_MAX_FILES || fs_file_table[fd].flags == 0){
+        return -2;
+    }
+
+    /* seek the file */
+    fs_file_table[fd].offset = offset;
+
+    return 0;
+}
+
+int fs_read(int fd, void* buf, int size)
+{
+    ERR_ON_NULL(buf);
+
+    /* check if a filesystem is available */
+    if(fs_current == NULL || fs_current->ops->read == NULL){
+        dbgprintf("No filesystem available %x %x\n", fs_current, fs_current->ops->read);
+        return -1;
+    }
+
+    /* check if the file is open */
+    dbgprintf("fs_read %d %x %d\n", fd, buf, size);
+    if(fd < 0 || fd >= FS_MAX_FILES || !(fs_file_table[fd].flags & FS_FILE_FLAG_READ)){
+        return -2;
+    }
+
+    /* read the file */
+    dbgprintf("fs_read %d %x %d\n", fd, buf, size);
+    int ret = fs_current->ops->read(fs_current, &fs_file_table[fd], buf, size);
+    if(ret <= 0){
+        return -3;
+    }
+
+    fs_file_table[fd].offset += size;
+
+    return ret;
+}
+
+int fs_write(int fd, void* buf, int size)
+{
+    ERR_ON_NULL(buf);
+
+    /* check if a filesystem is available */
+    if(fs_current == NULL || fs_current->ops->write == NULL){
+        return -1;
+    }
+
+    /* check if the file is open */
+    if(fd < 0 || fd >= FS_MAX_FILES || fs_file_table[fd].flags & FS_FILE_FLAG_WRITE){
+        return -2;
+    }
+
+    /* write the file */
+    int ret = fs_current->ops->write(fs_current, &fs_file_table[fd], buf, size);
+    if(ret < 0){
+        return -3;
+    }
+
+    return ret;
 }

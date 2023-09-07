@@ -335,7 +335,7 @@ int fat16_directory_entry_debug(struct fat16_directory_entry* entry)
  * @param entry_out Pointer to the destination struct where the entry should be copied.
  * @return directory cluster on success, or a negative value on error.
  */
-int fat16_get_directory_entry(char* path, struct fat16_directory_entry* entry_out)
+struct fat16_file_identifier fat16_get_directory_entry(char* path, struct fat16_directory_entry* entry_out)
 {
     uint16_t start_block;
     uint32_t index;
@@ -348,7 +348,12 @@ int fat16_get_directory_entry(char* path, struct fat16_directory_entry* entry_ou
 
         if(strlen(path) == 0){
             memcpy(entry_out, &root_directory, sizeof(struct fat16_directory_entry));
-            return start_block;
+            
+            struct fat16_file_identifier identifier = {
+                .directory = get_root_directory_start_block(),
+                .index = 0
+            };
+            return identifier;
         }
 
     } else {
@@ -374,14 +379,18 @@ int fat16_get_directory_entry(char* path, struct fat16_directory_entry* entry_ou
         }
 
         if (!found) {
-            return -1;
+            return (struct fat16_file_identifier){0};
         }
 
         token = (uint8_t*)sstrtok(NULL, "/");
     }
 
     memcpy(entry_out, &entry, sizeof(struct fat16_directory_entry));
-    return start_block;
+    
+    return (struct fat16_file_identifier){
+        .directory = start_block,
+        .index = index
+    };
 }
 
 int fat16_create_directory(const char* name)

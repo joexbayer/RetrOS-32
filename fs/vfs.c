@@ -12,7 +12,6 @@
  * No header file includes needed.
  */
 
-
 /**
  * @brief Creates a new directory
  * 

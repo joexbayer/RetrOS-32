@@ -31,6 +31,8 @@
 #include <net/net.h>
 #include <arch/interrupts.h>
 
+#include <fs/fs.h>
+
 #include <windowmanager.h>
 
 #include <fs/ext.h>
@@ -145,23 +147,25 @@ int gfx_decode_background_image(const char* file)
         return -1;
     }
 
-    byte_t* temp = (byte_t*) kalloc(5000);
-    inode_t inode = ext_open(file, 0);
-    if(inode == 0){
-        dbgprintf("[WSERVER] Could not open background file.\n");
+    byte_t temp[3000];
+    inode_t inode = fs_open(file, FS_FILE_FLAG_READ);
+    if(inode < 0){
+        dbgprintf("[WSERVER] Could not open background file: %d.\n", inode);
         return -1;
     }
 
-    int ret = ext_read(inode, temp, 5000);
+    int ret = fs_read(inode, temp, 3000);
     if(ret <= 0){
-        dbgprintf("[WSERVER] Could not read background file.\n");
+        dbgprintf("[WSERVER] Could not read background file: %d.\n", inode);
         return -1;
     }
-    ext_close(inode);
+    fs_close(inode);
 
     int out;
+    dbgprintf("[WSERVER] Decoding %d bytes.\n", ret);
     run_length_decode(temp, ret, wind.composition_buffer, &out);
-    kfree(temp);
+
+    dbgprintf("[WSERVER] Decoded %d bytes.\n", out);
 
     int originalWidth = 320;   // Original image width
     int originalHeight = 240;  // Original image height
@@ -169,8 +173,10 @@ int gfx_decode_background_image(const char* file)
     int targetHeight = vbe_info->height;    // Target screen height
 
     /* upscale image */
-    float scaleX = (float)targetWidth / originalWidth;
-    float scaleY = (float)targetHeight / originalHeight;
+    float scaleX = (float)targetWidth / (float)originalWidth;
+    float scaleY = (float)targetHeight / (float)originalHeight;
+
+    dbgprintf("[WSERVER] Scaling image from %dx%d to %dx%d.\n", originalWidth, originalHeight, targetWidth, targetHeight);
 
     for (int i = 0; i < originalWidth; i++){
         for (int j = 0; j < originalHeight; j++){
@@ -178,8 +184,10 @@ int gfx_decode_background_image(const char* file)
             int screenX = (int)(i * scaleX);
             int screenY = (int)(j * scaleY);
 
+
             // Retrieve the pixel value from the original image
             unsigned char pixelValue = wind.composition_buffer[j * originalWidth + i];
+            //wind.composition_buffer[j * originalWidth + i] = pixelValue;
 
             // Set the pixel value on the screen at the calculated position
             for (int x = 0; x < scaleX; x++){
@@ -206,7 +214,7 @@ void __kthread_entry gfx_compositor_main()
             return;
         }
 
-        background = (uint8_t*) kalloc(wind.buffer_size);
+        background = (uint8_t*) palloc(wind.buffer_size+1);
         if(background == NULL){
             warningf("Could not allocate memory for background buffer.\n");
             return;
@@ -218,10 +226,13 @@ void __kthread_entry gfx_compositor_main()
         
 
         wind.flags &= ~WINDOW_SERVER_UNINITIALIZED;
-        gfx_decode_background_image("circles.img");
+        gfx_decode_background_image("/CIRCLES .IMG");
+
+        //memset(background, 3, wind.buffer_size);
         dbgprintf("[WSERVER] %d bytes allocated for composition buffer.\n", wind.buffer_size);
     }
 
+    dbgprintf("[WSERVER] Window Server initialized.\n");
     struct mouse m;
     /* Main composition loop */
     while(1){
@@ -282,9 +293,9 @@ void __kthread_entry gfx_compositor_main()
                 
             wind.wm.ops->draw(&wind.wm, wind.wm.windows);
         }
-        
-    
+
         kernel_yield();
+
 
         ENTER_CRITICAL();
         

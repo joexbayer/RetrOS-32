@@ -149,8 +149,13 @@ compile: bindir $(LIBOBJ) bootblock kernel apps
 	@echo "[Compile] Finished."
 	$(TIME-END)
 
-img: iso
-	mv boot.iso boot.img
+create_fs:
+	@dd if=/dev/zero of=filesystem.image bs=512 count=390
+	@./bin/mkfsv2
+
+img: compile create_fs sync
+	@echo "Finished creating the image."
+	$(TIME-END)
 
 clean:
 	make -C ./net clean
@@ -190,6 +195,15 @@ fat16reset:
 	rm fatfs.img
 	dd if=/dev/zero of=fatfs.img bs=16M count=2
 	mkfs.fat -F 16 -v -n FAT16 fatfs.img
+
+
+
+sync:
+	mkdir -p mnt
+	sudo mount filesystemv2.img ./mnt
+	sudo cp -vvv rootfs/circles.img ./mnt/
+	sudo umount ./mnt
+# sudo cp -r mnt/* ./mnt/apps/
 
 mount:
 	sudo mount tests/filesystem.test ./mnt

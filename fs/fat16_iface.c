@@ -149,10 +149,19 @@ static int fat16_read(struct filesystem* fs, struct file* file, void* buf, int s
         return -3;
     }
 
+    dbgprintf("Entry: \n");
+    dbgprintf("  Filename: %s\n", entry.filename);
+    dbgprintf("  Attributes: 0x%x\n", entry.attributes);
+    dbgprintf("  First cluster: %d\n", entry.first_cluster);
+    dbgprintf("  File size: %d\n", entry.file_size);
+
+
     int cluster = entry.first_cluster;
     int offset = file->offset;
 
     /* read the data */
+    dbgprintf("Reading %d bytes from cluster %d offset %d\n", size, cluster, offset);
+
     int read = fat16_read_data(cluster, offset, buf, size, entry.file_size);
     if(read < 0){
         return -4;
@@ -172,7 +181,7 @@ static int fat16_read(struct filesystem* fs, struct file* file, void* buf, int s
  */
 static struct file* fat16_open(struct filesystem* fs, const char* path, int flags)
 {
-    int directory;
+    struct fat16_file_identifier id;;
     struct file* file;
     struct fat16_directory_entry entry;
 
@@ -181,8 +190,9 @@ static struct file* fat16_open(struct filesystem* fs, const char* path, int flag
     }
 
     /* parse path */
-    directory = fat16_get_directory_entry((char*)path, &entry);
-    if(directory < 0){
+    id = fat16_get_directory_entry((char*)path, &entry);
+    if(id.directory < 0){
+        dbgprintf("Failed to get directory entry\n");
         return NULL;
     }
 
@@ -194,8 +204,8 @@ static struct file* fat16_open(struct filesystem* fs, const char* path, int flag
 
     file->flags = flags;
     file->offset = 0;
-    file->directory = directory;
-    file->identifier = entry.first_cluster; 
+    file->directory = id.directory;
+    file->identifier = id.index; 
     file->nlinks = 1;
 
     return file;
@@ -305,12 +315,12 @@ static int fat16_stat(struct filesystem* fs, const char* path, struct file* file
 static int fat16_list(struct filesystem* fs, const char* path, char* buf, int size)
 {
     struct fat16_directory_entry entry;
-    int directory = fat16_get_directory_entry((char*)path, &entry);
-    if(directory < 0 || entry.attributes != FAT16_FLAG_SUBDIRECTORY){
+    struct fat16_file_identifier id = fat16_get_directory_entry((char*)path, &entry);
+    if(id.directory < 0 || entry.attributes != FAT16_FLAG_SUBDIRECTORY){
         return -1;
     }
     
-    dbgprintf("Listing directory %d\n", directory);
+    dbgprintf("Listing directory %d\n", id.directory);
 
     /**
      * @brief Should this function use twrite?
@@ -325,7 +335,7 @@ static int fat16_list(struct filesystem* fs, const char* path, char* buf, int si
         struct fat16_directory_entry entry = {0};
         struct fat16_directory_entry* dir_entry = &entry;
 
-        fat16_read_entry(directory, i, &entry);
+        fat16_read_entry(id.directory, i, &entry);
         dbgprintf("Entry %d: 0x%x\n", i, dir_entry);
 
         /* Check if the entry is used (filename's first byte is not 0x00 or 0xE5) */
