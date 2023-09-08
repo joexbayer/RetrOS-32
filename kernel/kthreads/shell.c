@@ -257,7 +257,7 @@ void cat(int argc, char* argv[])
 }
 EXPORT_KSYMBOL(cat);
 
-void ls()
+void ls(int argc, char* argv[])
 {
 	struct filesystem* fs = fs_get();
 	if(fs == NULL){
@@ -270,7 +270,11 @@ void ls()
 		return;
 	}
 
-	fs->ops->list(fs, "/", NULL, 0);
+	if(argc == 1){
+		fs->ops->list(fs, "/", NULL, 0);
+		return;
+	}
+	fs->ops->list(fs, argv[1], NULL, 0);
 
 	//listdir();
 }

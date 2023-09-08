@@ -140,6 +140,22 @@ static void gfx_unset_fullscreen(struct window* w)
     __is_fullscreen = 0;
 }
 
+int gfx_set_background_color(color_t color)
+{
+    if(wind.flags & WINDOW_SERVER_UNINITIALIZED){
+        dbgprintf("[WSERVER] Cannot set background color before initialization.\n");
+        return -1;
+    }
+
+    if(background == NULL){
+        dbgprintf("[WSERVER] Background buffer is NULL.\n");
+        return -2;
+    }
+
+    memset(background, color, wind.buffer_size);
+    return ERROR_OK;
+}
+
 int gfx_decode_background_image(const char* file)
 {
     if(wind.flags & WINDOW_SERVER_UNINITIALIZED){
@@ -150,12 +166,14 @@ int gfx_decode_background_image(const char* file)
     byte_t temp[3000];
     inode_t inode = fs_open(file, FS_FILE_FLAG_READ);
     if(inode < 0){
+        gfx_set_background_color(3);
         dbgprintf("[WSERVER] Could not open background file: %d.\n", inode);
         return -1;
     }
 
     int ret = fs_read(inode, temp, 3000);
     if(ret <= 0){
+        gfx_set_background_color(3);
         dbgprintf("[WSERVER] Could not read background file: %d.\n", inode);
         return -1;
     }
@@ -226,7 +244,7 @@ void __kthread_entry gfx_compositor_main()
         
 
         wind.flags &= ~WINDOW_SERVER_UNINITIALIZED;
-        gfx_decode_background_image("/CIRCLES .IMG");
+        gfx_decode_background_image("/circles.img");
 
         //memset(background, 3, wind.buffer_size);
         dbgprintf("[WSERVER] %d bytes allocated for composition buffer.\n", wind.buffer_size);

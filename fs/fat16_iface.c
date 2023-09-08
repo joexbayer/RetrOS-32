@@ -208,6 +208,13 @@ static struct file* fat16_open(struct filesystem* fs, const char* path, int flag
     file->identifier = id.index; 
     file->nlinks = 1;
 
+    dbgprintf("File %s:\n", path);
+    dbgprintf("  Directory: %d\n", file->directory);
+    dbgprintf("  Identifier: %d\n", file->identifier);
+    dbgprintf("  Flags: 0x%x\n", file->flags);
+    
+
+
     return file;
 }
 
@@ -315,6 +322,7 @@ static int fat16_stat(struct filesystem* fs, const char* path, struct file* file
 static int fat16_list(struct filesystem* fs, const char* path, char* buf, int size)
 {
     struct fat16_directory_entry entry;
+    int entries = 0;
     struct fat16_file_identifier id = fat16_get_directory_entry((char*)path, &entry);
     if(id.directory < 0 || entry.attributes != FAT16_FLAG_SUBDIRECTORY){
         return -1;
@@ -336,10 +344,27 @@ static int fat16_list(struct filesystem* fs, const char* path, char* buf, int si
         struct fat16_directory_entry* dir_entry = &entry;
 
         fat16_read_entry(id.directory, i, &entry);
-        dbgprintf("Entry %d: 0x%x\n", i, dir_entry);
 
         /* Check if the entry is used (filename's first byte is not 0x00 or 0xE5) */
-        if (dir_entry->filename[0] != 0x00 && dir_entry->filename[0] != 0xE5) {
+        if (dir_entry->filename[0] != 0x00 && dir_entry->filename[0] != 0xE5
+            // && (HAS_FLAG(dir_entry->attributes, FAT16_FLAG_ARCHIVE) || HAS_FLAG(dir_entry->attributes, FAT16_FLAG_SUBDIRECTORY))
+        ) {
+            /* parse name */
+            char name[13] = {0};
+            int j = 0;
+            while(dir_entry->filename[j] != ' '){
+                name[j] = dir_entry->filename[j];
+                j++;
+            }
+
+            if(dir_entry->extension[0] != ' '){
+                name[j++] = '.';
+                for(int k = 0; k < 3; k++){
+                    name[j++] = dir_entry->extension[k];
+                }
+            }
+
+            name[j] = '\0';
 
             /* get time */
             uint16_t time = dir_entry->created_time;
@@ -357,11 +382,15 @@ static int fat16_list(struct filesystem* fs, const char* path, char* buf, int si
                 dir_entry->file_size,
                 months[month],
                 day, hours, minutes,
-                dir_entry->full_name,
+                name,
                 dir_entry->attributes & FAT16_FLAG_SUBDIRECTORY ? "/" : ""
             );
+
+            entries++;
         }
     }
+
+    twritef("%d directory entries.\n", entries);
 
     return 0;
 }

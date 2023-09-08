@@ -243,57 +243,50 @@ int fat16_add_entry(uint16_t block, char *filename, const char *extension, byte_
     return -1;  /* no empty slot found in the root directory */
 }
 
+void fat16_to_upper(char *str) {
+    if (!str) return;
+
+    while (*str) {
+        if (*str >= 'a' && *str <= 'z') {
+            *str = *str - ('a' - 'A');
+        }
+        str++;
+    }
+}
+
 int fat16_name_compare(uint8_t* path_part, uint8_t* full_name)
 {
-    int i;
+    int j = 0;
     int len = strlen((char*)path_part);
-
-    // Compare filename portion (first 8 characters)
-    for (i = 0; i < 8 && i < len; i++) {
-        if (path_part[i] != full_name[i]) {
-            return 0; // Characters don't match.
+    fat16_to_upper((char*)path_part);
+    
+    while(j < len && path_part[j] != '\0' && path_part[j] != '.'){
+        if(path_part[j] != full_name[j]){
+            return 0;
         }
+        j++;
     }
 
-    // If we've exhausted the path part, compare the remaining filename characters with space.
-    for (; i < 8; i++) {
-        if (full_name[i] != ' ') {
-            return 0; // They are not the same.
-        }
-    }
-
-    // If path_part had '.' move past it
-    if (path_part[i] == '.') {
-        i++;
-    }
-
-    // Compare the extension (next 3 characters)
-    for (int j = 0; j < 3 && i < len; j++, i++) {
-        if (path_part[i] != full_name[j + 8]) {
-            return 0; // Characters don't match.
-        }
-    }
-
-    // If we've exhausted the path part, compare the remaining extension characters with space.
-    for (int j = i - 8; j < 3; j++) {
-        if (full_name[j + 8] != ' ') {
-            return 0; // They are not the same.
-        }
-    }
+    
 
     return 1; // The names are the same.
 }
 
 char* sstrtok(char* str, const char* delim)
 {
-    static char local_buffer[128];
+    static char local_buffer[128] = {};  /* Local buffer to store the string */
     static char* current = NULL;   /* Keeps track of the current position in the string */
+    
+    int len = strlen(str);
 
     if (str != NULL) {
-        memcpy(local_buffer, str, strlen(str));
-        local_buffer[strlen(str)+1] = '\0';  // Ensure null-termination
+        memset(local_buffer, 0, 128);
+        memcpy(local_buffer, str, len);
+        local_buffer[len+1] = 0;  // Ensure null-termination
         current = local_buffer;
     }
+
+    dbgprintf("sstrtok: %s (%d) / %s (%d)\n", current, strlen(current), str, strlen(str));
 
     if (current == NULL || *current == '\0') {
         return NULL;   /* If there is no more string or the current position is at the end, return NULL */
@@ -379,7 +372,9 @@ struct fat16_file_identifier fat16_get_directory_entry(char* path, struct fat16_
         }
 
         if (!found) {
-            return (struct fat16_file_identifier){0};
+            return (struct fat16_file_identifier){
+                .directory = -1,
+                .index = -1};
         }
 
         token = (uint8_t*)sstrtok(NULL, "/");
@@ -648,6 +643,13 @@ int fat16_format(char* label, int reserved)
 
     dbgprintf("FAT16 formatted\n");
 
+    fat16_load();
+    fat16_set_fat_entry(0, 0xFF00 | 0xF8); 
+    fat16_allocate_cluster(1);
+    fat16_add_entry(get_root_directory_start_block(), "VOLUME1 ", "   ", FAT16_FLAG_VOLUME_LABEL, 0, 0);
+
+    fat16_sync_fat_table();
+
     return 0;  /* assume success */
 }
 
@@ -701,9 +703,6 @@ int fat16_load()
     for (uint16_t i = 0; i < boot_table.fat_blocks; i++) {
         read_block(fat_table_memory + i * 512, get_fat_start_block() + i);
     }
-    fat16_set_fat_entry(0, 0xFF00 | 0xF8); 
-    fat16_allocate_cluster(1);
-    fat16_add_entry(get_root_directory_start_block(), "VOLUME1 ", "   ", FAT16_FLAG_VOLUME_LABEL, 0, 0);
 
     current_dir_block = get_root_directory_start_block();
 

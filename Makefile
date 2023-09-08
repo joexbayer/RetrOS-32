@@ -192,16 +192,14 @@ qemu:
 	sudo qemu-system-i386 -d int -device e1000,netdev=net0 -serial stdio -netdev user,id=net0 -object filter-dump,id=net0,netdev=net0,file=dump.dat boot.img
 
 fat16reset:
-	rm fatfs.img
+	rm fatfs.img
 	dd if=/dev/zero of=fatfs.img bs=16M count=2
 	mkfs.fat -F 16 -v -n FAT16 fatfs.img
 
-
-
 sync:
 	mkdir -p mnt
-	sudo mount filesystemv2.img ./mnt
-	sudo cp -vvv rootfs/circles.img ./mnt/
+	sudo mount -o shortname=winnt filesystemv2.img ./mnt
+	sudo cp -vvv -r rootfs/* ./mnt/
 	sudo umount ./mnt
 # sudo cp -r mnt/* ./mnt/apps/
 
