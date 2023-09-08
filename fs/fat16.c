@@ -256,37 +256,67 @@ void fat16_to_upper(char *str) {
 
 int fat16_name_compare(uint8_t* path_part, uint8_t* full_name)
 {
-    int j = 0;
+    int j = 0, i = 0;
     int len = strlen((char*)path_part);
     fat16_to_upper((char*)path_part);
+
+    dbgprintf("Comparing %s to %s\n", path_part, full_name);
     
-    while(j < len && path_part[j] != '\0' && path_part[j] != '.'){
-        if(path_part[j] != full_name[j]){
-            return 0;
+    // Iterate over the name part of path_part and compare to full_name
+    while (i < len && path_part[i] != '.' && j < 8){
+        if (path_part[i] != full_name[j]){
+            return 0; // Mismatch found, names aren't the same
+        }
+        i++;
+        j++;
+    }
+
+    // If path_part has a shorter name, we expect full_name to have spaces 
+    while (j < 8){
+        if (full_name[j] != ' '){
+            return 0; // Mismatch found
         }
         j++;
     }
 
-    
+    // If path_part contains a dot, skip it
+    if (i < len && path_part[i] == '.'){
+        i++;
+    }
 
+    // Now, compare the extension part
+    while (i < len && j < 11){
+        if (path_part[i] != full_name[j])
+        {
+            return 0; // Mismatch found
+        }
+        i++;
+        j++;
+    }
+
+    // If path_part has a shorter extension, we expect full_name to have spaces
+    while (j < 11){
+        if (full_name[j] != ' '){
+            return 0; // Mismatch found
+        }
+        j++;
+    }
     return 1; // The names are the same.
 }
 
 char* sstrtok(char* str, const char* delim)
 {
-    static char local_buffer[128] = {};  /* Local buffer to store the string */
+    static char local_buffer[128] = {0};  /* Local buffer to store the string */
     static char* current = NULL;   /* Keeps track of the current position in the string */
-    
-    int len = strlen(str);
 
     if (str != NULL) {
+        int len = strlen(str);
         memset(local_buffer, 0, 128);
         memcpy(local_buffer, str, len);
         local_buffer[len+1] = 0;  // Ensure null-termination
         current = local_buffer;
     }
 
-    dbgprintf("sstrtok: %s (%d) / %s (%d)\n", current, strlen(current), str, strlen(str));
 
     if (current == NULL || *current == '\0') {
         return NULL;   /* If there is no more string or the current position is at the end, return NULL */
@@ -358,7 +388,7 @@ struct fat16_file_identifier fat16_get_directory_entry(char* path, struct fat16_
     while (token != NULL) {
         int found = 0;
 
-        //dbgprintf("Searching for %s in %d\n", token, start_block);
+        dbgprintf("Searching for %s in %d\n", token, start_block);
 
         for(index = 0; index < ENTRIES_PER_BLOCK; index++) {
             if(fat16_read_entry(start_block, index, &entry) < 0) continue;
@@ -366,6 +396,7 @@ struct fat16_file_identifier fat16_get_directory_entry(char* path, struct fat16_
                 if (entry.attributes & FAT16_FLAG_SUBDIRECTORY) {
                     start_block = GET_DIRECTORY_BLOCK(entry.first_cluster);
                 }
+
                 found = 1;
                 break;
             }
@@ -447,7 +478,7 @@ int fat16_create_file(const char *filename, const char* ext, void *data, int dat
 
     struct fat16_directory_entry entry = {
         .first_cluster = first_cluster,
-    };
+        };
 
     fat16_write_data(entry.first_cluster, 0, data, data_length);
 

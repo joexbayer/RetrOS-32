@@ -78,7 +78,7 @@ int main(int argc, char const *argv[])
 
     fat16_print_root_directory_entries();
 
-    char* path = "/DIR/DIR2/FILENAM2TXT";   
+    char* path = "/DIR/DIR2/FILENAM2.TXT";   
 
     struct fat16_directory_entry entry;
     fat16_get_directory_entry(path, &entry);
