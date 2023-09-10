@@ -6,6 +6,9 @@
 #include "../utils/StdLib.hpp"
 #include <fs/ext.h>
 #include <fs/directory.h>
+
+#include <fs/fat16.h>
+
 #include <lib/printf.h>
 
 #define WIDTH 300
@@ -129,7 +132,8 @@ public:
     }
 
     int loadFiles(){
-        struct directory_entry entry;
+        //struct directory_entry entry;
+        struct fat16_directory_entry entry;
 
 
         if(m_fd != 0) fclose(m_fd);
@@ -140,12 +144,24 @@ public:
         if(m_fd <= -1) return -1;
 
         while (1) {
-            int ret = read(m_fd, &entry, sizeof(struct directory_entry));
+            int ret = read(m_fd, &entry, sizeof(struct fat16_directory_entry));
             if (ret <= 0) {
                 break;
             }
 
-            File* file = new File(entry.name, entry.flags, 0, 0, 0, 0);
+                        /* parse name */
+            char name[13];
+            memset(name, 0, 13);
+            memcpy(name, entry.filename, 8);
+            memcpy(name + 8, entry.extension, 3);
+
+            printf("entry: %s\n", name);
+
+            if (
+                entry.filename[0] == 0xe5 || entry.filename[0] == 0x00
+            )  continue;
+
+            File* file = new File(name, entry.attributes, 0, 0, 0, 0);
             m_cache->addFile(file);
         }
 
@@ -185,7 +201,7 @@ public:
             int xOffset = 12 + j * WIDTH / 2;
             int yOffset = 12 + i * ICON_SIZE;
 
-            if (file->flags & FS_DIR_FLAG_DIRECTORY) {
+            if (file->flags & FAT16_FLAG_SUBDIRECTORY) {
                 drawIcon(xOffset, yOffset, icon[0]);
             } else {
                 drawIcon(xOffset, yOffset, icon[1]);
@@ -195,7 +211,7 @@ public:
 
             /* check if x,y is inside box */
             if (x > xOffset && x < xOffset + ICON_SIZE && y > yOffset && y < yOffset + ICON_SIZE) {
-                if (file->flags & FS_DIR_FLAG_DIRECTORY) {
+                if (file->flags & FAT16_FLAG_SUBDIRECTORY) {
                     /* change directory */
 
                     path->concat(file->getName());

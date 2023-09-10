@@ -39,6 +39,8 @@
 #include <gfx/api.h>
 #include <net/api.h>
 
+#include <fs/fs.h>
+
 #include <multiboot.h>
 
 #define USE_MULTIBOOT 0
@@ -152,10 +154,10 @@ void kernel(uint32_t magic)
 	add_system_call(SYSCALL_FREE, (syscall_t)&free);
 	add_system_call(SYSCALL_MALLOC, (syscall_t)&malloc);
 
-	add_system_call(SYSCALL_OPEN, (syscall_t)&ext_open);
-	add_system_call(SYSCALL_READ, (syscall_t)&ext_read);
-	add_system_call(SYSCALL_WRITE, (syscall_t)&ext_write);
-	add_system_call(SYSCALL_CLOSE, (syscall_t)&ext_close);
+	add_system_call(SYSCALL_OPEN, (syscall_t)&fs_open);
+	add_system_call(SYSCALL_READ, (syscall_t)&fs_read);
+	add_system_call(SYSCALL_WRITE, (syscall_t)&fs_write);
+	add_system_call(SYSCALL_CLOSE, (syscall_t)&fs_close);
 
 #pragma GCC diagnostic pop
 	

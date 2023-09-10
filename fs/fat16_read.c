@@ -21,7 +21,7 @@ int fat16_read_data_from_cluster(uint32_t cluster, void *data, int data_length, 
     }
 
     /* Calculate the block number based on the cluster. */
-    uint16_t block_num = get_data_start_block() + cluster;
+    uint16_t block_num = GET_DIRECTORY_BLOCK(cluster);
     return read_block_offset((byte_t *)data, data_length, offset, block_num);
 }
 

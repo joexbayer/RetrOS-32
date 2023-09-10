@@ -206,19 +206,20 @@ int fs_read(int fd, void* buf, int size)
     }
 
     /* check if the file is open */
-    dbgprintf("fs_read %d %x %d\n", fd, buf, size);
-    if(fd < 0 || fd >= FS_MAX_FILES || !(fs_file_table[fd].flags & FS_FILE_FLAG_READ)){
+    if(fd < 0 || fd >= FS_MAX_FILES || !HAS_FLAG(fs_file_table[fd].flags, FS_FILE_FLAG_READ)){
+        dbgprintf("File not open %d %d %d\n", fd, fs_file_table[fd].flags, FS_FILE_FLAG_READ);
         return -2;
     }
 
     /* read the file */
-    dbgprintf("fs_read %d %x %d\n", fd, buf, size);
     int ret = fs_current->ops->read(fs_current, &fs_file_table[fd], buf, size);
     if(ret <= 0){
         return -3;
     }
 
     fs_file_table[fd].offset += size;
+
+    dbgprintf("fs_read %d: read %d/%d\n", fd, ret, size);
 
     return ret;
 }

@@ -105,18 +105,22 @@ void xxd(int argc, char* argv[])
 		return;
 	}
 
-	inode_t inode = ext_open(argv[1], 0);
-	if(inode <= 0){
+	inode_t inode = fs_open(argv[1], FS_FILE_FLAG_READ);
+	if(inode < 0){
 		twritef("File %s not found.\n", argv[1]);
 		return;
 	}
 
 	char* buf = kalloc(MAX_FILE_SIZE);
-	int ret = ext_read(inode, buf, MAX_FILE_SIZE);
+	int ret = fs_read(inode, buf, MAX_FILE_SIZE);
+	if(ret < 0){
+		twritef("Error reading file\n");
+		return;
+	}
 	
 	hexdump(buf, ret);
 	
-	ext_close(inode);
+	fs_close(inode);
 	kfree(buf);
 
 	return;
@@ -130,18 +134,18 @@ void sh(int argc, char* argv[])
 		return;
 	}
 
-	inode_t inode = ext_open(argv[1], 0);
+	inode_t inode = fs_open(argv[1], FS_FILE_FLAG_READ);
 	if(inode <= 0){
 		twritef("File %s not found.\n", argv[1]);
 		return;
 	}
 
 	char* buf = kalloc(MAX_FILE_SIZE);
-	int ret = ext_read(inode, buf, MAX_FILE_SIZE);
+	int ret = fs_read(inode, buf, MAX_FILE_SIZE);
 	
 	script_parse(buf);
 	
-	ext_close(inode);
+	fs_close(inode);
 	kfree(buf);
 
 	return;
@@ -243,16 +247,16 @@ EXPORT_KSYMBOL(cd);
 
 void cat(int argc, char* argv[])
 {
-	inode_t inode = ext_open(argv[1], 0);
+	inode_t inode = fs_open(argv[1], FS_FILE_FLAG_READ);
 	if(inode < 0){
 		twritef("File %s not found.\n", argv[1]);
 		return;
 	}
 
 	char buf[512];
-	ext_read(inode, buf, 512);
+	fs_read(inode, buf, 512);
 	twritef("%s\n", buf);
-	ext_close(inode);
+	fs_close(inode);
 	return;
 }
 EXPORT_KSYMBOL(cat);

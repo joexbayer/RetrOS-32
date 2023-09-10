@@ -19,7 +19,6 @@
 #include <sync.h>
 
 #define DIRECTORY_ROOT 0
-#define GET_DIRECTORY_BLOCK(cluster) (cluster == 0 ? get_root_directory_start_block() : get_data_start_block() + cluster)  
 
 static struct fat_boot_table boot_table = {0};
 static byte_t* fat_table_memory = NULL;  /* pointer to the in-memory FAT table */
@@ -37,7 +36,7 @@ static struct fat16_directory_entry root_directory = {
     .extension = "   ",
     .attributes = FAT16_FLAG_SUBDIRECTORY,
     .first_cluster = 0,
-    .file_size = 0
+    .file_size = 512
 };
 
 /* HELPER FUNCTIONS */
@@ -150,6 +149,12 @@ int fat16_read_entry(uint32_t block, uint32_t index, struct fat16_directory_entr
     if(index >= ENTRIES_PER_BLOCK)
         return -1;  /* index out of range */
 
+    /* edge case where entry is root directory */
+    if(block == get_root_directory_start_block() && index == 0){
+        memcpy(entry_out, &root_directory, sizeof(struct fat16_directory_entry));
+        return 0;
+    }
+
     byte_t buffer[512];
     if(read_block(buffer, block) < 0){
         dbgprintf("Error reading block\n");
@@ -259,8 +264,6 @@ int fat16_name_compare(uint8_t* path_part, uint8_t* full_name)
     int j = 0, i = 0;
     int len = strlen((char*)path_part);
     fat16_to_upper((char*)path_part);
-
-    dbgprintf("Comparing %s to %s\n", path_part, full_name);
     
     // Iterate over the name part of path_part and compare to full_name
     while (i < len && path_part[i] != '.' && j < 8){
