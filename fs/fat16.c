@@ -350,6 +350,7 @@ int fat16_directory_entry_debug(struct fat16_directory_entry* entry)
     dbgprintf("  Reserved: 0x%x\n", entry->reserved);
     dbgprintf("  Created time: 0x%x\n", entry->created_time);
     dbgprintf("  Created date: 0x%x\n", entry->created_date);
+    dbgprintf("  First cluster: %d\n", entry->first_cluster);
     return 0;
 }
 

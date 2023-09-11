@@ -75,7 +75,7 @@ struct fat16_directory_entry {
 
 struct fat16_file_identifier {
     uint16_t directory;
-    uint16_t index;
+    int16_t index;
 };
 
 /* internal fat16 utility functions */

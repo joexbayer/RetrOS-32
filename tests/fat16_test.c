@@ -81,10 +81,18 @@ int main(int argc, char const *argv[])
     char* path = "/DIR/DIR2/FILENAM2.TXT";   
 
     struct fat16_directory_entry entry;
-    fat16_get_directory_entry(path, &entry);
+    struct fat16_file_identifier file_id;
+
+    file_id = fat16_get_directory_entry(path, &entry);
+    printf("File ID: %d : %d\n", file_id.directory, file_id.index);
     fat16_directory_entry_debug(&entry);
 
-    (void)fat16_get_directory_entry("/DIR", &entry);
+    file_id = fat16_get_directory_entry("/", &entry);
+    printf("File ID: %d : %d\n", file_id.directory, file_id.index);
+    fat16_directory_entry_debug(&entry);
+
+    file_id = fat16_get_directory_entry("/DIR", &entry);
+    printf("File ID: %d : %d\n", file_id.directory, file_id.index);
     fat16_directory_entry_debug(&entry);
 
 
