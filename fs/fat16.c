@@ -364,8 +364,9 @@ int fat16_directory_entry_debug(struct fat16_directory_entry* entry)
  */
 struct fat16_file_identifier fat16_get_directory_entry(char* path, struct fat16_directory_entry* entry_out)
 {
-    uint16_t start_block;
     uint32_t index;
+    uint16_t start_block;
+    int last_start_block;
     struct fat16_directory_entry entry = {0};
 
     dbgprintf("Searching for %s\n", path);
@@ -398,7 +399,8 @@ struct fat16_file_identifier fat16_get_directory_entry(char* path, struct fat16_
             if(fat16_read_entry(start_block, index, &entry) < 0) continue;
             if (fat16_name_compare(token, entry.full_name)) {
                 if (entry.attributes & FAT16_FLAG_SUBDIRECTORY) {
-                    start_block = GET_DIRECTORY_BLOCK(entry.first_cluster);
+                    last_start_block = start_block;
+                    start_block = entry.first_cluster != get_root_directory_start_block() ? get_data_start_block() + entry.first_cluster : get_root_directory_start_block();
                 }
 
                 found = 1;
@@ -418,7 +420,7 @@ struct fat16_file_identifier fat16_get_directory_entry(char* path, struct fat16_
     memcpy(entry_out, &entry, sizeof(struct fat16_directory_entry));
     
     return (struct fat16_file_identifier){
-        .directory = start_block,
+        .directory = IS_DIRECTORY(entry) ? last_start_block : start_block,
         .index = index
     };
 }

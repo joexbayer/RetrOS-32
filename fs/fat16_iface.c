@@ -158,11 +158,12 @@ static int fat16_read(struct filesystem* fs, struct file* file, void* buf, int s
 
     int cluster = entry.first_cluster;
     int offset = file->offset;
+    int file_size = IS_DIRECTORY(entry) ? 512 : entry.file_size;
 
     /* read the data */
     dbgprintf("Reading %d bytes from cluster %d offset %d\n", size, cluster, offset);
 
-    int read = fat16_read_data(cluster, offset, buf, size, entry.file_size);
+    int read = fat16_read_data(cluster, offset, buf, size, file_size);
     if(read < 0){
         return -4;
     }
@@ -181,8 +182,8 @@ static int fat16_read(struct filesystem* fs, struct file* file, void* buf, int s
  */
 static struct file* fat16_open(struct filesystem* fs, const char* path, int flags)
 {
-    struct fat16_file_identifier id;;
     struct file* file;
+    struct fat16_file_identifier id;;
     struct fat16_directory_entry entry;
 
     if(fs == NULL || path == NULL || strlen(path) > 255){

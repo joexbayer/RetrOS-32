@@ -8,6 +8,7 @@
 #include <util.h>
 #include <colors.h>
 #include <fs/ext.h>
+#include <fs/fs.h>
 
 #define COLOR_BG COLOR_VGA_LIGHTEST_GRAY
 #define COLOR_TEXT COLOR_VGA_MEDIUM_DARK_GRAY

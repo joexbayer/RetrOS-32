@@ -17,7 +17,7 @@
 #define ENTRIES_PER_BLOCK (512 / sizeof(struct fat16_directory_entry))
 
 #define GET_DIRECTORY_BLOCK(cluster) (cluster == 0 ? get_root_directory_start_block() : get_data_start_block() + cluster)  
-
+#define IS_DIRECTORY(entry) (entry.attributes & FAT16_FLAG_SUBDIRECTORY)
 #define FAT_BLOCKS (65536*sizeof(uint16_t)/512)
 
 #define FAT_BOOT_TABLE_SIZE 64

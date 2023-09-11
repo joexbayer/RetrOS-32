@@ -110,8 +110,8 @@ void Editor::Quit()
 void Editor::Open(char* path)
 {
 
-	m_fd = open(path, FS_FLAG_CREATE);
-	if(m_fd <= 0)
+	m_fd = open(path, FS_FILE_FLAG_CREATE | FS_FILE_FLAG_READ);
+	if(m_fd < 0)
 		return;
 	
 	setTitle(path);
