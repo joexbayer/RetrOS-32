@@ -41,6 +41,7 @@ programs: bin/crt0.o ${USROBJS}
 	@make -C colors/
 	@make -C finder/
 	@make -C calculator/
+	@make -C graphs/
 	@echo [USR] All user programs created and linked!
 
 bin/%.o: %.c bin/crt0.o

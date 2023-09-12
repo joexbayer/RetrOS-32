@@ -12,7 +12,7 @@
 /* int startValue, int endValue, float t */
 #define EASE(startValue, endValue, t) (startValue + (endValue - startValue) * ((t < 0.0f) ? 0.0f : (t > 1.0f) ? 1.0f : t))
 
-
 #define PI 3.14159265358979323846
+
 
 #endif /* E9ADA698_B583_4B4F_BBB9_3513A8E02614 */

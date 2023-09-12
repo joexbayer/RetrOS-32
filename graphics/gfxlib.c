@@ -31,7 +31,7 @@ int gfx_get_window_height()
 
 int gfx_push_event(struct window* w, struct gfx_event* e)
 {
-	dbgprintf("Pushing event %d (head %d): data %d, data2 %d\n", e->event, w->events.head, e->data, e->data2);
+	//dbgprintf("Pushing event %d (head %d): data %d, data2 %d\n", e->event, w->events.head, e->data, e->data2);
 
 	SPINLOCK(w,  {
 		memcpy(&w->events.list[w->events.head], e, sizeof(*e));
@@ -66,7 +66,7 @@ int gfx_event_loop(struct gfx_event* event, gfx_event_flag_t flags)
 			continue;
 		}
 		
-		dbgprintf("Getting event %d (tail %d)\n", current_running->gfx_window->events.list[current_running->gfx_window->events.tail].event, current_running->gfx_window->events.tail);
+		//dbgprintf("Getting event %d (tail %d)\n", current_running->gfx_window->events.list[current_running->gfx_window->events.tail].event, current_running->gfx_window->events.tail);
 		SPINLOCK(current_running->gfx_window, {
 			memcpy(event, &current_running->gfx_window->events.list[current_running->gfx_window->events.tail], sizeof(struct gfx_event));
 			current_running->gfx_window->events.tail = (current_running->gfx_window->events.tail + 1) % GFX_MAX_EVENTS;

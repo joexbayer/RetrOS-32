@@ -121,8 +121,6 @@ static void __int_handler kb_callback()
 			break;
 	}
 
-  dbgprintf("Scancode (%d)\n", scancode);
-
 	if(scancode & 0x80)
 		return;
 
@@ -158,7 +156,6 @@ static void __int_handler kb_callback()
   } else {
 	  kb_add_char( __shift_pressed ? c+('A'-'a') : c);
   }
-  dbgprintf("Pressed %d\n", __ctrl_pressed ? 128+c : c);
 
 	__keyboard_presses++;
 

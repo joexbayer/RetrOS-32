@@ -110,7 +110,7 @@ inline void fat16_free_cluster(uint32_t cluster)
 
 uint32_t fat16_get_free_cluster()
 {
-    acquire(&fat16_table_lock);
+    //acquire(&fat16_table_lock);
 
     for (int i = 0; i < 65536; i++) {  /* Start from 2 as 0 and 1 are reserved entries */
         if (fat16_get_fat_entry(i) == 0x0000) {
@@ -122,7 +122,7 @@ uint32_t fat16_get_free_cluster()
         }
     }
 
-    release(&fat16_table_lock);
+    //release(&fat16_table_lock);
     return -1;  /* no free cluster found */
 }
 
@@ -140,6 +140,8 @@ int fat16_sync_directory_entry(uint16_t block, uint32_t index, const struct fat1
 
     uint32_t offset = (index % ENTRIES_PER_BLOCK) * sizeof(struct fat16_directory_entry);
     write_block_offset((byte_t*)entry, sizeof(struct fat16_directory_entry), offset, block);
+
+    dbgprintf("Syncing entry %s.%s (%d bytes) Attributes: 0x%x Cluster: %d %s to %d index %d\n", entry->filename, entry->extension, entry->file_size, entry->attributes, entry->first_cluster, entry->attributes & 0x10 ? "<DIR>" : "", block, index);
 
     return 0;  /* success */
 }
@@ -647,7 +649,7 @@ int fat16_format(char* label, int reserved)
     /* ... other fields ... */
     boot_table_ptr->boot_signature = 0xAA55;
     
-    memcpy(boot_table_ptr->volume_label, "VOLUME1    ", 11);
+    memcpy(boot_table_ptr->volume_label, "NETOS-VOL01", 11);
     memcpy(boot_table_ptr->file_system_identifier, "FAT16   ", 8); /* This can be any 8-character string */
     memcpy(boot_table_ptr->manufacturer, "NETOS   ", 8); /* This can be any 8-character string */
 
@@ -683,7 +685,7 @@ int fat16_format(char* label, int reserved)
     fat16_load();
     fat16_set_fat_entry(0, 0xFF00 | 0xF8); 
     fat16_allocate_cluster(1);
-    fat16_add_entry(get_root_directory_start_block(), "VOLUME1 ", "   ", FAT16_FLAG_VOLUME_LABEL, 0, 0);
+    fat16_add_entry(get_root_directory_start_block(), "NETOS-VOL01", "   ", FAT16_FLAG_VOLUME_LABEL, 0, 0);
 
     fat16_sync_fat_table();
 

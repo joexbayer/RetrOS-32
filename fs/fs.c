@@ -230,11 +230,13 @@ int fs_write(int fd, void* buf, int size)
 
     /* check if a filesystem is available */
     if(fs_current == NULL || fs_current->ops->write == NULL){
+        dbgprintf("No filesystem available\n");
         return -1;
     }
 
     /* check if the file is open */
-    if(fd < 0 || fd >= FS_MAX_FILES || fs_file_table[fd].flags & FS_FILE_FLAG_WRITE){
+    if(fd < 0 || fd >= FS_MAX_FILES || !(fs_file_table[fd].flags & FS_FILE_FLAG_WRITE)){
+        dbgprintf("File not open\n");
         return -2;
     }
 

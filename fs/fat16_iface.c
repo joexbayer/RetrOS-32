@@ -89,34 +89,40 @@ static int fat16_write(struct filesystem* fs, struct file* file, const void* buf
 
     /* check if the file is open */
     if(file->nlinks == 0){
+        dbgprintf("File is not open\n");
         return -1;
     }
 
     /* check if the file is writeable */
     if(!(file->flags & FS_FILE_FLAG_WRITE)){
+        dbgprintf("File is not writeable\n");
         return -2;
     }
 
     struct fat16_directory_entry entry;
     if(fat16_read_entry(file->directory, file->identifier, &entry) != 0){
+        dbgprintf("Failed to read directory entry\n");
         return -3;
     }
 
     int cluster = entry.first_cluster;
-    int offset = file->offset;
+    int offset = /*file->offset*/ 0;
 
     /* write the data */
     int written = fat16_write_data(cluster, offset, (void*)buf, size);
     if(written < 0){
+        dbgprintf("Failed to write data\n");
         return -4;
     }
 
     /* update the file size */
-    entry.file_size += written;
+    entry.file_size += size;
 
     fat16_sync_directory_entry(file->directory, file->identifier, &entry);
 
-    return written;
+    dbgprintf("Wrote %d bytes to cluster %d offset %d\n", written, cluster, offset);
+
+    return size;
 }
 
 /**

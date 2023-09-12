@@ -110,7 +110,7 @@ void Editor::Quit()
 void Editor::Open(char* path)
 {
 
-	m_fd = open(path, FS_FILE_FLAG_CREATE | FS_FILE_FLAG_READ);
+	m_fd = open(path, FS_FILE_FLAG_CREATE | FS_FILE_FLAG_READ | FS_FILE_FLAG_WRITE);
 	if(m_fd < 0)
 		return;
 	
@@ -131,7 +131,7 @@ void Editor::setFd(int fd)
 
 void Editor::Save()
 {
-	if(m_fd <= 0){
+	if(m_fd < 0){
 		return;
 	}
 	

@@ -59,6 +59,18 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
 
     struct gfx_theme* theme = kernel_gfx_current_theme();
 
+    if((window->is_moving.state == GFX_WINDOW_MOVING || window->resize) && !HAS_FLAG(window->flags, GFX_IS_IMMUATABLE)){
+        /* draw outline of window */
+        vesa_line_horizontal(buffer, window->x, window->y, window->width, COLOR_VGA_DARKEST_GRAY);
+        vesa_line_horizontal(buffer, window->x, window->y+window->height, window->width, COLOR_VGA_DARKEST_GRAY);
+        vesa_line_vertical(buffer, window->x, window->y, window->height, COLOR_VGA_DARKEST_GRAY);
+        vesa_line_vertical(buffer, window->x+window->width, window->y, window->height, COLOR_VGA_DARKEST_GRAY);
+
+        window->changed = 0;
+        return;
+
+    }
+
     int background_color = window->in_focus ? window->color.border == 0 ? theme->window.border : window->color.border : theme->window.border;
 
     /* Copy inner window framebuffer to given buffer with relativ pitch. */
@@ -80,6 +92,7 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
             
         /* Draw main frame of window with title bar and borders */
         vesa_fillrect(buffer, window->x+4, window->y-4, window->width-8, 12, theme->window.background);
+
         vesa_line_horizontal(buffer, window->x+4, window->y-4, window->width-8, COLOR_VGA_DARKEST_GRAY);
         vesa_line_horizontal(buffer, window->x+4, window->y-3, window->width-8, COLOR_VGA_LIGHTER_GRAY+2);
 
@@ -90,10 +103,6 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
             vesa_line_horizontal(buffer, window->x+8, (window->y-1)+i*3, window->width-16, background_color);
             vesa_line_horizontal(buffer, window->x+8, (window->y-2)+i*3, window->width-16, COLOR_VGA_LIGHTER_GRAY+2);
         }
-
-        /* Exit */
-        vesa_fillrect(buffer,  window->x+window->width-20,  window->y-2, strlen("X")*8 - 2, 8, theme->window.background);
-        vesa_write_str(buffer, window->x+window->width-20,  window->y-2, "X", COLOR_VGA_DARK_GRAY);
 
         /* Title */
         int title_position = (window->width/2) - ((strlen(window->name)*8)/2);
@@ -106,6 +115,10 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
             vesa_fillrect(buffer, window->x+header_position, window->y-2, strlen(window->header)*8 + 4, 8, background_color);
             vesa_write_str(buffer, window->x+header_position+4, window->y-2, window->header, window->color.text == 0 ? theme->window.background : window->color.text);
         }
+
+        /* Exit */
+        vesa_fillrect(buffer,  window->x+window->width-20,  window->y-2, strlen("X")*8 - 2, 8, theme->window.background);
+        vesa_write_str(buffer, window->x+window->width-20,  window->y-2, "X", COLOR_VGA_DARK_GRAY);
     }
 
     if(!HAS_FLAG(window->flags, GFX_HIDE_BORDER)){
@@ -245,6 +258,8 @@ static void gfx_default_mouse_up(struct window* window, int x, int y)
         window->is_moving.state = GFX_WINDOW_STATIC;
         window->is_moving.x = x;
         window->is_moving.y = y;
+
+        window->changed = 1;
     }
 
     if(gfx_point_in_rectangle(window->x+window->width-8,  window->y+window->height-8, window->x+window->width,  window->y+window->height, x, y) && window->is_resizable){
