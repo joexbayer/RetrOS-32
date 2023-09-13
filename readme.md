@@ -169,6 +169,7 @@ IBM Thinkpad a21p
 
 - [x] Custom Bootloader & GRUB compatible
 - [x] Wallpapers
+- [x] Mountable image 
 - [x] Multi-threaded pre-emptive scheduling
 - [x] GDT & TSS kernel / userspace separation
 - [x] Interrupt handling
@@ -185,7 +186,7 @@ IBM Thinkpad a21p
   - [ ] HTML
 - [x] ATA IDE Driver
   - [x] Ext2 (like) Filesystem
-  - [ ] FAT16 (like), support for up to 32mb files.
+  - [ ] FAT16, support for up to 32mb files.
   - [x] read / write
 - [x] Memory
   - [x] 32bit Virtual Memory
