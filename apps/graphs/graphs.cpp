@@ -21,8 +21,8 @@ float approx_sin(float x) {
 
 const int GRAPH_WIDTH = 400;
 const int GRAPH_HEIGHT = 200;
-const int GRAPH_OFFSET_X = 50; /* Increased offset for axis labels */
-const int GRAPH_OFFSET_Y = 50; /* Increased offset for axis labels */
+const int GRAPH_OFFSET_X = 10; /* Increased offset for axis labels */
+const int GRAPH_OFFSET_Y = 10; /* Increased offset for axis labels */
 const int ORIGIN_X = GRAPH_OFFSET_X + GRAPH_WIDTH / 2;
 const int ORIGIN_Y = GRAPH_OFFSET_Y + GRAPH_HEIGHT / 2;
 const int GRID_SPACING = 20; /* Spacing for grid lines */
@@ -42,11 +42,11 @@ public:
 
         /* Draw grid lines */
         for (int i = GRAPH_OFFSET_X + GRID_SPACING; i < GRAPH_OFFSET_X + GRAPH_HEIGHT; i += GRID_SPACING) {
-            drawLine(i, GRAPH_OFFSET_Y, i, GRAPH_OFFSET_Y + GRAPH_WIDTH, COLOR_VGA_MEDIUM_GRAY);
+            drawLine(i, GRAPH_OFFSET_Y, i, GRAPH_OFFSET_Y + GRAPH_WIDTH, COLOR_VGA_LIGHT_GRAY);
             //drawFormatText(i, ORIGIN_Y + 5, COLOR_VGA_DARKEST_GRAY, "%d", i - ORIGIN_X);
         }
         for (int i = GRAPH_OFFSET_Y + GRID_SPACING; i < GRAPH_OFFSET_Y + GRAPH_WIDTH; i += GRID_SPACING) {
-           drawLine(GRAPH_OFFSET_X, i, GRAPH_OFFSET_X + GRAPH_HEIGHT, i, COLOR_VGA_MEDIUM_GRAY);
+           drawLine(GRAPH_OFFSET_X, i, GRAPH_OFFSET_X + GRAPH_HEIGHT, i, COLOR_VGA_LIGHT_GRAY);
            //drawFormatText(ORIGIN_X - 25, i, COLOR_VGA_DARKEST_GRAY, "%d", ORIGIN_Y - i);
         }
 
