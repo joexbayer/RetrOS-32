@@ -259,6 +259,27 @@ static int fat16_close(struct filesystem* fs, struct file* file)
  */
 static int fat16_remove(struct filesystem* fs, const char* path)
 {
+    FS_VALIDATE(fs);
+
+    struct fat16_file_identifier id;
+    struct fat16_directory_entry entry;
+
+    /* parse path */
+    id = fat16_get_directory_entry((char*)path, &entry);
+    if(id.directory < 0){
+        return -1;
+    }
+
+    /* check if the file is open */
+    if(entry.attributes != 0){
+        return -2;
+    }
+
+    /* delete the entry */
+    if(fat16_delete_entry(id.directory, id.index) != 0){
+        return -3;
+    }
+
     return 0;
 }
 

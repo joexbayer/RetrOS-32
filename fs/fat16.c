@@ -200,6 +200,33 @@ static int fat16_find_entry(const char *filename, const char* ext, struct fat16_
     return -1;  /* Not found */
 }
 
+int fat16_free_clusters(int start_cluster)
+{
+    int count = 0;
+    int current_cluster = start_cluster;
+    int last_cluster = 0;
+    while (current_cluster != 0xFFFF) {
+        count++;
+        last_cluster = current_cluster;
+        fat16_free_cluster(current_cluster);
+        current_cluster = fat16_get_fat_entry(last_cluster);
+    }
+    return count;
+}
+
+int fat16_delete_entry(int block, int index)
+{
+    struct fat16_directory_entry entry = {0};
+    fat16_read_entry(block, index, &entry);
+
+    fat16_free_clusters(entry.first_cluster);
+
+    memset(&entry, 0, sizeof(struct fat16_directory_entry));
+    fat16_sync_directory_entry(block, index, &entry);
+
+    return 0;
+}
+
 /**
  * Adds a new root directory entry.
  * @param filename The name of the file (up to 8 characters, not including the extension).
