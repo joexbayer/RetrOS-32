@@ -209,6 +209,7 @@ IBM Thinkpad a21p
 - [x] Calculator
 - [x] Tools
   - [x] Build
+  - [ ] Sync / Migration Took
   - [x] mkfs
   - [x] Testing
   - [ ] Create & Encode icons and wallpapers
