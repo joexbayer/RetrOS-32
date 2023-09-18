@@ -280,6 +280,8 @@ static int fat16_remove(struct filesystem* fs, const char* path)
         return -3;
     }
 
+    /* TODO: close potentially open files with the path */
+
     return 0;
 }
 
@@ -293,7 +295,37 @@ static int fat16_remove(struct filesystem* fs, const char* path)
  */
 static int fat16_mkdir(struct filesystem* fs, const char* path)
 {
-    return 0;
+    FS_VALIDATE(fs);
+
+    /* check if the directory already exists */
+    struct fat16_directory_entry entry;
+    struct fat16_file_identifier id = fat16_get_directory_entry((char*)path, &entry);
+    if(id.directory >= 0){
+        return -1;
+    }
+
+    /* parse out directory */
+    char* directory = (char*)kalloc(strlen(path) + 1);
+    ERR_ON_NULL(directory);
+
+    /* find last / in path */
+    int i = strlen(path) - 1;
+    while(path[i] != '/' && i >= 0){
+        i--;
+    }
+    i--;
+
+    if(i < 0){
+        return -2;
+    }
+
+    /* copy directory name */
+    memcpy(directory, path, i);
+
+    /* add rest of path as new directory in parsed directory */
+
+
+    
 }
 
 /**
@@ -320,6 +352,29 @@ static int fat16_rmdir(struct filesystem* fs, const char* path)
  */
 static int fat16_rename(struct filesystem* fs, const char* path, const char* new_path)
 {
+    FS_VALIDATE(fs);
+
+    /* check if the file exists */
+    struct fat16_directory_entry entry;
+    struct fat16_file_identifier id = fat16_get_directory_entry((char*)path, &entry);
+    if(id.directory < 0){
+        return -1;
+    }
+
+    /* check if the new file exists */
+    struct fat16_directory_entry new_entry;
+    struct fat16_file_identifier new_id = fat16_get_directory_entry((char*)new_path, &new_entry);
+    if(new_id.directory >= 0){
+        return -2;
+    }
+
+    /* rename the file */
+    if(fat16_rename_entry(id.directory, id.index, (char*)new_path) != 0){
+        return -3;
+    }
+
+
+
     return 0;
 }
 

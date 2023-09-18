@@ -200,6 +200,20 @@ static int fat16_find_entry(const char *filename, const char* ext, struct fat16_
     return -1;  /* Not found */
 }
 
+int fat16_rename_entry(int directory, int index, char* name)
+{
+    struct fat16_directory_entry entry = {0};
+    fat16_read_entry(directory, index, &entry);
+
+    /* change old name to new: TODO consider . */
+    memcpy(entry.filename, name, 8);
+    memcpy(entry.extension, name+8, 3);
+
+    fat16_sync_directory_entry(directory, index, &entry);
+
+    return 0;
+}
+
 int fat16_free_clusters(int start_cluster)
 {
     int count = 0;
