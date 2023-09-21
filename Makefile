@@ -204,7 +204,7 @@ sync:
 # sudo cp -r mnt/* ./mnt/apps/
 
 mount:
-	sudo mount tests/filesystem.test ./mnt
+	sudo mount -o shortname=winnt filesystemv2.img ./mnt
 
 fat16test:
 	gcc tools/fat.c -o ./bin/fattest.o

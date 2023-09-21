@@ -9,9 +9,10 @@ uint32_t fat16_find_cluster_by_offset(int first_cluster, int offset, int* cluste
     uint32_t current_cluster = first_cluster;
     int traversed_bytes = 0; 
 
-    while (current_cluster < 0xFFF8 && current_cluster != 0xFFFF && traversed_bytes + 512 <= offset){
+    while (current_cluster < 0xFFF8 && current_cluster != 0xFFFF && traversed_bytes + 512 < offset){
         traversed_bytes += 512;
         current_cluster = fat16_get_fat_entry(current_cluster);
+        dbgprintf("Skipping 0x%x\n", current_cluster);
     }
 
     *cluster_offset = offset - traversed_bytes;
@@ -23,6 +24,18 @@ int fat16_write_data_to_cluster_with_offset(uint32_t cluster, int offset, byte_t
     int block_num = GET_DIRECTORY_BLOCK(cluster);
     write_block_offset(data, data_length, offset, block_num);
 
+    return 0;
+}
+
+int fat16_print_cluster_chain(int cluster)
+{
+    uint32_t current_cluster = cluster;
+    int i = 0;
+    while (current_cluster < 0xFFF8 && current_cluster != 0xFFFF){
+        dbgprintf("Cluster %d: 0x%x ->\n", i, current_cluster);
+        current_cluster = fat16_get_fat_entry(current_cluster);
+        i++;
+    }
     return 0;
 }
 
@@ -43,6 +56,8 @@ int fat16_write_data(int first_cluster, int offset, void* data, int data_length)
 {
     int remaining_data_length = data_length;
     int data_offset = 0;
+
+    fat16_print_cluster_chain(first_cluster);
 
     /* Determine the cluster and inner cluster offset where we should start writing. */
     int cluster_offset;
@@ -90,6 +105,9 @@ int fat16_write_data(int first_cluster, int offset, void* data, int data_length)
     if (fat16_get_fat_entry(current_cluster) != 0xFFFF){
         fat16_set_fat_entry(current_cluster, 0xFFFF);
     }
+
+    fat16_print_cluster_chain(first_cluster);
+    fat16_sync_fat_table();
 
     return 0;  /* Success */
 }

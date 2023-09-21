@@ -112,7 +112,7 @@ uint32_t fat16_get_free_cluster()
 {
     //acquire(&fat16_table_lock);
 
-    for (int i = 0; i < 65536; i++) {  /* Start from 2 as 0 and 1 are reserved entries */
+    for (int i = 5; i < 65536; i++) {  /* Start from 2 as 0 and 1 are reserved entries */
         if (fat16_get_fat_entry(i) == 0x0000) {
 
             fat16_allocate_cluster(i);
@@ -782,6 +782,12 @@ int fat16_load()
     fat_table_memory = (byte_t*)kalloc((boot_table.fat_blocks * 512));  /* Allocate memory for the FAT table */
     for (uint16_t i = 0; i < boot_table.fat_blocks; i++) {
         read_block(fat_table_memory + i * 512, get_fat_start_block() + i);
+    }
+
+    /* dump fat table */
+    for(int i = 0; i < 65536; i++){
+        if(fat16_get_fat_entry(i) == 0xFFFF || fat16_get_fat_entry(i) == 0 ) continue;
+        dbgprintf("FAT table %d: %x\n", i, fat16_get_fat_entry(i));
     }
 
     current_dir_block = get_root_directory_start_block();
