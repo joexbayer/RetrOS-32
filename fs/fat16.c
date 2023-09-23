@@ -308,46 +308,46 @@ int fat16_name_compare(uint8_t* path_part, uint8_t* full_name)
     int len = strlen((char*)path_part);
     fat16_to_upper((char*)path_part);
     
-    // Iterate over the name part of path_part and compare to full_name
+    /* Iterate over the name part of path_part and compare to full_name */
     while (i < len && path_part[i] != '.' && j < 8){
         if (path_part[i] != full_name[j]){
-            return 0; // Mismatch found, names aren't the same
+            return 0; /* Mismatch found, names aren't the same */
         }
         i++;
         j++;
     }
 
-    // If path_part has a shorter name, we expect full_name to have spaces 
+    /* If path_part has a shorter name, we expect full_name to have spaces  */
     while (j < 8){
         if (full_name[j] != ' '){
-            return 0; // Mismatch found
+            return 0; /* Mismatch found */
         }
         j++;
     }
 
-    // If path_part contains a dot, skip it
+    /* If path_part contains a dot, skip it */
     if (i < len && path_part[i] == '.'){
         i++;
     }
 
-    // Now, compare the extension part
+    /* Now, compare the extension part */
     while (i < len && j < 11){
         if (path_part[i] != full_name[j])
         {
-            return 0; // Mismatch found
+            return 0; /* Mismatch found */
         }
         i++;
         j++;
     }
 
-    // If path_part has a shorter extension, we expect full_name to have spaces
+    /* If path_part has a shorter extension, we expect full_name to have spaces */
     while (j < 11){
         if (full_name[j] != ' '){
-            return 0; // Mismatch found
+            return 0; /* Mismatch found */
         }
         j++;
     }
-    return 1; // The names are the same.
+    return 1; /* The names are the same */.
 }
 
 char* sstrtok(char* str, const char* delim)
@@ -359,7 +359,7 @@ char* sstrtok(char* str, const char* delim)
         int len = strlen(str);
         memset(local_buffer, 0, 128);
         memcpy(local_buffer, str, len);
-        local_buffer[len+1] = 0;  // Ensure null-termination
+        local_buffer[len+1] = 0;  /* Ensure null-termination */
         current = local_buffer;
     }
 

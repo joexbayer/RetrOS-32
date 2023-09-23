@@ -81,7 +81,17 @@ uint16_t tcp_calculate_checksum(uint32_t src_ip, uint32_t dest_ip, unsigned shor
 
 	return sum;
 }
-
+/**
+ * @brief Sends a TCP segment.
+ * Function sends given data as a TCP segment.
+ * @warning Calls net_send_skb() which frees the SKB.
+ * @param sock generic socket to send from.
+ * @param hdr TCP header to send.
+ * @param skb SKB to send.
+ * @param data given data to send.
+ * @param len length of data
+ * @return int 
+ */
 static int __tcp_send(struct sock* sock, struct tcp_header* hdr, struct sk_buff* skb, uint8_t* data, uint32_t len)
 {
 	if(net_ipv4_add_header(skb, ntohl(sock->recv_addr.sin_addr.s_addr), TCP, sizeof(struct tcp_header)+len) < 0){
@@ -123,8 +133,9 @@ static int __tcp_send(struct sock* sock, struct tcp_header* hdr, struct sk_buff*
  */
 int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t push)
 {
-	struct sk_buff* skb = skb_new();
-	assert(skb != NULL);
+	uint8_t retries;
+	uint32_t timeout;
+	struct sk_buff* skb;
 
 	dbgprintf("[TCP] Sending segment with size %d, seq: %d (%d after)\n", len, sock->tcp->sequence, sock->tcp->sequence+len);
 	struct tcp_header hdr = {
@@ -149,9 +160,27 @@ int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t pus
 	 * 
 	 * Problem is that we "lose" the skb after it is transmitted, keep a copy?
 	 */
+	retries = 0;
 
-	__tcp_send(sock, &hdr, skb, data, len);
-	return ERROR_OK;
+	do {
+		skb = skb_new();
+		ERR_ON_NULL(skb);
+
+		__tcp_send(sock, &hdr, skb, data, len);
+
+		/* Wait for ACK */
+		timeout = get_time() + 500;
+
+		/* check if ack was receiver for timeout seconds. */
+		while(get_time() < timeout){
+			kernel_yield();
+			if(!net_sock_awaiting_ack(sock, sock->tcp->sequence)) return ERROR_OK;
+		}
+
+	} while (retries++ < 3);
+
+	dbgprintf("[TCP] Failed to send segment\n");
+	return -1;
 }
 
 int tcp_send_ack(struct sock* sock, struct tcp_header* tcp, int len)
@@ -378,6 +407,12 @@ int tcp_parse(struct sk_buff* skb)
 			 * We will not buffer packets for now, but we should probably do that in the future.
 			 * sock->tcp->sequence == htonl(tcp->seq)
 			 */
+			if (sk->tcp->acknowledgement != htonl(hdr->seq)) {
+				dbgprintf("[TCP] Out-of-order packet received. Expected seq: %d, received seq: %d\n", sk->tcp->acknowledgement, htonl(hdr->seq));
+				return -1;
+			}
+
+
 			int ret = net_sock_add_data(sk, skb);
 			tcp_send_ack(sk, hdr, skb->data_len);
 			if(ret == 0)
@@ -399,12 +434,3 @@ int tcp_parse(struct sk_buff* skb)
 	
 	return -1;
 }
-
-void tcp_connection_update()
-{
-	/* This will be a BIG switch statement, executing functions
-	* based on state of a tcp connection
-	*/
-
-}
-
