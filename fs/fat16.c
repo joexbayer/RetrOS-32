@@ -347,7 +347,7 @@ int fat16_name_compare(uint8_t* path_part, uint8_t* full_name)
         }
         j++;
     }
-    return 1; /* The names are the same */.
+    return 1; /* The names are the same */
 }
 
 char* sstrtok(char* str, const char* delim)

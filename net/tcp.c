@@ -174,7 +174,7 @@ int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t pus
 		/* check if ack was receiver for timeout seconds. */
 		while(get_time() < timeout){
 			kernel_yield();
-			if(!net_sock_awaiting_ack(sock, sock->tcp->sequence)) return ERROR_OK;
+			if(!net_sock_awaiting_ack(sock)) return ERROR_OK;
 		}
 
 	} while (retries++ < 3);
@@ -281,7 +281,7 @@ int tcp_recv_ack(struct sock* sock, struct tcp_header* tcp)
 	dbgprintf("[TCP] Incoming TCP ack expected %d got %d\n", sock->tcp->sequence, htonl(tcp->ack_seq));
 	if(sock->tcp->sequence == htonl(tcp->ack_seq)){
 		dbgprintf("[TCP] Correct sequence acked\n");
-		sock->tcp->acknowledgement = htonl(tcp->seq)+1;
+		sock->tcp->acknowledgement = htonl(tcp->seq);
 		sock->tcp->state = TCP_ESTABLISHED;
 	}
 	
@@ -294,25 +294,43 @@ int tcp_recv_fin(struct sock* sock, struct tcp_header* tcp)
 	return -1;
 }
 
-int tcp_recv_syn(struct sock* sock, struct sk_buff* skb)
-{
-	/* Cant really assert this as we dont want to panic if its not true. */
-	assert(sock->tcp->state == TCP_LISTEN);
 
+int tcp_recv_syn(struct sock* sock, struct tcp_header* tcp)
+{
+	int ret;
+	struct sk_buff* skb;
 	/* send syn ack & more*/
 	struct tcp_header hdr = {
 		.source = sock->bound_port,
 		.dest = sock->recv_addr.sin_port,
 		.window = 1500,
 		.seq = sock->tcp->sequence,
-		.ack_seq = htonl(skb->hdr.tcp->seq)+1,
+		.ack_seq = htonl(tcp->seq)+1,
 		.doff = 0x05,
 		.syn = 1,
 		.ack = 1
 	};
 
+	if (sock->tcp->state != TCP_LISTEN){
+		dbgprintf("[TCP] Socket %d is not listening\n", sock);
+		return -1;
+	}
+
+ 	skb = skb_new();
+	ERR_ON_NULL(skb);
+
+	ret = __tcp_send(sock, &hdr, skb, NULL, 0);
+	if(ret < 0){
+		dbgprintf("[TCP] Failed to send syn ack\n");
+		return -1;
+	}
+
+	/* update states */
+	sock->tcp->sequence += 1;  /* Increment by 1 as the SYN flag consumes a sequence number */
+    sock->tcp->acknowledgement = htonl(tcp->seq) + 1;
 	sock->tcp->state = TCP_SYN_RCVD;
-	return 1;
+
+	return ERROR_OK;
 }
 
 int tcp_send_fin(struct sock* sock)
@@ -368,7 +386,7 @@ int tcp_parse(struct sk_buff* skb)
 	switch (sk->tcp->state){
 	case TCP_LISTEN:
 		if(hdr->syn == 1 && hdr->ack == 0){
-			return tcp_recv_syn(sk, skb);
+			return tcp_recv_syn(sk, hdr);
 		}
 		break;
 	case TCP_SYN_RCVD:
@@ -408,7 +426,7 @@ int tcp_parse(struct sk_buff* skb)
 			 * sock->tcp->sequence == htonl(tcp->seq)
 			 */
 			if (sk->tcp->acknowledgement != htonl(hdr->seq)) {
-				dbgprintf("[TCP] Out-of-order packet received. Expected seq: %d, received seq: %d\n", sk->tcp->acknowledgement, htonl(hdr->seq));
+				dbgprintf("[TCP] Out-of-order packet received. Expected seq: %d, received seq: %d\n", htonl(sk->tcp->acknowledgement), htonl(hdr->seq));
 				return -1;
 			}
 

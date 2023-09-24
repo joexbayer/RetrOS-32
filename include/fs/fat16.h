@@ -74,7 +74,7 @@ struct fat16_directory_entry {
 } __attribute__((packed));
 
 struct fat16_file_identifier {
-    uint16_t directory;
+    int16_t directory;
     int16_t index;
 };
 

@@ -1,41 +1,31 @@
-#ifndef __IPC_H
-#define __IPC_H
+#ifndef IPC_INTERFACE_H
+#define IPC_INTERFACE_H
+
 
 #include <stdint.h>
+#include <rbuffer.h>
 
-/**
- * Events
- * Messages
- */
-
-struct event {
-    uint8_t type;
-    uint8_t action;
+/* IPC Message structure */
+struct ipc_message {
+    unsigned char* data; // Pointer to the message data
+    int length;          // Length of the message
 };
 
-enum msg_box_statues {
-    MSG_UNUSED,
-    MSG_USED
+/* IPC Channel structure */
+struct ipc_channel {
+    struct ring_buffer* rbuf; // Ring buffer for the IPC channel
 };
 
-struct message {
-    void* data;
-    uint16_t len;
-};
+/* Initializes an IPC channel with the given buffer size */
+struct ipc_channel* ipc_channel_init(int size);
 
-#define MESSAGE_BOX_MAX_SIZE 10
-struct message_box {
-    unsigned char id;
-    struct message messages[MESSAGE_BOX_MAX_SIZE];
-    unsigned short head;
-    unsigned short tail;
+/* Sends a message over the IPC channel */
+error_t ipc_send(struct ipc_channel* channel, ipc_message_t* message);
 
-    unsigned char status;
-};
+/* Receives a message from the IPC channel */
+error_t ipc_receive(struct ipc_channel* channel, ipc_message_t* message);
 
-void ipc_msg_box_init();
+/* Cleans up and releases the IPC channel */
+void ipc_channel_free(struct ipc_channel* channel);
 
-void signal(int signal);
-void signal_wait(int signal);
-
-#endif // !__IPC_H
+#endif /* IPC_INTERFACE_H */
