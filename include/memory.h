@@ -105,6 +105,7 @@ void enable_paging();
 void vmem_map_driver_region(uint32_t addr, int size);
 void vmem_init_kernel();
 void vmem_cleanup_process(struct pcb* pcb);
+void vmem_init_process_thread(struct pcb* parent, struct pcb* thread);
 void vmem_init_process(struct pcb* pcb, byte_t* data, int size);
 void vmem_stack_free(struct pcb* pcb, void* ptr);
 void* vmem_stack_alloc(struct pcb* pcb, int size);
