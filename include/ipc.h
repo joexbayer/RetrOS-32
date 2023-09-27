@@ -16,16 +16,10 @@ struct ipc_channel {
     struct ring_buffer* rbuf; // Ring buffer for the IPC channel
 };
 
-/* Initializes an IPC channel with the given buffer size */
-struct ipc_channel* ipc_channel_init(int size);
-
-/* Sends a message over the IPC channel */
-error_t ipc_send(struct ipc_channel* channel, ipc_message_t* message);
-
-/* Receives a message from the IPC channel */
-error_t ipc_receive(struct ipc_channel* channel, ipc_message_t* message);
-
-/* Cleans up and releases the IPC channel */
-void ipc_channel_free(struct ipc_channel* channel);
+int sys_ipc_open();
+int sys_ipc_close(int channel);
+int sys_ipc_send(int channel, void* data, int length);
+int sys_ipc_send(int channel, void* data, int length);
+int sys_ipc_receive(int channel, void* data, int length);
 
 #endif /* IPC_INTERFACE_H */
