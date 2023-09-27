@@ -276,6 +276,7 @@ void vmem_stack_free(struct pcb* pcb, void* ptr)
  * @note The function uses page-aligned sizes and ensures efficient memory utilization.
  * @note The function assumes that the vmem_continious_allocation_map() function is defined and handles memory mapping.
  * @note The function uses kalloc() to allocate memory for internal data structures (e.g., struct allocation and bits array).
+ * TODO: Needs to be synchronized among threads.
  */
 void* vmem_stack_alloc(struct pcb* pcb, int _size)
 {
@@ -400,6 +401,7 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 
 	/**
 	 * @brief Part 2.5: Check if there is space at the end of the last allocation.
+	 * This avoids creating new physical page allocations.
 	 */
 	int space_at_end = ((uint32_t)(iter->region->basevaddr)+iter->region->size) - ((uint32_t)(iter->address)+iter->size);
 	if(space_at_end >= _size)
@@ -459,6 +461,58 @@ void vmem_dump_heap(struct allocation* allocation)
 	dbgprintf(" -------     &End     --------\n");
 }
 
+/**
+ * @brief Initializes the virtual memory module.
+ * The vmem_init() function is responsible for initializing the virtual memory module.
+ * @param parent A pointer to the process control block (PCB) of the parent process.
+ * @param thread A pointer to the process control block (PCB) of the thread.
+ */
+void vmem_init_process_thread(struct pcb* parent, struct pcb* thread)
+{
+	/**
+	 * @brief Create the virtual memory for the thread.
+	 * Mainly needs its own stack, but also needs to share
+	 * the heap and data sections with the parent.
+	 * @see https://github.com/joexbayer/NETOS/issues/73
+	 * TODO: How to handle heap? Share? need synchronization?
+	 */
+	
+	/* inheret directory */
+	uint32_t* thread_directory = vmem_manager->ops->alloc(vmem_manager);
+	for (int i = 0; i < 1024; i++){
+		/* copy over pages */
+		if(parent->page_dir[i] != 0) thread_directory[i] = parent->page_dir[i];
+	}
+
+	/* Allocate table for stack */
+	uint32_t* thread_stack_table = vmem_manager->ops->alloc(vmem_manager);
+	
+	/* create 8kb stack, 2 4kb pages */
+	uint32_t* thread_stack_page = vmem_default->ops->alloc(vmem_default);
+	memset(thread_stack_page, 0, PAGE_SIZE);
+	vmem_map(thread_stack_table, VMEM_STACK, (uint32_t) thread_stack_page, USER);
+
+	uint32_t* thread_stack_page2 = vmem_default->ops->alloc(vmem_default);
+	memset(thread_stack_page2, 0, PAGE_SIZE);
+	vmem_map(thread_stack_table, VMEM_STACK+PAGE_SIZE, (uint32_t) thread_stack_page2, USER);
+
+	/* Insert and replace stack in directory. */
+	vmem_add_table(thread_directory, VMEM_STACK, thread_stack_table, USER);
+
+	thread->page_dir = (uint32_t*)thread_directory;
+	thread->allocations = parent->allocations;
+
+	dbgprintf("[INIT THREAD] Thread paging setup done.\n");
+}
+
+/**
+ * @brief Initializes the virtual memory for the specified process control block (PCB).
+ * The vmem_init_process() function is responsible for initializing the virtual memory for the given PCB.
+ * @param pcb A pointer to the process control block (PCB) for which memory needs to be initialized.
+ * @param data in memory data to be copied into the process data section.
+ * @param size size of the data to be copied.
+ * TODO: Should probably be on demand paging.
+ */
 void vmem_init_process(struct pcb* pcb, byte_t* data, int size)
 {
 	/* Allocate directory and tables for data and stack */
@@ -511,6 +565,25 @@ void vmem_init_process(struct pcb* pcb, byte_t* data, int size)
 
 	dbgprintf("[INIT PROCESS] Process paging setup done.\n");
 	pcb->page_dir = (uint32_t*)process_directory;
+}
+
+/**
+ * @brief Cleans up the virtual memory for the specified process control block (PCB).
+ * Responsible for cleaning up the virtual stack for the given PCB. 
+ * Does not cleanup the heap or data sections.
+ * @param thread A pointer to the process control block (PCB) for which memory needs to be cleaned up.
+ */
+void vmem_cleanup_process_thead(struct pcb* thread)
+{
+	/**
+	 * @brief Free the stack for the thread.
+	 * @see https://github.com/joexbayer/NETOS/issues/73
+	 * TODO: Data sections should remain until the original process is killed.
+	 * 
+	 */
+
+	uint32_t directory = (uint32_t)thread->page_dir;
+	kernel_panic("vmem_cleanup_process_thead: Not implemented");
 }
 
 /**

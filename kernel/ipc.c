@@ -1,42 +1,57 @@
 #include <ipc.h>
 #include <memory.h>
+#include <syscalls.h>
 
-/* Initializes an IPC channel with the given buffer size */
-struct ipc_channel* ipc_channel_init(int size) {
-    struct ipc_channel* channel = (struct ipc_channel*) kalloc(sizeof(struct ipc_channel));
-    if (!channel) {
-        return NULL;
+#define IPC_MAX_CHANNELS 16
+
+#define IPC_VALID_CHANNEL(channel) if(channel < 0 || channel >= IPC_MAX_CHANNELS) {return -1;}
+
+/* handel to channel implementation */
+static struct ipc_channel channels[IPC_MAX_CHANNELS] = {0};
+
+static int ipc_alloc_channel() {
+    for (int i = 0; i < IPC_MAX_CHANNELS; i++)
+        if (!channels[i].rbuf)
+            return i;
+    return -1;
+}
+
+/* userspace interface */
+int sys_ipc_open()
+{
+    int channel = ipc_alloc_channel();
+    if (channel < 0) {
+        return -1;
     }
 
-    channel->rbuf = rbuffer_new(size);
-    if (!channel->rbuf) {
-        kfree(channel);
-        return NULL;
-    }
-    
+    channels[channel].rbuf = rbuffer_new(1024);
     return channel;
 }
+EXPORT_SYSCALL(SYSCALL_IPC_OPEN, sys_ipc_open);
 
-/* Sends a message over the IPC channel */
-error_t ipc_send(struct ipc_channel* channel, struct ipc_message* message) {
-    if (!channel || !message || !message->data || message->length <= 0) {
-        return -ERROR_NULL_POINTER;
-    }
-    return channel->rbuf->ops->add(channel->rbuf, message->data, message->length);
-}
 
-/* Receives a message from the IPC channel */
-error_t ipc_receive(struct ipc_channel* channel, struct ipc_message* message) {
-    if (!channel || !message || !message->data || message->length <= 0) {
-        return -ERROR_NULL_POINTER;
-    }
-    return channel->rbuf->ops->read(channel->rbuf, message->data, message->length);
-}
+int sys_ipc_close(int channel)
+{
+    IPC_VALID_CHANNEL(channel);
 
-/* Cleans up and releases the IPC channel */
-void ipc_channel_free(struct ipc_channel* channel) {
-    if (channel) {
-        rbuffer_free(channel->rbuf);
-        kfree(channel);
-    }
+    rbuffer_free(channels[channel].rbuf);
+    channels[channel].rbuf = NULL;
+    return 0;
 }
+EXPORT_SYSCALL(SYSCALL_IPC_CLOSE, sys_ipc_close);
+
+int sys_ipc_send(int channel, void* data, int length)
+{
+    IPC_VALID_CHANNEL(channel);
+
+    return channels[channel].rbuf->ops->add(channels[channel].rbuf, data, length);
+}
+EXPORT_SYSCALL(SYSCALL_IPC_SEND, sys_ipc_send);
+
+int sys_ipc_receive(int channel, void* data, int length)
+{
+    IPC_VALID_CHANNEL(channel);
+
+    return channels[channel].rbuf->ops->read(channels[channel].rbuf, data, length);
+}
+EXPORT_SYSCALL(SYSCALL_IPC_RECEIVE, sys_ipc_receive);
