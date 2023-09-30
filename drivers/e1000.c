@@ -225,6 +225,14 @@ void e1000_attach(struct pci_device* dev)
 	_e1000_tx_init();
 	_e1000_rx_init();
 
+	/* Generate random MAC address */
+	for (int i = 0; i < 6; i++){
+		mac[i] = rand() % 255;
+	}
+
+	dbgprintf("[E1000] MAC: %x:%x:%x:%x:%x:%x\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+
+
 	_e1000_mac();
 
     /* For now.. hard code irq to 11 */
