@@ -325,7 +325,7 @@ static int fat16_mkdir(struct filesystem* fs, const char* path)
     /* add rest of path as new directory in parsed directory */
 
 
-    
+    return 0;
 }
 
 /**

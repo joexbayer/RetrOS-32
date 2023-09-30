@@ -73,6 +73,7 @@ int send(int socket, const void *message, int length, int flags);
 int sendto(int socket, const void *message, int length, int flags, const struct sockaddr *dest_addr, socklen_t dest_len);
 int socket(int domain, int type, int protocol);
 void close(int socket);
+int gethostname(char *name);
 
 
 #ifdef __cplusplus
@@ -103,8 +104,13 @@ public:
             // error
         }
 
-        dest_addr.sin_addr.s_addr = htonl(760180939);
-        dest_addr.sin_port = htons(4242);
+        int host_ip = gethostname((char*)host);
+        if (host_ip == -1) {
+            // error
+        }
+
+        dest_addr.sin_addr.s_addr = host_ip;
+        dest_addr.sin_port = htons(port);
         dest_addr.sin_family = AF_INET;
 
         int ret = connect(sd, (struct sockaddr *)&dest_addr, sizeof(struct sockaddr_in));

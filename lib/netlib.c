@@ -99,6 +99,11 @@ int socket(int domain, int type, int protocol)
     return invoke_syscall(SYSCALL_NET_SOCK_SOCKET, domain, type, protocol);
 }
 
+int gethostname(char *name)
+{
+    return invoke_syscall(SYSCALL_NET_DNS_LOOKUP, (int)name, 0, 0);
+}
+
 #ifdef __cplusplus
 }
 #endif

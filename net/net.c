@@ -195,7 +195,7 @@ error_t kernel_send(struct sock* socket, void *message, int length, int flags)
     tcp_send_segment(socket, message, length, 1);
 
     /* Move this into tcp_send_segment */
-    WAIT(net_sock_awaiting_ack(socket));
+    //WAIT(net_sock_awaiting_ack(socket));
 
     /* Split into smaller "messages" of needed. */
     return length;

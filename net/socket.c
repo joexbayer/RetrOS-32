@@ -164,6 +164,7 @@ error_t net_sock_is_established(struct sock* sk)
     return sk->tcp->state == TCP_ESTABLISHED;
 }
 
+/* returns true if socket is waiting for an ack */
 error_t net_sock_awaiting_ack(struct sock* sk)
 {
     assert(sk->tcp != NULL);

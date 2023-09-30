@@ -1,70 +1,57 @@
-/**
- * @file ipc.c
- * @author Joe Bayer (joexbayer)
- * @brief API for inter process communication (IPC)
- * @version 0.1
- * @date 2023-01-24
- * 
- * @copyright Copyright (c) 2023
- * 
- */
 #include <ipc.h>
 #include <memory.h>
-#include <scheduler.h>
-#include <bitmap.h>
+#include <syscalls.h>
 
-/* Potentionally move to dynamic allocation? */
-#define MAX_MESSAGE_BOXES 10
-#define IPC_MAX_SIGNALS 255
+#define IPC_MAX_CHANNELS 16
 
-static struct message_box msg_boxes[MAX_MESSAGE_BOXES];
-static bitmap_t msg_bitmap;
+#define IPC_VALID_CHANNEL(channel) if(channel < 0 || channel >= IPC_MAX_CHANNELS) {return -1;}
 
-static signal_value_t signal_values[IPC_MAX_SIGNALS];
+/* handel to channel implementation */
+static struct ipc_channel channels[IPC_MAX_CHANNELS] = {0};
 
-void signal_wait(int sig)
-{
-    WAIT(signal_values[sig] == 0);
-    signal_values[sig] = 0;
-}
-
-void signal(int sig)
-{
-    signal_values[sig] = 1;
-}
-
-/**
- * @brief Creates new message in message box with given ID
- * 
- * @param id 
- * @param data 
- * @param size 
- * @return int (less than 0 on error.)
- */
-int ipc_msg_push(int id, void* data, int size)
-{
+static int ipc_alloc_channel() {
+    for (int i = 0; i < IPC_MAX_CHANNELS; i++)
+        if (!channels[i].rbuf)
+            return i;
     return -1;
 }
 
-/**
- * @brief Checks if there is a message in the given msg_box
- * Copies message into given message pointer.
- * @param id of message box
- * @param struct message* message to copy into.
- * @return int (less than 0 on error.)
- */
-int ipc_msg_get(int id, struct message* msg)
+/* userspace interface */
+int sys_ipc_open()
 {
-    return -1;
-}
+    int channel = ipc_alloc_channel();
+    if (channel < 0) {
+        return -1;
+    }
 
-int ipc_msg_box_create()
+    channels[channel].rbuf = rbuffer_new(1024);
+    return channel;
+}
+EXPORT_SYSCALL(SYSCALL_IPC_OPEN, sys_ipc_open);
+
+
+int sys_ipc_close(int channel)
 {
-    return -1;
-}
+    IPC_VALID_CHANNEL(channel);
 
-void ipc_msg_box_init()
+    rbuffer_free(channels[channel].rbuf);
+    channels[channel].rbuf = NULL;
+    return 0;
+}
+EXPORT_SYSCALL(SYSCALL_IPC_CLOSE, sys_ipc_close);
+
+int sys_ipc_send(int channel, void* data, int length)
 {
-    msg_bitmap = create_bitmap(MAX_MESSAGE_BOXES);
-}
+    IPC_VALID_CHANNEL(channel);
 
+    return channels[channel].rbuf->ops->add(channels[channel].rbuf, data, length);
+}
+EXPORT_SYSCALL(SYSCALL_IPC_SEND, sys_ipc_send);
+
+int sys_ipc_receive(int channel, void* data, int length)
+{
+    IPC_VALID_CHANNEL(channel);
+
+    return channels[channel].rbuf->ops->read(channels[channel].rbuf, data, length);
+}
+EXPORT_SYSCALL(SYSCALL_IPC_RECEIVE, sys_ipc_receive);

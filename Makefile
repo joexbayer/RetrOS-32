@@ -84,9 +84,9 @@ multiboot_kernel: bin/multiboot.o $(KERNELOBJ)
 kernel: bin/kcrt0.o $(KERNELOBJ)
 	@$(LD) -o bin/kernelout $^ $(LDFLAGS) -T ./kernel/linker.ld
 
-.depend: **/*.[cSh]
+.depend: **/*.[cSh]	
+	@echo [KERNEL] Creating dependencies...
 	@$(CC) $(CCFLAGS) -MM -MG **/*.[cS] > $@
-	@echo [KERNEL] Creating dependencies
 	
 -include .depend
 
@@ -189,7 +189,7 @@ vdi: cleanvid docker
 	qemu-img convert -f raw -O vdi boot.img boot.vdi
 
 qemu:
-	sudo qemu-system-i386 -d int -device e1000,netdev=net0 -serial stdio -netdev user,id=net0 -object filter-dump,id=net0,netdev=net0,file=dump.dat boot.img
+	sudo qemu-system-i386 -device e1000,netdev=net0 -serial stdio -netdev user,id=net0 -object filter-dump,id=net0,netdev=net0,file=dump.dat filesystemv2.img
 
 fat16reset:
 	rm fatfs.img
@@ -204,7 +204,7 @@ sync:
 # sudo cp -r mnt/* ./mnt/apps/
 
 mount:
-	sudo mount tests/filesystem.test ./mnt
+	sudo mount -o shortname=winnt filesystemv2.img ./mnt
 
 fat16test:
 	gcc tools/fat.c -o ./bin/fattest.o

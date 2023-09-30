@@ -34,7 +34,6 @@ public:
                 break;
             case GFX_EVENT_EXIT:
                 Cleanup();
-                exit();
                 return ;
             case GFX_EVENT_KEYBOARD:
                 switch (e.data)
@@ -85,13 +84,6 @@ int main()
     TcpEcho demo(200, 200);
     demo.setHeader("tcpbin.com");
     demo.Run();
-
-    while (1)
-    {
-        /* code */
-    }
     
-    
-
     return 0;
 }

@@ -14,6 +14,8 @@
 #include <net/net.h>
 #include <sync.h>
 #include <serial.h>
+#include <syscalls.h>
+#include <syscall_helper.h>
 
 #include <util.h>
 
@@ -164,3 +166,4 @@ int gethostname(char* hostname)
     }
     return 0;
 }
+EXPORT_SYSCALL(SYSCALL_NET_DNS_LOOKUP, gethostname);
