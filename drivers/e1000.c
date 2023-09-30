@@ -225,6 +225,12 @@ void e1000_attach(struct pci_device* dev)
 	_e1000_tx_init();
 	_e1000_rx_init();
 
+	/* random mac address */
+	for (int i = 0; i < 6; i++){
+		mac[i] = rand() % 255;
+	}
+	
+
 	_e1000_mac();
 
     /* For now.. hard code irq to 11 */

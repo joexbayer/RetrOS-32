@@ -362,14 +362,6 @@ inline void itohex(uint32_t n, char s[])
   reverse(s);
 }
 
-/* https://wiki.osdev.org/Random_Number_Generator */
-static unsigned long int next = 1;  /* NB: "unsigned long int" is assumed to be 32 bits wide */
-int rand(void)  /* RAND _MAX assumed to be 32767*/
-{
-    next = next * 1103515245 + 12345;
-    return (unsigned int) (next / 65536) % 32768;
-}
-
 int kernel_size = 0;
 
 unsigned long long rdtsc(void)
@@ -377,6 +369,14 @@ unsigned long long rdtsc(void)
     unsigned long long int x;
     __asm__ volatile (".byte 0x0f, 0x31" : "=A" (x));
     return x;
+}
+
+/* https://wiki.osdev.org/Random_Number_Generator */
+static unsigned long int next = 1;  /* NB: "unsigned long int" is assumed to be 32 bits wide */
+int rand(void)  /* RAND _MAX assumed to be 32767*/
+{
+    next = next * rdtsc() + 12345;
+    return (unsigned int) (next / 65536) % 32768;
 }
 
 #ifdef __cplusplus
