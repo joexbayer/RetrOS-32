@@ -163,6 +163,14 @@ Samsung N150 Plus,
 Samsung NP-NC10,
 IBM Thinkpad a21p
 
+## Project Structure (TBD)
+    NETOS - Project
+    ├── apps
+    │   └── ...
+    ├── Bin 
+    │   ├── kernel
+    │   └── ...
+    └── docker-compose.yml
 
 <!-- ROADMAP -->
 ## Roadmap
