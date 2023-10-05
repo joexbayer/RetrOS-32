@@ -243,6 +243,25 @@ void cd(int argc, char* argv[])
 {
 	current_running->current_directory = change_directory(argv[1]);
 }
+
+void fdisk(int argc, char* argv[])
+{
+	struct diskdev* dev = disk_device_get();
+	if(dev == NULL){
+		twritef("No disk device attached\n");
+		return;
+	}
+
+	twritef("fdisk:      \n");
+	twritef("Disk:     %s\n", dev->dev->model);
+	twritef("Size:     %d\n", dev->dev->size*512);
+	twritef("Attached: %d\n", dev->attached);
+	twritef("Read:     %x\n", dev->read);
+	twritef("Write:    %x\n", dev->write);
+}
+EXPORT_KSYMBOL(fdisk);
+
+
 EXPORT_KSYMBOL(cd);
 
 void cat(int argc, char* argv[])

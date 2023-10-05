@@ -22,6 +22,8 @@ int disk_attached();
 
 char* disk_name();
 
+struct diskdev* disk_device_get();
+
 int write_block(char* buf, int block);
 int write_block_offset(char* usr_buf, int size, int offset, int block);
 

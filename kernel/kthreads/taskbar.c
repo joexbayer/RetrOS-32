@@ -30,6 +30,8 @@ static void __callback taskbar_bg_lotr();
 static void __callback taskbar_bg_default();
 static void __callback taskbar_bg_circles();
 static void __callback taskbar_bg_calc();
+static void __callback taskbar_bg_graph();
+static void __callback taskbar_bg_default_color();
 
 /* prototype to taskbar thread */
 static void __kthread_entry taskbar(void);
@@ -101,7 +103,11 @@ static struct taskbar_options {
                     .name = "> Calculator",
                     .callback = &taskbar_bg_calc
                 },
-                
+                {
+                    .name = "> Graph",
+                    .callback = &taskbar_bg_graph
+                }
+            
             }
 
         },
@@ -112,6 +118,10 @@ static struct taskbar_options {
             .h = 18,
             .name = "Wallpaper",
             .options = {
+                {
+                    .name = "> Color",
+                    .callback = &taskbar_bg_default_color
+                },
                 {
                     .name = "> LOTR",
                     .callback = &taskbar_bg_lotr
@@ -339,6 +349,18 @@ static void __callback taskbar_bg_lotr()
 static void __callback taskbar_bg_circles()
 {
     gfx_decode_background_image("circles.img");
+}
+
+static void __callback taskbar_bg_graph()
+{
+    int pid = pcb_create_process("/bin/graphs.o", 0, NULL, 0);
+    if(pid < 0)
+        dbgprintf("%s does not exist\n", "graphs.o");
+}
+
+static void __callback taskbar_bg_default_color()
+{
+    gfx_set_background_color(3);
 }
 
 static void __callback taskbar_bg_calc()
