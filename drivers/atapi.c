@@ -167,11 +167,12 @@ static void __ide_set_drive(uint8_t bus, uint8_t i)
     /* ELSE UNSUPPORTED. */
 }
 
+/* Assuming the ATAPI device is on the primary channel, master drive */
 int atapi_init(struct pci_device* dev)
 {
-   /* Assuming the ATAPI device is on the primary channel, master drive */
-    uint8_t status;
     init_cache();
+
+    uint8_t status;
     uint16_t base = ATA_PRIMARY_IO;
 
     outportb(base + ATA_REG_DEVCTRL, 0x04);  /* Assert the SRST bit to reset the device */
@@ -194,22 +195,21 @@ int atapi_init(struct pci_device* dev)
 
     dbgprintf("[ATAPI] Waiting for device to be ready...\n");
 
-    /* Wait for the device to be ready with a timeout */
+    /* Wait for the device to be ready */
     ata_wait_busy(base);
 
     /* Check the status register */
     status = inportb(base + ATA_REG_STATUS);
-    dbgprintf("[ATAPI] Device status: 0x%x\n", status);
-    if(status == 0) return -1;
-
     if (!(status & 0x08)) {
         dbgprintf("[ATAPI] DRQ bit not set. Status: 0x%x\n", status);
         if (status & 0x01) {
             uint8_t error = inportb(base + ATA_REG_ERROR);
             dbgprintf("[ATAPI] ERR bit set. Error register: 0x%x\n", error);
-            /* Handle specific errors based on the error register if needed */
+            return -error;
         }
+        return -1;
     }
+    dbgprintf("[ATAPI] Device status: 0x%x\n", status);
 
     /* Read identification data */
     uint16_t id_data[256];
@@ -227,8 +227,6 @@ int atapi_init(struct pci_device* dev)
     dbgprintf("[ATAPI] Device model: %s\n", atapi_ide_device.model);
 
     attach_disk_dev(&read_virtual_sector, NULL, &atapi_ide_device);
-
-    /* Further initialization based on the identification data can be added here */
 
 }
 
