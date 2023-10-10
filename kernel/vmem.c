@@ -233,9 +233,9 @@ void __deprecated vmem_free_allocation(struct allocation* allocation)
 
 void vmem_stack_free(struct pcb* pcb, void* ptr)
 {
-	if(ptr == pcb->allocations->address){
-		struct allocation* old = pcb->allocations;
-		pcb->allocations = pcb->allocations->next;
+	if(ptr == pcb->allocations->head->address){
+		struct allocation* old = pcb->allocations->head;
+		pcb->allocations->head = pcb->allocations->head->next;
 		pcb->used_memory -= old->size;
 
 		vmem_free_page_region(old->region, old->size);
@@ -244,7 +244,7 @@ void vmem_stack_free(struct pcb* pcb, void* ptr)
 		return;
 	}
 
-	struct allocation* iter = pcb->allocations;
+	struct allocation* iter = pcb->allocations->head;
 	while(iter->next != NULL){
 		if(iter->next->address == ptr){
 			
@@ -297,7 +297,7 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 	 * Create a physical page allocation and attach it to the virtual allocation.
 	 * Setup the allocation size and adress and add it to the pcb.
 	 */
-	if(pcb->allocations == NULL){
+	if(pcb->allocations->head == NULL){
 
 		struct vmem_page_region* physical = vmem_create_page_region(pcb, (void*)VMEM_HEAP, num_pages, USER);
 		if(physical == NULL){
@@ -313,7 +313,7 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 		allocation->size = _size;
 		allocation->next = NULL;
 
-		pcb->allocations = allocation;
+		pcb->allocations->head = allocation;
 		pcb->used_memory += size;
 
 		dbgprintf("[1] Allocated %d bytes of data to 0x%x\n", _size, allocation->address);
@@ -323,7 +323,7 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 	/**
 	 * @brief Part 1.5: If first allocation is freed, allocate from start of heap.
 	 */
-	if(pcb->allocations->address > (uint32_t*) VMEM_HEAP && pcb->allocations->address <= (uint32_t*) VMEM_HEAP+size){
+	if(pcb->allocations->head->address > (uint32_t*) VMEM_HEAP && pcb->allocations->head->address <= (uint32_t*) VMEM_HEAP+size){
 
 		/* TODO: Clean this up, redudent code */
 		struct vmem_page_region* physical = vmem_create_page_region(pcb, (void*)VMEM_HEAP, num_pages, USER);
@@ -351,7 +351,7 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 	 * Then we can simply add new allocation to the exisitng one physical one.
 	 * Second option is we need to allocate a new physical page allocation, between two existing ones.
 	 */
-	struct allocation* iter = pcb->allocations;
+	struct allocation* iter = pcb->allocations->head;
 	while(iter->next != NULL){
 
 		/**
@@ -563,6 +563,14 @@ void vmem_init_process(struct pcb* pcb, byte_t* data, int size)
 	vmem_add_table(process_directory, VMEM_STACK, process_stack_table, USER);
 	vmem_add_table(process_directory, VMEM_DATA, process_data_table, USER); 
 
+	pcb->allocations = kalloc(sizeof(struct virtual_allocations));
+	if(pcb->allocations == NULL){
+		kernel_panic("Out of memory while allocating virtual memory allocations.");
+	}
+	pcb->allocations->head = NULL;
+	pcb->allocations->spinlock = 0;
+
+
 	dbgprintf("[INIT PROCESS] Process paging setup done.\n");
 	pcb->page_dir = (uint32_t*)process_directory;
 }
@@ -635,7 +643,7 @@ void vmem_cleanup_process(struct pcb* pcb)
 	uint32_t heap_table = (uint32_t)pcb->page_dir[DIRECTORY_INDEX(VMEM_HEAP)] & ~PAGE_MASK;
 	
 	/* Free all malloc allocation */
-	struct allocation* iter = pcb->allocations;
+	struct allocation* iter = pcb->allocations->head;
 	while(iter != NULL){
 		struct allocation* old = iter;
 		iter = iter->next;
@@ -646,6 +654,9 @@ void vmem_cleanup_process(struct pcb* pcb)
 	}
 	vmem_manager->ops->free(vmem_default, (void*) heap_table);
 	
+	/* Free allocation list */
+	kfree(pcb->allocations);
+
 	/**
 	 * Lastly free directory.
 	 */

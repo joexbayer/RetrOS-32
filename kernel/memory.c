@@ -41,7 +41,7 @@ void* malloc(unsigned int size)
 		return NULL;
 	}
 
-	vmem_dump_heap(current_running->allocations);
+	vmem_dump_heap(current_running->allocations->head);
 	return ptr;
 }
 

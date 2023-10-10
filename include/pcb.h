@@ -74,7 +74,7 @@ struct pcb {
 
     uintptr_t thread_eip;
     
-    struct allocation* allocations;
+    struct virtual_allocations* allocations;
     int used_memory;
 
     struct pcb* parent;
