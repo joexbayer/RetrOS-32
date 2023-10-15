@@ -480,7 +480,7 @@ void vmem_init_process_thread(struct pcb* parent, struct pcb* thread)
 	/* inheret directory */
 	uint32_t* thread_directory = vmem_manager->ops->alloc(vmem_manager);
 	for (int i = 0; i < 1024; i++){
-		/* copy over pages */
+		/* copy over pages, this will include heap and data */
 		if(parent->page_dir[i] != 0) thread_directory[i] = parent->page_dir[i];
 	}
 
@@ -590,8 +590,13 @@ void vmem_cleanup_process_thead(struct pcb* thread)
 	 * 
 	 */
 
-	uint32_t directory = (uint32_t)thread->page_dir;
-	kernel_panic("vmem_cleanup_process_thead: Not implemented");
+	uint32_t stack_table = (uint32_t)thread->page_dir[DIRECTORY_INDEX(VMEM_STACK)] & ~PAGE_MASK;
+	uint32_t stack_page = (uint32_t)((uint32_t*)(thread->page_dir[DIRECTORY_INDEX(VMEM_STACK)] & ~PAGE_MASK))[TABLE_INDEX(0xEFFFFFF0)]& ~PAGE_MASK;
+	uint32_t stack_page2 = (uint32_t)((uint32_t*)(thread->page_dir[DIRECTORY_INDEX(VMEM_STACK-PAGE_SIZE)] & ~PAGE_MASK))[TABLE_INDEX(0xEFFFFFF0)]& ~PAGE_MASK;
+
+	vmem_default->ops->free(vmem_default, (void*) stack_page);
+	vmem_default->ops->free(vmem_default, (void*) stack_page2);
+	vmem_manager->ops->free(vmem_default, (void*) stack_table);
 }
 
 /**
@@ -604,8 +609,17 @@ void vmem_cleanup_process_thead(struct pcb* thread)
  */
 void vmem_cleanup_process(struct pcb* pcb)
 {
-	dbgprintf("[Memory] Cleaning up pages from pcb.\n");
 
+	/**
+	 * @brief A process can not be "cleaned" unless all of its threads are dead.
+	 * @see https://github.com/joexbayer/NETOS/issues/84
+	 * 
+	 * Should proably be done before this function is entered.
+	 * Theoretically a process's threads, could have threads, like a tree.
+	 * TODO: Find a solution...
+	 */
+
+	dbgprintf("[Memory] Cleaning up pages from pcb.\n");
 	uint32_t directory = (uint32_t)pcb->page_dir;
 
 	/**
@@ -629,12 +643,14 @@ void vmem_cleanup_process(struct pcb* pcb)
 	vmem_manager->ops->free(vmem_default, (void*) data_table);
 
 	/**
-	 * Free all stack pages (currently only 1)
+	 * Free all stack pages
 	 */
 	uint32_t stack_table = (uint32_t)pcb->page_dir[DIRECTORY_INDEX(VMEM_STACK)] & ~PAGE_MASK;
 	uint32_t stack_page = (uint32_t)((uint32_t*)(pcb->page_dir[DIRECTORY_INDEX(VMEM_STACK)] & ~PAGE_MASK))[TABLE_INDEX(0xEFFFFFF0)]& ~PAGE_MASK;
-	
+	uint32_t stack_page2 = (uint32_t)((uint32_t*)(pcb->page_dir[DIRECTORY_INDEX(VMEM_STACK-PAGE_SIZE)] & ~PAGE_MASK))[TABLE_INDEX(0xEFFFFFF0)]& ~PAGE_MASK;
+
 	vmem_default->ops->free(vmem_default, (void*) stack_page);
+	vmem_default->ops->free(vmem_default, (void*) stack_page2);
 	vmem_manager->ops->free(vmem_default, (void*) stack_table);
 
 	/**
@@ -686,6 +702,7 @@ void vmem_init_kernel()
 	uint32_t* kernel_heap_memory_table = vmem_default->ops->alloc(vmem_default);;
 	vmem_add_table(kernel_page_dir, start, kernel_heap_memory_table, SUPERVISOR);
 
+	/* identity map first 7 mb of data. */
 	for (int i = 1; i < 7; i++){
 		uint32_t* kernel_page_table_memory = vmem_default->ops->alloc(vmem_default);;
 		for (int addr = 0x400000*i; addr < 0x400000*(i+1); addr += PAGE_SIZE)
