@@ -409,7 +409,7 @@ error_t pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 	pcb->state = PCB_NEW;
 	pcb->pid = pid;
 	pcb->stackptr = stack;
-	pcb->allocations = NULL;
+	//pcb->allocations = NULL;
 	pcb->used_memory = 0;
 	pcb->kallocs = 0;
 	pcb->preempts = 0;
@@ -428,6 +428,14 @@ error_t pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
 	memcpy(pcb->name, name, strlen(name)+1);
 
 	dbgprintf("Initiated new kernel thread!\n");
+
+	/* this is done for processes in vmem.c, should probably be moved there? */
+	pcb->allocations = kalloc(sizeof(struct virtual_allocations));
+	if(pcb->allocations == NULL){
+		kernel_panic("Out of memory while allocating virtual memory allocations.");
+	}
+	pcb->allocations->head = NULL;
+	pcb->allocations->spinlock = 0;
 
 	return 1;
 }
