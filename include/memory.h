@@ -5,6 +5,7 @@
 #include <pcb.h>
 #include <errors.h>
 #include <kutils.h>
+#include <sync.h>
 
 extern byte_t _code[], _end[], _code_end[], _ro_s[], _ro_e[], _data_s[], _data_e[], _bss_s[], _bss_e[], _bss_size[];
 extern int kernel_size;
@@ -64,6 +65,12 @@ struct vmem_page_region {
 	int used;
 };
 
+struct virtual_allocations {
+	struct allocation* head;
+	struct allocation* tail;
+
+	spinlock_t spinlock;
+};
 
 struct allocation {
 	int* bits;

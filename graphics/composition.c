@@ -163,25 +163,35 @@ int gfx_decode_background_image(const char* file)
         return -1;
     }
 
-    byte_t temp[3000];
+    byte_t* temp = malloc(10000);
     inode_t inode = fs_open(file, FS_FILE_FLAG_READ);
     if(inode < 0){
         gfx_set_background_color(3);
         dbgprintf("[WSERVER] Could not open background file: %d.\n", inode);
+        free(temp);
         return -1;
     }
 
-    int ret = fs_read(inode, temp, 3000);
+    int ret = fs_read(inode, temp, 10000);
     if(ret <= 0){
         gfx_set_background_color(3);
         dbgprintf("[WSERVER] Could not read background file: %d.\n", inode);
+        free(temp);
         return -1;
     }
     fs_close(inode);
 
+    byte_t* temp_window = (byte_t*) malloc(320*240);
+    if(temp_window == NULL){
+        gfx_set_background_color(3);
+        dbgprintf("[WSERVER] Could not allocate memory for background image.\n");
+        free(temp);
+        return -1;
+    }
+
     int out;
     dbgprintf("[WSERVER] Decoding %d bytes.\n", ret);
-    run_length_decode(temp, ret, wind.composition_buffer, &out);
+    run_length_decode(temp, ret, temp_window, &out);
 
     dbgprintf("[WSERVER] Decoded %d bytes.\n", out);
 
@@ -195,7 +205,7 @@ int gfx_decode_background_image(const char* file)
     float scaleY = (float)targetHeight / (float)originalHeight;
 
     dbgprintf("[WSERVER] Scaling image from %dx%d to %dx%d.\n", originalWidth, originalHeight, targetWidth, targetHeight);
-
+    
     for (int i = 0; i < originalWidth; i++){
         for (int j = 0; j < originalHeight; j++){
             // Calculate the position on the screen based on the scaling factors
@@ -204,7 +214,7 @@ int gfx_decode_background_image(const char* file)
 
 
             // Retrieve the pixel value from the original image
-            unsigned char pixelValue = wind.composition_buffer[j * originalWidth + i];
+            unsigned char pixelValue = temp_window[j * originalWidth + i];
             //wind.composition_buffer[j * originalWidth + i] = pixelValue;
 
             // Set the pixel value on the screen at the calculated position
@@ -215,6 +225,9 @@ int gfx_decode_background_image(const char* file)
             }
         }
     }
+
+    free(temp);
+    free(temp_window);
 
     return ERROR_OK;
 }

@@ -22,12 +22,25 @@ void* kalloc(int size);
 void kfree(void* ptr);
 /* ... */
 
+/**
+ * @brief Free function for the heap allocation
+ * 
+ * @warning is thread safe
+ * @param ptr Pointer to the memory to free
+ * @return void
+ */
 void free(void* ptr)
 {
 	dbgprintf("Freeing %x\n", ptr);
 	if(ptr == NULL)
 		return;
-	vmem_stack_free(current_running, ptr);
+		
+	/* lock on free as multiple threads can free at the same time */
+	spin_lock(&current_running->allocations->spinlock);
+	
+	vmem_stack_free(current_running, ptr);	
+
+	spin_unlock(&current_running->allocations->spinlock);
 }
 
 void* malloc(unsigned int size)
@@ -36,12 +49,18 @@ void* malloc(unsigned int size)
 		return NULL;
 	}
 	
+	/* lock on malloc as multiple threads can malloc at the same time */
+	spin_lock(&current_running->allocations->spinlock);
+
 	void* ptr = vmem_stack_alloc(current_running, size);
 	if(ptr == NULL){
+		spin_unlock(&current_running->allocations->spinlock);
 		return NULL;
 	}
 
-	vmem_dump_heap(current_running->allocations);
+	vmem_dump_heap(current_running->allocations->head);
+
+	spin_unlock(&current_running->allocations->spinlock);
 	return ptr;
 }
 

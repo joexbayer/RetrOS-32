@@ -12,6 +12,7 @@
 #include <pci.h>
 #include <e1000.h>
 #include <ata.h>
+#include <atapi.h>
 #include <terminal.h>
 #include <serial.h>
 #include <arch/io.h>
@@ -43,6 +44,7 @@ struct pci_driver registered_drivers[] = {
     {(uint16_t)E1000_VENDOR_ID, (uint16_t)E1000_DEVICE_ID, &e1000_attach},
     //{(uint16_t)E1000_VENDOR_ID, (uint16_t)0x155a, &e1000_attach},
     {0x8086, 0x7010, &ata_ide_init},
+    //{0x8086, 0x7010, &atapi_init},
     {0, 0, 0}
 };
 
@@ -166,8 +168,8 @@ void init_pci()
 void lspci()
 {
     for (int i = 0; i < _pci_devices_size; i++){
-        twritef("C: 0x%x D: 0x%x - %s\n",
-            _pci_devices[i].class,
+        twritef("V: 0x%x D: 0x%x - %s\n",
+            _pci_devices[i].vendor,
             _pci_devices[i].device,
             _pci_devices[i].class < 0x11 ? pci_classes[_pci_devices[i].class] : pci_classes[0]
         );

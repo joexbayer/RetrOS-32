@@ -100,7 +100,6 @@ void kernel(uint32_t magic)
 	mouse_init();
 	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Peripherals initialized.");
 	init_pcbs();
-	ipc_msg_box_init();
 	init_pci();
 	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "PCI initialized.");
 	init_worker();
@@ -118,10 +117,7 @@ void kernel(uint32_t magic)
 
 	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Networking initialized.");
 
-	if(!disk_attached()){
-		dbgprintf("[KERNEL] Attaching virtual disk because not physical one was found.\n");
-		virtual_disk_attach();
-	}
+
 
 	mbr_partition_load();
 
@@ -198,8 +194,6 @@ void kernel(uint32_t magic)
 	//pcb_create_process("/bin/clock", 0, NULL);
 	
 	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Timer initialized.");
-
-	dbgprintf("[ENTER_CRITICAL] %d\n", cli_cnt);
 
 
 	init_pit(1);

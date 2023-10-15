@@ -3,7 +3,7 @@
 #include <terminal.h>
 #include <serial.h>
 
-struct diskdev disk_device;
+static struct diskdev disk_device;
 
 void attach_disk_dev(
     int (*read)(char* buffer, uint32_t from, uint32_t size), 
@@ -28,6 +28,11 @@ char* disk_name()
     return disk_device.dev->model;
 }
 
+struct diskdev* disk_device_get()
+{
+    return &disk_device;
+}
+
 
 int disk_size(){
     if(disk_device.attached)
@@ -39,6 +44,12 @@ int disk_size(){
 int write_block(char* buf, int block)
 {
     //dbgprintf("[DISK] write: 0x%x. Block %d\n", buf, block*512);
+
+    if(disk_device.write == NULL){
+        dbgprintf("[DISK] No write function attached\n");
+        return -1;
+    }
+
     return disk_device.write(buf, block, 1);
 }
 
@@ -53,6 +64,11 @@ int write_block_offset(char* usr_buf, int size, int offset, int block)
 
 int read_block(char* buf, int block)
 {
+    if(disk_device.read == NULL){
+        dbgprintf("[DISK] No read function attached\n");
+        return -1;
+    }
+
     //dbgprintf("[DISK] read: 0x%x. Block %d\n", buf, block*512);
     return disk_device.read(buf, block, 1);
 }

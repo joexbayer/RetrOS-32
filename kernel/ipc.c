@@ -1,6 +1,7 @@
 #include <ipc.h>
 #include <memory.h>
 #include <syscalls.h>
+#include <syscall_helper.h>
 
 #define IPC_MAX_CHANNELS 16
 
