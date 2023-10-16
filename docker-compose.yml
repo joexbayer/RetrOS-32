@@ -3,6 +3,6 @@ services:
   netos:
     build: .
     volumes:
-      - ./:/NETOS
+      - ./:/RetrOS-32
     entrypoint: make
     command: img

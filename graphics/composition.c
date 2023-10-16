@@ -305,8 +305,8 @@ void __kthread_entry gfx_compositor_main()
         /* This code runs only if a window has changed */
         if(window_changed && !__is_fullscreen){
             memcpy(wind.composition_buffer, background, wind.buffer_size);
-            int len = strlen("NETOS Development Build");
-            vesa_printf(wind.composition_buffer, (vbe_info->width/2) - (len/2)*8, vbe_info->height-8, COLOR_BLACK, "%s", "NETOS Development Build");
+            int len = strlen("RetrOS-32 Development Build");
+            vesa_printf(wind.composition_buffer, (vbe_info->width/2) - (len/2)*8, vbe_info->height-8, COLOR_BLACK, "%s", "RetrOS-32 Development Build");
 
             if(1){
                 /* performance */

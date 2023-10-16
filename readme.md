@@ -20,19 +20,19 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <h1 align="center">NET/OS</h1>
+  <h1 align="center">RetrOS 32bit</h1>
 
   <p align="center">
     Hobby 32bit operatingsystem project focusing on networking on i386 architecture.
     <br />
-    <a href="https://github.com/joexbayer/NETOS"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/joexbayer/RetrOS-32"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/joexbayer/NETOS">View Demo</a>
+    <a href="https://github.com/joexbayer/RetrOS-32">View Demo</a>
     ·
-    <a href="https://github.com/joexbayer/NETOS/issues">Report Bug</a>
+    <a href="https://github.com/joexbayer/RetrOS-32/issues">Report Bug</a>
     ·
-    <a href="https://github.com/joexbayer/NETOS/issues">Request Feature</a>
+    <a href="https://github.com/joexbayer/RetrOS-32/issues">Request Feature</a>
   </p>
 </div>
 
@@ -68,12 +68,12 @@
 
 <!-- ABOUT THE PROJECT -->
 <p align="center">
-  <img src="https://github.com/joexbayer/NETOS/blob/main/graphics/screenshot2.png?raw=true">
+  <img src="https://github.com/joexbayer/RetrOS-32/blob/main/graphics/screenshot2.png?raw=true">
 </p>
 
 | | |
 |:-------------------------:|:-------------------------:|
-| <img src="https://github.com/joexbayer/NETOS/blob/main/graphics/screenshot1.png?raw=true"> | <img src="https://github.com/joexbayer/NETOS/blob/main/graphics/screenshot3.png?raw=true">
+| <img src="https://github.com/joexbayer/RetrOS-32/blob/main/graphics/screenshot1.png?raw=true"> | <img src="https://github.com/joexbayer/RetrOS-32/blob/main/graphics/screenshot3.png?raw=true">
 ## About The Project
 
 <p align="center">32bit Hobby Operatingsystem with graphics, multitasking and networking!</p>
@@ -117,7 +117,7 @@ _To compile the kernel and its needed programs you simply need to run *make iso*
 ##### MacOS can compile the kernel but not the needed tools.
 1. Clone the repo
    ```sh
-   git clone https://github.com/joexbayer/NETOS.git
+   git clone https://github.com/joexbayer/RetrOS-32.git
    ```
 2. Compile the kernel / OS
   
@@ -134,7 +134,7 @@ _To compile the kernel and its needed programs you simply need to run *make iso*
 
 1. Clone the repo
    ```sh
-   git clone https://github.com/joexbayer/NETOS.git
+   git clone https://github.com/joexbayer/RetrOS-32.git
    ```
 
 2. Compile and Launch QEMU
@@ -214,7 +214,7 @@ IBM Thinkpad a21p
   - [x] Testing
   - [ ] Create & Encode icons and wallpapers
 
-See the [open issues](https://github.com/joexbayer/NETOS/issues) for a full list of proposed features (and known issues).
+See the [open issues](https://github.com/joexbayer/RetrOS-32/issues) for a full list of proposed features (and known issues).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -232,7 +232,7 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 Joe Bayer - joeba@uio.com
 
-Project Link: [https://github.com/joexbayer/NETOS](https://github.com/joexbayer/NETOS)
+Project Link: [https://github.com/joexbayer/RetrOS-32](https://github.com/joexbayer/RetrOS-32)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -243,6 +243,6 @@ Project Link: [https://github.com/joexbayer/NETOS](https://github.com/joexbayer/
 
 Use this space to list resources you find helpful and would like to give credit to. I've included a few of my favorites to kick things off!
 
-* README Template](https://github.com/othneildrew/Best-README-Template/blob/master/README.md)
+* README Template(https://github.com/othneildrew/Best-README-Template/blob/master/README.md)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

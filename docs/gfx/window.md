@@ -4,7 +4,7 @@
 Represents a window object with its properties and actions.
 Mainly needed to draw to the window using its draw operations.
 
-- See the code for all properties and methods [window.h](https://github.com/joexbayer/NETOS/blob/main/include/gfx/window.h).
+- See the code for all properties and methods [window.h](https://github.com/joexbayer/RetrOS-32/blob/main/include/gfx/window.h).
 
 ## Functions
 
@@ -18,7 +18,7 @@ Creates a new window.
 struct window* win = gfx_new_window(250, 200, GFX_IS_RESIZABLE);
 win->draw->rect(win, 0, 0, 250, 200, COLOR_VGA_GREEN);
 ```
-Example: [kclock](https://github.com/joexbayer/NETOS/blob/main/kernel/kthreads/kclock.c).
+Example: [kclock](https://github.com/joexbayer/RetrOS-32/blob/main/kernel/kthreads/kclock.c).
 
 ## Enums
 

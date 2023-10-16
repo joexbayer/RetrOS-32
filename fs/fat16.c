@@ -690,9 +690,9 @@ int fat16_format(char* label, int reserved)
     /* ... other fields ... */
     boot_table_ptr->boot_signature = 0xAA55;
     
-    memcpy(boot_table_ptr->volume_label, "NETOS-VOL01", 11);
+    memcpy(boot_table_ptr->volume_label, "RetrOS32-V", 11);
     memcpy(boot_table_ptr->file_system_identifier, "FAT16   ", 8); /* This can be any 8-character string */
-    memcpy(boot_table_ptr->manufacturer, "NETOS   ", 8); /* This can be any 8-character string */
+    memcpy(boot_table_ptr->manufacturer, "RetrOS32", 8); /* This can be any 8-character string */
 
     /* Update the boot table */
     boot_table = *boot_table_ptr;
@@ -726,7 +726,7 @@ int fat16_format(char* label, int reserved)
     fat16_load();
     fat16_set_fat_entry(0, 0xFF00 | 0xF8); 
     fat16_allocate_cluster(1);
-    fat16_add_entry(get_root_directory_start_block(), "NETOS-VOL01", "   ", FAT16_FLAG_VOLUME_LABEL, 0, 0);
+    fat16_add_entry(get_root_directory_start_block(), "RetrOS-32-VOL01", "   ", FAT16_FLAG_VOLUME_LABEL, 0, 0);
 
     fat16_sync_fat_table();
 
@@ -766,8 +766,8 @@ int fat16_load()
     read_block((byte_t*)&boot_table, BOOT_BLOCK);
 
     /* confirm that bootblock is correct */
-    if (memcmp(boot_table.manufacturer, "NETOS   ", 8) != 0) {
-        dbgprintf("Bootblock manufacturer is not NETOS\n");
+    if (memcmp(boot_table.manufacturer, "RetrOS32", 8) != 0) {
+        dbgprintf("Bootblock manufacturer is not RetrOS-32\n");
         return -1;
     }
 

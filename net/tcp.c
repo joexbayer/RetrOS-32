@@ -153,7 +153,7 @@ int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t pus
 
 	/**
 	 * @brief This is where we need to check if packet is lost.
-	 * @see https://github.com/joexbayer/NETOS/issues/30
+	 * @see https://github.com/joexbayer/RetrOS-32/issues/30
 	 * TODO: check if packet is lost.
 	 * Simples solution is to just wait for an ACK, if we dont get one, resend the packet.
 	 * Need a timer to resend the packet.
@@ -416,7 +416,7 @@ int tcp_parse(struct sk_buff* skb)
 			dbgprintf("Socket %d received data for %d\n", sk, hdr->ack_seq);
 			/**
 			 * @brief This is where we should check if the packet is in order.
-			 * @see https://github.com/joexbayer/NETOS/issues/34
+			 * @see https://github.com/joexbayer/RetrOS-32/issues/34
 			 * TODO: check if packet is in order.
 			 * Probably need to check if the sequence number is equal to the expected sequence number.
 			 * If not, we should probably drop the packet and wait for the correct one. 

@@ -473,7 +473,7 @@ void vmem_init_process_thread(struct pcb* parent, struct pcb* thread)
 	 * @brief Create the virtual memory for the thread.
 	 * Mainly needs its own stack, but also needs to share
 	 * the heap and data sections with the parent.
-	 * @see https://github.com/joexbayer/NETOS/issues/73
+	 * @see https://github.com/joexbayer/RetrOS-32/issues/73
 	 * TODO: How to handle heap? Share? need synchronization?
 	 */
 	
@@ -585,7 +585,7 @@ void vmem_cleanup_process_thead(struct pcb* thread)
 {
 	/**
 	 * @brief Free the stack for the thread.
-	 * @see https://github.com/joexbayer/NETOS/issues/73
+	 * @see https://github.com/joexbayer/RetrOS-32/issues/73
 	 * TODO: Data sections should remain until the original process is killed.
 	 * 
 	 */
@@ -612,7 +612,7 @@ void vmem_cleanup_process(struct pcb* pcb)
 
 	/**
 	 * @brief A process can not be "cleaned" unless all of its threads are dead.
-	 * @see https://github.com/joexbayer/NETOS/issues/84
+	 * @see https://github.com/joexbayer/RetrOS-32/issues/84
 	 * 
 	 * Should proably be done before this function is entered.
 	 * Theoretically a process's threads, could have threads, like a tree.

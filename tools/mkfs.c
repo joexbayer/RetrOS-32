@@ -1,7 +1,7 @@
 /**
  * @file mkfs.c
  * @author Joe Bayer (joexbayer)
- * @brief "Normal" C program, creating a NETOS filesystem and adds programs / files.
+ * @brief "Normal" C program, creating a RetrOS-32 filesystem and adds programs / files.
  * Compiled to 32 bit as it is linked with the ENTOS fs/ objects and headers. 
  * @version 0.1
  * @date 2022-08-11

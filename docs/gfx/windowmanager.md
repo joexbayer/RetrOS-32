@@ -45,7 +45,7 @@ Struct for window manager operations.
 ### windowmanager
 Structure defines a window manager. It includes properties for operation management, composition buffer size and its buffer, windows and their count, spinlock, state and flags of the window manager, mouse state and its properties.
 
-- See the code for all properties [windowmanager.h](https://github.com/joexbayer/NETOS/blob/main/include/windowmanager.h).
+- See the code for all properties [windowmanager.h](https://github.com/joexbayer/RetrOS-32/blob/main/include/windowmanager.h).
 
 ## Functions
 
@@ -60,4 +60,4 @@ struct windowmanager* wm = kalloc(sizeof(struct windowmanager));
 init_windowmanager(wm, WM_FULLSCREEN | WM_RESIZABLE);
 ```
 
-Main: [windowmanager.c](https://github.com/joexbayer/NETOS/blob/main/kernel/windowmanager.c).
+Main: [windowmanager.c](https://github.com/joexbayer/RetrOS-32/blob/main/kernel/windowmanager.c).
