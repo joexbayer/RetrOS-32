@@ -24,7 +24,7 @@
 
 int main(int argc, char* argv[])
 {
-    printf("[" BLUE "BUILD" RESET "] Starting building...\n[" BLUE "BUILD" RESET "] Creating NETOS iso file.\n");
+    printf("[" BLUE "BUILD" RESET "] Starting building...\n[" BLUE "BUILD" RESET "] Creating RetrOS-32 iso file.\n");
 
     FILE* bootblock = fopen("./bin/bootblock", "rwb"); 
     fseek(bootblock, 0L, SEEK_END);

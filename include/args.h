@@ -1,7 +1,7 @@
 #ifndef __ARGS_H
 #define __ARGS_H
 
-#ifndef __NETOS_MOCK
+#ifndef __RetrOS32MOCK
 #define va_start(v,l) __builtin_va_start(v,l)
 #define va_arg(v,l)   __builtin_va_arg(v,l)
 #define va_end(v)     __builtin_va_end(v)

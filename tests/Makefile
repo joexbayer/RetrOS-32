@@ -28,13 +28,13 @@ bin:
 	@mkdir -p bin
 
 ext_test: bin ext_test.c
-	@$(CC) ext_test.c -D__FS_TEST ../bin/bitmap.o $(FSBOJS) -D__NETOS_MOCK $(MOCK) -I ../include/ -I ./include/  -O2 -m32 -Wall -g --no-builtin -D__KERNEL -o ./bin/ext_test.o
+	@$(CC) ext_test.c -D__FS_TEST ../bin/bitmap.o $(FSBOJS) -D__RetrOS32MOCK $(MOCK) -I ../include/ -I ./include/  -O2 -m32 -Wall -g --no-builtin -D__KERNEL -o ./bin/ext_test.o
 
 fat16_test: bin ext_test.c
-	@$(CC) fat16_test.c -D__FS_TEST ../bin/bitmap.o $(FATOBJS) -D__NETOS_MOCK $(MOCK) -I ../include/ -I ./include/  -O2 -m32 -Wall -g --no-builtin -D__KERNEL -o ./bin/fat16_test.o 
+	@$(CC) fat16_test.c -D__FS_TEST ../bin/bitmap.o $(FATOBJS) -D__RetrOS32MOCK $(MOCK) -I ../include/ -I ./include/  -O2 -m32 -Wall -g --no-builtin -D__KERNEL -o ./bin/fat16_test.o 
 
 mem_test: bin mem_test.c
-	@$(CC) mem_test.c -D__MEM_TEST ../bin/bitmap.o ../bin/kmem.o  -D__NETOS_MOCK $(MOCK) -I ../include/ -I ./include/  -O2 -m32 -Wall -g --no-builtin -o ./bin/mem_test.o
+	@$(CC) mem_test.c -D__MEM_TEST ../bin/bitmap.o ../bin/kmem.o  -D__RetrOS32MOCK $(MOCK) -I ../include/ -I ./include/  -O2 -m32 -Wall -g --no-builtin -o ./bin/mem_test.o
 
 fat16:
 	make -C ../ compile && make fat16_test && ./bin/fat16_test.o

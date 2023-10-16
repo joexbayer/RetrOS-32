@@ -176,7 +176,7 @@ return:
 
 /* Strings */
 welcome_str:
-    .asciz "********* Welcome to NETOS bootloader! *********\n"
+    .asciz "********* Welcome to RetrOS-32 bootloader! *********\n"
 total_error_str:
     .asciz "Unable to boot.\n"
 drive_num:
