@@ -66,6 +66,8 @@ static struct network_manager {
 
 void net_incoming_packet_handler()
 {
+    dbgprintf("New packet incoming...\n");
+
     struct sk_buff* skb = skb_new();
     skb->len = netdev_recieve(skb->data, MAX_PACKET_SIZE);
     if(skb->len <= 0) {
