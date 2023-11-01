@@ -15,6 +15,7 @@
 #include "interpreter.h"
 #include <ksyms.h>
 #include <stdint.h>
+#include <fs/fs.h>
 
 #define DEFAULT_OUT "bytecode.o"
 
@@ -32,7 +33,7 @@ int rc(int argc, char **argv)
 
     argv++;
 
-    if ((fd = ext_open(*argv, 0)) <= 0) {
+    if ((fd = fs_open(*argv, FS_FILE_FLAG_READ)) <= 0) {
         twritef("could not open(%s)\n", *argv);
         return -1;
     }
@@ -42,7 +43,7 @@ int rc(int argc, char **argv)
         return -1;
     }
     // read the source file
-    if ((i = ext_read(fd, src, MAX_FILE_SIZE)) <= 0) {
+    if ((i = fs_read(fd, src, MAX_FILE_SIZE)) <= 0) {
         twritef("read() returned %d\n", i);
         kfree(src);
         return -1;
@@ -50,7 +51,7 @@ int rc(int argc, char **argv)
     dbgprintf("read() returned %d\n", i);
     src[i+1] = 0; // add EOF character
     DEBUG_PRINT("%s\n", src);
-    ext_close(fd);
+    fs_close(fd);
 
     unsigned char* dec = src;
     int dec_sz = i;
@@ -94,7 +95,7 @@ int as(int argc, char **argv)
 
     argv++;
 
-    if ((fd = ext_open(*argv, 0)) <= 0) {
+    if ((fd = fs_open(*argv, FS_FILE_FLAG_READ)) <= 0) {
         twritef("could not open(%s)\n", *argv);
         return -1;
     }
@@ -104,14 +105,14 @@ int as(int argc, char **argv)
         return -1;
     }
     // read the source file
-    if ((i = ext_read(fd, src, MAX_FILE_SIZE)) <= 0) {
+    if ((i = fs_read(fd, src, MAX_FILE_SIZE)) <= 0) {
         twritef("read() returned %d\n", i);
         kfree(src);
         return -1;
     }
     src[i+1] = 0; // add EOF character
     DEBUG_PRINT("%s\n", src);
-    ext_close(fd);
+    fs_close(fd);
 
     int* text = kalloc(VM_TEXT_SIZE);
     char* data = kalloc(VM_DATA_SIZE);
@@ -125,7 +126,7 @@ int as(int argc, char **argv)
         return -1;
     }
 
-    if ((fd = ext_open(DEFAULT_OUT, FS_FLAG_CREATE)) <= 0) {
+    if ((fd = fs_open(DEFAULT_OUT, FS_FILE_FLAG_CREATE)) <= 0) {
         twritef("could not open(%s)\n", *argv);
         return -1;
     }
@@ -145,9 +146,9 @@ int as(int argc, char **argv)
 
     //run_length_encode(original_buffer, sz, enc, &enc_sz);
 
-    ext_write(fd, original_buffer, sz);
+    fs_write(fd, original_buffer, sz);
 
-    ext_close(fd);
+    fs_close(fd);
 
     //kfree(enc);
     kfree(text);
@@ -200,7 +201,7 @@ int cc(int argc, char **argv)
 
     // read the source file
     DEBUG_PRINT("Reading (%s)\n", *argv);
-    if ((fd = ext_open(*argv, 0)) < 0) {
+    if ((fd = fs_open(*argv, FS_FILE_FLAG_READ)) < 0) {
         twritef("could not open(%s)\n", *argv);
         return -1;
     }
@@ -210,7 +211,7 @@ int cc(int argc, char **argv)
         return -1;
     }
     // read the source file
-    if ((i = ext_read(fd, src, MAX_FILE_SIZE)) <= 0) {
+    if ((i = fs_read(fd, src, MAX_FILE_SIZE)) <= 0) {
         twritef("read() returned %d\n", i);
         kfree(src);
         vm_free(&vm);
@@ -218,7 +219,7 @@ int cc(int argc, char **argv)
     }
     src[i+1] = 0; // add EOF character
     DEBUG_PRINT("%s\n", src);
-    ext_close(fd);
+    fs_close(fd);
 
     DEBUG_PRINT("Lexing\n");
     struct lexed_file lexd = program(vm.text, vm.data, src);
