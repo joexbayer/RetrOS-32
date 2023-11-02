@@ -437,6 +437,11 @@ void __kthread_entry shell()
 
 	testfn();
 	struct window* window = gfx_new_window(SHELL_WIDTH, SHELL_HEIGHT, GFX_IS_RESIZABLE);
+	if(window == NULL){
+		warningf("Failed to create window for shell");
+		return;
+	}
+
 	terminal_attach(&term);
 
 	memset(&term, 0, sizeof(struct terminal));

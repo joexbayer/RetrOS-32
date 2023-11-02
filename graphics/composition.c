@@ -226,7 +226,6 @@ int gfx_decode_background_image(const char* file)
             }
         }
     }
-
     free(temp);
     free(temp_window);
 
@@ -340,7 +339,19 @@ void __kthread_entry gfx_compositor_main()
                 }
 
                 /* workspaces window */
-                vesa_printf(wind.composition_buffer, 4, 400, COLOR_WHITE, "%s", "Workspace: %d/%d (F3 to switch)", workspace, WM_MAX_WORKSPACES-1);
+                vesa_printf(wind.composition_buffer, 4, 384, COLOR_WHITE, "Workspace: %d/%d (F3 to switch)", workspace, WM_MAX_WORKSPACES-1);
+                struct mem_info minfo;
+	            get_mem_info(&minfo);
+
+                struct unit kernel = calculate_size_unit(minfo.kernel.used);
+	            struct unit kernel_total = calculate_size_unit(minfo.kernel.total);
+
+	            struct unit permanent = calculate_size_unit(minfo.permanent.used);
+	            struct unit permanent_total = calculate_size_unit(minfo.permanent.total);
+
+                vesa_printf(wind.composition_buffer, 4, 400+8, COLOR_WHITE, "Memory:");
+                vesa_printf(wind.composition_buffer, 4, 400+24, COLOR_WHITE, "Kernel: %d/%s %d/%s", kernel.size, kernel.unit,  kernel_total.size, kernel_total.unit);
+                vesa_printf(wind.composition_buffer, 4, 400+32, COLOR_WHITE, "Permanent: %d/%s %d/%s", permanent.size, permanent.unit, permanent_total.size, permanent_total.unit);
 
             }
                 

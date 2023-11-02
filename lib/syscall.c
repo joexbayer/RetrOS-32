@@ -52,7 +52,10 @@ void sleep(int seconds)
 
 void gfx_create_window(int width, int height, int flags)
 {
-    invoke_syscall(SYSCALL_GFX_WINDOW, width, height, flags);
+    void* ptr = invoke_syscall(SYSCALL_GFX_WINDOW, width, height, flags);
+    if (ptr == NULL) {
+        return;
+    }
 }
 
 int get_current_time(struct time* time)

@@ -15,10 +15,6 @@
 #include <assert.h>
 
 /* Dynamic kernel memory */
-#define KERNEL_MEMORY_START 	0x300000
-#define KERNEL_MEMORY_END		0x400000
-#define KMEM_BLOCK_SIZE 		256
-#define KMEM_BLOCKS_PER_BYTE 	8
 
 #define KMEM_BITMAP_INDEX(addr) ((addr - KERNEL_MEMORY_START) / KMEM_BLOCK_SIZE / KMEM_BLOCKS_PER_BYTE)
 #define KMEM_BITMAP_OFFSET(addr) ((addr - KERNEL_MEMORY_START) / KMEM_BLOCK_SIZE % KMEM_BLOCKS_PER_BYTE)
@@ -98,6 +94,11 @@ void* kalloc(int size)
     current_running->kallocs++;
 
     dbgprintf("Total mem: %d\n", __kmemory_used);
+
+    if(__kmemory_used > KERNEL_MEMORY_END-KERNEL_MEMORY_START){
+        dbgprintf("Out of memory: %d\n", __kmemory_used);
+        kernel_panic("Out of memory!");
+    }
 
     spin_unlock(&__kmemory_lock);
     return ptr;

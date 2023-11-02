@@ -21,8 +21,8 @@ main:
     mov %dl, drive_num
 
     /* Greet user with message. */
-    # movw $welcome_str, %si
-    # call print
+    movw $welcome_str, %si
+    call print
 
     # mov $0x0, %ah
     # int $0x16
@@ -177,11 +177,11 @@ return:
 
 /* Strings */
 welcome_str:
-    .asciz "RetrOS-32"
+    .asciz "RetrOS-32\n"
 total_error_str:
     .asciz "Unable to boot.\n"
 choice_str:
-    .asciz "Resolution:\n1. 640x480\n2. 800x600\n"
+    .asciz "Resolution: 1. 640x480 2. 800x600\n"
 drive_num:
     .word 0x0000
 /* Reading in kernel, using  DAP (Disk Address Packet) */

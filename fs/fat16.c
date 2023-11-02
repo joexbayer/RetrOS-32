@@ -779,6 +779,11 @@ int fat16_load()
 
     /* Load FAT table into memory. */
     fat_table_memory = (byte_t*)kalloc((boot_table.fat_blocks * 512));  /* Allocate memory for the FAT table */
+    if(fat_table_memory == NULL){
+        dbgprintf("Error allocating memory for FAT table\n");
+        return -2;
+    }
+
     for (uint16_t i = 0; i < boot_table.fat_blocks; i++) {
         read_block(fat_table_memory + i * 512, get_fat_start_block() + i);
     }
