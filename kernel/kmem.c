@@ -161,7 +161,7 @@ void* palloc(int size)
 	if(size <= 0)
 		return NULL;
 
-	if(memory_permanent_ptr + size > PMEM_END_ADDRESS){
+	if(memory_permanent_ptr + size >= PMEM_END_ADDRESS){
 		dbgprintf("[WARNING] Not enough permanent memory!\n");
 		return NULL;
 	}

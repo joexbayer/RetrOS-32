@@ -78,8 +78,8 @@ continue:
 
     /* Setup GDT for 32 land */
     jmp setup_gdt
-setup_gdt:
 
+setup_gdt:
     lgdt gdtp
 
     /* Setup GDT descriptor for data, setting registers. */
@@ -108,44 +108,45 @@ set_a20:
     ret                                                                                
 
 set_video_mode:
+    /* Print message asking for resolution choice */
+    movw $choice_str, %si
+    call print
+
+    /* Wait for key press */
+    mov $0x00, %ah     /* Function 0x00 - Get Keypress */
+    int $0x16          /* BIOS Keyboard Services */
+
+    /* Check if pressed key is '1' or '2' */
+    cmp $'1', %al
+    je set_640x480
+    cmp $'2', %al
+    je set_800x600
+
+    jmp set_video_mode
+
+set_640x480:
     mov $0x4F02, %ax	
-    mov $0x4101, %bx /* 101 = 640x480, 103 = 800x600 */
+    mov $0x4101, %bx /* 101 = 640x480 */
+    jmp set_resolution
+
+set_800x600:
+    mov $0x4F02, %ax	
+    mov $0x4103, %bx /* 103 = 800x600 */
+
+set_resolution:
     int $0x10 
-
     push %es
-	mov $0x4F01, %ax
-	mov $0x4101, %cx /* !! change this as well */ 	
-	mov $vbe_info_structure, %di
-	int $0x10
-	pop %es
-
+    mov $0x4F01, %ax
+    mov %bx, %cx      /* Use same resolution code for information request */	
+    mov $vbe_info_structure, %di
+    int $0x10
+    pop %es
     ret
 
 kill:
     movw $total_error_str, %si
     call print
     call inf 
-
-print_number:
-    movw $10, %di          # Set divisor to 10
-    xorw %si, %si          # Counter for number of digits
-print_loop:
-    xorw %dx, %dx          # Clear %dx for division
-    divw %di               # Divide %cx by 10. Quotient in %cx, remainder in %dx
-    addb $'0', %dl         # Convert remainder to ASCII
-    pushw %dx              # Save character on stack
-    incw %si               # Increment digit counter
-    testw %cx, %cx         # Test quotient
-    jnz print_loop         # If quotient is non-zero, continue loop
-
-print_digits:
-    popw %ax               # Pop character from stack
-    movb $0x0E, %ah        # Function 0x0E - TTY Print
-    int $0x10              # BIOS interrupt
-    decw %si
-    jnz print_digits       # If there are more digits, continue loop
-
-    ret                    # Return after printing
 
 .code32
 enter32:
@@ -176,9 +177,11 @@ return:
 
 /* Strings */
 welcome_str:
-    .asciz "********* Welcome to RetrOS-32 bootloader! *********\n"
+    .asciz "RetrOS-32"
 total_error_str:
     .asciz "Unable to boot.\n"
+choice_str:
+    .asciz "Resolution:\n1. 640x480\n2. 800x600\n"
 drive_num:
     .word 0x0000
 /* Reading in kernel, using  DAP (Disk Address Packet) */

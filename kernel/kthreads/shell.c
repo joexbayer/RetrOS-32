@@ -36,6 +36,7 @@
 
 #include <kutils.h>
 #include <script.h>
+#include <vbe.h>
 
 #define SHELL_HEIGHT 225 /* 275 */
 #define SHELL_WIDTH 350 /* 300 */
@@ -243,6 +244,7 @@ void cd(int argc, char* argv[])
 {
 	current_running->current_directory = change_directory(argv[1]);
 }
+EXPORT_KSYMBOL(cd);
 
 void fdisk(int argc, char* argv[])
 {
@@ -261,8 +263,30 @@ void fdisk(int argc, char* argv[])
 }
 EXPORT_KSYMBOL(fdisk);
 
+void meminfo(int argc, char* argv[])
+{
+	struct mem_info minfo;
+	get_mem_info(&minfo);
 
-EXPORT_KSYMBOL(cd);
+	/* write mem for all 3 types */
+	struct unit kernel = calculate_size_unit(minfo.kernel.used);
+	struct unit kernel_total = calculate_size_unit(minfo.kernel.total);
+
+	struct unit permanent = calculate_size_unit(minfo.permanent.used);
+	struct unit permanent_total = calculate_size_unit(minfo.permanent.total);
+
+	struct unit virtual = calculate_size_unit(minfo.virtual.used);
+	struct unit virtual_total = calculate_size_unit(minfo.virtual.total);
+
+	struct unit total = calculate_size_unit(minfo.kernel.total+minfo.permanent.total+minfo.virtual.total);
+
+	twritef("Memory:\n");
+	twritef("  Kernel:    %d%s/%d%s\n", kernel.size, kernel.unit, kernel_total.size, kernel_total.unit);
+	twritef("  Permanent: %d%s/%d%s\n", permanent.size, permanent.unit, permanent_total.size, permanent_total.unit);
+	twritef("  Virtual:   %d%s/%d%s\n", virtual.size, virtual.unit, virtual_total.size, virtual_total.unit);
+	twritef("  Total:     %d%s\n", total.size, total.unit);
+}
+EXPORT_KSYMBOL(meminfo);
 
 void cat(int argc, char* argv[])
 {
@@ -279,6 +303,12 @@ void cat(int argc, char* argv[])
 	return;
 }
 EXPORT_KSYMBOL(cat);
+
+void res(int argc, char* argv[])
+{
+	twritef("Screen resolution: %dx%d\n", vbe_info->width, vbe_info->height);
+}
+EXPORT_KSYMBOL(res);
 
 void ls(int argc, char* argv[])
 {
@@ -302,6 +332,17 @@ void ls(int argc, char* argv[])
 	//listdir();
 }
 EXPORT_KSYMBOL(ls);
+
+void reset(int argc, char* argv[])
+{
+	kernel_gfx_draw_rectangle(current_running->gfx_window, 0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_VGA_BG);
+	term.head = 0;
+	term.tail = 0;
+	term.lines = 0;
+	memset(term.textbuffer, 0, TERMINAL_BUFFER_SIZE);
+	reset_shell();
+}
+EXPORT_KSYMBOL(reset);
 
 void help()
 {
@@ -395,14 +436,15 @@ void __kthread_entry shell()
 	dbgprintf("shell is running!\n");
 
 	testfn();
-
-	memset(term.textbuffer, 0, TERMINAL_BUFFER_SIZE);
 	struct window* window = gfx_new_window(SHELL_WIDTH, SHELL_HEIGHT, GFX_IS_RESIZABLE);
+	terminal_attach(&term);
+
+	memset(&term, 0, sizeof(struct terminal));
+	memset(term.textbuffer, 0, TERMINAL_BUFFER_SIZE);
 	
 	dbgprintf("shell: window 0x%x\n", window);
 	kernel_gfx_draw_rectangle(current_running->gfx_window, 0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_VGA_BG);
 
-	terminal_attach(&term);
 
 	struct mem_info minfo;
     get_mem_info(&minfo);

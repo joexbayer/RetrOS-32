@@ -462,6 +462,8 @@ struct fat16_file_identifier fat16_get_directory_entry(char* path, struct fat16_
 
     memcpy(entry_out, &entry, sizeof(struct fat16_directory_entry));
     
+    dbgprintf("Found entry %s.%s (%d bytes) Attributes: 0x%x Cluster: %d %s\n", entry.filename, entry.extension, entry.file_size, entry.attributes, entry.first_cluster, entry.attributes & 0x10 ? "<DIR>" : "");
+
     return (struct fat16_file_identifier){
         .directory = IS_DIRECTORY(entry) ? last_start_block : start_block,
         .index = index
@@ -696,7 +698,6 @@ int fat16_format(char* label, int reserved)
 
     /* Update the boot table */
     boot_table = *boot_table_ptr;
-    fat16_bootblock_info();
 
     /* Write the boot table to the boot block */
     if(write_block(bootblock, BOOT_BLOCK) < 0){
@@ -776,19 +777,17 @@ int fat16_load()
     mutex_init(&fat16_write_lock);
     mutex_init(&fat16_management_lock);
 
-    fat16_bootblock_info();
-
     /* Load FAT table into memory. */
     fat_table_memory = (byte_t*)kalloc((boot_table.fat_blocks * 512));  /* Allocate memory for the FAT table */
     for (uint16_t i = 0; i < boot_table.fat_blocks; i++) {
         read_block(fat_table_memory + i * 512, get_fat_start_block() + i);
     }
 
-    /* dump fat table */
-    for(int i = 0; i < 65536; i++){
-        if(fat16_get_fat_entry(i) == 0xFFFF || fat16_get_fat_entry(i) == 0 ) continue;
-        dbgprintf("FAT table %d: %x\n", i, fat16_get_fat_entry(i));
-    }
+    // /* dump fat table */
+    // for(int i = 0; i < 65536; i++){
+    //     if(fat16_get_fat_entry(i) == 0xFFFF || fat16_get_fat_entry(i) == 0 ) continue;
+    //     dbgprintf("FAT table %d: %x\n", i, fat16_get_fat_entry(i));
+    // }
 
     current_dir_block = get_root_directory_start_block();
 
