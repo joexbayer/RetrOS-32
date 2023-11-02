@@ -5,6 +5,8 @@
 #include <sync.h>
 #include <gfx/window.h>
 
+#define WM_MAX_WORKSPACES 4
+
 /* macro to validate that all ops in a wm are not NULL */
 #define WM_VALIDATE(wm) if((wm)->ops == NULL || (wm)->ops->add == NULL || (wm)->ops->remove == NULL || (wm)->ops->draw == NULL || (wm)->ops->push_front == NULL || (wm)->ops->mouse_event == NULL) { return -ERROR_OPS_CORRUPTED; }
 /* validate flags macro */
@@ -31,6 +33,8 @@ struct windowmanager_ops {
     int (*draw)(struct windowmanager *wm, struct window *window);
     int (*push_front)(struct windowmanager *wm, struct window *window);
     int (*mouse_event)(struct windowmanager *wm, int x, int y, char flags);
+    /* select a workspace */
+    int (*workspace)(struct windowmanager *wm, int workspace);
 };
 
 /* Window manager struct */
@@ -39,6 +43,11 @@ struct windowmanager {
     struct windowmanager_ops *ops;
     uint8_t* composition_buffer;
     struct window *windows;
+
+    /* workspaces */
+    struct window* workspaces[WM_MAX_WORKSPACES];
+    int workspace;
+
     uint32_t window_count;
     spinlock_t spinlock;
 

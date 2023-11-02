@@ -212,6 +212,7 @@ int gfx_decode_background_image(const char* file)
             int screenX = (int)(i * scaleX);
             int screenY = (int)(j * scaleY);
 
+            //dbgprintf("[WSERVER] Drawing pixel at %x.\n", &temp_window[j * originalWidth + i]);
 
             // Retrieve the pixel value from the original image
             unsigned char pixelValue = temp_window[j * originalWidth + i];
@@ -234,7 +235,6 @@ int gfx_decode_background_image(const char* file)
 
 void __kthread_entry gfx_compositor_main()
 {
-
     if(wind.flags & WINDOW_SERVER_UNINITIALIZED){
 
         wind.buffer_size = vbe_info->width*vbe_info->height*(vbe_info->bpp/8)+1;
@@ -245,7 +245,7 @@ void __kthread_entry gfx_compositor_main()
             return;
         }
 
-        background = (uint8_t*) palloc(wind.buffer_size+1);
+        background = (uint8_t*) kalloc(wind.buffer_size+1);
         if(background == NULL){
             warningf("Could not allocate memory for background buffer.\n");
             return;
@@ -265,6 +265,12 @@ void __kthread_entry gfx_compositor_main()
 
     dbgprintf("[WSERVER] Window Server initialized.\n");
     struct mouse m;
+
+    int workspace = 0;
+
+    int taskbar_pid = start("taskbar");
+    struct pcb* taskbar = pcb_get_by_pid(taskbar_pid);
+
     /* Main composition loop */
     while(1){
         struct gfx_theme* theme = kernel_gfx_current_theme();
@@ -283,7 +289,19 @@ void __kthread_entry gfx_compositor_main()
         
         unsigned char key = kb_get_char();
         if(key != 0){
-            if(key == F10){
+            if(key == F3){
+
+                /* remove task bar window from list */
+                wind.wm.ops->remove(&wind.wm, taskbar->gfx_window);
+
+                workspace = (workspace+1)%WM_MAX_WORKSPACES;
+                wind.wm.ops->workspace(&wind.wm, workspace);
+                dbgprintf("Switched to workspace %d.\n", workspace);
+                window_changed = 1;
+
+                wind.wm.ops->add(&wind.wm, taskbar->gfx_window);
+
+            } else if(key == F10){
 
                 __is_fullscreen ? gfx_unset_fullscreen(wind.wm.windows) : gfx_set_fullscreen(wind.wm.windows);
 
@@ -320,6 +338,10 @@ void __kthread_entry gfx_compositor_main()
                     usage = (int)(info.usage*100);
                     vesa_printf(wind.composition_buffer, 4, 300+((i+1)*8), 0, "%d  %d/%d (%d) %s", info.pid, (pcb_get_by_pid(i)->preempts), pcb_total_usage(), timer_get_tick(), info.name);
                 }
+
+                /* workspaces window */
+                vesa_printf(wind.composition_buffer, 4, 400, COLOR_WHITE, "%s", "Workspace: %d/%d (F3 to switch)", workspace, WM_MAX_WORKSPACES-1);
+
             }
                 
             wind.wm.ops->draw(&wind.wm, wind.wm.windows);
