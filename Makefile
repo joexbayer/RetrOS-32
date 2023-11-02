@@ -115,7 +115,7 @@ bin/mkfsv2: tools/mkfsv2.c bin/fat16.o bin/bitmap.o ./tests/mocks.c
 	@gcc tools/mkfsv2.c bin/bitmap.o ./tests/mocks.c bin/fat16.o -I ./include/  -O2 -m32 -Wall -g -D__FS_TEST -D__KERNEL -o 	./bin/mkfsv2
 	@echo [BUILD]      Compiling $<
 
-tools: bin/build bin/mkfs
+tools: bin/build bin/mkfs bin/mkfsv2
 
 tests: compile
 	@make -C ./tests/
@@ -153,7 +153,7 @@ create_fs:
 	@dd if=/dev/zero of=filesystem.image bs=512 count=390
 	@./bin/mkfsv2
 
-img: compile create_fs sync
+img: tools compile create_fs sync
 	@echo "Finished creating the image."
 	$(TIME-END)
 

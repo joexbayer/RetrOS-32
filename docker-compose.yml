@@ -6,3 +6,4 @@ services:
       - ./:/RetrOS-32
     entrypoint: make
     command: img
+    privileged: true

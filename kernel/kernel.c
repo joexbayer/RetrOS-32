@@ -187,7 +187,6 @@ void kernel(uint32_t magic)
 	//start("workd");
 	//start("netd");
   	start("kclock");
-	start("taskbar");
 
 	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Deamons initialized.");
 	

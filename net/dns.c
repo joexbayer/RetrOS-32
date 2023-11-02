@@ -81,6 +81,7 @@ int gethostname(char* hostname)
             return __dns_cache[i].ip;
         }
 
+    dbgprintf("[DNS] query for (%s)\n", hostname);
     
     char hostname_save[40];
     memcpy(hostname_save, hostname, strlen(hostname)+1);
@@ -120,6 +121,8 @@ int gethostname(char* hostname)
     
     struct dns_answer* answer;
     int last_length = 0;
+
+    dbgprintf("[DNS] %i bytes received\n", ret);
 
     struct dns_header* dns = (struct dns_header*) &buf;
     for (int i = 0; i < dns->ans_count; i++){
@@ -161,6 +164,8 @@ int gethostname(char* hostname)
         kernel_sock_close(__dns_socket);
 
         //release(&__dns_mutex);
+
+        dbgprintf("[DNS] (%s at %i) (new)\n", hostname, result);
 
         return result;
     }

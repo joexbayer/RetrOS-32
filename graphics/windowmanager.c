@@ -17,6 +17,7 @@ static int wm_default_remove(struct windowmanager* wm, struct window* window);
 static int wm_default_draw(struct windowmanager* wm, struct window* window);
 static int wm_default_push_front(struct windowmanager* wm, struct window* window);
 static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char flags);
+static int wm_default_workspace(struct windowmanager* wm, int workspace);
 
 /* default windowmanager ops struct */
 static struct windowmanager_ops wm_default_wm_ops = {
@@ -24,7 +25,8 @@ static struct windowmanager_ops wm_default_wm_ops = {
     .remove = wm_default_remove,
     .draw = wm_default_draw,
     .push_front = wm_default_push_front,
-    .mouse_event = wm_default_mouse_event
+    .mouse_event = wm_default_mouse_event,
+    .workspace = wm_default_workspace
 };
 
 /* init new window manager with default ops and rest 0 */
@@ -39,6 +41,12 @@ int init_windowmanager(struct windowmanager* wm, int flags)
     wm->ops = &wm_default_wm_ops;
     wm->windows = NULL;
     wm->window_count = 0;
+
+    /* workspaces */
+    wm->workspace = 0;
+    for(int i = 0; i < WM_MAX_WORKSPACES; i++){
+        wm->workspaces[i] = NULL;
+    }
 
     /* flags */
     wm->flags = flags;
@@ -64,6 +72,7 @@ int init_windowmanager(struct windowmanager* wm, int flags)
 static int wm_default_add(struct windowmanager* wm, struct window* window)
 {
     ERR_ON_NULL(wm);
+    ERR_ON_NULL(window);
     
     if (wm->window_count == 0) {
         wm->windows = window;
@@ -76,6 +85,24 @@ static int wm_default_add(struct windowmanager* wm, struct window* window)
     window->next = current;
 
     wm->window_count++;
+
+    return ERROR_OK;
+}
+
+static int wm_default_workspace(struct windowmanager* wm, int workspace)
+{
+    ERR_ON_NULL(wm);
+
+    if(workspace < 0 || workspace >= WM_MAX_WORKSPACES){
+        return -ERROR_INVALID_ARGUMENTS;
+    }
+
+    /* store current windows in workspace */
+    wm->workspaces[wm->workspace] = wm->windows;
+
+    /* set new workspace */
+    wm->windows = wm->workspaces[workspace];
+    wm->workspace = workspace;
 
     return ERROR_OK;
 }

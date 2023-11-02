@@ -404,14 +404,24 @@ static int fat16_stat(struct filesystem* fs, const char* path, struct file* file
  */
 static int fat16_list(struct filesystem* fs, const char* path, char* buf, int size)
 {
-    struct fat16_directory_entry entry;
+    int ret;
     int entries = 0;
-    struct fat16_file_identifier id = fat16_get_directory_entry((char*)path, &entry);
-    if(id.directory < 0 || entry.attributes != FAT16_FLAG_SUBDIRECTORY){
+    struct fat16_directory_entry entry;
+    struct fat16_directory_entry parent_entry;
+    
+    /* check if the directory exists */
+    struct fat16_file_identifier id = fat16_get_directory_entry((char*)path, &parent_entry);
+    if(id.directory < 0 || parent_entry.attributes != FAT16_FLAG_SUBDIRECTORY){
         return -1;
     }
-    
-    dbgprintf("Listing directory %d\n", id.directory);
+
+    /* read the directory entry */
+    ret = fat16_read_entry(id.directory, id.index, &entry);
+    if(ret != 0){
+        return -2;
+    }
+
+    dbgprintf("Listing directory %d\n", entry.first_cluster);
 
     /**
      * @brief Should this function use twrite?
@@ -423,10 +433,10 @@ static int fat16_list(struct filesystem* fs, const char* path, char* buf, int si
     /* print the directory contents */
     twritef("Size  Date    Time    Name\n");
     for (int i = 0; i < (int)ENTRIES_PER_BLOCK; i++) {
-        struct fat16_directory_entry entry = {0};
-        struct fat16_directory_entry* dir_entry = &entry;
+        struct fat16_directory_entry _list_entry = {0};
+        struct fat16_directory_entry* dir_entry = &_list_entry;
 
-        fat16_read_entry(id.directory, i, &entry);
+        fat16_read_entry(entry.first_cluster == 0 ? get_root_directory_start_block() : get_data_start_block() + entry.first_cluster, i, dir_entry);
 
         /* Check if the entry is used (filename's first byte is not 0x00 or 0xE5) */
         if (dir_entry->filename[0] != 0x00 && dir_entry->filename[0] != 0xE5
