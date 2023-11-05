@@ -443,9 +443,6 @@ void __kthread_entry shell()
 	}
 
 	terminal_attach(&term);
-
-	memset(&term, 0, sizeof(struct terminal));
-	memset(term.textbuffer, 0, TERMINAL_BUFFER_SIZE);
 	
 	dbgprintf("shell: window 0x%x\n", window);
 	kernel_gfx_draw_rectangle(current_running->gfx_window, 0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_VGA_BG);

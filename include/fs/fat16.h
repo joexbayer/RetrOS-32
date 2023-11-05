@@ -102,6 +102,7 @@ int fat16_sync_directory_entry(uint16_t block, uint32_t index, const struct fat1
 struct fat16_file_identifier fat16_get_directory_entry(char* path, struct fat16_directory_entry* entry_out);
 int fat16_create_directory(const char *name);
 
+int fat16_create_empty_file(const char* path, int directory);
 int fat16_create_file(const char *filename, const char* ext, void *data, int data_length);
 
 int fat16_init();

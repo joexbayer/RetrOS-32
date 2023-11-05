@@ -241,6 +241,43 @@ int fat16_delete_entry(int block, int index)
     return 0;
 }
 
+int fat16_create_empty_file(const char* path, int directory)
+{   
+    int i = 0, j = 0;
+    char name[8];
+    char ext[3];
+
+    memset(name, ' ', 8);
+    memset(ext, ' ', 3);
+
+    /* extract name and ext (if there) */
+    if(path[0] == '/'){
+        /* TODO: implement full path creation of files. */
+        return -1;
+    }
+
+    /* at this point I assume that path is a file name */
+    while(path[0] != '.' && path[0] != '\0'){
+        name[i++] = TO_UPPER(path[0]);
+        path++;
+    }
+
+    if(path[0] == '.'){
+        path++;
+    }
+
+    while(path[0] != '\0'){
+        ext[j++] = TO_UPPER(path[0]);
+        path++;
+    }
+
+    /* create the file */
+    if(fat16_create_file((char*)name, ext, NULL, 0) != 0){
+        return -2;
+    }
+
+}
+
 /**
  * Adds a new root directory entry.
  * @param filename The name of the file (up to 8 characters, not including the extension).
@@ -529,9 +566,11 @@ int fat16_create_file(const char *filename, const char* ext, void *data, int dat
 
     struct fat16_directory_entry entry = {
         .first_cluster = first_cluster,
-        };
+    };
 
-    fat16_write_data(entry.first_cluster, 0, data, data_length);
+    if(data_length > 0 && data != NULL){
+        fat16_write_data(entry.first_cluster, 0, data, data_length);
+    }
 
 
     fat16_add_entry(current_dir_block, (char*)filename, ext, FAT16_FLAG_ARCHIVE, first_cluster, data_length);

@@ -52,6 +52,17 @@ unsigned char* run_length_decode(const unsigned char* encodedData, int encodedLe
     return decodedData;
 }
 
+/* Function to align a given size to the size of a void* */
+int align_to_pointer_size(int size)
+{
+    /* Calculate the alignment requirement */
+    int alignment = sizeof(void*);
+
+    /* Align the size */
+    int aligned_size = (size + alignment - 1) & ~(alignment - 1);
+
+    return aligned_size;
+}
 
 int exec_cmd(char* str)
 {

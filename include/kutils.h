@@ -51,6 +51,11 @@ typedef unsigned char ubyte_t;
 
 void init_kctors();
 
+#define PTR_SIZE sizeof(void*)
+#define ALIGN(x, a)  (((x) + ((a) - 1)) & ~((a) - 1))
+
+/* Macro to convert a lowercase character to uppercase */
+#define TO_UPPER(c)  (((c) >= 'a' && (c) <= 'z') ? ((c) - 'a' + 'A') : (c))
 
 #define jmp(addr) __asm__ __volatile__ ("jmp *%0" : : "m" (addr))
 #define call(addr) __asm__ __volatile__ ("call *%0" : : "m" (addr))
@@ -104,6 +109,7 @@ struct unit {
 };
 struct unit calculate_size_unit(int bytes);
 
+int align_to_pointer_size(int size);
 unsigned char* run_length_encode(const unsigned char* data, int length, unsigned char* out, int* encodedLength);
 unsigned char* run_length_decode(const unsigned char* encodedData, int encodedLength, unsigned char* out, int* decodedLength);
 int exec_cmd(char* str);

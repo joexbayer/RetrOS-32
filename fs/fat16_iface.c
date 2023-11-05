@@ -188,6 +188,9 @@ static int fat16_read(struct filesystem* fs, struct file* file, void* buf, int s
  */
 static struct file* fat16_open(struct filesystem* fs, const char* path, int flags)
 {
+    char* name;
+    char* ext;
+
     struct file* file;
     struct fat16_file_identifier id;;
     struct fat16_directory_entry entry;
@@ -199,8 +202,26 @@ static struct file* fat16_open(struct filesystem* fs, const char* path, int flag
     /* parse path */
     id = fat16_get_directory_entry((char*)path, &entry);
     if(id.directory < 0){
-        dbgprintf("Failed to get directory entry\n");
-        return NULL;
+        
+        /* check if the file should be created */
+        if(flags & FS_FILE_FLAG_CREATE){
+
+            /* extract name and ext (if there) */
+            if(path[0] == '/'){
+                /* TODO: implement full path creation of files. */
+                return NULL;
+            }
+
+            fat16_create_empty_file(path, 0);
+
+            /* get the file identifier */
+            id = fat16_get_directory_entry((char*)path, &entry);
+            if(id.directory < 0){
+                return NULL;
+            }
+        } else {
+            return NULL;
+        }
     }
 
     /* allocate new file */

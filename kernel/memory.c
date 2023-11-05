@@ -49,6 +49,8 @@ void* malloc(unsigned int size)
 		return NULL;
 	}
 	
+	size = ALIGN(size, PTR_SIZE);
+
 	/* lock on malloc as multiple threads can malloc at the same time */
 	spin_lock(&current_running->allocations->spinlock);
 

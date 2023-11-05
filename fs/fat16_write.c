@@ -54,6 +54,8 @@ int fat16_write_data_to_cluster(uint32_t cluster, const void *data, int data_len
 
 int fat16_write_data(int first_cluster, int offset, void* data, int data_length)
 {
+    if(data_length <= 0) return -1;  /* Error: Invalid data length */
+
     int remaining_data_length = data_length;
     int data_offset = 0;
 

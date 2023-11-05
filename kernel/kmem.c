@@ -72,6 +72,10 @@ static inline void __kmemory_write_metadata(int start_block, int num_blocks)
  */
 void* kalloc(int size)
 {
+    if (size <= 0) return NULL;
+
+    size = ALIGN(size, PTR_SIZE);
+
 	spin_lock(&__kmemory_lock);
 
     int num_blocks = (size + sizeof(int) + KMEM_BLOCK_SIZE - 1) / KMEM_BLOCK_SIZE;
@@ -159,8 +163,8 @@ int kmemory_total()
 static uint32_t memory_permanent_ptr = PERMANENT_KERNEL_MEMORY_START;
 void* palloc(int size)
 {
-	if(size <= 0)
-		return NULL;
+	if(size <= 0) return NULL;
+    size = ALIGN(size, PTR_SIZE);
 
 	if(memory_permanent_ptr + size >= PMEM_END_ADDRESS){
 		dbgprintf("[WARNING] Not enough permanent memory!\n");

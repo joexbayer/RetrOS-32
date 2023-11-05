@@ -288,7 +288,7 @@ void __kthread_entry gfx_compositor_main()
         
         unsigned char key = kb_get_char();
         if(key != 0){
-            if(key == F3){
+            if(key == F4){
 
                 /* remove task bar window from list */
                 wind.wm.ops->remove(&wind.wm, taskbar->gfx_window);
