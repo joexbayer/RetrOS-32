@@ -375,7 +375,6 @@ error_t pcb_create_kthread(void (*entry)(), char* name)
 		return -ERROR_ALLOC;
 	}
 
-	//pcb->allocations = NULL;
 	pcb->parent = current_running;
 	pcb->term = current_running->term;
 
@@ -388,6 +387,7 @@ error_t pcb_create_kthread(void (*entry)(), char* name)
 
 	memcpy(pcb->name, name, strlen(name)+1);
 	
+	pcb->page_dir = kernel_page_dir;
 	/* this is done for processes in vmem.c, should probably be moved there? */
 	pcb->allocations = kalloc(sizeof(struct virtual_allocations));
 	if(pcb->allocations == NULL){
@@ -401,8 +401,6 @@ error_t pcb_create_kthread(void (*entry)(), char* name)
 	pcb->allocations->spinlock = 0;
 
 	get_scheduler()->ops->add(get_scheduler(), pcb);
-	//running->ops->push(running, &pcb_table[i]);
-	
 
 	pcb_count++;
 	dbgprintf("Added %s, PID: %d, Stack: 0x%x\n", name, pcb->pid, pcb->kesp);
@@ -414,7 +412,6 @@ void __noreturn start_pcb(struct pcb* pcb)
 {   
 	pcb->state = RUNNING;
 	dbgprintf("[START PCB] Starting pcb!\n");
-	//pcb_dbg_print(current_running);
 	_start_pcb(pcb); /* asm function */
 	
 	UNREACHABLE();
@@ -433,18 +430,7 @@ void init_pcbs()
 		pcb_table[i].next = NULL;
 	}
 
-	//int ret = pcb_create_kthread(&Genesis, "Genesis");
-	//if(ret < 0) return; // error
-
 	current_running = &pcb_table[0];
 
-	//running->_list = current_running;
-
 	dbgprintf("[PCB] All process control blocks are ready.\n");
-
-}
-
-void pcb_start()
-{
-	/* We will never reach this.*/
 }

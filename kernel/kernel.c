@@ -195,7 +195,6 @@ void kernel(uint32_t magic)
 
 
 	init_pit(1);
-	pcb_start();
 	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Starting OS. %d", cli_cnt);
 	LEAVE_CRITICAL();
 	

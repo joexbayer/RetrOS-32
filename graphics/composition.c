@@ -79,7 +79,6 @@ static inline int gfx_check_changes(struct window* w)
 void gfx_composition_remove_window(struct window* w)
 {
     while (wind.wm.state != WM_INITIALIZED);
-    
     wind.wm.ops->remove(&wind.wm, w);
 }
 

@@ -92,7 +92,7 @@ static int fat16_write(struct filesystem* fs, struct file* file, const void* buf
         dbgprintf("File is not open\n");
         return -1;
     }
-
+ 
     /* check if the file is writeable */
     if(!(file->flags & FS_FILE_FLAG_WRITE)){
         dbgprintf("File is not writeable\n");
@@ -116,7 +116,9 @@ static int fat16_write(struct filesystem* fs, struct file* file, const void* buf
     }
 
     /* update the file size */
-    entry.file_size += size;
+    if ((offset + written) > entry.file_size) {
+        entry.file_size = offset + written;
+    }
 
     fat16_sync_directory_entry(file->directory, file->identifier, &entry);
 

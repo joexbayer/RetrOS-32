@@ -127,7 +127,6 @@ struct pcb_queue {
 };
 
 void init_pcbs();
-void pcb_start();
 void start_pcb(struct pcb* pcb);
 error_t pcb_create_kthread( void (*entry)(), char* name);
 error_t pcb_create_process(char* program, int args, char** argv, pcb_flag_t flags);
