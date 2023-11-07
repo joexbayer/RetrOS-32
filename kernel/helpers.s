@@ -132,6 +132,7 @@ pcb_restore_context:
 
 .global _start_pcb
 _start_pcb:
+    subl $1, cli_cnt
     # movl current_running, %eax
     movl 4(%esp), %eax
 
@@ -147,11 +148,10 @@ _start_pcb_skip:
     pushl	$NEW_PCB_INIT_EFLAGS
     pushl	PCB_CS(%eax)
     pushl	PCB_EIP(%eax)
-    
-    subl $1, cli_cnt
 
     movw	PCB_DS(%eax),%ds
     movw	PCB_DS(%eax),%es
+    
     iret
 
 .section .text

@@ -23,250 +23,159 @@
 
 #include <fs/fs.h>
 
-//#include <gfx/gfxlib.h>
-
-#define PCB_STACK_SIZE 0x2000
-const char* pcb_status[] = {"stopped ", "running ", "new     ", "blocked ", "sleeping", "zombie"};
 static struct pcb pcb_table[MAX_NUM_OF_PCBS];
-static int pcb_count = 0;
-
-/* Prototype functions for pcb queue interface */
-static error_t __pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb);
-static error_t __pcb_queue_add(struct pcb_queue* queue, struct pcb* pcb);
-static void __pcb_queue_remove(struct pcb_queue* queue, struct pcb* pcb);
-static struct pcb* __pcb_queue_pop(struct pcb_queue* queue);
-static struct pcb* __pcb_queue_peek(struct pcb_queue* queue);
-
-/* Setup for default pcb queue operations */
-static struct pcb_queue_operations pcb_queue_default_ops = {
-	.push = &__pcb_queue_push,
-	.add = &__pcb_queue_add,
-	.remove = &__pcb_queue_remove,
-	.pop = &__pcb_queue_pop,
-	.peek = &__pcb_queue_peek
-};
-
-/* Global running and blocked queue */
-struct pcb_queue* running;
-struct pcb_queue* blocked;
-
 /**
  * Current running PCB, used for context aware
  * functions such as windows drawing to the screen.
  */
 struct pcb* current_running = &pcb_table[0];
 
+//#include <gfx/gfxlib.h>
 
-/**
- * @brief Creates a new PCB queue.
- *
- * The `pcb_new_queue()` function allocates memory for a new `pcb_queue` structure and initializes its members.
- * The `_list` member is set to `NULL`, and the queue's operations and spinlock are attached and initialized.
- *
- * @return A pointer to the newly created `pcb_queue` structure. NULL on error.
- */ 
-struct pcb_queue* pcb_new_queue()
+const char* pcb_status[] = {"stopped ", "running ", "new     ", "blocked ", "sleeping", "zombie"};
+static int pcb_count = 0;
+
+static void __pcb_free(struct pcb* pcb)
 {
-	struct pcb_queue* queue = kalloc(sizeof(struct pcb_queue));
-	if(queue == NULL){
-		return NULL;
-	}
-
-	queue->_list = NULL;
-	queue->ops = &pcb_queue_default_ops;
-	queue->spinlock = 0;
-	queue->total = 0;
-
-	return queue;
+	memset(pcb, 0, sizeof(struct pcb));
+	pcb->state = STOPPED;
+	pcb->pid = -1;
+	pcb->next = NULL;
+	pcb->prev = NULL;
 }
 
-/**
- * @brief Pushes a PCB onto the single linked PCB queue.
- *
- * The `__pcb_queue_push()` function adds a PCB to the end of the specified queue. The function takes a pointer to
- * the `pcb_queue` structure and a pointer to the `pcb` structure to be added as arguments. The function uses
- * a spinlock to protect the critical section and adds the PCB to the end of the queue by traversing the current
- * list of PCBs and adding the new PCB to the end.
- *
- * @param queue A pointer to the `pcb_queue` structure to add the `pcb` to.
- * @param pcb A pointer to the `pcb` structure to add to the queue.
- */
-static error_t __pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb)
+static int __pcb_load_from_disk(const char* file, void* buf, int size)
 {
-	if(queue == NULL){
-		return -ERROR_PCB_QUEUE_NULL;
+	inode_t inode = fs_open(file, FS_FILE_FLAG_READ);
+	if(inode < 0){
+		dbgprintf("Error opening %s\n", file);
+		return -ERROR_FILE_NOT_FOUND;
 	}
 
-	/* This approach is suboptimal for large pcb queues, as you have to iterate over all pcbs */
-	SPINLOCK(queue, {
+	dbgprintf("Reading %s from disk\n", file);
+	int read = fs_read(inode, buf, size);
+	if(read < 0){
+		fs_close(inode);
+		return -ERROR_FILE_NOT_FOUND;
+	}
 
-		struct pcb* current = queue->_list;
-		if(current == NULL){
-			queue->_list = pcb;
-			break;
-		}
-		while (current->next != NULL){
-			current = current->next;
-		}
-		current->next = pcb;
-		pcb->next = NULL;
-		queue->total++;
+	fs_close(inode);
+	return read;
+}
 
+static int __pcb_init_kernel_stack(struct pcb* pcb)
+{
+	int32_t stack = (uint32_t) kalloc(PCB_STACK_SIZE);
+	if((void*)stack == NULL){
+		return -ERROR_ALLOC;
+	}
+	memset((void*)stack, 0, PCB_STACK_SIZE);
 
-	});
+	/* Stack grows down so we want the upper part of allocated memory.*/ 
+	pcb->ctx.ebp = stack+PCB_STACK_SIZE-1;
+	pcb->ctx.esp = stack+PCB_STACK_SIZE-1;
+	pcb->kesp = pcb->ctx.esp;
+	pcb->kebp = pcb->kesp;
+	pcb->stackptr = stack;
 
 	return ERROR_OK;
 }
 
-/**
- * @brief Adds a PCB to the single linked PCB queue.
- *
- * The `__pcb_queue_add()` function adds a PCB to the beginning of the specified queue. The function takes a pointer to
- * the `pcb_queue` structure and a pointer to the `pcb` structure to be added as arguments. The function uses
- * a spinlock to protect the critical section and adds the PCB to the beginning of the queue by modifying the pointers
- * of the existing PCBs in the queue to insert the new PCB at the front.
- *
- * @param queue A pointer to the `pcb_queue` structure to add the `pcb` to.
- * @param pcb A pointer to the `pcb` structure to add to the queue.
- */
-static error_t __pcb_queue_add(struct pcb_queue* queue, struct pcb* pcb)
+static struct pcb* __pcb_get_free()
 {
-	if(queue == NULL){
-		return -ERROR_PCB_QUEUE_NULL;
+	ASSERT_CRITICAL();
+	int i; /* Find a pcb is that is "free" */
+	for(i = 0; i < MAX_NUM_OF_PCBS; i++)
+		if(pcb_table[i].state == STOPPED){
+			struct pcb* pcb = &pcb_table[i];
+
+			pcb->pid = i;
+			pcb->state = PCB_NEW;
+			pcb->used_memory = 0;
+			pcb->kallocs = 0;
+			pcb->preempts = 0;
+			pcb->is_process = 0;
+			pcb->args = 0;
+			pcb->argv = NULL;
+			pcb->current_directory = 0;
+			pcb->yields = 0;
+
+			return pcb;
+		}
+
+	return NULL;
+}
+
+static struct pcb* __pcb_init_process(byte_t flags, uint32_t entry_point)
+{
+    ENTER_CRITICAL();
+
+    struct pcb* pcb = __pcb_get_free();
+    if (pcb == NULL) {
+        LEAVE_CRITICAL();
+        return NULL;
+    }
+
+    if (__pcb_init_kernel_stack(pcb) < 0) {
+        __pcb_free(pcb);
+        LEAVE_CRITICAL();
+        return NULL;
+    }
+
+	pcb->ctx.esp = 0xEFFFFFF0;
+    pcb->ctx.ebp = pcb->ctx.esp;
+    pcb->ctx.eip = entry_point;
+    pcb->is_process = 1;
+    pcb->cs = GDT_PROCESS_CS | PROCESSS_PRIVILEGE;
+    pcb->ds = GDT_PROCESS_DS | PROCESSS_PRIVILEGE;
+
+    /* Set kernel privileges if flag is set */
+    if (flags & PCB_FLAG_KERNEL) {
+        pcb->cs = GDT_KERNEL_CS;
+        pcb->ds = GDT_KERNEL_DS;
+    }
+
+    LEAVE_CRITICAL();
+    return pcb;
+}
+
+static int __pcb_init_virt_args(struct pcb* pcb, int argc, char** argv)
+{
+	if(argc == 0) return ERROR_OK;
+
+	struct args* virtual_args = vmem_stack_alloc(pcb, sizeof(struct args));
+	if(virtual_args == NULL){
+		dbgprintf("[PCB] Failed to allocate memory for virtual args\n");
+		return -ERROR_ALLOC;
 	}
 
-	if(pcb == NULL){
-		return -ERROR_PCB_NULL;
+	/* get physical address */
+	uint32_t* heap_table = (uint32_t*)(pcb->page_dir[DIRECTORY_INDEX(VMEM_HEAP)] & ~PAGE_MASK);
+	uint32_t heap_page = (uint32_t)((uint32_t*)heap_table)[TABLE_INDEX((uint32_t)virtual_args)]& ~PAGE_MASK;
+
+	struct args* _args = (struct args*)(heap_page);
+	/* copy over args */
+	_args->argc = argc;
+	for (int i = 0; i < argc; i++){
+		memcpy(_args->data[i], argv[i], strlen(argv[i])+1);
+		_args->argv[i] = virtual_args->data[i];
+		dbgprintf("Arg %d: %s (0x%x)\n", i, _args->data[i], _args->argv[i]);
 	}
-
-	SPINLOCK(queue, {
-
-		/* Add the pcb to the front of the queue */
-		pcb->next = queue->_list; // Set the next pointer of the new pcb to the current head of the queue
-		queue->_list = pcb; // Set the head of the queue to the new pcb
-
-		queue->total++;
-
-	});
-	dbgprintf("New pcb added to a queue\n");
+	pcb->args = _args->argc;
+	pcb->argv = virtual_args->argv;
 
 	return ERROR_OK;
 }
 
-/**
- * @brief Removes a PCB from the double linked PCB queue.
- *
- * The `__pcb_queue_remove()` function removes a PCB from the specified queue. The function takes a pointer to the
- * `pcb_queue` structure and a pointer to the `pcb` structure to be removed as arguments. The function uses a
- * spinlock to protect the critical section and removes the specified PCB from the queue by modifying the pointers
- * of the previous and next PCBs in the queue to bypass the removed PCB.
- *
- * @param queue A pointer to the `pcb_queue` structure to remove the `pcb` from.
- * @param pcb A pointer to the `pcb` structure to remove from the queue.
- */
-static void __pcb_queue_remove(struct pcb_queue* queue, struct pcb* pcb)
-{
-	assert(queue != NULL);
-	dbgprintf("Removed %s from a queue\n", pcb->name);
-
-	SPINLOCK(queue, {
-
-		/* Remove pcb from linked list queue */
-		struct pcb* current = queue->_list;
-		while ( current->next != NULL && current->next != pcb){
-			current = current->next;
-		}
-
-		if(current->next == NULL){
-			return;
-		}
-
-		current->next = pcb->next;
-	});
-
-}
-
-/**
- * @brief Removes and returns the first PCB in the PCB queue.
- *
- * The `__pcb_queue_pop()` function removes and returns the first PCB in the specified queue. The function takes a pointer
- * to the `pcb_queue` structure as an argument. The function uses a spinlock to protect the critical section and removes
- * the first PCB from the queue by modifying the pointers of the previous and next PCBs in the queue to bypass the
- * removed PCB. The function returns a pointer to the removed PCB, or `NULL` if the queue is empty.
- *
- * @param queue A pointer to the `pcb_queue` structure to remove the first PCB from.
- * @return A pointer to the first PCB in the queue, or `NULL` if the queue is empty.
- */
-static struct pcb* __pcb_queue_pop(struct pcb_queue* queue)
-{
-    if(queue == NULL || queue->_list == NULL){
-		return NULL;
-	}
-
-	struct pcb* front = NULL;
-	SPINLOCK(queue, {
-
-		front = queue->_list;
-		queue->_list = front->next;
-
-		front->next = NULL;
-		front->prev = NULL;
-	});
-
-    return front;
-}
-
-/**
- * @brief Returns but not removes the first PCB in the PCB queue.
- *
- * The `__pcb_queue_peek()` function returns the first PCB in the specified queue. The function takes a pointer
- * to the `pcb_queue` structure as an argument. The function uses a spinlock to protect the critical section and
- * returns a pointer to the first PCB in the queue, or `NULL` if the queue is empty.
- *
- * @param queue A pointer to the `pcb_queue` structure to return the first PCB from.
- * @return A pointer to the first PCB in the queue, or `NULL` if the queue is empty.
- */
-static struct pcb* __pcb_queue_peek(struct pcb_queue* queue)
-{
-	if(queue == NULL || queue->_list == NULL){
-		return NULL;
-	}
-
-	struct pcb* front = NULL;
-	SPINLOCK(queue, {
-
-		front = queue->_list;
-	});
-
-	return front;
-}
-
-
-/**
- * @brief Wrapper function to push to running queue
- * 
- * @param pcb 
- */
-void pcb_queue_push_running(struct pcb* pcb)
-{
-	running->ops->push(running, pcb);
-}
-
-void pcb_queue_remove_running(struct pcb* pcb)
-{
-	running->ops->remove(running, pcb);
-}
 
 
 int pcb_total_usage()
 {
 	int total = 0;
 	/* Do not include idle task at pid 0 */
-	for (int i = 1; i < MAX_NUM_OF_PCBS; i++)
-	{
+	for (int i = 1; i < MAX_NUM_OF_PCBS; i++){
 		total += pcb_table[i].preempts;
 	}
-
 	return total;
 }
 
@@ -291,12 +200,6 @@ error_t pcb_get_info(int pid, struct pcb_info* info)
 	return ERROR_OK;
 }
 
-struct pcb* pcb_get_new_running()
-{
-	assert(running->_list != NULL);
-	return running->_list;
-}
-
 void pcb_kill(int pid)
 {
 	if(pid < 0 || pid > MAX_NUM_OF_PCBS) return;
@@ -314,46 +217,6 @@ void idletask(){
 	while(1){
 		HLT();
 	};
-}
-
-static struct pcb* pcb_get_free()
-{
-	int i; /* Find a pcb is that is "free" */
-	for(i = 0; i < MAX_NUM_OF_PCBS; i++)
-		if(pcb_table[i].state == STOPPED){
-			pcb_table[i].pid = i;
-			return &pcb_table[i];
-		}
-
-	return NULL;
-}
-
-static void pcb_free(struct pcb* pcb)
-{
-	memset(pcb, 0, sizeof(struct pcb));
-	pcb->state = STOPPED;
-	pcb->pid = -1;
-	pcb->next = NULL;
-	pcb->prev = NULL;
-}
-
-
-void dummytask(){
-	int j = 0;
-	for (int i = 0; i < 699999999; i++){
-		j = (j+100) % 1000;	
-	}
-
-	kernel_exit();
-	UNREACHABLE();
-}
-
-void pcb_set_running(int pid)
-{
-	if(pid < 0 || pid > MAX_NUM_OF_PCBS)
-		return;
-
-	pcb_table[pid].state = RUNNING;
 }
 
 struct pcb* pcb_get_by_pid(int pid)
@@ -403,74 +266,6 @@ int pcb_cleanup_routine(int pid)
 }
 
 /**
- * @brief Initializes the PCBs struct members and importantly allocates the stack.
- * 
- * @param pid id of process
- * @param pcb pointer to pcb
- * @param entry pointer to entry function
- * @param name name of process.
- * @return int 1 on success -1 on error.
- */
-error_t pcb_init_kthread(int pid, struct pcb* pcb, void (*entry)(), char* name)
-{
-	dbgprintf("Initiating new kernel thread!\n");
-	uint32_t stack = (uint32_t) kalloc(PCB_STACK_SIZE);
-	if((void*)stack == NULL){
-		dbgprintf("[PCB] STACK == NULL");
-		return -ERROR_ALLOC;
-	}
-	memset((void*)stack, 0, PCB_STACK_SIZE);
-
-	/* Stack grows down so we want the upper part of allocated memory.*/ 
-	pcb->ctx.ebp = stack+PCB_STACK_SIZE-1;
-	pcb->ctx.esp = stack+PCB_STACK_SIZE-1;
-	pcb->kesp = pcb->ctx.esp;
-	pcb->kebp = pcb->kesp;
-	pcb->ctx.eip = (uint32_t)&kthread_entry;
-	pcb->state = PCB_NEW;
-	pcb->pid = pid;
-	pcb->stackptr = stack;
-	//pcb->allocations = NULL;
-	pcb->used_memory = 0;
-	pcb->kallocs = 0;
-	pcb->preempts = 0;
-	pcb->term = current_running->term;
-	pcb->page_dir = kernel_page_dir;
-	pcb->is_process = 0;
-	pcb->args = 0;
-	pcb->argv = NULL;
-	pcb->current_directory = 0;
-	pcb->yields = 0;
-	pcb->parent = current_running;
-	pcb->thread_eip = (uintptr_t) entry;
-	pcb->cs = GDT_KERNEL_CS;
-	pcb->ds = GDT_KERNEL_DS;
-
-	memcpy(pcb->name, name, strlen(name)+1);
-
-	dbgprintf("Initiated new kernel thread!\n");
-
-	/* this is done for processes in vmem.c, should probably be moved there? */
-	pcb->allocations = kalloc(sizeof(struct virtual_allocations));
-	if(pcb->allocations == NULL){
-		pcb_free(pcb);
-		dbgprintf("[PCB] Failed to allocate memory for virtual allocations\n");
-		return -ERROR_ALLOC;
-	}
-
-	pcb->allocations->head = NULL;
-	pcb->allocations->spinlock = 0;
-
-	return 1;
-}
-
-void flush_tlb() {
-    uint32_t cr3;
-    asm volatile ("movl %%cr3, %0" : "=r" (cr3));
-    asm volatile ("movl %0, %%cr3" : : "r" (cr3));
-}
-
-/**
  * @brief Creates a new kernel thread.
  * Creates a process thread which inherets the parents virtual memory.
  * @param entry entry function
@@ -480,47 +275,16 @@ void flush_tlb() {
  */
 error_t pcb_create_thread(struct pcb* parent, void (*entry)(), char* name, byte_t flags)
 {
-	ENTER_CRITICAL();
 
-	struct pcb* pcb = pcb_get_free();
+	/* Initialize PCB and set privileges */
+    struct pcb* pcb = __pcb_init_process(flags, (uint32_t)entry);
 	if(pcb == NULL){
-		dbgprintf("No free PCBs!\n");
-		return -ERROR_PCB_FULL;
-	}
-
-	pcb->ctx.eip = (uint32_t)entry;
-	pcb->ctx.esp = 0xEFFFFFF0;
-	pcb->ctx.ebp = pcb->ctx.esp;
-
-	/* Stack grows down so we want the upper part of allocated memory.*/
-	pcb->stackptr = (uint32_t) kalloc(PCB_STACK_SIZE);
-	if((void*)pcb->stackptr == NULL){
-		dbgprintf("[PCB] STACK == NULL");
-		pcb_free(pcb);
-		return -ERROR_ALLOC;
-	}
-	memset((void*)pcb->stackptr, 0, PCB_STACK_SIZE);
-	pcb->kesp = pcb->stackptr+PCB_STACK_SIZE-1;
-	pcb->kebp = pcb->kesp;
-
-	/* a process thread still is treated as a process */
-	pcb->is_process = 1;
-
-	pcb->term = parent->term;
-	pcb->kallocs = 0;
-	pcb->preempts = 0;
-	pcb->args = 0;
-	pcb->argv = NULL;
-	pcb->yields = 0;
-	pcb->parent = current_running;
-	pcb->cs = GDT_PROCESS_CS | PROCESSS_PRIVILEGE;
-    pcb->ds = GDT_PROCESS_DS | PROCESSS_PRIVILEGE;
-
-	/* Launch with kernel privileges */
-	if(flags & PCB_FLAG_KERNEL){
-		pcb->cs = GDT_KERNEL_CS;
-		pcb->ds = GDT_KERNEL_DS;
-	}
+        return -ERROR_NULL_POINTER;
+    }
+    
+    /* Inherit parent's attributes */
+    pcb->term = parent->term;
+    pcb->parent = current_running;
 
 	/* inheret parents virtual memory */
 	vmem_init_process_thread(parent, pcb);
@@ -528,113 +292,58 @@ error_t pcb_create_thread(struct pcb* parent, void (*entry)(), char* name, byte_
 	get_scheduler()->ops->add(get_scheduler(), pcb);
 
 	pcb_count++;
-	LEAVE_CRITICAL();
-	pcb->state = PCB_NEW;
 	return pcb->pid;
 }
 
 error_t pcb_create_process(char* program, int argc, char** argv, pcb_flag_t flags)
 {
-	ENTER_CRITICAL();
-	/* Load process from disk */
-	inode_t inode = fs_open(program, FS_FILE_FLAG_READ);
-	if(inode < 0){
-		return -ERROR_FILE_NOT_FOUND;
-	}
+	char* buf;
+	int ret, size;
+	struct pcb* pcb;
 
-	dbgprintf("Reading %s from disk\n", program);
-	char* buf = kalloc(MAX_FILE_SIZE);
-	if(buf == NULL){
-		dbgprintf("Error allocating memory for %s\n", program);
-		fs_close(inode);
-		return -ERROR_ALLOC;
-	}
-
-	/* Read file into buffer */
-	int read = fs_read(inode, buf, MAX_FILE_SIZE);
-	if(read < 0){
+	/* Load program into memory */
+	buf = kalloc(MAX_FILE_SIZE);
+	if(buf == NULL){return -ERROR_ALLOC;}
+	
+	ret = __pcb_load_from_disk(program, buf, MAX_FILE_SIZE);
+	if(ret < 0){
+		dbgprintf("Error loading %s\n", program);
+		
 		kfree(buf);
-		fs_close(inode);
 		return -ERROR_FILE_NOT_FOUND;
 	}
+	size = ret;
 
-	fs_close(inode);
-
-	/* Create stack and pcb */
-	struct pcb* pcb = pcb_get_free();
+	pcb = __pcb_init_process(flags, VMEM_DATA);
 	if(pcb == NULL){
 		kfree(buf);
-		fs_close(inode);
-		return -ERROR_PCB_FULL;
-	}
+        return -ERROR_NULL_POINTER;
+    }
 
-	pcb->ctx.eip = 0x1000000; /* External programs start */
-	pcb->data_size = read;
+	pcb->data_size = size;
 	memcpy(pcb->name, program, strlen(program)+1);
-	pcb->ctx.esp = 0xEFFFFFF0;
-	pcb->ctx.ebp = pcb->ctx.esp;
-	
-	pcb->stackptr = (uint32_t) kalloc(PCB_STACK_SIZE);
-	if((void*)pcb->stackptr == NULL){
-		kfree(buf);
-		fs_close(inode);
-		pcb_free(pcb);
-		return -ERROR_ALLOC;
-	}
-	memset((void*)pcb->stackptr, 0, PCB_STACK_SIZE);
-	
-	dbgprintf("Setup PCB %d for %s\n", pcb->pid, program);
-	pcb->kesp = pcb->stackptr+PCB_STACK_SIZE-1;
-	pcb->kebp = pcb->kesp;
-	pcb->term = current_running->term;
-	pcb->is_process = 1;
-	pcb->kallocs = 0;
-	pcb->preempts = 0;
-	pcb->args = argc;
-	pcb->argv = argv;
-	pcb->current_directory = current_running->current_directory;
-	pcb->yields = 0;
-	pcb->parent = current_running;
-	pcb->cs = GDT_PROCESS_CS | PROCESSS_PRIVILEGE;
-    pcb->ds = GDT_PROCESS_DS | PROCESSS_PRIVILEGE;
 
-	/* Launch with kernel privileges */
-	if(flags & PCB_FLAG_KERNEL){
-		pcb->cs = GDT_KERNEL_CS;
-		pcb->ds = GDT_KERNEL_DS;
-	}
+	pcb->term = current_running->term;
+	pcb->parent = current_running;
 
 	/* Memory map data */
-	vmem_init_process(pcb, buf, read);
+	vmem_init_process(pcb, buf, size);
 
-	if(argc > 0){
-		struct args* virtual_args = vmem_stack_alloc(pcb, sizeof(struct args));
+	ret = __pcb_init_virt_args(pcb, argc, argv);
+	if(ret < 0){
+		kfree(buf);
+		__pcb_free(pcb);
 
-		/* get physical address */
-		uint32_t heap_table = (uint32_t*)(pcb->page_dir[DIRECTORY_INDEX(VMEM_HEAP)] & ~PAGE_MASK);
-		uint32_t heap_page = (uint32_t)((uint32_t*)heap_table)[TABLE_INDEX((uint32_t)virtual_args)]& ~PAGE_MASK;
-	
-		struct args* _args = (struct args*)(heap_page);
-		/* copy over args */
-		_args->argc = pcb->args;
-		for (int i = 0; i < pcb->args; i++){
-			memcpy(_args->data[i], pcb->argv[i], strlen(pcb->argv[i])+1);
-			_args->argv[i] = virtual_args->data[i];
-			dbgprintf("Arg %d: %s (0x%x)\n", i, _args->data[i], _args->argv[i]);
-		}
-		pcb->args = _args->argc;
-		pcb->argv = virtual_args->argv;
+		return -ERROR_ALLOC;
 	}
-
 
 	get_scheduler()->ops->add(get_scheduler(), pcb);
 	// TODO: Check for errors
 
 	pcb_count++;
-	LEAVE_CRITICAL();
 	kfree(buf);
+
 	dbgprintf("Created new process!\n");
-	pcb->state = PCB_NEW;
 	/* Run */
 	return pcb->pid;
 }
@@ -651,17 +360,49 @@ error_t pcb_create_kthread(void (*entry)(), char* name)
 {   
 	ENTER_CRITICAL();
 	
-	struct pcb* pcb = pcb_get_free();
+	struct pcb* pcb = __pcb_get_free();
 	if(pcb == NULL){
 		dbgprintf("No free PCBs!\n");
+
+		LEAVE_CRITICAL();
 		return -ERROR_PCB_FULL;
 	}
 	
-	int ret = pcb_init_kthread(pcb->pid, pcb, entry, name);
-	assert(ret);
+	/* Set up stack */
+	int ret = __pcb_init_kernel_stack(pcb);
+	if(ret < 0){
+		dbgprintf("[PCB] Failed to allocate stack\n");
+		return -ERROR_ALLOC;
+	}
+
+	//pcb->allocations = NULL;
+	pcb->parent = current_running;
+	pcb->term = current_running->term;
+
+	pcb->thread_eip = (uintptr_t) entry;
+	pcb->page_dir = kernel_page_dir;
+	pcb->ctx.eip = (uint32_t)&kthread_entry;
+
+	pcb->cs = GDT_KERNEL_CS;
+	pcb->ds = GDT_KERNEL_DS;
+
+	memcpy(pcb->name, name, strlen(name)+1);
+	
+	/* this is done for processes in vmem.c, should probably be moved there? */
+	pcb->allocations = kalloc(sizeof(struct virtual_allocations));
+	if(pcb->allocations == NULL){
+		__pcb_free(pcb);
+		dbgprintf("[PCB] Failed to allocate memory for virtual allocations\n");
+		LEAVE_CRITICAL();
+		return -ERROR_ALLOC;
+	}
+
+	pcb->allocations->head = NULL;
+	pcb->allocations->spinlock = 0;
 
 	get_scheduler()->ops->add(get_scheduler(), pcb);
 	//running->ops->push(running, &pcb_table[i]);
+	
 
 	pcb_count++;
 	dbgprintf("Added %s, PID: %d, Stack: 0x%x\n", name, pcb->pid, pcb->kesp);
@@ -691,9 +432,6 @@ void init_pcbs()
 		pcb_table[i].pid = -1;
 		pcb_table[i].next = NULL;
 	}
-
-	running = pcb_new_queue();
-	blocked = pcb_new_queue();
 
 	//int ret = pcb_create_kthread(&Genesis, "Genesis");
 	//if(ret < 0) return; // error

@@ -130,7 +130,6 @@ void kernel(uint32_t magic)
 	register_kthread(&dhcpd, "dhcpd");
 	register_kthread(&gfx_compositor_main, "wind");
 	register_kthread(&idletask, "idled");
-	register_kthread(&dummytask, "Dummy");
 	register_kthread(&worker_thread, "workd");
 	register_kthread(&tcpd, "tcpd");
 

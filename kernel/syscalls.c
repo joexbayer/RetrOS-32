@@ -12,7 +12,9 @@ void add_system_call(int index, syscall_t fn)
 }
 
 int system_call(int index, int arg1, int arg2, int arg3)
-{
+{	
+
+	LEAVE_CRITICAL();
 	/* Call system call function based on index. */
 	if(index < 0 || index > 255){
 		return -1;
@@ -25,5 +27,8 @@ int system_call(int index, int arg1, int arg2, int arg3)
 	//LEAVE_CRITICAL();
 	//dbgprintf("[SYSCALL] %s Leaving %d: %d %d %d\n", current_running->name, index, arg1, arg2, arg3);
 	EOI(48);
+
+	ENTER_CRITICAL();
+
 	return ret;
 }

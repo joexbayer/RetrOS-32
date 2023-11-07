@@ -62,6 +62,7 @@ void init_kctors();
 #define ret() __asm__ __volatile__ ("ret")
 
 extern int cli_cnt;
+
 #define ENTER_CRITICAL()\
     cli_cnt++;\
     asm ("cli");\

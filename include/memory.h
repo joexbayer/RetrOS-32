@@ -109,7 +109,6 @@ void* malloc(unsigned int size);
 void free(void* ptr);
 
 /* Assembly helper functions */
-void flush_tlb_entry(uint32_t vaddr);
 void load_page_directory();
 void enable_paging();
 
