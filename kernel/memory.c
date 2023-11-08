@@ -32,8 +32,7 @@ void kfree(void* ptr);
 void free(void* ptr)
 {
 	dbgprintf("Freeing %x\n", ptr);
-	if(ptr == NULL)
-		return;
+	if(ptr == NULL)return;
 		
 	/* lock on free as multiple threads can free at the same time */
 	spin_lock(&current_running->allocations->spinlock);
@@ -69,8 +68,7 @@ void* malloc(unsigned int size)
 void* calloc(int size, int val)
 {
 	void* m = malloc(size);
-	if(m == NULL)	
-		return NULL;
+	if(m == NULL) return NULL;
 
 	memset(m, val, size);
 	return m;

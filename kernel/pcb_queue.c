@@ -9,21 +9,13 @@
  * 
  */
 
-#include <arch/gdt.h>
 #include <pcb.h>
 #include <serial.h>
 #include <memory.h>
-#include <scheduler.h>
-#include <fs/ext.h>
 #include <assert.h>
-#include <kthreads.h>
 #include <kutils.h>
 #include <util.h>
 #include <errors.h>
-
-#include <fs/fs.h>
-
-//#include <gfx/gfxlib.h>
 
 /* Prototype functions for pcb queue interface */
 static error_t __pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb);

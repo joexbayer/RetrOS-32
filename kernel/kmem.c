@@ -122,8 +122,7 @@ void* kalloc(int size)
  */
 void kfree(void* ptr)
 {
-	if (!ptr)
-		return;
+	if (!ptr) return;
 	
 	spin_lock(&__kmemory_lock);
 

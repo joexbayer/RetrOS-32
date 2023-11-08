@@ -167,7 +167,24 @@ static int __pcb_init_virt_args(struct pcb* pcb, int argc, char** argv)
 	return ERROR_OK;
 }
 
+/**
+ * @brief Sets all PCBs state to stopped. Meaning they can be started.
+ * Also starts the PCB background process.
+ */
+void init_pcbs()
+{   
 
+	/* Stopped processes are eligible to be "replaced." */
+	for (int i = 0; i < MAX_NUM_OF_PCBS; i++){
+		pcb_table[i].state = STOPPED;
+		pcb_table[i].pid = -1;
+		pcb_table[i].next = NULL;
+	}
+
+	current_running = &pcb_table[0];
+
+	dbgprintf("[PCB] All process control blocks are ready.\n");
+}
 
 int pcb_total_usage()
 {
@@ -203,7 +220,6 @@ error_t pcb_get_info(int pid, struct pcb_info* info)
 void pcb_kill(int pid)
 {
 	if(pid < 0 || pid > MAX_NUM_OF_PCBS) return;
-
 	pcb_table[pid].state = ZOMBIE;
 }
 
@@ -246,10 +262,12 @@ int pcb_cleanup_routine(int pid)
 
 	gfx_destory_window(pcb_table[pid].gfx_window);
 	
+	/* kthreads only free their virtual allocations */
 	if(pcb_table[pid].is_process){
 		vmem_cleanup_process(&pcb_table[pid]);
+	} else {
+		vmem_free_allocations(&pcb_table[pid]);
 	}
-	dbgprintf("[PCB] Freeing stack (0x%x)\n", pcb_table[pid].stackptr+PCB_STACK_SIZE-1);
 	kfree((void*)pcb_table[pid].stackptr);
 
 	pcb_count--;
@@ -415,22 +433,4 @@ void __noreturn start_pcb(struct pcb* pcb)
 	_start_pcb(pcb); /* asm function */
 	
 	UNREACHABLE();
-}
-/**
- * @brief Sets all PCBs state to stopped. Meaning they can be started.
- * Also starts the PCB background process.
- */
-void init_pcbs()
-{   
-
-	/* Stopped processes are eligible to be "replaced." */
-	for (int i = 0; i < MAX_NUM_OF_PCBS; i++){
-		pcb_table[i].state = STOPPED;
-		pcb_table[i].pid = -1;
-		pcb_table[i].next = NULL;
-	}
-
-	current_running = &pcb_table[0];
-
-	dbgprintf("[PCB] All process control blocks are ready.\n");
 }
