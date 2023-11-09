@@ -43,7 +43,7 @@
 
 #include <multiboot.h>
 
-#define USE_MULTIBOOT 1
+#define USE_MULTIBOOT 0
 
 struct kernel_context {
 	struct scheduler sched_ctx;

@@ -15,6 +15,8 @@ struct pcb;
 
 #define PCB_STACK_SIZE 0x2000
 
+typedef int pid_t;
+
 /* TODO: Move to new file */
 typedef enum pcb_states {
     STOPPED,

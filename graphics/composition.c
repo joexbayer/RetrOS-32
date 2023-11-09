@@ -31,6 +31,8 @@
 #include <net/net.h>
 #include <arch/interrupts.h>
 
+#include <gfx/windowserver.h>
+
 #include <fs/fs.h>
 
 #include <windowmanager.h>
@@ -40,26 +42,25 @@
 /* prototypes */
 void __kthread_entry gfx_compositor_main();
 
-typedef enum window_server_flags {
-    WINDOW_SERVER_UNINITIALIZED = 1 << 0,
-    WINDOW_SERVER_INITIALIZED = 1 << 1
-} ws_flag_t;
-
-static struct window_server {
+static struct window_servers {
     uint8_t sleep_time;
-    uint8_t* composition_buffer;
+
+    /* frame buffers */
+    ubyte_t* composition_buffer;
+    ubyte_t* background;
+
     int buffer_size;
 
     struct windowmanager wm;
 
     byte_t flags;
-
 } wind = {
     .sleep_time = 2,
-    .flags = WINDOW_SERVER_UNINITIALIZED
+    .flags = WINDOW_SERVER_UNINITIALIZED,
+    .background = NULL
 };
 
-static ubyte_t* background = NULL;
+struct windowserver* ws;
 
 static inline int gfx_check_changes(struct window* w)
 {
@@ -78,8 +79,8 @@ static inline int gfx_check_changes(struct window* w)
  */
 void gfx_composition_remove_window(struct window* w)
 {
-    while (wind.wm.state != WM_INITIALIZED);
-    wind.wm.ops->remove(&wind.wm, w);
+     while (ws == NULL || ws->_wm->state != WM_INITIALIZED);
+     ws->ops->remove(ws, w);
 }
 
 /**
@@ -89,9 +90,9 @@ void gfx_composition_remove_window(struct window* w)
  */
 void gfx_composition_add_window(struct window* w)
 {
-    while (wind.wm.state != WM_INITIALIZED);
+    while (ws == NULL || ws->_wm->state != WM_INITIALIZED);
 
-    wind.wm.ops->add(&wind.wm, w);
+     ws->ops->add(ws, w);
 }
 
 static int __is_fullscreen = 0;
@@ -146,12 +147,12 @@ int gfx_set_background_color(color_t color)
         return -1;
     }
 
-    if(background == NULL){
+    if(wind.background == NULL){
         dbgprintf("[WSERVER] Background buffer is NULL.\n");
         return -2;
     }
 
-    memset(background, color, wind.buffer_size);
+    memset(wind.background, color, wind.buffer_size);
     return ERROR_OK;
 }
 
@@ -211,16 +212,13 @@ int gfx_decode_background_image(const char* file)
             int screenX = (int)(i * scaleX);
             int screenY = (int)(j * scaleY);
 
-            //dbgprintf("[WSERVER] Drawing pixel at %x.\n", &temp_window[j * originalWidth + i]);
-
             // Retrieve the pixel value from the original image
             unsigned char pixelValue = temp_window[j * originalWidth + i];
-            //wind.composition_buffer[j * originalWidth + i] = pixelValue;
 
             // Set the pixel value on the screen at the calculated position
             for (int x = 0; x < scaleX; x++){
                 for (int y = 0; y < scaleY; y++){
-                    vesa_put_pixel(background, screenX + x, screenY + y, pixelValue);
+                    vesa_put_pixel(wind.background, screenX + x, screenY + y, pixelValue);
                 }
             }
         }
@@ -233,6 +231,22 @@ int gfx_decode_background_image(const char* file)
 
 void __kthread_entry gfx_compositor_main()
 {
+    ws = ws_new();
+    if(ws == NULL){
+        dbgprintf("[WSERVER] Could not allocate memory for window server.\n");
+        return;
+    }
+
+    int taskbar_pid = start("taskbar");
+    ws->taskbar = pcb_get_by_pid(taskbar_pid);
+    ws->ops->set_background(ws, 3);
+
+
+    while(1){
+        ws->ops->draw(ws);
+    }
+
+
     if(wind.flags & WINDOW_SERVER_UNINITIALIZED){
 
         wind.buffer_size = vbe_info->width*vbe_info->height*(vbe_info->bpp/8)+1;
@@ -243,8 +257,8 @@ void __kthread_entry gfx_compositor_main()
             return;
         }
 
-        background = (uint8_t*) kalloc(wind.buffer_size+1);
-        if(background == NULL){
+        wind.background = (uint8_t*) kalloc(wind.buffer_size+1);
+        if(wind.background == NULL){
             warningf("Could not allocate memory for background buffer.\n");
             return;
         }
@@ -265,8 +279,6 @@ void __kthread_entry gfx_compositor_main()
     struct mouse m;
 
     int workspace = 0;
-
-    int taskbar_pid = start("taskbar");
     struct pcb* taskbar = pcb_get_by_pid(taskbar_pid);
 
     /* Main composition loop */
@@ -320,7 +332,7 @@ void __kthread_entry gfx_compositor_main()
 
         /* This code runs only if a window has changed */
         if(window_changed && !__is_fullscreen){
-            memcpy(wind.composition_buffer, background, wind.buffer_size);
+            memcpy(wind.composition_buffer, wind.background, wind.buffer_size);
             int len = strlen("RetrOS-32 Development Build");
             vesa_printf(wind.composition_buffer, (vbe_info->width/2) - (len/2)*8, vbe_info->height-8, COLOR_BLACK, "%s", "RetrOS-32 Development Build");
 
@@ -358,7 +370,6 @@ void __kthread_entry gfx_compositor_main()
         }
 
         kernel_yield();
-
 
         ENTER_CRITICAL();
         

@@ -35,6 +35,11 @@ struct windowmanager_ops {
     int (*mouse_event)(struct windowmanager *wm, int x, int y, char flags);
     /* select a workspace */
     int (*workspace)(struct windowmanager *wm, int workspace);
+
+    int (*init)(struct windowmanager *wm, int flags);
+    int (*destroy)(struct windowmanager *wm);
+
+    int (*changes)(struct windowmanager *wm);
 };
 
 /* Window manager struct */
@@ -54,6 +59,8 @@ struct windowmanager {
     /* state */
     windowmanager_state_t state;
 
+    struct kref _krefs;
+
     /* flags */
     windowmanager_flag_t flags;
 
@@ -67,6 +74,11 @@ struct windowmanager {
     int mouse_state;
 };
 
+struct windowmanager* wm_new(int flags);
+
+int wm_destroy(struct windowmanager* wm);
+
+/* TODO: remove when not needed anymore */
 int init_windowmanager(struct windowmanager* wm, int flags);
 
 #endif /* __WINDOWMANAGER_H */

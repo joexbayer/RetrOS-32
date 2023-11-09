@@ -18,6 +18,7 @@ static int wm_default_draw(struct windowmanager* wm, struct window* window);
 static int wm_default_push_front(struct windowmanager* wm, struct window* window);
 static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char flags);
 static int wm_default_workspace(struct windowmanager* wm, int workspace);
+static int wm_default_changes(struct windowmanager* wm);
 
 /* default windowmanager ops struct */
 static struct windowmanager_ops wm_default_wm_ops = {
@@ -26,7 +27,10 @@ static struct windowmanager_ops wm_default_wm_ops = {
     .draw = wm_default_draw,
     .push_front = wm_default_push_front,
     .mouse_event = wm_default_mouse_event,
-    .workspace = wm_default_workspace
+    .workspace = wm_default_workspace,
+    .init = init_windowmanager,
+    .destroy = wm_destroy,
+    .changes = wm_default_changes
 };
 
 /* init new window manager with default ops and rest 0 */
@@ -38,7 +42,6 @@ int init_windowmanager(struct windowmanager* wm, int flags)
     wm->spinlock = SPINLOCK_UNLOCKED;
     wm->composition_buffer_size = 0;
     wm->composition_buffer = NULL;
-    wm->ops = &wm_default_wm_ops;
     wm->windows = NULL;
     wm->window_count = 0;
 
@@ -57,6 +60,22 @@ int init_windowmanager(struct windowmanager* wm, int flags)
     WM_VALIDATE(wm);
 
     return ERROR_OK;
+}
+
+static int wm_default_changes(struct windowmanager* wm)
+{
+    ERR_ON_NULL(wm);
+    WM_VALIDATE(wm);
+
+    struct window* w = wm->windows;
+
+    while(w != NULL){
+        if(w->changed)
+            return 1;
+        w = w->next;
+    }
+    
+    return 0;
 }
 
 
@@ -265,6 +284,65 @@ static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char f
             return ERROR_OK;
         }
     }
+
+    return ERROR_OK;
+}
+
+/**
+ * @brief wm_init initializes a windowmanager
+ * 
+ * @param wm windowmanager
+ * @return int 0 on success, error code otherwise
+ */
+struct windowmanager* wm_new(int flags)
+{
+    struct windowmanager* wm = kalloc(sizeof(struct windowmanager));
+    if(wm == NULL){
+        return NULL;
+    }
+    
+    /* init krefs */
+    kref_get(&wm->_krefs);
+
+    wm->ops = &wm_default_wm_ops;
+
+    /* init windowmanager */
+    if(wm->ops->init(wm, flags) < 0){
+        kfree(wm);
+        return NULL;
+    }
+
+    return wm;
+}
+
+/**
+ * @brief wm_destroy destroys a windowmanager
+ * 
+ * @param wm windowmanager
+ * @return int 0 on success, error code otherwise
+ */
+int wm_destroy(struct windowmanager* wm)
+{
+    ERR_ON_NULL(wm);
+    WM_VALIDATE(wm);
+
+    /* check refs */
+    if(kref_put(&wm->_krefs) > 0){
+        return ERROR_OK;
+    }
+
+    /* free composition buffer */
+    if(wm->composition_buffer != NULL){
+        kfree(wm->composition_buffer);
+    }
+
+    /* free workspaces */
+    // TODO
+
+    /* free windows */
+
+    /* free windowmanager */
+    kfree(wm);
 
     return ERROR_OK;
 }

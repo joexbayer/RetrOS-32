@@ -1,6 +1,8 @@
 #ifndef __KERNEL_UTILS_H
 #define __KERNEL_UTILS_H
 
+#include <sync.h>
+
 #ifndef X86_REGISTERS_H
 #define X86_REGISTERS_H
 
@@ -104,11 +106,21 @@ typedef enum {
     true = 1
 } bool_t;
 
+typedef int kref_t;
+
 struct unit {
     char* unit;
     int size;
 };
 struct unit calculate_size_unit(int bytes);
+
+struct kref {
+    int refs;
+    spinlock_t spinlock;
+};
+int kref_get(struct kref* ref);
+int kref_put(struct kref* ref);
+int kref_destroy(struct kref* ref);
 
 int align_to_pointer_size(int size);
 unsigned char* run_length_encode(const unsigned char* data, int length, unsigned char* out, int* encodedLength);
