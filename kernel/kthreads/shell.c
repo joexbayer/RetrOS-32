@@ -99,6 +99,8 @@ void ps()
 }
 EXPORT_KSYMBOL(ps);
 
+
+
 void xxd(int argc, char* argv[])
 {
 	if(argc == 1){

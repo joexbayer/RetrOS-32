@@ -93,6 +93,11 @@ int read(int fd, void* buffer, int size)
     return invoke_syscall(SYSCALL_READ, fd, (int)buffer, size);
 }
 
+int thread_create(void* entry)
+{
+    return invoke_syscall(SYSCALL_CREATE_THREAD, (int)entry, 0, 0);
+}
+
 void* malloc(int size)
 {
     return (void*)invoke_syscall(SYSCALL_MALLOC, size, 0, 0);

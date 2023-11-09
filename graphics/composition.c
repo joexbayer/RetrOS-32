@@ -8,37 +8,12 @@
  * @copyright Copyright (c) 2023
  * 
  */
-#include <vbe.h>
 #include <gfx/window.h>
 #include <gfx/gfxlib.h>
 #include <gfx/events.h>
-#include <gfx/theme.h>
-#include <keyboard.h>
-#include <scheduler.h>
-#include <util.h>
-#include <memory.h>
-#include <serial.h>
-#include <rtc.h>
-#include <timer.h>
-#include <colors.h>
-#include <mouse.h>
-#include <gfx/component.h>
-#include <sync.h>
-#include <assert.h>
-#include <kthreads.h>
-#include <kutils.h>
 #include <math.h>
-#include <net/net.h>
-#include <arch/interrupts.h>
-
 #include <gfx/windowserver.h>
-
-#include <fs/fs.h>
-
 #include <windowmanager.h>
-
-#include <fs/ext.h>
-
 /* prototypes */
 void __kthread_entry gfx_compositor_main();
 
@@ -52,6 +27,7 @@ struct windowserver* ws;
 void gfx_composition_remove_window(struct window* w)
 {
      while (ws == NULL || ws->_wm->state != WM_INITIALIZED);
+
      ws->ops->remove(ws, w);
 }
 
@@ -64,7 +40,7 @@ void gfx_composition_add_window(struct window* w)
 {
     while (ws == NULL || ws->_wm->state != WM_INITIALIZED);
 
-     ws->ops->add(ws, w);
+    ws->ops->add(ws, w);
 }
 
 int gfx_set_background_color(color_t color)

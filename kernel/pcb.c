@@ -39,6 +39,7 @@ static void __pcb_free(struct pcb* pcb)
 {
 	memset(pcb, 0, sizeof(struct pcb));
 	pcb->state = STOPPED;
+	pcb->parent = NULL;
 	pcb->pid = -1;
 	pcb->next = NULL;
 	pcb->prev = NULL;
@@ -239,24 +240,40 @@ int pcb_cleanup_routine(int pid)
 {
 	assert(pid != current_running->pid && !(pid < 0 || pid > MAX_NUM_OF_PCBS));
 
+	struct pcb* pcb = &pcb_table[pid];
+
 	dbgprintf("[PCB] Cleanup on PID %d stack: 0x%x (original: 0x%x)\n", pid, pcb_table[pid].ctx.esp, pcb_table[pid].stackptr+PCB_STACK_SIZE-1);
 
 	gfx_destory_window(pcb_table[pid].gfx_window);
-	
-	/* kthreads only free their virtual allocations */
-	if(pcb_table[pid].is_process){
-		vmem_cleanup_process(&pcb_table[pid]);
-	} else {
-		vmem_free_allocations(&pcb_table[pid]);
+
+	/**
+	 * @brief A process cannot exit before all its children have exited.
+	 * Therefor loop over all pcbs and kill them if current is their parent.
+	 */
+
+	for (int i = 0; i < MAX_NUM_OF_PCBS; i++){
+		if(pcb_table[i].parent == pcb && pcb_table[i].is_process == PCB_THREAD){
+			pcb_table[i].state = ZOMBIE;
+		}
 	}
-	kfree((void*)pcb_table[pid].stackptr);
+	
+	switch (pcb->is_process){
+	case PCB_PROCESS:
+		vmem_cleanup_process(pcb);
+		break;
+	case PCB_THREAD:
+		vmem_cleanup_process_thead(pcb);
+		break;
+	default:
+		vmem_free_allocations(pcb);
+		break;
+	}
+	kfree((void*)pcb->stackptr);
 
 	pcb_count--;
 
 	CRITICAL_SECTION({
-		memset(&pcb_table[pid], 0, sizeof(struct pcb));
-		pcb_table[pid].state = STOPPED;
-		pcb_table[pid].pid = -1;
+		__pcb_free(pcb);
 	});
 
 	dbgprintf("[PCB] Cleanup on PID %d [DONE]\n", pid);
@@ -274,7 +291,6 @@ int pcb_cleanup_routine(int pid)
  */
 error_t pcb_create_thread(struct pcb* parent, void (*entry)(), char* name, byte_t flags)
 {
-
 	/* Initialize PCB and set privileges */
     struct pcb* pcb = __pcb_init_process(flags, (uint32_t)entry);
 	if(pcb == NULL){
@@ -283,7 +299,11 @@ error_t pcb_create_thread(struct pcb* parent, void (*entry)(), char* name, byte_
     
     /* Inherit parent's attributes */
     pcb->term = parent->term;
-    pcb->parent = current_running;
+    pcb->parent = parent;
+	pcb->is_process = PCB_THREAD;
+
+	/* name */
+	memcpy(pcb->name, name, strlen(name)+1);
 
 	/* inheret parents virtual memory */
 	vmem_init_process_thread(parent, pcb);

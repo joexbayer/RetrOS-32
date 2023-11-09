@@ -28,6 +28,12 @@ typedef enum pcb_states {
     CLEANING
 } pcb_state_t;
 
+typedef enum pcb_types {
+    PCB_KTHREAD = 0,
+    PCB_PROCESS = 1,
+    PCB_THREAD = 2,
+} pcb_type_t;
+
 typedef enum pcb_flags {
     PCB_FLAG_KERNEL = 1 << 1,
 } pcb_flag_t;
@@ -131,6 +137,7 @@ struct pcb_queue {
 void init_pcbs();
 void start_pcb(struct pcb* pcb);
 error_t pcb_create_kthread( void (*entry)(), char* name);
+error_t pcb_create_thread(struct pcb* parent, void (*entry)(), char* name, byte_t flags);
 error_t pcb_create_process(char* program, int args, char** argv, pcb_flag_t flags);
 
 void pcb_kill(int pid);
