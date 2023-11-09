@@ -9,6 +9,7 @@
 #include <memory.h>
 #include <mouse.h>
 #include <math.h>
+#include <vbe.h>
 
 /* default static prototype functions for windowmanager ops */
 
@@ -37,11 +38,15 @@ static struct windowmanager_ops wm_default_wm_ops = {
 int init_windowmanager(struct windowmanager* wm, int flags)
 {
     ERR_ON_NULL(wm);
-    WM_VALIDATE_FLAGS(wm);
+
+    wm->composition_buffer_size = VBE_SIZE();
+    wm->composition_buffer = kalloc(VBE_SIZE());
+    if(wm->composition_buffer == NULL){
+        dbgprintf("Failed to allocate composition buffer\n");
+        return -ERROR_ALLOC;
+    }
 
     wm->spinlock = SPINLOCK_UNLOCKED;
-    wm->composition_buffer_size = 0;
-    wm->composition_buffer = NULL;
     wm->windows = NULL;
     wm->window_count = 0;
 
@@ -57,7 +62,7 @@ int init_windowmanager(struct windowmanager* wm, int flags)
     /* state */
     wm->state = WM_INITIALIZED;
 
-    WM_VALIDATE(wm);
+    dbgprintf("Initialized window manager\n");
 
     return ERROR_OK;
 }
@@ -74,7 +79,7 @@ static int wm_default_changes(struct windowmanager* wm)
             return 1;
         w = w->next;
     }
-    
+
     return 0;
 }
 

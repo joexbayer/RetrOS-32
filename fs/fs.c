@@ -133,6 +133,25 @@ struct filesystem* fs_get()
     return fs_current;
 }
 
+int fs_load_from_file(const char* file, void* buf, int size)
+{
+	int inode = fs_open(file, FS_FILE_FLAG_READ);
+	if(inode < 0){
+		dbgprintf("Error opening %s\n", file);
+		return -ERROR_FILE_NOT_FOUND;
+	}
+
+	dbgprintf("Reading %s from disk\n", file);
+	int read = fs_read(inode, buf, size);
+	if(read < 0){
+		fs_close(inode);
+		return -ERROR_FILE_NOT_FOUND;
+	}
+
+	fs_close(inode);
+	return read;
+}
+
 int fs_close(int fd)
 {
     /* check if a filesystem is available */

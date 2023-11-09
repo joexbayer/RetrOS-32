@@ -44,25 +44,6 @@ static void __pcb_free(struct pcb* pcb)
 	pcb->prev = NULL;
 }
 
-static int __pcb_load_from_disk(const char* file, void* buf, int size)
-{
-	inode_t inode = fs_open(file, FS_FILE_FLAG_READ);
-	if(inode < 0){
-		dbgprintf("Error opening %s\n", file);
-		return -ERROR_FILE_NOT_FOUND;
-	}
-
-	dbgprintf("Reading %s from disk\n", file);
-	int read = fs_read(inode, buf, size);
-	if(read < 0){
-		fs_close(inode);
-		return -ERROR_FILE_NOT_FOUND;
-	}
-
-	fs_close(inode);
-	return read;
-}
-
 static int __pcb_init_kernel_stack(struct pcb* pcb)
 {
 	int32_t stack = (uint32_t) kalloc(PCB_STACK_SIZE);
@@ -323,7 +304,7 @@ error_t pcb_create_process(char* program, int argc, char** argv, pcb_flag_t flag
 	buf = kalloc(MAX_FILE_SIZE);
 	if(buf == NULL){return -ERROR_ALLOC;}
 	
-	ret = __pcb_load_from_disk(program, buf, MAX_FILE_SIZE);
+	ret = fs_load_from_file(program, buf, MAX_FILE_SIZE);
 	if(ret < 0){
 		dbgprintf("Error loading %s\n", program);
 		

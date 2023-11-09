@@ -4,6 +4,7 @@
 #include <scheduler.h>
 #include <gfx/events.h>
 #include <memory.h>
+#include <fs/fs.h>
 #include <vbe.h>
 
 static int ws_init(struct windowserver* ws);
@@ -29,7 +30,6 @@ static struct window_server_ops ws_default_ops = {
 static int ws_init(struct windowserver* ws)
 {
     ERR_ON_NULL(ws);
-    WS_VALIDATE(ws);
 
     ws->sleep_time = WINDOW_SERVER_SLEEP_TIME;
     ws->_is_fullscreen = false;
@@ -42,7 +42,7 @@ static int ws_init(struct windowserver* ws)
     ws->_wm = wm;
     ws->workspace = 0;
 
-    ws->background = kalloc(VBE_SIZE());
+    ws->background = palloc(VBE_SIZE());
     if(ws->background == NULL){
         wm->ops->destroy(wm);
         ws->ops->destroy(ws);
@@ -130,7 +130,61 @@ static int ws_set_background(struct windowserver* ws, color_t color)
 
 static int ws_set_background_file(struct windowserver* ws, const char* path)
 {
-    return 0;
+    ERR_ON_NULL(ws);
+    ERR_ON_NULL(path);
+    WS_VALIDATE(ws);
+
+    int originalWidth = 320;   // Original image width
+    int originalHeight = 240;  // Original image height
+    int targetWidth = vbe_info->width;     // Target screen width
+    int targetHeight = vbe_info->height;    // Target screen height
+
+     /* upscale image */
+    float scaleX = (float)targetWidth / (float)originalWidth;
+    float scaleY = (float)targetHeight / (float)originalHeight;
+
+    byte_t* temp = malloc(10000);
+    if(temp == NULL){
+        return -ERROR_ALLOC;
+    }
+
+    int ret = fs_load_from_file(path, temp, 10000);
+    if(ret <= 0){
+        dbgprintf("[WSERVER] Could not read background file: %d.\n", ret);
+        free(temp);
+        return -ERROR_FILE_NOT_FOUND;
+    }
+
+    byte_t* temp_window = (byte_t*) malloc(320*240);
+    if(temp_window == NULL){
+        free(temp);
+        return -ERROR_ALLOC;
+    }
+
+    int out;
+    run_length_decode(temp, ret, temp_window, &out);
+
+    for (int i = 0; i < originalWidth; i++){
+        for (int j = 0; j < originalHeight; j++){
+            // Calculate the position on the screen based on the scaling factors
+            int screenX = (int)(i * scaleX);
+            int screenY = (int)(j * scaleY);
+
+            // Retrieve the pixel value from the original image
+            unsigned char pixelValue = temp_window[j * originalWidth + i];
+
+            // Set the pixel value on the screen at the calculated position
+            for (int x = 0; x < scaleX; x++){
+                for (int y = 0; y < scaleY; y++){
+                    vesa_put_pixel(ws->background, screenX + x, screenY + y, pixelValue);
+                }
+            }
+        }
+    }
+
+    free(temp);
+    free(temp_window);
+    return ERROR_OK;
 }
 
 static int __ws_key_event(struct windowserver* ws, unsigned char key)
@@ -138,7 +192,7 @@ static int __ws_key_event(struct windowserver* ws, unsigned char key)
     ERR_ON_NULL(ws);
     WS_VALIDATE(ws);
 
-    if(key == 0){return 0;}
+    if(key == 0){return ERROR_OK;}
 
     switch (key)
     {
@@ -200,8 +254,6 @@ static int ws_draw(struct windowserver* ws)
         ws->_wm->ops->draw(ws->_wm, ws->_wm->windows);
     }
 
-    return 0;
-
     /* Move out of this module */
     kernel_yield();
 
@@ -217,7 +269,7 @@ static int ws_draw(struct windowserver* ws)
     }
     vesa_put_icon16((uint8_t*)vbe_info->framebuffer, ws->m.x, ws->m.y);
 
-    return 0;
+    return ERROR_OK;
 }
 
 struct windowserver* ws_new()
@@ -245,11 +297,11 @@ static int ws_destroy(struct windowserver* ws)
     WS_VALIDATE(ws);
 
     if(kref_put(&ws->_krefs) > 0){
-        return 0;
+        return ERROR_OK;
     }
 
     ws->_wm->ops->destroy(ws->_wm);
 
     kfree(ws);
-    return 0;
+    return ERROR_OK;
 }
