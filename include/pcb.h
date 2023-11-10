@@ -61,6 +61,7 @@ struct pcb {
     uint32_t kesp;
     uint32_t kebp;
     uint8_t is_process;
+    uintptr_t thread_eip;
     /* DO NOT NOT CHANGE ABOVE.*/
     char name[PCB_MAX_NAME_LENGTH];
     pcb_state_t state;
@@ -80,8 +81,6 @@ struct pcb {
     struct terminal* term;
 
     inode_t current_directory;
-
-    uintptr_t thread_eip;
     
     struct virtual_allocations* allocations;
     int used_memory;
@@ -137,7 +136,7 @@ struct pcb_queue {
 void init_pcbs();
 void start_pcb(struct pcb* pcb);
 error_t pcb_create_kthread( void (*entry)(), char* name);
-error_t pcb_create_thread(struct pcb* parent, void (*entry)(), char* name, byte_t flags);
+error_t pcb_create_thread(struct pcb* parent, void (*entry)(), void* arg, byte_t flags);
 error_t pcb_create_process(char* program, int args, char** argv, pcb_flag_t flags);
 
 void pcb_kill(int pid);

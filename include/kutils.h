@@ -2,6 +2,7 @@
 #define __KERNEL_UTILS_H
 
 #include <sync.h>
+#include <stdint.h>
 
 #ifndef X86_REGISTERS_H
 #define X86_REGISTERS_H
@@ -121,6 +122,8 @@ struct kref {
 int kref_get(struct kref* ref);
 int kref_put(struct kref* ref);
 int kref_destroy(struct kref* ref);
+
+int32_t csprintf(char *buffer, const char *fmt, ...);
 
 int align_to_pointer_size(int size);
 unsigned char* run_length_encode(const unsigned char* data, int length, unsigned char* out, int* encodedLength);

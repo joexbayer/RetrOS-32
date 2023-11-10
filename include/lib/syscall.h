@@ -27,6 +27,9 @@ int fclose(int fd);
 void* malloc(int size);
 void free(void* ptr);
 
+int thread_create(void* entry, void* arg, int flags);
+void yield();
+
 
 #ifdef __cplusplus
 }

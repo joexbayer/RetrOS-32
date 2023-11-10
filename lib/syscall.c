@@ -30,6 +30,11 @@ int invoke_syscall(int i, int arg1, int arg2, int arg3)
     return ret;
 }
 
+void yield()
+{
+    invoke_syscall(SYSCALL_YIELD, 0, 0, 0);
+}
+
 void screen_put(int x, int y, unsigned char c)
 {
     invoke_syscall(SYSCALL_SCRPUT, x, y, c);
@@ -93,9 +98,9 @@ int read(int fd, void* buffer, int size)
     return invoke_syscall(SYSCALL_READ, fd, (int)buffer, size);
 }
 
-int thread_create(void* entry)
+int thread_create(void* entry, void* arg, int flags)
 {
-    return invoke_syscall(SYSCALL_CREATE_THREAD, (int)entry, 0, 0);
+    return invoke_syscall(SYSCALL_CREATE_THREAD, (int)entry, arg, flags);
 }
 
 void* malloc(int size)

@@ -328,7 +328,7 @@ inline int atoi(char s[])
 	return n*sign;
 }
 
-inline void itoa(int n, char s[])
+inline int itoa(int n, char s[])
 {
 	int i, sign;
 
@@ -344,9 +344,11 @@ inline void itoa(int n, char s[])
 	
 	s[i] = '\0';
 	reverse(s);
+
+    return i;
 }
 
-inline void itohex(uint32_t n, char s[])
+inline int itohex(uint32_t n, char s[])
 {
   uint32_t i, d;
 
@@ -358,8 +360,10 @@ inline void itohex(uint32_t n, char s[])
     else
       s[i++] = d - 10 + 'a';
   } while ((n /= 16) > 0);
-  s[i++] = 0;
+  s[i] = 0;
   reverse(s);
+
+  return i;
 }
 
 int kernel_size = 0;

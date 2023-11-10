@@ -28,8 +28,7 @@ static struct pcb pcb_table[MAX_NUM_OF_PCBS];
  * Current running PCB, used for context aware
  * functions such as windows drawing to the screen.
  */
-struct pcb* current_running = &pcb_table[0];
-
+struct pcb* current_running = NULL;
 //#include <gfx/gfxlib.h>
 
 const char* pcb_status[] = {"stopped ", "running ", "new     ", "blocked ", "sleeping", "zombie"};
@@ -110,6 +109,7 @@ static struct pcb* __pcb_init_process(byte_t flags, uint32_t entry_point)
     pcb->is_process = 1;
     pcb->cs = GDT_PROCESS_CS | PROCESSS_PRIVILEGE;
     pcb->ds = GDT_PROCESS_DS | PROCESSS_PRIVILEGE;
+	pcb->thread_eip = 0;
 
     /* Set kernel privileges if flag is set */
     if (flags & PCB_FLAG_KERNEL) {
@@ -284,15 +284,16 @@ int pcb_cleanup_routine(int pid)
 /**
  * @brief Creates a new kernel thread.
  * Creates a process thread which inherets the parents virtual memory.
+ * In the context of a kernel thread the thread_eip is set to the entry function.
  * @param entry entry function
  * @param name name of thread
  * @param flags flags for thread
  * @return int pid of thread, -1 on error.
  */
-error_t pcb_create_thread(struct pcb* parent, void (*entry)(), char* name, byte_t flags)
+error_t pcb_create_thread(struct pcb* parent, void (*entry)(), void* arg, byte_t flags)
 {
 	/* Initialize PCB and set privileges */
-    struct pcb* pcb = __pcb_init_process(flags, (uint32_t)entry);
+    struct pcb* pcb = __pcb_init_process(flags, VMEM_DATA);
 	if(pcb == NULL){
         return -ERROR_NULL_POINTER;
     }
@@ -300,10 +301,18 @@ error_t pcb_create_thread(struct pcb* parent, void (*entry)(), char* name, byte_
     /* Inherit parent's attributes */
     pcb->term = parent->term;
     pcb->parent = parent;
+	pcb->thread_eip = (uintptr_t) entry;
 	pcb->is_process = PCB_THREAD;
 
+	/**
+	 * @brief This is kinda a hack
+	 * To pass the thread argument we reuse the args field.
+	 * As its the first argument of the thread function.
+	 */
+	pcb->args = (uint32_t)arg;
+
 	/* name */
-	memcpy(pcb->name, name, strlen(name)+1);
+	csprintf(pcb->name, "%s#%d", parent->name, pcb->pid);
 
 	/* inheret parents virtual memory */
 	vmem_init_process_thread(parent, pcb);
@@ -344,6 +353,8 @@ error_t pcb_create_process(char* program, int argc, char** argv, pcb_flag_t flag
 
 	pcb->term = current_running->term;
 	pcb->parent = current_running;
+
+	pcb->thread_eip = 0;
 
 	/* Memory map data */
 	vmem_init_process(pcb, buf, size);
@@ -394,7 +405,7 @@ error_t pcb_create_kthread(void (*entry)(), char* name)
 		return -ERROR_ALLOC;
 	}
 
-	pcb->parent = current_running;
+	pcb->parent = current_running == &pcb_table[0] ? NULL : current_running;
 	pcb->term = current_running->term;
 
 	pcb->thread_eip = (uintptr_t) entry;

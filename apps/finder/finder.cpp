@@ -4,6 +4,7 @@
 #include <colors.h>
 #include "../utils/StringHelper.hpp"
 #include "../utils/StdLib.hpp"
+#include "../utils/Thread.hpp"
 #include <fs/ext.h>
 #include <fs/directory.h>
 
@@ -271,9 +272,27 @@ private:
     String* path;
 };
 
+void thread(void* arg){
+    
+    printf("thread %x\n", arg);
+    while (1){
+        yield();
+    }
+}
 
 int main(void)
 {
+    Thread* t = new Thread(thread, 0);
+    t->start((void*)t);
+
+    printf("thread2: %x\n", t);
+
+    while (1)
+    {
+        /* code */
+    }
+    
+
     Finder finder;
     finder.Run();
 
