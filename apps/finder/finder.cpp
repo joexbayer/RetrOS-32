@@ -275,23 +275,12 @@ private:
 void thread(void* arg){
     
     printf("thread %x\n", arg);
-    while (1){
-        yield();
-    }
 }
 
 int main(void)
 {
     Thread* t = new Thread(thread, 0);
     t->start((void*)t);
-
-    printf("thread2: %x\n", t);
-
-    while (1)
-    {
-        /* code */
-    }
-    
 
     Finder finder;
     finder.Run();
