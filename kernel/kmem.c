@@ -15,10 +15,6 @@
 #include <assert.h>
 
 /* Dynamic kernel memory */
-#define KERNEL_MEMORY_START 	0x300000
-#define KERNEL_MEMORY_END		0x400000
-#define KMEM_BLOCK_SIZE 		256
-#define KMEM_BLOCKS_PER_BYTE 	8
 
 #define KMEM_BITMAP_INDEX(addr) ((addr - KERNEL_MEMORY_START) / KMEM_BLOCK_SIZE / KMEM_BLOCKS_PER_BYTE)
 #define KMEM_BITMAP_OFFSET(addr) ((addr - KERNEL_MEMORY_START) / KMEM_BLOCK_SIZE % KMEM_BLOCKS_PER_BYTE)
@@ -76,6 +72,10 @@ static inline void __kmemory_write_metadata(int start_block, int num_blocks)
  */
 void* kalloc(int size)
 {
+    if (size <= 0) return NULL;
+
+    size = ALIGN(size, PTR_SIZE);
+
 	spin_lock(&__kmemory_lock);
 
     int num_blocks = (size + sizeof(int) + KMEM_BLOCK_SIZE - 1) / KMEM_BLOCK_SIZE;
@@ -99,6 +99,11 @@ void* kalloc(int size)
 
     dbgprintf("Total mem: %d\n", __kmemory_used);
 
+    if(__kmemory_used > KERNEL_MEMORY_END-KERNEL_MEMORY_START){
+        dbgprintf("Out of memory: %d\n", __kmemory_used);
+        kernel_panic("Out of memory!");
+    }
+
     spin_unlock(&__kmemory_lock);
     return ptr;
 }
@@ -117,8 +122,7 @@ void* kalloc(int size)
  */
 void kfree(void* ptr)
 {
-	if (!ptr)
-		return;
+	if (!ptr) return;
 	
 	spin_lock(&__kmemory_lock);
 
@@ -158,8 +162,8 @@ int kmemory_total()
 static uint32_t memory_permanent_ptr = PERMANENT_KERNEL_MEMORY_START;
 void* palloc(int size)
 {
-	if(size <= 0)
-		return NULL;
+	if(size <= 0) return NULL;
+    size = ALIGN(size, PTR_SIZE);
 
 	if(memory_permanent_ptr + size >= PMEM_END_ADDRESS){
 		dbgprintf("[WARNING] Not enough permanent memory!\n");

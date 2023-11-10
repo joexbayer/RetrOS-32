@@ -62,6 +62,8 @@ struct filesystem {
 int fs_register(struct filesystem* fs);
 int fs_unregister(struct filesystem* fs);
 
+int fs_load_from_file(const char* file, void* buf, int size);
+
 struct file* fs_alloc_file();
 
 int fs_init();

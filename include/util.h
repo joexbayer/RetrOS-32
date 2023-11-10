@@ -43,8 +43,8 @@ int parse_arguments(const char *input_string, char tokens[10][100]);
 void hexdump(const void *data, int size);
 
 int atoi(char s[]);
-void itoa(int n, char s[]); 
-void itohex(uint32_t n, char s[]);
+int itoa(int n, char s[]); 
+int itohex(uint32_t n, char s[]);
 
 int isdigit(char c);
 int isspace(char c);

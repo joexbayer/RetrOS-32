@@ -20,6 +20,7 @@
 .equ PCB_KESP, PCB_CTX + 164
 .equ PCB_KEBP, PCB_CTX + 168
 .equ PCB_IS_PROCESS, PCB_CTX + 172
+.equ PCB_THREAD_EIP, PCB_CTX + 173
 
 
 NEW_PCB_INIT_EFLAGS = ((0 << 12) | (1 << 9))
@@ -132,12 +133,17 @@ pcb_restore_context:
 
 .global _start_pcb
 _start_pcb:
+    subl $1, cli_cnt
     # movl current_running, %eax
     movl 4(%esp), %eax
 
     movl PCB_KESP(%eax), %esp
+
+    # This forwards the arguments to the new process
+    # Thread entry point is stored in PCB_THREAD_EIP, 0 for process.
     movl PCB_ARGS(%eax), %ebx
     movl PCB_ARGV(%eax), %ecx
+    movl PCB_THREAD_EIP(%eax), %edx
     
     cmpl $0, 20(%eax)
     je _start_pcb_skip
@@ -147,11 +153,10 @@ _start_pcb_skip:
     pushl	$NEW_PCB_INIT_EFLAGS
     pushl	PCB_CS(%eax)
     pushl	PCB_EIP(%eax)
-    
-    subl $1, cli_cnt
 
     movw	PCB_DS(%eax),%ds
     movw	PCB_DS(%eax),%es
+    
     iret
 
 .section .text

@@ -92,7 +92,7 @@ static int fat16_write(struct filesystem* fs, struct file* file, const void* buf
         dbgprintf("File is not open\n");
         return -1;
     }
-
+ 
     /* check if the file is writeable */
     if(!(file->flags & FS_FILE_FLAG_WRITE)){
         dbgprintf("File is not writeable\n");
@@ -116,7 +116,9 @@ static int fat16_write(struct filesystem* fs, struct file* file, const void* buf
     }
 
     /* update the file size */
-    entry.file_size += size;
+    if ((offset + written) > entry.file_size) {
+        entry.file_size = offset + written;
+    }
 
     fat16_sync_directory_entry(file->directory, file->identifier, &entry);
 
@@ -188,6 +190,9 @@ static int fat16_read(struct filesystem* fs, struct file* file, void* buf, int s
  */
 static struct file* fat16_open(struct filesystem* fs, const char* path, int flags)
 {
+    char* name;
+    char* ext;
+
     struct file* file;
     struct fat16_file_identifier id;;
     struct fat16_directory_entry entry;
@@ -199,8 +204,26 @@ static struct file* fat16_open(struct filesystem* fs, const char* path, int flag
     /* parse path */
     id = fat16_get_directory_entry((char*)path, &entry);
     if(id.directory < 0){
-        dbgprintf("Failed to get directory entry\n");
-        return NULL;
+        
+        /* check if the file should be created */
+        if(flags & FS_FILE_FLAG_CREATE){
+
+            /* extract name and ext (if there) */
+            if(path[0] == '/'){
+                /* TODO: implement full path creation of files. */
+                return NULL;
+            }
+
+            fat16_create_empty_file(path, 0);
+
+            /* get the file identifier */
+            id = fat16_get_directory_entry((char*)path, &entry);
+            if(id.directory < 0){
+                return NULL;
+            }
+        } else {
+            return NULL;
+        }
     }
 
     /* allocate new file */

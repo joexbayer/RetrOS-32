@@ -54,6 +54,8 @@ int fat16_write_data_to_cluster(uint32_t cluster, const void *data, int data_len
 
 int fat16_write_data(int first_cluster, int offset, void* data, int data_length)
 {
+    if(data_length <= 0) return -1;  /* Error: Invalid data length */
+
     int remaining_data_length = data_length;
     int data_offset = 0;
 
@@ -65,7 +67,6 @@ int fat16_write_data(int first_cluster, int offset, void* data, int data_length)
     int next_cluster = current_cluster;
 
     while (remaining_data_length > 0){
-        dbgprintf("0x%x (%d, %d)\n", next_cluster, first_cluster, offset);
         /* If there is no allocated cluster or we've reached the end of the cluster chain, allocate a new one. */
         if (next_cluster < 0 || next_cluster == 0xFFFF || next_cluster >= 0xFFF8){
             uint32_t free_cluster = fat16_get_free_cluster();
@@ -77,6 +78,8 @@ int fat16_write_data(int first_cluster, int offset, void* data, int data_length)
                 return -2; /* Error: Couldn't write data */
             }
             current_cluster = free_cluster;
+        } else {
+            current_cluster = next_cluster;
         }
 
         /* Determine how much to write in this iteration. */
@@ -106,8 +109,10 @@ int fat16_write_data(int first_cluster, int offset, void* data, int data_length)
         fat16_set_fat_entry(current_cluster, 0xFFFF);
     }
 
+    dbgprintf("Wrote %d bytes to cluster chain\n", data_length);
+
     fat16_print_cluster_chain(first_cluster);
     fat16_sync_fat_table();
 
-    return 0;  /* Success */
+    return data_length;  /* Success */
 }

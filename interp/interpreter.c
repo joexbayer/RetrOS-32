@@ -115,7 +115,16 @@ int as(int argc, char **argv)
     fs_close(fd);
 
     int* text = kalloc(VM_TEXT_SIZE);
+    if(text == NULL){
+        twritef("could not malloc(%d) for text area\n", VM_TEXT_SIZE);
+        return -1;
+    }
+
     char* data = kalloc(VM_DATA_SIZE);
+    if(data == NULL){
+        twritef("could not malloc(%d) for data area\n", VM_DATA_SIZE);
+        return -1;
+    }
 
     lex_init();
     struct lexed_file lexd = program(text, data, src);
@@ -133,6 +142,11 @@ int as(int argc, char **argv)
 
     int sz = sizeof(struct lexed_file) + lexd.datasize + lexd.textsize;
     char* buffer = kalloc(sz);
+    if(buffer == NULL){
+        twritef("could not malloc(%d) for buffer area\n", sz);
+        return -1;
+    }
+
     char* original_buffer = buffer;
 
     memcpy(buffer, &lexd, sizeof(struct lexed_file));

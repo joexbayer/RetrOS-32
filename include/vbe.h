@@ -6,6 +6,8 @@
 #define PIXELS_PER_CHAR 8
 #define PIXELS_PER_ICON 16
 
+#define VBE_SIZE() (vbe_info->width*vbe_info->height*(vbe_info->bpp/8)+1)
+
 extern struct vbe_mode_info_structure* vbe_info;
 struct vbe_mode_info_structure {
    uint16_t attributes;      // deprecated, only bit 7 should be of interest to you, and it indicates the mode supports a linear frame buffer.

@@ -15,10 +15,13 @@
 #include <colors.h>
 #include <rtc.h>
 #include <util.h>
+#include <syscall_helper.h>
 
 #define center_x(size) ((110/2) - ((size*8)/2))
 
 static char* months[] = {"NAN", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Nov", "Dec"};
+
+static volatile int shared;
 
 int main()
 {   
@@ -44,6 +47,7 @@ int main()
         gfx_draw_format_text(center_x(5), 112, COLOR_VGA_MEDIUM_GRAY, "%s%d:%s%d", now.hour > 9 ? "" : "0", now.hour, now.minute > 9 ? "" : "0", now.minute);
         gfx_draw_format_text(center_x(6), 124, COLOR_VGA_MEDIUM_GRAY, "%d. %s", now.day, months[now.month]);
 
+        gfx_draw_format_text(0, 0, COLOR_WHITE, "%d", shared);
         sleep(100);
 
         int ret = gfx_get_event(&event, GFX_EVENT_NONBLOCKING);
@@ -58,6 +62,5 @@ int main()
         }
 
     }
-    
 	return 0;
 }

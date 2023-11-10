@@ -1,5 +1,6 @@
 #include "edit.hpp"
 
+
 #define HEADER_OFFSET 13
 
 /* Helper functions */
@@ -109,7 +110,7 @@ void Editor::Quit()
 
 void Editor::Open(char* path)
 {
-
+	printf("Opening file: %s\n", path);
 	m_fd = open(path, FS_FILE_FLAG_CREATE | FS_FILE_FLAG_READ | FS_FILE_FLAG_WRITE);
 	if(m_fd < 0)
 		return;

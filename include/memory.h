@@ -13,6 +13,11 @@ extern int kernel_size;
 #define PERMANENT_KERNEL_MEMORY_START 0x100000
 #define PMEM_END_ADDRESS 	 0x200000
 
+#define KERNEL_MEMORY_START 	0x300000
+#define KERNEL_MEMORY_END		0x400000
+#define KMEM_BLOCK_SIZE 		256
+#define KMEM_BLOCKS_PER_BYTE 	8
+
 #define VMEM_MAX_ADDRESS    0x1600000
 #define VMEM_START_ADDRESS  0x400000
 #define VMEM_TOTAL_PAGES ((VMEM_MAX_ADDRESS-VMEM_START_ADDRESS) / PAGE_SIZE)
@@ -104,19 +109,23 @@ void* malloc(unsigned int size);
 void free(void* ptr);
 
 /* Assembly helper functions */
-void flush_tlb_entry(uint32_t vaddr);
 void load_page_directory();
 void enable_paging();
 
 /* Virtual memory API */
 void vmem_map_driver_region(uint32_t addr, int size);
 void vmem_init_kernel();
+
 void vmem_cleanup_process(struct pcb* pcb);
+void vmem_cleanup_process_thead(struct pcb* thread);
+
 void vmem_init_process_thread(struct pcb* parent, struct pcb* thread);
 void vmem_init_process(struct pcb* pcb, byte_t* data, int size);
 void vmem_stack_free(struct pcb* pcb, void* ptr);
 void* vmem_stack_alloc(struct pcb* pcb, int size);
 void vmem_dump_heap(struct allocation* allocation);
+
+int vmem_free_allocations(struct pcb* pcb);
 
 void vmem_free_allocation(struct allocation* allocation);
 int vmem_continious_allocation_map(struct pcb* pcb, struct allocation* allocation, uint32_t* address, int num, int access);

@@ -161,6 +161,11 @@ static void gfx_window_resize(struct window* w, int width, int height)
 {
     /* Allocate new inner buffer, copy over old buffer, free old buffer, update struct */
     uint8_t* new_buffer = kalloc(width*height);
+    if(new_buffer == NULL){
+        warningf("Failed to allocate new buffer for window resize\n");
+        return;
+    }
+
     uint8_t* old = w->inner;
 
     //memcpy(new_buffer, old, w->inner_height*w->inner_width > width*width ? width*width : w->inner_height*w->inner_width);

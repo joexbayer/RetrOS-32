@@ -210,6 +210,7 @@ static int sched_round_robin(struct scheduler* sched)
                 if(next->is_process){
                     tss.esp_0 = (uint32_t)next->kebp;
                     tss.ss_0 = GDT_KERNEL_DS;
+                    dbgprintf("%d ss\n", cli_cnt);
                 }
 
                 sched->ctx.running = next;
@@ -217,7 +218,7 @@ static int sched_round_robin(struct scheduler* sched)
                 load_page_directory(next->page_dir);
                 //load_data_segments(GDT_KERNEL_DS);
                 start_pcb(next);
-                return ERROR_OK; /* not sure if it should return or break */
+                kernel_panic("Illegal return of 'start_pcb'");/* not sure if it should return or break */
             }
             break; /* Never reached. */
         case ZOMBIE:{
@@ -260,7 +261,6 @@ static int sched_round_robin(struct scheduler* sched)
     }
 
     load_page_directory(sched->ctx.running->page_dir);
-
     return ERROR_OK;
 }
 

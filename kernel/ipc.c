@@ -43,6 +43,7 @@ EXPORT_SYSCALL(SYSCALL_IPC_CLOSE, sys_ipc_close);
 
 int sys_ipc_send(int channel, void* data, int length)
 {
+    ERR_ON_NULL(data);
     IPC_VALID_CHANNEL(channel);
 
     return channels[channel].rbuf->ops->add(channels[channel].rbuf, data, length);
@@ -51,6 +52,7 @@ EXPORT_SYSCALL(SYSCALL_IPC_SEND, sys_ipc_send);
 
 int sys_ipc_receive(int channel, void* data, int length)
 {
+    ERR_ON_NULL(data);
     IPC_VALID_CHANNEL(channel);
 
     return channels[channel].rbuf->ops->read(channels[channel].rbuf, data, length);

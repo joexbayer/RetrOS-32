@@ -30,6 +30,11 @@ int invoke_syscall(int i, int arg1, int arg2, int arg3)
     return ret;
 }
 
+void yield()
+{
+    invoke_syscall(SYSCALL_YIELD, 0, 0, 0);
+}
+
 void screen_put(int x, int y, unsigned char c)
 {
     invoke_syscall(SYSCALL_SCRPUT, x, y, c);
@@ -52,7 +57,10 @@ void sleep(int seconds)
 
 void gfx_create_window(int width, int height, int flags)
 {
-    invoke_syscall(SYSCALL_GFX_WINDOW, width, height, flags);
+    void* ptr = invoke_syscall(SYSCALL_GFX_WINDOW, width, height, flags);
+    if (ptr == NULL) {
+        return;
+    }
 }
 
 int get_current_time(struct time* time)
@@ -88,6 +96,11 @@ int write(int fd, void* buffer, int size)
 int read(int fd, void* buffer, int size)
 {
     return invoke_syscall(SYSCALL_READ, fd, (int)buffer, size);
+}
+
+int thread_create(void* entry, void* arg, int flags)
+{
+    return invoke_syscall(SYSCALL_CREATE_THREAD, (int)entry, arg, flags);
 }
 
 void* malloc(int size)

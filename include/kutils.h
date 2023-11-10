@@ -1,6 +1,9 @@
 #ifndef __KERNEL_UTILS_H
 #define __KERNEL_UTILS_H
 
+#include <sync.h>
+#include <stdint.h>
+
 #ifndef X86_REGISTERS_H
 #define X86_REGISTERS_H
 
@@ -51,12 +54,18 @@ typedef unsigned char ubyte_t;
 
 void init_kctors();
 
+#define PTR_SIZE sizeof(void*)
+#define ALIGN(x, a)  (((x) + ((a) - 1)) & ~((a) - 1))
+
+/* Macro to convert a lowercase character to uppercase */
+#define TO_UPPER(c)  (((c) >= 'a' && (c) <= 'z') ? ((c) - 'a' + 'A') : (c))
 
 #define jmp(addr) __asm__ __volatile__ ("jmp *%0" : : "m" (addr))
 #define call(addr) __asm__ __volatile__ ("call *%0" : : "m" (addr))
 #define ret() __asm__ __volatile__ ("ret")
 
 extern int cli_cnt;
+
 #define ENTER_CRITICAL()\
     cli_cnt++;\
     asm ("cli");\
@@ -98,12 +107,25 @@ typedef enum {
     true = 1
 } bool_t;
 
+typedef int kref_t;
+
 struct unit {
     char* unit;
     int size;
 };
 struct unit calculate_size_unit(int bytes);
 
+struct kref {
+    int refs;
+    spinlock_t spinlock;
+};
+int kref_get(struct kref* ref);
+int kref_put(struct kref* ref);
+int kref_destroy(struct kref* ref);
+
+int32_t csprintf(char *buffer, const char *fmt, ...);
+
+int align_to_pointer_size(int size);
 unsigned char* run_length_encode(const unsigned char* data, int length, unsigned char* out, int* encodedLength);
 unsigned char* run_length_decode(const unsigned char* encodedData, int encodedLength, unsigned char* out, int* decodedLength);
 int exec_cmd(char* str);

@@ -23,8 +23,8 @@ static void vmem_free(struct virtual_memory_allocator* vmem, void* addr);
 
 uint32_t* kernel_page_dir = NULL;
 
-static int vmem_default_permissions = SUPERVISOR | PRESENT | READ_WRITE;
-static int vmem_user_permissions = USER | PRESENT | READ_WRITE;
+static const int vmem_default_permissions = SUPERVISOR | PRESENT | READ_WRITE;
+static const int vmem_user_permissions = USER | PRESENT | READ_WRITE;
 
 struct virtual_memory_operations {
 	uint32_t* (*alloc)(struct virtual_memory_allocator* vmem);
@@ -155,6 +155,8 @@ static int vmem_page_region_alloc(struct vmem_page_region* pages, int size)
 
 	pages->used += size;
 	pages->refs++;
+
+	return 0;
 }
 
 static int vmem_free_page_region(struct vmem_page_region* region, int size)
@@ -170,13 +172,36 @@ static int vmem_free_page_region(struct vmem_page_region* region, int size)
 	dbgprintf("Freeing %d pages\n", num_pages);
 	for (int i = 0; i < num_pages; i++){
 		if(region->bits[i] == 0) continue;
-		void* vaddr = VMEM_START_ADDRESS + (region->bits[i] * PAGE_SIZE);
+		void* vaddr = (void*) VMEM_START_ADDRESS + (region->bits[i] * PAGE_SIZE);
 		vmem_default->ops->free(vmem_default, (void*) vaddr);
-		vmem_unmap(vmem_get_page_table(current_running, vaddr), (uint32_t) vaddr);
+		vmem_unmap(vmem_get_page_table(current_running, (uint32_t)vaddr), (uint32_t)vaddr);
 	}
 
 	kfree(region->bits);
 	kfree(region);
+
+	return 0;
+}
+
+int vmem_free_allocations(struct pcb* pcb)
+{
+	uint32_t heap_table = (uint32_t)pcb->page_dir[DIRECTORY_INDEX(VMEM_HEAP)] & ~PAGE_MASK;
+	assert(heap_table != 0);
+
+	/* Free all malloc allocation */
+	struct allocation* iter = pcb->allocations->head;
+	while(iter != NULL){
+		struct allocation* old = iter;
+		iter = iter->next;
+
+		vmem_free_page_region(old->region, old->size);
+	
+		kfree(old);
+	}
+	vmem_manager->ops->free(vmem_default, (void*) heap_table);
+	
+	/* Free allocation list */
+	kfree(pcb->allocations);
 
 	return 0;
 }
@@ -303,7 +328,7 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 		if(physical == NULL){
 			kfree(allocation);
 			warningf("Out of heap memory\n");
-			return -1;
+			return NULL;
 		}
 		allocation->region = physical;
 		
@@ -330,7 +355,7 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 		if(physical == NULL){
 			kfree(allocation);
 			warningf("Out of heap memory\n");
-			return -1;
+			return NULL;
 		}
 		allocation->region = physical;
 		
@@ -422,7 +447,7 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 
 	/**
 	 * @brief Part 3: No spot found, allocate at end of heap.
-	 * At this point we have not found a spot inbetween exisitng allocations, so append at the end.
+	 * At this point we have not found a spot inbetween existing allocations, so append at the end.
 	 * This means we need to allocate a new physical page allocation.
 	 * @note "iter" will point to the last element in the allocation list.
 	 */
@@ -430,7 +455,7 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 	if(physical == NULL){
 		kfree(allocation);
 		warningf("Out of heap memory\n");
-		return -1;
+		return NULL;
 	}
 	allocation->region = physical;
 
@@ -592,7 +617,7 @@ void vmem_cleanup_process_thead(struct pcb* thread)
 
 	uint32_t stack_table = (uint32_t)thread->page_dir[DIRECTORY_INDEX(VMEM_STACK)] & ~PAGE_MASK;
 	uint32_t stack_page = (uint32_t)((uint32_t*)(thread->page_dir[DIRECTORY_INDEX(VMEM_STACK)] & ~PAGE_MASK))[TABLE_INDEX(0xEFFFFFF0)]& ~PAGE_MASK;
-	uint32_t stack_page2 = (uint32_t)((uint32_t*)(thread->page_dir[DIRECTORY_INDEX(VMEM_STACK-PAGE_SIZE)] & ~PAGE_MASK))[TABLE_INDEX(0xEFFFFFF0)]& ~PAGE_MASK;
+	uint32_t stack_page2 = (uint32_t)((uint32_t*)(thread->page_dir[DIRECTORY_INDEX((VMEM_STACK-PAGE_SIZE))] & ~PAGE_MASK))[TABLE_INDEX(0xEFFFFFF0)]& ~PAGE_MASK;
 
 	vmem_default->ops->free(vmem_default, (void*) stack_page);
 	vmem_default->ops->free(vmem_default, (void*) stack_page2);
@@ -647,7 +672,7 @@ void vmem_cleanup_process(struct pcb* pcb)
 	 */
 	uint32_t stack_table = (uint32_t)pcb->page_dir[DIRECTORY_INDEX(VMEM_STACK)] & ~PAGE_MASK;
 	uint32_t stack_page = (uint32_t)((uint32_t*)(pcb->page_dir[DIRECTORY_INDEX(VMEM_STACK)] & ~PAGE_MASK))[TABLE_INDEX(0xEFFFFFF0)]& ~PAGE_MASK;
-	uint32_t stack_page2 = (uint32_t)((uint32_t*)(pcb->page_dir[DIRECTORY_INDEX(VMEM_STACK-PAGE_SIZE)] & ~PAGE_MASK))[TABLE_INDEX(0xEFFFFFF0)]& ~PAGE_MASK;
+	uint32_t stack_page2 = (uint32_t)((uint32_t*)(pcb->page_dir[DIRECTORY_INDEX((VMEM_STACK-PAGE_SIZE))] & ~PAGE_MASK))[TABLE_INDEX(0xEFFFFFF0)]& ~PAGE_MASK;
 
 	vmem_default->ops->free(vmem_default, (void*) stack_page);
 	vmem_default->ops->free(vmem_default, (void*) stack_page2);
@@ -656,22 +681,7 @@ void vmem_cleanup_process(struct pcb* pcb)
 	/**
 	 * Free all heap allocated memory.
 	 */
-	uint32_t heap_table = (uint32_t)pcb->page_dir[DIRECTORY_INDEX(VMEM_HEAP)] & ~PAGE_MASK;
-	
-	/* Free all malloc allocation */
-	struct allocation* iter = pcb->allocations->head;
-	while(iter != NULL){
-		struct allocation* old = iter;
-		iter = iter->next;
-
-		vmem_free_page_region(old->region, old->size);
-	
-		kfree(old);
-	}
-	vmem_manager->ops->free(vmem_default, (void*) heap_table);
-	
-	/* Free allocation list */
-	kfree(pcb->allocations);
+	vmem_free_allocations(pcb);
 
 	/**
 	 * Lastly free directory.

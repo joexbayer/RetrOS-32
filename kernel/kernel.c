@@ -130,7 +130,6 @@ void kernel(uint32_t magic)
 	register_kthread(&dhcpd, "dhcpd");
 	register_kthread(&gfx_compositor_main, "wind");
 	register_kthread(&idletask, "idled");
-	register_kthread(&dummytask, "Dummy");
 	register_kthread(&worker_thread, "workd");
 	register_kthread(&tcpd, "tcpd");
 
@@ -138,8 +137,11 @@ void kernel(uint32_t magic)
 
 #pragma GCC diagnostic ignored "-Wcast-function-type"
 	add_system_call(SYSCALL_PRTPUT, (syscall_t)&terminal_putchar);
+	
 	add_system_call(SYSCALL_EXIT, (syscall_t)&kernel_exit);
 	add_system_call(SYSCALL_SLEEP, (syscall_t)&kernel_sleep);
+	add_system_call(SYSCALL_YIELD, (syscall_t)&kernel_yield);
+
 	add_system_call(SYSCALL_GFX_WINDOW, (syscall_t)&gfx_new_window);
 	add_system_call(SYSCALL_GFX_GET_TIME,  (syscall_t)&get_current_time);
 	add_system_call(SYSCALL_GFX_DRAW, (syscall_t)&gfx_syscall_hook);
@@ -196,7 +198,6 @@ void kernel(uint32_t magic)
 
 
 	init_pit(1);
-	pcb_start();
 	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Starting OS. %d", cli_cnt);
 	LEAVE_CRITICAL();
 	

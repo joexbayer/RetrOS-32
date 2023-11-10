@@ -99,6 +99,49 @@ void ps()
 }
 EXPORT_KSYMBOL(ps);
 
+/* Function to print the lines and corners */
+void print_branches(int level) {
+    for (int i = 0; i < level; i++) {
+        if (i == level - 1) {
+            twritef(":---");
+        } else {
+            twritef(":   ");
+        }
+    }
+}
+
+/* Recursive function to print PCB tree */
+void print_pcb_tree(struct pcb *pcb, int level) {
+    if (pcb == NULL || pcb->pid == -1) {
+        return;
+    }
+
+    /* Print branches and nodes */
+    print_branches(level);
+    twritef(">%s\n", pcb->name);
+
+    /* Recursively print child PCBs */
+    for (int i = 1; i < MAX_NUM_OF_PCBS; i++) {
+        struct pcb *child_pcb = pcb_get_by_pid(i);
+        if (child_pcb && child_pcb->parent == pcb) {
+            print_pcb_tree(child_pcb, level + 1);
+        }
+    }
+}
+
+/* Function to visualize the PCBs as a tree */
+void tree() {
+    /* Hierarchical visualization of the PCBs based on their parent */
+    for (int i = 1; i < MAX_NUM_OF_PCBS; i++) {
+        struct pcb *pcb = pcb_get_by_pid(i);
+        if (pcb && pcb->parent == NULL) { /* Start with root PCBs */
+            print_pcb_tree(pcb, 0);
+        }
+    }
+}
+
+EXPORT_KSYMBOL(tree);
+
 void xxd(int argc, char* argv[])
 {
 	if(argc == 1){
@@ -437,10 +480,12 @@ void __kthread_entry shell()
 
 	testfn();
 	struct window* window = gfx_new_window(SHELL_WIDTH, SHELL_HEIGHT, GFX_IS_RESIZABLE);
-	terminal_attach(&term);
+	if(window == NULL){
+		warningf("Failed to create window for shell");
+		return;
+	}
 
-	memset(&term, 0, sizeof(struct terminal));
-	memset(term.textbuffer, 0, TERMINAL_BUFFER_SIZE);
+	terminal_attach(&term);
 	
 	dbgprintf("shell: window 0x%x\n", window);
 	kernel_gfx_draw_rectangle(current_running->gfx_window, 0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_VGA_BG);

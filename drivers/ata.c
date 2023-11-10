@@ -191,6 +191,10 @@ void ata_ide_init(struct pci_device* dev)
 	interrupt_install_handler(ATA_SECONDARY_IRQ, &ata_secondary);
 
 	ata_driver_data = kalloc(512);
+    if(ata_driver_data == NULL){
+        dbgprintf("[ATA]: Failed to allocate memory for driver data.\n");
+        return;
+    }
 
 	uint16_t io;
 	__ide_set_drive(ATA_PRIMARY, ATA_MASTER);

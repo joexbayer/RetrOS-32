@@ -207,8 +207,6 @@ static void taskbar_hdr_opt_event(struct window* w, struct taskbar_header* heade
     }
 }
 
-
-
 /**
  * @brief taskbar is the main taskbar thread
  */

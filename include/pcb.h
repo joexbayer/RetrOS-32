@@ -13,6 +13,10 @@ struct pcb;
 #define MAX_NUM_OF_PCBS 64
 #define PCB_MAX_NAME_LENGTH 25
 
+#define PCB_STACK_SIZE 0x2000
+
+typedef int pid_t;
+
 /* TODO: Move to new file */
 typedef enum pcb_states {
     STOPPED,
@@ -23,6 +27,12 @@ typedef enum pcb_states {
     ZOMBIE,
     CLEANING
 } pcb_state_t;
+
+typedef enum pcb_types {
+    PCB_KTHREAD = 0,
+    PCB_PROCESS = 1,
+    PCB_THREAD = 2,
+} pcb_type_t;
 
 typedef enum pcb_flags {
     PCB_FLAG_KERNEL = 1 << 1,
@@ -51,6 +61,7 @@ struct pcb {
     uint32_t kesp;
     uint32_t kebp;
     uint8_t is_process;
+    uintptr_t thread_eip;
     /* DO NOT NOT CHANGE ABOVE.*/
     char name[PCB_MAX_NAME_LENGTH];
     pcb_state_t state;
@@ -70,9 +81,6 @@ struct pcb {
     struct terminal* term;
 
     inode_t current_directory;
-    
-
-    uintptr_t thread_eip;
     
     struct virtual_allocations* allocations;
     int used_memory;
@@ -126,24 +134,19 @@ struct pcb_queue {
 };
 
 void init_pcbs();
-void pcb_start();
 void start_pcb(struct pcb* pcb);
 error_t pcb_create_kthread( void (*entry)(), char* name);
+error_t pcb_create_thread(struct pcb* parent, void (*entry)(), void* arg, byte_t flags);
 error_t pcb_create_process(char* program, int args, char** argv, pcb_flag_t flags);
 
-void pcb_set_running(int pid);
 void pcb_kill(int pid);
 
 void pcb_dbg_print(struct pcb* pcb);
-
-void pcb_queue_remove_running(struct pcb* pcb);
-void pcb_queue_push_running(struct pcb* pcb);
 
 int pcb_cleanup_routine(int pid);
 
 error_t pcb_get_info(int pid, struct pcb_info* info);
 
-struct pcb* pcb_get_new_running();
 struct pcb_queue* pcb_new_queue();
 
 /* functions in entry.s */

@@ -1,6 +1,8 @@
 #include <syscalls.h>
 #include <pcb.h>
+#include <kutils.h>
 #include <arch/interrupts.h>
+#include <syscall_helper.h>
 #include <assert.h>
 
 syscall_t syscall[255];
@@ -11,19 +13,28 @@ void add_system_call(int index, syscall_t fn)
 	syscall[index] = fn;
 }
 
-int system_call(int index, int arg1, int arg2, int arg3)
+int sys_create_thread(void* entry, void* arg, byte_t flags)
 {
+	return pcb_create_thread(current_running, entry, arg, flags);
+}
+EXPORT_SYSCALL(SYSCALL_CREATE_THREAD, sys_create_thread);
+
+int system_call(int index, int arg1, int arg2, int arg3)
+{	
+	/* the system call interrupt entered a critcal section */
+	LEAVE_CRITICAL();
+	
 	/* Call system call function based on index. */
 	if(index < 0 || index > 255){
 		return -1;
 	}
 
 	syscall_t fn = syscall[index];
-	//dbgprintf("[SYSCALL] %s Entering %d: %d %d %d\n", current_running->name, index, arg1, arg2, arg3);
-	//ENTER_CRITICAL();
 	int ret = fn(arg1, arg2, arg3);
-	//LEAVE_CRITICAL();
-	//dbgprintf("[SYSCALL] %s Leaving %d: %d %d %d\n", current_running->name, index, arg1, arg2, arg3);
 	EOI(48);
+
+	/* Enter critical section again */
+	ENTER_CRITICAL();
+
 	return ret;
 }
