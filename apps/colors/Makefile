@@ -41,7 +41,7 @@ bin/%.o: %.cpp
 	@echo [USR] Compiling C++ $(basename $@)
 
 $(OUTPUT): $(DEPENDS)
-	@$(LD) -o $@ $(DEPENDS) ../bin/crt0.o $(COMMON) $(LDFLAGS) -T ./../utils/linker.ld
+	@$(LD) -o $@ $(DEPENDS) $(COMMON) $(LDFLAGS) -T ./../utils/linker.ld
 	@echo [USR] Compiling C++ $(basename $@)
 	@cp $(OUTPUT) ../../rootfs/bin
 

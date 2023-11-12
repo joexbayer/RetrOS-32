@@ -2,7 +2,7 @@ CCFLAGS=-m32 -O2 \
 		-g -Wall -Wextra -Wpedantic -Wstrict-aliasing \
 		-Wno-pointer-arith -Wno-unused-parameter -nostdlib \
 		-nostdinc -ffreestanding -fno-pie -fno-stack-protector \
-		-fno-builtin-function -fno-builtin -I ./../../include/ -I ./../include/
+		-fno-builtin-function -fno-builtin -I ./../../include/ -I ./../include/ -fno-exceptions -fno-rtti
 MAKEFLAGS += --no-print-directory
 
 UNAME := $(shell uname)
@@ -24,36 +24,22 @@ endif
 
 #### ONLY EDIT THIS ####
 OUTPUT = edit.o
-DEPENDS = bin/edit.o
 ########################
 
+SRC_FILES = $(wildcard *.cpp)
+OBJ_FILES = $(SRC_FILES:%.cpp=$(OUTPUTDIR)%.o)
+
 OUTPUTDIR = ./bin/
-COMMON = ../../bin/syscall.o ../../bin/util.o ../../bin/printf.o ../../bin/graphics.o ../../bin/lex.o ../bin/cppUtils.o
+COMMON = ../../bin/lex.o
 
-.PHONY: all new programs
-all: new bin $(OUTPUT)
+all: $(OUTPUT)
 
-new: bindir
-
-# C++ compiling
-bin/%.o: %.cpp
-	$(CPP) -o $@ -c $< $(CCFLAGS) -fno-exceptions -fno-rtti -I ./../include/
-	@echo [USR] Compiling C++ $(basename $@)
-
-$(OUTPUT): $(DEPENDS)
-	@$(LD) -o $@ ../bin/crt0.o $(DEPENDS) $(COMMON) $(LDFLAGS) -T ./../utils/linker.ld
-	@echo [USR] Compiling C++ $(basename $@)
+$(OUTPUT): $(OBJ_FILES)
+	$(LD) -o $@ $(LDFLAGS) $^ -L../ -l:lib.a $(COMMON) -T ./../utils/linker.ld
 	@cp $(OUTPUT) ../../rootfs/bin
 
-.depend: **/*.[cSh]
-	@$(CC) $(CCFLAGS) -MM -MG **/*.[cS] > $@
-
--include .depend
-
-bindir:
-	@mkdir -p bin
+$(OUTPUTDIR)%.o: %.cpp
+	$(CPP) $(CCFLAGS) -c $< -o $@
 
 clean:
-	rm -f ./bin/*
-	rm -f $(OUTPUT)
-	rm -f .depend
+	rm -rf $(OUTPUTDIR)* *.o *.d $(OUTPUT) .depend

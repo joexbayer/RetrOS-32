@@ -7,6 +7,7 @@ extern float cos_60[60];
 
 int angle = 0;
 
+
 struct Point3D {
     float x, y, z;
 };

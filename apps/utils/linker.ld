@@ -6,6 +6,7 @@ SECTIONS
 
     .text BLOCK(2K) : ALIGN(2K)
     {
+        ../bin/crt0.o(.text)
         *(.text.prologue)
         *(.text)
     }

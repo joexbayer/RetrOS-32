@@ -36,7 +36,10 @@ all: new
 
 new: ${UTILS} bindir programs
 
-programs: bin/crt0.o ${USROBJS}
+staticlib:
+	@ar rcs lib.a $(COMMON)
+
+programs: staticlib bin/crt0.o ${USROBJS}
 	@make -C editor/
 	@make -C colors/
 	@make -C finder/
@@ -46,13 +49,13 @@ programs: bin/crt0.o ${USROBJS}
 
 bin/%.o: %.c bin/crt0.o
 	@$(CC) -o $@ -c $< $(CCFLAGS) 
-	@$(LD) -o $(basename $@) ./bin/crt0.o $@ $(COMMON) $(LDFLAGS) -T ./utils/linker.ld
+	@$(LD) -o $(basename $@) $@ -L. -l:lib.a $(LDFLAGS) -T ./utils/linker.ld
 	@cp $(basename $@) ../rootfs/bin/
 	@echo [USR] Compiling $(basename $@)
 
 bin/%.o: %.cpp bin/crt0.o
 	@$(CPP) -o $@ -c $< $(CCFLAGS) -fno-exceptions -fno-rtti
-	@$(LD) -o $(basename $@) ./bin/crt0.o $@ $(COMMON) $(LDFLAGS) -T ./utils/linker.ld
+	@$(LD) -o $(basename $@) $@ $(LDFLAGS) -L. -l:lib.a -T ./utils/linker.ld
 	@cp $(basename $@) ../rootfs/bin/
 	@echo [USR] Compiling $(basename $@)
 
