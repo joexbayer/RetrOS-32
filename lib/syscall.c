@@ -57,7 +57,7 @@ void sleep(int seconds)
 
 void gfx_create_window(int width, int height, int flags)
 {
-    void* ptr = invoke_syscall(SYSCALL_GFX_WINDOW, width, height, flags);
+    void* ptr = (void*) invoke_syscall(SYSCALL_GFX_WINDOW, width, height, flags);
     if (ptr == NULL) {
         return;
     }
@@ -100,7 +100,7 @@ int read(int fd, void* buffer, int size)
 
 int thread_create(void* entry, void* arg, int flags)
 {
-    return invoke_syscall(SYSCALL_CREATE_THREAD, (int)entry, arg, flags);
+    return invoke_syscall(SYSCALL_CREATE_THREAD, (int)entry, (int)arg, flags);
 }
 
 void* malloc(int size)

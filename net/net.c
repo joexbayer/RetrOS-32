@@ -61,7 +61,7 @@ error_t kernel_recv(struct sock* socket, void *buffer, int length, int flags)
         break;
     default:
         dbgprintf("Unknown socket type\n");
-        break;
+        return -ERROR_INVALID_SOCKET_TYPE;
     }
 
     dbgprintf(" %d reading from socket ...\n");
@@ -78,8 +78,7 @@ error_t kernel_recv_timeout(struct sock* socket, void *buffer, int length, int f
 
     int read = -1;
     while(read == -1){
-        if(get_time() - time_start > timeout+3)
-            return 0;
+        if(get_time() - time_start > timeout+3)return 0;
 
     }
 
@@ -92,8 +91,9 @@ error_t kernel_connect(struct sock* socket, const struct sockaddr *address, sock
     /* Cast sockaddr back to sockaddr_in. Cast originally to comply with linux implementation.*/
     struct sockaddr_in* addr = (struct sockaddr_in*) address;
     
-    if(socket->bound_port == 0)
+    if(socket->bound_port == 0){
         net_sock_bind(socket, 0, INADDR_ANY);
+    }
 
     assert(socket->tcp == NULL);
     tcp_new_connection(socket, addr->sin_port, socket->bound_port);
@@ -127,13 +127,15 @@ error_t kernel_connect(struct sock* socket, const struct sockaddr *address, sock
 error_t kernel_sendto(struct sock* socket, const void *message, int length, int flags, const struct sockaddr *dest_addr, socklen_t dest_len)
 {
     /* Flags are ignored... for now. */
-    if(socket->socket > NET_NUMBER_OF_SOCKETS)
+    if(socket->socket > NET_NUMBER_OF_SOCKETS){
         return -ERROR_INVALID_SOCKET;
+    }
 
     /* Cast sockaddr back to sockaddr_in. Cast originally to comply with linux implementation.*/
     struct sockaddr_in* addr = (struct sockaddr_in*) dest_addr;
-    if(socket->bound_port == 0)
+    if(socket->bound_port == 0){
         net_sock_bind(socket, 0, INADDR_ANY);
+    }
 
     dbgprintf("Socket %d sending %d\n", socket->socket, length);
     /* Forward packet to specified protocol. */
