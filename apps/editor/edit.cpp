@@ -1,9 +1,8 @@
 #include "edit.hpp"
-
-
+#include <utils/cppUtils.hpp>
+#include <utils/Graphics.hpp>
 
 #define HEADER_OFFSET 13
-
 /* Helper functions */
 static int isAlpha(unsigned char c) {
     return ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'));
@@ -396,14 +395,11 @@ void Editor::putChar(unsigned char c)
 
 extern "C" int main(int argc, char* argv[])
 {
-	char* t = (char*) malloc(1000);
 	printf("Starting editor...\n");
 	printf("argc: %d\n", argc);
 	for(int i = 0; i < argc; i++){
 		printf("argv[%d]: %s\n", i, argv[i]);
 	}
-
-
 
 	Editor* s1 = new Editor();
 	if(argc > 1){

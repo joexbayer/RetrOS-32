@@ -2,7 +2,7 @@
 #define D2830F9E_59AE_4E2A_B9AB_EB0EC93872EF
 
 #include <lib/printf.h>
-#include <lib/graphics.h>
+#include <utils/Graphics.hpp>
 #include <gfx/events.h>
 #include "../../interp/lex.h"
 #include <util.h>

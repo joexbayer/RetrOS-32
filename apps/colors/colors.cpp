@@ -1,5 +1,5 @@
 #include <lib/printf.h>
-#include <lib/graphics.h>
+#include <utils/Graphics.hpp>
 #include <gfx/events.h>
 #include <colors.h>
 

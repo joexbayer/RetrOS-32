@@ -1,10 +1,10 @@
 #include <util.h>
-#include <lib/graphics.h>
+#include <utils/Graphics.hpp>
 #include <gfx/events.h>
 #include <colors.h>
-#include "../utils/StringHelper.hpp"
-#include "../utils/StdLib.hpp"
-#include "../utils/Thread.hpp"
+#include <utils/StringHelper.hpp>
+#include <utils/StdLib.hpp>
+#include <utils/Thread.hpp>
 #include <fs/ext.h>
 #include <fs/directory.h>
 

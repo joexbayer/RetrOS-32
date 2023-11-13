@@ -1,10 +1,11 @@
-CCFLAGS=-m32 -O2 \
-		-g -Wall -Wextra -Wpedantic -Wstrict-aliasing \
+
+ROOT = ../../
+
+CCFLAGS=-m32 -O2 -g -Wall -Wextra -Wpedantic -Wstrict-aliasing \
 		-Wno-pointer-arith -Wno-unused-parameter -nostdlib \
 		-nostdinc -ffreestanding -fno-pie -fno-stack-protector \
-		-fno-builtin-function -fno-builtin -I ./../../include/ -I ./../include/
+		-fno-builtin-function -fno-builtin -I $(ROOT)include/ -I $(ROOT)apps/ -fno-exceptions -fno-rtti
 MAKEFLAGS += --no-print-directory
-
 UNAME := $(shell uname)
 ifeq ($(UNAME),Linux)
 	CC=gcc
@@ -24,36 +25,25 @@ endif
 
 #### ONLY EDIT THIS ####
 OUTPUT = finder.o
-DEPENDS = bin/finder.o
 ########################
 
+SRC_FILES = $(wildcard *.cpp)
+OBJ_FILES = $(SRC_FILES:%.cpp=$(OUTPUTDIR)%.o)
+
 OUTPUTDIR = ./bin/
-COMMON = ../../bin/syscall.o ../../bin/printf.o ../../bin/util.o ../../bin/graphics.o ../bin/cppUtils.o
+COMMON = $(ROOT)bin/lex.o
 
-.PHONY: all new programs
-all: new bin $(OUTPUT)
+all: $(OUTPUT) install
 
-new: bindir
+install: $(OUTPUT)
+	@cp $(OUTPUT) $(ROOT)rootfs/bin
 
-# C++ compiling
-bin/%.o: %.cpp
-	$(CPP) -o $@ -c $< $(CCFLAGS) -fno-exceptions -fno-rtti -I ./../include/
-	@echo [USR] Compiling C++ $(basename $@)
+$(OUTPUT): $(OBJ_FILES)
+	$(LD) -o $@ $(LDFLAGS) $^ -L../ -lcore -lgraphic $(COMMON) -T $(ROOT)apps/utils/linker.ld
 
-$(OUTPUT): $(DEPENDS)
-	@$(LD) -o $@ $(DEPENDS) $(COMMON) $(LDFLAGS) -T ./../utils/linker.ld
-	@echo [USR] Compiling C++ $(basename $@)
-	@cp $(OUTPUT) ../../rootfs/bin
-
-.depend: **/*.[cSh]
-	@$(CC) $(CCFLAGS) -MM -MG **/*.[cS] > $@
-
--include .depend
-
-bindir:
-	@mkdir -p bin
+$(OUTPUTDIR)%.o: %.cpp
+	@mkdir -p $(OUTPUTDIR)
+	$(CPP) $(CCFLAGS) -c $< -o $@
 
 clean:
-	rm -f ./bin/*
-	rm -f $(OUTPUT)
-	rm -f .depend
+	rm -rf $(OUTPUTDIR)* *.o *.d $(OUTPUT) .depend

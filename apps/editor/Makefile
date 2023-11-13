@@ -1,10 +1,10 @@
-CCFLAGS=-m32 -O2 \
-		-g -Wall -Wextra -Wpedantic -Wstrict-aliasing \
+ROOT = ../../
+
+CCFLAGS=-m32 -O2 -g -Wall -Wextra -Wpedantic -Wstrict-aliasing \
 		-Wno-pointer-arith -Wno-unused-parameter -nostdlib \
 		-nostdinc -ffreestanding -fno-pie -fno-stack-protector \
-		-fno-builtin-function -fno-builtin -I ./../../include/ -I ./../include/ -fno-exceptions -fno-rtti
+		-fno-builtin-function -fno-builtin -I $(ROOT)include/ -I $(ROOT)apps/ -fno-exceptions -fno-rtti
 MAKEFLAGS += --no-print-directory
-
 UNAME := $(shell uname)
 ifeq ($(UNAME),Linux)
 	CC=gcc
@@ -24,21 +24,24 @@ endif
 
 #### ONLY EDIT THIS ####
 OUTPUT = edit.o
+LIBS = -lcore -lgraphic 
+EXTENDED = $(ROOT)bin/lex.o
 ########################
 
 SRC_FILES = $(wildcard *.cpp)
 OBJ_FILES = $(SRC_FILES:%.cpp=$(OUTPUTDIR)%.o)
-
 OUTPUTDIR = ./bin/
-COMMON = ../../bin/lex.o
 
-all: $(OUTPUT)
+all: $(OUTPUT) install
+
+install: $(OUTPUT)
+	@cp $(OUTPUT) $(ROOT)rootfs/bin
 
 $(OUTPUT): $(OBJ_FILES)
-	$(LD) -o $@ $(LDFLAGS) $^ -L../ -l:lib.a $(COMMON) -T ./../utils/linker.ld
-	@cp $(OUTPUT) ../../rootfs/bin
+	$(LD) -o $@ $(LDFLAGS) $^ -L$(ROOT)apps $(LIBS) $(EXTENDED) -T $(ROOT)apps/utils/linker.ld
 
 $(OUTPUTDIR)%.o: %.cpp
+	@mkdir -p $(OUTPUTDIR)
 	$(CPP) $(CCFLAGS) -c $< -o $@
 
 clean:
