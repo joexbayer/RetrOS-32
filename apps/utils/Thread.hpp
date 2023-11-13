@@ -7,7 +7,10 @@ typedef void (*ThreadFunc)(void*);
 
 class Thread {
 public:
-    Thread(ThreadFunc func, int flags) : mFunc(func), mThreadId(-1), flags(flags) {}
+    Thread(ThreadFunc func, int flags) {
+        this->mFunc = func;
+        this->flags = flags;
+    }
 
     int start(void* arg) {
         mThreadId = thread_create(reinterpret_cast<void*>(mFunc), arg, flags);

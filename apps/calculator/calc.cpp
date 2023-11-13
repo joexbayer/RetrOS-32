@@ -22,7 +22,7 @@ public:
         drawUI();
     }
 
-        void drawUI() {
+    void drawUI() {
         // Draw keypad
         drawRect(0, 0, WIDTH, HEIGHT, COLOR_WHITE);
         for (int i = 0; i < 3; i++) {
@@ -201,8 +201,10 @@ extern "C" int main() {
 
     const char* title = "Calculator";
     const char* message = "Do you want to start calculator?";
+    
     MsgBox* msgBox = new MsgBox(title, message, MSGBOX_OK_CANCEL);
     MsgBoxResult ret = msgBox->show();
+
     delete msgBox;
 
     if (ret == MSGBOX_CANCEL) {

@@ -20,23 +20,26 @@ typedef enum _msgbox_results {
     MSGBOX_NO
 } MsgBoxResult;
 
-#define MSGBOX_WIDTH 150
+#define MSGBOX_WIDTH 170
 #define MSGBOX_HEIGHT 100
 
-void __msgbox_fn(void* args);
+/* Forward declaration of threading function */
+void __msgbox_thread_fn(void* args);
 
 class MsgBox {
-
 public:
-    MsgBox(const char* title, const char* message, MsgBoxType type) : mThread(__msgbox_fn, 0) {
+    MsgBox(const char* title, const char* message, MsgBoxType type) : mThread(__msgbox_thread_fn, 0) {
         mType = type;
         mTitle = title;
         mMessage = message;
     }
 
     MsgBoxResult show() {
+        /* Start the thread */
         mThread.start(this);
-        while (isDone() != 0) {
+
+        /* Wait for the thread to finish */
+        while (isRunning()) {
             yield();
         }
 
@@ -47,20 +50,29 @@ public:
         mRunning = 0;
     }
 
-    volatile char mRunning = 1;
-    MsgBoxResult mResult;
+    /* public variables used by thread */
     const char* mTitle;
     const char* mMessage;
+
+    MsgBoxResult mResult;
     MsgBoxType mType;
 private:
     Thread mThread;
 
-    volatile char isDone() {
-        return mRunning;
+    volatile char mRunning = 1;
+
+    volatile char isRunning() {
+        return mRunning == 1;
     }
 };
 
-void __msgbox_fn(void* args){
+/**
+ * @brief Thread function for the message box
+ * Handles the drawing of the message box and the user input
+ * @param args Pointer to the MsgBox object
+ */
+void __msgbox_thread_fn(void* args)
+{
     MsgBox* box = static_cast<MsgBox*>(args);
 
     Window win(MSGBOX_WIDTH, MSGBOX_HEIGHT, box->mTitle, 0);
@@ -70,18 +82,36 @@ void __msgbox_fn(void* args){
 
     switch (box->mType) {
         case MSGBOX_OK_CANCEL:{
-                win.drawContouredRect(10, 10, 50, 20);
-                gfx_draw_format_text(20, 16, COLOR_BLACK, "OK");
+                win.drawContouredRect(10, 70, 50, 20);
+                gfx_draw_format_text(20, 76, COLOR_BLACK, "OK");
 
-                win.drawContouredRect(70, 10, 50, 20);
-                gfx_draw_format_text(80, 16, COLOR_BLACK, "Cancel");
+                win.drawContouredRect(110, 70, 50, 20);
+                gfx_draw_format_text(120, 76, COLOR_BLACK, "Cancel");
             }
             break;
-        case MSGBOX_OK:
+        case MSGBOX_OK:{
+                win.drawContouredRect(60, 70, 50, 20);
+                gfx_draw_format_text(70, 76, COLOR_BLACK, "OK");
+            }
             break;
-        case MSGBOX_YES_NO:
+        case MSGBOX_YES_NO:{
+                win.drawContouredRect(10, 70, 50, 20);
+                gfx_draw_format_text(20, 76, COLOR_BLACK, "Yes");
+
+                win.drawContouredRect(110, 70, 50, 20);
+                gfx_draw_format_text(120, 76, COLOR_BLACK, "No");
+            }
             break;
-        case MSGBOX_YES_NO_CANCEL:
+        case MSGBOX_YES_NO_CANCEL:{
+                win.drawContouredRect(10, 70, 50, 20);
+                gfx_draw_format_text(20, 76, COLOR_BLACK, "Yes");
+
+                win.drawContouredRect(60, 70, 50, 20);
+                gfx_draw_format_text(70, 76, COLOR_BLACK, "No");
+
+                win.drawContouredRect(110, 70, 50, 20);
+                gfx_draw_format_text(120, 76, COLOR_BLACK, "Cancel");
+            }
             break;
         default:
             break;
@@ -91,14 +121,51 @@ void __msgbox_fn(void* args){
     while (1){
         int ret = gfx_get_event(&event, GFX_EVENT_BLOCKING);
         if(ret == -1) continue;
+        if (event.event != GFX_EVENT_MOUSE) continue;
 
-        switch (event.event){
-        case GFX_EVENT_MOUSE:{
-                if (event.data > 10 && event.data < 60 && event.data2 > 10 && event.data2 < 30) {
+        switch (box->mType){
+        case MSGBOX_OK_CANCEL:{
+                if (event.data > 10 && event.data < 60 && event.data2 > 70 && event.data2 < 90) {
                     box->mResult = MSGBOX_RESULT_OK;
                     box->close();
                     return;
-                } else if (event.data > 70 && event.data < 120 && event.data2 > 10 && event.data2 < 30) {
+                } else if (event.data > 110 && event.data < 160 && event.data2 > 70 && event.data2 < 90) {
+                    box->mResult = MSGBOX_CANCEL;
+                    box->close();
+                    return;
+                }
+            }
+            break;
+        case MSGBOX_OK:{
+                if (event.data > 60 && event.data < 110 && event.data2 > 70 && event.data2 < 90) {
+                    box->mResult = MSGBOX_RESULT_OK;
+                    box->close();
+                    return;
+                }
+            }
+            break;
+        case MSGBOX_YES_NO:{
+                if (event.data > 10 && event.data < 60 && event.data2 > 70 && event.data2 < 90) {
+                    box->mResult = MSGBOX_YES;
+                    box->close();
+                    return;
+                } else if (event.data > 110 && event.data < 160 && event.data2 > 70 && event.data2 < 90) {
+                    box->mResult = MSGBOX_NO;
+                    box->close();
+                    return;
+                }
+            }
+            break;
+        case MSGBOX_YES_NO_CANCEL:{
+                if (event.data > 10 && event.data < 60 && event.data2 > 70 && event.data2 < 90) {
+                    box->mResult = MSGBOX_YES;
+                    box->close();
+                    return;
+                } else if (event.data > 60 && event.data < 110 && event.data2 > 70 && event.data2 < 90) {
+                    box->mResult = MSGBOX_NO;
+                    box->close();
+                    return;
+                } else if (event.data > 110 && event.data < 160 && event.data2 > 70 && event.data2 < 90) {
                     box->mResult = MSGBOX_CANCEL;
                     box->close();
                     return;
