@@ -26,20 +26,25 @@ endif
 
 OUTPUTDIR = ./bin/
 
-UTILS = bin/cppUtils.o bin/StringHelper.o
+UTILS = bin/cppUtils.o
 
 USROBJS = bin/counter.o bin/clock.o bin/cube.o bin/echo.o
+
 COMMON = ../bin/syscall.o ../bin/util.o ../bin/printf.o ../bin/graphics.o ../bin/netlib.o bin/cppUtils.o
+LIBCOMMON_OBJS = ../bin/syscall.o ../bin/util.o ../bin/printf.o bin/cppUtils.o
+LIBGRAPHICS_OBJS = ../bin/graphics.o
+LIBNET_OBJS = ../bin/netlib.o
+
 
 .PHONY: all new programs
 all: new
 
 new: ${UTILS} bindir programs
 
-staticlib:
+staticlibs:
 	@ar rcs lib.a $(COMMON)
 
-programs: staticlib bin/crt0.o ${USROBJS}
+programs: staticlibs bin/crt0.o ${USROBJS}
 	@make -C editor/
 	@make -C colors/
 	@make -C finder/
