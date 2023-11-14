@@ -4,8 +4,14 @@
 # Ubuntu with build-essentials works.
 #
 
-FROM ubuntu
-RUN apt-get update && \
-  apt-get install -y build-essential && apt-get install -y gcc-multilib && apt-get install -y grub2 && apt-get install -y xorriso && apt-get install xxd && apt-get install -y sudo
+FROM debian:12
+
+RUN apt-get update                      && \
+    apt-get install -y build-essential  && \
+    apt-get install -y gcc-multilib     && \
+    apt-get install -y grub2            && \
+    apt-get install -y xorriso          && \
+    apt-get install -y xxd              && \
+    apt-get install -y sudo
 
 WORKDIR /RetrOS-32

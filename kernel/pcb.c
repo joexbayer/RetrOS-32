@@ -233,11 +233,12 @@ void pcb_dbg_print(struct pcb* pcb)
 /**
  * @brief Sets the process with given pid to stopped. Also frees the process's stack.
  * 
- * @param pid id of the process.
+ * @param void* arg pid of process to stop.
  * @return int index of pcb, -1 on error.
  */
-int pcb_cleanup_routine(int pid)
+int pcb_cleanup_routine(void* arg)
 {
+	int pid = (int)arg;
 	assert(pid != current_running->pid && !(pid < 0 || pid > MAX_NUM_OF_PCBS));
 
 	struct pcb* pcb = &pcb_table[pid];

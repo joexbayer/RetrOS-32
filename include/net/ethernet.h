@@ -2,7 +2,6 @@
 #define ETHERNET_H
 
 #include <stdint.h>
-#include <net/skb.h>
 
 #define ETHER_HDR_LENGTH 14
 #define MAC_SIZE 6
@@ -17,6 +16,8 @@ struct ethernet_header
     uint8_t  smac[MAC_SIZE];
     uint16_t ethertype;
 } __attribute__((packed));
+
+#include <net/skb.h>
 
 void print_ethernet(struct ethernet_header* hdr);
 int net_ethernet_add_header(struct sk_buff* skb, uint32_t ip);

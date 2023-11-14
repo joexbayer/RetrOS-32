@@ -166,6 +166,7 @@ int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t pus
 		skb = skb_new();
 		ERR_ON_NULL(skb);
 
+		/* Send segment, __tcp_send consumes skb */
 		__tcp_send(sock, &hdr, skb, data, len);
 
 		/* Wait for ACK */

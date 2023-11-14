@@ -34,13 +34,18 @@ enum netd_states {
     NETD_STARTED
 };
 
+struct networkmanager;
+
 struct network_manager_ops {
     void (*start)();
     void (*stop)();
     void (*restart)();
+
+    void (*get_info)(struct net_info* info);
+    void (*send_skb)(struct networkmanager* nm, struct sk_buff* skb);
 };
 
-static struct network_manager {
+static struct networkmanager {
     int state;
 
     uint16_t packets;

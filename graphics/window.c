@@ -347,8 +347,8 @@ struct window* gfx_new_window(int width, int height, window_flag_t flags)
     }
 
     w->pitch = w->inner_width;
-    w->x = 16;
-    w->y = 16;
+    w->x = 32;
+    w->y = 32;
     w->owner = current_running;
     w->changed = 1;
     w->color.border = 0;

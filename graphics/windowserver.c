@@ -1,3 +1,14 @@
+/**
+ * @file windowserver.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Windowserver implementation
+ * @version 0.1
+ * @date 2023-11-12
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ */
+
 #include <gfx/windowserver.h>
 #include <keyboard.h>
 #include <gfx/gfxlib.h>
@@ -143,7 +154,7 @@ static int ws_set_background_file(struct windowserver* ws, const char* path)
     float scaleX = (float)targetWidth / (float)originalWidth;
     float scaleY = (float)targetHeight / (float)originalHeight;
 
-    byte_t* temp = malloc(10000);
+    ubyte_t* temp = malloc(10000);
     if(temp == NULL){
         return -ERROR_ALLOC;
     }
@@ -155,7 +166,7 @@ static int ws_set_background_file(struct windowserver* ws, const char* path)
         return -ERROR_FILE_NOT_FOUND;
     }
 
-    byte_t* temp_window = (byte_t*) malloc(320*240);
+    ubyte_t* temp_window = malloc(320*240);
     if(temp_window == NULL){
         free(temp);
         return -ERROR_ALLOC;

@@ -1,11 +1,13 @@
 #ifndef SKB_H
 #define SKB_H
 
+struct sk_buff;
 #include <stdint.h>
 #include <net/netdev.h>
 #include <memory.h>
 #include <net/utils.h>
 #include <util.h>
+#include <net/ethernet.h>
 
 struct sk_buff {
 
@@ -71,7 +73,6 @@ void skb_free(struct sk_buff* skb);
     (skb)->len = -1;            \
     (skb)->head = NULL;
 
-#include <net/ethernet.h>
 #include <net/arp.h>
 #include <net/ipv4.h>
 #include <net/icmp.h>

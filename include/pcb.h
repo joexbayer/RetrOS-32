@@ -143,7 +143,7 @@ void pcb_kill(int pid);
 
 void pcb_dbg_print(struct pcb* pcb);
 
-int pcb_cleanup_routine(int pid);
+int pcb_cleanup_routine(void* arg);
 
 error_t pcb_get_info(int pid, struct pcb_info* info);
 

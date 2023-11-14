@@ -42,7 +42,7 @@ static struct work_queue queue = {
  * @param arg argument to work_fn
  * @param callback with return value of work_fn
  */
-int work_queue_add(void* fn, void* arg, void(*callback)(int))
+int work_queue_add(int (*fn)(void*), void* arg, void(*callback)(int))
 {
     struct work* work = get_new_work();
     if(work == NULL){

@@ -13,7 +13,7 @@ void add_system_call(int index, syscall_t fn)
 	syscall[index] = fn;
 }
 
-int sys_create_thread(void* entry, void* arg, byte_t flags)
+int sys_create_thread(void (*entry)(), void* arg, byte_t flags)
 {
 	return pcb_create_thread(current_running, entry, arg, flags);
 }

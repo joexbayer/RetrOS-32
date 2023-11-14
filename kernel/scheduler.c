@@ -124,8 +124,7 @@ static int sched_prioritize(struct scheduler* sched, struct pcb* pcb)
  */
 static struct pcb* sched_consume(struct scheduler* sched)
 {
-    ERR_ON_NULL(sched);
-    SCHED_VALIDATE(sched);
+    ERR_ON_NULL_PTR(sched);
 
     /* Consume the current running pcb and return it */ 
     struct pcb* pcb = sched->ctx.running;
@@ -228,7 +227,7 @@ static int sched_round_robin(struct scheduler* sched)
                  * The ZOMBIE pcb will not be scheduled again and a work thread will deal with cleaning up the pcb.
                  * This is because we want to spend as little time as possible in the scheduler.
                  */
-                RETURN_ON_ERR(work_queue_add(&pcb_cleanup_routine, (void*)next->pid, NULL));
+                RETURN_ON_ERR(work_queue_add(&pcb_cleanup_routine, (void*)((int)next->pid), NULL));
             }
             break;
         /* If next is sleeping, check if it should be woken up */
@@ -243,6 +242,7 @@ static int sched_round_robin(struct scheduler* sched)
                     break;
                 }
             }
+        /* fall through */
         case BLOCKED:
             /* Blocked just means we want to add it back to the queue */
         default:
@@ -309,7 +309,7 @@ static int sched_exit(struct scheduler* sched)
     sched->exits++;  
 
     /* Add cleanup routine to work queue */
-    RETURN_ON_ERR(work_queue_add(&pcb_cleanup_routine, (void*)sched->ctx.running->pid, NULL));
+    RETURN_ON_ERR(work_queue_add(&pcb_cleanup_routine, (void*)((int)sched->ctx.running->pid), NULL));
     sched->ctx.running = NULL;
 
     CRITICAL_SECTION({

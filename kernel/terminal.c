@@ -128,6 +128,8 @@ void terminal_putchar(char c)
 
 	current_running->term->textbuffer[current_running->term->head] = c;
 	current_running->term->head++;
+
+	serial_put(c);
 	gfx_commit();
 }
  

@@ -1,3 +1,14 @@
+/**
+ * @file windowmanager.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Window manager implementation
+ * @version 0.1
+ * @date 2023-11-12
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ */
+
 #include <windowmanager.h>
 #include <util.h>
 #include <errors.h>
