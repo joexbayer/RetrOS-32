@@ -50,6 +50,11 @@ typedef enum __fs_flags {
     FS_FLAG_UNUSED = 1 << 1,
 } fs_flag_t;
 
+typedef enum __fs_seek_flags {
+    FS_SEEK_START = 0,
+    FS_SEEK_CUR = 1
+} fs_seek_flag_t;
+
 struct filesystem {
     struct filesystem_ops* ops;
     unsigned char flags;
@@ -67,6 +72,8 @@ int fs_load_from_file(const char* file, void* buf, int size);
 struct file* fs_alloc_file();
 
 int fs_init();
+
+int fs_seek(int fd, int offset, fs_seek_flag_t flag);
 
 int fs_open(const char* path, int flags);
 int fs_close(int fd);

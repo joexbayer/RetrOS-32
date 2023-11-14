@@ -36,9 +36,11 @@ public:
         return name->getData();
     }
 
+
+
     int flags;
-private:
     String* name;
+private:
     int x,y,w,h;
 };
 
@@ -98,8 +100,10 @@ public:
             icon[i] = (unsigned char*)malloc(ICON_SIZE*ICON_SIZE);
         }
 
-        loadIcon("folder.ico", 0);
-        loadIcon("text.ico", 1);
+        loadIcon("/ico/folder.ico", 0);
+        loadIcon("/ico/text.ico", 1);
+        loadIcon("/ico/cfile.ico", 2);
+        loadIcon("/ico/bin.ico", 3);
 
         path = new String("/");
         m_cache = new FileCache();
@@ -135,6 +139,7 @@ public:
     int loadFiles(){
         //struct directory_entry entry;
         struct fat16_directory_entry entry;
+
 
 
         if(m_fd != 0) fclose(m_fd);
@@ -204,8 +209,12 @@ public:
 
             if (file->flags & FAT16_FLAG_SUBDIRECTORY) {
                 drawIcon(xOffset, yOffset, icon[0]);
-            } else {
+            } else if(file->name->includes("TXT")){
                 drawIcon(xOffset, yOffset, icon[1]);
+            } else if(file->name->includes("C  ")){
+                drawIcon(xOffset, yOffset, icon[2]);
+            } else {
+                drawIcon(xOffset, yOffset, icon[3]);
             }
 
             drawText(48 + j * WIDTH / 2, 24 + (i++) * ICON_SIZE, file->getName(), COLOR_BLACK);

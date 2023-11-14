@@ -173,12 +173,9 @@ int kernel_gfx_draw_text(struct window* w, int x, int y, char* str, unsigned cha
 {
 	ERR_ON_NULL(w);
 
-	for (int i = 0; i < strlen(str); i++)
-	{
+	for (int i = 0; i < strlen(str); i++){
 		kernel_gfx_draw_char(w, x+(i*8), y, str[i], color);
 	}
-
-	gfx_commit();
 
 	return 0;
 }
@@ -262,8 +259,6 @@ void kernel_gfx_draw_line(struct window* w, int x0, int y0, int x1, int y1, unsi
 			y0 = y0 + sy;
 		}
 	}
-
-	gfx_commit();
 }  
 
 static void kernel_gfx_draw_circle_helper(struct window* w, int xc, int yc, int x, int y, unsigned char color, bool_t fill)

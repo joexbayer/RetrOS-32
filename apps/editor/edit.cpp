@@ -28,7 +28,6 @@ static int prevNewline(unsigned char* str, unsigned char* limit)
 	return str - begin;
 }
 
-
 void Editor::reDrawHeader()
 {
 	gfx_draw_rectangle(0, 0, this->c_width, this->c_height, COLOR_BG);

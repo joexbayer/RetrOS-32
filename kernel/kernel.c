@@ -43,8 +43,6 @@
 
 #include <multiboot.h>
 
-#define USE_MULTIBOOT 0
-
 struct kernel_context {
 	struct scheduler sched_ctx;
 	/* netdriver? */
@@ -59,7 +57,7 @@ void kernel(uint32_t magic)
 {
 	asm ("cli");
 
-#if USE_MULTIBOOT
+#ifdef USE_MULTIBOOT
   	struct multiboot_info* mb_info = (struct multiboot_info*) magic;
 	vbe_info->height = mb_info->framebuffer_height;
 	vbe_info->width = mb_info->framebuffer_width;
@@ -68,8 +66,8 @@ void kernel(uint32_t magic)
 	vbe_info->framebuffer = mb_info->framebuffer_addr;
 #else
 	vbe_info = (struct vbe_mode_info_structure*) magic;
-    init_serial();
 #endif
+    init_serial();
 	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Booting OS...");
 	/* Clear memory and BSS */
 	//memset((char*)_bss_s, 0, (unsigned int) _bss_size);
@@ -117,9 +115,12 @@ void kernel(uint32_t magic)
 
 	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Networking initialized.");
 
-
-
 	mbr_partition_load();
+
+	/* check for disk */
+	if(!disk_attached()){
+		virtual_disk_attach();
+	}
 
 	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Filesystem initialized.");
 

@@ -12,7 +12,7 @@
 #define VIRTUAL_DISK_MEMORY_END   0x800000
 
 struct ide_device virtual_disk = {
-    .size = VIRTUAL_DISK_MEMORY_END-VIRTUAL_DISK_MEMORY_START,
+    .size = (VIRTUAL_DISK_MEMORY_END-VIRTUAL_DISK_MEMORY_START)/512,
     .model = "Virtual Disk"
 };
 

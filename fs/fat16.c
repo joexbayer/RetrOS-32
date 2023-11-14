@@ -802,6 +802,16 @@ void fat16_set_date(uint16_t *date, uint16_t year, ubyte_t month, ubyte_t day)
 
 int fat16_load()
 {
+    if(disk_attached() == 0){
+        dbgprintf("No disk attached\n");
+        return -1;
+    }
+
+    if(fat_table_memory != NULL){
+        dbgprintf("FAT16 already loaded\n");
+        return 0;
+    }
+
     /* load the bootblock */
     read_block((byte_t*)&boot_table, BOOT_BLOCK);
 
@@ -819,7 +829,7 @@ int fat16_load()
     /* Load FAT table into memory. */
     fat_table_memory = (byte_t*)kalloc((boot_table.fat_blocks * 512));  /* Allocate memory for the FAT table */
     if(fat_table_memory == NULL){
-        dbgprintf("Error allocating memory for FAT table\n");
+        dbgprintf("Error allocating memory for FAT table: %d\n", boot_table.fat_blocks * 512);
         return -2;
     }
 

@@ -57,7 +57,7 @@ KERNELOBJ = bin/kernel.o bin/terminal.o bin/helpers.o bin/pci.o bin/virtualdisk.
 			bin/util.o bin/interrupts.o bin/irs_entry.o bin/timer.o bin/gdt.o bin/interpreter.o bin/vm.o bin/lex.o \
 			bin/keyboard.o bin/pcb.o bin/pcb_queue.o bin/memory.o bin/vmem.o bin/kmem.o bin/e1000.o bin/display.o bin/env.o \
 			bin/sync.o bin/kthreads.o bin/ata.o bin/bitmap.o bin/rtc.o bin/tss.o bin/kutils.o bin/script.o \
-			bin/diskdev.o bin/scheduler.o bin/work.o bin/rbuffer.o bin/errors.o bin/kclock.o bin/atapi.o \
+			bin/diskdev.o bin/scheduler.o bin/work.o bin/rbuffer.o bin/errors.o bin/kclock.o bin/atapi.o bin/tar.o \
 			bin/serial.o bin/io.o bin/syscalls.o bin/list.o bin/hashmap.o bin/vbe.o bin/ksyms.o bin/windowserver.o\
 			bin/mouse.o bin/ipc.o ${PROGRAMOBJ} ${GFXOBJ} bin/font8.o bin/net.o bin/fs.o bin/ext.o bin/fat16.o bin/partition.o
 
@@ -152,7 +152,7 @@ create_fs:
 	@dd if=/dev/zero of=filesystem.image bs=512 count=390
 	@./bin/mkfsv2
 
-img: tools compile create_fs sync
+img: grub_fix tools compile create_fs sync
 	@echo "Finished creating the image."
 	$(TIME-END)
 
@@ -173,7 +173,11 @@ test: clean compile tests
 bindir:
 	@mkdir -p bin
 
-grub: apps multiboot_kernel
+# Kernel.o must be recompiled with the multiboot flag.
+grub_fix:
+	@rm bin/kernel.o
+grub: CCFLAGS += -DUSE_MULTIBOOT
+grub: grub_fix apps multiboot_kernel
 	cp bin/kernelout legacy/multiboot/boot/myos.bin
 	$(GRUB)
 
@@ -190,11 +194,6 @@ vdi: cleanvid docker
 qemu:
 	sudo qemu-system-i386 -device e1000,netdev=net0 -serial stdio -netdev user,id=net0 -object filter-dump,id=net0,netdev=net0,file=dump.dat filesystemv2.img
 
-fat16reset:
-	rm fatfs.img
-	dd if=/dev/zero of=fatfs.img bs=16M count=2
-	mkfs.fat -F 16 -v -n FAT16 fatfs.img
-
 sync:
 	mkdir -p mnt
 	sudo mount -o shortname=winnt filesystemv2.img ./mnt
@@ -204,13 +203,6 @@ sync:
 
 mount:
 	sudo mount -o shortname=winnt filesystemv2.img ./mnt
-
-fat16test:
-	gcc tools/fat.c -o ./bin/fattest.o
-	./bin/fattest.o
-
-fat16umount:
-	sudo umount ./mnt
 
 run: docker qemu
 endif

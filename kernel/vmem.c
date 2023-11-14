@@ -667,6 +667,8 @@ void vmem_cleanup_process(struct pcb* pcb)
 	vmem_default->ops->free(vmem_default, (void*) data_page);
 	vmem_manager->ops->free(vmem_default, (void*) data_table);
 
+	dbgprintf("[Memory] Cleaning up data from pcb [DONE].\n");
+
 	/**
 	 * Free all stack pages
 	 */
@@ -678,10 +680,14 @@ void vmem_cleanup_process(struct pcb* pcb)
 	vmem_default->ops->free(vmem_default, (void*) stack_page2);
 	vmem_manager->ops->free(vmem_default, (void*) stack_table);
 
+	dbgprintf("[Memory] Cleaning up stack from pcb [DONE].\n");
+
 	/**
 	 * Free all heap allocated memory.
 	 */
 	vmem_free_allocations(pcb);
+
+	dbgprintf("[Memory] Cleaning up allocations from pcb [DONE].\n");
 
 	/**
 	 * Lastly free directory.
