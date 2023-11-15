@@ -2,6 +2,7 @@
 #include <pcb.h>
 #include <gfx/window.h>
 #include <gfx/events.h>
+#include <gfx/gfxlib.h>
 #include <vbe.h>
 #include <colors.h>
 #include <rtc.h>
@@ -57,23 +58,10 @@ static struct taskbar_options {
     .headers = {
         {
             .x = 4,
-            .y = 0,
+            .y = 2,
             .w = 60,
-            .h = 18,
+            .h = 10,
             .name = "Home",
-            .options = {
-                {
-                    .name = "> Shutdown",
-                    .callback = NULL
-                },
-            }
-        },
-        {
-            .x = 60,
-            .y = 0,
-            .w = 60,
-            .h = 18,
-            .name = "Open",
             .options = {
                 {
                     .name = "> Terminal",
@@ -109,13 +97,12 @@ static struct taskbar_options {
                 }
             
             }
-
         },
         {
             .x = 120,
-            .y = 0,
-            .w = 60,
-            .h = 18,
+            .y = 2,
+            .w = 100,
+            .h = 14,
             .name = "Wallpaper",
             .options = {
                 {
@@ -244,7 +231,12 @@ static void __kthread_entry taskbar(void)
 
         /* print text for all headers */
         for (int i = 0; i < TASKBAR_MAX_HEADERS; i++){
-            w->draw->text(w, default_taskbar.headers[i].x + 4, 5, default_taskbar.headers[i].name, COLOR_BLACK);
+
+            /* use gfx_lib */
+            if(default_taskbar.headers[i].name == NULL) continue;
+            gfx_button(default_taskbar.headers[i].x, default_taskbar.headers[i].y, default_taskbar.headers[i].w, default_taskbar.headers[i].h, default_taskbar.headers[i].name);
+
+            //w->draw->text(w, default_taskbar.headers[i].x + 4, 5, default_taskbar.headers[i].name, COLOR_BLACK);
         }
 
         /* draw options */
