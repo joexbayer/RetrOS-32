@@ -99,9 +99,12 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
         vesa_line_horizontal(buffer, window->x+4, window->y+8, window->width-8, COLOR_VGA_DARKEST_GRAY);
         vesa_line_horizontal(buffer, window->x+4, window->y+7, window->width-8, background_color);
 
-        for (int i = 0; i < 3; i++){
-            vesa_line_horizontal(buffer, window->x+8, (window->y-1)+i*3, window->width-16, background_color);
-            vesa_line_horizontal(buffer, window->x+8, (window->y-2)+i*3, window->width-16, COLOR_VGA_LIGHTER_GRAY+2);
+
+        if(window->in_focus){
+            for (int i = 0; i < 3; i++){
+                vesa_line_horizontal(buffer, window->x+8, (window->y-1)+i*3, window->width-16, background_color);
+                vesa_line_horizontal(buffer, window->x+8, (window->y-2)+i*3, window->width-16, COLOR_VGA_LIGHTER_GRAY+2);
+            }
         }
 
         /* Title */

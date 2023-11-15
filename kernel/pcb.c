@@ -331,10 +331,10 @@ error_t pcb_create_process(char* program, int argc, char** argv, pcb_flag_t flag
 	struct pcb* pcb;
 
 	/* Load program into memory */
-	buf = kalloc(MAX_FILE_SIZE);
+	buf = kalloc(32*1024);
 	if(buf == NULL){return -ERROR_ALLOC;}
 	
-	ret = fs_load_from_file(program, buf, MAX_FILE_SIZE);
+	ret = fs_load_from_file(program, buf, 32*1024);
 	if(ret < 0){
 		dbgprintf("Error loading %s\n", program);
 		
@@ -406,7 +406,7 @@ error_t pcb_create_kthread(void (*entry)(), char* name)
 		return -ERROR_ALLOC;
 	}
 
-	pcb->parent = current_running == &pcb_table[0] ? NULL : current_running;
+	pcb->parent = NULL;
 	pcb->term = current_running->term;
 
 	pcb->thread_eip = (uintptr_t) entry;

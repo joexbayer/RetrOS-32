@@ -183,8 +183,8 @@ void xxd(int argc, char* argv[])
 		return;
 	}
 
-	char* buf = kalloc(MAX_FILE_SIZE);
-	int ret = fs_read(inode, buf, MAX_FILE_SIZE);
+	char* buf = kalloc(32*1024);
+	int ret = fs_read(inode, buf, 32*1024);
 	if(ret < 0){
 		twritef("Error reading file\n");
 		return;
@@ -212,8 +212,8 @@ void sh(int argc, char* argv[])
 		return;
 	}
 
-	char* buf = kalloc(MAX_FILE_SIZE);
-	int ret = fs_read(inode, buf, MAX_FILE_SIZE);
+	char* buf = kalloc(32*1024);
+	int ret = fs_read(inode, buf, 32*1024);
 	
 	script_parse(buf);
 	

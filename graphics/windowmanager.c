@@ -111,6 +111,7 @@ static int wm_default_add(struct windowmanager* wm, struct window* window)
     
     if (wm->window_count == 0) {
         wm->windows = window;
+        window->in_focus = 1;
         wm->window_count++;
         return ERROR_OK;
     }
@@ -120,6 +121,9 @@ static int wm_default_add(struct windowmanager* wm, struct window* window)
     window->next = current;
 
     wm->window_count++;
+
+    window->in_focus = 1;
+    current->in_focus = 0;
 
     return ERROR_OK;
 }

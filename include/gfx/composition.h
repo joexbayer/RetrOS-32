@@ -13,4 +13,6 @@ void gfx_set_fullscreen(struct window* w);
 
 int gfx_set_background_color(color_t color);
 
+int gfx_set_taskbar(pid_t pid);
+
 #endif /* FCA672BC_C2FD_4772_BC32_C01EF99BEA47 */

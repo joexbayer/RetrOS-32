@@ -112,7 +112,7 @@ enum grays {
 
 
 
-
+int rgb_to_vga(unsigned char color);
 
 
 

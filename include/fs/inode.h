@@ -5,7 +5,7 @@
 #include <rtc.h>
 #include <sync.h>
 
-#define MAX_FILE_SIZE 4096*8
+#define MAX_FILE_SIZE 100*1024
 #define NDIRECT MAX_FILE_SIZE / 512
 
 typedef int16_t inode_t;

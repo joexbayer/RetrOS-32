@@ -154,12 +154,12 @@ static int ws_set_background_file(struct windowserver* ws, const char* path)
     float scaleX = (float)targetWidth / (float)originalWidth;
     float scaleY = (float)targetHeight / (float)originalHeight;
 
-    ubyte_t* temp = malloc(10000);
+    ubyte_t* temp = malloc(320*240);
     if(temp == NULL){
         return -ERROR_ALLOC;
     }
 
-    int ret = fs_load_from_file(path, temp, 10000);
+    int ret = fs_load_from_file(path, temp, 320*240);
     if(ret <= 0){
         dbgprintf("[WSERVER] Could not read background file: %d.\n", ret);
         free(temp);
@@ -209,13 +209,17 @@ static int __ws_key_event(struct windowserver* ws, unsigned char key)
     {
     case F4:{
             /* Workspace changes */
-            ws->_wm->ops->remove(ws->_wm, ws->taskbar->gfx_window);
+            if(ws->taskbar != NULL){
+                ws->_wm->ops->remove(ws->_wm, ws->taskbar->gfx_window);
+            }
 
             ws->workspace = (ws->workspace+1)%WM_MAX_WORKSPACES;
             ws->_wm->ops->workspace(ws->_wm, ws->workspace);
             ws->window_changes = 1;
-
-            ws->_wm->ops->add(ws->_wm, ws->taskbar->gfx_window);
+            
+            if(ws->taskbar != NULL){
+                ws->_wm->ops->add(ws->_wm, ws->taskbar->gfx_window);
+            }
         }
         break;
     case F10:{

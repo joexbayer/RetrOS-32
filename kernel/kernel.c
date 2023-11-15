@@ -39,9 +39,20 @@
 #include <gfx/api.h>
 #include <net/api.h>
 
+#include <colors.h>
+
 #include <fs/fs.h>
 
 #include <multiboot.h>
+
+#define TEXT_COLOR 15  /* White color for text */
+#define LINE_HEIGHT 8  /* Height of each line */
+
+static void kernel_boot_printf(const char* message) {
+    static int kernel_msg = 0;
+    vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10 + (kernel_msg++ * LINE_HEIGHT), TEXT_COLOR, message);
+	for(int i = 0; i < 10000000; i++){}
+}
 
 struct kernel_context {
 	struct scheduler sched_ctx;
@@ -51,7 +62,6 @@ struct kernel_context {
 	/* graphics?? */
 } global_kernel_context;
 
-int kernel_msg = 0;
 /* This functions always needs to be on top? */
 void kernel(uint32_t magic) 
 {
@@ -68,7 +78,24 @@ void kernel(uint32_t magic)
 	vbe_info = (struct vbe_mode_info_structure*) magic;
 #endif
     init_serial();
-	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Booting OS...");
+
+	int color_width = vbe_info->width/16;
+
+	/* draw palette */
+	int j = 0;
+	int k = 0;
+	for (int i = 0; i < 256; i++){
+		/* every 16 colors move down */
+		vesa_fillrect((uint8_t*)vbe_info->framebuffer, k*color_width, j*color_width, color_width, color_width, rgb_to_vga(i));
+		k++;
+		if (i % 16 == 0){
+			j++;
+			k = 0;
+		}
+	}
+
+	kernel_boot_printf("Booting OS...");
+
 	/* Clear memory and BSS */
 	//memset((char*)_bss_s, 0, (unsigned int) _bss_size);
     //memset((char*)0x100000, 0, 0x800000-0x100000);
@@ -77,7 +104,7 @@ void kernel(uint32_t magic)
 
 	kernel_size = _end-_code;
 	init_memory();
-	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Memory initialized.");
+	kernel_boot_printf("Memory initialized.");
 
 	dbgprintf("[VBE] INFO:\n");
 	dbgprintf("[VBE] Height: %d\n", vbe_info->height);
@@ -88,32 +115,32 @@ void kernel(uint32_t magic)
 	//vmem_map_driver_region((uint8_t*)vbe_info->framebuffer, (vbe_info->width*vbe_info->height*(vbe_info->bpp/8))+1);
 	
 	init_kctors();
-	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Kernel constructors initialized.");
+	kernel_boot_printf("Kernel constructors initialized.");
 
 	//vga_set_palette();
 
 	init_interrupts();
-	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Interrupts initialized.");
+	kernel_boot_printf("Interrupts initialized.");
 	init_keyboard();
 	mouse_init();
-	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Peripherals initialized.");
+	kernel_boot_printf("Peripherals initialized.");
 	init_pcbs();
 	init_pci();
-	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "PCI initialized.");
+	kernel_boot_printf("PCI initialized.");
 	init_worker();
 
 	/* initilize the default scheduler */
 	PANIC_ON_ERR(sched_init_default(get_scheduler(), 0));
 
-	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Scheduler initialized.");
+	kernel_boot_printf("Scheduler initialized.");
 
-	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Hardware initialized.");
+	kernel_boot_printf("Hardware initialized.");
 
 	init_arp();
 	init_sockets();
 	init_dns();
 
-	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Networking initialized.");
+	kernel_boot_printf("Networking initialized.");
 
 	mbr_partition_load();
 
@@ -122,7 +149,7 @@ void kernel(uint32_t magic)
 		virtual_disk_attach();
 	}
 
-	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Filesystem initialized.");
+	kernel_boot_printf("Filesystem initialized.");
 
 	//ext_create_file_system();
 
@@ -134,7 +161,7 @@ void kernel(uint32_t magic)
 	register_kthread(&worker_thread, "workd");
 	register_kthread(&tcpd, "tcpd");
 
-	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Kernel Threads initialized.");
+	kernel_boot_printf("Kernel Threads initialized.");
 
 #pragma GCC diagnostic ignored "-Wcast-function-type"
 	add_system_call(SYSCALL_PRTPUT, (syscall_t)&terminal_putchar);
@@ -161,7 +188,7 @@ void kernel(uint32_t magic)
 #pragma GCC diagnostic pop
 	
 
-	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Systemcalls initialized.");
+	kernel_boot_printf("Systemcalls initialized.");
 
 	dbgprintf("[KERNEL] TEXT: %d\n", _code_end-_code);
 	dbgprintf("[KERNEL] RODATA: %d\n", _ro_e-_ro_s);
@@ -173,33 +200,31 @@ void kernel(uint32_t magic)
 	load_page_directory(kernel_page_dir);
 	init_gdt();
 	init_tss();
-	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "GDT & TSS initialized.");
+	kernel_boot_printf("GDT & TSS initialized.");
 	enable_paging();
 
-	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Virtual memory initialized.");
+	kernel_boot_printf("Virtual memory initialized.");
 
 	dbgprintf("[KERNEL] Enabled paging!\n");
 	
 	vesa_init();
 
-	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Graphics initialized.");
+	kernel_boot_printf("Graphics initialized.");
 
 	start("idled");
 	start("wind");
 	start("workd");
-	//start("workd");
-	//start("netd");
-  	start("kclock");
+	start("login");
 
-	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Deamons initialized.");
+	kernel_boot_printf("Deamons initialized.");
 	
 	//pcb_create_process("/bin/clock", 0, NULL);
 	
-	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Timer initialized.");
+	kernel_boot_printf("Timer initialized.");
 
 
 	init_pit(1);
-	vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10+((kernel_msg++)*8), 15, "Starting OS. %d", cli_cnt);
+	kernel_boot_printf("Starting OS. %d");
 	LEAVE_CRITICAL();
 	
 	PANIC_ON_ERR(0);

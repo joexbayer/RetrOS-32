@@ -34,13 +34,17 @@ int gfx_get_window_height();
 int kernel_gfx_set_title(char* title);
 int kernel_gfx_set_header(const char* header);
 
+int gfx_draw_contoured_box(int x, int y, int width, int height, color_t color);
+
 void kernel_gfx_set_position(struct window* w, int x, int y);
 
 void gfx_inner_box(int x, int y, int w, int h, int fill);
 void gfx_outer_box(int x, int y, int w, int h, int fill);
 
-void gfx_button(int x, int y, int w, int h, char* text);
+int gfx_button(int x, int y, int width, int height, const char* name);
 
 void gfx_commit();
+
+void gfx_put_icon32(int x, int y);
 
 #endif // !__GFXLIB_H
