@@ -66,7 +66,6 @@ int gfx_set_taskbar(pid_t pid)
 
     ws->taskbar = pcb_get_by_pid(pid);
     return ERROR_OK;
-
 }
 
 void __kthread_entry gfx_compositor_main()
@@ -78,7 +77,6 @@ void __kthread_entry gfx_compositor_main()
     }
     
     ws->ops->set_background(ws, 3);
-    ws->ops->set_background_file(ws, "/win2.img");
 
     dbgprintf("[WSERVER] Window server initialized.\n");
 

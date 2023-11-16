@@ -33,8 +33,9 @@ static void __callback taskbar_cube();
 static void __callback taskbar_colors();
 static void __callback taskbar_clock();
 static void __callback taskbar_bg_lotr();
+static void __callback taskbar_bg_lotr2();
 static void __callback taskbar_bg_default();
-static void __callback taskbar_bg_circles();
+static void __callback taskbar_bg_retro();
 static void __callback taskbar_bg_calc();
 static void __callback taskbar_bg_graph();
 static void __callback taskbar_bg_default_color();
@@ -129,18 +130,23 @@ static struct taskbar_options {
                 },
                 {
                     .icon = bin_16,
-                    .name = "LOTR",
+                    .name = "LOTR 1",
                     .callback = &taskbar_bg_lotr
                 },
                 {
                     .icon = bin_16,
-                    .name = "Default",
+                    .name = "LOTR 2",
+                    .callback = &taskbar_bg_lotr2
+                },
+                {
+                    .icon = bin_16,
+                    .name = "WIN95",
                     .callback = &taskbar_bg_default
                 },
                 {
                     .icon = bin_16,
-                    .name = "Circles",
-                   .callback = taskbar_bg_circles
+                    .name = "Retro",
+                   .callback = taskbar_bg_retro
                 },
             }
         },
@@ -379,17 +385,22 @@ static void __callback taskbar_clock()
 
 static void __callback taskbar_bg_default()
 {
-    gfx_decode_background_image("default.img");
+    gfx_decode_background_image("/imgs/win2.img");
 }
 
 static void __callback taskbar_bg_lotr()
 {
-    gfx_decode_background_image("lotr.img");
+    gfx_decode_background_image("/imgs/lotr2.img");
 }
 
-static void __callback taskbar_bg_circles()
+static void __callback taskbar_bg_lotr2()
 {
-    gfx_decode_background_image("circles.img");
+    gfx_decode_background_image("/imgs/lotr3.img");
+}
+
+static void __callback taskbar_bg_retro()
+{
+    gfx_decode_background_image("/imgs/retro.img");
 }
 
 static void __callback taskbar_bg_graph()

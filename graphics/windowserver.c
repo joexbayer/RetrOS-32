@@ -154,7 +154,7 @@ static int ws_set_background_file(struct windowserver* ws, const char* path)
     float scaleX = (float)targetWidth / (float)originalWidth;
     float scaleY = (float)targetHeight / (float)originalHeight;
 
-    ubyte_t* temp = malloc(320*240);
+    ubyte_t* temp = kalloc(320*240);
     if(temp == NULL){
         return -ERROR_ALLOC;
     }
@@ -162,15 +162,17 @@ static int ws_set_background_file(struct windowserver* ws, const char* path)
     int ret = fs_load_from_file(path, temp, 320*240);
     if(ret <= 0){
         dbgprintf("[WSERVER] Could not read background file: %d.\n", ret);
-        free(temp);
+        kfree(temp);
         return -ERROR_FILE_NOT_FOUND;
     }
 
-    ubyte_t* temp_window = malloc(320*240);
+    ubyte_t* temp_window = kalloc(320*240);
     if(temp_window == NULL){
-        free(temp);
+        kfree(temp);
         return -ERROR_ALLOC;
     }
+
+    dbgprintf("[WSERVER] Decoding background file %x.\n", ws->background);
 
     int out;
     run_length_decode(temp, ret, temp_window, &out);
@@ -182,7 +184,7 @@ static int ws_set_background_file(struct windowserver* ws, const char* path)
             int screenY = (int)(j * scaleY);
 
             // Retrieve the pixel value from the original image
-            unsigned char pixelValue = temp_window[j * originalWidth + i];
+            unsigned char pixelValue = rgb_to_vga(temp_window[j * originalWidth + i]);
 
             // Set the pixel value on the screen at the calculated position
             for (int x = 0; x < scaleX; x++){
@@ -193,8 +195,8 @@ static int ws_set_background_file(struct windowserver* ws, const char* path)
         }
     }
 
-    free(temp);
-    free(temp_window);
+    kfree(temp);
+    kfree(temp_window);
     return ERROR_OK;
 }
 
