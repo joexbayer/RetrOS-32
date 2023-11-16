@@ -226,15 +226,15 @@ void vesa_write_str(uint8_t* buffer, int x, int y, const char* data, int color)
 	vesa_write(buffer, x, y, data, strlen(data), color);
 }
 
-void vesa_inner_box(uint8_t* buffer, int x, int y, int w, int h)
+void vesa_inner_box(uint8_t* buffer, int x, int y, int w, int h, color_t color)
 {
-    vesa_fillrect(buffer, x, y, w, h, COLOR_GRAY_DEFAULT);
+    vesa_fillrect(buffer, x, y, w, h, color);
 
-    vesa_line_horizontal(buffer, x, y, w, COLOR_GRAY_DARK);
-    vesa_line_horizontal(buffer, x, y+h, w, COLOR_GRAY_LIGHT);
+    vesa_line_horizontal(buffer, x, y, w, 31);
+    vesa_line_horizontal(buffer, x, y+h, w, COLOR_VGA_MEDIUM_DARK_GRAY+5);
 
-    vesa_line_vertical(buffer, x, y, h, COLOR_GRAY_DARK);
-    vesa_line_vertical(buffer, x+w, y, h, COLOR_GRAY_LIGHT);
+    vesa_line_vertical(buffer, x, y, h, 31);
+    vesa_line_vertical(buffer, x+w, y, h, COLOR_VGA_MEDIUM_DARK_GRAY+5);
 }
 
 void vesa_fill(uint8_t* buffer, unsigned char color)

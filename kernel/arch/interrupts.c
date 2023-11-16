@@ -128,6 +128,8 @@ void isr_handler(struct registers regs)
 	}
 
 	if (handlers[regs.int_no] != 0){
+		if(regs.int_no != 32)
+			EOI(regs.int_no);
 		isr_t handler = handlers[regs.int_no];
 		handler();
 	}

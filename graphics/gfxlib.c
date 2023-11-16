@@ -73,24 +73,14 @@ int gfx_draw_contoured_box(int x, int y, int width, int height, color_t color)
 	return 0;
 }
 
-void gfx_put_icon32(int x, int y)
-{
-    for (int l = 0; l < 32; l++) {
-
-        for (int i = 0; i < 32; i++) {
-            if (test_icon32[l][i] != 0x0) {
-
-				if((x)+i < 0 || (y)+l < 0 || (x)+i > current_running->gfx_window->inner_width || (y)+l > current_running->gfx_window->inner_height)
-					continue;
-                putpixel(current_running->gfx_window->inner, (x)+i, (y)+l, rgb_to_vga(test_icon32[l][i]), current_running->gfx_window->pitch);
-            }
-        }
-    }
-}
-
 int gfx_button(int x, int y, int width, int height, const char* name)
 {
-	kernel_gfx_draw_rectangle(current_running->gfx_window, x, y, width, height, 30);
+	return gfx_button_ext(x, y, width, height, name, 30);
+}
+
+int gfx_button_ext(int x, int y, int width, int height, const char* name, color_t color)
+{
+	kernel_gfx_draw_rectangle(current_running->gfx_window, x, y, width, height, color);
 	kernel_gfx_draw_rectangle(current_running->gfx_window, x, y, width-1, 1, 31);
 	kernel_gfx_draw_rectangle(current_running->gfx_window, x, y, 1, height, 31);
 	kernel_gfx_draw_rectangle(current_running->gfx_window, x+width-1, y, 1, height, COLOR_VGA_MEDIUM_DARK_GRAY+5);
@@ -105,6 +95,40 @@ int gfx_button(int x, int y, int width, int height, const char* name)
 
 	kernel_gfx_draw_text(current_running->gfx_window, text_x, text_y, name, 0x0);
 
+	return 0;
+}
+
+int gfx_put_icon16(unsigned char icon[], int x, int y)
+{
+	for (int l = 0; l < 16; l++) {
+
+		for (int i = 0; i < 16; i++) {
+			/* for new icons we use 0xfa for transparent */
+			if (icon[l*16+i] != 0xfa) {
+
+				if((x)+i < 0 || (y)+l < 0 || (x)+i > current_running->gfx_window->inner_width || (y)+l > current_running->gfx_window->inner_height)
+					continue;
+				putpixel(current_running->gfx_window->inner, (x)+i, (y)+l, rgb_to_vga(icon[l*16+i]), current_running->gfx_window->pitch);
+			}
+		}
+	}
+	return 0;
+}
+
+int gfx_put_icon32(unsigned char icon[], int x, int y)
+{
+	for (int l = 0; l < 32; l++) {
+
+		for (int i = 0; i < 32; i++) {
+			/* for new icons we use 0xfa for transparent */
+			if (icon[l*32+i] != 0xfa) {
+
+				if((x)+i < 0 || (y)+l < 0 || (x)+i > current_running->gfx_window->inner_width || (y)+l > current_running->gfx_window->inner_height)
+					continue;
+				putpixel(current_running->gfx_window->inner, (x)+i, (y)+l, rgb_to_vga(icon[l*32+i]), current_running->gfx_window->pitch);
+			}
+		}
+	}
 	return 0;
 }
 

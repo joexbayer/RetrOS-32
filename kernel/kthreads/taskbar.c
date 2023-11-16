@@ -11,12 +11,17 @@
 #include <kutils.h>
 #include <kthreads.h>
 #include <gfx/composition.h>
+#include <lib/icons.h>
+
+#define TASKBAR_HEIGHT 20
 
 #define TASKBAR_MAX_OPTIONS 10
+#define TASKBAR_OPTIONS_HEIGHT 16
+#define TASKBAR_OPTIONS_HEIGHT_TOTAL TASKBAR_OPTIONS_HEIGHT * TASKBAR_MAX_OPTIONS
 #define TASKBAR_MAX_HEADERS 5
 
 #define TASKBAR_EXT_OPT_WIDTH 100
-#define TASKBAR_EXT_OPT_HEIGHT 100
+#define TASKBAR_EXT_OPT_HEIGHT 160
 
 #define TIME_PREFIX(unit) unit < 10 ? "0" : ""
 
@@ -40,12 +45,14 @@ static void __kthread_entry taskbar(void);
 /* taskbar options */
 static struct taskbar_option {
     char name[50];
+    unsigned char* icon;
     void (*callback)(void);
 };
 
 /* taskbar header */
 static struct taskbar_header {
     char name[50];
+    unsigned char* icon;
     int x, y, w, h;
     bool_t extended;
     struct taskbar_option options[TASKBAR_MAX_OPTIONS];
@@ -60,39 +67,48 @@ static struct taskbar_options {
             .x = 4,
             .y = 2,
             .w = 60,
-            .h = 10,
-            .name = "Home",
+            .h = 16,
+            .name = "Start",
+            .icon = menu_16,
             .options = {
                 {
-                    .name = "> Terminal",
+                    .icon = terminal_16,
+                    .name = "Terminal",
                     .callback = &taskbar_terminal
                 },
                 {
-                    .name = "> Finder",
+                    .icon = finder_16,
+                    .name = "Finder",
                     .callback = &taskbar_finder
                 },
                 {
-                    .name = "> Editor",
+                    .icon = editor_16,
+                    .name = "Editor",
                     .callback = &taskbar_editor
                 },
                 {
-                    .name = "> Cube",
+                    .icon = bin_16,
+                    .name = "Cube",
                     .callback = &taskbar_cube
                 },
                 {
-                    .name = "> Colors",
+                    .icon = bin_16,
+                    .name = "Colors",
                     .callback = &taskbar_colors
                 },
                 {
-                    .name = "> Clock",
+                    .icon = clock_16,
+                    .name = "Clock",
                     .callback = &taskbar_clock
                 },
                 {
-                    .name = "> Calculator",
+                    .icon = calc_16,
+                    .name = "Calc",
                     .callback = &taskbar_bg_calc
                 },
                 {
-                    .name = "> Graph",
+                    .icon = bin_16,
+                    .name = "Graph",
                     .callback = &taskbar_bg_graph
                 }
             
@@ -103,22 +119,27 @@ static struct taskbar_options {
             .y = 2,
             .w = 100,
             .h = 14,
+            .icon = NULL,
             .name = "Wallpaper",
             .options = {
                 {
-                    .name = "> Color",
+                    .icon = bin_16,
+                    .name = "Color",
                     .callback = &taskbar_bg_default_color
                 },
                 {
-                    .name = "> LOTR",
+                    .icon = bin_16,
+                    .name = "LOTR",
                     .callback = &taskbar_bg_lotr
                 },
                 {
-                    .name = "> Default",
+                    .icon = bin_16,
+                    .name = "Default",
                     .callback = &taskbar_bg_default
                 },
                 {
-                    .name = "> Circles",
+                    .icon = bin_16,
+                    .name = "Circles",
                    .callback = taskbar_bg_circles
                 },
             }
@@ -141,25 +162,30 @@ static void taskbar_hdr_event(struct window* w, struct taskbar_header* header, i
         /* draw header */
         dbgprintf("Clicked header %s\n", header->name);
 
-        w->draw->rect(w, header->x, header->y+18, TASKBAR_EXT_OPT_WIDTH, TASKBAR_EXT_OPT_HEIGHT, 30);
-        w->draw->rect(w, header->x, header->y+18, TASKBAR_EXT_OPT_WIDTH, 1, COLOR_VGA_LIGHTER_GRAY+1);
+        w->draw->rect(w, header->x, header->y+20, TASKBAR_EXT_OPT_WIDTH, TASKBAR_EXT_OPT_HEIGHT, 30);
+
+        w->draw->rect(w, header->x, header->y+20, TASKBAR_EXT_OPT_WIDTH, 1, COLOR_VGA_LIGHTER_GRAY+1);
         /* draw border around previous rect in light gray */
         /* bottom */
-        w->draw->rect(w, header->x, header->y+19+TASKBAR_EXT_OPT_HEIGHT-2, TASKBAR_EXT_OPT_WIDTH, 1, COLOR_VGA_DARK_GRAY);
-        w->draw->rect(w, header->x, header->y+18+TASKBAR_EXT_OPT_HEIGHT-2, TASKBAR_EXT_OPT_WIDTH, 1, COLOR_VGA_DARK_GRAY+8);
+        w->draw->rect(w, header->x, header->y+21+TASKBAR_EXT_OPT_HEIGHT-2, TASKBAR_EXT_OPT_WIDTH, 1, COLOR_VGA_DARK_GRAY);
+        w->draw->rect(w, header->x, header->y+20+TASKBAR_EXT_OPT_HEIGHT-2, TASKBAR_EXT_OPT_WIDTH, 1, COLOR_VGA_DARK_GRAY+8);
 
-        w->draw->rect(w, header->x, header->y+18, 1, TASKBAR_EXT_OPT_HEIGHT, COLOR_VGA_DARK_GRAY);
-        w->draw->rect(w, header->x+1, header->y+18, 1, TASKBAR_EXT_OPT_HEIGHT-1, COLOR_VGA_LIGHTER_GRAY+1);
+        w->draw->rect(w, header->x, header->y+20, 1, TASKBAR_EXT_OPT_HEIGHT, COLOR_VGA_DARK_GRAY);
+        w->draw->rect(w, header->x+1, header->y+20, 1, TASKBAR_EXT_OPT_HEIGHT-1, COLOR_VGA_LIGHTER_GRAY+1);
 
-        w->draw->rect(w, header->x+TASKBAR_EXT_OPT_WIDTH-1, header->y+18, 1, TASKBAR_EXT_OPT_HEIGHT, COLOR_VGA_DARK_GRAY);
-        w->draw->rect(w, header->x+TASKBAR_EXT_OPT_WIDTH-2, header->y+18, 1, TASKBAR_EXT_OPT_HEIGHT, COLOR_VGA_DARK_GRAY+8);
+        w->draw->rect(w, header->x+TASKBAR_EXT_OPT_WIDTH-1, header->y+20, 1, TASKBAR_EXT_OPT_HEIGHT, COLOR_VGA_DARK_GRAY);
+        w->draw->rect(w, header->x+TASKBAR_EXT_OPT_WIDTH-2, header->y+20, 1, TASKBAR_EXT_OPT_HEIGHT, COLOR_VGA_DARK_GRAY+8);
         
         header->extended = true;
 
         /* draw options */
         for (int j = 0; j < TASKBAR_MAX_OPTIONS; j++){
-            if(header->options[j].name == NULL) break;
-            w->draw->text(w, header->x+4, header->y+18 + (j*10) + 4, header->options[j].name, COLOR_BLACK);
+            if(header->options[j].name[0] == 0) break;
+
+            if(header->options[j].icon != NULL){
+                gfx_put_icon16(header->options[j].icon, header->x+4, header->y+20 + (j*TASKBAR_OPTIONS_HEIGHT) + 4);
+            }
+            w->draw->text(w, header->x+24, header->y+20 + (j*TASKBAR_OPTIONS_HEIGHT) + 8, header->options[j].name, COLOR_BLACK);
             //w->draw->rect(w, header->x, header->y+18 + (j*8) +4+9, TASKBAR_EXT_OPT_WIDTH, 1, COLOR_VGA_DARK_GRAY);
         }
     }
@@ -179,9 +205,9 @@ static void taskbar_hdr_opt_event(struct window* w, struct taskbar_header* heade
         
         if(gfx_point_in_rectangle(
                 header->x+4, /* x, 4 padding */
-                header->y+18 + (j*10) + 4, /* y, 18 offset from header */
+                header->y+20 + (j*TASKBAR_OPTIONS_HEIGHT) + 4, /* y, 18 offset from header */
                 header->x+4 + TASKBAR_EXT_OPT_WIDTH, /* width */
-                header->y+18 + (j*10) + 4 + 8, /* height */
+                header->y+20 + (j*TASKBAR_OPTIONS_HEIGHT) + 4 + 8, /* height */
                 x, y) /* mouse position */
             ){
             dbgprintf("Clicked option %s\n", header->options[j].name);
@@ -192,6 +218,28 @@ static void taskbar_hdr_opt_event(struct window* w, struct taskbar_header* heade
             return;
         }
     }
+}
+
+static void draw_memory_usage(struct window* w, struct mem_info mem_info) {
+    // Calculate the percentage of used memory
+    int mem_usage_percent = mem_info.kernel.used * 100 / mem_info.kernel.total;
+
+    // Define colors for different usage levels
+    color_t usage_color;
+    if (mem_usage_percent < 50) {
+        usage_color = COLOR_VGA_GREEN; // Low usage
+    } else if (mem_usage_percent < 75) {
+        usage_color = COLOR_VGA_YELLOW; // Moderate usage
+    } else {
+        usage_color = COLOR_VGA_RED; // High usage
+    }
+
+    // Calculate the width of the rectangle based on memory usage
+    int rect_width = (100 * mem_usage_percent) / 100;
+
+    // Draw the rectangle
+    w->draw->rect(w, w->inner_width/2 - rect_width/2, 5, 100, 10, COLOR_VGA_LIGHT_GRAY);
+    w->draw->rect(w, w->inner_width/2 - rect_width/2, 5, rect_width, 10, usage_color);
 }
 
 /**
@@ -205,23 +253,32 @@ static void __kthread_entry taskbar(void)
         return;
     }
 
-    w->ops->move(w, 0, 0);
-    w->draw->rect(w, 0, 17, vbe_info->width, 1, COLOR_VGA_DARK_GRAY);
+    w->ops->move(w, 0, 32);
+    w->draw->rect(w, 0, TASKBAR_HEIGHT+1, vbe_info->width, 1, COLOR_VGA_DARK_GRAY);
     w->draw->rect(w, 0, 0, vbe_info->width, 2, 0xf);
 
     struct time time;
     struct gfx_event event;
+    struct mem_info mem_info;
     int timedate_length = strlen("00:00:00 00/00/0000");
+
+        w->draw->rect(w, 0, 1, vbe_info->width, TASKBAR_HEIGHT, 30);
+        w->draw->rect(w, 0, 0, vbe_info->width, 2, COLOR_VGA_LIGHTER_GRAY+1);
+        w->draw->rect(w, 0, TASKBAR_HEIGHT, vbe_info->width, 1, COLOR_VGA_LIGHT_GRAY);
+        w->draw->rect(w, 0, TASKBAR_HEIGHT+1, vbe_info->width, 1, 0);
+
+        /* print text for all headers */
+        for (int i = 0; i < TASKBAR_MAX_HEADERS; i++){
+            if(default_taskbar.headers[i].name[0] == 0) continue;
+            if(default_taskbar.headers[i].icon != NULL){
+                gfx_put_icon16(default_taskbar.headers[i].icon, default_taskbar.headers[i].x, default_taskbar.headers[i].y);
+            }
+            gfx_button(default_taskbar.headers[i].x+16, default_taskbar.headers[i].y, default_taskbar.headers[i].w, default_taskbar.headers[i].h, default_taskbar.headers[i].name);
+        }
     while (1){
 
-        /* draw background */
-        w->draw->rect(w, 0, 1, vbe_info->width, 16, 30);
-        w->draw->rect(w, 0, 0, vbe_info->width, 2, COLOR_VGA_LIGHTER_GRAY+1);
-        w->draw->rect(w, 0, 16, vbe_info->width, 1, COLOR_VGA_LIGHT_GRAY);
-        w->draw->rect(w, 0, 17, vbe_info->width, 1, 0);
-
-        /* draw time */
         get_current_time(&time);
+        w->draw->rect(w, w->inner_width - (timedate_length*8), 5, timedate_length*8, 10, 30);
         w->draw->textf(w, w->inner_width - (timedate_length*8), 5, COLOR_BLACK,
             "%s%d:%s%d:%s%d %s%d/%s%d/%d",
             TIME_PREFIX(time.hour), time.hour, TIME_PREFIX(time.minute),time.minute,
@@ -229,32 +286,26 @@ static void __kthread_entry taskbar(void)
             TIME_PREFIX(time.month), time.month, time.year
         );
 
-        /* print text for all headers */
-        for (int i = 0; i < TASKBAR_MAX_HEADERS; i++){
+        get_mem_info(&mem_info);
+        draw_memory_usage(w, mem_info);
 
-            /* use gfx_lib */
-            if(default_taskbar.headers[i].name == NULL) continue;
-            gfx_button(default_taskbar.headers[i].x, default_taskbar.headers[i].y, default_taskbar.headers[i].w, default_taskbar.headers[i].h, default_taskbar.headers[i].name);
-
-            //w->draw->text(w, default_taskbar.headers[i].x + 4, 5, default_taskbar.headers[i].name, COLOR_BLACK);
-        }
-
+        
         /* draw options */
         gfx_event_loop(&event, GFX_EVENT_BLOCKING);
         switch (event.event){
         case GFX_EVENT_MOUSE:{
                 /* check if mouse event is inside a header */
                 for (int i = 0; i < TASKBAR_MAX_HEADERS; i++){
-                    if(default_taskbar.headers[i].name == NULL) continue;
+                    if(default_taskbar.headers[i].name[0] == 0) continue;
                     /* clear all extended options*/
                     if(default_taskbar.headers[i].extended){
                         taskbar_hdr_opt_event(w, &default_taskbar.headers[i], event.data, event.data2);
                         default_taskbar.headers[i].extended = false;
                         w->draw->rect(w,
                             default_taskbar.headers[i].x,
-                            default_taskbar.headers[i].y+18,
+                            default_taskbar.headers[i].y+20,
                             TASKBAR_EXT_OPT_WIDTH, 
-                            TASKBAR_EXT_OPT_HEIGHT,
+                            TASKBAR_OPTIONS_HEIGHT_TOTAL+5,
                             COLOR_TRANSPARENT
                         );
                     }

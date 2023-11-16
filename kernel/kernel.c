@@ -79,8 +79,9 @@ void kernel(uint32_t magic)
 #endif
     init_serial();
 
-	int color_width = vbe_info->width/16;
+	rgb_init_color_table();
 
+	int color_width = vbe_info->width/16;
 	/* draw palette */
 	int j = 0;
 	int k = 0;

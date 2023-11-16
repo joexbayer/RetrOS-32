@@ -80,6 +80,8 @@ void __kthread_entry gfx_compositor_main()
     ws->ops->set_background(ws, 3);
     ws->ops->set_background_file(ws, "/win2.img");
 
+    dbgprintf("[WSERVER] Window server initialized.\n");
+
     while(1){
         ws->ops->draw(ws);
     }

@@ -37,6 +37,13 @@ const unsigned char vga_rgb[] = {
 };
 int size = sizeof(vga_rgb) / sizeof(vga_rgb[0]);
 
+static color_t rgb_trans_table[256];
+
+inline color_t rgb_to_vga(color_t c)
+{
+    return rgb_trans_table[c];
+}
+
 /* Function to split 8-bit RGB into its components */
 void rgb_to_components(unsigned char color, unsigned char *r, unsigned char *g, unsigned char *b) {
     *r = (color & 0xE0) >> 5;
@@ -53,16 +60,19 @@ float color_distance_squared(unsigned char color1, unsigned char color2) {
 }
 
 /* Function to find the index of the closest color in vga_rgb */
-int rgb_to_vga(unsigned char color)
+int rgb_init_color_table()
 {
-    int closest_index = 0;
-    float min_distance_squared = 255.0 * 255.0; /* Maximum possible squared distance */
-    for (int i = 0; i < size; i++) {
-        float distance_squared = color_distance_squared(color, vga_rgb[i]);
-        if (distance_squared < min_distance_squared) {
-            min_distance_squared = distance_squared;
-            closest_index = i;
+    for (int color = 0; color < 256; color++)
+    {
+        int closest_index = 0;
+        float min_distance_squared = 255.0 * 255.0; /* Maximum possible squared distance */
+        for (int i = 0; i < size; i++) {
+            float distance_squared = color_distance_squared(color, vga_rgb[i]);
+            if (distance_squared < min_distance_squared) {
+                min_distance_squared = distance_squared;
+                closest_index = i;
+            }
         }
+        rgb_trans_table[color] = closest_index;
     }
-    return closest_index;
 }

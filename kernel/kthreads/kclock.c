@@ -27,8 +27,7 @@ void __kthread_entry kclock()
     }
 
     w->ops->move(w, 450, 50);
-    while (1)
-    {
+    while (1){
         theme = kernel_gfx_current_theme();
         angle_id = (0.5 * (now.hour%12 * 60 + now.minute) / 6);
         
@@ -38,6 +37,20 @@ void __kthread_entry kclock()
 
         w->draw->circle(w, 55, 55, 50, COLOR_VGA_LIGHTEST_GRAY, 1);
         w->draw->circle(w, 55, 55, 50, 0, 0);
+
+        /* draw small lines between numbers */
+        for(int i = 0; i < 60; i++){
+            if(i % 5 == 0) continue;
+            w->draw->line(w, 55 + (50*sin_60[i])/1.1, 55+ (50*cos_60[i])/1.1, 55 + (50*sin_60[i])/1.2, 55+ (50*cos_60[i])/1.2, theme->window.text);
+        }
+
+
+        /* 12, 3, 6, 9 numbers */
+        w->draw->text(w, center_x(2), 18,  "12", theme->window.text);
+        w->draw->text(w, center_x(1), 100-4-8, "6", theme->window.text);
+        w->draw->text(w, 18, 55, "9", theme->window.text);
+        w->draw->text(w, 100-4-8, 55, "3", theme->window.text);
+
 
 		w->draw->line(w, 55, 55, 55 + (50*sin_60[angle_id])/1.5, 55+ (50*cos_60[angle_id])/1.5, theme->window.text);
 		w->draw->line(w, 55, 55, 55 + (50*sin_60[now.minute])/1.1, 55+ (50*cos_60[now.minute])/1.1, theme->window.text);

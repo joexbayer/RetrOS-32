@@ -9,6 +9,8 @@
 #include <kutils.h>
 #include <vbe.h>
 
+#include <lib/icons.h>
+
 
 void __kthread_entry login()
 {   
@@ -35,7 +37,7 @@ void __kthread_entry login()
     gfx_button(10+10, 10+10+10+10, 50, 20, "OK");
 
     /* icon to the right middle 32x32 */
-    gfx_put_icon32(275-10-32, 10+20+10+10);
+    gfx_put_icon32(computer_icon, 275-64-16, 10+20+5);
 
     while (1)
     {
