@@ -26,9 +26,12 @@ void __kthread_entry kclock()
         return;
     }
 
+    kernel_gfx_set_title("Clock");
+
     w->ops->move(w, 450, 50);
     while (1){
         theme = kernel_gfx_current_theme();
+
         angle_id = (0.5 * (now.hour%12 * 60 + now.minute) / 6);
         
         get_current_time(&now);
