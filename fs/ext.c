@@ -15,8 +15,6 @@
 #include <util.h>
 #include <rtc.h>
 
-#include <editor.h>
-
 static struct superblock superblock;
 static struct inode* root_dir;
 static struct inode* current_dir;
@@ -187,8 +185,6 @@ void ext_create_file_system()
 		.name = "edit.o",
 		.flags = FS_DIR_FLAG_FILE
 	};
-
-	inode_write(apps_editor_edit_o, apps_editor_edit_o_len, home_disk_inode, &superblock);
 
 	__inode_add_dir(&hello_c, root_dir, &superblock);
 	__inode_add_dir(&home, bin_dir_inode, &superblock);

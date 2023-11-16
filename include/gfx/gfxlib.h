@@ -17,6 +17,9 @@ enum GFX_LINE_ATTRIBUTES {
 int gfx_event_loop(struct gfx_event* event, gfx_event_flag_t flags);
 int gfx_push_event(struct window* w, struct gfx_event* e);
 
+int gfx_put_icon32(unsigned char icon[], int x, int y);
+int gfx_put_icon16(unsigned char icon[], int x, int y);
+
 void gfx_line(int x, int y, int length, int option, int color);
 
 int kernel_gfx_draw_rectangle(struct window* w, int x, int y, int width, int height, color_t color);
@@ -34,12 +37,15 @@ int gfx_get_window_height();
 int kernel_gfx_set_title(char* title);
 int kernel_gfx_set_header(const char* header);
 
+int gfx_draw_contoured_box(int x, int y, int width, int height, color_t color);
+
 void kernel_gfx_set_position(struct window* w, int x, int y);
 
 void gfx_inner_box(int x, int y, int w, int h, int fill);
 void gfx_outer_box(int x, int y, int w, int h, int fill);
 
-void gfx_button(int x, int y, int w, int h, char* text);
+int gfx_button(int x, int y, int width, int height, const char* name);
+int gfx_button_ext(int x, int y, int width, int height, const char* name, color_t color);
 
 void gfx_commit();
 

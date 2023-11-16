@@ -36,11 +36,11 @@ public:
 		m_bufferHead = 1;
 
 		gfx_draw_rectangle(0, 0, c_width+24, c_height, COLOR_BG);
-		gfx_draw_line(0, 17, c_height, 17, COLOR_BG+2);
-		for (int i = 0; i < c_height/8; i++)gfx_draw_format_text(0, i*8, COLOR_BG+4, "%s%d ", i < 10 ? " " : "", i);
+
 
 		setColor(COLOR_TEXT);
 		reDraw(0, 0);
+		reDrawHeader();
 
 	}
 
@@ -83,7 +83,7 @@ private:
 	#define KEYWORD_TYPE COLOR_VGA_LIGHT_BLUE
 	#define KEYWORD_SYS COLOR_VGA_PURPLE
 	#define KEYWORD_BRANCH COLOR_VGA_RED
-	#define KEYWORD_FUNC COLOR_VGA_YELLOW
+	#define KEYWORD_FUNC COLOR_VGA_MEDIUM_DARK_GRAY
 
 	struct keyword keyWords[20] = {
 		{"char", KEYWORD_TYPE},

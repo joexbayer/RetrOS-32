@@ -20,10 +20,22 @@ main:
     /* Save Drive number of booted drive. */
     mov %dl, drive_num
 
+    /* Clear screen and set colors */
+    mov $0x0600, %ax  /* Scroll up function */
+    xor %cx, %cx      /* Top left corner of the window (Column 0, Row 0) */
+    mov $0x184F, %dx  /* Bottom right corner of the window (Column 79, Row 24) */
+    mov $0x1F, %bh    /* Attribute byte (blue background, white text) */
+    int $0x10
+
+    /* Set cursor position to top left */
+    xor %dx, %dx      /* Row 0, Column 0 */
+    mov $0x02, %ah    /* Function to set cursor position */
+    int $0x10
+
+
     /* Greet user with message. */
     movw $welcome_str, %si
     call print
-
     # mov $0x0, %ah
     # int $0x16
 
@@ -163,15 +175,31 @@ inf:
 /* 	AL = Character, BH = Page Number, BL = Color (only in graphic mode)*/
 print:
     xor %bh, %bh
-    /* INT 13 needs 0x0E for teletype output*/
+    /* INT 10h needs 0x0E for teletype output */
     movb $0x0E, %ah
     lodsb
 
     cmpb $0, %al
     je return
 
+    /* Check for newline character and handle it */
+    cmpb $0x0A, %al
+    je new_line
+
     int $0x10
     jmp print
+
+new_line:
+    /* Move to the start of the next line */
+    /* Assuming 80 characters per line */
+    mov $0x03, %ah  /* Read cursor position function */
+    int $0x10       /* Get current cursor position in DX */
+    inc %dh         /* Move to the next line */
+    xor %dl, %dl    /* Reset column to 0 */
+    mov $0x02, %ah  /* Set cursor position function */
+    int $0x10       /* Set new cursor position */
+    jmp print
+
 return:
     ret
 
@@ -179,9 +207,9 @@ return:
 welcome_str:
     .asciz "RetrOS-32\n"
 total_error_str:
-    .asciz "Unable to boot.\n"
+    .asciz "\n"
 choice_str:
-    .asciz "Resolution: 1. 640x480 2. 800x600\n"
+    .asciz "1. \n"
 drive_num:
     .word 0x0000
 /* Reading in kernel, using  DAP (Disk Address Packet) */

@@ -45,6 +45,93 @@ int gfx_push_event(struct window* w, struct gfx_event* e)
 	return 0;
 }
 
+/**
+ drawRect(x, y, width, height, 30);
+        
+        // Top Inner Border
+        drawRect(x, y, width-1, 1, 31);
+        
+        // Left Inner Border
+        drawRect(x, y, 1, height, 31);
+        
+        // Right Inner Border
+        drawRect(x+width-1, y, 1, height, COLOR_VGA_MEDIUM_DARK_GRAY+5);
+        
+        // Bottom Inner Borders
+        drawRect(x, y+height-1, width-1, 1, COLOR_VGA_MEDIUM_DARK_GRAY+5);
+        drawRect(x, y+height, width-1, 1, 31);
+*/
+int gfx_draw_contoured_box(int x, int y, int width, int height, color_t color) 
+{
+	kernel_gfx_draw_rectangle(current_running->gfx_window, x, y, width, height, color);
+	kernel_gfx_draw_rectangle(current_running->gfx_window, x, y, width-1, 1, 31);
+	kernel_gfx_draw_rectangle(current_running->gfx_window, x, y, 1, height, 31);
+	kernel_gfx_draw_rectangle(current_running->gfx_window, x+width-1, y, 1, height, COLOR_VGA_MEDIUM_DARK_GRAY+5);
+	kernel_gfx_draw_rectangle(current_running->gfx_window, x, y+height-1, width-1, 1, COLOR_VGA_MEDIUM_DARK_GRAY+5);
+	kernel_gfx_draw_rectangle(current_running->gfx_window, x, y+height, width-1, 1, 31);
+
+	return 0;
+}
+
+int gfx_button(int x, int y, int width, int height, const char* name)
+{
+	return gfx_button_ext(x, y, width, height, name, 30);
+}
+
+int gfx_button_ext(int x, int y, int width, int height, const char* name, color_t color)
+{
+	kernel_gfx_draw_rectangle(current_running->gfx_window, x, y, width, height, color);
+	kernel_gfx_draw_rectangle(current_running->gfx_window, x, y, width-1, 1, 31);
+	kernel_gfx_draw_rectangle(current_running->gfx_window, x, y, 1, height, 31);
+	kernel_gfx_draw_rectangle(current_running->gfx_window, x+width-1, y, 1, height, COLOR_VGA_MEDIUM_DARK_GRAY+5);
+	kernel_gfx_draw_rectangle(current_running->gfx_window, x, y+height-1, width-1, 1, COLOR_VGA_MEDIUM_DARK_GRAY+5);
+	kernel_gfx_draw_rectangle(current_running->gfx_window, x, y+height, width-1, 1, 31);
+
+	/* center the text */
+	int text_width = strlen(name)*PIXELS_PER_CHAR;
+	int text_height = 8;
+	int text_x = x + (width/2) - (text_width/2);
+	int text_y = y + (height/2) - (text_height/2);
+
+	kernel_gfx_draw_text(current_running->gfx_window, text_x, text_y, name, 0x0);
+
+	return 0;
+}
+
+int gfx_put_icon16(unsigned char icon[], int x, int y)
+{
+	for (int l = 0; l < 16; l++) {
+
+		for (int i = 0; i < 16; i++) {
+			/* for new icons we use 0xfa for transparent */
+			if (icon[l*16+i] != 0xfa) {
+
+				if((x)+i < 0 || (y)+l < 0 || (x)+i > current_running->gfx_window->inner_width || (y)+l > current_running->gfx_window->inner_height)
+					continue;
+				putpixel(current_running->gfx_window->inner, (x)+i, (y)+l, rgb_to_vga(icon[l*16+i]), current_running->gfx_window->pitch);
+			}
+		}
+	}
+	return 0;
+}
+
+int gfx_put_icon32(unsigned char icon[], int x, int y)
+{
+	for (int l = 0; l < 32; l++) {
+
+		for (int i = 0; i < 32; i++) {
+			/* for new icons we use 0xfa for transparent */
+			if (icon[l*32+i] != 0xfa) {
+
+				if((x)+i < 0 || (y)+l < 0 || (x)+i > current_running->gfx_window->inner_width || (y)+l > current_running->gfx_window->inner_height)
+					continue;
+				putpixel(current_running->gfx_window->inner, (x)+i, (y)+l, rgb_to_vga(icon[l*32+i]), current_running->gfx_window->pitch);
+			}
+		}
+	}
+	return 0;
+}
+
 int gfx_event_loop(struct gfx_event* event, gfx_event_flag_t flags)
 {
 
@@ -173,12 +260,9 @@ int kernel_gfx_draw_text(struct window* w, int x, int y, char* str, unsigned cha
 {
 	ERR_ON_NULL(w);
 
-	for (int i = 0; i < strlen(str); i++)
-	{
+	for (int i = 0; i < strlen(str); i++){
 		kernel_gfx_draw_char(w, x+(i*8), y, str[i], color);
 	}
-
-	gfx_commit();
 
 	return 0;
 }
@@ -262,8 +346,6 @@ void kernel_gfx_draw_line(struct window* w, int x0, int y0, int x1, int y1, unsi
 			y0 = y0 + sy;
 		}
 	}
-
-	gfx_commit();
 }  
 
 static void kernel_gfx_draw_circle_helper(struct window* w, int xc, int yc, int x, int y, unsigned char color, bool_t fill)

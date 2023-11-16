@@ -60,6 +60,14 @@ int gfx_decode_background_image(const char* file)
    return ERROR_OK;
 }
 
+int gfx_set_taskbar(pid_t pid)
+{
+    ERR_ON_NULL(ws);
+
+    ws->taskbar = pcb_get_by_pid(pid);
+    return ERROR_OK;
+}
+
 void __kthread_entry gfx_compositor_main()
 {
     ws = ws_new();
@@ -67,11 +75,10 @@ void __kthread_entry gfx_compositor_main()
         dbgprintf("[WSERVER] Could not allocate memory for window server.\n");
         return;
     }
-
-    int taskbar_pid = start("taskbar");
-    ws->taskbar = pcb_get_by_pid(taskbar_pid);
+    
     ws->ops->set_background(ws, 3);
-    ws->ops->set_background_file(ws, "/lotr.img");
+
+    dbgprintf("[WSERVER] Window server initialized.\n");
 
     while(1){
         ws->ops->draw(ws);

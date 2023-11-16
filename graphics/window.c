@@ -19,6 +19,7 @@
 #include <vbe.h>
 #include <errors.h>
 #include <kutils.h>
+#include <lib/icons.h>
 
 /* prototype window ops */
 static void gfx_default_click(struct window* window, int x, int y); 
@@ -91,7 +92,15 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
           /* Header */
             
         /* Draw main frame of window with title bar and borders */
-        vesa_fillrect(buffer, window->x+4, window->y-4, window->width-8, 12, theme->window.background);
+#ifdef __WINDOWS_95
+        color_t header_color = window->in_focus ? 0x1 : COLOR_VGA_DARK_GRAY;
+        color_t header_text_color = window->in_focus ? 0x0f : COLOR_VGA_LIGHT_GRAY;
+#else 
+        color_t header_color = theme->window.background;
+        color_t header_text_color = 0x00;
+#endif // DEBUG
+
+        vesa_fillrect(buffer, window->x+6, window->y-4, window->width-8, 12, theme->window.background);
 
         vesa_line_horizontal(buffer, window->x+4, window->y-4, window->width-8, COLOR_VGA_DARKEST_GRAY);
         vesa_line_horizontal(buffer, window->x+4, window->y-3, window->width-8, COLOR_VGA_LIGHTER_GRAY+2);
@@ -99,26 +108,24 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
         vesa_line_horizontal(buffer, window->x+4, window->y+8, window->width-8, COLOR_VGA_DARKEST_GRAY);
         vesa_line_horizontal(buffer, window->x+4, window->y+7, window->width-8, background_color);
 
-        for (int i = 0; i < 3; i++){
-            vesa_line_horizontal(buffer, window->x+8, (window->y-1)+i*3, window->width-16, background_color);
-            vesa_line_horizontal(buffer, window->x+8, (window->y-2)+i*3, window->width-16, COLOR_VGA_LIGHTER_GRAY+2);
+        if(window->in_focus){
+            for (int i = 0; i < 3; i++){
+                vesa_line_horizontal(buffer, window->x+8, (window->y-1)+i*3, window->width-16, background_color);
+                vesa_line_horizontal(buffer, window->x+8, (window->y-2)+i*3, window->width-16, COLOR_VGA_LIGHTER_GRAY+2);
+            }
         }
 
         /* Title */
         int title_position = (window->width/2) - ((strlen(window->name)*8)/2);
         vesa_fillrect(buffer, window->x+title_position, window->y-2, strlen(window->name)*8 + 4, 8, theme->window.background);
-        vesa_write_str(buffer, window->x+title_position+4, window->y-2, window->name, COLOR_VGA_DARK_GRAY);
+        vesa_write_str(buffer, window->x+title_position+4, window->y-2, window->name, header_text_color);
 
-            /* Header */
-        if(0 && window->header != 0){
-            int header_position = (window->width/2) - ((strlen(window->header)*8)/2);
-            vesa_fillrect(buffer, window->x+header_position, window->y-2, strlen(window->header)*8 + 4, 8, background_color);
-            vesa_write_str(buffer, window->x+header_position+4, window->y-2, window->header, window->color.text == 0 ? theme->window.background : window->color.text);
-        }
-
-        /* Exit */
-        vesa_fillrect(buffer,  window->x+window->width-20,  window->y-2, strlen("X")*8 - 2, 8, theme->window.background);
-        vesa_write_str(buffer, window->x+window->width-20,  window->y-2, "X", COLOR_VGA_DARK_GRAY);
+        //     /* Header */
+        // if(0 && window->header != 0){
+        //     int header_position = (window->width/2) - ((strlen(window->header)*8)/2);
+        //     vesa_fillrect(buffer, window->x+header_position, window->y-2, strlen(window->header)*8 + 4, 8, background_color);
+        //     vesa_write_str(buffer, window->x+header_position+4, window->y-2, window->header, header_text_color);
+        // }
     }
 
     if(!HAS_FLAG(window->flags, GFX_HIDE_BORDER)){
@@ -131,7 +138,7 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
         vesa_line_horizontal(buffer, window->x+4, window->y+window->height-7, window->width-8, COLOR_VGA_LIGHTER_GRAY+2);
         
         /* left */
-        vesa_fillrect(buffer, window->x+4, window->y, 4, window->height-4, theme->window.background);
+        vesa_fillrect(buffer, window->x+4, window->y+8, 4, window->height-4-8, theme->window.background);
         vesa_line_vertical(buffer, window->x+4, window->y-3, window->height, COLOR_VGA_DARKEST_GRAY);
         vesa_line_vertical(buffer, window->x+5, window->y-3, window->height-1, COLOR_VGA_LIGHTER_GRAY+2);
 
@@ -139,12 +146,27 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
         vesa_line_vertical(buffer, window->x+7, window->y+8, window->height-16, background_color);
 
         /* right */
-        vesa_fillrect(buffer, window->x+window->width-8, window->y, 4, window->height-4, theme->window.background);
+        vesa_fillrect(buffer, window->x+window->width-8, window->y+8, 4, window->height-4-8, theme->window.background);
         vesa_line_vertical(buffer, window->x+window->width-4, window->y-4, window->height, COLOR_VGA_DARKEST_GRAY);
         vesa_line_vertical(buffer, window->x+window->width-5, window->y-4, window->height, background_color);
 
         vesa_line_vertical(buffer, window->x+window->width-8, window->y+8, window->height-16, COLOR_VGA_DARKEST_GRAY);
         vesa_line_vertical(buffer, window->x+window->width-7, window->y+8, window->height-16, COLOR_VGA_LIGHTER_GRAY+2);
+    }
+
+    if(!HAS_FLAG(window->flags, GFX_HIDE_HEADER)){
+
+        /* full screen */
+        vesa_inner_box(buffer, window->x+window->width-46+6,  window->y-3, 10, 9, theme->window.background);
+        vesa_write_str(buffer, window->x+window->width-44+6,  window->y-2, "^", COLOR_VGA_DARK_GRAY);
+
+        /* Minimize */
+        vesa_inner_box(buffer, window->x+window->width-34+6,  window->y-3, 10, 9, theme->window.background);
+        vesa_write_str(buffer, window->x+window->width-32+6,  window->y-2, "-", COLOR_VGA_DARK_GRAY);
+
+        /* Exit */
+        vesa_inner_box(buffer, window->x+window->width-22+6,  window->y-3, 10, 9, theme->window.background);
+        vesa_write_str(buffer, window->x+window->width-20+6,  window->y-2, "X", COLOR_VGA_DARK_GRAY);
     }
 
     window->changed = 0;

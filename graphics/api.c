@@ -13,8 +13,7 @@ int gfx_syscall_hook(int option, void* data, int flags)
     ERR_ON_NULL(data);
     ERR_ON_NULL(current_running);
 
-    switch (option)
-    {
+    switch (option){
     case GFX_DRAW_CHAR_OPT:;
         struct gfx_char* c = (struct gfx_char*)data;
         kernel_gfx_draw_char(current_running->gfx_window, c->x, c->y, c->data, c->color);
@@ -41,12 +40,9 @@ int gfx_syscall_hook(int option, void* data, int flags)
 
     case GFX_EVEN_LOOP_OPT:
         return gfx_event_loop((struct gfx_event*)data, flags);
-
     default:
         break;
     }
-
-    gfx_commit();
-
+     gfx_commit();
     return ERROR_OK;
 }

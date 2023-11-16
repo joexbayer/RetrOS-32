@@ -4,7 +4,6 @@
 #include <utils/Graphics.hpp>
 #include <lib/syscall.h>
 #include <utils/Thread.hpp>
-#include <lib/printf.h>
 
 typedef enum _msgbox_types {
     MSGBOX_OK,

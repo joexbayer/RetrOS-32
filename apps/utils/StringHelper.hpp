@@ -39,6 +39,15 @@ public:
         return m_length;
     }
 
+    int includes(const char* str){
+        int len = strlen(str);
+        if(len > m_length) return 0;
+        for(int i = 0; i < m_length - len; i++){
+            if(strncmp(m_data + i, str, len) == 0) return 1;
+        }
+        return 0;
+    }
+
     static int strlen(const char* str) {
         int len = 0;
         while (str[len] != '\0') {

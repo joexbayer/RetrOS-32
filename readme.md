@@ -165,12 +165,68 @@ IBM Thinkpad a21p
 
 ## Project Structure (TBD)
     NETOS - Project
-    ├── apps
-    │   └── ...
-    ├── Bin 
-    │   ├── kernel
-    │   └── ...
-    └── docker-compose.yml
+    ├── Dockerfile 
+    ├── LICENSE.txt
+    ├── Makefile
+    ├── apps (userspace applications)
+    │   ├── Makefile
+    │   ├── ...
+    │   ├── libcore.a
+    │   ├── libgraphic.a
+    │   ├── libnet.a
+    │   ├── readme.md
+    │   └── utils
+    │       └── *.cpp
+    ├── bin 
+    │   └── *.o
+    ├── boot (custom bootloader)
+    │   ├── bootloader.s
+    │   └── multiboot.ld
+    ├── docker-compose.yml
+    ├── docs (documentation)
+    │   ├── *.md
+    ├── drivers (kernel drivers)
+    │   └── *.c
+    ├── fs (filesystem)
+    │   ├── Makefile
+    │   ├── bin
+    │   └── *.c
+    ├── graphics
+    │   └── *.c
+    ├── include
+    │   ├── arch
+    │   │   └── *.c
+    │   ├── fs
+    │   │   └── *.c
+    │   ├── gfx
+    │   │   └── *.h
+    │   ├── lib
+    │   │   └── *.h
+    │   ├── net
+    │   │   └── *.h
+    │   └── *.h
+    ├── kernel (main kernel source files)
+    │   ├── arch
+    │   │   └── *.c
+    │   ├── kthreads
+    │   │   └── *.c
+    │   └── *.c
+    ├── legacy (old code)
+    ├── lib (libraries)
+    │   └── *.c
+    ├── net (networking code)
+    │   └── *.c
+    ├── readme.md
+    ├── rootfs (root filesystem for the OS)
+    ├── tests (testing code)
+    │   ├── Makefile
+    │   ├── bin
+    │   ├── *_test.c
+    │   └── readme.md
+    └── tools (build tools)
+        ├── scripts
+        └── bin
+            └── *.c
 
 <!-- ROADMAP -->
 ## Roadmap
@@ -183,6 +239,7 @@ IBM Thinkpad a21p
 - [x] Interrupt handling
 - [x] PS/2 Keyboard & Mouse, PIT, VESA (640x480x8), RTC, Serial drivers, E1000
 - [x] PCI.
+- [x] 8Bit RGB to 8Bit VGA
 - [x] Filesystem
 - [x] Networkstack
   - [x] Ethernet, IP, ARP, UDP
@@ -194,7 +251,7 @@ IBM Thinkpad a21p
   - [ ] HTML
 - [x] ATA IDE Driver
   - [x] Ext2 (like) Filesystem
-  - [ ] FAT16, support for up to 32mb files.
+  - [x] FAT16, support for up to 32mb files.
   - [x] read / write
 - [x] Memory
   - [x] 32bit Virtual Memory
@@ -209,12 +266,13 @@ IBM Thinkpad a21p
   - [x] Fullscreen
 - [x] Terminal, Window Server, Process Informtaion, Finder.
 - [x] Library (printf, memcpy, etc)
-- [ ] IPC
+- [x] IPC
 - [x] System calls
 - [x] C Compiler / interpreter to bytecode
 - [x] Custom VM to run bytecode.
 - [x] Editor with Syntax Highlighting
 - [x] Calculator
+- [x] Userspace threads (shared virtual memory)
 - [x] Tools
   - [x] Build
   - [ ] Sync / Migration Took

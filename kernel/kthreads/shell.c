@@ -8,6 +8,7 @@
  * @copyright Copyright (c) 2022
  * 
  */
+#include <editor.h>
 #include <pci.h>
 #include <keyboard.h>
 #include <terminal.h>
@@ -33,6 +34,8 @@
 #include <gfx/events.h>
 
 #include <fs/fs.h>
+#include <fs/fat16.h>
+
 
 #include <kutils.h>
 #include <script.h>
@@ -100,7 +103,7 @@ void ps()
 EXPORT_KSYMBOL(ps);
 
 /* Function to print the lines and corners */
-void print_branches(int level) {
+static void print_branches(int level) {
     for (int i = 0; i < level; i++) {
         if (i == level - 1) {
             twritef(":---");
@@ -111,7 +114,7 @@ void print_branches(int level) {
 }
 
 /* Recursive function to print PCB tree */
-void print_pcb_tree(struct pcb *pcb, int level) {
+static void print_pcb_tree(struct pcb *pcb, int level) {
     if (pcb == NULL || pcb->pid == -1) {
         return;
     }
@@ -139,8 +142,33 @@ void tree() {
         }
     }
 }
-
 EXPORT_KSYMBOL(tree);
+
+void fat16(){
+	fat16_format("VOLUME1", 1);
+	fat16_init();
+
+	/* TODO USE FS */
+	fat16_create_directory("BIN     ");
+	fat16_change_directory("BIN     ");
+
+	/* load editor */
+	int fd = fs_open("edit.o", FS_FILE_FLAG_CREATE | FS_FILE_FLAG_WRITE);
+	if(fd < 0){
+		twritef("Failed to create file\n");
+		return;
+	}
+
+	int ret = fs_write(fd, (char*)apps_editor_edit_o, apps_editor_edit_o_len);
+	if(ret < 0){
+		twritef("Failed to write file\n");
+		return;
+	}
+
+	fs_close(fd);
+}
+EXPORT_KSYMBOL(fat16);
+
 
 void xxd(int argc, char* argv[])
 {
@@ -155,8 +183,8 @@ void xxd(int argc, char* argv[])
 		return;
 	}
 
-	char* buf = kalloc(MAX_FILE_SIZE);
-	int ret = fs_read(inode, buf, MAX_FILE_SIZE);
+	char* buf = kalloc(32*1024);
+	int ret = fs_read(inode, buf, 32*1024);
 	if(ret < 0){
 		twritef("Error reading file\n");
 		return;
@@ -184,8 +212,8 @@ void sh(int argc, char* argv[])
 		return;
 	}
 
-	char* buf = kalloc(MAX_FILE_SIZE);
-	int ret = fs_read(inode, buf, MAX_FILE_SIZE);
+	char* buf = kalloc(32*1024);
+	int ret = fs_read(inode, buf, 32*1024);
 	
 	script_parse(buf);
 	

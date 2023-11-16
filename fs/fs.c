@@ -196,7 +196,7 @@ int fs_open(const char* path, int flags)
     return fd;
 }
 
-int fs_seek(int fd, int offset)
+int fs_seek(int fd, int offset, fs_seek_flag_t flag)
 {
     /* check if a filesystem is available */
     if(fs_current == NULL){
@@ -208,8 +208,17 @@ int fs_seek(int fd, int offset)
         return -2;
     }
 
-    /* seek the file */
-    fs_file_table[fd].offset = offset;
+    switch (flag){
+    case FS_SEEK_START:
+        fs_file_table[fd].offset = offset;
+        break;
+    
+    case FS_SEEK_CUR:
+        fs_file_table[fd].offset += offset;
+        break;
+    default:
+        break;
+    }
 
     return 0;
 }

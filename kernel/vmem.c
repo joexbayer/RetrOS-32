@@ -162,7 +162,7 @@ static int vmem_page_region_alloc(struct vmem_page_region* pages, int size)
 static int vmem_free_page_region(struct vmem_page_region* region, int size)
 {
 	ERR_ON_NULL(region);
-	if(region->refs > 0){
+	if(region->refs > 1){
 		region->refs--;
 		region->used -= size;
 		return 0;
@@ -225,7 +225,7 @@ static void vmem_free(struct virtual_memory_allocator* vmem, void* addr)
 		
 		unset_bitmap(vmem->pages, bit);
 		vmem->used_pages--;
-		//dbgprintf("VMEM MANAGER] Free page %d at 0x%x\n", bit, addr);
+		dbgprintf("VMEM MANAGER] Free page %d at 0x%x\n", bit, addr);
 
 	});
 }
@@ -478,7 +478,7 @@ void vmem_dump_heap(struct allocation* allocation)
 	while(iter != NULL){
 		if(region != iter->region){
 			region = iter->region;
-			dbgprintf(" ------- Region 0x%x (%d/%d) %d refs --------\n", region->basevaddr, region->used, region->size, region->refs);
+			dbgprintf(" ------- Region 0x%x -> 0x%x (%d/%d) %d refs --------\n", region->basevaddr, region->basevaddr+region->size, region->used, region->size, region->refs);
 		}
 		dbgprintf("     0x%x --- size %d\n", iter->address, iter->used);
 		iter = iter->next;
@@ -667,6 +667,8 @@ void vmem_cleanup_process(struct pcb* pcb)
 	vmem_default->ops->free(vmem_default, (void*) data_page);
 	vmem_manager->ops->free(vmem_default, (void*) data_table);
 
+	dbgprintf("[Memory] Cleaning up data from pcb [DONE].\n");
+
 	/**
 	 * Free all stack pages
 	 */
@@ -678,10 +680,14 @@ void vmem_cleanup_process(struct pcb* pcb)
 	vmem_default->ops->free(vmem_default, (void*) stack_page2);
 	vmem_manager->ops->free(vmem_default, (void*) stack_table);
 
+	dbgprintf("[Memory] Cleaning up stack from pcb [DONE].\n");
+
 	/**
 	 * Free all heap allocated memory.
 	 */
 	vmem_free_allocations(pcb);
+
+	dbgprintf("[Memory] Cleaning up allocations from pcb [DONE].\n");
 
 	/**
 	 * Lastly free directory.
