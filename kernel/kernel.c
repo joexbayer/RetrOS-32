@@ -62,6 +62,12 @@ struct kernel_context {
 	/* graphics?? */
 } global_kernel_context;
 
+struct memory_info {
+    unsigned int extended_memory_low;
+    unsigned int extended_memory_high;
+} *total_memory;
+
+
 /* This functions always needs to be on top? */
 void kernel(uint32_t magic) 
 {
@@ -76,24 +82,13 @@ void kernel(uint32_t magic)
 	vbe_info->framebuffer = mb_info->framebuffer_addr;
 #else
 	vbe_info = (struct vbe_mode_info_structure*) magic;
+	total_memory = (struct memory_info*) (0x7e00);
 #endif
     init_serial();
 
 	rgb_init_color_table();
 
-	int color_width = vbe_info->width/16;
-	/* draw palette */
-	int j = 0;
-	int k = 0;
-	for (int i = 0; i < 256; i++){
-		/* every 16 colors move down */
-		vesa_fillrect((uint8_t*)vbe_info->framebuffer, k*color_width, j*color_width, color_width, color_width, rgb_to_vga(i));
-		k++;
-		if (i % 16 == 0){
-			j++;
-			k = 0;
-		}
-	}
+	memset(vbe_info->framebuffer, 0x1, VBE_SIZE());
 
 	kernel_boot_printf("Booting OS...");
 

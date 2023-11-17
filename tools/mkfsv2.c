@@ -15,23 +15,29 @@
 
 #include "../tests/include/mocks.h"
 
+#define BLOCK_SIZE 512
+#define BOOTBLOCK_SIZE BLOCK_SIZE*4
+
 FILE* filesystem = NULL;
 #define DEBUG 1
 
 int mkfsv2_load_bootloader()
 {
-    char bootblock[512];
+    char bootblock[BOOTBLOCK_SIZE];
     FILE* bootloader = fopen("bin/bootblock", "r");
     if(bootloader == NULL){
         return -1;
     }
 
-    int size = fread(bootblock, 1, 512, bootloader);
-    if(size != 512){
+    int size = fread(bootblock, 1, BOOTBLOCK_SIZE, bootloader);
+    if(size != BOOTBLOCK_SIZE){
         return -2;
     }
 
-    write_block(bootblock, 0);
+    /* write 4 bootblock blocks */
+    for(int i = 0; i < 4; i++){
+        write_block(bootblock + (i*512), i);
+    }
 
     fclose(bootloader);
     return 0;
@@ -64,7 +70,7 @@ int mkfsv2_load_kernel()
     }
 
     for(int i = 0; i < kernel_block_count; i++){
-        write_block(kernel_data + (i*512), i+1);
+        write_block(kernel_data + (i*512), i+4);
     }
 
     fclose(kernel);
@@ -98,7 +104,7 @@ int main(int argc, char const *argv[])
 
     /* We want to reserve blocks for the kernel before the filesystem starts. */
 
-    fat16_format("VOLUME1", kernel_block_count);
+    fat16_format("VOLUME1", kernel_block_count+4);
     if(fat16_load() < 0){
         printf("Unable to initialize FAT16 filesystem.\n");
         return -1;
