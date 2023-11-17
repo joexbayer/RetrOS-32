@@ -86,6 +86,9 @@ void kernel(uint32_t magic)
 #endif
     init_serial();
 
+	dbgprintf("Memory: 0x%x\n", total_memory->extended_memory_low);
+	dbgprintf("Memory: 0x%x\n", total_memory->extended_memory_high);
+
 	rgb_init_color_table();
 
 	memset(vbe_info->framebuffer, 0x1, VBE_SIZE());
