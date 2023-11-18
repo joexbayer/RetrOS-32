@@ -60,12 +60,11 @@ struct kernel_context {
 	/* diskdriver? */
 	/* fs? */
 	/* graphics?? */
-} global_kernel_context;
-
-struct memory_info {
-    unsigned int extended_memory_low;
-    unsigned int extended_memory_high;
-} *total_memory;
+	struct memory_info {
+		unsigned int extended_memory_low;
+		unsigned int extended_memory_high;
+	} *total_memory;
+} kernel_context;
 
 
 /* This functions always needs to be on top? */
@@ -82,12 +81,12 @@ void kernel(uint32_t magic)
 	vbe_info->framebuffer = mb_info->framebuffer_addr;
 #else
 	vbe_info = (struct vbe_mode_info_structure*) magic;
-	total_memory = (struct memory_info*) (0x7e00);
+	kernel_context.total_memory = (struct memory_info*) (0x7e00);
 #endif
     init_serial();
 
-	dbgprintf("Memory: 0x%x\n", total_memory->extended_memory_low);
-	dbgprintf("Memory: 0x%x\n", total_memory->extended_memory_high);
+	dbgprintf("Memory: 0x%x\n", kernel_context.total_memory->extended_memory_low);
+	dbgprintf("Memory: 0x%x\n", kernel_context.total_memory->extended_memory_high);
 
 	rgb_init_color_table();
 

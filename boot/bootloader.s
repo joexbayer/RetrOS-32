@@ -360,7 +360,6 @@ detect_memory_size:
 
     mov %ax, 0x7E00
     mov %bx, 0x7E04
-    ret
 
 /* AX/BX already contain the required values */
 use_ax:
