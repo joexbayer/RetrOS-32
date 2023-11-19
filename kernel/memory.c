@@ -16,6 +16,63 @@
 #include <bitmap.h>
 #include <assert.h>
 
+#define MB(mb) (mb*1024*1024)
+#define KB(kb) (kb*1024)
+
+
+
+static struct memory_map {
+	struct kernel_memory {
+		int from;
+		int to;
+	} kernel;
+	struct permanent_memory {
+		int from;
+		int to;
+	} permanent;
+	struct virtual_memory {
+		int from;
+		int to;
+	} virtual;
+	bool_t initialized;
+} kernel_memory_map = {0};
+
+int memory_map_init(int total_memory, int extended_memory)
+{
+	/* memory starts at 1MB */ 
+	int start = MB(1);
+
+	int permanent = total_memory  * (1/8);
+	int kernel = total_memory * (2/8);
+	int virtual = total_memory * (5/8);
+
+	kernel_memory_map.kernel.from = start;
+	kernel_memory_map.kernel.to = start + kernel;
+
+	kernel_memory_map.permanent.from = kernel_memory_map.kernel.to;
+	kernel_memory_map.permanent.to = kernel_memory_map.permanent.from + permanent;
+
+	kernel_memory_map.virtual.from = kernel_memory_map.permanent.to;
+	kernel_memory_map.virtual.to = kernel_memory_map.virtual.from + virtual;
+
+	kernel_memory_map.initialized = true;
+
+	dbgprintf("Memory map:\n");
+	dbgprintf("Kernel:    0x%x - 0x%x (%d)\n", kernel_memory_map.kernel.from, kernel_memory_map.kernel.to, total_memory);
+	dbgprintf("Permanent: 0x%x - 0x%x (%d)\n", kernel_memory_map.permanent.from, kernel_memory_map.permanent.to, total_memory);
+	dbgprintf("Virtual:   0x%x - 0x%x (%d)\n", kernel_memory_map.virtual.from, kernel_memory_map.virtual.to, total_memory);
+
+
+
+	return 0;
+
+	/* kernel memory */
+
+
+
+	return 0;
+}
+
 /* prototypes */
 void init_memory();
 void* kalloc(int size);

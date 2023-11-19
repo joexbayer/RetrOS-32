@@ -89,6 +89,7 @@ struct allocation {
 #define TABLE_INDEX(vaddr) ((vaddr >> PAGE_TABLE_BITS) & PAGE_TABLE_MASK)
 #define DIRECTORY_INDEX(vaddr) ((vaddr >> PAGE_DIRECTORY_BITS) & PAGE_TABLE_MASK)
 
+int memory_map_init(int total_memory, int extended_memory);
 void init_memory();
 error_t get_mem_info(struct mem_info* info);
 void kmem_init();

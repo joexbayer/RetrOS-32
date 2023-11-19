@@ -100,6 +100,8 @@ void kernel(uint32_t magic)
 	*((uint32_t*)0x0) = 0xBAADF00D;
 
 	kernel_size = _end-_code;
+
+	memory_map_init(kernel_context.total_memory->extended_memory_low * 1024, kernel_context.total_memory->extended_memory_high * 64 * 1024);
 	init_memory();
 	kernel_boot_printf("Memory initialized.");
 
