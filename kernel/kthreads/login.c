@@ -11,6 +11,11 @@
 
 #include <lib/icons.h>
 
+struct memory_info {
+		unsigned int extended_memory_low;
+		unsigned int extended_memory_high;
+	} *total_memory;
+
 
 void __kthread_entry login()
 {   
@@ -19,6 +24,11 @@ void __kthread_entry login()
         warningf("Failed to create window for login");
         return;
     }
+
+    total_memory = (struct memory_info*) (0x7e00);
+
+    struct unit unit = calculate_size_unit(total_memory->extended_memory_low * 1024);
+    struct unit unit2 = calculate_size_unit(total_memory->extended_memory_high * 64 * 1024);
 
     /* set title */
     kernel_gfx_set_title("Welcome to RetrOS-32");
@@ -38,6 +48,12 @@ void __kthread_entry login()
 
     /* icon to the right middle 32x32 */
     gfx_put_icon32(computer_icon, 275-64-16, 10+20+5);
+
+    /* draw memory info */
+    w->draw->textf(w, 10+10, 10+10+10+10+20+10,0x0,"Memory: %d %s", unit.size, unit.unit);
+    w->draw->textf(w, 10+10, 10+10+10+10+20+10+10, 0x0, "Extended Memory: %d %s", unit2.size, unit2.unit);
+
+
 
     while (1)
     {

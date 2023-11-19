@@ -167,6 +167,10 @@ new_line_str:
     .asciz "\n"
 mem_str:
     .asciz "Memory detected: 0x"
+video_modes_header_str:
+    .asciz "Available Video Modes:\n"
+vesa_error_str:
+    .asciz "VESA query failed.\n"
 
 /* Reading in kernel, using  DAP (Disk Address Packet) */
 disk_address_packet:
@@ -305,10 +309,10 @@ set_a20:
     ret                                                                                
 
 set_video_mode:
-    /* Print message asking for resolution choice */
     movw $choice_str, %si
     call print
 
+    /* Print message asking for resolution choice */
     /* Wait for key press */
     mov $0x00, %ah     /* Function 0x00 - Get Keypress */
     int $0x16          /* BIOS Keyboard Services */
@@ -343,6 +347,7 @@ set_resolution:
 detect_memory_size:
     xor %cx, %cx
     xor %dx, %dx
+
     mov $0xE801, %ax
     int $0x15
     jc mem_error
@@ -426,6 +431,10 @@ enter32:
     jmpl *%eax
 
 .code16
+vesa_info_block:
+    .space 512  /* Allocate space for VESA information block */
+mode_info_block:
+    .space 256  /* Allocate space for VESA mode information block */
 vbe_info_structure:
     . = _start + 510 + 1024 + 512
     .byte 0x55

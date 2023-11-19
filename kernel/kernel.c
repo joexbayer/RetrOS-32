@@ -51,7 +51,6 @@
 static void kernel_boot_printf(const char* message) {
     static int kernel_msg = 0;
     vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10 + (kernel_msg++ * LINE_HEIGHT), TEXT_COLOR, message);
-	for(int i = 0; i < 10000000; i++){}
 }
 
 struct kernel_context {
