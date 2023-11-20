@@ -16,11 +16,16 @@
 
 /* Dynamic kernel memory */
 
+#define KMEM_BLOCK_SIZE 		256
+#define KMEM_BLOCKS_PER_BYTE 	8
+
+static uint32_t KERNEL_MEMORY_START = 0;
+static uint32_t KERNEL_MEMORY_END = 0;
+
 #define KMEM_BITMAP_INDEX(addr) ((addr - KERNEL_MEMORY_START) / KMEM_BLOCK_SIZE / KMEM_BLOCKS_PER_BYTE)
 #define KMEM_BITMAP_OFFSET(addr) ((addr - KERNEL_MEMORY_START) / KMEM_BLOCK_SIZE % KMEM_BLOCKS_PER_BYTE)
 
-/* need to add static bitmap as, bitmap_t uses kalloc */
-static uint8_t __kmemory_bitmap[(KERNEL_MEMORY_END - KERNEL_MEMORY_START) / KMEM_BLOCK_SIZE / KMEM_BLOCKS_PER_BYTE];
+static uint8_t* __kmemory_bitmap;
 static spinlock_t __kmemory_lock = 0;
 static uint32_t __kmemory_used = 0;
 
@@ -159,29 +164,43 @@ int kmemory_total()
  * @brief Permanent memory allocation scheme for memory that wont be freed.
  * Mainly by the windowservers framebuffer, and E1000's buffers.
  */
-static uint32_t memory_permanent_ptr = PERMANENT_KERNEL_MEMORY_START;
+static uintptr_t memory_permanent_start = NULL;
+static uintptr_t memory_permanent_end = NULL;
 void* palloc(int size)
 {
 	if(size <= 0) return NULL;
+    if(memory_permanent_start == NULL || memory_permanent_end == NULL) return NULL;
+
     size = ALIGN(size, PTR_SIZE);
 
-	if(memory_permanent_ptr + size >= PMEM_END_ADDRESS){
+	if(memory_permanent_start + size >= memory_permanent_end){
 		dbgprintf("[WARNING] Not enough permanent memory!\n");
 		return NULL;
 	}
-	uint32_t new = memory_permanent_ptr + size;
-	memory_permanent_ptr += size;
+
+	uint32_t new = memory_permanent_start + size;
+	memory_permanent_start += size;
 
 	return (void*) new;
 }
 
 int pmemory_used()
 {
-    return memory_permanent_ptr-PERMANENT_KERNEL_MEMORY_START;
+    return memory_permanent_start-memory_map_get()->permanent.from;
 }
 
 void kmem_init()
 {
+    memory_permanent_start = (uint32_t) memory_map_get()->permanent.from;
+    memory_permanent_end = (uint32_t) memory_map_get()->permanent.to;
+
+    KERNEL_MEMORY_START = (uint32_t) memory_map_get()->kernel.from;
+    KERNEL_MEMORY_END = (uint32_t) memory_map_get()->kernel.to;
+
+    __kmemory_bitmap = palloc((memory_map_get()->kernel.total) / KMEM_BLOCK_SIZE / KMEM_BLOCKS_PER_BYTE);
+    assert(__kmemory_bitmap != NULL);
+    memset(__kmemory_bitmap, 0, (memory_map_get()->kernel.total) / KMEM_BLOCK_SIZE / KMEM_BLOCKS_PER_BYTE);
+
 	__kmemory_lock = 0;
     dbgprintf("Lock 0x%x initiated by %s\n", &__kmemory_lock, current_running->name);
 }

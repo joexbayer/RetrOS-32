@@ -152,6 +152,8 @@ create_fs:
 	@dd if=/dev/zero of=filesystem.image bs=512 count=390
 	@./bin/mkfsv2
 
+bare: compile create_fs
+
 img: grub_fix tools compile create_fs sync
 	@echo "Finished creating the image."
 	$(TIME-END)
@@ -175,7 +177,7 @@ bindir:
 
 # Kernel.o must be recompiled with the multiboot flag.
 grub_fix:
-	@rm bin/kernel.o
+	@rm -f bin/kernel.o
 grub: CCFLAGS += -DUSE_MULTIBOOT
 grub: grub_fix apps multiboot_kernel
 	cp bin/kernelout legacy/multiboot/boot/myos.bin

@@ -10,21 +10,13 @@
 extern byte_t _code[], _end[], _code_end[], _ro_s[], _ro_e[], _data_s[], _data_e[], _bss_s[], _bss_e[], _bss_size[];
 extern int kernel_size;
 
+#define MB(mb) (mb*1024*1024)
+#define KB(kb) (kb*1024)
+
+
 #define PERMANENT_KERNEL_MEMORY_START 0x100000
 #define PMEM_END_ADDRESS 	 0x200000
 
-#define KERNEL_MEMORY_START 	0x300000
-#define KERNEL_MEMORY_END		0x400000
-#define KMEM_BLOCK_SIZE 		256
-#define KMEM_BLOCKS_PER_BYTE 	8
-
-#define VMEM_MAX_ADDRESS    0x1600000
-#define VMEM_START_ADDRESS  0x400000
-#define VMEM_TOTAL_PAGES ((VMEM_MAX_ADDRESS-VMEM_START_ADDRESS) / PAGE_SIZE)
-
-#define VMEM_MANAGER_START  0x200000
-#define VMEM_MANAGER_END    0x300000
-#define VMEM_MANAGER_PAGES ((VMEM_MANAGER_END-VMEM_MANAGER_START) / PAGE_SIZE)
 
 #define VMEM_STACK          0xEFFFFFF0
 #define VMEM_HEAP           0xE0000000
@@ -61,6 +53,28 @@ struct mem_info {
 	}permanent;
 };
 
+struct memory_map {
+	struct kernel_memory {
+		uintptr_t from;
+		uintptr_t to;
+		int total;
+	} kernel;
+	struct permanent_memory {
+		uintptr_t from;
+		uintptr_t to;
+		int total;
+	} permanent;
+	struct virtual_memory {
+		uintptr_t from;
+		uintptr_t to;
+		int total;
+	} virtual;
+	int total;
+	bool_t initialized;
+};
+struct memory_map* memory_map_get();
+
+
 struct vmem_page_region {
 	int* bits;
 	uint32_t* basevaddr;
@@ -89,6 +103,7 @@ struct allocation {
 #define TABLE_INDEX(vaddr) ((vaddr >> PAGE_TABLE_BITS) & PAGE_TABLE_MASK)
 #define DIRECTORY_INDEX(vaddr) ((vaddr >> PAGE_DIRECTORY_BITS) & PAGE_TABLE_MASK)
 
+int memory_map_init(int total_memory, int extended_memory);
 void init_memory();
 error_t get_mem_info(struct mem_info* info);
 void kmem_init();
@@ -124,6 +139,8 @@ void vmem_init_process(struct pcb* pcb, byte_t* data, int size);
 void vmem_stack_free(struct pcb* pcb, void* ptr);
 void* vmem_stack_alloc(struct pcb* pcb, int size);
 void vmem_dump_heap(struct allocation* allocation);
+
+int vmem_total_usage();
 
 int vmem_free_allocations(struct pcb* pcb);
 

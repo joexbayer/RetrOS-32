@@ -232,6 +232,7 @@ IBM Thinkpad a21p
 ## Roadmap
 
 - [x] Custom Bootloader & GRUB compatible
+- [x] Stage 2 bootloader 
 - [x] Wallpapers
 - [x] Mountable image 
 - [x] Multi-threaded pre-emptive scheduling

@@ -51,7 +51,6 @@
 static void kernel_boot_printf(const char* message) {
     static int kernel_msg = 0;
     vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10 + (kernel_msg++ * LINE_HEIGHT), TEXT_COLOR, message);
-	for(int i = 0; i < 10000000; i++){}
 }
 
 struct kernel_context {
@@ -60,7 +59,12 @@ struct kernel_context {
 	/* diskdriver? */
 	/* fs? */
 	/* graphics?? */
-} global_kernel_context;
+	struct memory_info {
+		unsigned int extended_memory_low;
+		unsigned int extended_memory_high;
+	} *total_memory;
+} kernel_context;
+
 
 /* This functions always needs to be on top? */
 void kernel(uint32_t magic) 
@@ -76,24 +80,16 @@ void kernel(uint32_t magic)
 	vbe_info->framebuffer = mb_info->framebuffer_addr;
 #else
 	vbe_info = (struct vbe_mode_info_structure*) magic;
+	kernel_context.total_memory = (struct memory_info*) (0x7e00);
 #endif
     init_serial();
 
+	dbgprintf("Memory: 0x%x\n", kernel_context.total_memory->extended_memory_low);
+	dbgprintf("Memory: 0x%x\n", kernel_context.total_memory->extended_memory_high);
+
 	rgb_init_color_table();
 
-	int color_width = vbe_info->width/16;
-	/* draw palette */
-	int j = 0;
-	int k = 0;
-	for (int i = 0; i < 256; i++){
-		/* every 16 colors move down */
-		vesa_fillrect((uint8_t*)vbe_info->framebuffer, k*color_width, j*color_width, color_width, color_width, rgb_to_vga(i));
-		k++;
-		if (i % 16 == 0){
-			j++;
-			k = 0;
-		}
-	}
+	memset(vbe_info->framebuffer, 0x1, VBE_SIZE());
 
 	kernel_boot_printf("Booting OS...");
 
@@ -104,6 +100,8 @@ void kernel(uint32_t magic)
 	*((uint32_t*)0x0) = 0xBAADF00D;
 
 	kernel_size = _end-_code;
+
+	memory_map_init(kernel_context.total_memory->extended_memory_low * 1024, kernel_context.total_memory->extended_memory_high * 64 * 1024);
 	init_memory();
 	kernel_boot_printf("Memory initialized.");
 
