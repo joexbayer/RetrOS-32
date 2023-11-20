@@ -15,6 +15,7 @@
 #include <vbe.h>
 #include <bitmap.h>
 #include <assert.h>
+#include <kutils.h>
 
 #define MB(mb) (mb*1024*1024)
 #define KB(kb) (kb*1024)
@@ -27,31 +28,45 @@ int memory_map_init(int total_memory, int extended_memory)
 	/* memory starts at 1MB */ 
 	uintptr_t start = MB(1);
 
-	int permanent 	= ALIGN((int)(total_memory * (float)1/8), 4);
-	int kernel 		= ALIGN((int)(total_memory * (float)2/8), 4);
-	int virtual 	= ALIGN((int)(total_memory * (float)5/8), 4);
+	int permanent = ALIGN((int)(total_memory * (float)1/8), 1024*1024);
+	int kernel = ALIGN((int)(total_memory * (float)2/8), 1024*1024);
 
-	kernel_memory_map.kernel.from = start;
-	kernel_memory_map.kernel.to = start + kernel;
-	kernel_memory_map.kernel.total = kernel;
+	/* Align virtual to the closest 4096 bytes, flooring */
+	/* Calculate the remaining memory */
+	int remaining_memory = total_memory - permanent - kernel;
+	int virtual = ALIGN_DOWN(remaining_memory, 4096);
 
-	kernel_memory_map.permanent.from = kernel_memory_map.kernel.to;
-	kernel_memory_map.permanent.to = kernel_memory_map.permanent.from + permanent;
-	kernel_memory_map.permanent.total = permanent;
+	/* Ensure the total of aligned segments does not exceed total_memory */
+	if (permanent + kernel + virtual > total_memory) {
+		/* Adjust virtual to fit within the total_memory */
+		virtual = total_memory - permanent - kernel;
+		/* Re-align after adjustment */
+		virtual = ALIGN_DOWN(virtual, 4096);
+	}
 
-	kernel_memory_map.virtual.from = kernel_memory_map.permanent.to;
-	kernel_memory_map.virtual.to = kernel_memory_map.virtual.from + virtual;
-	kernel_memory_map.virtual.total = virtual;
+	struct memory_map map = {
+		.kernel.from 		= start,
+		.kernel.to 			= start + kernel,
+		.kernel.total 		= kernel,
 
-	kernel_memory_map.initialized = true;
-	kernel_memory_map.total = total_memory;
+		.permanent.from 	= start + kernel,
+		.permanent.to 		= start + kernel + permanent,
+		.permanent.total 	= permanent,
 
+		.virtual.from 		= start + kernel + permanent,
+		.virtual.to 		= start + kernel + permanent + virtual,
+		.virtual.total 		= virtual,
+
+		.total 				= permanent+kernel+virtual,
+		.initialized 		= true
+	};
+	kernel_memory_map = map;
 
 	dbgprintf("Memory map:\n");
 	dbgprintf("Kernel:    0x%x - 0x%x (%d)\n", kernel_memory_map.kernel.from, kernel_memory_map.kernel.to, kernel);
 	dbgprintf("Permanent: 0x%x - 0x%x (%d)\n", kernel_memory_map.permanent.from, kernel_memory_map.permanent.to, permanent);
 	dbgprintf("Virtual:   0x%x - 0x%x (%d)\n", kernel_memory_map.virtual.from, kernel_memory_map.virtual.to, virtual);
-	dbgprintf("Total:     0x%x - 0x%x (%d)\n", kernel_memory_map.kernel.from, kernel_memory_map.virtual.to, total_memory);
+	dbgprintf("Total:     0x%x - 0x%x (%d - %d)\n", kernel_memory_map.kernel.from, kernel_memory_map.virtual.to, (permanent+kernel+virtual), total_memory);
 
 	return 0;
 }

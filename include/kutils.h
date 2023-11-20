@@ -55,7 +55,8 @@ typedef unsigned char ubyte_t;
 void init_kctors();
 
 #define PTR_SIZE sizeof(void*)
-#define ALIGN(x, a)  (((x) + ((a) - 1)) & ~((a) - 1))
+#define ALIGN(x, a) (((x) + ((a) - 1)) & ~((a) - 1))
+#define ALIGN_DOWN(size, boundary) ((size) & ~((boundary) - 1));
 
 /* Macro to convert a lowercase character to uppercase */
 #define TO_UPPER(c)  (((c) >= 'a' && (c) <= 'z') ? ((c) - 'a' + 'A') : (c))
