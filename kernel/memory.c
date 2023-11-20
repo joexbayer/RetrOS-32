@@ -20,57 +20,45 @@
 #define KB(kb) (kb*1024)
 
 
-
-static struct memory_map {
-	struct kernel_memory {
-		int from;
-		int to;
-	} kernel;
-	struct permanent_memory {
-		int from;
-		int to;
-	} permanent;
-	struct virtual_memory {
-		int from;
-		int to;
-	} virtual;
-	bool_t initialized;
-} kernel_memory_map = {0};
+static struct memory_map kernel_memory_map = {0};
 
 int memory_map_init(int total_memory, int extended_memory)
 {
 	/* memory starts at 1MB */ 
-	int start = MB(1);
+	uintptr_t start = MB(1);
 
-	int permanent = total_memory  * (1/8);
-	int kernel = total_memory * (2/8);
-	int virtual = total_memory * (5/8);
+	int permanent 	= ALIGN((int)(total_memory * (float)1/8), 4);
+	int kernel 		= ALIGN((int)(total_memory * (float)2/8), 4);
+	int virtual 	= ALIGN((int)(total_memory * (float)5/8), 4);
 
 	kernel_memory_map.kernel.from = start;
 	kernel_memory_map.kernel.to = start + kernel;
+	kernel_memory_map.kernel.total = kernel;
 
 	kernel_memory_map.permanent.from = kernel_memory_map.kernel.to;
 	kernel_memory_map.permanent.to = kernel_memory_map.permanent.from + permanent;
+	kernel_memory_map.permanent.total = permanent;
 
 	kernel_memory_map.virtual.from = kernel_memory_map.permanent.to;
 	kernel_memory_map.virtual.to = kernel_memory_map.virtual.from + virtual;
+	kernel_memory_map.virtual.total = virtual;
 
 	kernel_memory_map.initialized = true;
+	kernel_memory_map.total = total_memory;
+
 
 	dbgprintf("Memory map:\n");
-	dbgprintf("Kernel:    0x%x - 0x%x (%d)\n", kernel_memory_map.kernel.from, kernel_memory_map.kernel.to, total_memory);
-	dbgprintf("Permanent: 0x%x - 0x%x (%d)\n", kernel_memory_map.permanent.from, kernel_memory_map.permanent.to, total_memory);
-	dbgprintf("Virtual:   0x%x - 0x%x (%d)\n", kernel_memory_map.virtual.from, kernel_memory_map.virtual.to, total_memory);
-
-
-
-	return 0;
-
-	/* kernel memory */
-
-
+	dbgprintf("Kernel:    0x%x - 0x%x (%d)\n", kernel_memory_map.kernel.from, kernel_memory_map.kernel.to, kernel);
+	dbgprintf("Permanent: 0x%x - 0x%x (%d)\n", kernel_memory_map.permanent.from, kernel_memory_map.permanent.to, permanent);
+	dbgprintf("Virtual:   0x%x - 0x%x (%d)\n", kernel_memory_map.virtual.from, kernel_memory_map.virtual.to, virtual);
+	dbgprintf("Total:     0x%x - 0x%x (%d)\n", kernel_memory_map.kernel.from, kernel_memory_map.virtual.to, total_memory);
 
 	return 0;
+}
+
+struct memory_map* memory_map_get()
+{
+	return &kernel_memory_map;
 }
 
 /* prototypes */
@@ -134,10 +122,12 @@ void* calloc(int size, int val)
 error_t get_mem_info(struct mem_info* info)
 {
 	struct mem_info inf = {
-		.kernel.total = kmemory_total(),
+		.kernel.total = memory_map_get()->kernel.total,
 		.kernel.used = kmemory_used(),
-		.permanent.total = PMEM_END_ADDRESS-PERMANENT_KERNEL_MEMORY_START,
-		.permanent.used = pmemory_used()
+		.permanent.total = memory_map_get()->permanent.total,
+		.permanent.used = pmemory_used(),
+		.virtual.total = memory_map_get()->virtual.total,
+		.virtual.used = vmem_total_usage(),
 	};
 
 	*info = inf;
