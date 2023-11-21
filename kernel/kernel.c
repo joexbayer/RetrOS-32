@@ -78,6 +78,12 @@ void kernel(uint32_t magic)
 	vbe_info->bpp = mb_info->framebuffer_bpp;
 	vbe_info->pitch = mb_info->framebuffer_width;
 	vbe_info->framebuffer = mb_info->framebuffer_addr;
+
+	struct memory_info _minfo = {
+		.extended_memory_low = mb_info->mem_lower,
+		.extended_memory_high = mb_info->mem_upper
+	};
+	kernel_context.total_memory = &_minfo;
 #else
 	vbe_info = (struct vbe_mode_info_structure*) magic;
 	kernel_context.total_memory = (struct memory_info*) (0x7e00);
