@@ -122,7 +122,7 @@ struct kref {
 };
 int kref_get(struct kref* ref);
 int kref_put(struct kref* ref);
-int kref_destroy(struct kref* ref);
+int kref_init(struct kref* ref);
 
 int32_t csprintf(char *buffer, const char *fmt, ...);
 

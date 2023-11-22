@@ -234,7 +234,7 @@ EXPORT_KSYMBOL(ed);
 
 void run(int argc, char* argv[])
 {
-	int r = start(argv[1]);
+	int r = start(argv[1], argc-1, &argv[1]);
 	if(r >= 0){
 		twritef("Kernel thread started\n");
 		return;
@@ -502,9 +502,9 @@ void testfn()
 }
 
 int c_test = 0;
-void __kthread_entry shell()
+void __kthread_entry shell(int argc, char* argv[])
 {
-	dbgprintf("shell is running!\n");
+	dbgprintf("shell is running %d!\n", argc);
 
 	testfn();
 	struct window* window = gfx_new_window(SHELL_WIDTH, SHELL_HEIGHT, GFX_IS_RESIZABLE);

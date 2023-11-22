@@ -56,10 +56,13 @@ int init_windowmanager(struct windowmanager* wm, int flags)
         dbgprintf("Failed to allocate composition buffer\n");
         return -ERROR_ALLOC;
     }
+    memset(wm->composition_buffer, 0x0, VBE_SIZE());
+
 
     wm->spinlock = SPINLOCK_UNLOCKED;
     wm->windows = NULL;
     wm->window_count = 0;
+    wm->mouse_state = 0;
 
     /* workspaces */
     wm->workspace = 0;
@@ -108,10 +111,10 @@ static int wm_default_add(struct windowmanager* wm, struct window* window)
 {
     ERR_ON_NULL(wm);
     ERR_ON_NULL(window);
-    
+
     if (wm->window_count == 0) {
         wm->windows = window;
-
+        
         window->in_focus = 1;
 
         wm->window_count++;
@@ -273,7 +276,6 @@ static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char f
     for (struct window* i = wm->windows; i != NULL; i = i->next){
         /* if mouse is in window */
         if(gfx_point_in_rectangle(i->x, i->y, i->x+i->width, i->y+i->height, x, y)){
-
             /* get coordinates inside of the window */
             int offset = HAS_FLAG(i->flags, GFX_HIDE_HEADER) ? 0 : 8;
             uint16_t x2 = CLAMP( (x - (i->x+offset)), 0,  i->inner_width);
@@ -331,10 +333,9 @@ struct windowmanager* wm_new(int flags)
     if(wm == NULL){
         return NULL;
     }
-    
     /* init krefs */
-    kref_get(&wm->_krefs);
-
+    kref_init(&wm->_krefs);
+    
     wm->ops = &wm_default_wm_ops;
 
     /* init windowmanager */
@@ -343,6 +344,7 @@ struct windowmanager* wm_new(int flags)
         return NULL;
     }
 
+    kref_get(&wm->_krefs);
     return wm;
 }
 

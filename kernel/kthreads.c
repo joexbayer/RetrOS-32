@@ -37,8 +37,8 @@ void __noreturn kthread_entry(int argc, char* args[])
         kernel_exit();
     }
 
-    void (*entry)() = current_running->thread_eip;
-    entry();
+    void (*entry)(int argc, char* argv[]) = (void (*)(int argc, char* argv[]))current_running->thread_eip;
+    entry(current_running->args, current_running->argv);
 
     kernel_exit();
     UNREACHABLE();
@@ -71,13 +71,13 @@ error_t register_kthread(void (*f)(), char* name)
  * @param name name of the kthread
  * @return error_t ERROR_OK on success, else error code
  */
-error_t start(char* name)
+error_t start(char* name, int argc, char* argv[])
 {
     ERR_ON_NULL(name);
 
     for (int i = 0; i < total_kthreads; i++){
         if(memcmp(name, kthread_table[i].name, strlen(kthread_table[i].name)) == 0){
-            return pcb_create_kthread(kthread_table[i].entry, kthread_table[i].name);
+            return pcb_create_kthread(kthread_table[i].entry, kthread_table[i].name, argc, argv);
         }
     }
 

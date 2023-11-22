@@ -182,7 +182,7 @@ void __kthread_entry networking_main()
         netd.skb_tx_queue = skb_new_queue();
     }
 
-    start("dhcpd");
+    start("dhcpd", 0, NULL);
 
     while(1){
         /**

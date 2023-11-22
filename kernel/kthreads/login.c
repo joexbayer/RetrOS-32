@@ -66,8 +66,8 @@ void __kthread_entry login()
                     /* check if OK is clicked x = event.data, y = event.data2 */
                     if(event.data > 10+10 && event.data < 10+10+50 && event.data2 > 10+10+10+10 && event.data2 < 10+10+10+10+20){
                         /* OK is clicked */
-                        start("kclock");
-                        pid_t taskbar = start("taskbar");
+                        start("kclock", 0, NULL);
+                        pid_t taskbar = start("taskbar", 0, NULL);
                         if(taskbar <= 0){
                             warningf("Failed to start taskbar");
                         }

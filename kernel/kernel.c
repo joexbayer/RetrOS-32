@@ -70,7 +70,7 @@ struct kernel_context {
 void kernel(uint32_t magic) 
 {
 	asm ("cli");
-
+	kernel_context.total_memory = (struct memory_info*) (0x7e00);
 #ifdef USE_MULTIBOOT
   	struct multiboot_info* mb_info = (struct multiboot_info*) magic;
 	vbe_info->height = mb_info->framebuffer_height;
@@ -79,31 +79,31 @@ void kernel(uint32_t magic)
 	vbe_info->pitch = mb_info->framebuffer_width;
 	vbe_info->framebuffer = mb_info->framebuffer_addr;
 
-	struct memory_info _minfo = {
-		.extended_memory_low = mb_info->mem_lower,
-		.extended_memory_high = mb_info->mem_upper
-	};
-	kernel_context.total_memory = &_minfo;
+	kernel_context.total_memory->extended_memory_low = 8*1024;
+	kernel_context.total_memory->extended_memory_high = 0;
 #else
 	vbe_info = (struct vbe_mode_info_structure*) magic;
 	kernel_context.total_memory = (struct memory_info*) (0x7e00);
 #endif
+	ENTER_CRITICAL();
     init_serial();
 
 	dbgprintf("Memory: 0x%x\n", kernel_context.total_memory->extended_memory_low);
 	dbgprintf("Memory: 0x%x\n", kernel_context.total_memory->extended_memory_high);
 
-	rgb_init_color_table();
-
-	memset(vbe_info->framebuffer, 0x1, VBE_SIZE());
+	//memset(vbe_info->framebuffer, 0x1, VBE_SIZE());
 
 	kernel_boot_printf("Booting OS...");
+
+	dbgprintf("[KERNEL] Kernel starting...\n");
+
+	rgb_init_color_table();
 
 	/* Clear memory and BSS */
 	//memset((char*)_bss_s, 0, (unsigned int) _bss_size);
     //memset((char*)0x100000, 0, 0x800000-0x100000);
-	ENTER_CRITICAL();
-	*((uint32_t*)0x0) = 0xBAADF00D;
+	//*((uint32_t*)0x0) = 0xBAADF00D;
+	dbgprintf("[KERNEL] BSS: 0x%x\n", _bss_s);
 
 	kernel_size = _end-_code;
 
@@ -216,10 +216,10 @@ void kernel(uint32_t magic)
 
 	kernel_boot_printf("Graphics initialized.");
 
-	start("idled");
-	start("wind");
-	start("workd");
-	start("login");
+	start("idled", 0, NULL);
+	start("wind", 0, NULL);
+	start("workd", 0, NULL);
+	start("login", 0, NULL);
 
 	kernel_boot_printf("Deamons initialized.");
 	
@@ -229,8 +229,17 @@ void kernel(uint32_t magic)
 
 
 	init_pit(1);
-	kernel_boot_printf("Starting OS. %d");
+	kernel_boot_printf("Starting OS...");
+
+	dbgprintf("[KERNEL] %d\n", cli_cnt);
 	LEAVE_CRITICAL();
+	asm ("sti");
+
+	while (1)
+	{
+		/* code */
+	}
+	
 	
 	PANIC_ON_ERR(0);
 	

@@ -135,7 +135,7 @@ struct pcb_queue {
 
 void init_pcbs();
 void start_pcb(struct pcb* pcb);
-error_t pcb_create_kthread( void (*entry)(), char* name);
+error_t pcb_create_kthread( void (*entry)(), char* name, int argc, char** argv);
 error_t pcb_create_thread(struct pcb* parent, void (*entry)(), void* arg, byte_t flags);
 error_t pcb_create_process(char* program, int args, char** argv, pcb_flag_t flags);
 

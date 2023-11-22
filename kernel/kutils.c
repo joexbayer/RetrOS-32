@@ -134,6 +134,14 @@ void kernel_panic(const char* reason)
     PANIC();
 }
 
+int kref_init(struct kref* ref)
+{
+    ref->refs = 0;
+    ref->spinlock = 0;
+
+    return 0;
+}
+
 int kref_get(struct kref* ref)
 {
     spin_lock(&ref->spinlock);
