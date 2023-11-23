@@ -244,7 +244,7 @@ void run(int argc, char* argv[])
 
 	pid = pcb_create_process(argv[1], argc-1, &argv[1], PCB_FLAG_KERNEL);
 	if(pid > 0){
-		twritef("Process %s started\n", argv[1]);
+		pcb_await(pid);
 		return;
 	}
 
@@ -257,6 +257,7 @@ void run(int argc, char* argv[])
 	pid = pcb_create_kthread(ptr, argv[1], argc-1, &argv[1]);
 	if(pid > 0){
 		twritef("Kernel thread %s started\n", argv[1]);
+		pcb_await(pid);
 		return;
 	}
 	

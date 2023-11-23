@@ -263,6 +263,23 @@ struct pcb* pcb_get_by_pid(int pid)
 	return &pcb_table[pid];
 }
 
+struct pcb* pcb_get_by_name(char* name)
+{
+	for (int i = 0; i < MAX_NUM_OF_PCBS; i++){
+		if(strncmp(pcb_table[i].name, name, strlen(name)) == 0){
+			return &pcb_table[i];
+		}
+	}
+	return NULL;
+}
+
+int pcb_await(int pid)
+{
+	if(pid < 0 || pid > MAX_NUM_OF_PCBS) return -1;
+	while(pcb_table[pid].state != STOPPED);
+	return 0;
+}
+
 
 void pcb_dbg_print(struct pcb* pcb)
 {
