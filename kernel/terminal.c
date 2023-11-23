@@ -54,18 +54,20 @@ void terminal_commit()
 	if(current_running->term == NULL)
 		return;
 
+
+	struct terminal* term = current_running->term;
 	struct gfx_theme* theme = kernel_gfx_current_theme();
 	int x = 0, y = 0;
-	kernel_gfx_draw_rectangle(current_running->gfx_window, 0, 0, current_running->term->screen->inner_width, current_running->term->screen->inner_height, theme->terminal.background);
-	for (int i = current_running->term->tail; i < current_running->term->head; i++){
-		if(current_running->term->textbuffer[i] == '\n'){
+	kernel_gfx_draw_rectangle(term->screen, 0, 0, term->screen->inner_width, term->screen->inner_height, theme->terminal.background);
+	for (int i = term->tail; i < current_running->term->head; i++){
+		if(term->textbuffer[i] == '\n'){
 			x = 0;
 			y++;
 			continue;
 		}
 
-		terminal_syntax(current_running->term->textbuffer[i]);
-		kernel_gfx_draw_char(current_running->gfx_window, 1 + x*8, 1+ y*8, current_running->term->textbuffer[i], current_running->term->text_color);
+		terminal_syntax(term->textbuffer[i]);
+		kernel_gfx_draw_char(term->screen, 1 + x*8, 1+ y*8, term->textbuffer[i], term->text_color);
 		x++;
 	}
 }
@@ -120,17 +122,25 @@ void terminal_putchar(char c)
 	
 	//unsigned char uc = c;	
 	if(c == '\n'){
-		if((current_running->term->screen->inner_height/8) -1 == current_running->term->lines)
+		if((current_running->term->screen->inner_height/8) -1 == current_running->term->lines){
 			terminal_scroll(current_running->term);
-		else
+		} else {
 			current_running->term->lines++;
+		}
+		terminal_commit();
 	}
 
 	current_running->term->textbuffer[current_running->term->head] = c;
 	current_running->term->head++;
 
 	serial_put(c);
-	gfx_commit();
+
+	if(current_running->term->screen != NULL && current_running->term->screen != current_running->gfx_window){
+		current_running->term->screen->changed = 1;
+	} else {
+		gfx_commit();
+	}
+
 }
  
 /**

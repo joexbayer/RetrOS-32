@@ -78,21 +78,20 @@ int exec_cmd(char* str)
 	args.argc = parse_arguments(str, args.data);
 	if(args.argc == 0) return -1;
 
-    for (int i = 0; i < args.argc; i++)
-    {
+    for (int i = 0; i < args.argc; i++){
         dbgprintf("%d: %s\n", args.argc, args.argv[i]);
     }
-    
-    dbgprintf("%s %s\n", args.argv[0], str);
 
 	void (*ptr)(int argc, char* argv[]) = (void (*)(int argc, char* argv[])) ksyms_resolve_symbol(args.argv[0]);
 	if(ptr == NULL){
 		return -1;
 	}
 
-	ptr(args.argc, args.argv);
-	gfx_commit();
 
+    /* execute command */
+	ptr(args.argc, args.argv);
+
+	gfx_commit();
 
 	return 0;
 }
