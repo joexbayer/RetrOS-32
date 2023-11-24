@@ -121,7 +121,7 @@ static void print_pcb_tree(struct pcb *pcb, int level) {
 
     /* Print branches and nodes */
     print_branches(level);
-    twritef(">%s\n", pcb->name);
+    twritef(">%s (%d)\n", pcb->name, pcb->pid);
 
     /* Recursively print child PCBs */
     for (int i = 1; i < MAX_NUM_OF_PCBS; i++) {
@@ -232,12 +232,31 @@ void ed()
 }
 EXPORT_KSYMBOL(ed);
 
-void run(int argc, char* argv[])
+void exec(int argc, char* argv[])
 {
 	pid_t pid;
+	bool_t kthread_as_deamon = false;
 
-	int r = start(argv[1], argc-1, &argv[1]);
-	if(r >= 0){
+	if(argc == 1){
+		twritef("usage: exec [options] <file | kfunc> [args ...]\n");
+		return;
+	}
+
+	/* check for potential options */
+	if(argv[1][0] == '-'){
+		switch (argv[1][1]){
+		case 'd':{
+				kthread_as_deamon = true;	
+			}
+			break;
+		default:
+			break;
+		}
+	}
+
+
+	pid = start(argv[1], argc-1, &argv[1]);
+	if(pid >= 0){
 		twritef("Kernel thread started\n");
 		return;
 	}
@@ -257,14 +276,14 @@ void run(int argc, char* argv[])
 	pid = pcb_create_kthread(ptr, argv[1], argc-1, &argv[1]);
 	if(pid > 0){
 		twritef("Kernel thread %s started\n", argv[1]);
-		pcb_await(pid);
+		if(kthread_as_deamon) pcb_await(pid);
 		return;
 	}
 	
 	twritef("Unknown command\n");
     return;
 }
-EXPORT_KSYMBOL(run);
+EXPORT_KSYMBOL(exec);
 
 /**
  * @brief cmd: command [opts] [args]

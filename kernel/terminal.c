@@ -127,7 +127,11 @@ void terminal_putchar(char c)
 		} else {
 			current_running->term->lines++;
 		}
-		terminal_commit();
+
+		/* should be a flush syscall */
+		if(current_running->term->screen != NULL && current_running->term->screen != current_running->gfx_window){
+			terminal_commit();
+		}
 	}
 
 	current_running->term->textbuffer[current_running->term->head] = c;

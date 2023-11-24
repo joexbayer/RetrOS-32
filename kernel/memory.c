@@ -121,6 +121,8 @@ void* malloc(unsigned int size)
 
 	vmem_dump_heap(current_running->allocations->head);
 
+	dbgprintf("Allocated %d bytes at %x\n", size, ptr);
+
 	spin_unlock(&current_running->allocations->spinlock);
 	return ptr;
 }
