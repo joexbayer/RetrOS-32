@@ -234,7 +234,7 @@ static void gfx_default_click(struct window* window, int x, int y)
 {
     dbgprintf("[GFX WINDOW] Clicked %s\n", window->name);
 
-    if(gfx_point_in_rectangle(window->x+window->width-24,  window->y-4, window->x+window->width-12, window->y+10, x, y)){
+    if (x >= window->x + window->width - 22 + 6 && x <= window->x + window->width - 22 + 6 + 10 && y >= window->y - 3 && y <= window->y - 3 + 9) {
         dbgprintf("[GFX WINDOW] Clicked %s exit button\n", window->name);
         struct gfx_event e = {
             .data = 0,
@@ -244,6 +244,49 @@ static void gfx_default_click(struct window* window, int x, int y)
         gfx_push_event(window, &e);
         return; 
     }
+
+    if (x >= window->x + window->width - 46 + 6 && x <= window->x + window->width - 46 + 6 + 10 && y >= window->y - 3 && y <= window->y - 3 + 9) {
+        
+        dbgprintf("[GFX WINDOW] Clicked %s full screen button\n", window->name);
+        if(window->is_maximized.state == 0){
+            window->is_maximized.state = 1;
+            window->is_maximized.width = window->width;
+            window->is_maximized.height = window->height;
+
+            window->ops->maximize(window);
+            struct gfx_event e = {
+                .data = window->inner_width,
+                .data2 = window->inner_height,
+                .event = GFX_EVENT_RESOLUTION
+            };
+            gfx_push_event(window, &e);
+            
+        } else {
+            window->is_maximized.state = 0;
+            window->width = window->is_maximized.width;
+            window->height = window->is_maximized.height;
+
+            window->ops->resize(window, window->width-16, window->height-16);
+
+            struct gfx_event e = {
+                .data = window->inner_width,
+                .data2 = window->inner_height,
+                .event = GFX_EVENT_RESOLUTION
+            };
+            gfx_push_event(window, &e);
+        }
+        
+        /* maximize widnow */
+
+        window->is_moving.state = GFX_WINDOW_STATIC;
+        window->is_moving.x = x;
+        window->is_moving.y = y;
+
+        window->resize = 0;
+
+        return;
+    }
+
     if(gfx_point_in_rectangle(window->x, window->y, window->x+window->width, window->y+10, x, y)){
         dbgprintf("[GFX WINDOW] Clicked %s title\n", window->name);
     }
@@ -340,8 +383,6 @@ static int gfx_window_maximize(struct window* window)
 
     window->ops->move(window, 0, 26);
 
-    CLEAR_FLAG(window->flags, GFX_IS_MOVABLE);
-
     window->changed = 1;
 
     return ERROR_OK;
@@ -414,6 +455,10 @@ struct window* gfx_new_window(int width, int height, window_flag_t flags)
     
     w->events.head = 0;
     w->events.tail = 0;
+
+    w->is_maximized.state = 0;
+    w->is_maximized.width = 0;
+    w->is_maximized.height = 0;
 
     w->is_moving.state = GFX_WINDOW_STATIC;
     /* Window can just use the name of the owner? */
