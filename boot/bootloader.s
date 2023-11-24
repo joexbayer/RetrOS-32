@@ -178,7 +178,7 @@ separator:
 
 /* Adjusted strings with padding to match the length of the separator */
 home_str:
-    .asciz " Welcome to RetrOS-32 Bootloader "
+    .asciz "                       Welcome to RetrOS-32 Bootloader  \n"
 kernel_str:
     .asciz "Loaded kernel.                   "
 choice_str:
@@ -271,18 +271,10 @@ draw_bottom_separator:
 print_main_window:
     call reset_screen
 
-    call draw_top_separator
-
-    /* Print the welcome message */
-    movw $straight_line, %si
-    call print
     movw $home_str, %si
     call print
-    movw $straight_line_end, %si
-    call print
 
-    /* Print the middle separator */
-    call draw_middle_separator
+    call draw_top_separator
 
     /* Print kernel status */
     movw $straight_line, %si
@@ -291,6 +283,9 @@ print_main_window:
     call print
     movw $straight_line_end, %si
     call print
+    /* Print the middle separator */
+    call draw_middle_separator
+
 
     ret
 
