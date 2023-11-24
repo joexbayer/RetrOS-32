@@ -106,7 +106,7 @@ return:
 
 /* Stage 1 Strings */
 welcome_str:
-    .asciz "RetrOS-32 - Stage 1\n"
+    .asciz "RetrOS-32 - Stage 1\n====================\n"
 welcome_err_str:
     .asciz " > Error reading from disk.\n"
 total_error_str:
@@ -114,7 +114,7 @@ total_error_str:
 drive_num:
     .word 0x0000
 
-# Partition 1
+# Boot partition set.
 . = _start + 446
 partition_table:
     .byte 0x80       # Bootable flag (0x80 for bootable, 0x00 for non-bootable)
@@ -155,22 +155,44 @@ _stage2_init:
     jmp _stage2
 
 /* Stage 2 strings */
+/* Box drawing characters with left padding for centering */
+top_left_corner:
+    .asciz "                     \xDA"
+top_right_corner:
+    .asciz "\xBF\n"
+bottom_left_corner:
+    .asciz "                     \xC0"
+bottom_right_corner:
+    .asciz "\xD9\n"
+straight_line:
+    .asciz "                     \xB3"
+straight_line_end:
+    .asciz "\xB3\n"
+left_cross:
+    .asciz "                     \xC3"
+right_cross_end:
+    .asciz "\xB4\n"
+separator:
+    .asciz "\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4"
+
+
+/* Adjusted strings with padding to match the length of the separator */
 home_str:
-    .asciz "Welcome to RetrOS-32 Bootloader\n======================\n"
+    .asciz " Welcome to RetrOS-32 Bootloader "
 kernel_str:
-    .asciz "Loaded kernel.\n"
+    .asciz "Loaded kernel.                   "
 choice_str:
-    .asciz "Choose resolution:\n1. 640x480\n2. 800x600\n"
+    .asciz "Choose resolution:               "
+choice_1_str:
+    .asciz "   1. 640x480                    "
+choice_2_str:
+    .asciz "   2. 800x600                    "
 memory_error_str:
-    .asciz "Memory detection error\n"
+    .asciz "Memory detection: ERROR          "
+mem_str:
+    .asciz "Memory detection: OK             "
 new_line_str:
     .asciz "\n"
-mem_str:
-    .asciz "Memory detected: 0x"
-video_modes_header_str:
-    .asciz "Available Video Modes:\n"
-vesa_error_str:
-    .asciz "VESA query failed.\n"
 
 /* Reading in kernel, using  DAP (Disk Address Packet) */
 disk_address_packet:
@@ -216,12 +238,64 @@ gdt_end:
 
 /* Stage 2 code */
 
-_stage2:
+draw_middle_separator:
+    movw $left_cross, %si
+    call print
+    movw $separator, %si
+    call print
+    movw $right_cross_end, %si
+    call print
+
+    ret
+
+draw_top_separator:
+    movw $top_left_corner, %si
+    call print
+    movw $separator, %si
+    call print
+    movw $top_right_corner, %si
+    call print
+
+    ret
+
+draw_bottom_separator:
+    movw $bottom_left_corner, %si
+    call print
+    movw $separator, %si
+    call print
+    movw $bottom_right_corner, %si
+    call print
+
+    ret
+
+print_main_window:
     call reset_screen
 
-    movw $home_str, %si
-    mov $0x0, %ah
+    call draw_top_separator
+
+    /* Print the welcome message */
+    movw $straight_line, %si
     call print
+    movw $home_str, %si
+    call print
+    movw $straight_line_end, %si
+    call print
+
+    /* Print the middle separator */
+    call draw_middle_separator
+
+    /* Print kernel status */
+    movw $straight_line, %si
+    call print
+    movw $kernel_str, %si
+    call print
+    movw $straight_line_end, %si
+    call print
+
+    ret
+
+_stage2:
+    call print_main_window
 
     /* Read reserved_blocks */
     movw _start+14, %bx
@@ -261,11 +335,6 @@ read_loop:
 reading_same_segment:
     /* decrements %cx and loops if nonzero */
     loop read_loop
-
-
-    movw $kernel_str, %si
-    mov $0x0, %ah
-    call print
 
     call detect_memory_size
 
@@ -309,8 +378,29 @@ set_a20:
     ret                                                                                
 
 set_video_mode:
+    /* Print resolution choice */
+    movw $straight_line, %si
+    call print
     movw $choice_str, %si
     call print
+    movw $straight_line_end, %si
+    call print
+
+    movw $straight_line, %si
+    call print
+    movw $choice_1_str, %si
+    call print
+    movw $straight_line_end, %si
+    call print
+
+    movw $straight_line, %si
+    call print
+    movw $choice_2_str, %si
+    call print
+    movw $straight_line_end, %si
+    call print
+
+    call draw_bottom_separator
 
     /* Print message asking for resolution choice */
     /* Wait for key press */
@@ -369,57 +459,22 @@ detect_memory_size:
 /* AX/BX already contain the required values */
 use_ax:
 print_memory_size:
-    push %ax
+    movw $straight_line, %si
+    call print
     movw $mem_str, %si
     call print
-    pop %ax
-
-    push %ax
-    call print_hex
-    pop %ax
-
-    movw $new_line_str, %si
+    movw $straight_line_end, %si
     call print
     ret
     
 mem_error:
     /* Handle error */
+    movw $straight_line, %si
+    call print
     movw $memory_error_str, %si
     call print
-    ret
-
-/* Print a 16-bit register value in hexadecimal */
-print_hex:
-    /* Assuming AX contains the value to print */
-    push %ax  /* Save AX */
-    push %dx  /* Save DX */
-
-    /* Print each nibble */
-    mov $4, %cx
-.hex_loop:
-    rol $4, %ax
-    mov %al, %dl
-    and $0x0F, %dl
-    cmp $0x09, %dl
-    jg .letter
-    add $0x30, %dl  /* Convert to ASCII number */
-    jmp .print_digit
-.letter:
-    add $0x37, %dl  /* Convert to ASCII letter */
-.print_digit:
-    mov %dl, %al
-    call print_char
-    loop .hex_loop
-
-    pop %dx  /* Restore DX */
-    pop %ax  /* Restore AX */
-    ret
-
-print_char:
-    /* Print a single character in AL */
-    xor %bh, %bh
-    mov $0x0E, %ah
-    int $0x10
+    movw $straight_line_end, %si
+    call print
     ret
 
 .code32
@@ -431,10 +486,6 @@ enter32:
     jmpl *%eax
 
 .code16
-vesa_info_block:
-    .space 512  /* Allocate space for VESA information block */
-mode_info_block:
-    .space 256  /* Allocate space for VESA mode information block */
 vbe_info_structure:
     . = _start + 510 + 1024 + 512
     .byte 0x55
