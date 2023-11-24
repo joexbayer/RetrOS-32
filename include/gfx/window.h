@@ -102,7 +102,15 @@ struct window {
     struct pcb* owner;
     spinlock_t spinlock;
 
-    uint8_t in_focus;
+    byte_t in_focus;
+    
+    struct {
+        uint16_t width;
+        uint16_t height;
+        byte_t state;
+    } is_maximized;
+
+
 
     unsigned char flags;
     char changed;
