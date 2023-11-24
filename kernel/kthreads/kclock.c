@@ -13,8 +13,15 @@
 
 static char* months[] = {"NAN", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Nov", "Dec"};
 
-void __kthread_entry kclock()
+void __kthread_entry kclock(int argc, char* argv[])
 {   
+    if(argc != 0){
+        for (int i = 0; i < argc; i++){
+            dbgprintf("kclock: argv[%d] = %s\n", i, argv[i]);
+        }
+        
+    }
+
     int angle_id;
     struct time now;
     struct gfx_theme* theme;

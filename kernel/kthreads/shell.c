@@ -234,17 +234,34 @@ EXPORT_KSYMBOL(ed);
 
 void run(int argc, char* argv[])
 {
-	int r = start(argv[1]);
+	pid_t pid;
+
+	int r = start(argv[1], argc-1, &argv[1]);
 	if(r >= 0){
 		twritef("Kernel thread started\n");
 		return;
 	}
 
-	int pid = pcb_create_process(argv[1], argc-1, &argv[1], PCB_FLAG_KERNEL);
-	if(pid < 0){
-		twritef("%s does not exist\n", argv[1]);
+	pid = pcb_create_process(argv[1], argc-1, &argv[1], PCB_FLAG_KERNEL);
+	if(pid > 0){
+		pcb_await(pid);
+		return;
+	}
+
+	void (*ptr)(int argc, char* argv[]) = (void (*)(int argc, char* argv[])) ksyms_resolve_symbol(argv[1]);
+	if(ptr == NULL){
+		twritef("Unknown command\n");
+		return;
+	}
+
+	pid = pcb_create_kthread(ptr, argv[1], argc-1, &argv[1]);
+	if(pid > 0){
+		twritef("Kernel thread %s started\n", argv[1]);
+		pcb_await(pid);
+		return;
 	}
 	
+	twritef("Unknown command\n");
     return;
 }
 EXPORT_KSYMBOL(run);
@@ -459,7 +476,6 @@ void shell_put(unsigned char c)
 		
 		terminal_commit();
 		reset_shell();
-		
 		return;
 	}
 
@@ -502,9 +518,9 @@ void testfn()
 }
 
 int c_test = 0;
-void __kthread_entry shell()
+void __kthread_entry shell(int argc, char* argv[])
 {
-	dbgprintf("shell is running!\n");
+	dbgprintf("shell is running %d!\n", argc);
 
 	testfn();
 	struct window* window = gfx_new_window(SHELL_WIDTH, SHELL_HEIGHT, GFX_IS_RESIZABLE);
@@ -512,12 +528,11 @@ void __kthread_entry shell()
 		warningf("Failed to create window for shell");
 		return;
 	}
-
-	terminal_attach(&term);
 	
 	dbgprintf("shell: window 0x%x\n", window);
 	kernel_gfx_draw_rectangle(current_running->gfx_window, 0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_VGA_BG);
 
+	terminal_attach(&term);
 
 	struct mem_info minfo;
     get_mem_info(&minfo);

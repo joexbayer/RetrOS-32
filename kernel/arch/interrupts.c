@@ -112,14 +112,6 @@ void load_data_segments(int seg)
 /* Main interrupt handler, calls interrupt specific hanlder if installed. */
 void isr_handler(struct registers regs)
 {	
-	/* dump registers
-	dbgprintf("EAX: 0x%x EBX: 0x%x ECX: 0x%x EDX: 0x%x\n", regs.eax, regs.ebx, regs.ecx, regs.edx);
-	dbgprintf("ESP: 0x%x EBP: 0x%x ESI: 0x%x EDI: 0x%x\n", regs.esp, regs.ebp, regs.esi, regs.edi);
-	dbgprintf("EIP: 0x%x CS: 0x%x EFLAGS: 0x%x USERESP: 0x%x SS: 0x%x\n", regs.eip, regs.cs, regs.eflags, regs.useresp, regs.ss);
-	dbgprintf("DS: 0x%x\n", regs.ds);
-	dbgprintf("INT: %d\n", regs.int_no);
-	dbgprintf("ERR: %d\n", regs.err_code); */
-
 	interrupt_counter[regs.int_no]++;
 	if(regs.int_no < 32){
 		__interrupt_exception_handler(regs.int_no);

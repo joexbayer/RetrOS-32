@@ -351,8 +351,6 @@ struct window* gfx_new_window(int width, int height, window_flag_t flags)
 
     w->flags = flags;
 
-    dbgprintf("Window flags: %x\n", flags);
-
     /* Set default ops */
     w->ops = &default_window_ops;
     w->draw = &default_window_draw_ops;
@@ -368,15 +366,19 @@ struct window* gfx_new_window(int width, int height, window_flag_t flags)
         w->height += 16;
     }
 
+    w->owner = current_running;
     w->pitch = w->inner_width;
     w->x = 32;
     w->y = 32;
-    w->owner = current_running;
+
     w->changed = 1;
+
     w->color.border = 0;
     w->color.header = 0;
     w->color.text = 0;
     w->spinlock = 0;
+
+    w->next = NULL;
 
     if(flags & GFX_IS_RESIZABLE){
         w->is_resizable = 1;

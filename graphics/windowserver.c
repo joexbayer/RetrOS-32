@@ -42,6 +42,8 @@ static int ws_init(struct windowserver* ws)
 {
     ERR_ON_NULL(ws);
 
+    dbgprintf("[WSERVER] Initializing window manager.\n");
+
     ws->sleep_time = WINDOW_SERVER_SLEEP_TIME;
     ws->_is_fullscreen = false;
 
@@ -52,6 +54,7 @@ static int ws_init(struct windowserver* ws)
     }
     ws->_wm = wm;
     ws->workspace = 0;
+
 
     ws->background = palloc(VBE_SIZE());
     if(ws->background == NULL){
@@ -256,7 +259,7 @@ static int ws_draw(struct windowserver* ws)
 {
     ERR_ON_NULL(ws);
     WS_VALIDATE(ws);
-
+    
     /* get state variables */
     int mouse_changed = mouse_get_event(&ws->m);
     get_current_time(&ws->time);
@@ -297,14 +300,15 @@ struct windowserver* ws_new()
     }
 
     ws->ops = &ws_default_ops;
-
-    kref_get(&ws->_krefs);
+    kref_init(&ws->_krefs);
 
     if(ws->ops->init(ws) < 0){
         kfree(ws);
         return NULL;
     }
 
+
+    kref_get(&ws->_krefs);
     return ws;
 }
 

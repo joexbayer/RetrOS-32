@@ -12,7 +12,7 @@ void error_main();
 void tcpd();
 void image_viewer();
 
-error_t start(char* name);
+error_t start(char* name, int argc, char* argv[]);
 error_t register_kthread(void (*f)(), char* name);
 void kthread_entry(int argc, char* args[]);
 

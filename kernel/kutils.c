@@ -78,21 +78,20 @@ int exec_cmd(char* str)
 	args.argc = parse_arguments(str, args.data);
 	if(args.argc == 0) return -1;
 
-    for (int i = 0; i < args.argc; i++)
-    {
+    for (int i = 0; i < args.argc; i++){
         dbgprintf("%d: %s\n", args.argc, args.argv[i]);
     }
-    
-    dbgprintf("%s %s\n", args.argv[0], str);
 
 	void (*ptr)(int argc, char* argv[]) = (void (*)(int argc, char* argv[])) ksyms_resolve_symbol(args.argv[0]);
 	if(ptr == NULL){
 		return -1;
 	}
 
-	ptr(args.argc, args.argv);
-	gfx_commit();
 
+    /* execute command */
+	ptr(args.argc, args.argv);
+
+	gfx_commit();
 
 	return 0;
 }
@@ -132,6 +131,14 @@ void kernel_panic(const char* reason)
     reason, pcb->pid, pcb->name, pcb->ctx.esp, pcb->ctx.ebp, pcb->kesp, pcb->kebp, pcb->ctx.eip, pcb_status[pcb->state], pcb->stackptr, (int)((pcb->stackptr+0x2000-1) - pcb->ctx.esp), (pcb->stackptr+0x2000-1), pcb->ctx.esp,  pcb->page_dir, pcb->cs, pcb->ds);
 
     PANIC();
+}
+
+int kref_init(struct kref* ref)
+{
+    ref->refs = 0;
+    ref->spinlock = 0;
+
+    return 0;
 }
 
 int kref_get(struct kref* ref)

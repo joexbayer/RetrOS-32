@@ -345,7 +345,7 @@ EXPORT_KTHREAD(taskbar);
 
 static void __callback taskbar_terminal()
 {
-    start("shell");
+    start("shell",  0, NULL);
 }
 
 static void __callback taskbar_finder()

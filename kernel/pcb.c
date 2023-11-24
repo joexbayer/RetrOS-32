@@ -62,6 +62,47 @@ static int __pcb_init_kernel_stack(struct pcb* pcb)
 	return ERROR_OK;
 }
 
+static int pcb_kthread_free_args(struct pcb* pcb)
+{
+	ERR_ON_NULL(pcb);
+
+	if(pcb->args == 0) return ERROR_OK;
+
+	for (int i = 0; i < pcb->args; i++){
+		kfree(pcb->argv[i]);
+	}
+	kfree(pcb->argv);
+
+	return ERROR_OK;
+}
+
+static error_t pcb_kthread_init_args(struct pcb* pcb, int argc, char** argv)
+{	
+	ERR_ON_NULL(pcb);
+	if(argc == 0) return ERROR_OK;
+
+	dbgprintf("[PCB] Allocating %d args\n", argc);
+
+	/* copy and allocate space for args */
+	pcb->argv = kalloc(sizeof(char*)*argc);
+	if(pcb->argv == NULL){
+		return -ERROR_ALLOC;
+	}
+
+	for (int i = 0; i < argc; i++){
+		pcb->argv[i] = kalloc(100);
+		if(pcb->argv[i] == NULL){
+			return -ERROR_ALLOC;
+		}
+		memcpy(pcb->argv[i], argv[i], strlen(argv[i])+1);	
+	}
+
+	pcb->args = argc;
+
+	return ERROR_OK;
+}
+
+
 static struct pcb* __pcb_get_free()
 {
 	ASSERT_CRITICAL();
@@ -222,6 +263,23 @@ struct pcb* pcb_get_by_pid(int pid)
 	return &pcb_table[pid];
 }
 
+struct pcb* pcb_get_by_name(char* name)
+{
+	for (int i = 0; i < MAX_NUM_OF_PCBS; i++){
+		if(strncmp(pcb_table[i].name, name, strlen(name)) == 0){
+			return &pcb_table[i];
+		}
+	}
+	return NULL;
+}
+
+int pcb_await(int pid)
+{
+	if(pid < 0 || pid > MAX_NUM_OF_PCBS) return -1;
+	while(pcb_table[pid].state != STOPPED);
+	return 0;
+}
+
 
 void pcb_dbg_print(struct pcb* pcb)
 {
@@ -265,8 +323,10 @@ int pcb_cleanup_routine(void* arg)
 	case PCB_THREAD:
 		vmem_cleanup_process_thead(pcb);
 		break;
-	default:
-		vmem_free_allocations(pcb);
+	default:{
+			pcb_kthread_free_args(pcb);
+			vmem_free_allocations(pcb);
+		}
 		break;
 	}
 	kfree((void*)pcb->stackptr);
@@ -378,7 +438,6 @@ error_t pcb_create_process(char* program, int argc, char** argv, pcb_flag_t flag
 	/* Run */
 	return pcb->pid;
 }
-
 /**
  * @brief Add a pcb to the list of running proceses.
  * Also instantiates the PCB itself.
@@ -387,7 +446,7 @@ error_t pcb_create_process(char* program, int argc, char** argv, pcb_flag_t flag
  * @param name name of process
  * @return int amount of running processes, -1 on error.
  */
-error_t pcb_create_kthread(void (*entry)(), char* name)
+error_t pcb_create_kthread(void (*entry)(), char* name, int argc, char** argv)
 {   
 	ENTER_CRITICAL();
 	
@@ -424,6 +483,15 @@ error_t pcb_create_kthread(void (*entry)(), char* name)
 	if(pcb->allocations == NULL){
 		__pcb_free(pcb);
 		dbgprintf("[PCB] Failed to allocate memory for virtual allocations\n");
+		LEAVE_CRITICAL();
+		return -ERROR_ALLOC;
+	}
+
+	dbgprintf("[PCB] Allocating %d args\n", argc);
+	ret = pcb_kthread_init_args(pcb, argc, argv);
+	if(ret < 0){
+		__pcb_free(pcb);
+		dbgprintf("[PCB] Failed to allocate memory for args\n");
 		LEAVE_CRITICAL();
 		return -ERROR_ALLOC;
 	}

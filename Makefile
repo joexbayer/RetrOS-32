@@ -194,7 +194,7 @@ vdi: cleanvid docker
 	qemu-img convert -f raw -O vdi boot.img boot.vdi
 
 qemu:
-	sudo qemu-system-i386 -device e1000,netdev=net0 -serial stdio -netdev user,id=net0 -object filter-dump,id=net0,netdev=net0,file=dump.dat filesystemv2.img
+	sudo qemu-system-i386 -no-reboot -device e1000,netdev=net0 -serial stdio -netdev user,id=net0 -object filter-dump,id=net0,netdev=net0,file=dump.dat filesystemv2.img -m 32m
 
 sync:
 	mkdir -p mnt

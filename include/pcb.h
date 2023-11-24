@@ -64,7 +64,7 @@ struct pcb {
     uintptr_t thread_eip;
     /* DO NOT NOT CHANGE ABOVE.*/
     char name[PCB_MAX_NAME_LENGTH];
-    pcb_state_t state;
+    volatile pcb_state_t state;
     int16_t pid;
     uint16_t sleep;
     uint32_t stackptr;
@@ -135,10 +135,15 @@ struct pcb_queue {
 
 void init_pcbs();
 void start_pcb(struct pcb* pcb);
-error_t pcb_create_kthread( void (*entry)(), char* name);
+
+struct pcb* pcb_get_by_pid(int pid);
+struct pcb* pcb_get_by_name(char* name);
+
+error_t pcb_create_kthread( void (*entry)(), char* name, int argc, char** argv);
 error_t pcb_create_thread(struct pcb* parent, void (*entry)(), void* arg, byte_t flags);
 error_t pcb_create_process(char* program, int args, char** argv, pcb_flag_t flags);
 
+int pcb_await(int pid);
 void pcb_kill(int pid);
 
 void pcb_dbg_print(struct pcb* pcb);
@@ -153,14 +158,12 @@ struct pcb_queue* pcb_new_queue();
 void _start_pcb(struct pcb* pcb);
 void context_switch_entry();
 
-struct pcb* pcb_get_by_pid(int pid);
 
 /* declaration in helpers.s */
 void pcb_restore_context();
 void pcb_save_context();
 
 void idletask();
-void dummytask();
 void Genesis();
 
 

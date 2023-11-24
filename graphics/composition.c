@@ -75,6 +75,8 @@ void __kthread_entry gfx_compositor_main()
         dbgprintf("[WSERVER] Could not allocate memory for window server.\n");
         return;
     }
+
+    dbgprintf("[WSERVER] Initializing window server...\n");
     
     ws->ops->set_background(ws, 3);
 
