@@ -27,6 +27,7 @@ static void gfx_default_mouse_down(struct window* window, int x, int y);
 static void gfx_default_mouse_up(struct window* window, int x, int y);
 static void gfx_default_hover(struct window* window, int x, int y);
 static void gfx_window_resize(struct window* w, int width, int height);
+static int gfx_window_maximize(struct window* window);
 
 /* default window ops struct */
 static struct window_ops default_window_ops = {
@@ -35,7 +36,10 @@ static struct window_ops default_window_ops = {
     .mouseup = &gfx_default_mouse_up,
     .hover = &gfx_default_hover,
     .resize = &gfx_window_resize,
-    .move = &kernel_gfx_set_position
+    .move = &kernel_gfx_set_position,
+    .destroy = &gfx_destory_window,
+    .maximize = &gfx_window_maximize
+
 };
 
 /* default windows draw ops */
@@ -61,15 +65,20 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
     struct gfx_theme* theme = kernel_gfx_current_theme();
 
     if((window->is_moving.state == GFX_WINDOW_MOVING || window->resize) && !HAS_FLAG(window->flags, GFX_IS_IMMUATABLE)){
-        /* draw outline of window */
-        vesa_line_horizontal(buffer, window->x, window->y, window->width, COLOR_VGA_DARKEST_GRAY);
-        vesa_line_horizontal(buffer, window->x, window->y+window->height, window->width, COLOR_VGA_DARKEST_GRAY);
-        vesa_line_vertical(buffer, window->x, window->y, window->height, COLOR_VGA_DARKEST_GRAY);
-        vesa_line_vertical(buffer, window->x+window->width, window->y, window->height, COLOR_VGA_DARKEST_GRAY);
+        vesa_striped_line_horizontal(buffer, window->x, window->y, window->width, COLOR_VGA_DARKEST_GRAY, 2);
+        vesa_striped_line_horizontal(buffer, window->x+2, window->y, window->width-2, COLOR_VGA_LIGHTEST_GRAY, 4);
+        
+        vesa_striped_line_horizontal(buffer, window->x, window->y+window->height, window->width, COLOR_VGA_DARKEST_GRAY, 2);
+        vesa_striped_line_horizontal(buffer, window->x+2, window->y+window->height, window->width-2, COLOR_VGA_LIGHTEST_GRAY, 4);
+
+        vesa_striped_line_vertical(buffer, window->x, window->y, window->height, COLOR_VGA_DARKEST_GRAY, 2);
+        vesa_striped_line_vertical(buffer, window->x, window->y+2, window->height-2, COLOR_VGA_LIGHTEST_GRAY, 4);
+
+        vesa_striped_line_vertical(buffer, window->x+window->width, window->y, window->height, COLOR_VGA_DARKEST_GRAY, 2);
+        vesa_striped_line_vertical(buffer, window->x+window->width, window->y+2, window->height-2, COLOR_VGA_LIGHTEST_GRAY, 4);
 
         window->changed = 0;
         return;
-
     }
 
     int background_color = window->in_focus ? window->color.border == 0 ? theme->window.border : window->color.border : theme->window.border;
@@ -97,7 +106,7 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
         color_t header_text_color = window->in_focus ? 0x0f : COLOR_VGA_LIGHT_GRAY;
 #else 
         color_t header_color = theme->window.background;
-        color_t header_text_color = 0x00;
+        color_t header_text_color = window->in_focus ? 0x00 : COLOR_VGA_LIGHT_GRAY;
 #endif // DEBUG
 
         vesa_fillrect(buffer, window->x+6, window->y-4, window->width-8, 12, theme->window.background);
@@ -320,6 +329,22 @@ int gfx_destory_window(struct window* w)
 
     return ERROR_OK;
 
+}
+
+
+static int gfx_window_maximize(struct window* window)
+{
+    ERR_ON_NULL(window);
+
+    gfx_window_resize(window, vbe_info->width-16, vbe_info->height-40);
+
+    window->ops->move(window, 0, 26);
+
+    CLEAR_FLAG(window->flags, GFX_IS_MOVABLE);
+
+    window->changed = 1;
+
+    return ERROR_OK;
 }
 
 /**

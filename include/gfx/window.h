@@ -41,6 +41,8 @@ struct window_ops {
     void (*mouseup)(struct window*, int x, int y);
     void (*resize)(struct window*, int width, int height);
     void (*move)(struct window*, int x, int y);
+    int (*destroy)(struct window*);
+    int (*maximize)(struct window*);
 };
 
 /* window draw ops */

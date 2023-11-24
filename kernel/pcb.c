@@ -21,6 +21,9 @@
 #include <util.h>
 #include <errors.h>
 
+#include <syscalls.h>
+#include <syscall_helper.h>
+
 #include <fs/fs.h>
 
 static struct pcb pcb_table[MAX_NUM_OF_PCBS];
@@ -279,6 +282,7 @@ int pcb_await(int pid)
 	while(pcb_table[pid].state != STOPPED);
 	return 0;
 }
+EXPORT_SYSCALL(SYSCALL_AWAIT_PROCESS, pcb_await);
 
 
 void pcb_dbg_print(struct pcb* pcb)
@@ -477,7 +481,6 @@ error_t pcb_create_kthread(void (*entry)(), char* name, int argc, char** argv)
 
 	memcpy(pcb->name, name, strlen(name)+1);
 	
-	pcb->page_dir = kernel_page_dir;
 	/* this is done for processes in vmem.c, should probably be moved there? */
 	pcb->allocations = kalloc(sizeof(struct virtual_allocations));
 	if(pcb->allocations == NULL){
@@ -486,6 +489,8 @@ error_t pcb_create_kthread(void (*entry)(), char* name, int argc, char** argv)
 		LEAVE_CRITICAL();
 		return -ERROR_ALLOC;
 	}
+	memset(pcb->allocations, 0, sizeof(struct virtual_allocations));
+
 
 	dbgprintf("[PCB] Allocating %d args\n", argc);
 	ret = pcb_kthread_init_args(pcb, argc, argv);
@@ -495,9 +500,6 @@ error_t pcb_create_kthread(void (*entry)(), char* name, int argc, char** argv)
 		LEAVE_CRITICAL();
 		return -ERROR_ALLOC;
 	}
-
-	pcb->allocations->head = NULL;
-	pcb->allocations->spinlock = 0;
 
 	get_scheduler()->ops->add(get_scheduler(), pcb);
 

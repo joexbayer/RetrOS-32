@@ -32,6 +32,7 @@ struct windowmanager_ops {
     /* draw all windows */
     int (*draw)(struct windowmanager *wm, struct window *window);
     int (*push_front)(struct windowmanager *wm, struct window *window);
+    int (*push_back)(struct windowmanager *wm, struct window *window);
     int (*mouse_event)(struct windowmanager *wm, int x, int y, char flags);
     /* select a workspace */
     int (*workspace)(struct windowmanager *wm, int workspace);

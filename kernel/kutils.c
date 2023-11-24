@@ -120,7 +120,7 @@ void kernel_panic(const char* reason)
 
     const char* message = "KERNEL PANIC";
     int message_len = strlen(message);
-    //vesa_fillrect((uint8_t*)vbe_info->framebuffer, 0, 0, vbe_info->width, vbe_info->height, 1);
+    vesa_fillrect((uint8_t*)vbe_info->framebuffer, 0, 0, vbe_info->width, vbe_info->height, 1);
 
     for (int i = 0; i < message_len; i++){
         vesa_put_char16((uint8_t*)vbe_info->framebuffer, message[i], 16+(i*16), vbe_info->height/3 - 24, 15);

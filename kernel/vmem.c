@@ -753,11 +753,14 @@ void vmem_init_kernel()
 	vmem_add_table(kernel_page_dir, start, kernel_heap_memory_table, SUPERVISOR);
 
 	/* identity map rest of memory above 4MB */
+	dbgprintf("Initiating memory from 0x%x - %d\n", 0x400000, ((total_mem)/(1024*1024)) - 4);
 	for (int i = 1; i < ((total_mem)/(1024*1024)) - 4; i++){
 		uint32_t* kernel_page_table_memory = vmem_default->ops->alloc(vmem_default);;
-		for (int addr = 0x400000*i; addr < 0x400000*(i+1); addr += PAGE_SIZE)
+		for (int addr = 0x400000*i; addr < 0x400000*(i+1); addr += PAGE_SIZE){
 			vmem_map(kernel_page_table_memory, addr, addr, SUPERVISOR);
+		}
 		vmem_add_table(kernel_page_dir, 0x400000*i, kernel_page_table_memory, SUPERVISOR);
+		dbgprintf("Initiated memory between 0x%x and 0x%x\n", 0x400000*i, 0x400000*(i+1));
 	}
 	dbgprintf("Initiated memory between 0x%x and 0x%x (Extended)\n", 0x400000, 0x400000 + total_mem - 4*1024*1024);
 	

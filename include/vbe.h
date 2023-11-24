@@ -78,10 +78,24 @@ inline unsigned char* getpixel(uint8_t* buffer, int x,int y, int pitch) {
     return pixel_offset;
 }
 
+inline void vesa_striped_line_horizontal(uint8_t* buffer, int x, int y, int length, int color, int stripe_width)
+{
+    for (int i = x; i < (x+length); i++)
+        if (i % stripe_width == 0)
+            putpixel(buffer, i, y, color, vbe_info->pitch);
+}
+
 inline void vesa_line_horizontal(uint8_t* buffer, int x, int y, int length, int color)
 {
     for (int i = x; i < (x+length); i++)
         putpixel(buffer, i, y, color, vbe_info->pitch);
+}
+
+inline void vesa_striped_line_vertical(uint8_t* buffer, int x, int y, int length, int color, int stripe_width)
+{
+    for (int i = y; i < (y+length); i++)
+        if (i % stripe_width == 0)
+            putpixel(buffer, x, i, color, vbe_info->pitch);
 }
 
 inline void vesa_line_vertical(uint8_t* buffer, int x, int y, int length, int color)
