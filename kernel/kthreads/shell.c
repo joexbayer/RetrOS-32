@@ -235,6 +235,7 @@ EXPORT_KSYMBOL(ed);
 void exec(int argc, char* argv[])
 {
 	pid_t pid;
+	byte_t idx = 1;
 	bool_t kthread_as_deamon = false;
 
 	if(argc == 1){
@@ -252,30 +253,30 @@ void exec(int argc, char* argv[])
 		default:
 			break;
 		}
+		idx++;
 	}
 
 
-	pid = start(argv[1], argc-1, &argv[1]);
+	pid = start(argv[idx], argc-idx, &argv[idx]);
 	if(pid >= 0){
 		twritef("Kernel thread started\n");
 		return;
 	}
 
-	pid = pcb_create_process(argv[1], argc-1, &argv[1], PCB_FLAG_KERNEL);
+	pid = pcb_create_process(argv[idx], argc-idx, &argv[idx], PCB_FLAG_KERNEL);
 	if(pid > 0){
 		pcb_await(pid);
 		return;
 	}
 
-	void (*ptr)(int argc, char* argv[]) = (void (*)(int argc, char* argv[])) ksyms_resolve_symbol(argv[1]);
+	void (*ptr)(int argc, char* argv[]) = (void (*)(int argc, char* argv[])) ksyms_resolve_symbol(argv[idx]);
 	if(ptr == NULL){
 		twritef("Unknown command\n");
 		return;
 	}
 
-	pid = pcb_create_kthread(ptr, argv[1], argc-1, &argv[1]);
+	pid = pcb_create_kthread(ptr, argv[idx], argc-idx, &argv[idx]);
 	if(pid > 0){
-		twritef("Kernel thread %s started\n", argv[1]);
 		if(kthread_as_deamon) pcb_await(pid);
 		return;
 	}

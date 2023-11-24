@@ -77,6 +77,8 @@ static int ws_add(struct windowserver* ws, struct window* window)
         return -ERROR_OPS_CORRUPTED;
     }
 
+    dbgprintf("[WSERVER] Added window %x.\n", window);
+
     return 0;
 }
 
