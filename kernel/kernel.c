@@ -35,14 +35,13 @@
 #include <virtualdisk.h>
 
 #include <gfx/window.h>
+#include <gfx/windowserver.h>
 #include <gfx/composition.h>
 #include <gfx/api.h>
 #include <net/api.h>
 
 #include <colors.h>
-
 #include <fs/fs.h>
-
 #include <multiboot.h>
 
 #define TEXT_COLOR 15  /* White color for text */
@@ -54,11 +53,8 @@ static void kernel_boot_printf(const char* message) {
 }
 
 struct kernel_context {
-	struct scheduler sched_ctx;
-	/* netdriver? */
-	/* diskdriver? */
-	/* fs? */
-	/* graphics?? */
+	struct scheduler* sched_ctx;
+	struct windowserver* window_server;
 	struct memory_info {
 		unsigned int extended_memory_low;
 		unsigned int extended_memory_high;
