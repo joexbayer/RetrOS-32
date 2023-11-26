@@ -24,7 +24,6 @@ static void vmem_free(struct virtual_memory_allocator* vmem, void* addr);
 uint32_t* kernel_page_dir = NULL;
 
 static const int vmem_default_permissions = SUPERVISOR | PRESENT | READ_WRITE;
-static const int vmem_default_permissions_read = SUPERVISOR | PRESENT;
 static const int vmem_user_permissions = USER | PRESENT | READ_WRITE;
 
 static int VMEM_START_ADDRESS = 0;
@@ -211,11 +210,11 @@ static int vmem_free_page_region(struct pcb* pcb, struct vmem_page_region* regio
 		if(region->bits[i] == 0) continue;
 		
 		/* Free the physical page */
-		void* paddr = (void*) vmem_default->start + (region->bits[i] * PAGE_SIZE);
+		void* paddr = (void*) (vmem_default->start + (region->bits[i] * PAGE_SIZE));
 		vmem_default->ops->free(vmem_default, (void*) paddr);
 
 		/* Unmap the virtual page */
-		void* vaddr = (void*) region->basevaddr + (i * PAGE_SIZE);
+		void* vaddr = (void*) (region->basevaddr + (i * PAGE_SIZE));
 		dbgprintf("Unmapping 0x%x\n", vaddr);
 		uint32_t* heap_table = vmem_get_page_table(pcb, (uint32_t)vaddr);
 		dbgprintf("Table: 0x%x\n", heap_table);
@@ -473,7 +472,7 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 	 * This means we need to allocate a new physical page allocation.
 	 * @note "iter" will point to the last element in the allocation list.
 	 */
-	struct vmem_page_region* physical = vmem_create_page_region(pcb, (void*)iter->region->basevaddr + iter->region->size, num_pages, USER);
+	struct vmem_page_region* physical = vmem_create_page_region(pcb, (void*)((byte_t*)iter->region->basevaddr + iter->region->size), num_pages, USER);
 	if(physical == NULL){
 		kfree(allocation);
 		warningf("Out of heap memory\n");
@@ -754,8 +753,6 @@ void vmem_cleanup_process(struct pcb* pcb)
  */
 void vmem_init_kernel()
 {	
-	uintptr_t vmem_start 	= memory_map_get()->virtual.from;
-	int vmem_size 			= memory_map_get()->virtual.total;
 	int total_mem			= memory_map_get()->total;
 
 	kernel_page_dir = vmem_manager->ops->alloc(vmem_manager);
