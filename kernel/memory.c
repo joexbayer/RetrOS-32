@@ -119,7 +119,7 @@ void* malloc(unsigned int size)
 		return NULL;
 	}
 
-	vmem_dump_heap(current_running->allocations->head);
+	//vmem_dump_heap(current_running->allocations->head);
 
 	dbgprintf("Allocated %d bytes at %x\n", size, ptr);
 
