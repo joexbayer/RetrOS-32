@@ -229,20 +229,6 @@ static int __ws_key_event(struct windowserver* ws, unsigned char key)
             }
         }
         break;
-    case F9: {
-            /* Maximize current focus windows */
-            struct window* w = ws->_wm->windows;
-            if(w == NULL){break;}
-
-            w->ops->maximize(w);
-            struct gfx_event e = {
-                .data = w->inner_width,
-                .data2 = w->inner_height,
-                .event = GFX_EVENT_RESOLUTION
-            };
-            gfx_push_event(w, &e);
-        }
-        break;
     case F10:{
             /* Fullscreen of window current in focus*/
             struct window* w = ws->_wm->windows;
