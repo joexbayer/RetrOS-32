@@ -75,14 +75,6 @@ int gfx_set_taskbar(pid_t pid)
 void __kthread_entry gfx_compositor_main()
 {
     /* memory test */
-	for (int i = 0; i < (15 * 1024*1024)+(1*1024*1024); i++){
-		volatile char value = *(volatile char *)i;
-		*(volatile char *)i = value;
-
-		if (i % (1024*1024) == 0){
-			dbgprintf("[KERNEL] 0x%x MB tested\n", i);
-		}
-	}
 
     ws = ws_new();
     if(ws == NULL){

@@ -91,6 +91,7 @@ void kfree(void* ptr);
  */
 void free(void* ptr)
 {
+	return;
 	dbgprintf("Freeing %x\n", ptr);
 	if(ptr == NULL)return;
 		
