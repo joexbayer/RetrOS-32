@@ -8,7 +8,6 @@
  * @copyright Copyright (c) 2022
  * 
  */
-#include <editor.h>
 #include <pci.h>
 #include <keyboard.h>
 #include <terminal.h>
@@ -150,22 +149,6 @@ void fat16(){
 
 	/* TODO USE FS */
 	fat16_create_directory("BIN     ");
-	fat16_change_directory("BIN     ");
-
-	/* load editor */
-	int fd = fs_open("edit.o", FS_FILE_FLAG_CREATE | FS_FILE_FLAG_WRITE);
-	if(fd < 0){
-		twritef("Failed to create file\n");
-		return;
-	}
-
-	int ret = fs_write(fd, (char*)apps_editor_edit_o, apps_editor_edit_o_len);
-	if(ret < 0){
-		twritef("Failed to write file\n");
-		return;
-	}
-
-	fs_close(fd);
 }
 EXPORT_KSYMBOL(fat16);
 

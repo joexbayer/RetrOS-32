@@ -136,7 +136,6 @@ build: tools
 
 apps:
 	@make -C ./apps/
-	xxd -i apps/editor/edit.o > include/editor.h
 
 iso: compile tests apps tools build img
 	$(TIME-END)
