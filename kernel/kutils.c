@@ -95,6 +95,7 @@ int exec_cmd(char* str)
 
 	return 0;
 }
+EXPORT_KSYMBOL(exec_cmd);
 
 struct unit calculate_size_unit(int bytes)
 {

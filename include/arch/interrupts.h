@@ -50,9 +50,12 @@ struct idt_ptr
 
 
 #define EOI(irq) \
-	if (irq >= 0x28) \
-		outportb(PIC2, 0x20); /* Slave */\
-	outportb(PIC1, 0x20); /* Master */
+    do {\
+        if (irq >= 0x28){\
+		    outportb(PIC2, 0x20); /* Slave */\
+        } \
+        outportb(PIC1, 0x20); /* Master */\
+    } while(0);
 
 extern void isr0(struct registers*);
 extern void isr1(struct registers*);

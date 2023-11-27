@@ -44,8 +44,8 @@ void kernel_gfx_set_position(struct window* w, int x, int y);
 void gfx_inner_box(int x, int y, int w, int h, int fill);
 void gfx_outer_box(int x, int y, int w, int h, int fill);
 
-int gfx_button(int x, int y, int width, int height, const char* name);
-int gfx_button_ext(int x, int y, int width, int height, const char* name, color_t color);
+int gfx_button(int x, int y, int width, int height, char* name);
+int gfx_button_ext(int x, int y, int width, int height, char* name, color_t color);
 
 void gfx_commit();
 

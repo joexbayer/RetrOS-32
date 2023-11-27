@@ -8,6 +8,7 @@
 #include <timer.h>
 #include <terminal.h>
 #include <kutils.h>
+#include <scheduler.h>
 
 #define center_x(size) ((110/2) - ((size*8)/2))
 
@@ -25,7 +26,6 @@ void __kthread_entry kclock(int argc, char* argv[])
     int angle_id;
     struct time now;
     struct gfx_theme* theme;
-    struct gfx_event event;
     
     struct window* w = gfx_new_window(110, 140, 0);
     if(w == NULL){
@@ -72,16 +72,16 @@ void __kthread_entry kclock(int argc, char* argv[])
         kernel_sleep(100);
 
         struct gfx_event event;
-			int ret = gfx_event_loop(&event, GFX_EVENT_NONBLOCKING);
-			if(ret == -1) continue;
+        int ret = gfx_event_loop(&event, GFX_EVENT_NONBLOCKING);
+        if(ret == -1) continue;
 
-			switch (event.event){
-			case GFX_EVENT_EXIT:
-				kernel_exit();
-				break;
-			default:
-				break;
-			}
+        switch (event.event){
+        case GFX_EVENT_EXIT:
+            kernel_exit();
+            break;
+        default:
+            break;
+        }
 
     }
 }

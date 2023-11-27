@@ -46,6 +46,7 @@
 #define SHELL_POSITION shell_height-8
 #define SHELL_MAX_SIZE SHELL_WIDTH/2
 
+void __kthread_entry shell(int argc, char* argv[]);
 
 /* TODO: Move this into a shell struct */
 static uint16_t shell_width = SHELL_WIDTH;
@@ -89,7 +90,6 @@ void reset_shell()
 void ps()
 {
 	int ret;
-	int line = 0;
 	int usage;
 	twritef("  PID  USAGE    TYPE     STATE     NAME\n");
 	for (int i = 1; i < MAX_NUM_OF_PCBS; i++){
@@ -214,6 +214,11 @@ void sh(int argc, char* argv[])
 
 	char* buf = kalloc(32*1024);
 	int ret = fs_read(inode, buf, 32*1024);
+	if(ret < 0){
+		fs_close(inode);
+		twritef("Error reading file\n");
+		return;
+	}
 	
 	script_parse(buf);
 	
@@ -235,7 +240,7 @@ EXPORT_KSYMBOL(ed);
 void exec(int argc, char* argv[])
 {
 	pid_t pid;
-	byte_t idx = 1;
+	ubyte_t idx = 1;
 	bool_t kthread_as_deamon = false;
 
 	if(argc == 1){
@@ -338,6 +343,10 @@ void echo(int argc, char* argv[])
 	}
 
 	twritef("%s\n", argv[1]);
+
+	/* page fault test */
+	int* ptr = (int*) 0x10000000;
+	*ptr = 0xdeadbeef;
 }
 EXPORT_KSYMBOL(echo);
 
@@ -476,7 +485,6 @@ char* welcome = "\n\
  */
 void shell_put(unsigned char c)
 {
-	int ret;
 	unsigned char uc = c;
 
 	if(uc == ARROW_UP){
@@ -606,3 +614,4 @@ void __kthread_entry shell(int argc, char* argv[])
 	kernel_exit();
 }
 EXPORT_KTHREAD(shell);
+EXPORT_KSYMBOL(shell);

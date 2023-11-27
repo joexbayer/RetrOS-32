@@ -31,6 +31,7 @@
 #include <kutils.h>
 #include <errors.h>
 #include <mbr.h>
+#include <diskdev.h>
 
 #include <arch/tss.h>
 
@@ -51,7 +52,7 @@
 
 struct kernel_context kernel_context;
 
-static void kernel_boot_printf(const char* message) {
+static void kernel_boot_printf(char* message) {
     static int kernel_msg = 0;
     vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10 + (kernel_msg++ * LINE_HEIGHT), TEXT_COLOR, message);
 }

@@ -21,6 +21,7 @@
 #include <kutils.h>
 #include <lib/icons.h>
 
+
 /* prototype window ops */
 static void gfx_default_click(struct window* window, int x, int y); 
 static void gfx_default_mouse_down(struct window* window, int x, int y);
@@ -109,7 +110,7 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
         color_t header_text_color = window->in_focus ? 0x00 : COLOR_VGA_LIGHT_GRAY;
 #endif // DEBUG
 
-        vesa_fillrect(buffer, window->x+6, window->y-4, window->width-8, 12, theme->window.background);
+        vesa_fillrect(buffer, window->x+6, window->y-4, window->width-8, 12, header_color);
 
         vesa_line_horizontal(buffer, window->x+4, window->y-4, window->width-8, COLOR_VGA_DARKEST_GRAY);
         vesa_line_horizontal(buffer, window->x+4, window->y-3, window->width-8, COLOR_VGA_LIGHTER_GRAY+2);

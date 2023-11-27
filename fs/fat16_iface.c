@@ -116,7 +116,7 @@ static int fat16_write(struct filesystem* fs, struct file* file, const void* buf
     }
 
     /* update the file size */
-    if ((offset + written) > entry.file_size) {
+    if ((uint32_t)(offset + written) > entry.file_size) {
         entry.file_size = offset + written;
     }
 
@@ -190,8 +190,6 @@ static int fat16_read(struct filesystem* fs, struct file* file, void* buf, int s
  */
 static struct file* fat16_open(struct filesystem* fs, const char* path, int flags)
 {
-    char* name;
-    char* ext;
 
     struct file* file;
     struct fat16_file_identifier id;;

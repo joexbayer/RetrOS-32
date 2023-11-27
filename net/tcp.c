@@ -173,7 +173,7 @@ int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t pus
 		timeout = get_time() + 500;
 
 		/* check if ack was receiver for timeout seconds. */
-		while(get_time() < timeout){
+		while((uint32_t)get_time() < timeout){
 			kernel_yield();
 			if(!net_sock_awaiting_ack(sock)) return ERROR_OK;
 		}
