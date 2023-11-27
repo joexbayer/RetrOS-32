@@ -1,4 +1,5 @@
 #include <kthreads.h>
+#include <scheduler.h>
 #include <pcb.h>
 #include <gfx/window.h>
 #include <terminal.h>

@@ -136,7 +136,6 @@ void _e1000_rx_init()
 }
 
 static int next = 0;
-static int errors = 0;
 int e1000_receive(char* buffer, uint32_t size)
 {
 	int tail = E1000_DEVICE_SET(E1000_RDT);

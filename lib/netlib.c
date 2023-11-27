@@ -71,7 +71,7 @@ int recv_timeout(int socket, void *buffer, int length, int flags, int timeout)
     return invoke_syscall(SYSCALL_NET_SOCK_RECV_TIMEOUT, socket, (int)&net_buffer, timeout);
 }   
 
-int send(int socket, const void *message, int length, int flags)
+int send(int socket, void *message, int length, int flags)
 {
     
     struct net_buffer net_buffer = {
@@ -82,10 +82,8 @@ int send(int socket, const void *message, int length, int flags)
     return invoke_syscall(SYSCALL_NET_SOCK_SEND, socket, (int)&net_buffer, 0);
 }   
 
-int sendto(int socket, const void *message, int length, int flags, const struct sockaddr *dest_addr, socklen_t dest_len)
+int sendto(int socket, void *message, int length, int flags, const struct sockaddr *dest_addr, socklen_t dest_len)
 {
-    
-    
     struct net_buffer net_buffer = {
         .buffer = message,
         .length = length,

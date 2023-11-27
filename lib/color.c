@@ -62,8 +62,7 @@ float color_distance_squared(unsigned char color1, unsigned char color2) {
 /* Function to find the index of the closest color in vga_rgb */
 int rgb_init_color_table()
 {
-    for (int color = 0; color < 256; color++)
-    {
+    for (int color = 0; color < 256; color++){
         int closest_index = 0;
         float min_distance_squared = 255.0 * 255.0; /* Maximum possible squared distance */
         for (int i = 0; i < size; i++) {
@@ -75,4 +74,6 @@ int rgb_init_color_table()
         }
         rgb_trans_table[color] = closest_index;
     }
+
+    return 0;
 }

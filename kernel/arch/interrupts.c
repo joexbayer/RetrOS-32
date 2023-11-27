@@ -50,14 +50,8 @@ static const char* __exceptions_names[32] = {
 	"RESERVED","RESERVED","RESERVED","RESERVED","RESERVED","RESERVED",
 	"RESERVED"
 };
-
-/* Definitions for DIRECTORY_INDEX and TABLE_INDEX macros */
-#define DIRECTORY_INDEX(x) (((x) >> 22) & 0x3FF)
-#define TABLE_INDEX(x) (((x) >> 12) & 0x3FF)
-
 /* Definition for PAGE_TABLE_ADDRESS macro */
 #define PAGE_TABLE_ADDRESS(x) (((x) >> 12) << 12)
-
 #define PRESENT_BIT 0x1
 #define READ_WRITE_BIT 0x2
 #define USER_SUPERVISOR_BIT 0x4
@@ -94,6 +88,7 @@ void print_page_fault_info(unsigned long cr2) {
 
 void page_fault_interrupt(unsigned long cr2, unsigned long err)
 {
+	backtrace();
 	interrupt_counter[14]++;
 	ENTER_CRITICAL();
 	dbgprintf("Page fault: 0x%x (Stack: 0x%x) %d (%s)\n", cr2, current_running->stackptr, err, current_running->name);
@@ -205,6 +200,11 @@ static void init_idt()
 
 	idt_flush((uint32_t)&idt);
 }
+EXPORT_KSYMBOL(_page_fault_entry);
+EXPORT_KSYMBOL(_syscall_entry);
+EXPORT_KSYMBOL(isr_handler);
+EXPORT_KSYMBOL(isr14);
+
 
 void init_interrupts()
 {

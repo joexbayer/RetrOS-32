@@ -276,6 +276,8 @@ int fat16_create_empty_file(const char* path, int directory)
         return -2;
     }
 
+
+    return 0;
 }
 
 /**
@@ -444,9 +446,9 @@ int fat16_directory_entry_debug(struct fat16_directory_entry* entry)
  */
 struct fat16_file_identifier fat16_get_directory_entry(char* path, struct fat16_directory_entry* entry_out)
 {
-    uint32_t index;
+    uint32_t index = 0;
     uint16_t start_block;
-    int last_start_block;
+    int last_start_block = 0;
     struct fat16_directory_entry entry = {0};
 
     dbgprintf("Searching for %s\n", path);

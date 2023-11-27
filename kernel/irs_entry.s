@@ -16,6 +16,9 @@ idt_flush:
 	.global isr\index
 	isr\index:
 		cli
+    pushl %ebp
+    movl %esp, %ebp
+
 		push $0
 		push $\index
 		jmp isr_entry
@@ -25,6 +28,9 @@ idt_flush:
 	.global isr\index
 	isr\index:
 		cli
+    pushl %ebp
+    movl %esp, %ebp
+
 		push $0
 		push $\index
 		jmp isr_entry
@@ -81,29 +87,6 @@ ISR_NO_ERR 47
 
 isr_entry:
   cli
-  /*pushal
-  
-  pushl %ds
-  
-  mov $16, %ax
-  mov %ax, %ds
-  mov %ax, %es
-  mov %ax, %fs
-  mov %ax, %gs
-  
-  call isr_handler
-
-  pop %eax
-  mov %ax, %ds
-  mov %ax, %es
-  mov %ax, %fs
-  mov %ax, %gs
-
-  popal
-
-  popl	%ds
-
-  add $8, %esp*/
 
   pushal
 
@@ -119,6 +102,9 @@ isr_entry:
   popal
   add $8, %esp
 
+  movl %ebp, %esp
+  popl %ebp
+
   iret
 
 syscall_return_value:
@@ -127,6 +113,9 @@ syscall_return_value:
 _syscall_entry:
     cli
     addl $1, cli_cnt
+
+    pushl %ebp
+    movl %esp, %ebp
 
     pushfl
     pushal
@@ -157,6 +146,9 @@ _syscall_entry:
     
     movl	(syscall_return_value), %eax
 
+    movl %ebp, %esp
+    popl %ebp
+
     subl $1, cli_cnt
     iret
 
@@ -167,6 +159,8 @@ page_fault_error:
 .global _page_fault_entry
 _page_fault_entry:
     cli
+    pushl %ebp
+    movl %esp, %ebp
 
     movl	%eax, (page_fault_save)
     popl	%eax
@@ -192,6 +186,9 @@ _page_fault_entry:
     addl	$8, %esp
     
     popl	%ds
-    popal    
+    popal
+
+    movl %ebp, %esp
+    popl %ebp
 
     iret

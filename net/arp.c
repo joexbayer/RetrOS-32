@@ -158,7 +158,7 @@ void net_net_arp_request()
  * 
  * @param skb socket buffer to parse
  */
-uint8_t arp_parse(struct sk_buff* skb)
+int8_t arp_parse(struct sk_buff* skb)
 {
 	struct arp_header* a_hdr = (struct arp_header*) skb->data;
 	skb->hdr.arp = a_hdr;

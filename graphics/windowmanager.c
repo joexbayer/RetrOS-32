@@ -296,7 +296,7 @@ static int wm_default_draw(struct windowmanager* wm, struct window* window)
         wm->ops->draw(wm, window->next);
     }
     
-    gfx_draw_window(wm->composition_buffer, window);
+    window->draw->draw(wm->composition_buffer, window);
 
     return ERROR_OK;
 }

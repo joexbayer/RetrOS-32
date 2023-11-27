@@ -8,9 +8,9 @@ enum {
 };
 
 struct vm {
-    long *text, old_text, *stack;
+    int *text, old_text, *stack;
     char *data;
-    long *pc, *bp, *sp, ax, cycle; // virtual machine registers
+    int *pc, *bp, *sp, ax, cycle; // virtual machine registers
 };
 
 void vm_init(struct vm* vm);

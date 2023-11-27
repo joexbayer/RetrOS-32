@@ -25,7 +25,7 @@ int disk_attached()
 
 char* disk_name()
 {
-    return disk_device.dev->model;
+    return (char*) disk_device.dev->model;
 }
 
 struct diskdev* disk_device_get()
@@ -41,9 +41,9 @@ int disk_size(){
     return 0;
 }
 
-int write_block(char* buf, int block)
+int write_block(void* _buf, int block)
 {
-    //dbgprintf("[DISK] write: 0x%x. Block %d\n", buf, block*512);
+    char* buf = (char*) _buf;
 
     if(disk_device.write == NULL){
         dbgprintf("[DISK] No write function attached\n");
@@ -53,17 +53,20 @@ int write_block(char* buf, int block)
     return disk_device.write(buf, block, 1);
 }
 
-int write_block_offset(char* usr_buf, int size, int offset, int block)
+int write_block_offset(void* _usr_buf, int size, int offset, int block)
 {
     char buf[512];
+    void* usr_buf = (void*) _usr_buf;
+
     disk_device.read((char*)buf, block, 1);
     memcpy(&buf[offset], usr_buf, size);
 
     return write_block(buf, block);
 }
 
-int read_block(char* buf, int block)
+int read_block(void* _buf, int block)
 {
+    char* buf = (char*) _buf;
     if(disk_device.read == NULL){
         dbgprintf("[DISK] No read function attached\n");
         return -1;
@@ -73,9 +76,11 @@ int read_block(char* buf, int block)
     return disk_device.read(buf, block, 1);
 }
 
-int read_block_offset(char* usr_buf, int size, int offset, int block)
+int read_block_offset(void* _usr_buf, int size, int offset, int block)
 {
     char buf[512];
+    byte_t* usr_buf = (byte_t*) _usr_buf;
+
     read_block((char*)buf, block);
     memcpy(usr_buf, &buf[offset], size);
 

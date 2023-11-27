@@ -17,7 +17,7 @@ static int __octal_string_to_int(char *current_char, unsigned int size){
 static int tar_list(int fd)
 {
     struct tar_header header;
-    int bytes_read;
+    unsigned int bytes_read;
 
     while ((bytes_read = fs_read(fd, &header, sizeof(header))) > 0) {
         if (bytes_read < sizeof(header)) {
@@ -47,7 +47,7 @@ static int tar_list(int fd)
 static int tar_extract(int fd)
 {
     struct tar_header header;
-    int bytes_read;
+    unsigned int bytes_read;
 
     while ((bytes_read = fs_read(fd, &header, sizeof(header))) > 0) {
         
