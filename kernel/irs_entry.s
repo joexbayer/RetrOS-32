@@ -16,8 +16,6 @@ idt_flush:
 	.global isr\index
 	isr\index:
 		cli
-    pushl %ebp
-    movl %esp, %ebp
 
 		push $0
 		push $\index
@@ -28,8 +26,6 @@ idt_flush:
 	.global isr\index
 	isr\index:
 		cli
-    pushl %ebp
-    movl %esp, %ebp
 
 		push $0
 		push $\index
@@ -102,9 +98,6 @@ isr_entry:
   popal
   add $8, %esp
 
-  movl %ebp, %esp
-  popl %ebp
-
   iret
 
 syscall_return_value:
@@ -159,8 +152,6 @@ page_fault_error:
 .global _page_fault_entry
 _page_fault_entry:
     cli
-    pushl %ebp
-    movl %esp, %ebp
 
     movl	%eax, (page_fault_save)
     popl	%eax
@@ -187,8 +178,5 @@ _page_fault_entry:
     
     popl	%ds
     popal
-
-    movl %ebp, %esp
-    popl %ebp
 
     iret
