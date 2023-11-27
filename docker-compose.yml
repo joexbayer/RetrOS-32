@@ -2,6 +2,7 @@ version: "3"
 services:
   netos:
     build: .
+    platform: linux/i386
     volumes:
       - ./:/RetrOS-32
     entrypoint: make
