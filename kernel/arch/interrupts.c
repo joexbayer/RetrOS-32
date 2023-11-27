@@ -88,6 +88,18 @@ void print_page_fault_info(unsigned long cr2) {
 
 void page_fault_interrupt(unsigned long cr2, unsigned long err)
 {
+	uintptr_t *stack_ptr;
+    asm("mov %%ebp, %0" : "=r"(stack_ptr)); // Get current base pointer
+	dbgprintf("Stack pointer: 0x%x\n", stack_ptr);
+
+    // Navigate the stack to find the return address
+    stack_ptr = (uintptr_t *)(*stack_ptr); // Move to the previous frame's base pointer
+
+    // Now, stack_ptr points to the previous frame's base pointer
+    uintptr_t return_addr = *(stack_ptr + 1); // The return address is next to the base pointer
+	dbgprintf("Return address: 0x%x\n", return_addr);
+	dbgprintf("Stack pointer: 0x%x\n", stack_ptr);
+
 	backtrace();
 	interrupt_counter[14]++;
 	ENTER_CRITICAL();

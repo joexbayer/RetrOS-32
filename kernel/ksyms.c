@@ -54,14 +54,12 @@ uintptr_t ksyms_resolve_symbol(const char* name)
     return NULL;
 }
 
-void backtrace(void) {
-    uintptr_t* frame_ptr = __builtin_frame_address(0);
-    uintptr_t return_addr;
+void __backtrace_from(uintptr_t* frame_ptr, uintptr_t* return_addr)
+{
     int depth = 0;
 
     dbgprintf("Backtrace:\n");
     while (frame_ptr && depth < KSYMS_MAX_DEPTH) {
-        return_addr = *((uintptr_t*) (frame_ptr + 1));
         dbgprintf("searching for 0x%x\n", return_addr);
         if(return_addr == 0) break;
         if(return_addr > 0x100000) break; // TODO: fix this (it's a hack to prevent backtracing into user space)
@@ -90,8 +88,15 @@ void backtrace(void) {
         }
         
         frame_ptr = (uintptr_t*) (*frame_ptr);
+        return_addr = *((uintptr_t*) (frame_ptr + 1));
         depth++;
     }
+}
+
+void backtrace(void) {
+    uintptr_t* frame_ptr = __builtin_frame_address(0);
+    uintptr_t return_addr;
+    __backtrace_from(frame_ptr, &return_addr);
 }
 EXPORT_KSYMBOL(backtrace);
 
