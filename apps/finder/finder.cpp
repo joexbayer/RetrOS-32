@@ -40,7 +40,6 @@ public:
     }
 
 
-
     int flags;
     String* name;
 private:
@@ -347,8 +346,6 @@ public:
 
         showFiles(0, 0);
 
-        drawTree();
-
         struct gfx_event event;
         while (1){
             int ret = gfx_get_event(&event, GFX_EVENT_BLOCKING);
@@ -377,16 +374,8 @@ private:
     String* path;
 };
 
-void thread(void* arg){
-    
-    printf("thread %x\n", arg);
-}
-
 int main(void)
 {
-    Thread* t = new Thread(thread, 0);
-    t->start((void*)t);
-
     Finder finder;
     finder.Run();
 

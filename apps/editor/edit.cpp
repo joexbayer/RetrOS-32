@@ -40,6 +40,13 @@ void Editor::reDrawHeader()
 }
 
 
+void Editor::scroll(int lines) {
+        scrollY += lines;
+        // Ensure that the scroll position stays within valid range
+        if (scrollY < 0) scrollY = 0;
+        if (scrollY > m_bufferHead) scrollY = m_bufferSize;
+    }
+
 void Editor::Reset()
 {
 	for (int i = 0; i < this->m_bufferSize; i++) this->m_textBuffer[i] = 0;
@@ -53,6 +60,8 @@ void Editor::reDraw(int from, int to)
 	m_x = 0;
 	m_y = 0;
 	from = from <= 0 ? 0 : from;
+	to = to >= m_bufferHead ? m_bufferHead : to;
+
 	/* Skip the unchanged chars */
 	for (int i = 0; i < from; i++){
 		m_x++;
@@ -64,6 +73,14 @@ void Editor::reDraw(int from, int to)
 			m_x = 0;
 			m_y++;
 		}
+	}
+
+	int linesToSkip = scrollY;
+	while (linesToSkip > 0 && from < m_bufferSize) {
+		if (m_textBuffer[from] == '\n') {
+			linesToSkip--;
+		}
+		from++;
 	}
 
 	int line = 0;
@@ -356,13 +373,16 @@ void Editor::putChar(unsigned char c)
 
 			line_end = prevNewline(&m_textBuffer[m_bufferEdit], m_textBuffer);
 			reDraw(m_bufferEdit-line_end+1, m_bufferEdit+moveto+3);
+			reDraw(0, m_bufferSize);
 		}
 		return;
 	case KEY_F3:
-		Save();
+		scroll(1);
+		reDraw(0, m_bufferSize);	
 		return;
 	case KEY_F2:
-		Lex();
+		scroll(-1);
+		reDraw(0, m_bufferSize);
 		return;
 	case KEY_F1:{
 			reDraw(0, m_bufferHead);
