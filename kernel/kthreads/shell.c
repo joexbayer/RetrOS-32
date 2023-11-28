@@ -326,10 +326,6 @@ void echo(int argc, char* argv[])
 	}
 
 	twritef("%s\n", argv[1]);
-
-	/* page fault test */
-	int* ptr = (int*) 0x10000000;
-	*ptr = 0xdeadbeef;
 }
 EXPORT_KSYMBOL(echo);
 

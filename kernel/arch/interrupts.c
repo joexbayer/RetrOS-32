@@ -72,15 +72,18 @@ void print_page_fault_info(unsigned long cr2) {
         /* Get the page table entry */
         page_table_entry = page_table[TABLE_INDEX(cr2)];
 
-        /* Print detailed information */
-        dbgprintf("Page Fault Address: 0x%x\n", cr2);
-        dbgprintf("Page Directory Entry: 0x%x\n", page_dir_entry);
-        dbgprintf("Page Table Entry: 0x%x\n", page_table_entry);
+		/* Print detailed information */
+		dbgprintf("Page Fault Address: 0x%x\n", cr2);
+		dbgprintf("Page Directory Entry: 0x%x\n", page_dir_entry);
 
-        /* Analyzing and printing permissions */
-        dbgprintf("Permissions: %s, %s\n",
-                  (page_table_entry & READ_WRITE_BIT) ? "Read/Write" : "Read-Only",
-                  (page_table_entry & USER_SUPERVISOR_BIT) ? "User" : "Supervisor");
+		if(page_table_entry & PRESENT_BIT){
+			dbgprintf("Page Table Entry: 0x%x\n", page_table_entry);
+
+			/* Analyzing and printing permissions */
+			dbgprintf("Permissions: %s, %s\n",
+					(page_table_entry & READ_WRITE_BIT) ? "Read/Write" : "Read-Only",
+					(page_table_entry & USER_SUPERVISOR_BIT) ? "User" : "Supervisor");
+		}
     } else {
         dbgprintf("Page Directory Entry not present for address 0x%x\n", cr2);
     }
@@ -88,19 +91,16 @@ void print_page_fault_info(unsigned long cr2) {
 
 void page_fault_interrupt(unsigned long cr2, unsigned long err)
 {
-	uintptr_t *stack_ptr;
-    asm("mov %%ebp, %0" : "=r"(stack_ptr)); // Get current base pointer
-	dbgprintf("Stack pointer: 0x%x\n", stack_ptr);
+	// Access the stack frame
+    uint32_t *ebp = (uint32_t*) __builtin_frame_address(0);
+    uint32_t return_address_for_iret = *(ebp + 13); // Offset to eip
+    uint32_t original_ebp = *(ebp + 8); // Offset to original ebp
 
-    // Navigate the stack to find the return address
-    stack_ptr = (uintptr_t *)(*stack_ptr); // Move to the previous frame's base pointer
+    dbgprintf("Return address for iret: 0x%x\n", return_address_for_iret);
+    dbgprintf("Original ebp: 0x%x\n", original_ebp);
 
-    // Now, stack_ptr points to the previous frame's base pointer
-    uintptr_t return_addr = *(stack_ptr + 1); // The return address is next to the base pointer
-	dbgprintf("Return address: 0x%x\n", return_addr);
-	dbgprintf("Stack pointer: 0x%x\n", stack_ptr);
+    __backtrace_from((uintptr_t*)original_ebp, (uintptr_t)return_address_for_iret);
 
-	backtrace();
 	interrupt_counter[14]++;
 	ENTER_CRITICAL();
 	dbgprintf("Page fault: 0x%x (Stack: 0x%x) %d (%s)\n", cr2, current_running->stackptr, err, current_running->name);

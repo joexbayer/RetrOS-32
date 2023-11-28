@@ -1,7 +1,7 @@
 
 ROOT = ../../
 
-CCFLAGS=-m32 -O2 -g -Wall -Wextra -Wpedantic -Wstrict-aliasing \
+CCFLAGS=-m32 -O2 -Wall -Wextra -Wpedantic -Wstrict-aliasing \
 		-Wno-pointer-arith -Wno-unused-parameter -nostdlib \
 		-nostdinc -ffreestanding -fno-pie -fno-stack-protector \
 		-fno-builtin-function -fno-builtin -I $(ROOT)include/ -I $(ROOT)apps/ -fno-exceptions -fno-rtti

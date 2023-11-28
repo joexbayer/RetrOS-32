@@ -1,5 +1,5 @@
 CCFLAGS=-m32 -std=gnu11 -O1 -D__KERNEL \
-		-g -Wall -Wextra -Wpedantic -Wstrict-aliasing \
+		-Wall -Wextra -Wpedantic -Wstrict-aliasing \
 		-Wno-pointer-arith -Wno-unused-parameter -nostdlib \
 		-nostdinc -ffreestanding -fno-pie -fno-stack-protector \
 		-Wno-conversion -I ./include/
@@ -107,11 +107,11 @@ bin/build: ./tools/build.c
 	@echo [BUILD]      Compiling $<
 
 bin/mkfs: bin/ext.o bin/bitmap.o ./tools/mkfs.c
-	@gcc tools/mkfs.c bin/bitmap.o fs/bin/inode.o -I include/  -O2 -m32 -Wall -g -D_XOPEN_SOURCE -D_FILE_OFFSET_BITS=64 -D__KERNEL -o  ./bin/mkfs
+	@gcc tools/mkfs.c bin/bitmap.o fs/bin/inode.o -I include/  -O2 -m32 -Wall -D_XOPEN_SOURCE -D_FILE_OFFSET_BITS=64 -D__KERNEL -o  ./bin/mkfs
 	@echo [BUILD]      Compiling $<
 
 bin/mkfsv2: tools/mkfsv2.c bin/fat16.o bin/bitmap.o ./tests/mocks.c
-	@gcc tools/mkfsv2.c bin/bitmap.o ./tests/mocks.c bin/fat16.o -I ./include/  -O2 -m32 -Wall -g -D__FS_TEST -D__KERNEL -o 	./bin/mkfsv2
+	@gcc tools/mkfsv2.c bin/bitmap.o ./tests/mocks.c bin/fat16.o -I ./include/  -O2 -m32 -Wall -D__FS_TEST -D__KERNEL -o 	./bin/mkfsv2
 	@echo [BUILD]      Compiling $<
 
 tools: bin/build bin/mkfs bin/mkfsv2
