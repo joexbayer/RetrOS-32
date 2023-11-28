@@ -157,6 +157,8 @@ img: grub_fix tools compile create_fs sync
 	@echo "Finished creating the image."
 	$(TIME-END)
 
+re_apps: apps create_fs sync
+
 clean:
 	make -C ./net clean
 	make -C ./fs clean

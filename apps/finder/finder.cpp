@@ -12,9 +12,12 @@
 
 #include <lib/printf.h>
 
-#define WIDTH 300
-#define HEIGHT 200
+#define WIDTH 350
+#define HEIGHT 225
 #define ICON_SIZE 32
+
+#define TREE_VIEW_WIDTH 110  /* Width for the tree view panel */
+#define HEADER_HEIGHT 10     /* Height for the header */
 
 class File {
 public:
@@ -140,8 +143,6 @@ public:
         //struct directory_entry entry;
         struct fat16_directory_entry entry;
 
-
-
         if(m_fd != 0) fclose(m_fd);
 
         m_cache->clear();
@@ -177,24 +178,82 @@ public:
         return 0;
     }
 
-    int showFiles(int x, int y){
-        if(x == 0 && y == 0 ){
-            drawRect(0, 0, WIDTH, HEIGHT, COLOR_WHITE);
-            drawRect(0, 0, WIDTH, 10, 30);
+    int drawTreeRecursive(int depth, String* path, int entries){
+        int fd = open(path->getData(), FS_FLAG_READ);
+        if (fd <= -1) return -1;
 
-            drawRect(1, 1, WIDTH-1, 1, 30+1);
-            drawRect(1, 1, 1, 10, 30+1);
+        int origEntries = entries;
+        struct fat16_directory_entry entry;
+        int lastY = entries * 12;
 
-            drawRect(1+WIDTH-2, 1, 1, 10, COLOR_VGA_MEDIUM_DARK_GRAY+5);
-            drawRect(1, 10, WIDTH-1, 1, COLOR_VGA_MEDIUM_DARK_GRAY+5); 
-            drawRect(1, 11, WIDTH-1, 1, COLOR_BLACK);
-            drawRect(1, 12, WIDTH-1, 1, 30+1); 
+        while (1) {
+            int ret = read(fd, &entry, sizeof(struct fat16_directory_entry));
+            if (ret <= 0) {
+                break;
+            }
 
-            gfx_draw_format_text(2, 2, COLOR_BLACK, "< >");
-            gfx_draw_format_text(WIDTH/2 - (path->getLength()*8)/2, 2, COLOR_BLACK, "%s", path->getData());
-            gfx_draw_format_text(WIDTH-strlen("XXX items")*8, 2, COLOR_BLACK, "%d items", m_cache->getSize());
+            /* parse name */
+            char name[13];
+            memset(name, 0, 13);
+            memcpy(name, entry.filename, 8);
+            //memcpy(name + 8, entry.extension, 3);
+
+            if (entry.filename[0] == 0xe5 || entry.filename[0] == 0x00 || entry.filename[0] == '.') continue;
+
+            entries++;
+            int textY = entries * 12;
+            gfx_draw_format_text(depth * 12, textY, COLOR_BLACK, "%s", name);
+
+            if (entry.attributes & FAT16_FLAG_SUBDIRECTORY) {
+                String* path2 = new String(path->getData());
+                path2->concat(name);
+
+                int ret = drawTreeRecursive(depth + 1, path2, entries);
+                if (ret > 0) entries += ret;
+
+                delete path2;
+            }
+
+            /* Draw a line from the parent to this directory */
+            if (depth > 1) {
+                drawLine(lastY+8, depth * 12 - 9, textY+8,  depth * 12 - 9, COLOR_BLACK);
+                drawLine(textY+4 , depth * 12 - 9, textY+4,  depth * 12-2, COLOR_BLACK);
+            }
+            lastY = textY; // Update lastY for the next iteration
         }
+
+        fclose(fd);
+        return entries - origEntries;
+    }
+
+    int drawTree(){
+        /* Draw the tree view background */
+        drawContouredRect(0, 0, TREE_VIEW_WIDTH, HEIGHT);
+        drawContouredBox(8, 12, TREE_VIEW_WIDTH - 16, HEIGHT-20, COLOR_WHITE);
+
+        drawFormatText(2, 2, COLOR_BLACK, "Tree View");
         
+
+        String* path = new String("/");
+        int entries = drawTreeRecursive(1, path, 0);
+        return 0;
+    }
+
+    int showFiles(int x, int y){
+
+        if (x == 0 && y == 0) {
+            /* Draw the main background */
+            drawRect(TREE_VIEW_WIDTH, HEADER_HEIGHT, WIDTH - TREE_VIEW_WIDTH, HEIGHT - HEADER_HEIGHT, COLOR_WHITE);
+            
+            /* Draw the header */
+            drawContouredRect(TREE_VIEW_WIDTH, 0, WIDTH - TREE_VIEW_WIDTH, HEADER_HEIGHT);
+
+            /* Header text and other UI elements, adjusted for the new layout */
+            gfx_draw_format_text(TREE_VIEW_WIDTH + 2, 2, COLOR_BLACK, "< >");
+            gfx_draw_format_text(TREE_VIEW_WIDTH + (WIDTH - TREE_VIEW_WIDTH)/2 - (path->getLength()*8)/2, 2, COLOR_BLACK, "%s", path->getData());
+            gfx_draw_format_text(WIDTH - strlen("XXX items")*8, 2, COLOR_BLACK, "%d items", m_cache->getSize());
+        }
+    
         File* file;
         int iter = 0;
         int j = 0, i = 0;
@@ -204,26 +263,56 @@ public:
             if(file == 0) continue;
 
             /* draw icon based on type */
-            int xOffset = 12 + j * WIDTH / 2;
-            int yOffset = 12 + i * ICON_SIZE;
+            /* Adjust positioning for icons, considering the TREE_VIEW_WIDTH and HEADER_HEIGHT */
+            int xOffset = TREE_VIEW_WIDTH + 4 + j * (WIDTH - TREE_VIEW_WIDTH) / 2;
+            int yOffset = (HEADER_HEIGHT + 4 + i * ICON_SIZE);
 
             if (file->flags & FAT16_FLAG_SUBDIRECTORY) {
                 drawIcon(xOffset, yOffset, icon[0]);
-            } else if(file->name->includes("TXT")){
+            } else if (file->name->includes("TXT")) {
                 drawIcon(xOffset, yOffset, icon[1]);
-            } else if(file->name->includes("C  ")){
+            } else if (file->name->includes("C  ")) {
                 drawIcon(xOffset, yOffset, icon[2]);
             } else {
                 drawIcon(xOffset, yOffset, icon[3]);
             }
 
-            drawText(48 + j * WIDTH / 2, 24 + (i++) * ICON_SIZE, file->getName(), COLOR_BLACK);
+            /* Position text under the icon */
+            int textXOffset = xOffset+ICON_SIZE+4;
+            int textYOffset = yOffset + ICON_SIZE/2; /* Position the text just below the icon */
+            drawText(textXOffset, textYOffset, file->getName(), COLOR_BLACK);
 
-            /* check if x,y is inside box */
+            /* Check if x,y is inside box */
             if (x > xOffset && x < xOffset + ICON_SIZE && y > yOffset && y < yOffset + ICON_SIZE) {
                 if (file->flags & FAT16_FLAG_SUBDIRECTORY) {
                     /* change directory */
 
+                    /* ugly hack */
+                    if(String::strcmp(file->getName(), "..") == 0){
+                        int index = path->getLength()-1;
+                        while(index > 0 && path->getData()[index] != '/') index--;
+
+                        String* path2 = path->substring(0, index);
+                        delete path;
+                        path = path2;
+                        
+                        setHeader(path->getData());
+                        loadFiles();
+                        showFiles(0, 0);
+                        printf("change directory to %s\n", path->getData());
+                        return 0;
+                    }
+
+                    if(file->getName()[0] == '.'){
+                        if (i * ICON_SIZE > HEIGHT - ICON_SIZE-100) {
+                            i = 0;
+                            ++j;
+                        } else {
+                            ++i;
+                        }
+                        iter++;
+                        continue;
+                    }
                     path->concat(file->getName());
                     setHeader(path->getData());
                     loadFiles();
@@ -235,9 +324,11 @@ public:
                 }
             }
 
-            if (i * ICON_SIZE > HEIGHT - ICON_SIZE) {
+            if (i * ICON_SIZE > HEIGHT - ICON_SIZE-100) {
                 i = 0;
                 ++j;
+            } else {
+                ++i;
             }
             iter++;
         }
@@ -251,7 +342,12 @@ public:
     void Run(){
         /* event loop */
         loadFiles();
+
+        drawRect(0, 0, WIDTH, HEIGHT, COLOR_WHITE);
+
         showFiles(0, 0);
+
+        drawTree();
 
         struct gfx_event event;
         while (1){
