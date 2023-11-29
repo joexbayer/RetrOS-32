@@ -7,6 +7,7 @@
 #include <utils/Thread.hpp>
 #include <fs/ext.h>
 #include <fs/directory.h>
+#include <utils/TreeView.hpp>
 
 #include <fs/fat16.h>
 
@@ -91,12 +92,15 @@ private:
     int m_size = 0;
 };
 
+
 /* todo add to file */
 class Finder : public Window
 {
 public:
     Finder() : Window(WIDTH, HEIGHT, "Finder", 0){
         drawRect(0, 0, WIDTH, HEIGHT, 30);
+
+        treeView = new TreeView(0, 0, TREE_VIEW_WIDTH, HEIGHT);
 
         for(int i = 0; i < 5; i++){
             icon[i] = (unsigned char*)malloc(ICON_SIZE*ICON_SIZE);
@@ -177,66 +181,6 @@ public:
         return 0;
     }
 
-    int drawTreeRecursive(int depth, String* path, int entries){
-        int fd = open(path->getData(), FS_FLAG_READ);
-        if (fd <= -1) return -1;
-
-        int origEntries = entries;
-        struct fat16_directory_entry entry;
-        int lastY = entries * 12;
-
-        while (1) {
-            int ret = read(fd, &entry, sizeof(struct fat16_directory_entry));
-            if (ret <= 0) {
-                break;
-            }
-
-            /* parse name */
-            char name[13];
-            memset(name, 0, 13);
-            memcpy(name, entry.filename, 8);
-            //memcpy(name + 8, entry.extension, 3);
-
-            if (entry.filename[0] == 0xe5 || entry.filename[0] == 0x00 || entry.filename[0] == '.') continue;
-
-            entries++;
-            int textY = entries * 12;
-            gfx_draw_format_text(depth * 12, textY, COLOR_BLACK, "%s", name);
-
-            if (entry.attributes & FAT16_FLAG_SUBDIRECTORY) {
-                String* path2 = new String(path->getData());
-                path2->concat(name);
-
-                int ret = drawTreeRecursive(depth + 1, path2, entries);
-                if (ret > 0) entries += ret;
-
-                delete path2;
-            }
-
-            /* Draw a line from the parent to this directory */
-            if (depth > 1) {
-                drawLine(lastY+8, depth * 12 - 9, textY+8,  depth * 12 - 9, COLOR_BLACK);
-                drawLine(textY+4 , depth * 12 - 9, textY+4,  depth * 12-2, COLOR_BLACK);
-            }
-            lastY = textY; // Update lastY for the next iteration
-        }
-
-        fclose(fd);
-        return entries - origEntries;
-    }
-
-    int drawTree(){
-        /* Draw the tree view background */
-        drawContouredRect(0, 0, TREE_VIEW_WIDTH, HEIGHT);
-        drawContouredBox(8, 12, TREE_VIEW_WIDTH - 16, HEIGHT-20, COLOR_WHITE);
-
-        drawFormatText(2, 2, COLOR_BLACK, "Tree View");
-        
-
-        String* path = new String("/");
-        int entries = drawTreeRecursive(1, path, 0);
-        return 0;
-    }
 
     int showFiles(int x, int y){
 
@@ -346,6 +290,8 @@ public:
 
         showFiles(0, 0);
 
+        treeView->drawTree(this);
+
         struct gfx_event event;
         while (1){
             int ret = gfx_get_event(&event, GFX_EVENT_BLOCKING);
@@ -372,6 +318,7 @@ private:
     unsigned char* icon[5];
     FileCache* m_cache;
     String* path;
+    TreeView* treeView;
 };
 
 int main(void)

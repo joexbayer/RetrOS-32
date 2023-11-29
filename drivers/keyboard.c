@@ -87,7 +87,6 @@ unsigned char kb_get_char()
 	unsigned char c = kb_buffer[kb_buffer_tail];
 	kb_buffer_tail = (kb_buffer_tail + 1) % KB_BUFFER_SIZE;
 	//release(&kb_lock);
-  dbgprintf("kb_get_char: %d\n", c);
 	return c;
 }
 

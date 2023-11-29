@@ -41,11 +41,15 @@ void Editor::reDrawHeader()
 
 
 void Editor::scroll(int lines) {
-        scrollY += lines;
-        // Ensure that the scroll position stays within valid range
-        if (scrollY < 0) scrollY = 0;
-        if (scrollY > m_bufferHead) scrollY = m_bufferSize;
-    }
+	scrollY += lines;
+
+	// Ensure that the scroll position stays within valid range
+	if (scrollY < 0) scrollY = 0;
+
+	gfx_draw_rectangle(0, 0, 17, this->c_height, COLOR_BG);
+	gfx_draw_line(0, 17, this->c_height, 17, COLOR_VGA_MEDIUM_GRAY);
+	for (int i = scrollY; i < (this->c_height/8) + scrollY; i++)gfx_draw_format_text(0, HEADER_OFFSET+ (i-scrollY)*8, COLOR_VGA_MEDIUM_GRAY, "%s%d ", i < 10 ? " " : "", i);
+}
 
 void Editor::Reset()
 {
@@ -55,14 +59,15 @@ void Editor::Reset()
 	reDrawHeader();
 }
 
-void Editor::reDraw(int from, int to)
-{	
+void Editor::reDraw(int from, int to) {
+    /* Clamp from and to values */
+    from = from < 0 ? 0 : from;
+    to = to > m_bufferHead ? m_bufferHead : to;
+
 	m_x = 0;
 	m_y = 0;
-	from = from <= 0 ? 0 : from;
-	to = to >= m_bufferHead ? m_bufferHead : to;
 
-	/* Skip the unchanged chars */
+	/* Skip the unchanged chars 
 	for (int i = 0; i < from; i++){
 		m_x++;
 		if(m_x > (c_width/8)){
@@ -73,33 +78,43 @@ void Editor::reDraw(int from, int to)
 			m_x = 0;
 			m_y++;
 		}
+	}*/
+
+    /* Calculate the number of characters scrolled */
+    int linesScrolled = scrollY;
+    int charsScrolled = 0;
+    for (int i = 0; linesScrolled > 0; i++) {
+        if (m_textBuffer[i] == '\n') {
+            linesScrolled--;
+        } 
+        charsScrolled++;
+    }
+
+	if(from < charsScrolled){
+		to = to + (charsScrolled-from)+1;
+		from = charsScrolled;
 	}
 
-	int linesToSkip = scrollY;
-	while (linesToSkip > 0 && from < m_bufferSize) {
-		if (m_textBuffer[from] == '\n') {
-			linesToSkip--;
-		}
-		from++;
-	}
+	printf("from: %d, to: %d\n", from, to);	
 
-	int line = 0;
-	int col = 0;
-	
-	for (int i = from; i < to; i++){
-		if(i > 0 && (!isAlpha(m_textBuffer[i-1]) || m_textBuffer[i-1] == ' ')){
-			highlightSyntax(&m_textBuffer[i]);
-		}
+    /* Draw text in the range from 'from' to 'to' */
+    int line = 0, col = 0;
+    for (int i = from; i < to; i++) {
+        if (i > 0 && (!isAlpha(m_textBuffer[i - 1]) || m_textBuffer[i - 1] == ' ')) {
+            highlightSyntax(&m_textBuffer[i]);
+        }
+        drawChar(m_textBuffer[i], i == m_bufferEdit ? COLOR_VGA_LIGHT_GRAY : COLOR_BG);
 
-		drawChar(m_textBuffer[i], i == m_bufferEdit ? COLOR_VGA_LIGHT_GRAY : COLOR_BG);
-		if(i == m_bufferEdit){
-			line = m_y;
-			col = m_x;
-		}
-	}
-	
-	gfx_draw_rectangle(24, c_height-8, c_width-24, 8, COLOR_BG);
-	gfx_draw_format_text(24, c_height-8, COLOR_VGA_MEDIUM_DARK_GRAY, "W:%p/%p Line:%p Col:%p\n", m_bufferHead, m_bufferEdit, line, col);
+        /* Update cursor position */
+        if (i == m_bufferEdit) {
+            line = m_y;
+            col = m_x;
+        }
+    }
+
+    /* Draw status bar */
+    gfx_draw_rectangle(24, c_height - 8, c_width - 24, 8, COLOR_BG);
+    gfx_draw_format_text(24, c_height - 8, COLOR_VGA_MEDIUM_DARK_GRAY, "W:%p/%p Line:%p Col:%p\n", m_bufferHead, m_bufferEdit, line, col);
 }
 
 void Editor::Lex()
@@ -133,7 +148,7 @@ void Editor::Open(char* path)
 	
 	setTitle(path);
 
-	m_bufferHead = read(m_fd, m_textBuffer, 1000);
+	m_bufferHead = read(m_fd, m_textBuffer, m_bufferSize);
 	if(m_bufferHead < 0){
 		m_bufferHead = 0;
 	}
@@ -307,11 +322,13 @@ void Editor::putChar(unsigned char c)
 			line_end = nextNewline(&m_textBuffer[m_bufferEdit]);
 
 			if(newline){
-				reDraw(m_bufferEdit-line_start+1, m_bufferSize);
+				//reDraw(m_bufferEdit-line_start+1, m_bufferSize);
+				reDraw(0, m_bufferSize);
 				return;
 			}
 
-			reDraw(m_bufferEdit-(line_start+1), m_bufferEdit+line_end+1);
+			//reDraw(m_bufferEdit-(line_start+1), m_bufferEdit+line_end+1);
+			reDraw(0, m_bufferSize);
 			return;
 		}
 
@@ -323,7 +340,8 @@ void Editor::putChar(unsigned char c)
 		line_end = nextNewline(&m_textBuffer[m_bufferEdit]);
 		m_textBuffer[m_bufferEdit] = 0;
 
-		reDraw(m_bufferEdit-(line_start+1), m_bufferEdit+line_end+1);
+		//reDraw(m_bufferEdit-(line_start+1), m_bufferEdit+line_end+1);
+		reDraw(0, m_bufferSize);
 		return;
 	case KEY_LEFT: /* LEFT */
 		if(m_bufferEdit == 0) return;
@@ -336,7 +354,8 @@ void Editor::putChar(unsigned char c)
 
 		line_start = prevNewline(&m_textBuffer[m_bufferEdit], m_textBuffer);
 		line_end = nextNewline(&m_textBuffer[m_bufferEdit]);
-		reDraw(m_bufferEdit-(line_start+2), m_bufferEdit+line_end+2);
+		//reDraw(m_bufferEdit-(line_start+2), m_bufferEdit+line_end+2);
+		reDraw(0, m_bufferSize);
 		return;
 	case KEY_RIGHT: /* RIGHT */
 		if(m_bufferEdit == m_bufferHead) return;
@@ -349,7 +368,8 @@ void Editor::putChar(unsigned char c)
 
 		line_start = prevNewline(&m_textBuffer[m_bufferEdit], m_textBuffer);
 		line_end = nextNewline(&m_textBuffer[m_bufferEdit]);
-		reDraw(m_bufferEdit-(line_start+2), m_bufferEdit+line_end+2);
+		//reDraw(m_bufferEdit-(line_start+2), m_bufferEdit+line_end+2);
+		reDraw(0, m_bufferSize);
 		return;
 	case KEY_DOWN:{
 			if(m_bufferEdit == m_bufferHead) break;
@@ -358,11 +378,14 @@ void Editor::putChar(unsigned char c)
 				return;
 			}
 
-			int moveto = nextNewline(&m_textBuffer[m_bufferEdit]);
+			int prev = prevNewline(&m_textBuffer[m_bufferEdit], m_textBuffer);
+
+			int moveto = nextNewline(&m_textBuffer[m_bufferEdit-1]);
 			m_bufferEdit += moveto;
 
 			line_end = nextNewline(&m_textBuffer[m_bufferEdit]);
-			reDraw(m_bufferEdit-moveto, m_bufferEdit+line_end);
+			//reDraw(prev, m_bufferEdit+line_end);
+			reDraw(0, m_bufferSize);
 		}
 		return;
 	case KEY_UP: {
@@ -372,7 +395,7 @@ void Editor::putChar(unsigned char c)
 			m_bufferEdit -= moveto+1;
 
 			line_end = prevNewline(&m_textBuffer[m_bufferEdit], m_textBuffer);
-			reDraw(m_bufferEdit-line_end+1, m_bufferEdit+moveto+3);
+			//reDraw(m_bufferEdit-line_end+1, m_bufferEdit+moveto+3);
 			reDraw(0, m_bufferSize);
 		}
 		return;
@@ -385,7 +408,7 @@ void Editor::putChar(unsigned char c)
 		reDraw(0, m_bufferSize);
 		return;
 	case KEY_F1:{
-			reDraw(0, m_bufferHead);
+			reDraw(0, m_bufferSize);
 		}
 		return;
 	default: /* Default add character to buffer and draw it */
@@ -402,13 +425,15 @@ void Editor::putChar(unsigned char c)
 		m_bufferHead++;
 
 		if(c == '\n'){
-			reDraw(m_bufferEdit-2, m_bufferHead);
+			//reDraw(m_bufferEdit-2, m_bufferHead);
+			reDraw(0, m_bufferSize);
 			break;
 		}
 
 		line_start = prevNewline(&m_textBuffer[m_bufferEdit-1], m_textBuffer);
 		line_end = nextNewline(&m_textBuffer[m_bufferEdit]);
-		reDraw(m_bufferEdit-(line_start+2), m_bufferEdit+line_end);
+		//reDraw(m_bufferEdit-(line_start+2), m_bufferEdit+line_end);
+		reDraw(0, m_bufferSize);
 	}
 }
 
