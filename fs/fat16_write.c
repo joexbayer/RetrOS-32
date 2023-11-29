@@ -12,7 +12,7 @@ uint32_t fat16_find_cluster_by_offset(int first_cluster, int offset, int* cluste
     while (current_cluster < 0xFFF8 && current_cluster != 0xFFFF && traversed_bytes + 512 < offset){
         traversed_bytes += 512;
         current_cluster = fat16_get_fat_entry(current_cluster);
-        dbgprintf("Skipping 0x%x\n", current_cluster);
+        //dbgprintf("Skipping 0x%x\n", current_cluster);
     }
 
     *cluster_offset = offset - traversed_bytes;
@@ -32,7 +32,7 @@ int fat16_print_cluster_chain(int cluster)
     uint32_t current_cluster = cluster;
     int i = 0;
     while (current_cluster < 0xFFF8 && current_cluster != 0xFFFF){
-        dbgprintf("Cluster %d: 0x%x ->\n", i, current_cluster);
+        //dbgprintf("Cluster %d: 0x%x ->\n", i, current_cluster);
         current_cluster = fat16_get_fat_entry(current_cluster);
         i++;
     }
@@ -89,11 +89,11 @@ int fat16_write_data(int first_cluster, int offset, void* data, int data_length)
         /* Write data to the current cluster at the given offset. */
         int write_result = fat16_write_data_to_cluster_with_offset(current_cluster, cluster_offset, ((byte_t*)data) + data_offset, write_size);
         if (write_result < 0){
-            dbgprintf("Error writing data to cluster\n");
+            //dbgprintf("Error writing data to cluster\n");
             return -2;   /* Error: Couldn't write data */
         }
 
-        dbgprintf("Wrote %d bytes to cluster %d\n", write_size, current_cluster);
+        //dbgprintf("Wrote %d bytes to cluster %d\n", write_size, current_cluster);
 
         /* Update our counters and pointers. */
         remaining_data_length -= write_size;
@@ -109,7 +109,7 @@ int fat16_write_data(int first_cluster, int offset, void* data, int data_length)
         fat16_set_fat_entry(current_cluster, 0xFFFF);
     }
 
-    dbgprintf("Wrote %d bytes to cluster chain\n", data_length);
+    //dbgprintf("Wrote %d bytes to cluster chain\n", data_length);
 
     fat16_print_cluster_chain(first_cluster);
     fat16_sync_fat_table();

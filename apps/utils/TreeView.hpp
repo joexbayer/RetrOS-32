@@ -100,12 +100,17 @@ private:
     /* Logic of caching and interaction */
     struct TreeNode {
         String* name;
-        int x, y;
+        int x, y, depth, entries;
         int isDirectory;
     } nodes[100];
+    int nodeCount = 0;
 
-    int loadTree() {
-        
+    int insertNode(const char* name, int x, int y, int isDirectory) {
+        nodes[nodeCount].name = new String(name);
+        nodes[nodeCount].x = x;
+        nodes[nodeCount].y = y;
+        nodes[nodeCount].isDirectory = isDirectory;
+        nodeCount++;
     }
 
     int drawTreeRecursive(int depth, String* path, int entries) {
@@ -150,12 +155,12 @@ private:
                 drawIcon(depth * 12, textY-4, __file_icon);
             }
 
-
             gfx_draw_format_text((depth * 12)+18, textY, COLOR_BLACK, "%s", name);
             if (entry.attributes & FAT16_FLAG_SUBDIRECTORY) {
                 String* path2 = new String(path->getData());
                 path2->concat(name);
 
+                //insertNode(path2->getData(), depth * 12, textY, 1);
                 int ret = drawTreeRecursive(depth + 1, path2, entries);
                 if (ret > 0) entries += ret;
 

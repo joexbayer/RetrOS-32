@@ -16,7 +16,7 @@
 int fat16_read_data_from_cluster(uint32_t cluster, void *data, int data_length, int offset)
 {
     if (offset + data_length > 512) {  /* Assuming 512-byte clusters */
-        dbgprintf("Offset and buffer size exceed the cluster size\n");
+        //dbgprintf("Offset and buffer size exceed the cluster size\n");
         return -1;  /* Error: Offset and buffer size exceed the cluster size */
     }
 
@@ -29,7 +29,7 @@ int fat16_read_data(int first_cluster, uint32_t start_offset, void* _buffer, int
 {
     byte_t* buffer = (byte_t*) _buffer;
     if (start_offset > max_length) {
-        dbgprintf("Start offset beyond the file size\n");
+        //dbgprintf("Start offset beyond the file size\n");
         return -1;  /* Offset exceeds file size */
     }
 
@@ -45,7 +45,7 @@ int fat16_read_data(int first_cluster, uint32_t start_offset, void* _buffer, int
 
     /* Skip clusters to reach the start_offset */
     while (clusters_skipped > 0 && current_cluster != 0xFFFF) {
-        dbgprintf("Skipping cluster 0x%x\n", current_cluster);
+        //dbgprintf("Skipping cluster 0x%x\n", current_cluster);
         current_cluster = fat16_get_fat_entry(current_cluster);
         clusters_skipped--;
     }
@@ -55,7 +55,7 @@ int fat16_read_data(int first_cluster, uint32_t start_offset, void* _buffer, int
         int bytes_to_read = (bytes_left_to_read > (512 - offset_within_cluster)) ? (512 - offset_within_cluster) : bytes_left_to_read;
         fat16_read_data_from_cluster(current_cluster, buf_pos, bytes_to_read, offset_within_cluster);
 
-        dbgprintf("Read %d bytes from cluster 0x%x\n", bytes_to_read, current_cluster); 
+        //dbgprintf("Read %d bytes from cluster 0x%x\n", bytes_to_read, current_cluster); 
 
         buf_pos += bytes_to_read;
         bytes_left_to_read -= bytes_to_read;
@@ -66,7 +66,7 @@ int fat16_read_data(int first_cluster, uint32_t start_offset, void* _buffer, int
     }
 
     if (bytes_left_to_read > 0) {
-        dbgprintf("Unexpected end of data\n");
+        //dbgprintf("Unexpected end of data\n");
         return -3;  /* Unexpected end of data */
     }
 

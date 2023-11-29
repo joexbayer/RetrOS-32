@@ -77,7 +77,7 @@ void kernel(uint32_t magic)
 	kernel_context.total_memory = (struct memory_info*) (0x7e00);
 #endif
 	ENTER_CRITICAL();
-    init_serial();
+    //init_serial();
 
 	dbgprintf("INF: %s - %s\n", KERNEL_NAME, KERNEL_VERSION);
 

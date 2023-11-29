@@ -34,7 +34,7 @@ void serial_write(char* str)
 		serial_put(str[i]);
 }
 
-#define _KDEBUG
+//#define _KDEBUG
 
 /**
  * Writes the given string with formats to screen on give location.
