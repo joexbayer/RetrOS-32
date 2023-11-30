@@ -371,6 +371,8 @@ struct windowmanager* wm_new(int flags)
     if(wm == NULL){
         return NULL;
     }
+    memset(wm, 0, sizeof(struct windowmanager));
+
     /* init krefs */
     kref_init(&wm->_krefs);
     

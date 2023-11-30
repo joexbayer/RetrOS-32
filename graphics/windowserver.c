@@ -305,6 +305,7 @@ struct windowserver* ws_new()
     if(ws == NULL){
         return NULL;
     }
+    memset(ws, 0, sizeof(struct windowserver));
 
     ws->ops = &ws_default_ops;
     kref_init(&ws->_krefs);

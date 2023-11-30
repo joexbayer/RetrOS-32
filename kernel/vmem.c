@@ -98,6 +98,7 @@ static uint32_t* vmem_alloc(struct virtual_memory_allocator* vmem)
 		assert(bit != -1);
 
 		paddr = (uint32_t*) (vmem->start + (bit * PAGE_SIZE));
+		memset(paddr, 0, PAGE_SIZE);
 		vmem->used_pages++;
 
 		dbgprintf("[VMEM MANAGER] Allocated page %d at 0x%x\n", bit, paddr);
@@ -152,8 +153,11 @@ static struct vmem_page_region* vmem_create_page_region(struct pcb* pcb, void* b
 	if(allocation == NULL){
 		return NULL;
 	}
+	memset(allocation, 0, sizeof(struct vmem_page_region));
 
 	allocation->bits = kalloc(sizeof(int)*num);
+	memset(allocation->bits, 0, sizeof(int)*num);
+
 	allocation->refs = 0;
 	allocation->size = num*PAGE_SIZE;
 	allocation->used = 0;
@@ -334,6 +338,7 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 		warningf("Out memory\n");
 		return NULL;
 	}
+	memset(allocation, 0, sizeof(struct allocation));
 	
 	allocation->size = _size;
 	allocation->used = _size;
@@ -577,11 +582,13 @@ void vmem_init_process(struct pcb* pcb, byte_t* data, int size)
 	dbgprintf("[INIT PROCESS] Data: 	 0x%x\n", process_data_table);
 	dbgprintf("[INIT PROCESS] Stack:	 0x%x\n", process_stack_table);
 	dbgprintf("[INIT PROCESS] Heap: 	 0x%x\n", process_heap_table);
+	
 
 	/* Any process should have the kernel first 4mb mapped */
 	for (int i = 0; i < 1024; i++){
 		if(kernel_page_dir[i] != 0) process_directory[i] = kernel_page_dir[i];
 	}
+	pcb->page_dir = (uint32_t*)process_directory;
 
 	uint32_t* process_data_page;
 	/* Map the process data to a page */
@@ -627,12 +634,13 @@ void vmem_init_process(struct pcb* pcb, byte_t* data, int size)
 	if(pcb->allocations == NULL){
 		kernel_panic("Out of memory while allocating virtual memory allocations.");
 	}
+	memset(pcb->allocations, 0, sizeof(struct virtual_allocations));
+
 	pcb->allocations->head = NULL;
 	pcb->allocations->spinlock = 0;
 
 
 	dbgprintf("[INIT PROCESS] Process paging setup done: allocated %d pages.\n", allocated_pages);
-	pcb->page_dir = (uint32_t*)process_directory;
 }
 
 /**
@@ -672,6 +680,7 @@ void vmem_cleanup_process_thead(struct pcb* thread)
  */
 void vmem_cleanup_process(struct pcb* pcb)
 {
+	return;
 	/**
 	 * @brief A process can not be "cleaned" unless all of its threads are dead.
 	 * @see https://github.com/joexbayer/RetrOS-32/issues/84
@@ -756,6 +765,7 @@ void vmem_init_kernel()
 	int total_mem			= memory_map_get()->total;
 
 	kernel_page_dir = vmem_manager->ops->alloc(vmem_manager);
+	memset(kernel_page_dir, 0, PAGE_SIZE);
 
 	/* identity map first 4 mb of data. */
 	uint32_t* kernel_page_table = vmem_manager->ops->alloc(vmem_manager);
@@ -769,7 +779,7 @@ void vmem_init_kernel()
 
 	/* identity map rest of memory above 4MB */
 	dbgprintf("Initiating memory from 0x%x - %d\n", 0x400000, ((total_mem)/(1024*1024)) - 4);
-	for (int i = 1; i < 16/4; i++){
+	for (int i = 1; i < (total_mem/(1024*1024))/4; i++){
 		uint32_t* kernel_page_table_memory = vmem_manager->ops->alloc(vmem_manager);
 		if (kernel_page_table_memory == NULL){
 			PANIC();
@@ -802,16 +812,19 @@ void vmem_init_kernel()
 	dbgprintf("[INIT KERNEL] Directory: 		0x%x\n", kernel_page_dir);
 	dbgprintf("[INIT KERNEL] 0x0 - 0x400000: 	0x%x\n", kernel_page_table);
 	dbgprintf("[INIT KERNEL] Heap (Kthreads): 	0x%x\n", kernel_heap_memory_table);
+
 }
 
 int vmem_allocator_create(struct virtual_memory_allocator* allocator, int from, int to)
 {
+	memset(allocator, 0, sizeof(struct virtual_memory_allocator));
 	allocator->start = from;
 	allocator->end = to;
 	allocator->total_pages = (to-from)/PAGE_SIZE;
 	allocator->ops = &vmem_default_ops;
 	allocator->used_pages = 0;
 	allocator->pages = create_bitmap(allocator->total_pages);
+
 	mutex_init(&allocator->lock);
 	dbgprintf("Created new allocator\n");
 	return 0;

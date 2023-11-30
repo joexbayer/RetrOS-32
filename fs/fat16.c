@@ -57,7 +57,7 @@ inline uint16_t get_data_start_block()
 }
 
 
-uint16_t fat16_get_fat_entry(uint32_t cluster)
+inline uint16_t fat16_get_fat_entry(uint32_t cluster)
 {
     if(fat_table_memory == NULL){
         return -1;
@@ -67,7 +67,7 @@ uint16_t fat16_get_fat_entry(uint32_t cluster)
     return *(uint16_t*)(fat_table_memory + fat_offset);
 }
 
-void fat16_set_fat_entry(uint32_t cluster, uint16_t value)
+inline void fat16_set_fat_entry(uint32_t cluster, uint16_t value)
 {
     if(fat_table_memory == NULL){
         return;

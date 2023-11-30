@@ -91,15 +91,15 @@ void print_page_fault_info(unsigned long cr2) {
 
 void page_fault_interrupt(unsigned long cr2, unsigned long err)
 {
-	// Access the stack frame
-    uint32_t *ebp = (uint32_t*) __builtin_frame_address(0);
-    uint32_t return_address_for_iret = *(ebp + 13); // Offset to eip
-    uint32_t original_ebp = *(ebp + 8); // Offset to original ebp
+	// // Access the stack frame
+    // uint32_t *ebp = (uint32_t*) __builtin_frame_address(0);
+    // uint32_t return_address_for_iret = *(ebp + 13); // Offset to eip
+    // uint32_t original_ebp = *(ebp + 8); // Offset to original ebp
 
-    dbgprintf("Return address for iret: 0x%x\n", return_address_for_iret);
-    dbgprintf("Original ebp: 0x%x\n", original_ebp);
+    // dbgprintf("Return address for iret: 0x%x\n", return_address_for_iret);
+    // dbgprintf("Original ebp: 0x%x\n", original_ebp);
 
-    __backtrace_from((uintptr_t*)original_ebp, (uintptr_t)return_address_for_iret);
+    // __backtrace_from((uintptr_t*)original_ebp, (uintptr_t)return_address_for_iret);
 
 	interrupt_counter[14]++;
 	ENTER_CRITICAL();
@@ -159,6 +159,18 @@ static void __interrupt_exception_handler(int i)
 void load_data_segments(int seg)
 {
     asm volatile ("movw %%ax, %%ds \n\t" "movw %% ax, %%es " : : "a" (seg));
+}
+
+int isr_validate()
+{
+	for (int i = 0; i < 48; i++){
+		if (idt_entries[i].flags == 0){
+			dbgprintf("ISR %d not installed.\n", i);
+			return -1;
+		}
+	}
+
+	return 0;
 }
 
 /* Main interrupt handler, calls interrupt specific hanlder if installed. */

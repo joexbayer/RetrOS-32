@@ -358,8 +358,10 @@ static void __callback taskbar_finder()
 
 static void __callback taskbar_editor()
 {
-    int pid = pcb_create_process("/bin/edit.o", 0, NULL, 0);
-	if(pid < 0)
+    exec(2, (char*[]){"exec", "/bin/edit.o", NULL});
+
+    //int pid = pcb_create_process("/bin/edit.o", 0, NULL, 0);
+	//if(pid < 0)
 		dbgprintf("%s does not exist\n", "edit.o");
 }
 
