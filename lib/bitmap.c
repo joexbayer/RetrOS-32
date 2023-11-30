@@ -35,9 +35,7 @@ int get_bitmap_size(int n)
 
 bitmap_t create_bitmap(int n)
 {
-    bitmap_t map = (bitmap_t) kalloc((n + 7) / 8);
-    memset(map, 0, (n + 7) / 8);
-    return map;
+    return (bitmap_t) kalloc((n + 7) / 8);
 }
 
 void destroy_bitmap(bitmap_t b)

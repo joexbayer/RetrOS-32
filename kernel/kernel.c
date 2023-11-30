@@ -77,7 +77,7 @@ void kernel(uint32_t magic)
 	kernel_context.total_memory = (struct memory_info*) (0x7e00);
 #endif
 	ENTER_CRITICAL();
-    init_serial();
+    //init_serial();
 
 	dbgprintf("INF: %s - %s\n", KERNEL_NAME, KERNEL_VERSION);
 
@@ -120,6 +120,7 @@ void kernel(uint32_t magic)
 	init_interrupts();
 	kernel_boot_printf("Interrupts initialized.");
 	init_keyboard();
+	mouse_init();
 	kernel_boot_printf("Peripherals initialized.");
 	init_pcbs();
 	init_pci();
@@ -218,7 +219,8 @@ void kernel(uint32_t magic)
 	
 	kernel_boot_printf("Timer initialized.");
 
-	mouse_init();	
+	
+	
 
 	init_pit(1);
 	kernel_boot_printf("Starting OS...");

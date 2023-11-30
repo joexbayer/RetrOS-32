@@ -47,7 +47,6 @@ struct pcb_queue* pcb_new_queue()
 	if(queue == NULL){
 		return NULL;
 	}
-	memset(queue, 0, sizeof(struct pcb_queue));
 
 	queue->_list = NULL;
 	queue->ops = &pcb_queue_default_ops;

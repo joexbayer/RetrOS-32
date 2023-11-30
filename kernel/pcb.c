@@ -390,9 +390,18 @@ error_t pcb_create_thread(struct pcb* parent, void (*entry)(), void* arg, byte_t
 
 error_t pcb_create_process(char* program, int argc, char** argv, pcb_flag_t flags)
 {
-	char* buf = NULL;
-	int ret = 0, size = 0;
-	struct pcb* pcb = 0;
+	for (int i = 0; i < (15 * 1024*1024)+(1*1024*1024); i++){
+		volatile char value = *(volatile char *)i;
+		*(volatile char *)i = value;
+
+		if (i % (1024*1024) == 0){
+			dbgprintf("[KERNEL] 0x%x MB tested\n", i);
+		}
+	}
+
+	char* buf;
+	int ret, size;
+	struct pcb* pcb;
 
 	/* Load program into memory */
 	buf = kalloc(32*1024);
@@ -421,11 +430,9 @@ error_t pcb_create_process(char* program, int argc, char** argv, pcb_flag_t flag
 
 	pcb->thread_eip = 0;
 
-	if(isr_validate() < 0 ) kernel_panic("ISR not installed");
-
 	/* Memory map data */
 	vmem_init_process(pcb, buf, size);
-	
+
 	ret = __pcb_init_virt_args(pcb, argc, argv);
 	if(ret < 0){
 		kfree(buf);
@@ -433,9 +440,6 @@ error_t pcb_create_process(char* program, int argc, char** argv, pcb_flag_t flag
 
 		return -ERROR_ALLOC;
 	}
-	if(isr_validate() < 0 ) kernel_panic("ISR not installed");
-
-	//pcb->page_dir = kernel_page_dir;
 
 	get_scheduler()->ops->add(get_scheduler(), pcb);
 	// TODO: Check for errors
