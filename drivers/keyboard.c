@@ -73,6 +73,7 @@ static int __keyboard_presses = 0;
 static uint8_t __shift_pressed = 0;
 static uint8_t __alt_pressed = 0;
 static uint8_t __ctrl_pressed = 0;
+static uint8_t __super_pressed = 0;
 
 
 unsigned char kb_get_char()
@@ -94,6 +95,8 @@ void kb_add_char(unsigned char c)
 	kb_buffer[kb_buffer_head] = c;
 	kb_buffer_head = (kb_buffer_head + 1) % KB_BUFFER_SIZE;
 }
+
+
 
 static void __int_handler kb_callback()
 {
@@ -117,6 +120,12 @@ static void __int_handler kb_callback()
     case 157: /* ctrl up */
 			__ctrl_pressed = 0;
 			return;
+    case 91: /* windows key */
+      __super_pressed = 1;
+      return;
+    case 219: /* windows key up */
+      __super_pressed = 0;
+      return;
 		default:
 			break;
 	}

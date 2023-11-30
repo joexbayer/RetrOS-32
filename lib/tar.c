@@ -17,7 +17,7 @@ static int __octal_string_to_int(char *current_char, unsigned int size){
 static int tar_list(int fd)
 {
     struct tar_header header;
-    int bytes_read;
+    unsigned int bytes_read;
 
     while ((bytes_read = fs_read(fd, &header, sizeof(header))) > 0) {
         if (bytes_read < sizeof(header)) {
@@ -47,7 +47,7 @@ static int tar_list(int fd)
 static int tar_extract(int fd)
 {
     struct tar_header header;
-    int bytes_read;
+    unsigned int bytes_read;
 
     while ((bytes_read = fs_read(fd, &header, sizeof(header))) > 0) {
         
@@ -70,7 +70,7 @@ static int tar_extract(int fd)
         unsigned int blocks_to_skip = (size + TAR_BLOCK_SIZE - 1) / TAR_BLOCK_SIZE;
         unsigned int bytes_to_read = TAR_BLOCK_SIZE * blocks_to_skip;
 
-        byte_t* buf = (byte_t*)malloc(bytes_to_read);
+        byte_t* buf = (byte_t*)kalloc(bytes_to_read);
         if(buf == NULL){
             twritef("Error allocating memory\n");
             return -1;
@@ -79,14 +79,14 @@ static int tar_extract(int fd)
         int ret = fs_read(fd, buf, bytes_to_read);
         if(ret < 0){
             twritef("Error reading file\n");
-            free(buf);
+            kfree(buf);
             return -1;
         }
 
         int new_file = fs_open(header.name, FS_FILE_FLAG_CREATE | FS_FILE_FLAG_WRITE);
         if(new_file < 0){
             twritef("Error creating file\n");
-            free(buf);
+            kfree(buf);
             return -1;
         }
 
@@ -94,7 +94,7 @@ static int tar_extract(int fd)
 
         fs_close(new_file);
 
-        free(buf);
+        kfree(buf);
     }
 
     return 0;

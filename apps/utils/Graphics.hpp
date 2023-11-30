@@ -69,6 +69,23 @@ public:
         drawRect(x, y+height, width-1, 1, 31);
     }
 
+    void drawContouredBox(int x, int y, int width, int height, color_t color) {
+        drawRect(x, y, width, height, color);
+        
+        // Top Inner Border
+        drawRect(x, y, width-1, 1, 31);
+        
+        // Left Inner Border
+        drawRect(x, y, 1, height, 31);
+        
+        // Right Inner Border
+        drawRect(x+width-1, y, 1, height, COLOR_VGA_MEDIUM_DARK_GRAY+5);
+        
+        // Bottom Inner Borders
+        drawRect(x, y+height-1, width-1, 1, COLOR_VGA_MEDIUM_DARK_GRAY+5);
+        drawRect(x, y+height, width-1, 1, 31);
+    }
+
     void drawFormatText(int x, int y, unsigned char color, const char* fmt, ...)
     {
         va_list args;

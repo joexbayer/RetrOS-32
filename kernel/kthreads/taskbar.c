@@ -12,6 +12,7 @@
 #include <kthreads.h>
 #include <gfx/composition.h>
 #include <lib/icons.h>
+#include <scheduler.h>
 
 #define TASKBAR_HEIGHT 20
 
@@ -44,14 +45,14 @@ static void __callback taskbar_bg_default_color();
 static void __kthread_entry taskbar(void);
 
 /* taskbar options */
-static struct taskbar_option {
+struct taskbar_option {
     char name[50];
     unsigned char* icon;
     void (*callback)(void);
 };
 
 /* taskbar header */
-static struct taskbar_header {
+struct taskbar_header {
     char name[50];
     unsigned char* icon;
     int x, y, w, h;
@@ -60,7 +61,7 @@ static struct taskbar_header {
 };
 
 /* taskbar options config */
-static struct taskbar_options {
+struct taskbar_options {
     struct taskbar_header headers[TASKBAR_MAX_HEADERS];
 } default_taskbar = {
     .headers = {
@@ -207,7 +208,7 @@ static void taskbar_hdr_event(struct window* w, struct taskbar_header* header, i
 static void taskbar_hdr_opt_event(struct window* w, struct taskbar_header* header, int x, int y)
 {
     for (int j = 0; j < TASKBAR_MAX_OPTIONS; j++){
-        if(header->options[j].name == NULL) break;
+        if(header->options[j].name[0] == '\0') break;
         
         if(gfx_point_in_rectangle(
                 header->x+4, /* x, 4 padding */
@@ -319,7 +320,7 @@ static void __kthread_entry taskbar(void)
 
                 for (int i = 0; i < TASKBAR_MAX_HEADERS; i++){
                     /* continue for empty headers */
-                    if(default_taskbar.headers[i].name == NULL) continue;
+                    if(default_taskbar.headers[i].name[0] == '\0') continue;
 
                     dbgprintf("Checking header %x\n", default_taskbar.headers[i].name);
 
@@ -364,7 +365,7 @@ static void __callback taskbar_editor()
 
 static void __callback taskbar_cube()
 {
-    int pid = pcb_create_process("/bin/cube", 0, NULL, 0);
+    int pid = pcb_create_process("/bin/cube.o", 0, NULL, 0);
     if(pid < 0)
         dbgprintf("%s does not exist\n", "cube");
 }

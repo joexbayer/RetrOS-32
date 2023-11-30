@@ -24,11 +24,11 @@ char* disk_name();
 
 struct diskdev* disk_device_get();
 
-int write_block(char* buf, int block);
-int write_block_offset(char* usr_buf, int size, int offset, int block);
+int write_block(void* buf, int block);
+int write_block_offset(void* usr_buf, int size, int offset, int block);
 
-int read_block(char* buf, int block);
-int read_block_offset(char* usr_buf, int size, int offset, int block);
+int read_block(void* buf, int block);
+int read_block_offset(void* usr_buf, int size, int offset, int block);
 
 int disk_size();
 

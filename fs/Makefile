@@ -1,5 +1,5 @@
 CCFLAGS=-m32 -std=gnu11 -O2 \
-		-g -Wall -Wextra -Wpedantic -Wstrict-aliasing -D__KERNEL \
+		-Wall -Wextra -Wpedantic -Wstrict-aliasing -D__KERNEL \
 		-Wno-pointer-arith -Wno-unused-parameter -nostdlib \
 		-nostdinc -ffreestanding -fno-pie -fno-stack-protector \
 		-fno-builtin-function -fno-builtin -I ./../include/

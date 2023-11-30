@@ -1,8 +1,8 @@
 CCFLAGS=-m32 -std=gnu11 -O1 -D__KERNEL \
-		-g -Wall -Wextra -Wpedantic -Wstrict-aliasing \
+		-Wall -Wextra -Wpedantic -Wstrict-aliasing \
 		-Wno-pointer-arith -Wno-unused-parameter -nostdlib \
 		-nostdinc -ffreestanding -fno-pie -fno-stack-protector \
-		-I ./include/
+		-Wno-conversion -I ./include/
 ASFLAGS=
 LDFLAGS= 
 MAKEFLAGS += --no-print-directory
@@ -57,7 +57,7 @@ KERNELOBJ = bin/kernel.o bin/terminal.o bin/helpers.o bin/pci.o bin/virtualdisk.
 			bin/util.o bin/interrupts.o bin/irs_entry.o bin/timer.o bin/gdt.o bin/interpreter.o bin/vm.o bin/lex.o \
 			bin/keyboard.o bin/pcb.o bin/pcb_queue.o bin/memory.o bin/vmem.o bin/kmem.o bin/e1000.o bin/display.o bin/env.o \
 			bin/sync.o bin/kthreads.o bin/ata.o bin/bitmap.o bin/rtc.o bin/tss.o bin/kutils.o bin/script.o bin/login.o \
-			bin/diskdev.o bin/scheduler.o bin/work.o bin/rbuffer.o bin/errors.o bin/kclock.o bin/atapi.o bin/tar.o bin/color.o\
+			bin/diskdev.o bin/scheduler.o bin/work.o bin/rbuffer.o bin/errors.o bin/kclock.o bin/tar.o bin/color.o\
 			bin/serial.o bin/io.o bin/syscalls.o bin/list.o bin/hashmap.o bin/vbe.o bin/ksyms.o bin/windowserver.o\
 			bin/mouse.o bin/ipc.o ${PROGRAMOBJ} ${GFXOBJ} bin/font8.o bin/net.o bin/fs.o bin/ext.o bin/fat16.o bin/partition.o
 
@@ -107,11 +107,11 @@ bin/build: ./tools/build.c
 	@echo [BUILD]      Compiling $<
 
 bin/mkfs: bin/ext.o bin/bitmap.o ./tools/mkfs.c
-	@gcc tools/mkfs.c bin/bitmap.o fs/bin/inode.o -I include/  -O2 -m32 -Wall -g -D_XOPEN_SOURCE -D_FILE_OFFSET_BITS=64 -D__KERNEL -o  ./bin/mkfs
+	@gcc tools/mkfs.c bin/bitmap.o fs/bin/inode.o -I include/  -O2 -m32 -Wall -D_XOPEN_SOURCE -D_FILE_OFFSET_BITS=64 -D__KERNEL -o  ./bin/mkfs
 	@echo [BUILD]      Compiling $<
 
 bin/mkfsv2: tools/mkfsv2.c bin/fat16.o bin/bitmap.o ./tests/mocks.c
-	@gcc tools/mkfsv2.c bin/bitmap.o ./tests/mocks.c bin/fat16.o -I ./include/  -O2 -m32 -Wall -g -D__FS_TEST -D__KERNEL -o 	./bin/mkfsv2
+	@gcc tools/mkfsv2.c bin/bitmap.o ./tests/mocks.c bin/fat16.o -I ./include/  -O2 -m32 -Wall -D__FS_TEST -D__KERNEL -o 	./bin/mkfsv2
 	@echo [BUILD]      Compiling $<
 
 tools: bin/build bin/mkfs bin/mkfsv2
@@ -136,7 +136,6 @@ build: tools
 
 apps:
 	@make -C ./apps/
-	xxd -i apps/editor/edit.o > include/editor.h
 
 iso: compile tests apps tools build img
 	$(TIME-END)
@@ -157,6 +156,8 @@ bare: compile create_fs
 img: grub_fix tools compile create_fs sync
 	@echo "Finished creating the image."
 	$(TIME-END)
+
+re_apps: apps create_fs sync
 
 clean:
 	make -C ./net clean

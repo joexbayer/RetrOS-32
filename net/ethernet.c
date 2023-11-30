@@ -30,7 +30,7 @@ int net_ethernet_add_header(struct sk_buff* skb, uint32_t ip)
     return 0;
 }
 
-uint8_t net_ethernet_parse(struct sk_buff* skb)
+int8_t net_ethernet_parse(struct sk_buff* skb)
 {
     struct ethernet_header* header = (struct ethernet_header*) skb->data;
     header->ethertype = ntohs(header->ethertype);

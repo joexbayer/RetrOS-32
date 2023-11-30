@@ -12,7 +12,7 @@ int display_get_info(struct display_info* info)
 {
     struct display_info display = {
         .bpp = vbe_info->bpp,
-        .height = vbe_info->width,
+        .width = vbe_info->width,
         .height = vbe_info->height,
         .color = 255,
         .name = "VESA"

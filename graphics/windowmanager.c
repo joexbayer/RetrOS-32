@@ -28,6 +28,7 @@ static int wm_default_add(struct windowmanager* wm, struct window* window);
 static int wm_default_remove(struct windowmanager* wm, struct window* window);
 static int wm_default_draw(struct windowmanager* wm, struct window* window);
 static int wm_default_push_front(struct windowmanager* wm, struct window* window);
+static int wm_default_push_back(struct windowmanager* wm, struct window* window);
 static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char flags);
 static int wm_default_workspace(struct windowmanager* wm, int workspace);
 static int wm_default_changes(struct windowmanager* wm);
@@ -38,6 +39,7 @@ static struct windowmanager_ops wm_default_wm_ops = {
     .remove = wm_default_remove,
     .draw = wm_default_draw,
     .push_front = wm_default_push_front,
+    .push_back = wm_default_push_back,
     .mouse_event = wm_default_mouse_event,
     .workspace = wm_default_workspace,
     .init = init_windowmanager,
@@ -197,6 +199,42 @@ static int wm_default_remove(struct windowmanager* wm, struct window* window)
     return ERROR_OK; 
 }
 
+static int wm_default_push_back(struct windowmanager* wm, struct window* window)
+{
+    ERR_ON_NULL(wm);
+
+    if(wm->window_count < 2){
+        return ERROR_OK;
+    }
+
+    dbgprintf("Pushing window %s to back\n", window->name);
+
+    window->in_focus = 0;
+
+    PANIC_ON_ERR(wm->ops->remove(wm, window));
+
+    spin_lock(&wm->spinlock);
+    /* Replace wm->windows with window, pushing original wm->windows back. */
+    struct window* i;
+    for (i = wm->windows; i != NULL && i->next != NULL; i = i->next);
+    if (i){
+        i->next = window;
+    }
+
+    window->next = NULL;
+    window->changed = 1;
+    wm->window_count++;
+
+    if(wm->windows){
+        wm->windows->changed = 1;
+        wm->windows->in_focus = 1;
+    }
+
+    spin_unlock(&wm->spinlock);
+
+    return ERROR_OK;
+}
+
 /**
  * @brief wm_default_push_front pushes a window to the front of the windowmanager
  * Used to bring a window to the front of the screen
@@ -258,7 +296,7 @@ static int wm_default_draw(struct windowmanager* wm, struct window* window)
         wm->ops->draw(wm, window->next);
     }
     
-    gfx_draw_window(wm->composition_buffer, window);
+    window->draw->draw(wm->composition_buffer, window);
 
     return ERROR_OK;
 }

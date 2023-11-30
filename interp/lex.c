@@ -94,7 +94,8 @@ void match(int tk) {
         return;
     }
     //twritef("%d: expected token: %c\n", line, tk);
-    if(error == 0) error = 1;
+    twritef("%d: %s\n", line, lex_errors[1]);
+kernel_exit();
     if(error_line == 0) error_line =line;
 }
 
@@ -120,7 +121,8 @@ void expression(int level) {
     {
         if (!lexer_context.token) {
             //twritef("%d: unexpected token EOF of expression\n", line);
-            if(error == 0) error = 2;
+            twritef("%d: %s\n", line, lex_errors[2]);
+kernel_exit();
             if(error_line == 0) error_line =line;
         }
         if (lexer_context.token == Num) {
@@ -222,7 +224,8 @@ void expression(int level) {
                 }
                 else {
                     //twritef("%d: bad function call\n", line);
-                    if(error == 0) error = 3;
+                    twritef("%d: %s\n", line, lex_errors[3]);
+kernel_exit();
                     if(error_line == 0) error_line =line;
                 }
 
@@ -251,7 +254,8 @@ void expression(int level) {
                 }
                 else {
                     //twritef("%d: undefined variable\n", line);
-                    if(error == 0) error = 4;
+                    twritef("%d: %s\n", line, lex_errors[4]);
+kernel_exit();
                     if(error_line == 0) error_line =line;
                 }
 
@@ -292,7 +296,8 @@ void expression(int level) {
                 lexer_context.expr_type = lexer_context.expr_type - PTR;
             } else {
                 //twritef("%d: bad dereference\n", line);
-                if(error == 0) error = 5;
+                twritef("%d: %s\n", line, lex_errors[5]);
+kernel_exit();
                 if(error_line == 0) error_line =line;
             }
 
@@ -306,7 +311,8 @@ void expression(int level) {
                 text --;
             } else {
                 //twritef("%d: bad address of\n", line);
-                if(error == 0) error = 6;
+                twritef("%d: %s\n", line, lex_errors[6]);
+kernel_exit();
                 if(error_line == 0) error_line =line;
             }
 
@@ -376,7 +382,8 @@ void expression(int level) {
                 *++text = LI;
             } else {
                 //twritef("%d: bad lvalue of pre-increment\n", line);
-                if(error == 0) error = 7;
+                twritef("%d: %s\n", line, lex_errors[7]);
+kernel_exit();
                 if(error_line == 0) error_line =line;
             }
             *++text = PUSH;
@@ -387,7 +394,8 @@ void expression(int level) {
         }
         else {
             //twritef("%d: bad expression\n", line);
-            if(error == 0) error = 8;
+            twritef("%d: %s\n", line, lex_errors[8]);
+kernel_exit();
             if(error_line == 0) error_line =line;
         }
     }
@@ -404,7 +412,8 @@ void expression(int level) {
                     *text = PUSH; // save the lvalue's pointer
                 } else {
                     //twritef("%d: bad lvalue in assignment\n", line);
-                    if(error == 0) error = 9;
+                    twritef("%d: %s\n", line, lex_errors[9]);
+kernel_exit();
                     if(error_line == 0) error_line =line;
                 }
                 expression(Assign);

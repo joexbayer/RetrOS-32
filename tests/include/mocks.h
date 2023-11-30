@@ -27,6 +27,9 @@ void vmem_init();
 void* kalloc(int size);
 void kfree(void* ptr);
 
+int write_block(char* buf, int block);
+int read_block(char* buf, int block);
+
 struct pcb {
 
 };

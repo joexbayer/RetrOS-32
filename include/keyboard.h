@@ -18,6 +18,8 @@
 #define F9 242 /* CTRL r */
 #define F10 241 /* CTRL q */
 
+#define TAB 9
+
 #define CTRLC 227
 #define CTRLE 229
 

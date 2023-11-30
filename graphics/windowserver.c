@@ -77,6 +77,8 @@ static int ws_add(struct windowserver* ws, struct window* window)
         return -ERROR_OPS_CORRUPTED;
     }
 
+    dbgprintf("[WSERVER] Added window %x.\n", window);
+
     return 0;
 }
 
@@ -208,10 +210,10 @@ static int __ws_key_event(struct windowserver* ws, unsigned char key)
     ERR_ON_NULL(ws);
     WS_VALIDATE(ws);
 
+
     if(key == 0){return ERROR_OK;}
 
-    switch (key)
-    {
+    switch (key){
     case F4:{
             /* Workspace changes */
             if(ws->taskbar != NULL){
@@ -228,7 +230,7 @@ static int __ws_key_event(struct windowserver* ws, unsigned char key)
         }
         break;
     case F10:{
-            /* Fullscreen of window current in focus */
+            /* Fullscreen of window current in focus*/
             struct window* w = ws->_wm->windows;
 
             ws->ops->fullscreen(ws, w);
@@ -239,6 +241,11 @@ static int __ws_key_event(struct windowserver* ws, unsigned char key)
                 .event = GFX_EVENT_RESOLUTION
             };
             gfx_push_event(w, &e);
+        }
+        break;
+    case TAB: {
+            dbgprintf("[WSERVER] Switching focus.\n");
+            ws->_wm->ops->push_back(ws->_wm, ws->_wm->windows);
         }
         break;
     default: {

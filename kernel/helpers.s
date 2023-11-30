@@ -38,8 +38,8 @@ tlb_flush_addr:
 .text
 .globl load_page_directory
 load_page_directory:
-    push %ebp
-    mov %esp, %ebp
+    pushl %ebp
+    movl %esp, %ebp
 
     pushl %eax
 
@@ -48,22 +48,22 @@ load_page_directory:
 
     popl %eax
 
-    mov %ebp, %esp
-    pop %ebp
+    movl %ebp, %esp
+    popl %ebp
     ret
 
 .text
 .globl enable_paging
 enable_paging:
-    push %ebp
-    mov %esp, %ebp
+    pushl %ebp
+    movl %esp, %ebp
 
     mov %cr0, %eax
     or $0x80000000, %eax
     mov %eax, %cr0
     
-    mov %ebp, %esp
-    pop %ebp
+    movl %ebp, %esp
+    popl %ebp
     ret
 
 .global pcb_save_context 

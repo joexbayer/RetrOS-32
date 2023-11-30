@@ -3,7 +3,11 @@
 
 #include <stdint.h>
 
-typedef unsigned int        size_t;
+#ifdef __APPLE__
+typedef unsigned long       size_t;
+#else
+typedef unsigned int       size_t;
+#endif
 
 void *operator new(size_t size);
  

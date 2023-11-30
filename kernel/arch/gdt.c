@@ -1,7 +1,7 @@
 #include <arch/gdt.h>
 #include <arch/tss.h>
 
-#define FLUSH_GDT()           asm volatile ("lgdt %0" : : "m" (gdt_addr))
+#define FLUSH_GDT() asm volatile ("lgdt %0" : : "m" (gdt_addr))
 
 static struct gdt_segment gdt[7];
 
@@ -9,7 +9,8 @@ static struct gdt_address
 {
 	uint16_t limit;
 	uint32_t base;
-} __attribute__((packed)) ;
+} __attribute__((packed));
+
 static struct gdt_address gdt_addr;
 
 void gdt_set_segment(struct gdt_segment *segment, uint32_t base, uint32_t limit, char type, char privilege, char system)

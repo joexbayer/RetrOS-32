@@ -78,14 +78,14 @@ public:
         return 0;
     }
 
-    String substring(int start, int end) const {
+    String* substring(int start, int end) const {
         int len = end - start;
         char* result = new char[len + 1];
         for (int i = 0; i < len; i++) {
             result[i] = m_data[start + i];
         }
         result[len] = '\0';
-        return String(result);
+        return new String(result);
     }
 
     int indexOf(char delimiter) const {

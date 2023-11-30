@@ -27,11 +27,11 @@ void ksyms_add_symbol(const char* name, uintptr_t addr) {
     if (__ksyms.num_symbols < KSYMS_MAX_SYMBOLS) {
         memcpy(__ksyms.symtable[__ksyms.num_symbols].name, name, strlen(name));
         __ksyms.symtable[__ksyms.num_symbols].addr = addr;
+        dbgprintf("Added new symbol %s at 0x%x\n", name, addr);
         __ksyms.num_symbols++;
     } else {
         twrite("Error: symbol table full\n");
     }
-    dbgprintf("Added new symbol %s\n", name);
 }
 
 /**
@@ -47,36 +47,62 @@ uintptr_t ksyms_resolve_symbol(const char* name)
         int ksym_namelen = strlen(__ksyms.symtable[i].name);
         int namelen = strlen(name);
         if(memcmp(name, __ksyms.symtable[i].name, namelen) == 0 && ksym_namelen == namelen){
-            return (void*) __ksyms.symtable[i].addr;
+            return __ksyms.symtable[i].addr;
         }
     }
 
     return NULL;
 }
 
-void backtrace(void) {
-    uintptr_t* frame_ptr = __builtin_frame_address(0);;
-    uintptr_t return_addr;
+void __backtrace_find_symbol(uintptr_t* addr)
+{
+        int best_index = -1;
+        uintptr_t best_diff = (uintptr_t)-1; // Max possible value for uintptr_t
+        for (int i = 0; i < __ksyms.num_symbols; i++) {
+           if (__ksyms.symtable[i].addr <= addr) {
+                uintptr_t diff = (uint32_t)addr - (uint32_t)__ksyms.symtable[i].addr;
+                if (diff < best_diff) {
+                    best_diff = diff;
+                    best_index = i;
+                }
+            }
+
+        }
+
+        if (best_index != -1) {
+            dbgprintf("%s: 0x%x - 0x%x = 0x%x\n", 
+                      __ksyms.symtable[best_index].name, 
+                      addr, 
+                      __ksyms.symtable[best_index].addr, 
+                      best_diff);
+            twritef("%s\n", __ksyms.symtable[best_index].name);
+        } else {
+            //dbgprintf("Unknown symbol: 0x%lx\n", addr);
+        }
+}
+
+void __backtrace_from(uintptr_t* frame_ptr, uintptr_t* return_addr)
+{
     int depth = 0;
 
-    dbgprintf("Backtrace:\n");
     while (frame_ptr && depth < KSYMS_MAX_DEPTH) {
-        return_addr = *((uintptr_t*) (frame_ptr + 1));
-        
-        int best_index = -1;
-        int best_diff = 0x999999;
-        for (int i = 0; i < __ksyms.num_symbols; i++) {
-            if(__ksyms.symtable[i].addr-return_addr < best_diff){
-                best_diff = __ksyms.symtable[i].addr-return_addr;
-                best_index = i;
-            }
-        }
-        if(best_index != -1)
-            dbgprintf("%s: 0x%lx - 0x%lx = 0x%lx\n", __ksyms.symtable[best_index].name, return_addr, __ksyms.symtable[best_index].addr, __ksyms.symtable[best_index].addr-return_addr);
+        if(return_addr == 0) break;
+        if(return_addr > 0x100000) break; // TODO: fix this (it's a hack to prevent backtracing into user space)
+
+       __backtrace_find_symbol(return_addr);
         
         frame_ptr = (uintptr_t*) (*frame_ptr);
+        if (frame_ptr) {
+            return_addr = *(frame_ptr + 1);
+        }
         depth++;
     }
+}
+
+void backtrace(void) {
+    uintptr_t* frame_ptr = __builtin_frame_address(0);
+    uintptr_t return_addr = *(frame_ptr + 1);
+    __backtrace_from(frame_ptr, return_addr);
 }
 EXPORT_KSYMBOL(backtrace);
 

@@ -193,7 +193,7 @@ static int vmem_page_region_alloc(struct vmem_page_region* pages, int size)
 	return 0;
 }
 
-static int vmem_free_page_region(struct vmem_page_region* region, int size)
+static int vmem_free_page_region(struct pcb* pcb, struct vmem_page_region* region, int size)
 {
 	ERR_ON_NULL(region);
 	if(region->refs > 1){
@@ -202,13 +202,24 @@ static int vmem_free_page_region(struct vmem_page_region* region, int size)
 		return 0;
 	}
 
+	dbgprintf("Freeing %d pages. 0x%x\n", region->size/PAGE_SIZE, region->basevaddr);
+
 	int num_pages = region->size / PAGE_SIZE;
 	dbgprintf("Freeing %d pages\n", num_pages);
 	for (int i = 0; i < num_pages; i++){
 		if(region->bits[i] == 0) continue;
-		void* vaddr = (void*) VMEM_START_ADDRESS + (region->bits[i] * PAGE_SIZE);
-		vmem_default->ops->free(vmem_default, (void*) vaddr);
-		vmem_unmap(vmem_get_page_table(current_running, (uint32_t)vaddr), (uint32_t)vaddr);
+		
+		/* Free the physical page */
+		void* paddr = (void*) (vmem_default->start + (region->bits[i] * PAGE_SIZE));
+		vmem_default->ops->free(vmem_default, (void*) paddr);
+
+		/* Unmap the virtual page */
+		void* vaddr = (void*) (region->basevaddr + (i * PAGE_SIZE));
+		dbgprintf("Unmapping 0x%x\n", vaddr);
+		uint32_t* heap_table = vmem_get_page_table(pcb, (uint32_t)vaddr);
+		dbgprintf("Table: 0x%x\n", heap_table);
+
+		vmem_unmap(heap_table, (uint32_t)vaddr);
 	}
 
 	kfree(region->bits);
@@ -222,17 +233,21 @@ int vmem_free_allocations(struct pcb* pcb)
 	uint32_t heap_table = (uint32_t)pcb->page_dir[DIRECTORY_INDEX(VMEM_HEAP)] & ~PAGE_MASK;
 	assert(heap_table != 0);
 
+	ENTER_CRITICAL();
 	/* Free all malloc allocation */
 	struct allocation* iter = pcb->allocations->head;
-	while(iter != NULL){
+	while(iter != NULL && iter != 0x1b0004){
 		struct allocation* old = iter;
 		iter = iter->next;
 
-		vmem_free_page_region(old->region, old->size);
+		dbgprintf("Freeing %d bytes of data from 0x%x (0x%x)\n", old->size, old->address, old);
+		dbgprintf("head: 0x%x\n", pcb->allocations->head);
+		vmem_free_page_region(pcb, old->region, old->size);
 	
 		kfree(old);
 	}
-	vmem_manager->ops->free(vmem_default, (void*) heap_table);
+	ENTER_CRITICAL();
+	vmem_default->ops->free(vmem_default, (void*) heap_table);
 	
 	/* Free allocation list */
 	kfree(pcb->allocations);
@@ -273,7 +288,7 @@ void vmem_stack_free(struct pcb* pcb, void* ptr)
 		pcb->allocations->head = pcb->allocations->head->next;
 		pcb->used_memory -= old->size;
 
-		vmem_free_page_region(old->region, old->size);
+		vmem_free_page_region(pcb, old->region, old->size);
 		
 		dbgprintf("[1] Free %d bytes of data from 0x%x\n", old->size, old->address);
 		return;
@@ -287,7 +302,8 @@ void vmem_stack_free(struct pcb* pcb, void* ptr)
 			iter->next = iter->next->next;
 			pcb->used_memory -= save->size;
 
-			vmem_free_page_region(save->region, save->size);
+			dbgprintf("Freeing %d bytes of data from 0x%x (0x%x)\n", save->size, save->address, save);
+			vmem_free_page_region(pcb, save->region, save->size);
 			dbgprintf("[2] Free %d bytes of data from 0x%x\n", save->size, save->address);
 			return;
 		}
@@ -323,6 +339,7 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 		warningf("Out memory\n");
 		return NULL;
 	}
+	dbgprintf("New allocation: 0x%x\n", allocation);
 	
 	allocation->size = _size;
 	allocation->used = _size;
@@ -461,7 +478,7 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 	 * This means we need to allocate a new physical page allocation.
 	 * @note "iter" will point to the last element in the allocation list.
 	 */
-	struct vmem_page_region* physical = vmem_create_page_region(pcb, (void*)iter->region->basevaddr + iter->region->size, num_pages, USER);
+	struct vmem_page_region* physical = vmem_create_page_region(pcb, (void*)((byte_t*)iter->region->basevaddr + iter->region->size), num_pages, USER);
 	if(physical == NULL){
 		kfree(allocation);
 		warningf("Out of heap memory\n");
@@ -513,14 +530,14 @@ void vmem_init_process_thread(struct pcb* parent, struct pcb* thread)
 	 */
 	
 	/* inheret directory */
-	uint32_t* thread_directory = vmem_manager->ops->alloc(vmem_manager);
+	uint32_t* thread_directory = vmem_default->ops->alloc(vmem_default);
 	for (int i = 0; i < 1024; i++){
 		/* copy over pages, this will include heap and data */
 		if(parent->page_dir[i] != 0) thread_directory[i] = parent->page_dir[i];
 	}
 
 	/* Allocate table for stack */
-	uint32_t* thread_stack_table = vmem_manager->ops->alloc(vmem_manager);
+	uint32_t* thread_stack_table = vmem_default->ops->alloc(vmem_default);
 	
 	/* create 8kb stack, 2 4kb pages */
 	uint32_t* thread_stack_page = vmem_default->ops->alloc(vmem_default);
@@ -553,13 +570,13 @@ void vmem_init_process(struct pcb* pcb, byte_t* data, int size)
 	int allocated_pages = 0;
 
 	/* Allocate directory and tables for data and stack */
-	uint32_t* process_directory = vmem_manager->ops->alloc(vmem_manager);
+	uint32_t* process_directory = vmem_default->ops->alloc(vmem_default);
 	allocated_pages++;
-	uint32_t* process_data_table = vmem_manager->ops->alloc(vmem_manager);
+	uint32_t* process_data_table = vmem_default->ops->alloc(vmem_default);
 	allocated_pages++;
-	uint32_t* process_stack_table = vmem_manager->ops->alloc(vmem_manager);
+	uint32_t* process_stack_table = vmem_default->ops->alloc(vmem_default);
 	allocated_pages++;
-	uint32_t* process_heap_table = vmem_manager->ops->alloc(vmem_manager);
+	uint32_t* process_heap_table = vmem_default->ops->alloc(vmem_default);
 	allocated_pages++;
 
 	dbgprintf("[INIT PROCESS] Directory: 0x%x\n", process_directory);
@@ -595,11 +612,15 @@ void vmem_init_process(struct pcb* pcb, byte_t* data, int size)
 	uint32_t* process_stack_page = vmem_default->ops->alloc(vmem_default);
 	allocated_pages++;
 	memset(process_stack_page, 0, PAGE_SIZE);
+	dbgprintf("[INIT PROCESS] Finished allocating 1/2 stack page.\n");
 	vmem_map(process_stack_table, VMEM_STACK, (uint32_t) process_stack_page, USER);
+	dbgprintf("[INIT PROCESS] Finished mapping 1/2 stack page.\n");
 
 	uint32_t* process_stack_page2 = vmem_default->ops->alloc(vmem_default);
 	allocated_pages++;
+	dbgprintf("[INIT PROCESS] Finished allocating 2/2 stack page.\n");
 	memset(process_stack_page2, 0, PAGE_SIZE);
+	dbgprintf("[INIT PROCESS] Finished clearing 2/2 stack page.\n");
 	vmem_map(process_stack_table, VMEM_STACK-PAGE_SIZE, (uint32_t) process_stack_page2, USER);
 	dbgprintf("[INIT PROCESS] Finished mapping stack.\n");
 
@@ -641,7 +662,10 @@ void vmem_cleanup_process_thead(struct pcb* thread)
 
 	vmem_default->ops->free(vmem_default, (void*) stack_page);
 	vmem_default->ops->free(vmem_default, (void*) stack_page2);
-	vmem_manager->ops->free(vmem_default, (void*) stack_table);
+	vmem_default->ops->free(vmem_default, (void*) stack_table);
+
+	vmem_default->ops->free(vmem_default, (void*) thread->page_dir);
+
 }
 
 /**
@@ -654,7 +678,6 @@ void vmem_cleanup_process_thead(struct pcb* thread)
  */
 void vmem_cleanup_process(struct pcb* pcb)
 {
-
 	/**
 	 * @brief A process can not be "cleaned" unless all of its threads are dead.
 	 * @see https://github.com/joexbayer/RetrOS-32/issues/84
@@ -689,7 +712,7 @@ void vmem_cleanup_process(struct pcb* pcb)
 	
 	vmem_default->ops->free(vmem_default, (void*) data_page);
 	freed_pages++;
-	vmem_manager->ops->free(vmem_default, (void*) data_table);
+	vmem_default->ops->free(vmem_default, (void*) data_table);
 	freed_pages++;
 
 	dbgprintf("[Memory] Cleaning up data from pcb [DONE].\n");
@@ -705,7 +728,7 @@ void vmem_cleanup_process(struct pcb* pcb)
 	freed_pages++;
 	vmem_default->ops->free(vmem_default, (void*) stack_page2);
 	freed_pages++;
-	vmem_manager->ops->free(vmem_default, (void*) stack_table);
+	vmem_default->ops->free(vmem_default, (void*) stack_table);
 	freed_pages++;
 
 	dbgprintf("[Memory] Cleaning up stack from pcb [DONE].\n");
@@ -720,7 +743,7 @@ void vmem_cleanup_process(struct pcb* pcb)
 	/**
 	 * Lastly free directory.
 	 */
-	vmem_manager->ops->free(vmem_default, (void*) directory);
+	vmem_default->ops->free(vmem_default, (void*) directory);
 	freed_pages++;
 	dbgprintf("[Memory] Cleaning up pages from pcb: freed %d pages.\n", freed_pages);
 }
@@ -736,30 +759,36 @@ void vmem_cleanup_process(struct pcb* pcb)
  */
 void vmem_init_kernel()
 {	
-	uintptr_t vmem_start 	= memory_map_get()->virtual.from;
-	int vmem_size 			= memory_map_get()->virtual.total;
 	int total_mem			= memory_map_get()->total;
 
 	kernel_page_dir = vmem_manager->ops->alloc(vmem_manager);
 
 	/* identity map first 4 mb of data. */
-	uint32_t* kernel_page_table = vmem_default->ops->alloc(vmem_default);
+	uint32_t* kernel_page_table = vmem_manager->ops->alloc(vmem_manager);
 	for (int addr = 0; addr < 0x400000; addr += PAGE_SIZE){
 		vmem_map(kernel_page_table, addr, addr, SUPERVISOR);
 	}
 
 	int start = VMEM_HEAP;
-	uint32_t* kernel_heap_memory_table = vmem_default->ops->alloc(vmem_default);;
+	uint32_t* kernel_heap_memory_table = vmem_manager->ops->alloc(vmem_manager);;
 	vmem_add_table(kernel_page_dir, start, kernel_heap_memory_table, SUPERVISOR);
 
 	/* identity map rest of memory above 4MB */
-	for (int i = 1; i < ((total_mem)/(1024*1024)) - 4; i++){
-		uint32_t* kernel_page_table_memory = vmem_default->ops->alloc(vmem_default);;
-		for (int addr = 0x400000*i; addr < 0x400000*(i+1); addr += PAGE_SIZE)
+	dbgprintf("Initiating memory from 0x%x - %d\n", 0x400000, ((total_mem)/(1024*1024)) - 4);
+	for (int i = 1; i < 16/4; i++){
+		uint32_t* kernel_page_table_memory = vmem_manager->ops->alloc(vmem_manager);
+		if (kernel_page_table_memory == NULL){
+			PANIC();
+		}
+		
+		for (int k = 0; k < 1024; k += 1){
+			int addr = 0x400000*i + k*PAGE_SIZE;
 			vmem_map(kernel_page_table_memory, addr, addr, SUPERVISOR);
+		}
 		vmem_add_table(kernel_page_dir, 0x400000*i, kernel_page_table_memory, SUPERVISOR);
+		dbgprintf("Initiated memory between 0x%x and 0x%x\n", 0x400000*i, 0x400000*(i+1));
 	}
-	dbgprintf("Initiated memory between 0x%x and 0x%x (Extended)\n", 0x400000, 0x400000 + total_mem - 4*1024*1024);
+	dbgprintf("Initiated memory between 0x%x and 0x%x\n", 0x400000, 0x400000 + total_mem - 4*1024*1024);
 	
 	/**
 	 * Identity map vesa color framebuffer
@@ -772,6 +801,9 @@ void vmem_init_kernel()
 	vmem_add_table(kernel_page_dir, 0, kernel_page_table, SUPERVISOR);
 
 	vmem_add_table(kernel_page_dir, vbe_info->framebuffer, kernel_page_table_vesa, SUPERVISOR); 
+	
+	/* test if 0x80d000 is identity mapped */
+
 	
 	dbgprintf("[INIT KERNEL] Directory: 		0x%x\n", kernel_page_dir);
 	dbgprintf("[INIT KERNEL] 0x0 - 0x400000: 	0x%x\n", kernel_page_table);
@@ -829,7 +861,9 @@ void vmem_init()
 	VMEM_END_ADDRESS 	= memory_map_get()->virtual.to;
 
 	vmem_allocator_create(vmem_default, VMEM_START_ADDRESS, VMEM_END_ADDRESS);
+	dbgprintf("Manager start: 0x%x - 0x%x (%d)\n", VMEM_MANAGER_START, VMEM_MANAGER_END, VMEM_MANAGER_PAGES);
 	vmem_allocator_create(vmem_manager, VMEM_MANAGER_START, VMEM_MANAGER_END);
+	dbgprintf("Default: 0x%x - 0x%x (%d)\n", VMEM_START_ADDRESS, VMEM_END_ADDRESS, VMEM_TOTAL_PAGES);
 
 	dbgprintf("[VIRTUAL MEMORY] %d free pagable pages.\n", VMEM_TOTAL_PAGES);
 	dbgprintf("[VIRTUAL MEMORY] %d free pagable management pages.\n", VMEM_MANAGER_PAGES);

@@ -73,12 +73,12 @@ int gfx_draw_contoured_box(int x, int y, int width, int height, color_t color)
 	return 0;
 }
 
-int gfx_button(int x, int y, int width, int height, const char* name)
+int gfx_button(int x, int y, int width, int height, char* name)
 {
 	return gfx_button_ext(x, y, width, height, name, 30);
 }
 
-int gfx_button_ext(int x, int y, int width, int height, const char* name, color_t color)
+int gfx_button_ext(int x, int y, int width, int height, char* name, color_t color)
 {
 	kernel_gfx_draw_rectangle(current_running->gfx_window, x, y, width, height, color);
 	kernel_gfx_draw_rectangle(current_running->gfx_window, x, y, width-1, 1, 31);

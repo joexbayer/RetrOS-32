@@ -50,13 +50,65 @@ static const char* __exceptions_names[32] = {
 	"RESERVED","RESERVED","RESERVED","RESERVED","RESERVED","RESERVED",
 	"RESERVED"
 };
+/* Definition for PAGE_TABLE_ADDRESS macro */
+#define PAGE_TABLE_ADDRESS(x) (((x) >> 12) << 12)
+#define PRESENT_BIT 0x1
+#define READ_WRITE_BIT 0x2
+#define USER_SUPERVISOR_BIT 0x4
+
+/* Function to print detailed page fault info */
+void print_page_fault_info(unsigned long cr2) {
+    unsigned long page_dir_entry;
+    unsigned long page_table_entry;
+
+    /* Get the directory entry from the page directory */
+    page_dir_entry = current_running->page_dir[DIRECTORY_INDEX(cr2)];
+
+    /* Check if the page directory entry is present */
+    if (page_dir_entry & PRESENT_BIT) {
+        /* Assuming PAGE_TABLE_ADDRESS extracts the address of the page table from the directory entry */
+        unsigned long *page_table = (unsigned long *)PAGE_TABLE_ADDRESS(page_dir_entry);
+
+        /* Get the page table entry */
+        page_table_entry = page_table[TABLE_INDEX(cr2)];
+
+		/* Print detailed information */
+		dbgprintf("Page Fault Address: 0x%x\n", cr2);
+		dbgprintf("Page Directory Entry: 0x%x\n", page_dir_entry);
+
+		if(page_table_entry & PRESENT_BIT){
+			dbgprintf("Page Table Entry: 0x%x\n", page_table_entry);
+
+			/* Analyzing and printing permissions */
+			dbgprintf("Permissions: %s, %s\n",
+					(page_table_entry & READ_WRITE_BIT) ? "Read/Write" : "Read-Only",
+					(page_table_entry & USER_SUPERVISOR_BIT) ? "User" : "Supervisor");
+		}
+    } else {
+        dbgprintf("Page Directory Entry not present for address 0x%x\n", cr2);
+    }
+}
 
 void page_fault_interrupt(unsigned long cr2, unsigned long err)
 {
+	// Access the stack frame
+    uint32_t *ebp = (uint32_t*) __builtin_frame_address(0);
+    uint32_t return_address_for_iret = *(ebp + 13); // Offset to eip
+    uint32_t original_ebp = *(ebp + 8); // Offset to original ebp
+
+    dbgprintf("Return address for iret: 0x%x\n", return_address_for_iret);
+    dbgprintf("Original ebp: 0x%x\n", original_ebp);
+
+    __backtrace_from((uintptr_t*)original_ebp, (uintptr_t)return_address_for_iret);
+
 	interrupt_counter[14]++;
 	ENTER_CRITICAL();
 	dbgprintf("Page fault: 0x%x (Stack: 0x%x) %d (%s)\n", cr2, current_running->stackptr, err, current_running->name);
 	dbgprintf("Page: %x, process: %s\n", current_running->page_dir[DIRECTORY_INDEX(cr2)], current_running->name);
+
+	/* print page_table entry */
+	print_page_fault_info(cr2);
+
 	pcb_dbg_print(current_running);
 
 	if(current_running->is_process){
@@ -160,6 +212,11 @@ static void init_idt()
 
 	idt_flush((uint32_t)&idt);
 }
+EXPORT_KSYMBOL(_page_fault_entry);
+EXPORT_KSYMBOL(_syscall_entry);
+EXPORT_KSYMBOL(isr_handler);
+EXPORT_KSYMBOL(isr14);
+
 
 void init_interrupts()
 {

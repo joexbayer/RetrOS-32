@@ -1,6 +1,7 @@
 #include <gfx/api.h>
 #include <gfx/gfxlib.h>
 #include <lib/graphics.h>
+#include <colors.h>
 #include <gfx/events.h>
 #include <assert.h>
 #include <errors.h>
@@ -35,7 +36,7 @@ int gfx_syscall_hook(int option, void* data, int flags)
     
     case GFX_DRAW_PIXEL:;
         struct gfx_pixel* pixel = (struct gfx_pixel*)data;
-        kernel_gfx_draw_pixel(current_running->gfx_window, pixel->x, pixel->y, pixel->color);
+        kernel_gfx_draw_pixel(current_running->gfx_window, pixel->x, pixel->y, rgb_to_vga(pixel->color));
         break;
 
     case GFX_EVEN_LOOP_OPT:

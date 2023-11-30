@@ -7,14 +7,18 @@
 #include <utils/Thread.hpp>
 #include <fs/ext.h>
 #include <fs/directory.h>
+#include <utils/TreeView.hpp>
 
 #include <fs/fat16.h>
 
 #include <lib/printf.h>
 
-#define WIDTH 300
-#define HEIGHT 200
+#define WIDTH 350
+#define HEIGHT 225
 #define ICON_SIZE 32
+
+#define TREE_VIEW_WIDTH 110  /* Width for the tree view panel */
+#define HEADER_HEIGHT 10     /* Height for the header */
 
 class File {
 public:
@@ -35,7 +39,6 @@ public:
     const char* getName() const {
         return name->getData();
     }
-
 
 
     int flags;
@@ -89,12 +92,15 @@ private:
     int m_size = 0;
 };
 
+
 /* todo add to file */
 class Finder : public Window
 {
 public:
     Finder() : Window(WIDTH, HEIGHT, "Finder", 0){
         drawRect(0, 0, WIDTH, HEIGHT, 30);
+
+        treeView = new TreeView(0, 0, TREE_VIEW_WIDTH, HEIGHT);
 
         for(int i = 0; i < 5; i++){
             icon[i] = (unsigned char*)malloc(ICON_SIZE*ICON_SIZE);
@@ -140,8 +146,6 @@ public:
         //struct directory_entry entry;
         struct fat16_directory_entry entry;
 
-
-
         if(m_fd != 0) fclose(m_fd);
 
         m_cache->clear();
@@ -177,24 +181,22 @@ public:
         return 0;
     }
 
+
     int showFiles(int x, int y){
-        if(x == 0 && y == 0 ){
-            drawRect(0, 0, WIDTH, HEIGHT, COLOR_WHITE);
-            drawRect(0, 0, WIDTH, 10, 30);
 
-            drawRect(1, 1, WIDTH-1, 1, 30+1);
-            drawRect(1, 1, 1, 10, 30+1);
+        if (x == 0 && y == 0) {
+            /* Draw the main background */
+            drawRect(TREE_VIEW_WIDTH, HEADER_HEIGHT, WIDTH - TREE_VIEW_WIDTH, HEIGHT - HEADER_HEIGHT, COLOR_WHITE);
+            
+            /* Draw the header */
+            drawContouredRect(TREE_VIEW_WIDTH, 0, WIDTH - TREE_VIEW_WIDTH, HEADER_HEIGHT);
 
-            drawRect(1+WIDTH-2, 1, 1, 10, COLOR_VGA_MEDIUM_DARK_GRAY+5);
-            drawRect(1, 10, WIDTH-1, 1, COLOR_VGA_MEDIUM_DARK_GRAY+5); 
-            drawRect(1, 11, WIDTH-1, 1, COLOR_BLACK);
-            drawRect(1, 12, WIDTH-1, 1, 30+1); 
-
-            gfx_draw_format_text(2, 2, COLOR_BLACK, "< >");
-            gfx_draw_format_text(WIDTH/2 - (path->getLength()*8)/2, 2, COLOR_BLACK, "%s", path->getData());
-            gfx_draw_format_text(WIDTH-strlen("XXX items")*8, 2, COLOR_BLACK, "%d items", m_cache->getSize());
+            /* Header text and other UI elements, adjusted for the new layout */
+            gfx_draw_format_text(TREE_VIEW_WIDTH + 2, 2, COLOR_BLACK, "< >");
+            gfx_draw_format_text(TREE_VIEW_WIDTH + (WIDTH - TREE_VIEW_WIDTH)/2 - (path->getLength()*8)/2, 2, COLOR_BLACK, "%s", path->getData());
+            gfx_draw_format_text(WIDTH - strlen("XXX items")*8, 2, COLOR_BLACK, "%d items", m_cache->getSize());
         }
-        
+    
         File* file;
         int iter = 0;
         int j = 0, i = 0;
@@ -204,26 +206,56 @@ public:
             if(file == 0) continue;
 
             /* draw icon based on type */
-            int xOffset = 12 + j * WIDTH / 2;
-            int yOffset = 12 + i * ICON_SIZE;
+            /* Adjust positioning for icons, considering the TREE_VIEW_WIDTH and HEADER_HEIGHT */
+            int xOffset = TREE_VIEW_WIDTH + 4 + j * (WIDTH - TREE_VIEW_WIDTH) / 2;
+            int yOffset = (HEADER_HEIGHT + 4 + i * ICON_SIZE);
 
             if (file->flags & FAT16_FLAG_SUBDIRECTORY) {
                 drawIcon(xOffset, yOffset, icon[0]);
-            } else if(file->name->includes("TXT")){
+            } else if (file->name->includes("TXT")) {
                 drawIcon(xOffset, yOffset, icon[1]);
-            } else if(file->name->includes("C  ")){
+            } else if (file->name->includes("C  ")) {
                 drawIcon(xOffset, yOffset, icon[2]);
             } else {
                 drawIcon(xOffset, yOffset, icon[3]);
             }
 
-            drawText(48 + j * WIDTH / 2, 24 + (i++) * ICON_SIZE, file->getName(), COLOR_BLACK);
+            /* Position text under the icon */
+            int textXOffset = xOffset+ICON_SIZE+4;
+            int textYOffset = yOffset + ICON_SIZE/2; /* Position the text just below the icon */
+            drawText(textXOffset, textYOffset, file->getName(), COLOR_BLACK);
 
-            /* check if x,y is inside box */
+            /* Check if x,y is inside box */
             if (x > xOffset && x < xOffset + ICON_SIZE && y > yOffset && y < yOffset + ICON_SIZE) {
                 if (file->flags & FAT16_FLAG_SUBDIRECTORY) {
                     /* change directory */
 
+                    /* ugly hack */
+                    if(String::strcmp(file->getName(), "..") == 0){
+                        int index = path->getLength()-1;
+                        while(index > 0 && path->getData()[index] != '/') index--;
+
+                        String* path2 = path->substring(0, index);
+                        delete path;
+                        path = path2;
+                        
+                        setHeader(path->getData());
+                        loadFiles();
+                        showFiles(0, 0);
+                        printf("change directory to %s\n", path->getData());
+                        return 0;
+                    }
+
+                    if(file->getName()[0] == '.'){
+                        if (i * ICON_SIZE > HEIGHT - ICON_SIZE-100) {
+                            i = 0;
+                            ++j;
+                        } else {
+                            ++i;
+                        }
+                        iter++;
+                        continue;
+                    }
                     path->concat(file->getName());
                     setHeader(path->getData());
                     loadFiles();
@@ -235,9 +267,11 @@ public:
                 }
             }
 
-            if (i * ICON_SIZE > HEIGHT - ICON_SIZE) {
+            if (i * ICON_SIZE > HEIGHT - ICON_SIZE-100) {
                 i = 0;
                 ++j;
+            } else {
+                ++i;
             }
             iter++;
         }
@@ -251,7 +285,12 @@ public:
     void Run(){
         /* event loop */
         loadFiles();
+
+        drawRect(0, 0, WIDTH, HEIGHT, COLOR_WHITE);
+
         showFiles(0, 0);
+
+        treeView->drawTree(this);
 
         struct gfx_event event;
         while (1){
@@ -279,18 +318,11 @@ private:
     unsigned char* icon[5];
     FileCache* m_cache;
     String* path;
+    TreeView* treeView;
 };
-
-void thread(void* arg){
-    
-    printf("thread %x\n", arg);
-}
 
 int main(void)
 {
-    Thread* t = new Thread(thread, 0);
-    t->start((void*)t);
-
     Finder finder;
     finder.Run();
 

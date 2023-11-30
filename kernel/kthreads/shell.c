@@ -8,7 +8,6 @@
  * @copyright Copyright (c) 2022
  * 
  */
-#include <editor.h>
 #include <pci.h>
 #include <keyboard.h>
 #include <terminal.h>
@@ -46,6 +45,7 @@
 #define SHELL_POSITION shell_height-8
 #define SHELL_MAX_SIZE SHELL_WIDTH/2
 
+void __kthread_entry shell(int argc, char* argv[]);
 
 /* TODO: Move this into a shell struct */
 static uint16_t shell_width = SHELL_WIDTH;
@@ -89,7 +89,6 @@ void reset_shell()
 void ps()
 {
 	int ret;
-	int line = 0;
 	int usage;
 	twritef("  PID  USAGE    TYPE     STATE     NAME\n");
 	for (int i = 1; i < MAX_NUM_OF_PCBS; i++){
@@ -121,7 +120,7 @@ static void print_pcb_tree(struct pcb *pcb, int level) {
 
     /* Print branches and nodes */
     print_branches(level);
-    twritef(">%s\n", pcb->name);
+    twritef(">%s (%d)\n", pcb->name, pcb->pid);
 
     /* Recursively print child PCBs */
     for (int i = 1; i < MAX_NUM_OF_PCBS; i++) {
@@ -150,22 +149,6 @@ void fat16(){
 
 	/* TODO USE FS */
 	fat16_create_directory("BIN     ");
-	fat16_change_directory("BIN     ");
-
-	/* load editor */
-	int fd = fs_open("edit.o", FS_FILE_FLAG_CREATE | FS_FILE_FLAG_WRITE);
-	if(fd < 0){
-		twritef("Failed to create file\n");
-		return;
-	}
-
-	int ret = fs_write(fd, (char*)apps_editor_edit_o, apps_editor_edit_o_len);
-	if(ret < 0){
-		twritef("Failed to write file\n");
-		return;
-	}
-
-	fs_close(fd);
 }
 EXPORT_KSYMBOL(fat16);
 
@@ -214,6 +197,11 @@ void sh(int argc, char* argv[])
 
 	char* buf = kalloc(32*1024);
 	int ret = fs_read(inode, buf, 32*1024);
+	if(ret < 0){
+		fs_close(inode);
+		twritef("Error reading file\n");
+		return;
+	}
 	
 	script_parse(buf);
 	
@@ -232,39 +220,59 @@ void ed()
 }
 EXPORT_KSYMBOL(ed);
 
-void run(int argc, char* argv[])
+void exec(int argc, char* argv[])
 {
 	pid_t pid;
+	ubyte_t idx = 1;
+	bool_t kthread_as_deamon = false;
 
-	int r = start(argv[1], argc-1, &argv[1]);
-	if(r >= 0){
+	if(argc == 1){
+		twritef("usage: exec [options] <file | kfunc> [args ...]\n");
+		return;
+	}
+
+	/* check for potential options */
+	if(argv[1][0] == '-'){
+		switch (argv[1][1]){
+		case 'd':{
+				kthread_as_deamon = true;	
+			}
+			break;
+		default:
+			break;
+		}
+		idx++;
+	}
+
+
+	pid = start(argv[idx], argc-idx, &argv[idx]);
+	if(pid >= 0){
 		twritef("Kernel thread started\n");
 		return;
 	}
 
-	pid = pcb_create_process(argv[1], argc-1, &argv[1], PCB_FLAG_KERNEL);
+	pid = pcb_create_process(argv[idx], argc-idx, &argv[idx], PCB_FLAG_KERNEL);
 	if(pid > 0){
 		pcb_await(pid);
 		return;
 	}
 
-	void (*ptr)(int argc, char* argv[]) = (void (*)(int argc, char* argv[])) ksyms_resolve_symbol(argv[1]);
+	void (*ptr)(int argc, char* argv[]) = (void (*)(int argc, char* argv[])) ksyms_resolve_symbol(argv[idx]);
 	if(ptr == NULL){
 		twritef("Unknown command\n");
 		return;
 	}
 
-	pid = pcb_create_kthread(ptr, argv[1], argc-1, &argv[1]);
+	pid = pcb_create_kthread(ptr, argv[idx], argc-idx, &argv[idx]);
 	if(pid > 0){
-		twritef("Kernel thread %s started\n", argv[1]);
-		pcb_await(pid);
+		if(kthread_as_deamon) pcb_await(pid);
 		return;
 	}
 	
 	twritef("Unknown command\n");
     return;
 }
-EXPORT_KSYMBOL(run);
+EXPORT_KSYMBOL(exec);
 
 /**
  * @brief cmd: command [opts] [args]
@@ -456,7 +464,6 @@ char* welcome = "\n\
  */
 void shell_put(unsigned char c)
 {
-	int ret;
 	unsigned char uc = c;
 
 	if(uc == ARROW_UP){
@@ -586,3 +593,4 @@ void __kthread_entry shell(int argc, char* argv[])
 	kernel_exit();
 }
 EXPORT_KTHREAD(shell);
+EXPORT_KSYMBOL(shell);

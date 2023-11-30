@@ -14,6 +14,8 @@
 #include <math.h>
 #include <gfx/windowserver.h>
 #include <windowmanager.h>
+#include <kthreads.h>
+
 /* prototypes */
 void __kthread_entry gfx_compositor_main();
 
@@ -38,9 +40,11 @@ void gfx_composition_remove_window(struct window* w)
  */
 void gfx_composition_add_window(struct window* w)
 {
-    while (ws == NULL || ws->_wm->state != WM_INITIALIZED);
+    dbgprintf("[WSERVER] Adding window to window server.\n");
+    if(ws->ops->add(ws, w) < 0){
+        dbgprintf("[WSERVER] Could not add window to window server.\n");
+    }
 
-    ws->ops->add(ws, w);
 }
 
 int gfx_set_background_color(color_t color)
@@ -70,6 +74,8 @@ int gfx_set_taskbar(pid_t pid)
 
 void __kthread_entry gfx_compositor_main()
 {
+    /* memory test */
+
     ws = ws_new();
     if(ws == NULL){
         dbgprintf("[WSERVER] Could not allocate memory for window server.\n");
@@ -82,6 +88,7 @@ void __kthread_entry gfx_compositor_main()
 
     dbgprintf("[WSERVER] Window server initialized.\n");
 
+    start("login", 0, NULL);
     while(1){
         ws->ops->draw(ws);
     }

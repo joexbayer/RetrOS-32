@@ -1,3 +1,5 @@
+#include <kernel.h>
+
 #include <windowmanager.h>
 #include <util.h>
 #include <pci.h>
@@ -29,42 +31,31 @@
 #include <kutils.h>
 #include <errors.h>
 #include <mbr.h>
+#include <diskdev.h>
 
 #include <arch/tss.h>
 
 #include <virtualdisk.h>
 
 #include <gfx/window.h>
+#include <gfx/windowserver.h>
 #include <gfx/composition.h>
 #include <gfx/api.h>
 #include <net/api.h>
 
 #include <colors.h>
-
 #include <fs/fs.h>
-
 #include <multiboot.h>
 
 #define TEXT_COLOR 15  /* White color for text */
 #define LINE_HEIGHT 8  /* Height of each line */
 
-static void kernel_boot_printf(const char* message) {
+struct kernel_context kernel_context;
+
+static void kernel_boot_printf(char* message) {
     static int kernel_msg = 0;
     vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10 + (kernel_msg++ * LINE_HEIGHT), TEXT_COLOR, message);
 }
-
-struct kernel_context {
-	struct scheduler sched_ctx;
-	/* netdriver? */
-	/* diskdriver? */
-	/* fs? */
-	/* graphics?? */
-	struct memory_info {
-		unsigned int extended_memory_low;
-		unsigned int extended_memory_high;
-	} *total_memory;
-} kernel_context;
-
 
 /* This functions always needs to be on top? */
 void kernel(uint32_t magic) 
@@ -87,6 +78,8 @@ void kernel(uint32_t magic)
 #endif
 	ENTER_CRITICAL();
     init_serial();
+
+	dbgprintf("INF: %s - %s\n", KERNEL_NAME, KERNEL_VERSION);
 
 	dbgprintf("Memory: 0x%x\n", kernel_context.total_memory->extended_memory_low);
 	dbgprintf("Memory: 0x%x\n", kernel_context.total_memory->extended_memory_high);
@@ -219,7 +212,6 @@ void kernel(uint32_t magic)
 	start("idled", 0, NULL);
 	start("wind", 0, NULL);
 	start("workd", 0, NULL);
-	start("login", 0, NULL);
 
 	kernel_boot_printf("Deamons initialized.");
 	
@@ -227,6 +219,8 @@ void kernel(uint32_t magic)
 	
 	kernel_boot_printf("Timer initialized.");
 
+	
+	
 
 	init_pit(1);
 	kernel_boot_printf("Starting OS...");
@@ -235,8 +229,7 @@ void kernel(uint32_t magic)
 	LEAVE_CRITICAL();
 	asm ("sti");
 
-	while (1)
-	{
+	while (1){
 		/* code */
 	}
 	
