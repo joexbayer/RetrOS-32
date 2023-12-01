@@ -56,7 +56,6 @@ programs: staticlibs bin/crt0.o ${USROBJS}
 	@make -C calculator/
 	@make -C graphs/
 	@make -C cube/
-	@make -C scene/ 
 	@echo [USR] All user programs created and linked!
 
 # bin/%.o: %.c bin/crt0.o
@@ -90,7 +89,6 @@ bindir:
 clean:
 	rm -f ./bin/*
 	make -C editor/ clean
-	make -C scene/ clean
 	make -C colors/ clean
 	make -C finder/ clean
 	make -C calculator/ clean

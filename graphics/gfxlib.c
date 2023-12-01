@@ -318,6 +318,12 @@ plotLine(x0, y0, x1, y1)
 
 void kernel_gfx_draw_line(struct window* w, int x0, int y0, int x1, int y1, unsigned char color)
 {  
+	if(x0 < 0 || y0 < 0 || x1 < 0 || y1 < 0)
+		return;
+	
+	if(x0 > w->inner_width || y0 > w->inner_height || x1 > w->inner_width || y1 > w->inner_height)
+		return;
+
 	int dx, dy, sx, sy, error;
 	int t1 = x1-x0;
 	int t2 = y1-y0;

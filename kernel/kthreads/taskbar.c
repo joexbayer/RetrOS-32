@@ -406,7 +406,7 @@ static void __callback taskbar_bg_retro()
 
 static void __callback taskbar_bg_graph()
 {
-    int pid = pcb_create_process("/bin/scene.o", 0, NULL, 0);
+    int pid = pcb_create_process("/bin/graphs.o", 0, NULL, 0);
     if(pid < 0)
         dbgprintf("%s does not exist\n", "graphs.o");
 }
