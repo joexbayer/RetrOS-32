@@ -1,6 +1,7 @@
 #include "edit.hpp"
 #include <utils/cppUtils.hpp>
 #include <utils/Graphics.hpp>
+#include <utils/MsgBox.hpp>
 
 #define HEADER_OFFSET 13
 /* Helper functions */
@@ -123,10 +124,12 @@ void Editor::Lex()
 
 void Editor::Quit()
 {
-	if(m_fd > 0){
-		/* TODO: Check for unsaved changes */
-		fclose(m_fd);
+	MsgBox* msg = new MsgBox("Save changes?", "Save changes to file?", MSGBOX_YES_NO_CANCEL);
+	MsgBoxResult ret = msg->show();
+	if(ret == MSGBOX_RESULT_OK){
+		Save();
 	}
+	fclose(m_fd);
 
 	free(m_textBuffer);
 	free(vm_data);
