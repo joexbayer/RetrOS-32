@@ -365,7 +365,7 @@ static void __callback taskbar_editor()
 
 static void __callback taskbar_cube()
 {
-    int pid = pcb_create_process("/bin/cube", 0, NULL, 0);
+    int pid = pcb_create_process("/bin/cube.o", 0, NULL, 0);
     if(pid < 0)
         dbgprintf("%s does not exist\n", "cube");
 }

@@ -110,6 +110,7 @@ void* kalloc(int size)
     }
 
     spin_unlock(&__kmemory_lock);
+
     return ptr;
 }
 

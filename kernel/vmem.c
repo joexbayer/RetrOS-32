@@ -233,16 +233,20 @@ int vmem_free_allocations(struct pcb* pcb)
 	uint32_t heap_table = (uint32_t)pcb->page_dir[DIRECTORY_INDEX(VMEM_HEAP)] & ~PAGE_MASK;
 	assert(heap_table != 0);
 
+	ENTER_CRITICAL();
 	/* Free all malloc allocation */
 	struct allocation* iter = pcb->allocations->head;
-	while(iter != NULL){
+	while(iter != NULL && iter != 0x1b0004){
 		struct allocation* old = iter;
 		iter = iter->next;
 
+		dbgprintf("Freeing %d bytes of data from 0x%x (0x%x)\n", old->size, old->address, old);
+		dbgprintf("head: 0x%x\n", pcb->allocations->head);
 		vmem_free_page_region(pcb, old->region, old->size);
 	
 		kfree(old);
-		}
+	}
+	ENTER_CRITICAL();
 	vmem_default->ops->free(vmem_default, (void*) heap_table);
 	
 	/* Free allocation list */
@@ -298,6 +302,7 @@ void vmem_stack_free(struct pcb* pcb, void* ptr)
 			iter->next = iter->next->next;
 			pcb->used_memory -= save->size;
 
+			dbgprintf("Freeing %d bytes of data from 0x%x (0x%x)\n", save->size, save->address, save);
 			vmem_free_page_region(pcb, save->region, save->size);
 			dbgprintf("[2] Free %d bytes of data from 0x%x\n", save->size, save->address);
 			return;
@@ -334,6 +339,7 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 		warningf("Out memory\n");
 		return NULL;
 	}
+	dbgprintf("New allocation: 0x%x\n", allocation);
 	
 	allocation->size = _size;
 	allocation->used = _size;
