@@ -25,7 +25,7 @@ endif
 #### ONLY EDIT THIS ####
 OUTPUT = edit.o
 LIBS = -lcore -lgraphic 
-EXTENDED = $(ROOT)bin/lex.o
+EXTENDED = 
 ########################
 
 SRC_FILES = $(wildcard *.cpp)

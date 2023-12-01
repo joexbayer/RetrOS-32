@@ -119,11 +119,6 @@ void Editor::reDraw(int from, int to) {
 
 void Editor::Lex()
 {
-	if(m_bufferHead > 0){
-		program(vm_text, vm_data, (char*)m_textBuffer);
-		gfx_draw_rectangle(24, c_height-8, c_width-24, 8, COLOR_BG);
-		gfx_draw_format_text(24, c_height-8, COLOR_BLACK, "%d: %s\n", lex_get_error_line(), lex_get_error());
-	}
 }
 
 void Editor::Quit()
