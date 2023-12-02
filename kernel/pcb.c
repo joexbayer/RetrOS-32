@@ -390,15 +390,6 @@ error_t pcb_create_thread(struct pcb* parent, void (*entry)(), void* arg, byte_t
 
 error_t pcb_create_process(char* program, int argc, char** argv, pcb_flag_t flags)
 {
-	for (int i = 0; i < (15 * 1024*1024)+(1*1024*1024); i++){
-		volatile char value = *(volatile char *)i;
-		*(volatile char *)i = value;
-
-		if (i % (1024*1024) == 0){
-			dbgprintf("[KERNEL] 0x%x MB tested\n", i);
-		}
-	}
-
 	char* buf;
 	int ret, size;
 	struct pcb* pcb;

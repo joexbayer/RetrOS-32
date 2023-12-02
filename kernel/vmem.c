@@ -496,7 +496,6 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 	return (void*) allocation->address;
 }
 
-
 void vmem_dump_heap(struct allocation* allocation)
 {
 	dbgprintf(" ------- Memory Heap --------\n");
@@ -759,7 +758,7 @@ void vmem_cleanup_process(struct pcb* pcb)
  */
 void vmem_init_kernel()
 {	
-	int total_mem			= memory_map_get()->total;
+	int total_mem = memory_map_get()->total;
 
 	kernel_page_dir = vmem_manager->ops->alloc(vmem_manager);
 
@@ -862,6 +861,7 @@ void vmem_init()
 
 	vmem_allocator_create(vmem_default, VMEM_START_ADDRESS, VMEM_END_ADDRESS);
 	dbgprintf("Manager start: 0x%x - 0x%x (%d)\n", VMEM_MANAGER_START, VMEM_MANAGER_END, VMEM_MANAGER_PAGES);
+
 	vmem_allocator_create(vmem_manager, VMEM_MANAGER_START, VMEM_MANAGER_END);
 	dbgprintf("Default: 0x%x - 0x%x (%d)\n", VMEM_START_ADDRESS, VMEM_END_ADDRESS, VMEM_TOTAL_PAGES);
 

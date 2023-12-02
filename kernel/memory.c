@@ -71,6 +71,18 @@ int memory_map_init(int total_memory, int extended_memory)
 	return 0;
 }
 
+static int memory_test(){
+	for (int i = 0; i < (15 * 1024*1024)+(1*1024*1024); i++){
+		volatile char value = *(volatile char *)i;
+		*(volatile char *)i = value;
+
+		if (i % (1024*1024) == 0){
+			dbgprintf("[KERNEL] 0x%x MB tested\n", i);
+		}
+	}
+	return 0;
+}
+
 struct memory_map* memory_map_get()
 {
 	return &kernel_memory_map;
@@ -166,4 +178,5 @@ void init_memory()
 	dbgprintf("Virtual memory initiated\n");
 	vmem_init_kernel();
 	dbgprintf("Virtual Kernel memory initiated\n");
+	memory_test();
 }
