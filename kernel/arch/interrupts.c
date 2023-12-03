@@ -19,6 +19,7 @@
 #include <kutils.h>
 #include <vbe.h>
 
+#include <kconfig.h>
 //TEMP
 #include <memory.h>
 
@@ -91,7 +92,7 @@ void print_page_fault_info(unsigned long cr2) {
 
 void page_fault_interrupt(unsigned long cr2, unsigned long err)
 {
-	// Access the stack frame
+	/*
     uint32_t *ebp = (uint32_t*) __builtin_frame_address(0);
     uint32_t return_address_for_iret = *(ebp + 13); // Offset to eip
     uint32_t original_ebp = *(ebp + 8); // Offset to original ebp
@@ -99,12 +100,11 @@ void page_fault_interrupt(unsigned long cr2, unsigned long err)
     dbgprintf("Return address for iret: 0x%x\n", return_address_for_iret);
     dbgprintf("Original ebp: 0x%x\n", original_ebp);
 
-    __backtrace_from((uintptr_t*)original_ebp, (uintptr_t)return_address_for_iret);
+    __backtrace_from((uintptr_t*)original_ebp, (uintptr_t)return_address_for_iret);*/
 
 	interrupt_counter[14]++;
 	ENTER_CRITICAL();
 	dbgprintf("Page fault: 0x%x (Stack: 0x%x) %d (%s)\n", cr2, current_running->stackptr, err, current_running->name);
-	dbgprintf("Page: %x, process: %s\n", current_running->page_dir[DIRECTORY_INDEX(cr2)], current_running->name);
 
 	/* print page_table entry */
 	print_page_fault_info(cr2);
@@ -113,12 +113,15 @@ void page_fault_interrupt(unsigned long cr2, unsigned long err)
 
 	if(current_running->is_process){
 		kernel_exit();
-		UNREACHABLE();
 	}
-	kernel_panic("A critical kernel thread encountered a page fault.");
-	//vesa_printf(0, 0, "Page fault: 0x%x (Stack: 0x%x) %d (%s)\n", cr2, current_running->stackptr, err, current_running->name);
-	//kernel_exit();
 
+#ifdef KERNEL_PANIC_ON_PAGE_FAULT
+	kernel_panic("A critical kernel thread encountered a page fault.");
+#endif
+	//vesa_printf(0, 0, "Page fault: 0x%x (Stack: 0x%x) %d (%s)\n", cr2, current_running->stackptr, err, current_running->name);
+	kernel_exit();
+
+	UNREACHABLE();
 }
 
 void general_protection_fault()
@@ -174,6 +177,13 @@ void isr_handler(struct registers regs)
 	if (handlers[regs.int_no] != 0){
 		if(regs.int_no != 32)
 			EOI(regs.int_no);
+
+		#ifdef KDEBUG_INTERRUPTS
+		if(regs.int_no != 32 && regs.int_no != 44){
+			dbgprintf("[interrupt] %d (%s)\n", regs.int_no, current_running->name);
+		}
+		#endif
+
 		isr_t handler = handlers[regs.int_no];
 		handler();
 	}

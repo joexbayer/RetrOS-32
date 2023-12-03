@@ -10,8 +10,18 @@
 #define PCB_MAX_PROCESSES 32
 #define PCB_MAX_THREADS 32
 
+/**
+ * @brief Debug defines
+ * 
+ */
 #define KDEBUG_SERIAL
+#define KDEBUG_INTERRUPTS
+#define KDEBUG_MEMORY
+#define KDEBUG_SCHEDULER
+#define KDEBUG_SYSCALLS
+#define KDEBUG_THREADS
 
+#define KERNEL_PANIC_ON_PAGE_FAULT
 
 
 

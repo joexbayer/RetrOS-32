@@ -98,10 +98,12 @@ void __int_handler __mouse_handler()
    	uint8_t status = inportb(MOUSE_STATUS);
 	while (status & MOUSE_BBIT) {
 		char mouse_in = inportb(MOUSE_PORT);
+		dbgprintf("[MOUSE] loop in: %d (cycle: %d)\n", mouse_in, mouse_device.cycle);
 		if (status & MOUSE_F_BIT) {
 			switch (mouse_device.cycle) {
 				case 0:{
 						mouse_device.packet.flags = mouse_in;
+						dbgprintf("[MOUSE] flags: %d\n", mouse_device.packet.flags);
 						if (!(mouse_in & MOUSE_V_BIT)){
 							return;
 						}
@@ -111,6 +113,7 @@ void __int_handler __mouse_handler()
 				case 1:{
 						mouse_device.packet.x = mouse_in;
 						++mouse_device.cycle;
+						dbgprintf("[MOUSE] x: %d\n", mouse_device.packet.x);
 					}
 					break;
 				case 2:{
@@ -118,6 +121,7 @@ void __int_handler __mouse_handler()
 						/* We now have a full mouse packet ready to use */
 						if (mouse_device.packet.flags & MOUSE_Y_OVERFLOW || mouse_device.packet.flags & MOUSE_X_OVERFLOW) {
 							/* x/y overflow? bad packet! */
+							mouse_device.cycle = 0;
 							break;
 						}
 
@@ -129,6 +133,8 @@ void __int_handler __mouse_handler()
 
 						if (mouse_device.x > vbe_info->width-16) mouse_device.x = vbe_info->width-16;
 						if (mouse_device.y > vbe_info->height-16) mouse_device.y = vbe_info->height-16;
+
+						dbgprintf("[MOUSE] x: %d, y: %d\n", mouse_device.x, mouse_device.y);
 
 						mouse_device.received = 0;
 						mouse_device.cycle = 0;
