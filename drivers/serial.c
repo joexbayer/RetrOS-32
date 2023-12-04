@@ -11,6 +11,7 @@
 
 #include <serial.h>
 #include <arch/io.h>
+#include <kconfig.h>
 #include <util.h>
 #include <args.h>
 #include <kutils.h>
@@ -34,8 +35,6 @@ void serial_write(char* str)
 		serial_put(str[i]);
 }
 
-#define _KDEBUG
-
 /**
  * Writes the given string with formats to screen on give location.
  * @param int x coordinate
@@ -48,7 +47,7 @@ int32_t serial_printf(char* fmt, ...)
 {
 
 	int written = 0;
-#ifdef _KDEBUG
+#ifdef KDEBUG_SERIAL
 
 	ENTER_CRITICAL();
 	va_list args;
@@ -123,6 +122,8 @@ int32_t serial_printf(char* fmt, ...)
 
 void init_serial()
 {
+#ifdef KDEBUG_SERIAL
+
     outportb(PORT + 1, 0x00);    // Disable all interrupts
 	outportb(PORT + 3, 0x80);    // Enable DLAB (set baud rate divisor)
 	outportb(PORT + 0, 0x03);    // Set divisor to 3 (lo byte) 38400 baud
@@ -142,4 +143,5 @@ void init_serial()
 
 	// serial_printf("[%s] Serial debugging activated %d!\n", "Serial", 20);
 	serial_init_done = 1;
+#endif
 }

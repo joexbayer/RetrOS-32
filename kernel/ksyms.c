@@ -20,6 +20,13 @@ static struct kernel_symbols {
     .num_symbols = 0
 };
 
+/**
+ * @brief Adds a symbol to the kernel symbol table.
+ * This function is usually called by the EXPORT_KSYMBOL macro.
+ * But can be called directly at runtime if needed.
+ * @param name name of the symbol
+ * @param addr address of the symbol
+ */
 void ksyms_add_symbol(const char* name, uintptr_t addr) {
     
     assert(strlen(name) < KSYMS_MAX_SYMBOL_LENGTH);

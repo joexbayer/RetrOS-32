@@ -234,6 +234,11 @@ int vmem_free_allocations(struct pcb* pcb)
 	assert(heap_table != 0);
 
 	ENTER_CRITICAL();
+	if(pcb->allocations->head == NULL){
+		kfree(pcb->allocations);
+		return 0;
+	}
+
 	/* Free all malloc allocation */
 	struct allocation* iter = pcb->allocations->head;
 	while(iter != NULL && iter != 0x1b0004){
@@ -246,6 +251,7 @@ int vmem_free_allocations(struct pcb* pcb)
 	
 		kfree(old);
 	}
+
 	ENTER_CRITICAL();
 	vmem_default->ops->free(vmem_default, (void*) heap_table);
 	
@@ -281,8 +287,22 @@ void __deprecated vmem_free_allocation(struct allocation* allocation)
 
 }
 
+
+/**
+ * @brief Frees a virtual stack allocation
+ * 
+ * @param pcb Process to free from.
+ * @param ptr Pointer to the address to free.
+ */
 void vmem_stack_free(struct pcb* pcb, void* ptr)
 {
+	/* Check if allocation is first in list */
+
+	if(pcb->allocations->head == NULL){
+		warningf("Trying to free allocation from empty list.\n");
+		return;
+	}
+
 	if(ptr == pcb->allocations->head->address){
 		struct allocation* old = pcb->allocations->head;
 		pcb->allocations->head = pcb->allocations->head->next;
@@ -294,6 +314,7 @@ void vmem_stack_free(struct pcb* pcb, void* ptr)
 		return;
 	}
 
+	/* Iterates over all allocations to find ptr */
 	struct allocation* iter = pcb->allocations->head;
 	while(iter->next != NULL){
 		if(iter->next->address == ptr){
@@ -302,8 +323,8 @@ void vmem_stack_free(struct pcb* pcb, void* ptr)
 			iter->next = iter->next->next;
 			pcb->used_memory -= save->size;
 
-			dbgprintf("Freeing %d bytes of data from 0x%x (0x%x)\n", save->size, save->address, save);
 			vmem_free_page_region(pcb, save->region, save->size);
+			
 			dbgprintf("[2] Free %d bytes of data from 0x%x\n", save->size, save->address);
 			return;
 		}

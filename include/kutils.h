@@ -30,8 +30,6 @@ typedef unsigned char ubyte_t;
 #define MAX_UINT16_T 0xFFFF
 #define MAX_UINT32_T 0xFFFFFFFF
 
-
-
 /* This is a interupt handler function */
 #define __int_handler //__attribute__((interrupt))
 /* This is a async callback function */

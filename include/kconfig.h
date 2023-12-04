@@ -14,7 +14,11 @@
  * @brief Debug defines
  * 
  */
+#define KDEBUG
 #define KDEBUG_SERIAL
+#define KDEBUG_WARNINGS
+
+/* specifics */
 #define KDEBUG_INTERRUPTS
 #define KDEBUG_MEMORY
 #define KDEBUG_SCHEDULER
