@@ -9,6 +9,7 @@
 #define KSYMS_MAX_DEPTH 100
 #define KSYMS_MAX_SYMBOL_LENGTH 25
 
+/* kernel symbol table structure. */
 static struct kernel_symbols {
     struct symbol_entry {
         char name[KSYMS_MAX_SYMBOL_LENGTH];

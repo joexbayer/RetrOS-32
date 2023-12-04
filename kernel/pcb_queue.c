@@ -69,6 +69,7 @@ struct pcb_queue* pcb_new_queue()
  */
 static error_t __pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb)
 {
+	ERR_ON_NULL(pcb);
 	if(queue == NULL){
 		return -ERROR_PCB_QUEUE_NULL;
 	}
@@ -107,24 +108,20 @@ static error_t __pcb_queue_push(struct pcb_queue* queue, struct pcb* pcb)
  */
 static error_t __pcb_queue_add(struct pcb_queue* queue, struct pcb* pcb)
 {
+	ERR_ON_NULL(pcb);
 	if(queue == NULL){
 		return -ERROR_PCB_QUEUE_NULL;
-	}
-
-	if(pcb == NULL){
-		return -ERROR_PCB_NULL;
 	}
 
 	SPINLOCK(queue, {
 
 		/* Add the pcb to the front of the queue */
-		pcb->next = queue->_list; // Set the next pointer of the new pcb to the current head of the queue
-		queue->_list = pcb; // Set the head of the queue to the new pcb
+		pcb->next = queue->_list; /* Set the next pointer of the new pcb to the current head of the queue */
+		queue->_list = pcb; /* Set the head of the queue to the new pcb */
 
 		queue->total++;
 
 	});
-	dbgprintf("New pcb added to a queue\n");
 
 	return ERROR_OK;
 }
@@ -142,8 +139,9 @@ static error_t __pcb_queue_add(struct pcb_queue* queue, struct pcb* pcb)
  */
 static void __pcb_queue_remove(struct pcb_queue* queue, struct pcb* pcb)
 {
-	assert(queue != NULL);
-	dbgprintf("Removed %s from a queue\n", pcb->name);
+	if(queue == NULL || pcb == NULL){
+		return;
+	}
 
 	SPINLOCK(queue, {
 

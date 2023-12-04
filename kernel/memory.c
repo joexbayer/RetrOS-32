@@ -20,7 +20,6 @@
 #define MB(mb) (mb*1024*1024)
 #define KB(kb) (kb*1024)
 
-
 static struct memory_map kernel_memory_map = {0};
 
 int memory_map_init(int total_memory, int extended_memory)
@@ -31,7 +30,6 @@ int memory_map_init(int total_memory, int extended_memory)
 	int permanent = ALIGN((int)(total_memory * (float)1/8), 1024*1024);
 	int kernel = ALIGN((int)(total_memory * (float)2/8), 1024*1024);
 
-	/* Align virtual to the closest 4096 bytes, flooring */
 	/* Calculate the remaining memory */
 	int remaining_memory = total_memory - permanent - kernel;
 	int virtual = ALIGN_DOWN(remaining_memory, 4096);

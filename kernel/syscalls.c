@@ -21,13 +21,13 @@ EXPORT_SYSCALL(SYSCALL_CREATE_THREAD, sys_create_thread);
 
 int system_call(int index, int arg1, int arg2, int arg3)
 {	
-	/* the system call interrupt entered a critcal section */
-	LEAVE_CRITICAL();
-	
 	/* Call system call function based on index. */
 	if(index < 0 || index > 255){
 		return -1;
 	}
+	
+	/* the system call interrupt entered a critcal section */
+	LEAVE_CRITICAL();
 
 	syscall_t fn = syscall[index];
 	int ret = fn(arg1, arg2, arg3);
