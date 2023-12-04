@@ -79,7 +79,7 @@ static uint8_t __super_pressed = 0;
 unsigned char kb_get_char()
 {
 	//acquire(&kb_lock);
-	if(kb_buffer_tail == kb_buffer_head || !current_running->gfx_window->in_focus){
+	if(kb_buffer_tail == kb_buffer_head){
 		//release(&kb_lock);
 		return 0;
 	}
@@ -167,11 +167,23 @@ static void __int_handler kb_callback()
   }
 
 	__keyboard_presses++;
-
 }
+
+static void keyboard_buffer_clear() {
+    while (inportb(0x64) & 1) {
+        inportb(0x60);  // Read and discard
+    }
+}
+
 void init_keyboard()
 {
   mutex_init(&kb_lock);
+
+  outportb(0x64, 0xAE);  // Send the keyboard enable command
+  outportb(0x60, 0xFF);  // Send the keyboard reset command
+
+  keyboard_buffer_clear();
+
 	// Firstly, register our timer callback.
 	interrupt_install_handler(KB_IRQ, &kb_callback);
 	dbgprintf("[PS/2] Keyboard initialized.\n");

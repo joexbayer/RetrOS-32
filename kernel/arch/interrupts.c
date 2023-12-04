@@ -175,12 +175,12 @@ void isr_handler(struct registers regs)
 	}
 
 	if (handlers[regs.int_no] != 0){
-		if(regs.int_no != 32)
-			EOI(regs.int_no);
+		// if(regs.int_no != 32)
+		// 	EOI(regs.int_no);
 
 		#ifdef KDEBUG_INTERRUPTS
 		if(regs.int_no != 32 && regs.int_no != 44){
-			dbgprintf("[interrupt] %d (%s)\n", regs.int_no, current_running->name);
+			dbgprintf("[interrupt] %d\n", regs.int_no);
 		}
 		#endif
 
