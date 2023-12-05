@@ -117,7 +117,7 @@ struct taskbar_options {
                 {
                     .icon = bin_16,
                     .name = "Wolfstein",
-                    .callback = &taskbar_bg_graph
+                    .callback = &taskbar_wolfstein
                 }
             
             }

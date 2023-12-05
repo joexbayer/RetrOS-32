@@ -16,33 +16,8 @@ public:
 
     void render(){
         /* draw map */
-        gfx_draw_rectangle(0, 0, m_width, m_height, 0xf);
-
+        gfx_draw_rectangle(0, 0, m_width, m_height, 0);
         drawRays();
-
-        // for (int y = 0; y < 8; y++){
-        //     for (int x = 0; x < 8; x++){
-        //         if (m_map[y*8+x] == 1){
-        //             gfx_draw_rectangle(x*10, y*10, 10, 10, COLOR_VGA_DARKEST_GRAY);
-        //         }
-        //     }
-        // }
-
-        /* draw player */
-        //gfx_draw_rectangle(m_player.pos.x*10, m_player.pos.y*10, 10, 10, COLOR_VGA_GREEN);
-
-        /* draw player direction */
-        // gfx_draw_line(m_player.pos.x*10, m_player.pos.y*10, m_player.pos.x*10 + m_player.dir.x*10, m_player.pos.y*10 + m_player.dir.y*10, COLOR_VGA_RED);
-
-        // /* draw rays */
-        // for(int i = -30; i < 30; i++){
-        //     float dirX = cos(FixAng(m_player.angle + i));
-        //     float dirY = -sin(FixAng(m_player.angle + i));
-        //     gfx_draw_line(m_player.pos.x*10, m_player.pos.y*10, m_player.pos.x*10 + dirX*10, m_player.pos.y*10 + dirY*10, COLOR_VGA_GREEN);
-        // }
-
-        // gfx_draw_format_text(0, 100, COLOR_BLACK, "x: %d, y: %d, angle: %d", (int)m_player.pos.x, (int)m_player.pos.y, (int)m_player.angle);
-
     }
 
     /* input */
@@ -99,23 +74,19 @@ private:
 
     float cos(int angle){
         return cos_values[CLAMP(angle, 0, 359)];
-        // int index = clamp_angle(angle) / 6;
-        // return cos_60[index]; 
     }
 
     float sin(int angle){
         return sin_values[CLAMP(angle, 0, 359)];
-        // int index = clamp_angle(angle) / 6;
-        // return sin_60[index];
     }
 
     char m_map[8*8] = {
         1,1,1,1,1,1,1,1,
-        1,0,1,0,0,0,0,1,
-        1,0,1,0,0,0,0,1,
-        1,0,1,0,0,0,0,1,
+        1,0,0,1,0,0,0,1,
+        1,0,0,1,0,0,1,1,
         1,0,0,0,0,0,0,1,
-        1,0,0,0,0,1,0,1,
+        1,0,0,0,0,0,0,1,
+        1,0,1,0,0,1,0,1,
         1,0,0,0,0,0,0,1,
         1,1,1,1,1,1,1,1,	
     };
@@ -123,7 +94,9 @@ private:
     void drawRays() {
         int rays = 60;
         int i = 0;
-        int rectSize = (m_width + rays - 1) / rays; // Adjust to ensure full coverage
+        int rectSize = (m_width + rays - 1) / rays;
+        const int MIN_COLOR_INTENSITY = 17;
+        const int MAX_COLOR_INTENSITY = 31;
 
         for (int rayIndex = -30; rayIndex < 30; rayIndex++) {
             /* Calculate ray's angle */
@@ -133,32 +106,29 @@ private:
             float hitDistance = castRay(rayAngle);
             int lineHeight = calculateWallHeight(hitDistance, rayAngle);
 
-            float normalizedHeight = static_cast<float>(lineHeight) / (m_height-25);
+            /* Scale and shift lineHeight */
+            float scaledHeight = static_cast<float>(lineHeight) / (m_height-25);
+            float adjustedHeight = scaledHeight * scaledHeight; /* Quadratic transformation */
+            int colorIntensity = static_cast<int>(MIN_COLOR_INTENSITY + adjustedHeight * (MAX_COLOR_INTENSITY - MIN_COLOR_INTENSITY));
+            /* Clamp color intensity to the desired range */
+            colorIntensity = MIN(MAX(colorIntensity, MIN_COLOR_INTENSITY), MAX_COLOR_INTENSITY);
 
-            int colorIntensity = static_cast<int>(17 + normalizedHeight * (31 - 17));   
-
-            colorIntensity = MIN(MAX(colorIntensity, 17), 31);
-
-            // Select color based on lineHeight
+            /* Select color based on lineHeight */
             int color = COLOR_VGA_MEDIUM_GRAY;
 
-            // Calculate the dimensions for the rectangle
-            int rectX = i * rectSize; // X position
-            int rectWidth = MIN(rectSize, m_width - rectX); // Adjust width for the last ray
-            int lineOffset = (m_height - lineHeight) / 2; // Y position
-            int rectHeight = lineHeight; // Height of the rectangle
+            /* Calculate the dimensions for the rectangle */
+            int rectX = i * rectSize; /* X position */
+            int rectWidth = MIN(rectSize, m_width - rectX); /* Adjust width for the last ray */
+            int lineOffset = (m_height - lineHeight) / 2; /* Y position */
+            int rectHeight = lineHeight; /* Height of the rectangle */
             i++;
 
-            // Draw the vertical rectangle for this ray
+            /* Draw the vertical rectangle for this ray */
             gfx_draw_rectangle(rectX, lineOffset, rectWidth, rectHeight, colorIntensity);
         }
-
     }
 
     float castRay(int angle) {
-        /* Constants */
-        const float MAX_DISTANCE = m_height-25; /* Maximum raycast distance */
-
         /* Ray step size */
         float stepSize = 0.01; /* Small step size for ray marching */
 
@@ -170,11 +140,10 @@ private:
         float dirX = cos(FixAng(angle));
         float dirY = -sin(FixAng(angle));
 
-
         /* Ray marching */
         float distance;
         float distanceStep = (m_height * 0.0015);
-        for (distance = 0; distance < MAX_DISTANCE; distance += distanceStep) {
+        for (distance = 0; distance < m_height-25; distance += distanceStep) {
             int mapX = ((int)rayX);
             int mapY = ((int)rayY);
 
@@ -197,32 +166,20 @@ private:
     }
 
     int calculateWallHeight(float distance, int angle) {
-        int angleDiff = FixAng(angle - m_player.angle);
 
-        // Correct the distance to avoid the fisheye effect
-        // Convert angle difference to radians for cosine calculation
-        float correctedDistance = distance * cos(angleDiff);
+        int angleDiff = angle - m_player.angle;
+        if (angleDiff > 180) {
+            angleDiff -= 360;
+        } else if (angleDiff < -180) {
+            angleDiff += 360;
+        }
+        /* Correct the distance to avoid the fisheye effect */
+        float correctedDistance = distance * cos_values[CLAMP(ABS(angleDiff), 0, 359)];
 
         /* Calculate wall height */
-        int height =  (int)(m_height-correctedDistance);
+        int height = (int)(m_height-correctedDistance);
 
         return height;
-    }
-
-
-    int clamp_angle(int angle) {
-        angle = angle % 360;
-        if (angle < 0) {
-            angle += 360;
-        }
-
-        /* Round to nearest multiple of 6 */
-        int nearest_multiple = (int)((angle + 3) / 6) * 6; /* Adding 3 for rounding to nearest multiple */
-
-        /* Ensure the result is again within [0, 360) */
-        nearest_multiple = nearest_multiple % 360;
-
-        return nearest_multiple;
     }
 
     int FixAng(int a){ if(a>359){ a-=360;} if(a<0){ a+=360;} return a;}
