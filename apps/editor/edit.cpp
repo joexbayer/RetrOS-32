@@ -32,7 +32,7 @@ static int prevNewline(unsigned char* str, unsigned char* limit)
 void Editor::reDrawHeader()
 {
 	gfx_draw_rectangle(0, 0, this->c_width, this->c_height, COLOR_BG);
-	gfx_draw_line(0, 17, this->c_height, 17, COLOR_VGA_MEDIUM_GRAY);
+	gfx_draw_line(17, 0, 17, this->c_height, COLOR_VGA_MEDIUM_GRAY);
 	for (int i = 0; i < this->c_height/8; i++)gfx_draw_format_text(0, HEADER_OFFSET+ i*8, COLOR_VGA_MEDIUM_GRAY, "%s%d ", i < 10 ? " " : "", i);
 
 	drawHeaderTable(c_width+24);
@@ -48,7 +48,7 @@ void Editor::scroll(int lines) {
 	if (scrollY < 0) scrollY = 0;
 
 	gfx_draw_rectangle(0, 0, 17, this->c_height, COLOR_BG);
-	gfx_draw_line(0, 17, this->c_height, 17, COLOR_VGA_MEDIUM_GRAY);
+	gfx_draw_line(17, 0, 17, this->c_height, COLOR_VGA_MEDIUM_GRAY);
 	for (int i = scrollY; i < (this->c_height/8) + scrollY; i++)gfx_draw_format_text(0, HEADER_OFFSET+ (i-scrollY)*8, COLOR_VGA_MEDIUM_GRAY, "%s%d ", i < 10 ? " " : "", i);
 }
 

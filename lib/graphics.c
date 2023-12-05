@@ -51,10 +51,10 @@ int gfx_draw_circle(int x, int y, int r, unsigned char color, char fill)
 int gfx_draw_line(int x0, int y0, int x1, int y1, unsigned char color)
 {
 	struct gfx_line line = {
-		.x0 = x0,
-		.y0 = y0,
-		.y1 = y1,
-		.x1 = x1,
+		.x0 = y0,
+		.y0 = x0,
+		.y1 = x1,
+		.x1 = y1,
 		.color = color
 	};
 

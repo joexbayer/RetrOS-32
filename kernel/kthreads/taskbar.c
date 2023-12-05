@@ -33,6 +33,7 @@ static void __callback taskbar_finder();
 static void __callback taskbar_cube();
 static void __callback taskbar_colors();
 static void __callback taskbar_clock();
+static void __callback taskbar_wolfstein();
 static void __callback taskbar_bg_lotr();
 static void __callback taskbar_bg_lotr2();
 static void __callback taskbar_bg_default();
@@ -111,6 +112,11 @@ struct taskbar_options {
                 {
                     .icon = bin_16,
                     .name = "Graph",
+                    .callback = &taskbar_bg_graph
+                },
+                {
+                    .icon = bin_16,
+                    .name = "Wolfstein",
                     .callback = &taskbar_bg_graph
                 }
             
@@ -343,6 +349,13 @@ static void __kthread_entry taskbar(void)
 }
 EXPORT_KTHREAD(taskbar);
 
+
+static void __callback taskbar_wolfstein()
+{
+    int pid = pcb_create_process("/bin/wolf.o", 0, NULL, 0);
+    if(pid < 0)
+        dbgprintf("%s does not exist\n", "wolf.o");
+}
 
 static void __callback taskbar_terminal()
 {

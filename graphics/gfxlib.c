@@ -32,7 +32,6 @@ int gfx_get_window_height()
 int gfx_push_event(struct window* w, struct gfx_event* e)
 {
 	ERR_ON_NULL(w);
-	dbgprintf("Pushing event %d (head %d): data %d, data2 %d\n", e->event, w->events.head, e->data, e->data2);
 
 	SPINLOCK(w,  {
 		memcpy(&w->events.list[w->events.head], e, sizeof(*e));

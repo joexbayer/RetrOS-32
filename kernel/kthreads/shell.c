@@ -244,16 +244,15 @@ void exec(int argc, char* argv[])
 		idx++;
 	}
 
-
 	pid = start(argv[idx], argc-idx, &argv[idx]);
 	if(pid >= 0){
 		twritef("Kernel thread started\n");
 		return;
 	}
 
-	pid = pcb_create_process(argv[idx], argc-idx, &argv[idx], PCB_FLAG_KERNEL);
+	pid = pcb_create_process(argv[idx], argc-idx, &argv[idx], 0 /* PCB_FLAG_KERNEL */);
 	if(pid > 0){
-		pcb_await(pid);
+		//pcb_await(pid);
 		return;
 	}
 

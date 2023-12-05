@@ -19,7 +19,7 @@
 #define KDEBUG_WARNINGS
 
 /* specifics */
-#define KDEBUG_INTERRUPTS
+//#define KDEBUG_INTERRUPTS
 #define KDEBUG_MEMORY
 #define KDEBUG_SCHEDULER
 #define KDEBUG_SYSCALLS

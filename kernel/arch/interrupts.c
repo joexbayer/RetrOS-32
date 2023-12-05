@@ -186,6 +186,7 @@ void isr_handler(struct registers regs)
 
 		isr_t handler = handlers[regs.int_no];
 		handler();
+		
 	}
 
 	if(regs.int_no != 32)

@@ -31,7 +31,7 @@ SRC_FILES = $(wildcard *.cpp)
 OBJ_FILES = $(SRC_FILES:%.cpp=$(OUTPUTDIR)%.o)
 
 OUTPUTDIR = ./bin/
-COMMON = $(ROOT)bin/lex.o
+COMMON = 
 
 all: $(OUTPUT) install
 
