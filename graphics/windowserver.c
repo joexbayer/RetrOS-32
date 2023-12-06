@@ -180,7 +180,7 @@ static int ws_set_background_file(struct windowserver* ws, const char* path)
     dbgprintf("[WSERVER] Decoding background file %x.\n", ws->background);
 
     int out;
-    run_length_decode(temp, ret, temp_window, &out);
+    decode_run_length(temp, ret, temp_window, &out);
 
     for (int i = 0; i < originalWidth; i++){
         for (int j = 0; j < originalHeight; j++){

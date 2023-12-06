@@ -31,6 +31,7 @@ enum errors {
     ERROR_SCHED_INVALID,
     ERROR_WINDOW_NOT_FOUND,
     ERROR_OPS_CORRUPTED,
+    ERROR_OUT_OF_MEMORY,
 };
 
 char* error_get_string(error_t err);

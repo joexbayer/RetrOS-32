@@ -16,6 +16,7 @@
 #include <fs/superblock.h>
 #include <fs/directory.h>
 #include <mocks.h>
+#include <test.h>
 
 #define SMALL_BUFFER_SIZE 1024
 #define LARGE_BUFFER_SIZE 4*4096-8

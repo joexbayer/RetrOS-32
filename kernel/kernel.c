@@ -62,6 +62,7 @@ void kernel(uint32_t magic)
 {
 	asm ("cli");
 	kernel_context.total_memory = (struct memory_info*) (0x7e00);
+
 #ifdef USE_MULTIBOOT
   	struct multiboot_info* mb_info = (struct multiboot_info*) magic;
 	vbe_info->height = mb_info->framebuffer_height;
@@ -74,8 +75,8 @@ void kernel(uint32_t magic)
 	kernel_context.total_memory->extended_memory_high = 0;
 #else
 	vbe_info = (struct vbe_mode_info_structure*) magic;
-	kernel_context.total_memory = (struct memory_info*) (0x7e00);
 #endif
+
 	ENTER_CRITICAL();
     init_serial();
 
@@ -219,9 +220,6 @@ void kernel(uint32_t magic)
 	
 	kernel_boot_printf("Timer initialized.");
 
-	
-	
-
 	init_pit(1);
 	kernel_boot_printf("Starting OS...");
 
@@ -229,15 +227,15 @@ void kernel(uint32_t magic)
 	LEAVE_CRITICAL();
 	asm ("sti");
 
-	while (1){
-		/* code */
-	}
-	
-	
+	while (1);
 	PANIC_ON_ERR(0);
 	
 }
 
+/**
+ * @brief 	Initializes the kernel constructors 
+ * @note 	Kernel constructors are functions that are called before the kernel starts
+ */
 void init_kctors()
 {
     int symbols = ((int)_kctor_table_size)/4;

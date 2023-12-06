@@ -110,8 +110,8 @@ bin/mkfs: bin/ext.o bin/bitmap.o ./tools/mkfs.c
 	@gcc tools/mkfs.c bin/bitmap.o fs/bin/inode.o -I include/  -O2 -m32 -Wall -D_XOPEN_SOURCE -D_FILE_OFFSET_BITS=64 -D__KERNEL -o  ./bin/mkfs
 	@echo [BUILD]      Compiling $<
 
-bin/mkfsv2: tools/mkfsv2.c bin/fat16.o bin/bitmap.o ./tests/mocks.c
-	@gcc tools/mkfsv2.c bin/bitmap.o ./tests/mocks.c bin/fat16.o -I ./include/  -O2 -m32 -Wall -D__FS_TEST -D__KERNEL -o 	./bin/mkfsv2
+bin/mkfsv2: tools/mkfsv2.c bin/fat16.o bin/bitmap.o ./tests/utils/mocks.c
+	@gcc tools/mkfsv2.c bin/bitmap.o ./tests/utils/mocks.c bin/fat16.o -I ./include/  -O2 -m32 -Wall -D__FS_TEST -D__KERNEL -o 	./bin/mkfsv2
 	@echo [BUILD]      Compiling $<
 
 tools: bin/build bin/mkfs bin/mkfsv2
@@ -153,7 +153,7 @@ create_fs:
 
 bare: compile create_fs
 
-img: grub_fix tools compile create_fs sync
+img: grub_fix tools compile tests create_fs sync
 	@echo "Finished creating the image."
 	$(TIME-END)
 

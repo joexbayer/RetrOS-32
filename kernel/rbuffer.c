@@ -1,4 +1,5 @@
 #include <rbuffer.h>
+#include <errors.h>
 #include <memory.h>
 
 /* Prototypes */
@@ -24,7 +25,14 @@ struct ring_buffer_operations default_ring_buffer_ops = {
 struct ring_buffer* rbuffer_new(int size)
 {
     struct ring_buffer* rbuf = kalloc(sizeof(struct ring_buffer));
+    if(rbuf == NULL) return NULL;
+
     rbuf->buffer = kalloc(size);
+    if(rbuf->buffer == NULL) {
+        kfree(rbuf);
+        return NULL;
+    }
+
     rbuf->ops = &default_ring_buffer_ops;
     rbuf->size = size;
     rbuf->start = 0;
@@ -113,6 +121,12 @@ static error_t __ring_buffer_read(struct ring_buffer *buffer, unsigned char *dat
     SPINLOCK(buffer, {
         /* Read the data from the buffer into a temporary buffer */
         char* temp_buffer = kalloc(available);
+        if(temp_buffer == NULL) {
+
+            spin_unlock(&buffer->spinlock);
+            return -ERROR_OUT_OF_MEMORY;
+        }
+
         if (buffer->start + available <= buffer->size) {
             memcpy(temp_buffer, buffer->buffer + buffer->start, available);
         } else {

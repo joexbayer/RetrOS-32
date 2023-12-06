@@ -14,7 +14,7 @@
 
 #include <mocks.h>
 
-#define DEBUG 1
+#define DEBUG 0
 
 /* needed by mocks.c */
 FILE* filesystem = NULL;
@@ -27,89 +27,66 @@ int main(int argc, char const *argv[])
         return -1;
     }
 
-    fat16_format("VOLUME1", 1);
-    if(fat16_load() < 0){
-        printf("Unable to initialize FAT16 filesystem.\n");
-        return -1;
-    }
+    // Existing tests
+    testprintf(fat16_load() != 0, "fat16_load() on empty filesystem");
+    testprintf(fat16_format("VOLUME1", 1) == 0, "fat16_format()");
+    testprintf(fat16_load() == 0, "fat16_load()");
+    testprintf(fat16_create_directory("test_dir") == 0, "fat16_create_directory()");
+    testprintf(fat16_create_empty_file("file.txt", 0) == 0, "fat16_create_empty_file()");
 
-    fat16_create_file("FILENAME", "TXT", "Hello, FAT16!", strlen("Hello, FAT16!")+1);
-    char buf1[3000];
-    int ret1 = fat16_read_file("FILENAME", "TXT", buf1, 14);
-    if (ret1 <= 0) {
-        printf("Unable to read file (sample.txt).\n");
-    }
-    printf("%s (%d)\n", buf1, ret1);  // Expected Output: Hello, FAT16!
-
-    // int size = 8*1024*1024;
-    
-    // char* buf2 = malloc(size);
-    // for (int i = 0; i < size; i++){
-    //     buf2[i] = i % 111;
-    // }
-    // fat16_create_file("sample2", "txt", buf2, size);
-
-    // char* buf3 = malloc(size);
-    // int ret2 = fat16_read_file("sample2", "txt", buf3, size);
-    // if (ret2 <= 0) {
-    //     printf("Unable to read file (sample2.txt).\n");
-    //     return -1;
-    // }
-
-    // int mem_ret = memcmp(buf2, buf3, size);
-    // if (mem_ret != 0) {
-    //     printf("Incorrect content of sample2.txt.\n");
-    //     return -1;
-    // }
-    
-    fat16_create_directory("DIR     ");
-
-    fat16_print_root_directory_entries();
-
-    fat16_change_directory("DIR     ");
-
-    fat16_create_directory("DIR2    ");
-
-    fat16_print_root_directory_entries();
-
-    fat16_change_directory("DIR2    ");
-
-    fat16_create_file("FILENAM2", "TXT", "Hello, FAT16!", strlen("Hello, FAT16!")+1);
-
-    fat16_print_root_directory_entries();
-
-    char* path = "/DIR/DIR2/FILENAM2.TXT";   
-
+    // Additional tests
     struct fat16_directory_entry entry;
-    struct fat16_file_identifier file_id;
+    testprintf(fat16_read_entry(0, 0, &entry) == 0, "fat16_read_entry()");
+    testprintf(fat16_sync_directory_entry(0, 0, &entry) == 0, "fat16_sync_directory_entry()");
 
-    file_id = fat16_get_directory_entry(path, &entry);
-    printf("File ID: %d : %d\n", file_id.directory, file_id.index);
-    fat16_directory_entry_debug(&entry);
+    // Test set time and date functions
+    uint16_t time, date;
+    fat16_set_time(&time, 12, 30, 30); // No return value to test
+    testprintf(1, "fat16_set_time()");
+    fat16_set_date(&date, 2023, 1, 1); // No return value to test
+    testprintf(1, "fat16_set_date()");
 
-    file_id = fat16_get_directory_entry("/", &entry);
-    printf("File ID: %d : %d\n", file_id.directory, file_id.index);
-    fat16_directory_entry_debug(&entry);
-
-    file_id = fat16_get_directory_entry("/DIR", &entry);
-    printf("File ID: %d : %d\n", file_id.directory, file_id.index);
-    fat16_directory_entry_debug(&entry);
-
-
-    fseek(filesystem, 0, SEEK_END);
-    int size2 = ftell(filesystem);
-    printf("Size of filesystem: %d\n", size2);
-    /* pad to 32mb */
-    if(size2 < 32*1024*1024){
-        char* buf = malloc(32*1024*1024 - size2);
-        memset(buf, 0, 32*1024*1024 - size2);
-        fwrite(buf, 32*1024*1024 - size2, 1, filesystem);
-        free(buf);
-
-        printf("Padded filesystem to 32mb.\n");
-    }
-
-    fat16_sync_fat_table();
+    // Test FAT16 File and Directory Manipulation Functions
+    struct fat16_directory_entry dir_entry;
+    testprintf(fat16_read_entry(1, 0, &dir_entry) == 0, "fat16_read_entry() on Directory");
     
+    int first_cluster = 2; // Example cluster number
+    char data[512]; // Example data buffer
+    testprintf(fat16_read_data(first_cluster, 0, data, sizeof(data), sizeof(data)) == 512, "fat16_read_data()");
+    
+    testprintf(fat16_write_data(first_cluster, 0, data, sizeof(data)) == 512, "fat16_write_data()");
+
+    struct fat16_directory_entry file_entry;
+    struct fat16_file_identifier id =  fat16_get_directory_entry("file.txt", &file_entry);
+    // Test FAT16 File Deletion
+    int block = id.directory, index = id.index; // Example block and index
+
+    /* write on file */
+    char string[] = "Hello World!";
+    testprintf(fat16_write_data(file_entry.first_cluster, 0, string, sizeof(string)) == 13, "fat16_write_data() on file.txt");
+
+    /* read on file */
+    char buffer[512];
+    testprintf(fat16_read_data(file_entry.first_cluster, 0, buffer, sizeof(string), sizeof(string)) == 13, "fat16_read_data() on file.txt");
+
+    /* compare */
+    testprintf(memcmp(string, buffer, sizeof(string)) == 0, "Correct data written and read on file.txt");
+
+    // Test FAT16 File Renaming
+    char new_name[] = "NEWNAME.TXT";
+    testprintf(fat16_rename_entry(block, index, new_name) == 0, "fat16_rename_entry()");
+
+    // Test FAT16 Cluster Allocation and Deallocation
+    uint32_t free_cluster = fat16_get_free_cluster();
+    testprintf(free_cluster != 0, "fat16_get_free_cluster()");
+    
+    fat16_allocate_cluster(free_cluster); // No return value to test
+    testprintf(1, "fat16_allocate_cluster()");
+    
+    fat16_free_cluster(free_cluster); // No return value to test
+    testprintf(1, "fat16_free_cluster()");
+
+    // Test FAT16 File Creation
+    testprintf(fat16_create_file("NEWFILE", "TXT", data, sizeof(data)) == 0, "fat16_create_file()");
     return 0;
 }

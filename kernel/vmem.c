@@ -154,6 +154,11 @@ static struct vmem_page_region* vmem_create_page_region(struct pcb* pcb, void* b
 	}
 
 	allocation->bits = kalloc(sizeof(int)*num);
+	if(allocation->bits == NULL){
+		kfree(allocation);
+		return NULL;
+	}
+
 	allocation->refs = 0;
 	allocation->size = num*PAGE_SIZE;
 	allocation->used = 0;
@@ -221,7 +226,6 @@ static int vmem_free_page_region(struct pcb* pcb, struct vmem_page_region* regio
 
 		vmem_unmap(heap_table, (uint32_t)vaddr);
 	}
-
 	kfree(region->bits);
 	kfree(region);
 
@@ -239,8 +243,14 @@ int vmem_free_allocations(struct pcb* pcb)
 		return 0;
 	}
 
+
 	/* Free all malloc allocation */
 	struct allocation* iter = pcb->allocations->head;
+	/**
+	 * @brief Very weird bug: a corrupt allocation at 0x1b0004
+	 * causes a page fault when trying to free it.
+	 * This somehow fixes it, but I have no idea why.
+	 */
 	while(iter != NULL && iter != 0x1b0004){
 		struct allocation* old = iter;
 		iter = iter->next;

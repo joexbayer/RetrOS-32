@@ -1,6 +1,6 @@
 #include <kutils.h>
 
-unsigned char* run_length_encode(const unsigned char* data, int length, unsigned char* out, int* encodedLength)
+unsigned char*  encode_run_length(const unsigned char* data, int length, unsigned char* out, int* encodedLength)
 {
     unsigned char* encodedData = out;
     int index = 0;
@@ -26,7 +26,7 @@ unsigned char* run_length_encode(const unsigned char* data, int length, unsigned
     return encodedData;
 }
 
-unsigned char* run_length_decode(const unsigned char* encodedData, int encodedLength, unsigned char* out, int* decodedLength)
+unsigned char* decode_run_length(const unsigned char* encodedData, int encodedLength, unsigned char* out, int* decodedLength)
 {
     unsigned char* decodedData = out;
     int index = 0;

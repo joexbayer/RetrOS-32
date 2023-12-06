@@ -17,5 +17,5 @@ _start:
 .section .data
 .align 16
 stack_bottom:
-.skip 4096 # 16 KiB
+.skip 4096 # 4 KiB
 stack:

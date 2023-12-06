@@ -1,6 +1,7 @@
 #include <diskdev.h>
 #include <util.h>
 #include <terminal.h>
+#include <errors.h>
 #include <serial.h>
 
 static struct diskdev disk_device;
@@ -78,6 +79,8 @@ int read_block(void* _buf, int block)
 
 int read_block_offset(void* _usr_buf, int size, int offset, int block)
 {
+    ERR_ON_NULL(_usr_buf);
+
     char buf[512];
     byte_t* usr_buf = (byte_t*) _usr_buf;
 
