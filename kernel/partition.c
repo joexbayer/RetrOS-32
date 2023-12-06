@@ -28,7 +28,6 @@ static const char* mbr_partition_type_string(mbr_partition_type_t type) {
     }
 }
 
-
 static struct mbr mbr;
 
 /**

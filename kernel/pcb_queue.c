@@ -139,11 +139,17 @@ static error_t __pcb_queue_add(struct pcb_queue* queue, struct pcb* pcb)
  */
 static void __pcb_queue_remove(struct pcb_queue* queue, struct pcb* pcb)
 {
-	if(queue == NULL || pcb == NULL){
+	if(queue == NULL || pcb == NULL || queue->_list == NULL){
 		return;
 	}
 
 	SPINLOCK(queue, {
+
+		if(queue->_list == pcb){
+			queue->_list = pcb->next;
+			break;
+		}
+
 
 		/* Remove pcb from linked list queue */
 		struct pcb* current = queue->_list;
@@ -152,7 +158,7 @@ static void __pcb_queue_remove(struct pcb_queue* queue, struct pcb* pcb)
 		}
 
 		if(current->next == NULL){
-			return;
+			break;
 		}
 
 		current->next = pcb->next;
@@ -208,7 +214,6 @@ static struct pcb* __pcb_queue_peek(struct pcb_queue* queue)
 
 	struct pcb* front = NULL;
 	SPINLOCK(queue, {
-
 		front = queue->_list;
 	});
 

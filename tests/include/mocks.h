@@ -24,6 +24,8 @@ void init_memory();
 void kmem_init();
 void vmem_init();
 
+char* error_get_string(int err);
+
 void* kalloc(int size);
 void kfree(void* ptr);
 

@@ -45,6 +45,11 @@ void testprintf(int test,  const char* test_str)
     tests++;
 }
 
+char* error_get_string(int err)
+{
+    return "No error";
+}
+
 void pcb_queue_attach_ops()
 {
 	
