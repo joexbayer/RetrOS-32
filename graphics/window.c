@@ -251,7 +251,7 @@ static void gfx_default_click(struct window* window, int x, int y)
         dbgprintf("[GFX WINDOW] Clicked %s full screen button\n", window->name);
         if(window->is_maximized.state == 0){
             window->is_maximized.state = 1;
-            window->is_maximized.width = window->width;
+            window->is_maximized.width = window->width+4;
             window->is_maximized.height = window->height;
 
             window->ops->maximize(window);
@@ -372,7 +372,6 @@ int gfx_destory_window(struct window* w)
     LEAVE_CRITICAL();
 
     return ERROR_OK;
-
 }
 
 

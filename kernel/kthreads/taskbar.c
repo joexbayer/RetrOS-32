@@ -352,7 +352,7 @@ EXPORT_KTHREAD(taskbar);
 
 static void __callback taskbar_wolfstein()
 {
-    int pid = pcb_create_process("/bin/wolf.o", 0, NULL, 0);
+    int pid = pcb_create_process("/bin/wolf3d.o", 0, NULL, 0);
     if(pid < 0)
         dbgprintf("%s does not exist\n", "wolf.o");
 }

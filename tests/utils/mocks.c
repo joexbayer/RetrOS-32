@@ -33,6 +33,7 @@ struct pcb __current_running = {
 struct pcb* current_running = &__current_running;
 
 int failed = 0;
+int tests = 0;
 void testprintf(int test,  const char* test_str)
 {
     if(test)
@@ -41,6 +42,7 @@ void testprintf(int test,  const char* test_str)
         fprintf(stderr, "[ " RED "FAILED" RESET " ] %s\n", test_str);
         failed++;
     }
+    tests++;
 }
 
 void pcb_queue_attach_ops()

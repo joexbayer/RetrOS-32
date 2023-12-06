@@ -21,7 +21,7 @@ int gfx_syscall_hook(int option, void* data, int flags)
         break;
     case GFX_DRAW_RECTANGLE_OPT:;
         struct gfx_rectangle* r = (struct gfx_rectangle*)data;
-        kernel_gfx_draw_rectangle(current_running->gfx_window, r->x, r->y, r->width, r->height, r->color);
+        kernel_gfx_draw_rectangle(current_running->gfx_window, r->x, r->y, r->width, r->height, r->palette == GFX_VGA ? r->color : rgb_to_vga(r->color));
         break;
     
     case GFX_DRAW_CIRCLE_OPT:;
@@ -31,7 +31,7 @@ int gfx_syscall_hook(int option, void* data, int flags)
     
     case GFX_DRAW_LINE_OPT:;
         struct gfx_line* line = (struct gfx_line*)data;
-        kernel_gfx_draw_line(current_running->gfx_window, line->x0, line->y0, line->x1, line->y1, line->color);
+        kernel_gfx_draw_line(current_running->gfx_window, line->x0, line->y0, line->x1, line->y1, rgb_to_vga(line->color));
         break;
     
     case GFX_DRAW_PIXEL:;

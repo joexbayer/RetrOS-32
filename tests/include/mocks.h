@@ -42,6 +42,7 @@ extern struct pcb* current_running;
 extern int failed;
 
 void testprintf(int test,  const char* test_str);
+void test_summary();
 
 struct memory_map {
 	struct kernel_memory {

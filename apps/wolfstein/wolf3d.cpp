@@ -16,7 +16,7 @@ public:
 
     void render(){
         /* draw map */
-        gfx_draw_rectangle(0, 0, m_width, m_height, 0);
+        gfx_draw_rectangle(0, 0, m_width, m_height, 0xf);
         drawRays();
     }
 
@@ -96,7 +96,7 @@ private:
         int i = 0;
         int rectSize = (m_width + rays - 1) / rays;
         const int MIN_COLOR_INTENSITY = 17;
-        const int MAX_COLOR_INTENSITY = 31;
+        const int MAX_COLOR_INTENSITY = 29;
 
         for (int rayIndex = -30; rayIndex < 30; rayIndex++) {
             /* Calculate ray's angle */

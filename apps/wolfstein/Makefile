@@ -24,7 +24,7 @@ else
 endif
 
 #### ONLY EDIT THIS ####
-OUTPUT = wolf.o
+OUTPUT = wolf3d.o
 ########################
 
 SRC_FILES = $(wildcard *.cpp)
