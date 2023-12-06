@@ -18,7 +18,8 @@ endif
 
 FSBOJS = ../fs/bin/ext.o ../fs/bin/path.o ../fs/bin/inode.o
 FATOBJS = ../fs/bin/fat16.o ../fs/bin/fat16_read.o ../fs/bin/fat16_write.o
-MOCK = mocks.c
+
+MOCK = utils/mocks.c utils/test.c
 
 .PHONY: bin
 
@@ -30,7 +31,7 @@ bin:
 ext_test: bin ext_test.c
 	@$(CC) ext_test.c -D__FS_TEST ../bin/bitmap.o $(FSBOJS) -D__RetrOS32MOCK $(MOCK) -I ../include/ -I ./include/  -O2 -m32 -Wall --no-builtin -D__KERNEL -o ./bin/ext_test.o
 
-fat16_test: bin ext_test.c
+fat16_test: bin fat16_test.c
 	@$(CC) fat16_test.c -D__FS_TEST ../bin/bitmap.o $(FATOBJS) -D__RetrOS32MOCK $(MOCK) -I ../include/ -I ./include/  -O2 -m32 -Wall --no-builtin -D__KERNEL -o ./bin/fat16_test.o 
 
 mem_test: bin mem_test.c
@@ -45,6 +46,7 @@ fat16ch:
 run:
 	./bin/ext_test.o
 	./bin/mem_test.o
+	./bin/fat16_test.o 
 
 clean:
 	rm -f ./bin/*

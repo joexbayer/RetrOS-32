@@ -40,9 +40,9 @@ int main()
         gfx_draw_circle(55, 55, 50, 0xf, 1);
         gfx_draw_circle(55, 55, 50, 0, 0);
 
-		gfx_draw_line(55, 55, 55 + (50*sin_60[angle_id])/1.5, 55+ (50*cos_60[angle_id])/1.5, COLOR_VGA_MEDIUM_GRAY);
-		gfx_draw_line(55, 55, 55 + (50*sin_60[now.minute])/1.1, 55+ (50*cos_60[now.minute])/1.1, COLOR_VGA_MEDIUM_GRAY);
-		gfx_draw_line(55, 55, 55 + (50*sin_60[now.second])/1.1, 55+ (50*cos_60[now.second])/1.1, COLOR_VGA_RED);
+		gfx_draw_line(55, 55, 55+ (50*cos_60[angle_id])/1.5, 55 + (50*sin_60[angle_id])/1.5, COLOR_VGA_MEDIUM_GRAY);
+		gfx_draw_line(55, 55, 55+ (50*cos_60[now.minute])/1.1, 55 + (50*sin_60[now.minute])/1.1, COLOR_VGA_MEDIUM_GRAY);
+		gfx_draw_line(55, 55, 55+ (50*cos_60[now.second])/1.1, 55 + (50*sin_60[now.second])/1.1, COLOR_VGA_RED);
 
         gfx_draw_format_text(center_x(5), 112, COLOR_VGA_MEDIUM_GRAY, "%s%d:%s%d", now.hour > 9 ? "" : "0", now.hour, now.minute > 9 ? "" : "0", now.minute);
         gfx_draw_format_text(center_x(6), 124, COLOR_VGA_MEDIUM_GRAY, "%d. %s", now.day, months[now.month]);

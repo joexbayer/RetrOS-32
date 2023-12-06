@@ -18,12 +18,12 @@
 
 #define KMEM_BLOCK_SIZE 		256
 #define KMEM_BLOCKS_PER_BYTE 	8
-
-static uint32_t KERNEL_MEMORY_START = 0;
-static uint32_t KERNEL_MEMORY_END = 0;
-
 #define KMEM_BITMAP_INDEX(addr) ((addr - KERNEL_MEMORY_START) / KMEM_BLOCK_SIZE / KMEM_BLOCKS_PER_BYTE)
 #define KMEM_BITMAP_OFFSET(addr) ((addr - KERNEL_MEMORY_START) / KMEM_BLOCK_SIZE % KMEM_BLOCKS_PER_BYTE)
+
+/* values determined by memory map, set at runtime */
+static uint32_t KERNEL_MEMORY_START = 0;
+static uint32_t KERNEL_MEMORY_END = 0;
 
 static uint8_t* __kmemory_bitmap;
 static spinlock_t __kmemory_lock = 0;
@@ -44,7 +44,7 @@ static inline int __kmemory_find_blocks(int num_blocks, int total_blocks)
             free_blocks = 0;
         }
     }
-    return -1;  // No free block found
+    return -1;  /* No free block found */
 }
 
 static inline void __kmemory_mark_blocks(int start_block, int num_blocks)
@@ -80,15 +80,15 @@ void* kalloc(int size)
     if (size <= 0) return NULL;
 
     size = ALIGN(size, PTR_SIZE);
-
-	spin_lock(&__kmemory_lock);
-
     int num_blocks = (size + sizeof(int) + KMEM_BLOCK_SIZE - 1) / KMEM_BLOCK_SIZE;
     int total_blocks = (KERNEL_MEMORY_END - KERNEL_MEMORY_START) / KMEM_BLOCK_SIZE;
 
+	spin_lock(&__kmemory_lock);
+
     int start_block = __kmemory_find_blocks(num_blocks, total_blocks);
     if (start_block == -1) {
-        // No contiguous free region of memory was found
+        /* No contiguous free region of memory was found */
+        warningf("Out of memory: %d\n", __kmemory_used);
         spin_unlock(&__kmemory_lock);
         return NULL;
     }
@@ -102,10 +102,9 @@ void* kalloc(int size)
     __kmemory_used += num_blocks * KMEM_BLOCK_SIZE;
     current_running->kallocs++;
 
-    dbgprintf("Total mem: %d\n", __kmemory_used);
-
+    /* sanity check */
     if(__kmemory_used > KERNEL_MEMORY_END-KERNEL_MEMORY_START){
-        dbgprintf("Out of memory: %d\n", __kmemory_used);
+        warningf("Out of memory: %d\n", __kmemory_used);
         kernel_panic("Out of memory!");
     }
 
@@ -132,15 +131,15 @@ void kfree(void* ptr)
 	
 	spin_lock(&__kmemory_lock);
 
-	// Calculate the index of the block in the memory region
+	/* Calculate the index of the block in the memory region */
 	int block_index = (((uint32_t)ptr) - KERNEL_MEMORY_START) / KMEM_BLOCK_SIZE;
 
-	// Read the size of the allocated block from the metadata block
+	/* Read the size of the allocated block from the metadata block */
 	int* metadata = (int*) (KERNEL_MEMORY_START + block_index * KMEM_BLOCK_SIZE);
 	int num_blocks = *metadata;
 	dbgprintf("[MEMORY] %s freeing %d blocks of data\n", current_running->name, num_blocks);
 
-	// Mark the blocks as free in the bitmap
+	/* Mark the blocks as free in the bitmap */
 	for (int i = 0; i < num_blocks; i++) {
 		uint32_t index = KMEM_BITMAP_INDEX(KERNEL_MEMORY_START + (block_index + i) * KMEM_BLOCK_SIZE);
 		uint32_t offset = KMEM_BITMAP_OFFSET(KERNEL_MEMORY_START + (block_index + i) * KMEM_BLOCK_SIZE);
@@ -151,18 +150,8 @@ void kfree(void* ptr)
 	spin_unlock(&__kmemory_lock);
 }
 
-int kmemory_used()
-{
-    return __kmemory_used;
-}
-
-int kmemory_total()
-{
-    return KERNEL_MEMORY_END-KERNEL_MEMORY_START;
-}
-
 /**
- * @brief Permanent memory allocation scheme for memory that wont be freed.
+ * @brief Arena style permanent memory allocation scheme for memory that wont be freed.
  * Mainly by the windowservers framebuffer, and E1000's buffers.
  */
 static uintptr_t memory_permanent_start = NULL;
@@ -190,6 +179,16 @@ int pmemory_used()
     return memory_permanent_start-memory_map_get()->permanent.from;
 }
 
+int kmemory_used()
+{
+    return __kmemory_used;
+}
+
+int kmemory_total()
+{
+    return KERNEL_MEMORY_END-KERNEL_MEMORY_START;
+}
+
 void kmem_init()
 {
     memory_permanent_start = (uint32_t) memory_map_get()->permanent.from;
@@ -198,6 +197,7 @@ void kmem_init()
     KERNEL_MEMORY_START = (uint32_t) memory_map_get()->kernel.from;
     KERNEL_MEMORY_END = (uint32_t) memory_map_get()->kernel.to;
 
+    /* Initialize the bitmap */
     __kmemory_bitmap = palloc((memory_map_get()->kernel.total) / KMEM_BLOCK_SIZE / KMEM_BLOCKS_PER_BYTE);
     assert(__kmemory_bitmap != NULL);
     memset(__kmemory_bitmap, 0, (memory_map_get()->kernel.total) / KMEM_BLOCK_SIZE / KMEM_BLOCKS_PER_BYTE);

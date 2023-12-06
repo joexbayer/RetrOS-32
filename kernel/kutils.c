@@ -9,50 +9,6 @@
 
 static char *units[] = {"bytes", "kb", "mb"};
 
-unsigned char* run_length_encode(const unsigned char* data, int length, unsigned char* out, int* encodedLength)
-{
-    unsigned char* encodedData = out;
-    int index = 0;
-    unsigned short count = 1;
-
-    for (int i = 1; i < length; i++) {
-        if (data[i] == data[i - 1]) {
-            count++;
-        } else {
-            encodedData[index++] = data[i - 1];
-            encodedData[index++] = (count & 0xFF);           // Lower byte of count
-            encodedData[index++] = ((count >> 8) & 0xFF);    // Upper byte of count
-            count = 1;
-        }
-    }
-
-    // Store the last run
-    encodedData[index++] = data[length - 1];
-    encodedData[index++] = (count & 0xFF);
-    encodedData[index++] = ((count >> 8) & 0xFF);
-
-    *encodedLength = index;
-    return encodedData;
-}
-
-unsigned char* run_length_decode(const unsigned char* encodedData, int encodedLength, unsigned char* out, int* decodedLength)
-{
-    unsigned char* decodedData = out;
-    int index = 0;
-
-    for (int i = 0; i < encodedLength; i += 3) {
-        unsigned char bit = encodedData[i];
-        unsigned short count = encodedData[i + 1] | (encodedData[i + 2] << 8);
-
-        for (int j = 0; j < count; j++) {
-            decodedData[index++] = bit;
-        }
-    }
-
-    *decodedLength = index;
-    return decodedData;
-}
-
 /* Function to align a given size to the size of a void* */
 int align_to_pointer_size(int size)
 {
@@ -97,6 +53,12 @@ int exec_cmd(char* str)
 }
 EXPORT_KSYMBOL(exec_cmd);
 
+/**
+ * @brief Converts a amount of bytes to a human readable format 
+ * 
+ * @param bytes amount of bytes
+ * @return struct unit 
+ */
 struct unit calculate_size_unit(int bytes)
 {
     int index = 0;
@@ -170,7 +132,7 @@ int kref_put(struct kref* ref)
 int32_t csprintf(char *buffer, const char *fmt, ...)
 {
     va_list args;
-    int written = 0; // Number of characters written
+    int written = 0; /* Number of characters written */
     char str[MAX_FMT_STR_SIZE];
     int num = 0;
 
@@ -178,8 +140,8 @@ int32_t csprintf(char *buffer, const char *fmt, ...)
 
     while (*fmt != '\0' && written < MAX_FMT_STR_SIZE) {
         if (*fmt == '%') {
-            memset(str, 0, MAX_FMT_STR_SIZE); // Clear the buffer
-            fmt++; // Move to the format specifier
+            memset(str, 0, MAX_FMT_STR_SIZE); /* Clear the buffer */
+            fmt++; /* Move to the format specifier */
 
             if (written < MAX_FMT_STR_SIZE - 1) {
                 switch (*fmt) {
@@ -206,16 +168,16 @@ int32_t csprintf(char *buffer, const char *fmt, ...)
                             buffer[written++] = (char)va_arg(args, int);
                         }
                         break;
-                    // Add additional format specifiers as needed
+                    /* Add additional format specifiers as needed */
                 }
 
-                // Copy formatted string to buffer
+                /* Copy formatted string to buffer */
                 for (int i = 0; str[i] != '\0'; i++) {
                     buffer[written++] = str[i];
                 }
             }
         } else {
-            // Directly copy characters that are not format specifiers
+            /* Directly copy characters that are not format specifiers */
             if (written < MAX_FMT_STR_SIZE - 1) {
                 buffer[written++] = *fmt;
             }
@@ -225,7 +187,7 @@ int32_t csprintf(char *buffer, const char *fmt, ...)
 
     va_end(args);
 
-    // Ensure the buffer is null-terminated
+    /* Ensure the buffer is null-terminated */
     buffer[written < MAX_FMT_STR_SIZE ? written : MAX_FMT_STR_SIZE - 1] = '\0';
 
     return written;

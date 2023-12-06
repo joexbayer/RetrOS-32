@@ -79,6 +79,9 @@ int mkfsv2_load_kernel()
     return kernel_block_count;
 }
 
+/* TODO: as argv */
+static const int IMG_SIZE = 32*1024*1024;
+
 int main(int argc, char const *argv[])
 {
     int kernel_block_count;
@@ -115,10 +118,10 @@ int main(int argc, char const *argv[])
     int size2 = ftell(filesystem);
     printf("Size of filesystem: %d\n", size2);
     /* pad to 32mb */
-    if(size2 < 32*1024*1024){
-        char* buf = malloc(32*1024*1024 - size2);
-        memset(buf, 0, 32*1024*1024 - size2);
-        fwrite(buf, 32*1024*1024 - size2, 1, filesystem);
+    if(size2 < IMG_SIZE){
+        char* buf = malloc(IMG_SIZE - size2);
+        memset(buf, 0, IMG_SIZE - size2);
+        fwrite(buf, IMG_SIZE - size2, 1, filesystem);
         free(buf);
 
         printf("Padded filesystem to 32mb.\n");

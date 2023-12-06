@@ -820,7 +820,7 @@ int fat16_load()
     /* confirm that bootblock is correct */
     if (memcmp(boot_table.manufacturer, "RetrOS32", 8) != 0) {
         dbgprintf("Bootblock manufacturer is not RetrOS-32\n");
-        return -1;
+        return -2;
     }
 
         /* init mutexes */
@@ -832,7 +832,7 @@ int fat16_load()
     fat_table_memory = (byte_t*)kalloc((boot_table.fat_blocks * 512));  /* Allocate memory for the FAT table */
     if(fat_table_memory == NULL){
         dbgprintf("Error allocating memory for FAT table: %d\n", boot_table.fat_blocks * 512);
-        return -2;
+        return -3;
     }
 
     for (uint16_t i = 0; i < boot_table.fat_blocks; i++) {

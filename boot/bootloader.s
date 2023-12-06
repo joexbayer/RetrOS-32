@@ -373,6 +373,8 @@ set_a20:
     ret                                                                                
 
 set_video_mode:
+    # je set_640x480
+
     /* Print resolution choice */
     movw $straight_line, %si
     call print

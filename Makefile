@@ -58,7 +58,7 @@ KERNELOBJ = bin/kernel.o bin/terminal.o bin/helpers.o bin/pci.o bin/virtualdisk.
 			bin/keyboard.o bin/pcb.o bin/pcb_queue.o bin/memory.o bin/vmem.o bin/kmem.o bin/e1000.o bin/display.o bin/env.o \
 			bin/sync.o bin/kthreads.o bin/ata.o bin/bitmap.o bin/rtc.o bin/tss.o bin/kutils.o bin/script.o bin/login.o \
 			bin/diskdev.o bin/scheduler.o bin/work.o bin/rbuffer.o bin/errors.o bin/kclock.o bin/tar.o bin/color.o\
-			bin/serial.o bin/io.o bin/syscalls.o bin/list.o bin/hashmap.o bin/vbe.o bin/ksyms.o bin/windowserver.o\
+			bin/serial.o bin/io.o bin/syscalls.o bin/list.o bin/hashmap.o bin/vbe.o bin/ksyms.o bin/windowserver.o bin/encoding.o\
 			bin/mouse.o bin/ipc.o ${PROGRAMOBJ} ${GFXOBJ} bin/font8.o bin/net.o bin/fs.o bin/ext.o bin/fat16.o bin/partition.o
 
 BOOTOBJ = bin/bootloader.o
@@ -110,8 +110,8 @@ bin/mkfs: bin/ext.o bin/bitmap.o ./tools/mkfs.c
 	@gcc tools/mkfs.c bin/bitmap.o fs/bin/inode.o -I include/  -O2 -m32 -Wall -D_XOPEN_SOURCE -D_FILE_OFFSET_BITS=64 -D__KERNEL -o  ./bin/mkfs
 	@echo [BUILD]      Compiling $<
 
-bin/mkfsv2: tools/mkfsv2.c bin/fat16.o bin/bitmap.o ./tests/mocks.c
-	@gcc tools/mkfsv2.c bin/bitmap.o ./tests/mocks.c bin/fat16.o -I ./include/  -O2 -m32 -Wall -D__FS_TEST -D__KERNEL -o 	./bin/mkfsv2
+bin/mkfsv2: tools/mkfsv2.c bin/fat16.o bin/bitmap.o ./tests/utils/mocks.c
+	@gcc tools/mkfsv2.c bin/bitmap.o ./tests/utils/mocks.c bin/fat16.o -I ./include/  -O2 -m32 -Wall -D__FS_TEST -D__KERNEL -o 	./bin/mkfsv2
 	@echo [BUILD]      Compiling $<
 
 tools: bin/build bin/mkfs bin/mkfsv2
@@ -153,7 +153,7 @@ create_fs:
 
 bare: compile create_fs
 
-img: grub_fix tools compile create_fs sync
+img: grub_fix tools compile tests create_fs sync
 	@echo "Finished creating the image."
 	$(TIME-END)
 

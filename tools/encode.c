@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-unsigned char* run_length_encode(const unsigned char* data, int length, unsigned char* out, int* encodedLength)
+unsigned char*  encode_run_length(const unsigned char* data, int length, unsigned char* out, int* encodedLength)
 {
     unsigned char* encodedData = out;
     int index = 0;
@@ -27,7 +27,7 @@ unsigned char* run_length_encode(const unsigned char* data, int length, unsigned
     return encodedData;
 }
 
-unsigned char* run_length_decode(const unsigned char* encodedData, int encodedLength, unsigned char* out, int* decodedLength)
+unsigned char* decode_run_length(const unsigned char* encodedData, int encodedLength, unsigned char* out, int* decodedLength)
 {
     unsigned char* decodedData = out;
     int index = 0;
@@ -78,9 +78,9 @@ int main(int argc, char** argv) {
 
     store = malloc(1000*70);
 
-    unsigned char* encoded = run_length_encode(background, 320*240, store, &len);
+    unsigned char* encoded =  encode_run_length(background, 320*240, store, &len);
     printf("Run length encoded data from %d to %d bytes\n", 320*240, len);
-    run_length_decode(encoded, len, background, &len2);
+    decode_run_length(encoded, len, background, &len2);
     printf("Run length decoded data from %d to %d bytes\n", len, len2 );
 
 

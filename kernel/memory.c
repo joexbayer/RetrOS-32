@@ -20,7 +20,6 @@
 #define MB(mb) (mb*1024*1024)
 #define KB(kb) (kb*1024)
 
-
 static struct memory_map kernel_memory_map = {0};
 
 int memory_map_init(int total_memory, int extended_memory)
@@ -31,7 +30,6 @@ int memory_map_init(int total_memory, int extended_memory)
 	int permanent = ALIGN((int)(total_memory * (float)1/8), 1024*1024);
 	int kernel = ALIGN((int)(total_memory * (float)2/8), 1024*1024);
 
-	/* Align virtual to the closest 4096 bytes, flooring */
 	/* Calculate the remaining memory */
 	int remaining_memory = total_memory - permanent - kernel;
 	int virtual = ALIGN_DOWN(remaining_memory, 4096);
@@ -68,6 +66,18 @@ int memory_map_init(int total_memory, int extended_memory)
 	dbgprintf("Virtual:   0x%x - 0x%x (%d)\n", kernel_memory_map.virtual.from, kernel_memory_map.virtual.to, virtual);
 	dbgprintf("Total:     0x%x - 0x%x (%d - %d)\n", kernel_memory_map.kernel.from, kernel_memory_map.virtual.to, (permanent+kernel+virtual), total_memory);
 
+	return 0;
+}
+
+static int memory_test(){
+	for (int i = 0; i < (15 * 1024*1024)+(1*1024*1024); i++){
+		volatile char value = *(volatile char *)i;
+		*(volatile char *)i = value;
+
+		if (i % (1024*1024) == 0){
+			dbgprintf("[KERNEL] 0x%x MB tested\n", i);
+		}
+	}
 	return 0;
 }
 
@@ -166,4 +176,5 @@ void init_memory()
 	dbgprintf("Virtual memory initiated\n");
 	vmem_init_kernel();
 	dbgprintf("Virtual Kernel memory initiated\n");
+	memory_test();
 }

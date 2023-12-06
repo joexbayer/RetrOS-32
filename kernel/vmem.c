@@ -154,6 +154,11 @@ static struct vmem_page_region* vmem_create_page_region(struct pcb* pcb, void* b
 	}
 
 	allocation->bits = kalloc(sizeof(int)*num);
+	if(allocation->bits == NULL){
+		kfree(allocation);
+		return NULL;
+	}
+
 	allocation->refs = 0;
 	allocation->size = num*PAGE_SIZE;
 	allocation->used = 0;
@@ -221,7 +226,6 @@ static int vmem_free_page_region(struct pcb* pcb, struct vmem_page_region* regio
 
 		vmem_unmap(heap_table, (uint32_t)vaddr);
 	}
-
 	kfree(region->bits);
 	kfree(region);
 
@@ -234,8 +238,19 @@ int vmem_free_allocations(struct pcb* pcb)
 	assert(heap_table != 0);
 
 	ENTER_CRITICAL();
+	if(pcb->allocations->head == NULL){
+		kfree(pcb->allocations);
+		return 0;
+	}
+
+
 	/* Free all malloc allocation */
 	struct allocation* iter = pcb->allocations->head;
+	/**
+	 * @brief Very weird bug: a corrupt allocation at 0x1b0004
+	 * causes a page fault when trying to free it.
+	 * This somehow fixes it, but I have no idea why.
+	 */
 	while(iter != NULL && iter != 0x1b0004){
 		struct allocation* old = iter;
 		iter = iter->next;
@@ -246,6 +261,7 @@ int vmem_free_allocations(struct pcb* pcb)
 	
 		kfree(old);
 	}
+
 	ENTER_CRITICAL();
 	vmem_default->ops->free(vmem_default, (void*) heap_table);
 	
@@ -281,8 +297,22 @@ void __deprecated vmem_free_allocation(struct allocation* allocation)
 
 }
 
+
+/**
+ * @brief Frees a virtual stack allocation
+ * 
+ * @param pcb Process to free from.
+ * @param ptr Pointer to the address to free.
+ */
 void vmem_stack_free(struct pcb* pcb, void* ptr)
 {
+	/* Check if allocation is first in list */
+
+	if(pcb->allocations->head == NULL){
+		warningf("Trying to free allocation from empty list.\n");
+		return;
+	}
+
 	if(ptr == pcb->allocations->head->address){
 		struct allocation* old = pcb->allocations->head;
 		pcb->allocations->head = pcb->allocations->head->next;
@@ -294,6 +324,7 @@ void vmem_stack_free(struct pcb* pcb, void* ptr)
 		return;
 	}
 
+	/* Iterates over all allocations to find ptr */
 	struct allocation* iter = pcb->allocations->head;
 	while(iter->next != NULL){
 		if(iter->next->address == ptr){
@@ -302,8 +333,8 @@ void vmem_stack_free(struct pcb* pcb, void* ptr)
 			iter->next = iter->next->next;
 			pcb->used_memory -= save->size;
 
-			dbgprintf("Freeing %d bytes of data from 0x%x (0x%x)\n", save->size, save->address, save);
 			vmem_free_page_region(pcb, save->region, save->size);
+			
 			dbgprintf("[2] Free %d bytes of data from 0x%x\n", save->size, save->address);
 			return;
 		}
@@ -495,7 +526,6 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 	dbgprintf("[3.5] Allocated %d bytes of data to 0x%x\n", _size, allocation->address);
 	return (void*) allocation->address;
 }
-
 
 void vmem_dump_heap(struct allocation* allocation)
 {
@@ -759,7 +789,7 @@ void vmem_cleanup_process(struct pcb* pcb)
  */
 void vmem_init_kernel()
 {	
-	int total_mem			= memory_map_get()->total;
+	int total_mem = memory_map_get()->total;
 
 	kernel_page_dir = vmem_manager->ops->alloc(vmem_manager);
 
@@ -862,6 +892,7 @@ void vmem_init()
 
 	vmem_allocator_create(vmem_default, VMEM_START_ADDRESS, VMEM_END_ADDRESS);
 	dbgprintf("Manager start: 0x%x - 0x%x (%d)\n", VMEM_MANAGER_START, VMEM_MANAGER_END, VMEM_MANAGER_PAGES);
+
 	vmem_allocator_create(vmem_manager, VMEM_MANAGER_START, VMEM_MANAGER_END);
 	dbgprintf("Default: 0x%x - 0x%x (%d)\n", VMEM_START_ADDRESS, VMEM_END_ADDRESS, VMEM_TOTAL_PAGES);
 

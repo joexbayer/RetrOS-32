@@ -118,6 +118,7 @@ void __int_handler __mouse_handler()
 						/* We now have a full mouse packet ready to use */
 						if (mouse_device.packet.flags & MOUSE_Y_OVERFLOW || mouse_device.packet.flags & MOUSE_X_OVERFLOW) {
 							/* x/y overflow? bad packet! */
+							mouse_device.cycle = 0;
 							break;
 						}
 

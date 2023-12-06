@@ -25,6 +25,17 @@ typedef enum _msgbox_results {
 /* Forward declaration of threading function */
 void __msgbox_thread_fn(void* args);
 
+/**
+ * @brief A message box widget
+ * @details This class implements a message box widget that can be used to
+ * display a message box to the user. It is used by the Finder application
+ * to display a message box when the user tries to delete a file.
+ * 
+ * @param title The title of the message box
+ * @param message The message to display
+ * @param type The type of message box to display
+ * @warning Assumes that a window is present.
+ */
 class MsgBox {
 public:
     MsgBox(const char* title, const char* message, MsgBoxType type) : mThread(__msgbox_thread_fn, 0) {

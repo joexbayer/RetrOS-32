@@ -55,7 +55,7 @@ int rc(int argc, char **argv)
 
     unsigned char* dec = src;
     int dec_sz = i;
-    //run_length_decode(src, i, dec, &dec_sz);
+    //decode_run_length(src, i, dec, &dec_sz);
 
     struct lexed_file* lexd = (struct lexed_file*) dec;
     dbgprintf("%d : %d : %d\n", lexd->datasize, lexd->entry, lexd->textsize);
@@ -158,7 +158,7 @@ int as(int argc, char **argv)
     //unsigned char* enc = kalloc(sz*2);
     //int enc_sz = 0;
 
-    //run_length_encode(original_buffer, sz, enc, &enc_sz);
+    // encode_run_length(original_buffer, sz, enc, &enc_sz);
 
     fs_write(fd, original_buffer, sz);
 

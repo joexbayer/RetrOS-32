@@ -30,8 +30,6 @@ typedef unsigned char ubyte_t;
 #define MAX_UINT16_T 0xFFFF
 #define MAX_UINT32_T 0xFFFFFFFF
 
-
-
 /* This is a interupt handler function */
 #define __int_handler //__attribute__((interrupt))
 /* This is a async callback function */
@@ -127,8 +125,8 @@ int kref_init(struct kref* ref);
 int32_t csprintf(char *buffer, const char *fmt, ...);
 
 int align_to_pointer_size(int size);
-unsigned char* run_length_encode(const unsigned char* data, int length, unsigned char* out, int* encodedLength);
-unsigned char* run_length_decode(const unsigned char* encodedData, int encodedLength, unsigned char* out, int* decodedLength);
+unsigned char*  encode_run_length(const unsigned char* data, int length, unsigned char* out, int* encodedLength);
+unsigned char* decode_run_length(const unsigned char* encodedData, int encodedLength, unsigned char* out, int* decodedLength);
 int exec_cmd(char* str);
 void kernel_panic(const char* reason);
 

@@ -51,6 +51,7 @@ staticlibs:
 
 programs: staticlibs bin/crt0.o ${USROBJS}
 	@make -C editor/
+	@make -C wolfstein/
 	@make -C colors/
 	@make -C finder/
 	@make -C calculator/

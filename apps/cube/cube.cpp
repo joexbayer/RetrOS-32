@@ -29,7 +29,7 @@ public:
         for (int i = 0; i < 12; i++) {
             Point2D p1 = project(cube[edges[i][0]]);
             Point2D p2 = project(cube[edges[i][1]]);
-            gfx_draw_line(p1.x, p1.y, p2.x, p2.y, COLOR_VGA_DARKEST_GRAY);
+            gfx_draw_line(p1.y, p1.x, p2.y, p2.x, COLOR_VGA_DARKEST_GRAY);
         }
     }
 

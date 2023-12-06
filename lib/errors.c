@@ -26,7 +26,7 @@ static char* error_string[] = {
     "Invalid scheduler, probably not initiated.",
     "Window not found.",
     "Window operations are corrupted.",
-
+    "Out of memory.",
 };
 
 char* error_get_string(error_t err)

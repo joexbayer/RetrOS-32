@@ -42,17 +42,17 @@ public:
 
         /* Draw grid lines */
         for (int i = GRAPH_OFFSET_X + GRID_SPACING; i < GRAPH_OFFSET_X + GRAPH_HEIGHT; i += GRID_SPACING) {
-            drawLine(i, GRAPH_OFFSET_Y, i, GRAPH_OFFSET_Y + GRAPH_WIDTH, COLOR_VGA_LIGHT_GRAY);
+            drawLine(GRAPH_OFFSET_Y, i, GRAPH_OFFSET_Y + GRAPH_WIDTH, i, COLOR_VGA_LIGHT_GRAY);
             //drawFormatText(i, ORIGIN_Y + 5, COLOR_VGA_DARKEST_GRAY, "%d", i - ORIGIN_X);
         }
         for (int i = GRAPH_OFFSET_Y + GRID_SPACING; i < GRAPH_OFFSET_Y + GRAPH_WIDTH; i += GRID_SPACING) {
-           drawLine(GRAPH_OFFSET_X, i, GRAPH_OFFSET_X + GRAPH_HEIGHT, i, COLOR_VGA_LIGHT_GRAY);
+           drawLine(i, GRAPH_OFFSET_X, i, GRAPH_OFFSET_X + GRAPH_HEIGHT, COLOR_VGA_LIGHT_GRAY);
            //drawFormatText(ORIGIN_X - 25, i, COLOR_VGA_DARKEST_GRAY, "%d", ORIGIN_Y - i);
         }
 
         /* Draw X and Y axis inside the rectangle */
-        drawLine(GRAPH_OFFSET_X, ORIGIN_Y, GRAPH_OFFSET_X + GRAPH_HEIGHT, ORIGIN_Y, COLOR_VGA_DARKEST_GRAY);
-        drawLine(ORIGIN_X, GRAPH_OFFSET_Y, ORIGIN_X, GRAPH_OFFSET_Y + GRAPH_WIDTH, COLOR_VGA_DARKEST_GRAY);
+        drawLine(ORIGIN_Y, GRAPH_OFFSET_X, ORIGIN_Y, GRAPH_OFFSET_X + GRAPH_HEIGHT, COLOR_VGA_DARKEST_GRAY);
+        drawLine(GRAPH_OFFSET_Y, ORIGIN_X, GRAPH_OFFSET_Y + GRAPH_WIDTH, ORIGIN_X, COLOR_VGA_DARKEST_GRAY);
 
         /* Axis labels */
         drawText(GRAPH_OFFSET_X + GRAPH_HEIGHT + 5, ORIGIN_Y, "X", COLOR_VGA_DARKEST_GRAY);

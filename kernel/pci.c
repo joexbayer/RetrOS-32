@@ -59,8 +59,7 @@ uint16_t pci_read_word(uint16_t bus, uint16_t slot, uint16_t func, uint16_t offs
     uint32_t lslot = (uint32_t)slot;
     uint32_t lfunc = (uint32_t)func;
     uint16_t tmp = 0;
-    address = (uint32_t)((lbus << 16) | (lslot << 11) |
-              (lfunc << 8) | (offset & 0xfc) | ((uint32_t)0x80000000));
+    address = (uint32_t)((lbus << 16) | (lslot << 11) | (lfunc << 8) | (offset & 0xfc) | ((uint32_t)0x80000000));
     outportl (0xCF8, address);
     tmp = (uint16_t)((inportl (0xCFC) >> ((offset & 2) * 8)) & 0xffff);
     return (tmp);
