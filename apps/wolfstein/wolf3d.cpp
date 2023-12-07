@@ -15,9 +15,12 @@ public:
     }
 
     void render(){
-        /* draw map */
-        gfx_draw_rectangle(0, 0, m_width, m_height, 0xf);
+        /* white sky */
+        gfx_draw_rectangle(0, 0, m_width, m_height/2, COLOR_WHITE);
+        gfx_draw_rectangle(0, m_height/2, m_width, m_height/2, COLOR_VGA_MEDIUM_DARK_GRAY);
+        
         drawRays();
+        drawMinimap();
     }
 
     /* input */
@@ -28,6 +31,8 @@ public:
                 m_player.angle = FixAng(m_player.angle);
                 m_player.dir.x = cos(m_player.angle);
                 m_player.dir.y = -sin(m_player.angle);
+
+                render();
             }
             break;
         case 'd':{
@@ -36,18 +41,25 @@ public:
 
                 m_player.dir.x = cos(m_player.angle);
                 m_player.dir.y = -sin(m_player.angle);
+                render();
             }
             break;
         case 'w':{
                 m_player.pos.x += m_player.dir.x * 0.2;
                 m_player.pos.y += m_player.dir.y * 0.2;
+                render();
             }
             break;
         case 's':{
                 m_player.pos.x -= m_player.dir.x * 0.2;
                 m_player.pos.y -= m_player.dir.y * 0.2;
+                render();
             }
             break;
+        case 'q':{
+                showDebug = !showDebug;
+                render();
+            }
         default:
             break;
         }
@@ -72,6 +84,8 @@ private:
     int m_width;
     int m_height;
 
+    char showDebug = 0;
+
     float cos(int angle){
         return cos_values[CLAMP(angle, 0, 359)];
     }
@@ -80,38 +94,74 @@ private:
         return sin_values[CLAMP(angle, 0, 359)];
     }
 
-    char m_map[8*8] = {
+    #define RED 0xE0
+    #define GREEN 0x1C
+    #define BLUE 0x03
+    unsigned char m_map[8*8] = {
         1,1,1,1,1,1,1,1,
-        1,0,0,1,0,0,0,1,
-        1,0,0,1,0,0,1,1,
+        1,0,RED,0,GREEN,0,0,1,
         1,0,0,0,0,0,0,1,
         1,0,0,0,0,0,0,1,
-        1,0,1,0,0,1,0,1,
+        1,0,0,0,BLUE,0,0,1,
+        1,0,0,0,0,0,0,1,
         1,0,0,0,0,0,0,1,
         1,1,1,1,1,1,1,1,	
     };
 
+    void drawMinimap() {
+        if(!showDebug){
+            return;
+        }
+
+        int rectSize = 8;
+        for (int i = 0; i < 8; i++) {
+            int rectY = i * rectSize;
+            for (int j = 0; j < 8; j++) {
+                int rectX = j * rectSize;
+                int color = m_map[i * 8 + j] != 0 ? COLOR_BLACK : COLOR_WHITE;
+                gfx_draw_rectangle_rgb(rectX, rectY, rectSize, rectSize, color);
+            }
+        }
+
+        /* Draw player */
+        int playerX = m_player.pos.x * rectSize;
+        int playerY = m_player.pos.y * rectSize;
+        gfx_draw_circle(playerX, playerY, 2, COLOR_VGA_GREEN, 1);
+
+        /* draw player rays */
+        for(int ray = -30; ray < 30; ray++){
+            int rayAngle = FixAng(m_player.angle + ray);
+
+            /* Ray direction */
+            float dirX = cos(FixAng(rayAngle));
+            float dirY = -sin(FixAng(rayAngle));
+
+            /* draw ray */
+            gfx_draw_line(playerX, playerY, playerX + dirX * 8, playerY + dirY * 8, COLOR_BLUE);
+        }
+    }
+
     void drawRays() {
+        
         int rays = 60;
         int i = 0;
         int rectSize = (m_width + rays - 1) / rays;
-        const int MIN_COLOR_INTENSITY = 17;
-        const int MAX_COLOR_INTENSITY = 29;
 
         for (int rayIndex = -30; rayIndex < 30; rayIndex++) {
             /* Calculate ray's angle */
             int rayAngle = FixAng(m_player.angle + rayIndex); /* Adjust ray angle based on player angle */
 
             /* Perform raycasting */
-            float hitDistance = castRay(rayAngle);
+            int hit;
+            float hitDistance = castRay(rayAngle, &hit);
             int lineHeight = calculateWallHeight(hitDistance, rayAngle);
 
             /* Scale and shift lineHeight */
-            float scaledHeight = static_cast<float>(lineHeight) / (m_height-25);
-            float adjustedHeight = scaledHeight * scaledHeight; /* Quadratic transformation */
-            int colorIntensity = static_cast<int>(MIN_COLOR_INTENSITY + adjustedHeight * (MAX_COLOR_INTENSITY - MIN_COLOR_INTENSITY));
-            /* Clamp color intensity to the desired range */
-            colorIntensity = MIN(MAX(colorIntensity, MIN_COLOR_INTENSITY), MAX_COLOR_INTENSITY);
+            float scaledHeight = static_cast<float>(lineHeight) / (m_height-50);
+            float distanceFactor = scaledHeight * scaledHeight;
+
+            /* Dim the color based on distance while keeping a minimum blue intensity */
+            unsigned char dimmedColor = hit == 0 || hit == 1 ? 0 : dim_color_with_min_blue(hit, distanceFactor);
 
             /* Select color based on lineHeight */
             int color = COLOR_VGA_MEDIUM_GRAY;
@@ -124,11 +174,32 @@ private:
             i++;
 
             /* Draw the vertical rectangle for this ray */
-            gfx_draw_rectangle(rectX, lineOffset, rectWidth, rectHeight, colorIntensity);
+            gfx_draw_rectangle_rgb(rectX, lineOffset, rectWidth, rectHeight, dimmedColor);
         }
     }
 
-    float castRay(int angle) {
+    unsigned char dim_color_with_min_blue(uint8_t baseColor, float distanceFactor) {
+        /* Extract individual color components */
+        int redComponent = (baseColor >> 5) & 0x07; /* Get the top 3 bits */
+        int greenComponent = (baseColor >> 2) & 0x07; /* Get the next 3 bits */
+        int blueComponent = baseColor & 0x03; /* Get the last 2 bits */
+
+        /* Apply the distance factor to each color component */
+        redComponent = (int)(redComponent * distanceFactor);
+        greenComponent = (int)(greenComponent * distanceFactor);
+        blueComponent = (int)(blueComponent * distanceFactor);
+
+        /* Clamp components within their respective bit limits */
+        redComponent = MIN(redComponent, 0x07);
+        greenComponent = MIN(greenComponent, 0x07);
+        blueComponent = MIN(blueComponent, 0x03);
+
+        /* Recombine the color components */
+        return (uint8_t)((redComponent << 5) | (greenComponent << 2) | blueComponent);
+    }
+
+
+    float castRay(int angle, int *hit) {
         /* Ray step size */
         float stepSize = 0.01; /* Small step size for ray marching */
 
@@ -149,11 +220,13 @@ private:
 
             /* Check if ray is out of bounds, one dimension */
             if (mapX < 0 || mapX >= 8 || mapY < 0 || mapY >= 8) {
+                *hit = 0;
                 break;
             }
 
             /* Check if ray hits a wall */
-            if (m_map[mapY * 8 + mapX] == 1) { /* Assuming 1 represents a wall */
+            if (m_map[mapY * 8 + mapX] != 0) { /* Assuming 1 represents a wall */
+                *hit = m_map[mapY * 8 + mapX];
                 break;
             }
 
@@ -206,7 +279,6 @@ int main()
         case GFX_EVENT_KEYBOARD:
             /* keyboard event in e.data */
             t.input(e.data);
-            t.render();
             break;
         case GFX_EVENT_MOUSE:
             /* mouse event in e.data and e.data2 */

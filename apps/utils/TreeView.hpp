@@ -145,8 +145,8 @@ private:
 
             /* Draw a line from the parent to this directory */
             if (depth > 1 && !(entry.attributes & FAT16_FLAG_SUBDIRECTORY)) {
-                gfx_draw_line(lastY+8, depth * 12 - 9, textY+8,  depth * 12 - 9, COLOR_BLACK);
-                gfx_draw_line(textY+4 , depth * 12 - 9, textY+4,  depth * 12-2, COLOR_BLACK);
+                gfx_draw_line( depth * 12 - 9, lastY+8,   depth * 12 - 9,  textY+8, COLOR_BLACK);
+                gfx_draw_line( depth * 12 - 9, textY+4 ,   depth * 12-2,  textY+4, COLOR_BLACK);
             }
 
             if (entry.attributes & FAT16_FLAG_SUBDIRECTORY) {
