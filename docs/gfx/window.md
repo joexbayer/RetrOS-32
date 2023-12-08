@@ -34,6 +34,11 @@ Flags representing certain properties a window can have.
 - `GFX_IS_RESIZABLE`: The window is resizable.
 - `GFX_IS_IMMUATABLE`: The window cannot be modified.
 - `GFX_IS_MOVABLE`: The window can be moved.
+- `GFX_IS_TRANSPARENT`: The window is transparent.
+- `GFX_IS_HIDDEN`: The window is hidden.
+- `GFX_HIDE_HEADER`: The window header is hidden.
+- `GFX_HIDE_BORDER`: The window border is hidden.
+- `GFX_NO_OPTIONS`: The window options are hidden.
 
 ## Structs
 
@@ -48,6 +53,8 @@ Hover and click are used to move the window. For receiving window interactions u
 - `void (*mouseup)(struct window*, int x, int y)`: Triggered when mouse button is released over the window.
 - `void (*resize)(struct window*, int width, int height)`: Resizes the window.
 - `void (*move)(struct window*, int x, int y)`: Moved window to given x, y coordinates
+- `int (*destroy)(struct window*)`: Destroys the window.
+- `int (*maximize)(struct window*)`: Maximizes the window.
 
 ### window_draw_ops
 Struct for window drawing operations.
@@ -58,3 +65,13 @@ Struct for window drawing operations.
 - `void (*text)(struct window*, int x, int y, char* text, color_t color)`: Outputs text.
 - `void (*line)(struct window*, int x1, int y1, int x2, int y2, color_t color)`: Draws a line.
 - `void (*circle)(struct window*, int x, int y, int radius, color_t color)`: Draws a circle.
+- `int (*box)(struct window*, int x, int y, int width, int height, color_t color)`: Draws a box.
+
+#### Examples
+```c
+win->draw->rect(win, 0, 0, 250, 200, COLOR_VGA_GREEN);
+win->draw->textf(win, 10, 10, COLOR_VGA_WHITE, "Hello, %s!", "World");
+win->draw->line(win, 0, 0, 250, 200, COLOR_VGA_RED);
+win->draw->circle(win, 125, 100, 50, COLOR_VGA_BLUE);
+win->draw->box(win, 0, 0, 250, 200, COLOR_VGA_YELLOW);
+```

@@ -165,7 +165,7 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
         vesa_line_vertical(buffer, window->x+window->width-7, window->y+8, window->height-16, COLOR_VGA_LIGHTER_GRAY+2);
     }
 
-    if(!HAS_FLAG(window->flags, GFX_HIDE_HEADER)){
+    if(!HAS_FLAG(window->flags, GFX_HIDE_HEADER) && !HAS_FLAG(window->flags, GFX_NO_OPTIONS)){
 
         /* full screen */
         vesa_inner_box(buffer, window->x+window->width-46+6,  window->y-3, 10, 9, theme->window.background);
@@ -235,7 +235,12 @@ static void gfx_window_resize(struct window* w, int width, int height)
 static void gfx_default_click(struct window* window, int x, int y)
 {
     dbgprintf("[GFX WINDOW] Clicked %s\n", window->name);
+    if(gfx_point_in_rectangle(window->x, window->y, window->x+window->width, window->y+10, x, y)){
+        dbgprintf("[GFX WINDOW] Clicked %s title\n", window->name);
+    }
 
+    if(HAS_FLAG(window->flags, GFX_NO_OPTIONS)) return;
+    
     if (x >= window->x + window->width - 22 + 6 && x <= window->x + window->width - 22 + 6 + 10 && y >= window->y - 3 && y <= window->y - 3 + 9) {
         dbgprintf("[GFX WINDOW] Clicked %s exit button\n", window->name);
         struct gfx_event e = {
@@ -289,9 +294,6 @@ static void gfx_default_click(struct window* window, int x, int y)
         return;
     }
 
-    if(gfx_point_in_rectangle(window->x, window->y, window->x+window->width, window->y+10, x, y)){
-        dbgprintf("[GFX WINDOW] Clicked %s title\n", window->name);
-    }
 }
 
 

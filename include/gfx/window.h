@@ -31,6 +31,7 @@ typedef enum window_flags {
     GFX_IS_HIDDEN = 1 << 4,
     GFX_HIDE_HEADER = 1 << 5,
     GFX_HIDE_BORDER = 1 << 6,
+    GFX_NO_OPTIONS = 1 << 7,
 } window_flag_t;
 
 /* window ops */
@@ -59,7 +60,6 @@ struct window_draw_ops {
 
 struct window {
     struct window* next;
-    //struct window* prev;
 
     char name[GFX_MAX_WINDOW_NAME_SIZE];
     char header[GFX_MAX_WINDOW_NAME_SIZE];
@@ -110,8 +110,6 @@ struct window {
         uint16_t height;
         byte_t state;
     } is_maximized;
-
-
 
     unsigned char flags;
     char changed;

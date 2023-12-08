@@ -19,7 +19,7 @@ struct memory_info {
 
 void __kthread_entry login()
 {   
-    struct window* w = gfx_new_window(275, 100, 0);
+    struct window* w = gfx_new_window(275, 100, GFX_NO_OPTIONS);
     if(w == NULL){
         warningf("Failed to create window for login");
         return;
