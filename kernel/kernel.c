@@ -213,6 +213,7 @@ void kernel(uint32_t magic)
 	start("idled", 0, NULL);
 	start("wind", 0, NULL);
 	start("workd", 0, NULL);
+	start("sysinf", 0, NULL);
 
 	kernel_boot_printf("Deamons initialized.");
 	

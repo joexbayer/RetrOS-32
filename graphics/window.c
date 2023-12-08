@@ -50,7 +50,8 @@ static struct window_draw_ops default_window_draw_ops = {
     .textf = &kernel_gfx_draw_format_text,
     .text = &kernel_gfx_draw_text,
     .line = &kernel_gfx_draw_line,
-    .circle = &kernel_gfx_draw_circle
+    .circle = &kernel_gfx_draw_circle,
+    .box = &kernel_gfx_draw_contoured_box
 };
 
 /**

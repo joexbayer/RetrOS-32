@@ -37,8 +37,7 @@ int gfx_get_window_height();
 int kernel_gfx_set_title(char* title);
 int kernel_gfx_set_header(const char* header);
 
-int gfx_draw_contoured_box(int x, int y, int width, int height, color_t color);
-
+int kernel_gfx_draw_contoured_box(struct window* w, int x, int y, int width, int height, color_t color);
 void kernel_gfx_set_position(struct window* w, int x, int y);
 
 void gfx_inner_box(int x, int y, int w, int h, int fill);

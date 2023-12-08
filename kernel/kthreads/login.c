@@ -37,7 +37,7 @@ void __kthread_entry login()
     w->ops->move(w, (vbe_info->width - w->width) / 2, (vbe_info->height - w->height) / 2);
 
     w->draw->rect(w, 0, 0, 275, 100, 30);
-    gfx_draw_contoured_box(10, 10, 275-20, 100-20, 30+1);
+    w->draw->box(w, 10, 10, 275-20, 100-20, 30+1);
 
     /* draw text */
     w->draw->text(w, 10+10, 10+10,  "Welcome to RetrOS", 0x0);

@@ -60,14 +60,14 @@ int gfx_push_event(struct window* w, struct gfx_event* e)
         drawRect(x, y+height-1, width-1, 1, COLOR_VGA_MEDIUM_DARK_GRAY+5);
         drawRect(x, y+height, width-1, 1, 31);
 */
-int gfx_draw_contoured_box(int x, int y, int width, int height, color_t color) 
+int kernel_gfx_draw_contoured_box(struct window* w, int x, int y, int width, int height, color_t color) 
 {
-	kernel_gfx_draw_rectangle(current_running->gfx_window, x, y, width, height, color);
-	kernel_gfx_draw_rectangle(current_running->gfx_window, x, y, width-1, 1, 31);
-	kernel_gfx_draw_rectangle(current_running->gfx_window, x, y, 1, height, 31);
-	kernel_gfx_draw_rectangle(current_running->gfx_window, x+width-1, y, 1, height, COLOR_VGA_MEDIUM_DARK_GRAY+5);
-	kernel_gfx_draw_rectangle(current_running->gfx_window, x, y+height-1, width-1, 1, COLOR_VGA_MEDIUM_DARK_GRAY+5);
-	kernel_gfx_draw_rectangle(current_running->gfx_window, x, y+height, width-1, 1, 31);
+	kernel_gfx_draw_rectangle(w, x, y, width, height, color);
+	kernel_gfx_draw_rectangle(w, x, y, width-1, 1, 31);
+	kernel_gfx_draw_rectangle(w, x, y, 1, height, 31);
+	kernel_gfx_draw_rectangle(w, x+width-1, y, 1, height, COLOR_VGA_MEDIUM_DARK_GRAY+5);
+	kernel_gfx_draw_rectangle(w, x, y+height-1, width-1, 1, COLOR_VGA_MEDIUM_DARK_GRAY+5);
+	kernel_gfx_draw_rectangle(w, x, y+height, width-1, 1, 31);
 
 	return 0;
 }
@@ -407,6 +407,12 @@ void kernel_gfx_draw_circle(struct window* w, int xc, int yc, int r, unsigned ch
     }
 }
 
+
+int kernel_gfx_draw_section(int x, int y, int width, int height, const char* name)
+{
+
+	return 0;
+}
 
 #define GFX_MAX_FMT 50
 int kernel_gfx_draw_format_text(struct window* w, int x, int y, unsigned char color, char* fmt, ...)
