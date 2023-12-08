@@ -30,4 +30,16 @@ struct gfx_event {
     uint16_t data2;
 };
 
+struct gfx_event_key {
+    uint8_t event;
+    uint16_t data;
+    uint16_t unused;
+};
+
+struct gfx_event_mouse {
+    uint8_t event;
+    uint16_t x;
+    uint16_t y;
+};
+
 #endif /* D05A48F1_86E3_4F50_8DF8_56BA8BEC696B */
