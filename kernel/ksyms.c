@@ -42,6 +42,13 @@ void ksyms_add_symbol(const char* name, uintptr_t addr) {
     }
 }
 
+void ksyms_list(void)
+{
+    for (int i = 0; i < __ksyms.num_symbols; i++) {
+        twritef("%s\n", __ksyms.symtable[i].name);
+    }
+}
+
 /**
  * @brief Checks if there exists a kernel symbol with the given name.
  * 

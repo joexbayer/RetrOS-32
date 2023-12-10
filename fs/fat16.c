@@ -330,6 +330,17 @@ int fat16_add_entry(uint16_t block, char *filename, const char *extension, byte_
     return -1;  /* no empty slot found in the root directory */
 }
 
+int fat16_used_blocks()
+{
+    int used = 0;
+    for(int i = 0; i < 65536; i++){
+        if(fat16_get_fat_entry(i) == 0xFFFF || fat16_get_fat_entry(i) == 0 ) continue;
+        used++;
+    }
+
+    return used;
+}
+
 void fat16_to_upper(char *str) {
     if (!str) return;
 

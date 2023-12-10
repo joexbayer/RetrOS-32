@@ -441,7 +441,11 @@ EXPORT_KSYMBOL(reset);
 
 void help()
 {
-	twritef("Help:\n  run - Run a new thread / process.\n  th - Change theme\n  ths - List themes\n");
+	twritef("Kthreads:\n");
+	kthread_list();
+	twritef("Commands:\n");
+	ksyms_list();
+
 }
 EXPORT_KSYMBOL(help);
 
@@ -549,7 +553,6 @@ void __kthread_entry shell(int argc, char* argv[])
 	twritef("_.--*/ \\*--._\nWelcome ADMIN!\n");
 	twritef("%s\n", welcome);
 	twritef("Memory: %d%s/%d%s\n", used.size, used.unit, total.size, total.unit);
-	help();
 	twriteln("");
 	terminal_commit(current_running->term);
 

@@ -481,6 +481,10 @@ int kernel_gfx_draw_format_text(struct window* w, int x, int y, unsigned char co
 						x_offset++;
 						break;
 					default:
+						kernel_gfx_draw_char(w, x+(x_offset*PIXELS_PER_CHAR), y, *fmt, color);
+						fmt--;
+						x_offset++;
+						written++;
 						break;
 				}
 				fmt++;

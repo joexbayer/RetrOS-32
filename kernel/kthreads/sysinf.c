@@ -6,6 +6,10 @@
 #include <util.h>
 #include <lib/icons.h>
 
+#include <diskdev.h>
+#include <fs/fs.h>
+#include <mbr.h>
+
 #define WIDTH 250
 #define HEIGHT 275
 
@@ -91,9 +95,10 @@ static void sysinf_draw_mem(struct window* w, struct tab* tab)
     char* header = "Map";
     SECTION(w, 24, 48, WIDTH-48, HEIGHT/2-48, header);
 
-    w->draw->textf(w, 30, 45+10, 0,     "Total:        %d MB", map->total / 1024 / 1024);
-    w->draw->textf(w, 30, 45+20, 0,     "Kernel:       %d MB", map->kernel.total / 1024 / 1024);
-    w->draw->textf(w, 30, 45+30, 0,     "Virtual:      %d MB", map->virtual.total / 1024 / 1024);
+    w->draw->textf(w, 30, 45+40, 0,     "Total:        %d MB", map->total / 1024 / 1024);
+    w->draw->textf(w, 30, 45+10, 0,     "Kernel:        %d MB", map->kernel.total / 1024 / 1024);
+    w->draw->textf(w, 30, 45+20, 0,     "Virtual:       %d MB", map->virtual.total / 1024 / 1024);
+    w->draw->textf(w, 30, 45+30, 0,     "Permanent:     %d MB", map->permanent.total / 1024 / 1024);
 
     char* kernel = "Usage";
     SECTION(w, 24, HEIGHT/2+10, WIDTH-48, HEIGHT/2-48, kernel);
@@ -105,16 +110,66 @@ static void sysinf_draw_mem(struct window* w, struct tab* tab)
 
     w->draw->box(w, 30, HEIGHT/2+10+10, 100, 10, 0);
     w->draw->rect(w, 31, HEIGHT/2+10+11, kernel_usage, 8, COLOR_VGA_GREEN);
-    w->draw->textf(w, 30, HEIGHT/2+10+10+12, 0, "Kernel: %d%%", kernel_usage);
+    w->draw->textf(w, 30, HEIGHT/2+10+10+12, 0, "Kernel: %d%", kernel_usage);
 
     w->draw->box(w, 30, HEIGHT/2+10+10+10+10, 100, 10, 0);
     w->draw->rect(w, 31, HEIGHT/2+10+10+10+11, virtual_usage, 8, COLOR_VGA_GREEN);
-    w->draw->textf(w, 30, HEIGHT/2+10+10+10+10+12, 0, "Virtual: %d%%", virtual_usage);
+    w->draw->textf(w, 30, HEIGHT/2+10+10+10+10+12, 0, "Virtual: %d%", virtual_usage);
 
     w->draw->rect(w, 30, HEIGHT/2+10+10+10+10+10+10, 100, 10, 0);
     w->draw->rect(w, 31, HEIGHT/2+10+10+10+10+10+11, permanent_usage, 8, COLOR_VGA_GREEN);
-    w->draw->textf(w, 30, HEIGHT/2+10+10+10+10+10+10+12, 0, "Permanent: %d%%", permanent_usage);
+    w->draw->textf(w, 30, HEIGHT/2+10+10+10+10+10+10+12, 0, "Permanent: %d%", permanent_usage);
+
+    gfx_put_icon32(computer_icon, 175, HEIGHT/2+10+10+10+5);
 }
+
+static void sysinf_draw_net(struct window* w, struct tab* tab)
+{
+
+}
+
+static void sysinf_draw_disk(struct window* w, struct tab* tab)
+{
+    /* Disk */
+    /* MBR */
+    /* Partitions */
+    /* Filesystems */
+
+    if(!disk_attached()){
+        w->draw->text(w, 24, 48, "No disk attached", 0);
+        return;
+    }
+
+    SECTION(w, 24, 48, WIDTH-48, HEIGHT/3-48, "Disk");
+
+    w->draw->textf(w, 30, 45+10, 0,     "Name:    %s", disk_name());
+    w->draw->textf(w, 30, 45+20, 0,     "Size:    %d MB", disk_size() / 1024 / 1024);
+
+
+    SECTION(w, 24, HEIGHT/3+10, WIDTH-48, HEIGHT/3-48, "MBR");
+
+    struct mbr* mbr = mbr_get();
+    for(int i = 0; i < 4; i++){
+        if(mbr->part[i].type == 0) continue;        
+        w->draw->textf(w, 30, HEIGHT/3+10+10, 0,     "%s", mbr_partition_type_string(mbr->part[i].type));
+        w->draw->textf(w, 30, HEIGHT/3+10+20, 0,     "LBA %d to %d", mbr->part[i].lba_start, mbr->part[i].lba_start + mbr->part[i].num_sectors);
+    }
+
+    SECTION(w, 24, (HEIGHT/3+10) + (HEIGHT/3-48)+10, WIDTH-48, 100, "Filesystem");
+
+    int usage = (int)(((float)fat16_used_blocks() / (float)65536)*100);
+
+    struct filesystem* fs = fs_get();
+
+    w->draw->textf(w, 30, (HEIGHT/3+10) + (HEIGHT/3-48)+10+10, 0, "Name:    %s", fs->name);
+    w->draw->textf(w, 30, (HEIGHT/3+10) + (HEIGHT/3-48)+10+20, 0, "Usage:   %d/%d blocks", fat16_used_blocks(), 65536);
+
+    w->draw->box(w, 30, (HEIGHT/3+10) + (HEIGHT/3-48)+10+30, 100, 10, 0);
+    w->draw->rect(w, 31, (HEIGHT/3+10) + (HEIGHT/3-48)+10+31, usage, 8, COLOR_VGA_GREEN);
+    w->draw->textf(w, 30+109, (HEIGHT/3+10) + (HEIGHT/3-48)+10+31, 0, "%d%", usage);
+
+}
+
 
 static void sysinf_draw_tab(struct window* w, struct tab* tab)
 {   
@@ -129,8 +184,10 @@ static void sysinf_draw_tab(struct window* w, struct tab* tab)
             sysinf_draw_mem(w, tab);
             break;
         case TAB_NET:
+            sysinf_draw_net(w, tab);
             break;
         case TAB_DISK:
+            sysinf_draw_disk(w, tab);
             break;
         case TAB_DISPLAY:
             break;
@@ -168,7 +225,6 @@ static void sysinf_click_event(struct window* w, int x, int y)
 
 void __kthread_entry sysinf(int argc, char* argv[])
 {   
-    
     struct window* w = gfx_new_window(WIDTH, HEIGHT, 0);
     if(w == NULL){
         warningf("Failed to create window for sysinf");
