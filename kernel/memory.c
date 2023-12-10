@@ -159,7 +159,6 @@ error_t get_mem_info(struct mem_info* info)
 	};
 
 	*info = inf;
-
 	return 0;
 }
 

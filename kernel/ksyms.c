@@ -4,10 +4,14 @@
 #include <serial.h>
 #include <terminal.h>
 #include <assert.h>
+#include <fs/fs.h>
+#include <math.h>
 
 #define KSYMS_MAX_SYMBOLS 100
 #define KSYMS_MAX_DEPTH 100
 #define KSYMS_MAX_SYMBOL_LENGTH 25
+
+#define MAX_SYMBOLS 750
 
 /* kernel symbol table structure. */
 static struct kernel_symbols {
@@ -20,6 +24,94 @@ static struct kernel_symbols {
 } __ksyms = {
     .num_symbols = 0
 };
+
+static struct symbols {
+    struct entry {
+        char name[50];
+        uintptr_t addr;
+    } symtable[MAX_SYMBOLS];
+    uintptr_t min;
+    uintptr_t max;
+    int num_symbols;
+};
+static struct symbols* __symbols;
+
+static int __init_symbols(void)
+{
+    __symbols = (struct symbols*) kalloc(sizeof(struct symbols));
+    if(__symbols == NULL) return -1;
+
+    __symbols->num_symbols = 0;
+    __symbols->min = (uintptr_t)-1;
+    __symbols->max = 0;
+    return 0;
+}
+
+static int __load_symbols(void)
+{
+    struct filesystem* fs = fs_get();
+    if(fs == NULL) return -1;
+
+    struct file* file = fs->ops->open(fs, "/symbols.map", FS_FILE_FLAG_READ);
+    if(file == NULL) return -2;
+
+    char* buf = (char*) kalloc(MAX_SYMBOLS*50);
+    if(buf == NULL) return -3;
+
+    int read = fs->ops->read(fs, file, buf, MAX_SYMBOLS*50);
+    if(read < 0){
+        kfree(buf);
+        return -4;
+    }
+
+    /* 000xxxxx symbol\n */
+    int i = 0;
+    int j = 0;
+    while(i < read){
+        if(buf[i] == ' '){
+            __symbols->symtable[__symbols->num_symbols].addr = (uintptr_t) htoi(&buf[j]);
+            __symbols->symtable[__symbols->num_symbols].name[0] = '\0';
+
+            if(__symbols->symtable[__symbols->num_symbols].addr < __symbols->min) __symbols->min = __symbols->symtable[__symbols->num_symbols].addr;
+            if(__symbols->symtable[__symbols->num_symbols].addr > __symbols->max) __symbols->max = __symbols->symtable[__symbols->num_symbols].addr;
+
+            j = i + 1;
+        } else if(buf[i] == '\n'){
+            memcpy(__symbols->symtable[__symbols->num_symbols].name, &buf[j], i - j);
+            __symbols->symtable[__symbols->num_symbols].name[i - j] = '\0';
+            __symbols->num_symbols++;
+            if(__symbols->num_symbols >= MAX_SYMBOLS) break;
+            j = i + 1;
+        }
+        i++;
+    }
+    dbgprintf("Loaded %d symbols\n", __symbols->num_symbols);
+
+    kfree(buf);
+    return 0;
+}
+
+int ksyms_init(void)
+{
+    if(__init_symbols() < 0) return -1;
+
+    switch(__load_symbols()){
+        case -1:
+            dbgprintf("Error: no filesystem available\n");
+            return -1;
+        case -2:
+            dbgprintf("Error: could not open symbols.map\n");
+            return -2;
+        case -3:
+            dbgprintf("Error: could not allocate memory for symbols.map\n");
+            return -3;
+        case -4:
+            dbgprintf("Error: could not read symbols.map\n");
+            return -4;
+    }
+
+    return 0;
+}
 
 /**
  * @brief Adds a symbol to the kernel symbol table.
@@ -69,55 +161,45 @@ uintptr_t ksyms_resolve_symbol(const char* name)
     return NULL;
 }
 
-void __backtrace_find_symbol(uintptr_t* addr)
-{
-        int best_index = -1;
-        uintptr_t best_diff = (uintptr_t)-1; // Max possible value for uintptr_t
-        for (int i = 0; i < __ksyms.num_symbols; i++) {
-           if (__ksyms.symtable[i].addr <= addr) {
-                uintptr_t diff = (uint32_t)addr - (uint32_t)__ksyms.symtable[i].addr;
-                if (diff < best_diff) {
-                    best_diff = diff;
-                    best_index = i;
-                }
-            }
+#define MAX_BACKTRACE_DEPTH 100
 
-        }
-
-        if (best_index != -1) {
-            dbgprintf("%s: 0x%x - 0x%x = 0x%x\n", 
-                      __ksyms.symtable[best_index].name, 
-                      addr, 
-                      __ksyms.symtable[best_index].addr, 
-                      best_diff);
-            twritef("%s\n", __ksyms.symtable[best_index].name);
-        } else {
-            //dbgprintf("Unknown symbol: 0x%lx\n", addr);
-        }
-}
-
-void __backtrace_from(uintptr_t* frame_ptr, uintptr_t* return_addr)
-{
-    int depth = 0;
-
-    while (frame_ptr && depth < KSYMS_MAX_DEPTH) {
-        if(return_addr == 0) break;
-        if(return_addr > 0x100000) break; // TODO: fix this (it's a hack to prevent backtracing into user space)
-
-       __backtrace_find_symbol(return_addr);
+void __backtrace_from(uintptr_t* ebp){
+    uintptr_t stack[MAX_BACKTRACE_DEPTH] = {0};
+     int depth = 0;
+    while (depth < MAX_BACKTRACE_DEPTH && ebp) {
+        uintptr_t ret_addr = *(ebp + 1);
+        stack[depth++] = ret_addr;
         
-        frame_ptr = (uintptr_t*) (*frame_ptr);
-        if (frame_ptr) {
-            return_addr = *(frame_ptr + 1);
+        if (ret_addr == 0) break;
+        if (ret_addr > 0x100000) break; // TODO: fix this (it's a hack to prevent backtracing into user space)
+        ebp = (uintptr_t *)*ebp;
+    }
+
+    for (int i = 0; i < depth; i++) {
+        uintptr_t addr = stack[i];
+        
+        // Find the closest symbol
+        int found = 0;
+        for (int j = 0; j < __symbols->num_symbols; j++) {
+            if (__symbols->symtable[j].addr <= addr && (j == __symbols->num_symbols - 1 || __symbols->symtable[j + 1].addr > addr)) {
+                dbgprintf("%s: 0x%x - 0x%x = 0x%x\n", 
+                    __symbols->symtable[j].name, 
+                    addr, 
+                    __symbols->symtable[j].addr, 
+                    addr - __symbols->symtable[j].addr);
+                found = 1;
+                break;
+            }
         }
-        depth++;
+
+        if (!found) {
+            dbgprintf("0x%x\n", addr);
+        }
     }
 }
 
-void backtrace(void) {
-    uintptr_t* frame_ptr = __builtin_frame_address(0);
-    uintptr_t return_addr = *(frame_ptr + 1);
-    __backtrace_from(frame_ptr, return_addr);
+void backtrace() {
+    uintptr_t *ebp  = __builtin_frame_address(0);
+    __backtrace_from(ebp);
 }
 EXPORT_KSYMBOL(backtrace);
-

@@ -2,7 +2,7 @@ CCFLAGS=-m32 -std=gnu11 -O1 -D__KERNEL \
 		-Wall -Wextra -Wpedantic -Wstrict-aliasing \
 		-Wno-pointer-arith -Wno-unused-parameter -nostdlib \
 		-nostdinc -ffreestanding -fno-pie -fno-stack-protector \
-		-Wno-conversion -I ./include/
+		-Wno-conversion -fno-omit-frame-pointer -I ./include/
 ASFLAGS=
 LDFLAGS= 
 MAKEFLAGS += --no-print-directory
@@ -67,7 +67,7 @@ LIBOBJ = bin/printf.o bin/syscall.o bin/graphics.o bin/netlib.o
 
 # ---------------- Makefile rules ----------------
 
-.PHONY: all new image clean boot net kernel grub time tests build apps bin/mkfsv2
+.PHONY: all new image clean boot net kernel grub time tests build apps bin/mkfsv2 symbols
 all: iso
 	$(TIME-END)
 
@@ -79,6 +79,12 @@ bootblock: $(BOOTOBJ)
 
 multiboot_kernel: bin/multiboot.o $(KERNELOBJ)
 	@$(LD) -o bin/kernelout $^ $(LDFLAGS) -T ./boot/multiboot.ld
+
+# Idea taken from SerenityOS
+symbols: bin/multiboot.o $(KERNELOBJ)
+	@$(LD) -o bin/symbols $^ $(LDFLAGS) -T ./kernel/linkersym.ld
+	@nm -C -n bin/symbols | grep ' [Tt] ' | sed 's/ [Tt] / /' > rootfs/symbols.map
+
 
 kernel: bin/kcrt0.o $(KERNELOBJ)
 	@$(LD) -o bin/kernelout $^ $(LDFLAGS) -T ./kernel/linker.ld
@@ -153,7 +159,7 @@ create_fs:
 
 bare: compile create_fs
 
-img: grub_fix tools compile tests create_fs sync
+img: grub_fix tools compile symbols tests create_fs sync
 	@echo "Finished creating the image."
 	$(TIME-END)
 

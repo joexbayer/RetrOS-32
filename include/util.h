@@ -45,6 +45,7 @@ void hexdump(const void *data, int size);
 int atoi(char s[]);
 int itoa(int n, char s[]); 
 int itohex(uint32_t n, char s[]);
+int htoi(char s[]);
 
 int isdigit(char c);
 int isspace(char c);

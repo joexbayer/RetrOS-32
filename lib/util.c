@@ -313,10 +313,54 @@ inline void reverse(char s[])
 	}
 }
 
+/* tolower: convert c to lower case; ASCII only */
+int tolower(int c) {
+    if (c >= 'A' && c <= 'Z') {
+        return c + 'a' - 'A';
+    } else {
+        return c;
+    }
+}
+
+/* isxdigit: check if c is a hexadecimal digit */
+int isxdigit(int c) {
+    if ((c >= '0' && c <= '9') ||
+        (c >= 'A' && c <= 'F') ||
+        (c >= 'a' && c <= 'f')) {
+        return 1; // true
+    } else {
+        return 0; // false
+    }
+}
+
+
+inline int htoi(char s[]) {
+    int i, n;
+
+    /* Skip white spaces and optional '0x' or '0X' prefix */
+    for (i = 0; s[i] == ' ' || s[i] == '0'; i++) {
+        if (s[i] == '0' && (s[i + 1] == 'x' || s[i + 1] == 'X')) {
+            i += 2;
+            break;
+        }
+    }
+
+    for (n = 0; isxdigit(s[i]); i++) {
+        if (isdigit(s[i])) {
+            n = 16 * n + (s[i] - '0');
+        } else {
+            n = 16 * n + (tolower(s[i]) - 'a' + 10);
+        }
+    }
+
+    return n;
+}
+
+
 inline int atoi(char s[])
 {
 	int i, n, sign;
-	for(i = 0; s[i] == ' '; i++) /* Skip white spaces */
+	for(i = 0; s[i] == ' ' || s[i] == '0'; i++) /* Skip white spaces */
 		; 
 	sign = ((char)s[i] == '-') ? -1 : 1;
 	if(s[i] == '-' || s[i] == '+')

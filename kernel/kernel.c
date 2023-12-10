@@ -206,6 +206,7 @@ void kernel(uint32_t magic)
 
 	dbgprintf("[KERNEL] Enabled paging!\n");
 	
+	ksyms_init();
 	vesa_init();
 
 	kernel_boot_printf("Graphics initialized.");

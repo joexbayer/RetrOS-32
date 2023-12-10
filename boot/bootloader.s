@@ -419,7 +419,7 @@ set_640x480:
 
 set_800x600:
     mov $0x4F02, %ax	
-    mov $0x4103, %bx /* 103 = 800x600 */
+    mov $0x4105, %bx /* 103 = 800x600 */
 
 set_resolution:
     int $0x10 

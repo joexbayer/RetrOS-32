@@ -16,7 +16,8 @@ idt_flush:
 	.global isr\index
 	isr\index:
 		cli
-
+    pushl %ebp
+    movl %esp, %ebp
 		push $0
 		push $\index
 		jmp isr_entry
@@ -26,7 +27,8 @@ idt_flush:
 	.global isr\index
 	isr\index:
 		cli
-
+    pushl %ebp
+    movl %esp, %ebp
 		push $0
 		push $\index
 		jmp isr_entry
@@ -97,6 +99,9 @@ isr_entry:
 
   popal
   add $8, %esp
+
+  movl %ebp, %esp
+  popl %ebp
 
   iret
 

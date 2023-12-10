@@ -92,15 +92,14 @@ void print_page_fault_info(unsigned long cr2) {
 
 void page_fault_interrupt(unsigned long cr2, unsigned long err)
 {
-	/*
     uint32_t *ebp = (uint32_t*) __builtin_frame_address(0);
     uint32_t return_address_for_iret = *(ebp + 13); // Offset to eip
-    uint32_t original_ebp = *(ebp + 8); // Offset to original ebp
-
+    uint32_t original_ebp = *(ebp + 9);
+	/*
     dbgprintf("Return address for iret: 0x%x\n", return_address_for_iret);
     dbgprintf("Original ebp: 0x%x\n", original_ebp);
-
-    __backtrace_from((uintptr_t*)original_ebp, (uintptr_t)return_address_for_iret);*/
+	*/
+    __backtrace_from((uintptr_t*)ebp);
 
 	interrupt_counter[14]++;
 	ENTER_CRITICAL();

@@ -505,6 +505,5 @@ static int fat16_list(struct filesystem* fs, const char* path, char* buf, int si
     }
 
     twritef("%d directory entries.\n", entries);
-
     return 0;
 }

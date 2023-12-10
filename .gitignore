@@ -67,6 +67,8 @@ rootfs/bin/*
 *.idb
 *.pdb
 
+bin/symbols
+
 .depend
 
 # Kernel Module Compile Results
