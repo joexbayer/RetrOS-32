@@ -273,6 +273,7 @@ IBM Thinkpad a21p
 - [x] Custom VM to run bytecode.
 - [x] Editor with Syntax Highlighting
 - [x] Calculator
+- [x] 3D Game
 - [x] Userspace threads (shared virtual memory)
 - [x] Tools
   - [x] Build
