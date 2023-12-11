@@ -165,7 +165,7 @@ uintptr_t ksyms_resolve_symbol(const char* name)
 
 void __backtrace_from(uintptr_t* ebp){
     uintptr_t stack[MAX_BACKTRACE_DEPTH] = {0};
-     int depth = 0;
+    int depth = 0;
     while (depth < MAX_BACKTRACE_DEPTH && ebp) {
         uintptr_t ret_addr = *(ebp + 1);
         stack[depth++] = ret_addr;
@@ -182,6 +182,7 @@ void __backtrace_from(uintptr_t* ebp){
         int found = 0;
         for (int j = 0; j < __symbols->num_symbols; j++) {
             if (__symbols->symtable[j].addr <= addr && (j == __symbols->num_symbols - 1 || __symbols->symtable[j + 1].addr > addr)) {
+                
                 dbgprintf("%s: 0x%x - 0x%x = 0x%x\n", 
                     __symbols->symtable[j].name, 
                     addr, 

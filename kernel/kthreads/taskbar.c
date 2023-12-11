@@ -41,6 +41,7 @@ static void __callback taskbar_bg_retro();
 static void __callback taskbar_bg_calc();
 static void __callback taskbar_bg_graph();
 static void __callback taskbar_bg_default_color();
+static void __callback taskbar_sysinf();
 
 /* prototype to taskbar thread */
 static void __kthread_entry taskbar(void);
@@ -83,6 +84,11 @@ struct taskbar_options {
                     .icon = finder_16,
                     .name = "Finder",
                     .callback = &taskbar_finder
+                },
+                {
+                    .icon = bin_16,
+                    .name = "Sysinf",
+                    .callback = &taskbar_sysinf
                 },
                 {
                     .icon = editor_16,
@@ -434,4 +440,11 @@ static void __callback taskbar_bg_calc()
     int pid = pcb_create_process("/bin/calc.o", 0, NULL, 0);
     if(pid < 0)
         dbgprintf("%s does not exist\n", "calc.o");
+}
+
+static void __callback taskbar_sysinf()
+{
+    int pid = pcb_create_process("/bin/sysinf.o", 0, NULL, 0);
+    if(pid < 0)
+        dbgprintf("%s does not exist\n", "sysinf.o");
 }

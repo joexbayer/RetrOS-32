@@ -325,6 +325,10 @@ void echo(int argc, char* argv[])
 	}
 
 	twritef("%s\n", argv[1]);
+
+	int* ptr = (int*) 0x1000000;
+	*ptr = 0xdeadbeef;
+
 }
 EXPORT_KSYMBOL(echo);
 
