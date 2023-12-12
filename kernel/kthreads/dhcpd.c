@@ -107,6 +107,7 @@ static int __dhcp_send_discovery(struct sock* socket)
     struct dhcp dhcp_disc;
 
     DHCP_DISCOVERY((&dhcp_disc));
+    memcpy(dhcp_disc.dhcp_chaddr, current_netdev.mac, 6);
 
     optoff += __dhcp_add_option(&dhcp_disc, optoff,  53, 1, (uint8_t *) &opt1);
     optoff += __dhcp_add_option(&dhcp_disc, optoff, 255, 0, (uint8_t *) &opt0);
@@ -161,6 +162,8 @@ static void __dhcp_handle_offer(struct dhcp* offer)
     dhcp_state.ip = my_ip;
     dhcp_state.gateway = server_ip;
     dhcp_state.state = DHCP_SUCCESS;
+
+    net_configure_iface("eth0", my_ip, 0xFF0000, server_ip);
 
     dbgprintf("[DHCP] Recieved IP.\n");
 }

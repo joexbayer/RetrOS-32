@@ -38,6 +38,8 @@ static char* rx_buf[RX_SIZE];
 
 static int interrupts = 0;
 
+struct netdev e1000_netdev;
+
 /**
  * @brief Clears the transmit buffers for the e1000
  */
@@ -172,7 +174,6 @@ drop:
  */
 int e1000_transmit(char* buffer, uint32_t size)
 {
-
 	if(size >= PACKET_SIZE){
 		dbgprintf("[e1000] Size %d is too large!\n", size);
 		return -1;
@@ -201,7 +202,7 @@ int e1000_transmit(char* buffer, uint32_t size)
 void __int_handler e1000_callback()
 {
 	interrupts++;
-	net_incoming_packet_handler();
+	net_incoming_packet(&e1000_netdev);
 
 	E1000_DEVICE_GET(E1000_ICR);
 }
@@ -233,9 +234,24 @@ void e1000_attach(struct pci_device* dev)
 	E1000_DEVICE_SET(E1000_RADV) = 0;
 	E1000_DEVICE_SET(E1000_IMS) = (1 << 7);
 
+	e1000_netdev = (struct netdev) {
+		.name = "E1000",
+		.driver = *dev,
+		.read = &e1000_receive,
+		.write = &e1000_transmit,
+		.sent = 0,
+		.received = 0,
+		.dropped = 0
+	};
+	memcpy(e1000_netdev.mac, &mac, 6);
+
+	/* very ugly temporary fix */
+	current_netdev = e1000_netdev;
+
+	net_register_netdev("eth0", &e1000_netdev);
 
 	/* Attach as current Netdevice. */
-	netdev_attach_driver(dev, &e1000_receive, &e1000_transmit, "Intel E1000", (uint8_t*)&mac);
+	//netdev_attach_driver(dev, &e1000_receive, &e1000_transmit, "Intel E1000", (uint8_t*)&mac);
 
 	dbgprintf("[E1000] Network card Intel E1000 found and attached!.\n");
 	dbgprintf("[E1000] Data size: %d\n", TX_SIZE*sizeof(void*) + RX_SIZE*sizeof(void*));

@@ -8,6 +8,7 @@ struct sk_buff;
 #include <net/utils.h>
 #include <util.h>
 #include <net/ethernet.h>
+#include <net/interface.h>
 
 struct sk_buff {
 
@@ -32,6 +33,8 @@ struct sk_buff {
     uint8_t* tail;
     uint8_t* data;
     uint8_t* end;
+
+    struct interface* interface;
 };
 
 struct skb_queue;

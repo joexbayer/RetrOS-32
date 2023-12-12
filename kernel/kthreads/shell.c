@@ -85,6 +85,12 @@ void reset_shell()
 	shell_column += 1;
 }
 
+void ifconfig()
+{
+	net_list_ifaces();
+}
+EXPORT_KSYMBOL(ifconfig);
+
 /* Shell commands */
 void ps()
 {

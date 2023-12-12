@@ -125,6 +125,7 @@ void kernel(uint32_t magic)
 	kernel_boot_printf("Peripherals initialized.");
 	init_pcbs();
 	init_pci();
+	net_init_loopback();
 	kernel_boot_printf("PCI initialized.");
 	init_worker();
 

@@ -2,6 +2,7 @@
 #define __NET_H
 
 #include <net/skb.h>
+#include <net/interface.h>
 #include <net/socket.h>
 
 struct net_info {
@@ -12,7 +13,14 @@ struct net_info {
 error_t net_get_info(struct net_info* info);
 
 void net_incoming_packet_handler();
+void __callback net_incoming_packet(struct netdev* dev);
+int net_register_interface(struct net_interface* interface);
 int net_send_skb(struct sk_buff* skb);
+
+int net_configure_iface(char* dev, uint32_t ip, uint32_t netmask, uint32_t gateway);
+
+/* defined in loopback.c */
+int net_init_loopback();
 
 error_t kernel_bind(struct sock* socket, const struct sockaddr *address, socklen_t address_len);
 error_t kernel_accept(struct sock* socket, struct sockaddr *address, socklen_t *address_len);
