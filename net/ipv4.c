@@ -10,6 +10,7 @@
  */
 
 #include <net/ipv4.h>
+#include <net/net.h>
 #include <net/utils.h>
 #include <terminal.h>
 #include <util.h>
@@ -19,6 +20,7 @@
 
 #include <net/dhcp.h>
 #include <serial.h>
+#include <net/interface.h>
 
 /**
  * @brief Creates and attaches IP header to SKB
@@ -48,8 +50,16 @@ int net_ipv4_add_header(struct sk_buff* skb, uint32_t ip, uint8_t proto, uint32_
 
     skb->proto = IP;
 
-    /* Add ethernet header */
+    /* Setup interface */
     uint32_t next_hop = route(ip);
+    struct net_interface* iface = net_get_iface(next_hop);
+    if(NULL == iface){
+        dbgprintf("No interface found for %d\n", next_hop);
+        return -1;
+    }
+    skb->interface = iface;
+
+    /* Add ethernet header */
 	int ret = net_ethernet_add_header(skb, next_hop);
 	if(ret < 0){
 		dbgprintf("Error adding ethernet header\n");
@@ -91,8 +101,8 @@ int net_ipv4_parse(struct sk_buff* skb)
     IP_NTOHL(hdr);
     skb->data = skb->data+hdr_len;
 
-    if(BROADCAST_IP != ntohl(skb->hdr.ip->daddr) && ntohl(skb->hdr.ip->daddr) != (uint32_t)dhcp_get_ip()){
-        dbgprintf("IP mismatch: %d %d\n", skb->hdr.ip->daddr, dhcp_get_ip());
+    if(BROADCAST_IP != ntohl(skb->hdr.ip->daddr) && ntohl(skb->hdr.ip->daddr) != (uint32_t)skb->interface->ip){
+        dbgprintf("IP mismatch: %d %d\n", skb->hdr.ip->daddr, skb->interface->ip);
         return -1; /* Currently only accept broadcast packets. */
     }
 
@@ -100,7 +110,7 @@ int net_ipv4_parse(struct sk_buff* skb)
     int arp = net_arp_find_entry(hdr->saddr, (uint8_t*)&mac);
     if(arp < 0){
         struct arp_content content = {
-            .sip = hdr->saddr
+            .sip = ntohl(hdr->saddr)
         };
 
         struct ethernet_header* ehdr= (struct ethernet_header*) skb->head;

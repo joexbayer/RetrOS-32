@@ -19,6 +19,16 @@
 
 static struct arp_entry arp_entry_table[MAX_ARP_ENTRIES];
 
+static void arp_list()
+{
+	dbgprintf("ARP Table:\n");
+	for (int i = 0; i < MAX_ARP_ENTRIES; i++){
+		if(arp_entry_table[i].sip != 0){
+			dbgprintf("IP: %i MAC: %x %x %x %x %x %x\n", arp_entry_table[i].sip, arp_entry_table[i].smac[0], arp_entry_table[i].smac[1], arp_entry_table[i].smac[2], arp_entry_table[i].smac[3], arp_entry_table[i].smac[4], arp_entry_table[i].smac[5]);
+		}
+	}
+}
+
 void init_arp()
 {
 	for (int i = 0; i < MAX_ARP_ENTRIES; i++)
@@ -46,8 +56,8 @@ int net_arp_add_entry(struct arp_content* arp)
 
 	for (int i = 0; i < MAX_ARP_ENTRIES; i++){
 		if(arp_entry_table[i].sip == 0){
-			memcpy((uint8_t*)&arp_entry_table[i].smac, (uint8_t*)&arp->smac, 6);
 			arp_entry_table[i].sip = arp->sip;
+			memcpy(&arp_entry_table[i].smac, &arp->smac, 6);
 			dbgprintf("Added APR entry.\n");
 			return 1;
 		}
@@ -66,6 +76,7 @@ int net_arp_add_entry(struct arp_content* arp)
  */
 int net_arp_find_entry(uint32_t ip, uint8_t* mac)
 {
+	arp_list();
 	for (int i = 0; i < MAX_ARP_ENTRIES; i++){
 		if(arp_entry_table[i].sip == ip){
 			memcpy(mac, arp_entry_table[i].smac, 6);
@@ -171,16 +182,15 @@ int8_t arp_parse(struct sk_buff* skb)
 	}
 
 	struct arp_content* arp_content = (struct arp_content*) skb->data;
+	net_arp_add_entry(arp_content);
 	ARPC_NTOHL(arp_content);
 
 	switch (a_hdr->opcode){
 	case ARP_REQUEST:
 
-		net_arp_add_entry(arp_content);
 		net_arp_respond(arp_content);
 		break;
 	case ARP_REPLY:
-		net_arp_add_entry(arp_content);
 		/* Signal ARP reply was recieved, check for waiting SKBs*/
 		break;
 	

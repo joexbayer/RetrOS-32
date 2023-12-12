@@ -11,7 +11,6 @@ struct sk_buff;
 #include <net/interface.h>
 
 struct sk_buff {
-
     struct sk_buff* next;
     struct netdev* netdevice;
 
@@ -34,7 +33,7 @@ struct sk_buff {
     uint8_t* data;
     uint8_t* end;
 
-    struct interface* interface;
+    struct net_interface* interface;
 };
 
 struct skb_queue;

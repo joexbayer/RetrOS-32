@@ -48,7 +48,6 @@ int net_udp_send(char* data, uint32_t sip, uint32_t dip, uint16_t sport, uint16_
 	skb->data += sizeof(struct udp_header) + length;
 	
 	dbgprintf("Sending UDP packet.\n");
-
 	net_send_skb(skb);
 	return 0;
 }

@@ -1,4 +1,5 @@
 #include <net/interface.h>
+#include <net/net.h>
 #include <kutils.h>
 #include <errors.h>
 #include <memory.h>
@@ -69,6 +70,7 @@ static int __iface_send(struct net_interface* interface, void* buffer, uint32_t 
         return -1;
     }
 
+    interface->device->sent++;
     return interface->device->write(buffer, size);
 }
 
@@ -78,6 +80,7 @@ static int __iface_recieve(struct net_interface* interface, void* buffer, uint32
         return -1;
     }
 
+    interface->device->received++;
     return interface->device->read(buffer, size);
 }
 

@@ -8,7 +8,6 @@
  * @copyright Copyright (c) 2022
  * 
  */
-
 #include <kutils.h>
 #include <scheduler.h>
 #include <serial.h>
@@ -28,6 +27,7 @@
 #include <net/socket.h>
 #include <net/net.h>
 #include <net/dhcp.h>
+#include <net/arp.h>
 
 #define MAX_PACKET_SIZE 0x600
 
@@ -58,7 +58,7 @@ static struct networkmanager {
     struct network_manager_ops ops;
 
     struct net_interface* ifs[4];
-    uint8_t if_count; 
+    uint8_t if_count;
 
 } netd = {
     .ops = {
@@ -90,18 +90,56 @@ static struct net_interface* __net_interface(struct netdev* dev)
     return NULL;
 }
 
+static void __net_config_loopback()
+{
+    struct net_interface* interface = __net_find_interface("lo0");
+    if(interface == NULL) return;
+
+    interface->ip = 0x7f000001;
+    interface->netmask = 0xff000000;
+    interface->gateway = 0x7f000001;
+
+    struct arp_entry entry = {
+        .sip = ntohl(LOOPBACK_IP), /* Store IP in host byte order */
+        .smac = {0x69, 0x00, 0x00, 0x00, 0x00, 0x00}
+    };
+    net_arp_add_entry(&entry);
+}
+
+static void __net_transmit_skb(struct sk_buff* skb)
+{
+    if(skb == NULL || skb->interface == NULL) return;
+    
+    dbgprintf("Transmitting packet\n");
+
+    int ret = skb->interface->ops->send(skb->interface, skb->head, skb->len);
+    if(ret < 0) return;    
+   
+    netd.packets++;
+    netd.stats.sent++;
+}
+
+static int net_drop_packet(struct sk_buff* skb)
+{
+    current_netdev.dropped++;
+    netd.stats.dropped++;
+    skb_free(skb);
+    return 0;
+}
+
+/* Exposed functions */
+
 int net_configure_iface(char* dev, uint32_t ip, uint32_t netmask, uint32_t gateway)
 {
-    struct net_interface* interface = __net_find_interface("eth0");
+    struct net_interface* interface = __net_find_interface(dev);
     if(interface == NULL) return -1;
 
-    interface->ip = ip;
+    interface->ip = ntohl(ip);
     interface->netmask = 0xffffff00;
-    interface->gateway = gateway;
+    interface->gateway = ntohl(gateway);
     interface->ops->configure(interface, "eth0");
 
     return 0;
-
 }
 
 void __callback net_incoming_packet(struct netdev* dev)
@@ -120,10 +158,56 @@ void __callback net_incoming_packet(struct netdev* dev)
     }
     skb->interface = interface;
 
+    dbgprintf("Adding SKB to RX queue from %s\n", interface->name);
+
     netd.skb_rx_queue->ops->add(netd.skb_rx_queue, skb);
     netd.packets++;
     netd.stats.recvd++;
-    dbgprintf("New packet incoming...\n");
+
+}
+
+struct net_interface* net_get_iface(uint32_t ip)
+{
+    struct net_interface* best_match = NULL;
+    int longest_prefix_length = -1;
+
+    for (int i = 0; i < netd.if_count; i++) {
+        int prefix_length = 0;
+        uint32_t mask = 0x80000000; /* Start with the most significant bit */
+
+        while (mask && (netd.ifs[i]->ip & mask) == (ip & mask)) {
+            prefix_length++;
+            mask >>= 1; /* Move to the next bit */
+        }
+
+        if (prefix_length > longest_prefix_length) {
+            longest_prefix_length = prefix_length;
+            best_match = netd.ifs[i];
+        }
+    }
+
+    dbgprintf("Found interface %s for %i\n", best_match->name, ip);
+
+    return best_match;
+}
+
+
+int net_iface_up(char* dev)
+{
+    struct net_interface* interface = __net_find_interface(dev);
+    if(interface == NULL) return -1;
+
+    interface->state = NET_IFACE_UP;
+    return 0;
+}
+
+int net_iface_down(char* dev)
+{
+    struct net_interface* interface = __net_find_interface(dev);
+    if(interface == NULL) return -1;
+
+    interface->state = NET_IFACE_DOWN;
+    return 0;
 }
 
 int net_list_ifaces()
@@ -144,24 +228,6 @@ int net_register_interface(struct net_interface* interface)
     return 0;
 }
 
-void __deprecated net_incoming_packet_handler()
-{
-    dbgprintf("New packet incoming...\n");
-
-    struct sk_buff* skb = skb_new();
-    skb->len = netdev_recieve(skb->data, MAX_PACKET_SIZE);
-    if(skb->len <= 0) {
-        dbgprintf("Received an empty packet.\n");
-        skb_free(skb);
-        return;
-    }
-
-    netd.skb_rx_queue->ops->add(netd.skb_rx_queue, skb);
-    netd.packets++;
-    netd.stats.recvd++;
-    dbgprintf("New packet incoming...\n");
-}
-
 int net_send_skb(struct sk_buff* skb)
 {
     ERR_ON_NULL(netd.skb_tx_queue);
@@ -174,43 +240,13 @@ int net_send_skb(struct sk_buff* skb)
     
 }
 
-static void __net_config_loopback()
-{
-    struct net_interface* interface = __net_find_interface("lo0");
-    if(interface == NULL) return;
-
-    interface->ip = 0x7f000001;
-    interface->netmask = 0xff000000;
-    interface->gateway = 0x7f000001;
-}
-
-static void __net_transmit_skb(struct sk_buff* skb)
-{
-    dbgprintf("Transmitting packet\n");
-    twritef("-> %i:%d, %d\n", ntohl(skb->hdr.ip->daddr), skb->hdr.tcp->dest == 0 ? ntohs(skb->hdr.udp->destport) : ntohs(skb->hdr.tcp->dest) , skb->len);
-    int read = netdev_transmit(skb->head, skb->len);
-    if(read <= 0){
-        dbgprintf("Error sending packet\n");
-    }
-    netd.packets++;
-    netd.stats.sent++;
-}
-
-int net_drop_packet(struct sk_buff* skb)
-{
-    current_netdev.dropped++;
-    netd.stats.dropped++;
-    skb_free(skb);
-    return 0;
-}
-
 error_t net_get_info(struct net_info* info)
 {
     *info = netd.stats;
     return ERROR_OK;
 }
 
-int net_handle_recieve(struct sk_buff* skb)
+static int net_handle_recieve(struct sk_buff* skb)
 {
     dbgprintf("Parsing new packet\n");
     if(net_ethernet_parse(skb) < 0) return net_drop_packet(skb);
@@ -221,12 +257,10 @@ int net_handle_recieve(struct sk_buff* skb)
             switch (skb->hdr.ip->proto){
             case UDP:
                 if(net_udp_parse(skb) < 0) return net_drop_packet(skb);
-                twritef("<- %i:%d, %d\n", ntohl(skb->hdr.ip->daddr), skb->hdr.udp->destport, skb->len);
                 break;
             
             case TCP:
                 if(tcp_parse(skb) < 0) return net_drop_packet(skb);
-                twritef("<- %i:%d, %d\n", ntohl(skb->hdr.ip->daddr), skb->hdr.tcp->dest, skb->len);
                 skb_free(skb);
                 break;
             
@@ -262,14 +296,19 @@ void __kthread_entry networking_main()
 {
     if(!is_netdev_attached()) return;
 
-    __net_config_loopback();
-
     if(netd.state == NETD_UNINITIALIZED){
         netd.skb_rx_queue = skb_new_queue();
         netd.skb_tx_queue = skb_new_queue();
     }
 
+    /* sanity check that loopback interface exists */
+    __net_config_loopback();
+    struct net_interface* lo = net_get_iface(LOOPBACK_IP);
+    assert(lo != NULL);
+
+    /* Start DHCP client */
     start("dhcpd", 0, NULL);
+    start("local_udp_server", 0, NULL);
 
     while(1){
         /**
