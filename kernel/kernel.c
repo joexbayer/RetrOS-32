@@ -215,19 +215,16 @@ void kernel(uint32_t magic)
 	start("idled", 0, NULL);
 	start("wind", 0, NULL);
 	start("workd", 0, NULL);
-	start("sysinf", 0, NULL);
+	start("netd", 0, NULL);
 
 	kernel_boot_printf("Deamons initialized.");
-	
-	//pcb_create_process("/bin/clock", 0, NULL);
-	
-	kernel_boot_printf("Timer initialized.");
 
 	init_pit(1);
-	kernel_boot_printf("Starting OS...");
+	kernel_boot_printf("Timer initialized.");
 
 	dbgprintf("[KERNEL] %d\n", cli_cnt);
 	LEAVE_CRITICAL();
+	kernel_boot_printf("Starting OS...");
 	asm ("sti");
 
 	while (1);

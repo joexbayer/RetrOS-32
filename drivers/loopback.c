@@ -15,7 +15,7 @@
 #include <memory.h>
 #include <math.h>
 
-static struct queue {
+static struct __queue {
     struct queue_entry {
         void* data;
         int size;
@@ -52,11 +52,13 @@ static int iface_loopback_read(char* buffer, uint32_t size)
 
     struct queue_entry* entry = &loopback_queue.entries[loopback_queue.head];
     int read = MIN(entry->size, size);
-    memcpy(buffer, entry->data, MIN(entry->size, read));
+    memcpy(buffer, entry->data, read);
 
     kfree(entry->data);
     entry->data = NULL;
     entry->size = 0;
+
+    dbgprintf("Removed packet from loopback queue.\n");
 
     loopback_queue.head = (loopback_queue.head + 1) % 32;
 
@@ -83,6 +85,8 @@ static int iface_loopback_write(char* buffer, uint32_t size)
 
     loopback_queue.tail = (loopback_queue.tail + 1) % 32;
     loopback_queue.size++;
+
+    dbgprintf("Added packet to loopback queue.\n");
 
     work_queue_add(&iface_loopback_interrupt, NULL, NULL);
 

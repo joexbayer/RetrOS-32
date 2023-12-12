@@ -109,8 +109,6 @@ static void __net_config_loopback()
 static void __net_transmit_skb(struct sk_buff* skb)
 {
     if(skb == NULL || skb->interface == NULL) return;
-    
-    dbgprintf("Transmitting packet\n");
 
     int ret = skb->interface->ops->send(skb->interface, skb->head, skb->len);
     if(ret < 0) return;    
@@ -232,6 +230,14 @@ int net_send_skb(struct sk_buff* skb)
 {
     ERR_ON_NULL(netd.skb_tx_queue);
 
+
+    if (skb->interface == NULL){
+        warningf("No interface specified for SKB. Dropping packet.\n");
+        skb_free(skb);
+        return -1;
+    }
+    
+
     RETURN_ON_ERR(netd.skb_tx_queue->ops->add(netd.skb_tx_queue, skb));
     netd.packets++;
     dbgprintf("Added SKB to TX queue\n");
@@ -310,7 +316,10 @@ void __kthread_entry networking_main()
     start("dhcpd", 0, NULL);
     start("local_udp_server", 0, NULL);
 
+    int todos = 0;
     while(1){
+        
+        todos = netd.skb_tx_queue->size + netd.skb_rx_queue->size;
         /**
          * @brief Query RX an    TX queue for netd.packets.
          */
@@ -330,6 +339,10 @@ void __kthread_entry networking_main()
             /* Offload skb parsing to worker thread. */
             //work_queue_add(&net_handle_recieve, (void*)skb, NULL);
             net_handle_recieve(skb);
+        }
+
+        if(todos == 0){
+            kernel_sleep(100);
         }
 
         kernel_yield();
