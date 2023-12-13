@@ -8,6 +8,7 @@
 #include <kutils.h>
 #include <util.h>
 #include <lib/icons.h>
+#include <pci.h>
 
 #include <diskdev.h>
 #include <fs/fs.h>
@@ -15,17 +16,19 @@
 #include <scheduler.h>
 #include <mbr.h>
 #include <net/dhcp.h>
+#include <lib/display.h>
 
-#define WIDTH 250
+#define WIDTH 300
 #define HEIGHT 275
 
-#define TABS 4
+#define TABS 5
 
 enum tab_type {
     TAB_MEM,
     TAB_NET,
     TAB_DISK,
-    TAB_DISPLAY,
+    TAB_DEV,
+    TAB_DISPLAY
 };
 
 struct tab_view {
@@ -73,11 +76,19 @@ struct tab_view {
             .y = 12,
             .active = false,
         },
+        [TAB_DEV] = {
+            .type = TAB_DEV,
+            .name = "Devices",
+            .width = 50,
+            .x = 12 + 150,
+            .y = 12,
+            .active = false,
+        },
         [TAB_DISPLAY] = {
             .type = TAB_DISPLAY,
             .name = "Display",
-            .width = WIDTH - 150-24,
-            .x = 12 + 150,
+            .width = WIDTH - 200-24,
+            .x = 12 + 200,
             .y = 12,
             .active = false,
         },
@@ -161,8 +172,6 @@ static void sysinf_draw_net(struct window* w, struct tab* tab)
         if(interfaces[i] == NULL) continue;
         w->draw->textf(w, 30, (HEIGHT/3+10) + (HEIGHT/3-48)+10+10 + (i*40), 0,     "%s\n. Address: %i\n. Netmask: %i\n. Gateway: %i", interfaces[i]->name, ntohl(interfaces[i]->ip), ntohl(interfaces[i]->netmask), ntohl(interfaces[i]->gateway));
     }
-    
-
 }
 
 static void sysinf_draw_disk(struct window* w, struct tab* tab)
@@ -204,7 +213,80 @@ static void sysinf_draw_disk(struct window* w, struct tab* tab)
     w->draw->box(w, 30, (HEIGHT/3+10) + (HEIGHT/3-48)+10+30, 100, 10, 0);
     w->draw->rect(w, 31, (HEIGHT/3+10) + (HEIGHT/3-48)+10+31, usage, 8, COLOR_VGA_GREEN);
     w->draw->textf(w, 30+109, (HEIGHT/3+10) + (HEIGHT/3-48)+10+31, 0, "%d%", usage);
+}
 
+static void sysinf_draw_dev(struct window* w, struct tab* tab)
+{
+    struct pci_device* devices = pci_get_devices();
+
+    SECTION(w, 24, 48, WIDTH-48, HEIGHT-48-24, "PCI");
+
+    /* Iterate through the devices */
+    for(int i = 0; i < 25; i++) {
+        if(devices[i].vendor == 0) continue;
+
+        unsigned char* icon;
+        switch (devices[i].class){
+        case 0x6:
+            icon = menu_16;
+            break;
+        case 0x2:
+            icon = wlan_16;
+            break;
+        default:
+            icon = desktop_16;
+            break;
+        }
+
+        int y_device = 45 + 12 + (i * 24);
+        int y_device_info = y_device + 12;
+
+        /* Draw the device name */
+        w->draw->textf(w, 35+18, y_device, 0, "%s (%s)", pci_get_class_name(&devices[i]), pci_get_vendor_name(&devices[i]));
+        gfx_put_icon16(icon, 35, y_device-4);
+
+        /* Draw additional device information */
+        w->draw->textf(w, 53, y_device_info, 0, "%s", pci_get_device_name(&devices[i]));
+
+        /* Draw tree lines */
+        /* Horizontal line from icon to text */
+        w->draw->line(w, y_device + 4, 30, y_device+4, 35,0);
+        w->draw->line(w, y_device_info + 4, 30, y_device_info+4, 50,0);
+        
+        /* Check if it's not the last device to draw a vertical line */
+        if (i < 24 ) {
+            w->draw->line(w, y_device + 4, 30, y_device + 4 + 24, 30,0);
+        }
+    }
+
+
+
+}
+
+static void sysinf_draw_display(struct window* w, struct tab* tab)
+{
+    struct display_info info;
+    display_get_info(&info);
+
+    /* Display */
+    SECTION(w, 24, 48, WIDTH-48, HEIGHT/3-48, "Display");
+
+    w->draw->textf(w, 30, 45+10, 0,     "Width:    %d", info.width);
+    w->draw->textf(w, 30, 45+20, 0,     "Height:   %d", info.height);
+    w->draw->textf(w, 30, 45+30, 0,     "Depth:    %d", info.bpp);
+
+
+    gfx_put_icon32(screen_32, WIDTH/2 + 40, 45+10);
+
+    /* Colors */
+    SECTION(w, 24, HEIGHT/3+10, WIDTH-48, HEIGHT-48, "Colors - VGA");
+
+    /* print all colors */
+    for(int i = 0; i < 16; i++){
+        for (int j = 0; j < 16; j++){
+            w->draw->box(w, 65 + (i*9), HEIGHT/3+10+10 + (j*9), 9, 9, j*16+i);
+        }
+    }
 }
 
 
@@ -227,6 +309,10 @@ static void sysinf_draw_tab(struct window* w, struct tab* tab)
             sysinf_draw_disk(w, tab);
             break;
         case TAB_DISPLAY:
+            sysinf_draw_display(w, tab);
+            break;
+        case TAB_DEV:
+            sysinf_draw_dev(w, tab);
             break;
     }
 }

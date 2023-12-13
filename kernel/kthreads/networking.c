@@ -305,8 +305,6 @@ static int net_handle_recieve(struct sk_buff* skb)
  */
 void __kthread_entry networking_main()
 {
-    if(!is_netdev_attached()) return;
-
     if(netd.state == NETD_UNINITIALIZED){
         netd.skb_rx_queue = skb_new_queue();
         netd.skb_tx_queue = skb_new_queue();
@@ -315,10 +313,15 @@ void __kthread_entry networking_main()
     /* sanity check that loopback interface exists */
     __net_config_loopback();
     struct net_interface* lo = net_get_iface(LOOPBACK_IP);
-    assert(lo != NULL);
+    if(lo == NULL){
+        kernel_panic("Failed to initialize loopback interface.\n");
+        return;
+    }
 
     /* Start DHCP client */
-    start("dhcpd", 0, NULL);
+    if(netd.if_count > 1){
+        start("dhcpd", 0, NULL);
+    }
     start("local_udp_server", 0, NULL);
 
     int todos = 0;

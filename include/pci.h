@@ -54,5 +54,10 @@ void init_pci();
 
 void list_pci_devices();
 
+struct pci_device* pci_get_devices();
+const char* pci_get_class_name(struct pci_device* dev);
+const char* pci_get_device_name(struct pci_device* dev);
+const char* pci_get_vendor_name(struct pci_device* dev);
+
 
 #endif

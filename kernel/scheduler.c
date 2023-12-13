@@ -179,6 +179,7 @@ static int sched_round_robin(struct scheduler* sched)
     /* If queue is empty, return error */
     next = sched->queue->ops->peek(sched->queue); 
     if(next == NULL){
+        warningf("Queue is empty");
         return -ERROR_PCB_QUEUE_EMPTY;
     }
 

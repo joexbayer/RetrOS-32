@@ -16,13 +16,13 @@
 
 #define TASKBAR_HEIGHT 20
 
-#define TASKBAR_MAX_OPTIONS 10
+#define TASKBAR_MAX_OPTIONS 15
 #define TASKBAR_OPTIONS_HEIGHT 16
 #define TASKBAR_OPTIONS_HEIGHT_TOTAL TASKBAR_OPTIONS_HEIGHT * TASKBAR_MAX_OPTIONS
 #define TASKBAR_MAX_HEADERS 5
 
 #define TASKBAR_EXT_OPT_WIDTH 100
-#define TASKBAR_EXT_OPT_HEIGHT 160
+#define TASKBAR_EXT_OPT_HEIGHT 170
 
 #define TIME_PREFIX(unit) unit < 10 ? "0" : ""
 
@@ -326,7 +326,7 @@ static void __kthread_entry taskbar(void)
                             default_taskbar.headers[i].x,
                             default_taskbar.headers[i].y+20,
                             TASKBAR_EXT_OPT_WIDTH, 
-                            TASKBAR_OPTIONS_HEIGHT_TOTAL+5,
+                            TASKBAR_EXT_OPT_HEIGHT,
                             COLOR_TRANSPARENT
                         );
                     }

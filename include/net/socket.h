@@ -8,6 +8,7 @@ struct sock;
 #include <sync.h>
 #include <net/skb.h>
 #include <lib/net.h>
+#include <pcb.h>
 
 /* forward declare struct sock*/
 struct sock {
@@ -32,6 +33,9 @@ struct sock {
 
     /* if tcp socket */
     struct tcp_connection* tcp;
+
+    /* Should be a queue? Can multiple pcbs read from same socket? */
+    struct pcb* waiting;
 };
 
 #include <net/tcp.h>
