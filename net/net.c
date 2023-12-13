@@ -163,8 +163,8 @@ error_t kernel_accept(struct sock* socket, struct sockaddr *address, socklen_t *
     if(!tcp_is_listening(socket))
         return -1;
     
-
     /* Create new TCP socket? */
+    
 
     return 0;
 }

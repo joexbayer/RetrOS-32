@@ -60,6 +60,8 @@ static struct networkmanager {
     struct net_interface* ifs[4];
     uint8_t if_count;
 
+    struct pcb* instance;
+
 } netd = {
     .ops = {
         .start = NULL,
@@ -70,7 +72,8 @@ static struct networkmanager {
     .packets = 0,
     .stats.dropped = 0, 
     .stats.recvd = 0,
-    .stats.sent = 0
+    .stats.sent = 0,
+    .instance = NULL,
 };
 
 static struct net_interface* __net_find_interface(char* dev)
@@ -167,6 +170,10 @@ void __callback net_incoming_packet(struct netdev* dev)
     netd.packets++;
     netd.stats.recvd++;
 
+    if(netd.instance != NULL && netd.instance->state == BLOCKED){ 
+        netd.instance->state = RUNNING;
+    }
+
 }
 
 struct net_interface* net_get_iface(uint32_t ip)
@@ -247,6 +254,10 @@ int net_send_skb(struct sk_buff* skb)
     netd.packets++;
     dbgprintf("Added SKB to TX queue\n");
 
+    if(netd.instance != NULL && netd.instance->state == BLOCKED){ 
+        netd.instance->state = RUNNING;
+    }
+
     return 0;
     
 }
@@ -310,6 +321,8 @@ void __kthread_entry networking_main()
         netd.skb_tx_queue = skb_new_queue();
     }
 
+    netd.instance = current_running;
+
     /* sanity check that loopback interface exists */
     __net_config_loopback();
     struct net_interface* lo = net_get_iface(LOOPBACK_IP);
@@ -324,7 +337,7 @@ void __kthread_entry networking_main()
     }
     start("local_udp_server", 0, NULL);
 
-    int todos = 0;
+    int todos =0;
     while(1){
         
         todos = netd.skb_tx_queue->size + netd.skb_rx_queue->size;
@@ -350,7 +363,7 @@ void __kthread_entry networking_main()
         }
 
         if(todos == 0){
-            kernel_sleep(100);
+            current_running->state = BLOCKED;
         }
 
         kernel_yield();

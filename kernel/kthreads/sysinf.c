@@ -31,7 +31,7 @@ enum tab_type {
     TAB_DISPLAY
 };
 
-struct tab_view {
+static struct tab_view {
     int width, height;
     int x, y;
 
@@ -162,15 +162,15 @@ static void sysinf_draw_net(struct window* w, struct tab* tab)
 
     SECTION(w, 24, HEIGHT/3+10, WIDTH-48, HEIGHT/3-48, "Services");
 
-    w->draw->textf(w, 30, HEIGHT/3+10+10, 0,     "DHCP:       %s", dhcp_state_names[dhcp_get_state()] );
-    w->draw->textf(w, 30, HEIGHT/3+10+20, 0,     "DNS:        %i", dhcp_get_dns());
+    w->draw->textf(w, 30, HEIGHT/3+10+10, 0,     "DHCP:          %s", dhcp_state_names[dhcp_get_state()] );
+    w->draw->textf(w, 30, HEIGHT/3+10+20, 0,     "DNS:           %i", dhcp_get_dns());
 
     SECTION(w, 24, (HEIGHT/3+10) + (HEIGHT/3-48)+10, WIDTH-48, 100, "Interface");
 
     struct net_interface** interfaces = net_get_interfaces();
     for (int i = 0; i < 2; i++){ /* we only currently support 2 interfaces */
         if(interfaces[i] == NULL) continue;
-        w->draw->textf(w, 30, (HEIGHT/3+10) + (HEIGHT/3-48)+10+10 + (i*40), 0,     "%s\n. Address: %i\n. Netmask: %i\n. Gateway: %i", interfaces[i]->name, ntohl(interfaces[i]->ip), ntohl(interfaces[i]->netmask), ntohl(interfaces[i]->gateway));
+        w->draw->textf(w, 30, (HEIGHT/3+10) + (HEIGHT/3-48)+10+10 + (i*40), 0,     "%s\n. Address:    %i\n. Netmask:    %i\n. Gateway:    %i", interfaces[i]->name, ntohl(interfaces[i]->ip), ntohl(interfaces[i]->netmask), ntohl(interfaces[i]->gateway));
     }
 }
 

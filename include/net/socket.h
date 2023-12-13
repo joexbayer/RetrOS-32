@@ -35,7 +35,7 @@ struct sock {
     struct tcp_connection* tcp;
 
     /* Should be a queue? Can multiple pcbs read from same socket? */
-    struct pcb* waiting;
+    volatile struct pcb* waiting;
 };
 
 #include <net/tcp.h>

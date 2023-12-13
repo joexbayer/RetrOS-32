@@ -273,7 +273,7 @@ int tcp_connect(struct sock* sock)
 
 int tcp_send_syn(struct sock* sock, uint16_t dst_port, uint16_t src_port)
 {
-
+	
 	return ERROR_OK;
 }
 

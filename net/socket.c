@@ -67,7 +67,13 @@ error_t net_sock_read(struct sock* sock, uint8_t* buffer, unsigned int length)
 {
 	dbgprintf(" [SOCK] Waiting for data... %d\n", sock);
 	/* Should be blocking */
-	WAIT(!net_sock_data_ready(sock, length));
+    while(!net_sock_data_ready(sock, length)){
+        sock->waiting = current_running;
+        current_running->state = BLOCKED;
+	    kernel_yield();
+    }
+	//WAIT(!net_sock_data_ready(sock, length));
+    dbgprintf(" [SOCK] Data ready! %d\n", sock);
 
     int to_read = -1;
 
@@ -108,6 +114,14 @@ static inline error_t net_sock_add_data_segment(struct sock* sock, struct sk_buf
     }
     sock->recvd += skb->data_len;
     sock->data_ready = sock->tcp == NULL ? 1 : skb->hdr.tcp->psh;
+
+    if(sock->waiting->state == BLOCKED){
+        /* need to clear waiting before setting it to run */
+        struct pcb* pcb = sock->waiting;
+        sock->waiting = NULL;
+        pcb->state = RUNNING;
+
+    }
 
     return ERROR_OK;
 }
@@ -254,6 +268,10 @@ void kernel_sock_close(struct sock* socket)
  */
 struct sock* kernel_socket(int domain, int type, int protocol)
 {
+
+    /* Should be a lock? */
+    ENTER_CRITICAL();
+
     //int current = get_free_bitmap(socket_map, NET_NUMBER_OF_SOCKETS);
     int current = get_free_bitmap(socket_map, NET_NUMBER_OF_SOCKETS);
 
@@ -273,11 +291,15 @@ struct sock* kernel_socket(int domain, int type, int protocol)
 
     socket_table[current]->skb_queue = skb_new_queue();
 
+    socket_table[current]->waiting = NULL;
+
     mutex_init(&(socket_table[current]->lock));
 
     total_sockets++;
 
-    dbgprintf("Created new sock\n");
+    dbgprintf("Created new sock %d\n", current);
+
+    LEAVE_CRITICAL();
 
     return socket_table[current];
 }

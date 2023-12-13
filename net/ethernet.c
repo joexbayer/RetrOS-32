@@ -31,7 +31,7 @@ int net_ethernet_add_header(struct sk_buff* skb, uint32_t ip)
     memcpy(skb->data, &e_hdr, ETHER_HDR_LENGTH);
     skb->data += ETHER_HDR_LENGTH;
 
-    net_ethernet_print(&e_hdr);
+    //net_ethernet_print(&e_hdr);
 
     dbgprintf("Added Ethernet header\n");
 
