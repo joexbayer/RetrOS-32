@@ -90,6 +90,11 @@ static struct net_interface* __net_interface(struct netdev* dev)
     return NULL;
 }
 
+struct net_interface** net_get_interfaces()
+{
+    return netd.ifs;
+}
+
 static void __net_config_loopback()
 {
     struct net_interface* interface = __net_find_interface("lo0");

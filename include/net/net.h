@@ -19,6 +19,7 @@ int net_send_skb(struct sk_buff* skb);
 
 int net_configure_iface(char* dev, uint32_t ip, uint32_t netmask, uint32_t gateway);
 struct net_interface* net_get_iface(uint32_t ip);
+struct net_interface** net_get_interfaces();
 /* defined in loopback.c */
 int net_init_loopback();
 

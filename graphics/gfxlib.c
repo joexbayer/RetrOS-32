@@ -441,11 +441,19 @@ int kernel_gfx_draw_format_text(struct window* w, int x, int y, unsigned char co
 				switch (*(fmt+1))
 				{
 					case 'd':
-					case 'i': ;
 						num = va_arg(args, int);
 						itoa(num, str);
 						kernel_gfx_draw_text(w, x+(x_offset*PIXELS_PER_CHAR), y, str, color);
 						x_offset += strlen(str);
+						break;
+					case 'i':
+						num = va_arg(args, int);
+						unsigned int bytes[4];
+						bytes[0] = (num >> 24) & 0xFF;
+						bytes[1] = (num >> 16) & 0xFF;
+						bytes[2] = (num >> 8) & 0xFF;
+						bytes[3] = num & 0xFF;
+						x_offset +=  kernel_gfx_draw_format_text(w, x+(x_offset*PIXELS_PER_CHAR), y, color, "%d.%d.%d.%d", bytes[3], bytes[2], bytes[1], bytes[0]);
 						break;
 					case 'p': ; /* p for padded int */
 						num = va_arg(args, int);

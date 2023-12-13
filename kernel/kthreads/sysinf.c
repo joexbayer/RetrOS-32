@@ -1,4 +1,7 @@
 #include <kthreads.h>
+#include <net/net.h>
+#include <net/interface.h>
+#include <net/netdev.h>
 #include <memory.h>
 #include <gfx/window.h>
 #include <gfx/gfxlib.h>
@@ -8,7 +11,10 @@
 
 #include <diskdev.h>
 #include <fs/fs.h>
+#include <fs/fat16.h>
+#include <scheduler.h>
 #include <mbr.h>
+#include <net/dhcp.h>
 
 #define WIDTH 250
 #define HEIGHT 275
@@ -125,6 +131,37 @@ static void sysinf_draw_mem(struct window* w, struct tab* tab)
 
 static void sysinf_draw_net(struct window* w, struct tab* tab)
 {
+    
+    /**
+     * Sections: 
+     * Stats
+     * Services
+     * Interface 
+     */
+    struct net_info info;
+    net_get_info(&info);
+
+    SECTION(w, 24, 48, WIDTH-48, HEIGHT/3-48, "Stats");
+
+    gfx_put_icon32(wlan_32, WIDTH/2 + 40, 45+10);
+
+    w->draw->textf(w, 30, 45+10, 0,     "TX:        %d", info.sent);
+    w->draw->textf(w, 30, 45+20, 0,     "RX:        %d", info.recvd);
+    w->draw->textf(w, 30, 45+30, 0,     "Dropped:   %d", info.dropped);
+
+    SECTION(w, 24, HEIGHT/3+10, WIDTH-48, HEIGHT/3-48, "Services");
+
+    w->draw->textf(w, 30, HEIGHT/3+10+10, 0,     "DHCP:       %s", dhcp_state_names[dhcp_get_state()] );
+    w->draw->textf(w, 30, HEIGHT/3+10+20, 0,     "DNS:        %i", dhcp_get_dns());
+
+    SECTION(w, 24, (HEIGHT/3+10) + (HEIGHT/3-48)+10, WIDTH-48, 100, "Interface");
+
+    struct net_interface** interfaces = net_get_interfaces();
+    for (int i = 0; i < 2; i++){ /* we only currently support 2 interfaces */
+        if(interfaces[i] == NULL) continue;
+        w->draw->textf(w, 30, (HEIGHT/3+10) + (HEIGHT/3-48)+10+10 + (i*40), 0,     "%s\n. Address: %i\n. Netmask: %i\n. Gateway: %i", interfaces[i]->name, ntohl(interfaces[i]->ip), ntohl(interfaces[i]->netmask), ntohl(interfaces[i]->gateway));
+    }
+    
 
 }
 

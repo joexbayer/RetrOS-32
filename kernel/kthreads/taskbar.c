@@ -86,8 +86,8 @@ struct taskbar_options {
                     .callback = &taskbar_finder
                 },
                 {
-                    .icon = bin_16,
-                    .name = "Sysinf",
+                    .icon = desktop_16,
+                    .name = "SysInfo",
                     .callback = &taskbar_sysinf
                 },
                 {
@@ -296,6 +296,8 @@ static void __kthread_entry taskbar(void)
         }
     while (1){
 
+        gfx_put_icon16(wlan_16, w->inner_width - (timedate_length*8) - 20, 4);
+
         get_current_time(&time);
         w->draw->rect(w, w->inner_width - (timedate_length*8), 5, timedate_length*8, 10, 30);
         w->draw->textf(w, w->inner_width - (timedate_length*8), 5, COLOR_BLACK,
@@ -444,7 +446,5 @@ static void __callback taskbar_bg_calc()
 
 static void __callback taskbar_sysinf()
 {
-    int pid = pcb_create_process("/bin/sysinf.o", 0, NULL, 0);
-    if(pid < 0)
-        dbgprintf("%s does not exist\n", "sysinf.o");
+    start("sysinf", 0, NULL); 
 }
