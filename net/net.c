@@ -153,6 +153,8 @@ error_t kernel_sendto(struct sock* socket, const void *message, int length, int 
         return -ERROR_INVALID_SOCKET_TYPE;
     }
 
+    socket->tx += length;
+
     return length;
 }
 

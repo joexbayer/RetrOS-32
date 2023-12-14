@@ -9,6 +9,27 @@
 #include <scheduler.h>
 #include <errors.h>
 
+static const char* tcp_state_str[] = {
+	"TCP_CREATED",
+	"TCP_CLOSED",
+	"TCP_LISTEN",
+	"TCP_WAIT_ACK",
+	"TCP_SYN_RCVD",
+	"TCP_SYN_SENT",
+	"TCP_ESTABLISHED",
+	"TCP_FIN_WAIT",
+	"TCP_FIN_WAIT_2",
+	"TCP_CLOSING",
+	"TCP_TIME_WAIT",
+	"TCP_CLOSE_WAIT",
+	"TCP_LAST_ACK"
+};
+
+char* tcp_state_to_str(tcp_state_t state)
+{
+	return (char*)tcp_state_str[state];
+}
+
 int tcp_new_connection(struct sock* sock, uint16_t dst_port, uint16_t src_port)
 {
 	sock->tcp = kalloc(sizeof(struct tcp_connection));

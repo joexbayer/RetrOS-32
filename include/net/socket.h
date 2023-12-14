@@ -10,6 +10,11 @@ struct sock;
 #include <lib/net.h>
 #include <pcb.h>
 
+struct sockets {
+    struct sock** sockets;
+    int total_sockets;
+};
+
 /* forward declare struct sock*/
 struct sock {
     socket_t socket;
@@ -19,6 +24,9 @@ struct sock {
     int domain;
 
     mutex_t lock;
+
+    int rx;
+    int tx;
 
     uint16_t bound_port;
     uint16_t bound_ip;
@@ -49,6 +57,8 @@ struct sock {
 void net_sock_bind(struct sock* socket, unsigned short port, unsigned int ip);
 int net_sock_read_skb(struct sock* socket);
 
+int net_get_sockets(struct sockets* sockets);
+
 void init_sockets();
 int get_total_sockets();
 
@@ -65,6 +75,11 @@ struct sock* sock_find_listen_tcp(uint16_t d_port);
 
 struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip);
 struct sock* net_socket_find_udp(uint32_t ip, uint16_t port);
+
+char* socket_type_to_str(int type);
+char* socket_state_to_str(int state);
+char* socket_protocol_to_str(int protocol);
+
 
 
 #endif /* SOCKET_H */

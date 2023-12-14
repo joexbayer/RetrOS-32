@@ -50,11 +50,18 @@
 #define TEXT_COLOR 15  /* White color for text */
 #define LINE_HEIGHT 8  /* Height of each line */
 
-struct kernel_context kernel_context;
+struct kernel_context kernel_context = {
+	.sched_ctx = NULL,
+	.window_server = NULL,
+	.total_memory = NULL,
+	.graphic_mode = KERNEL_FLAG_GRAPHICS,
+};
 
 static void kernel_boot_printf(char* message) {
     static int kernel_msg = 0;
-    vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10 + (kernel_msg++ * LINE_HEIGHT), TEXT_COLOR, message);
+	if(kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
+		vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10 + (kernel_msg++ * LINE_HEIGHT), TEXT_COLOR, message);
+	}
 }
 
 /* This functions always needs to be on top? */
@@ -121,7 +128,11 @@ void kernel(uint32_t magic)
 	init_interrupts();
 	kernel_boot_printf("Interrupts initialized.");
 	init_keyboard();
-	mouse_init();
+
+	if(kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
+		mouse_init();
+	}
+
 	kernel_boot_printf("Peripherals initialized.");
 	init_pcbs();
 	init_pci();
@@ -208,12 +219,19 @@ void kernel(uint32_t magic)
 	dbgprintf("[KERNEL] Enabled paging!\n");
 	
 	ksyms_init();
-	vesa_init();
 
-	kernel_boot_printf("Graphics initialized.");
+	if(kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
+		vesa_init();
+		kernel_boot_printf("Graphics initialized.");
+	}
+
 
 	start("idled", 0, NULL);
-	start("wind", 0, NULL);
+
+	if(kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
+		start("wind", 0, NULL);
+	}
+
 	start("workd", 0, NULL);
 	start("netd", 0, NULL);
 
@@ -259,20 +277,22 @@ void hexdump(const void *data, int size)
         twritef("%p: ", i);
 
         for (j = 0; j < HEXDUMP_COLS; j++) {
-            if (i + j < size)
-                twritef("%s%x ", p[i + j] < 16 ? "0" : "", p[i + j]);
-            else
+            if (i + j < size){
+    	            twritef("%s%x ", p[i + j] < 16 ? "0" : "", p[i + j]);
+			} else {
                 twritef("   ");
+			}
             if (j % 8 == 7)
                 twritef(" ");
         }
         twritef(" ");
 
         for (j = 0; j < HEXDUMP_COLS; j++) {
-            if (i + j < size)
+            if (i + j < size){
                 twritef("%c", (p[i + j] >= 32 && p[i + j] <= 126) ? p[i + j] : '.');
-            else
+			} else {
                 twritef(" ");
+			}
         }
         twritef("\n");
     }

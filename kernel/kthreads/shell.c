@@ -35,6 +35,8 @@
 #include <fs/fs.h>
 #include <fs/fat16.h>
 
+#include <net/socket.h>
+#include <net/tcp.h>
 
 #include <kutils.h>
 #include <script.h>
@@ -60,12 +62,7 @@ static const char backspace = '\b';
 
 static char* shell_name = "Kernel >";
 
-static struct terminal term  = {
-	.head = 0,
-	.tail = 0,
-	.lines = 0
-};
-
+static struct terminal* term = NULL; 
 /*
  *	IMPLEMENTATIONS
  */
@@ -96,13 +93,13 @@ void ps()
 {
 	int ret;
 	int usage;
-	twritef("  PID  USAGE    TYPE     STATE     NAME\n");
+	term->ops->writef(term, "  PID  USAGE    TYPE     STATE     NAME\n");
 	for (int i = 1; i < MAX_NUM_OF_PCBS; i++){
 		struct pcb_info info;
 		ret = pcb_get_info(i, &info);
 		if(ret < 0) continue;
 		usage = (int)(info.usage*100);
-		twritef("   %d    %s%d%      %s  %s  %s\n", info.pid, usage < 10 ? " ": "", usage, info.is_process ? "process" : "kthread", pcb_status[info.state], info.name);
+		term->ops->writef(term, "   %d    %s%d%      %s  %s  %s\n", info.pid, usage < 10 ? " ": "", usage, info.is_process ? "process" : "kthread", pcb_status[info.state], info.name);
 	}
 }
 EXPORT_KSYMBOL(ps);
@@ -111,9 +108,9 @@ EXPORT_KSYMBOL(ps);
 static void print_branches(int level) {
     for (int i = 0; i < level; i++) {
         if (i == level - 1) {
-            twritef(":---");
+            term->ops->writef(term, ":---");
         } else {
-            twritef(":   ");
+            term->ops->writef(term, ":   ");
         }
     }
 }
@@ -126,7 +123,7 @@ static void print_pcb_tree(struct pcb *pcb, int level) {
 
     /* Print branches and nodes */
     print_branches(level);
-    twritef(">%s (%d)\n", pcb->name, pcb->pid);
+    term->ops->writef(term, ">%s (%d)\n", pcb->name, pcb->pid);
 
     /* Recursively print child PCBs */
     for (int i = 1; i < MAX_NUM_OF_PCBS; i++) {
@@ -162,20 +159,20 @@ EXPORT_KSYMBOL(fat16);
 void xxd(int argc, char* argv[])
 {
 	if(argc == 1){
-		twritef("usage: xxd <file>\n");
+		term->ops->writef(term, "usage: xxd <file>\n");
 		return;
 	}
 
 	inode_t inode = fs_open(argv[1], FS_FILE_FLAG_READ);
 	if(inode < 0){
-		twritef("File %s not found.\n", argv[1]);
+		term->ops->writef(term, "File %s not found.\n", argv[1]);
 		return;
 	}
 
 	char* buf = kalloc(32*1024);
 	int ret = fs_read(inode, buf, 32*1024);
 	if(ret < 0){
-		twritef("Error reading file\n");
+		term->ops->writef(term, "Error reading file\n");
 		return;
 	}
 	
@@ -191,13 +188,13 @@ EXPORT_KSYMBOL(xxd);
 void sh(int argc, char* argv[])
 {
 	if(argc == 1){
-		twritef("usage: sh <file>\n");
+		term->ops->writef(term, "usage: sh <file>\n");
 		return;
 	}
 
 	inode_t inode = fs_open(argv[1], FS_FILE_FLAG_READ);
 	if(inode <= 0){
-		twritef("File %s not found.\n", argv[1]);
+		term->ops->writef(term, "File %s not found.\n", argv[1]);
 		return;
 	}
 
@@ -205,7 +202,7 @@ void sh(int argc, char* argv[])
 	int ret = fs_read(inode, buf, 32*1024);
 	if(ret < 0){
 		fs_close(inode);
-		twritef("Error reading file\n");
+		term->ops->writef(term, "Error reading file\n");
 		return;
 	}
 	
@@ -222,7 +219,7 @@ void ed()
 {
 	int pid = pcb_create_process("/bin/edit.o", 0, NULL, PCB_FLAG_KERNEL);
 	if(pid < 0)
-		twritef("%s does not exist\n", "edit.o");
+		term->ops->writef(term, "%s does not exist\n", "edit.o");
 }
 EXPORT_KSYMBOL(ed);
 
@@ -233,7 +230,7 @@ void exec(int argc, char* argv[])
 	bool_t kthread_as_deamon = false;
 
 	if(argc == 1){
-		twritef("usage: exec [options] <file | kfunc> [args ...]\n");
+		term->ops->writef(term, "usage: exec [options] <file | kfunc> [args ...]\n");
 		return;
 	}
 
@@ -252,7 +249,7 @@ void exec(int argc, char* argv[])
 
 	pid = start(argv[idx], argc-idx, &argv[idx]);
 	if(pid >= 0){
-		twritef("Kernel thread started\n");
+		term->ops->writef(term, "Kernel thread started\n");
 		return;
 	}
 
@@ -264,7 +261,7 @@ void exec(int argc, char* argv[])
 
 	void (*ptr)(int argc, char* argv[]) = (void (*)(int argc, char* argv[])) ksyms_resolve_symbol(argv[idx]);
 	if(ptr == NULL){
-		twritef("Unknown command\n");
+		term->ops->writef(term, "Unknown command\n");
 		return;
 	}
 
@@ -274,7 +271,7 @@ void exec(int argc, char* argv[])
 		return;
 	}
 	
-	twritef("Unknown command\n");
+	term->ops->writef(term, "Unknown command\n");
     return;
 }
 EXPORT_KSYMBOL(exec);
@@ -298,7 +295,7 @@ void ths()
 {
 	int total_themes = gfx_total_themes();
 	for (int i = 0; i < total_themes; i++){
-		twritef("%d) %s\n", i, kernel_gfx_get_theme(i)->name);
+		term->ops->writef(term, "%d) %s\n", i, kernel_gfx_get_theme(i)->name);
 	}
 }
 EXPORT_KSYMBOL(ths);
@@ -306,7 +303,7 @@ EXPORT_KSYMBOL(ths);
 void dig(int argc, char* argv[])
 {
 	int ret = gethostname(argv[1]);
-	twritef("%s IN (A) %i\n", argv[1], ret);
+	term->ops->writef(term, "%s IN (A) %i\n", argv[1], ret);
 }
 EXPORT_KSYMBOL(dig);
 
@@ -330,7 +327,7 @@ void echo(int argc, char* argv[])
 		return;
 	}
 
-	twritef("%s\n", argv[1]);
+	term->ops->writef(term, "%s\n", argv[1]);
 
 	int* ptr = (int*) 0x1000000;
 	*ptr = 0xdeadbeef;
@@ -355,16 +352,16 @@ void fdisk(int argc, char* argv[])
 {
 	struct diskdev* dev = disk_device_get();
 	if(dev == NULL){
-		twritef("No disk device attached\n");
+		term->ops->writef(term, "No disk device attached\n");
 		return;
 	}
 
-	twritef("fdisk:      \n");
-	twritef("Disk:     %s\n", dev->dev->model);
-	twritef("Size:     %d\n", dev->dev->size*512);
-	twritef("Attached: %d\n", dev->attached);
-	twritef("Read:     %x\n", dev->read);
-	twritef("Write:    %x\n", dev->write);
+	term->ops->writef(term, "fdisk:      \n");
+	term->ops->writef(term, "Disk:     %s\n", dev->dev->model);
+	term->ops->writef(term, "Size:     %d\n", dev->dev->size*512);
+	term->ops->writef(term, "Attached: %d\n", dev->attached);
+	term->ops->writef(term, "Read:     %x\n", dev->read);
+	term->ops->writef(term, "Write:    %x\n", dev->write);
 }
 EXPORT_KSYMBOL(fdisk);
 
@@ -385,11 +382,11 @@ void meminfo(int argc, char* argv[])
 
 	struct unit total = calculate_size_unit(minfo.kernel.total+minfo.permanent.total+minfo.virtual.total);
 
-	twritef("Memory:\n");
-	twritef("  Kernel:    %d%s/%d%s\n", kernel.size, kernel.unit, kernel_total.size, kernel_total.unit);
-	twritef("  Permanent: %d%s/%d%s\n", permanent.size, permanent.unit, permanent_total.size, permanent_total.unit);
-	twritef("  Virtual:   %d%s/%d%s\n", virtual.size, virtual.unit, virtual_total.size, virtual_total.unit);
-	twritef("  Total:     %d%s\n", total.size, total.unit);
+	term->ops->writef(term, "Memory:\n");
+	term->ops->writef(term, "  Kernel:    %d%s/%d%s\n", kernel.size, kernel.unit, kernel_total.size, kernel_total.unit);
+	term->ops->writef(term, "  Permanent: %d%s/%d%s\n", permanent.size, permanent.unit, permanent_total.size, permanent_total.unit);
+	term->ops->writef(term, "  Virtual:   %d%s/%d%s\n", virtual.size, virtual.unit, virtual_total.size, virtual_total.unit);
+	term->ops->writef(term, "  Total:     %d%s\n", total.size, total.unit);
 }
 EXPORT_KSYMBOL(meminfo);
 
@@ -397,13 +394,13 @@ void cat(int argc, char* argv[])
 {
 	inode_t inode = fs_open(argv[1], FS_FILE_FLAG_READ);
 	if(inode < 0){
-		twritef("File %s not found.\n", argv[1]);
+		term->ops->writef(term, "File %s not found.\n", argv[1]);
 		return;
 	}
 
 	char buf[512];
 	fs_read(inode, buf, 512);
-	twritef("%s\n", buf);
+	term->ops->writef(term, "%s\n", buf);
 	fs_close(inode);
 	return;
 }
@@ -411,7 +408,7 @@ EXPORT_KSYMBOL(cat);
 
 void res(int argc, char* argv[])
 {
-	twritef("Screen resolution: %dx%d\n", vbe_info->width, vbe_info->height);
+	term->ops->writef(term, "Screen resolution: %dx%d\n", vbe_info->width, vbe_info->height);
 }
 EXPORT_KSYMBOL(res);
 
@@ -419,12 +416,12 @@ void ls(int argc, char* argv[])
 {
 	struct filesystem* fs = fs_get();
 	if(fs == NULL){
-		twritef("No filesystem mounted\n");
+		term->ops->writef(term, "No filesystem mounted\n");
 		return;
 	}
 
 	if(fs->ops->list == NULL){
-		twritef("Filesystem does not support listing\n");
+		term->ops->writef(term, "Filesystem does not support listing\n");
 		return;
 	}
 
@@ -438,22 +435,36 @@ void ls(int argc, char* argv[])
 }
 EXPORT_KSYMBOL(ls);
 
+void socks(void)
+{
+	term->ops->writef(term, "Sockets:\n");
+
+	struct sockets socks;
+	net_get_sockets(&socks);
+
+	for (int i = 0; i < socks.total_sockets; i++){
+		struct sock* sock = socks.sockets[i];
+		if(sock == NULL) continue;
+
+		term->ops->writef(term, "  %d) %i:%d %s %s %s\n  tx: %d  rx: %d\n", i, sock->bound_ip == 1 ? 0 : sock->bound_ip, ntohs(sock->bound_port), socket_type_to_str(sock->type), socket_domain_to_str(sock->domain), sock->tcp ? tcp_state_to_str(sock->tcp->state) : "", sock->tx, sock->rx);
+	}
+}
+EXPORT_KSYMBOL(socks);
+
+
 void reset(int argc, char* argv[])
 {
 	kernel_gfx_draw_rectangle(current_running->gfx_window, 0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_VGA_BG);
-	term.head = 0;
-	term.tail = 0;
-	term.lines = 0;
-	memset(term.textbuffer, 0, TERMINAL_BUFFER_SIZE);
+	term->ops->reset(term);
 	reset_shell();
 }
 EXPORT_KSYMBOL(reset);
 
 void help()
 {
-	twritef("Kthreads:\n");
+	term->ops->writef(term, "Kthreads:\n");
 	kthread_list();
-	twritef("Commands:\n");
+	term->ops->writef(term, "Commands:\n");
 	ksyms_list();
 
 }
@@ -489,11 +500,11 @@ void shell_put(unsigned char c)
 
 	if(uc == newline){
 		memcpy(previous_shell_buffer, shell_buffer, strlen(shell_buffer)+1);
-		twritef("kernel> %s\n", shell_buffer);
+		term->ops->writef(term, "kernel> %s\n", shell_buffer);
 		
 		ENTER_CRITICAL();
 		if(exec_cmd(shell_buffer) < 0){
-			twritef("Unknown command\n");
+			term->ops->writef(term, "Unknown command\n");
 		}
 		LEAVE_CRITICAL();
 		
@@ -555,7 +566,8 @@ void __kthread_entry shell(int argc, char* argv[])
 	dbgprintf("shell: window 0x%x\n", window);
 	kernel_gfx_draw_rectangle(current_running->gfx_window, 0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_VGA_BG);
 
-	terminal_attach(&term);
+	term = terminal_create();
+	term->ops->attach(term);
 
 	struct mem_info minfo;
     get_mem_info(&minfo);
@@ -563,10 +575,10 @@ void __kthread_entry shell(int argc, char* argv[])
 	struct unit used = calculate_size_unit(minfo.kernel.used+minfo.permanent.used);
 	struct unit total = calculate_size_unit(minfo.kernel.total+minfo.permanent.total);
 
-	twritef("_.--*/ \\*--._\nWelcome ADMIN!\n");
-	twritef("%s\n", welcome);
-	twritef("Memory: %d%s/%d%s\n", used.size, used.unit, total.size, total.unit);
-	twriteln("");
+	term->ops->writef(term, "_.--*/ \\*--._\nWelcome ADMIN!\n");
+	term->ops->writef(term, "%s\n", welcome);
+	term->ops->writef(term, "Memory: %d%s/%d%s\n", used.size, used.unit, total.size, total.unit);
+	term->ops->writef(term, "Type 'help' for a list of commands\n");
 	terminal_commit(current_running->term);
 
 	kernel_gfx_set_header("/");

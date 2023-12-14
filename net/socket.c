@@ -27,6 +27,33 @@ static int total_sockets;
 static bitmap_t port_map;
 static bitmap_t socket_map;
 
+static const char* socket_type_str[] = {
+    "SOCK_TCP",
+    "SOCK_UDP",
+    "SOCK_RAW"
+};
+char* socket_type_to_str(int type){
+    return socket_type_str[type];
+}
+
+static const char* socket_domain_str[] = {
+    "AF_INET",
+    "AF_INET6",
+    "AF_UNIX"
+};
+char* socket_domain_to_str(int domain){
+    return socket_domain_str[domain];
+}
+
+static const char* socket_protocol_str[] = {
+    "IPPROTO_TCP",
+    "IPPROTO_UDP",
+    "IPPROTO_ICMP"
+};
+char* socket_protocol_to_str(int protocol){
+    return socket_protocol_str[protocol];
+}
+
 /**
  * Example:
  * 
@@ -63,6 +90,18 @@ static int __sock_add_skb(struct sock* socket, struct sk_buff* skb)
     return ERROR_OK;
 }
 
+int net_get_sockets(struct sockets* sockets)
+{
+    struct sockets _sockets = {
+        .sockets = socket_table,
+        .total_sockets = NET_NUMBER_OF_SOCKETS 
+    };
+
+    *sockets = _sockets;
+
+    return ERROR_OK;
+}
+
 error_t net_sock_read(struct sock* sock, uint8_t* buffer, unsigned int length)
 {
 	dbgprintf(" [SOCK] Waiting for data... %d\n", sock);
@@ -91,7 +130,7 @@ error_t net_sock_read(struct sock* sock, uint8_t* buffer, unsigned int length)
 
         dbgprintf("[SOCK] Received %d from socket %d\n", to_read, sock);
     });
-
+  
 	return to_read;
 }
 
@@ -120,8 +159,9 @@ static inline error_t net_sock_add_data_segment(struct sock* sock, struct sk_buf
         struct pcb* pcb = sock->waiting;
         sock->waiting = NULL;
         pcb->state = RUNNING;
-
     }
+
+    sock->rx += skb->data_len;
 
     return ERROR_OK;
 }
@@ -255,6 +295,8 @@ void kernel_sock_close(struct sock* socket)
     kfree((void*) socket);
     unset_bitmap(socket_map, (int)socket->socket);
 
+    socket_table[socket->socket] = NULL;
+
     total_sockets--;
 }
 
@@ -283,7 +325,10 @@ struct sock* kernel_socket(int domain, int type, int protocol)
     socket_table[current]->type = type;
     socket_table[current]->socket = current;
     socket_table[current]->bound_port = 0;
+    socket_table[current]->bound_ip = 0;
     socket_table[current]->tcp = NULL;
+    socket_table[current]->rx = 0;
+    socket_table[current]->tx = 0;
 
     socket_table[current]->recv_buffer = rbuffer_new(NET_MAX_BUFFER_SIZE);
 	socket_table[current]->data_ready = 0;

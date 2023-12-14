@@ -59,6 +59,8 @@ void __kthread_entry udptest()
     if(ret < 0){
         dbgprintf("Unable to send UDP packet\n");
     }
+
+    kernel_sock_close(socket);
 }
 EXPORT_KTHREAD(udptest);
 

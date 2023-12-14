@@ -130,7 +130,7 @@ void ksyms_add_symbol(const char* name, uintptr_t addr) {
         dbgprintf("Added new symbol %s at 0x%x\n", name, addr);
         __ksyms.num_symbols++;
     } else {
-        twrite("Error: symbol table full\n");
+        twritef("Error: symbol table full\n");
     }
 }
 

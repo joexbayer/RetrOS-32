@@ -81,7 +81,7 @@ struct tcp_header
     uint16_t urg_ptr;
 };
 
-
+char* tcp_state_to_str(tcp_state_t state);
 int tcp_is_listening(struct sock* sock);
 int tcp_set_listening(struct sock* sock, int backlog);
 
