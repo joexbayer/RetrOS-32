@@ -54,9 +54,6 @@ void __kthread_entry tcp_server()
         buffer[ret] = 0;
 
         dbgprintf(" Recieved '%s' (%d bytes)\n", buffer, ret);
-
-        char* test = "Hello world!\n";
-        ret = kernel_send(client, test, strlen(test), 0);
     }
 
     kernel_sock_close(socket);

@@ -182,6 +182,8 @@ struct sock* kernel_accept(struct sock* socket, struct sockaddr *address, sockle
         return NULL;
     }
 
+    socket->accept_sock = new_socket;
+
     /* Wait for a new connection. */
     net_sock_accept(socket, new_socket);
 

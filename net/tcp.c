@@ -234,24 +234,14 @@ int tcp_accept_connection(struct sock* sock, struct sock* new)
      * ESTABLISHED. Although the original socket will be used in 
      * get the first SYN.
      */
-    while(sock->tcp->state == TCP_LISTEN){
+    while(tcp_is_listening(sock)){
         sock->waiting = current_running;
         current_running->state = BLOCKED;
         kernel_yield();
     }
 
-    /**
-     * @brief At this point we can assume the state
-     * is TCP_SYN_RCVD. We can now configure the new socket.
-     * A tcp SYN/ACK packet has been sent to the client.
-     */ 
-    assert(sock->tcp->state == TCP_SYN_RCVD);
-
-    ret = net_prepare_tcp_sock(new, sock->bound_port, &sock->recv_addr);
-    if(ret < 0){
-        dbgprintf("[TCP] Unable to prepare new socket!\n");
-        return -2;
-    }
+	dbgprintf("[TCP] New socket %d created\n", new);
+	memset(&sock->recv_addr, 0, sizeof(struct sockaddr_in));
    
 	/**
      * @brief Now we wait for the client to send a ACK packet. 
@@ -467,7 +457,7 @@ int tcp_parse(struct sk_buff* skb)
 		return -1;
 	}
 
-	dbgprintf("[TCP] Incoming TCP packet: %d syn, %d ack, %d fin\n", hdr->syn, hdr->ack, hdr->fin);
+	dbgprintf("[TCP] Incoming TCP packet: %d syn, %d ack, %d fin %d push\n", hdr->syn, hdr->ack, hdr->fin, hdr->psh);
 
 	switch (sk->tcp->state){
 	case TCP_LISTEN:
@@ -480,6 +470,8 @@ int tcp_parse(struct sk_buff* skb)
 			 */
 			sk->recv_addr.sin_port = hdr->source;
 			sk->recv_addr.sin_addr.s_addr = skb->hdr.ip->saddr;
+
+			net_prepare_tcp_sock(sk->accept_sock, sk->bound_port, &sk->recv_addr);
 
 			dbgprintf("Socket %d received syn for %d\n", sk, hdr->seq);
 
@@ -494,7 +486,7 @@ int tcp_parse(struct sk_buff* skb)
 			 * Currently it is the LISTEN socket.
 			 */
 			dbgprintf("Socket %d received ack for %d\n", sk, hdr->ack_seq);
-			sk->tcp->state = TCP_ESTABLISHED;
+			sk->tcp->state = TCP_LISTEN;
 		}
 		break;
 	
