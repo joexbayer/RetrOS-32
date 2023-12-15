@@ -186,14 +186,17 @@ struct sock* kernel_accept(struct sock* socket, struct sockaddr *address, sockle
     net_sock_accept(socket, new_socket);
 
     /* Copy address of sender to address. */
-    struct sockaddr_in* addr = (struct sockaddr_in*) address;
-    memcpy(addr, &new_socket->recv_addr, sizeof(struct sockaddr_in));
+    if(address != NULL){
+        struct sockaddr_in* addr = (struct sockaddr_in*) address;
+        memcpy(addr, &new_socket->recv_addr, sizeof(struct sockaddr_in));
+    }
 
     return new_socket;
 }
 
 error_t kernel_listen(struct sock* socket, int backlog)
 {
+    tcp_new_connection(socket, 0, socket->bound_port);
     return tcp_set_listening(socket, backlog);
 }
 

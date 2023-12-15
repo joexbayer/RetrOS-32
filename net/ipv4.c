@@ -22,6 +22,24 @@
 #include <serial.h>
 #include <net/interface.h>
 
+int net_ipv4_print(struct ip_header* hdr)
+{
+    dbgprintf("IPv4 Header:\n");
+    dbgprintf("  Version: %d\n", hdr->version);
+    dbgprintf("  IHL: %d\n", hdr->ihl);
+    dbgprintf("  TOS: %d\n", hdr->tos);
+    dbgprintf("  Length: %d\n", hdr->len);
+    dbgprintf("  ID: %d\n", hdr->id);
+    dbgprintf("  Frag Offset: %d\n", hdr->frag_offset);
+    dbgprintf("  TTL: %d\n", hdr->ttl);
+    dbgprintf("  Protocol: %d\n", hdr->proto);
+    dbgprintf("  Checksum: %d\n", hdr->csum);
+    dbgprintf("  Source IP: %i\n", hdr->saddr);
+    dbgprintf("  Destination IP: %i\n", hdr->daddr );
+
+    return 0;
+}
+
 /**
  * @brief Creates and attaches IP header to SKB
  * 
@@ -33,23 +51,6 @@
  */
 int net_ipv4_add_header(struct sk_buff* skb, uint32_t ip, uint8_t proto, uint32_t length)
 {
-    struct ip_header hdr = {
-        .version = IPV4,
-        .ihl = 0x05,
-        .tos = 0,
-        .len = length+hdr.ihl*4,
-        .frag_offset = 0x4000,
-        .ttl = 64,
-        .proto = proto,
-        .saddr = dhcp_get_ip(),
-        .daddr = ip,
-        .csum = 0
-    };
-    IP_HTONL(&hdr);
-    hdr.csum = checksum(&hdr, hdr.ihl * 4, 0);
-
-    skb->proto = IP;
-
     /* Setup interface */
     uint32_t next_hop = route(ip);
     struct net_interface* iface = net_get_iface(next_hop);
@@ -58,6 +59,24 @@ int net_ipv4_add_header(struct sk_buff* skb, uint32_t ip, uint8_t proto, uint32_
         return -1;
     }
     skb->interface = iface;
+
+    struct ip_header hdr = {
+        .version = IPV4,
+        .ihl = 0x05,
+        .tos = 0,
+        .len = length+hdr.ihl*4,
+        .frag_offset = 0x4000,
+        .ttl = 64,
+        .proto = proto,
+        .saddr = iface->ip,
+        .daddr = ip,
+        .csum = 0
+    };
+    net_ipv4_print(&hdr); 
+    IP_HTONL(&hdr);
+    hdr.csum = checksum(&hdr, hdr.ihl * 4, 0);
+
+    skb->proto = IP;
 
     /* Add ethernet header */
 	int ret = net_ethernet_add_header(skb, next_hop);
@@ -100,9 +119,10 @@ int net_ipv4_parse(struct sk_buff* skb)
 
     IP_NTOHL(hdr);
     skb->data = skb->data+hdr_len;
+    net_ipv4_print(hdr);
 
     if(BROADCAST_IP != ntohl(skb->hdr.ip->daddr) && ntohl(skb->hdr.ip->daddr) != (uint32_t)skb->interface->ip){
-        dbgprintf("IP mismatch: %d %d\n", skb->hdr.ip->daddr, skb->interface->ip);
+        dbgprintf("IP mismatch: destination %i, interface: %i\n", ntohl(skb->hdr.ip->daddr), (uint32_t)skb->interface->ip);
         return -1; /* Currently only accept broadcast packets. */
     }
 

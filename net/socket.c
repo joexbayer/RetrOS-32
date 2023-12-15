@@ -28,8 +28,9 @@ static bitmap_t port_map;
 static bitmap_t socket_map;
 
 static const char* socket_type_str[] = {
-    "SOCK_TCP",
+    "SOCK",
     "SOCK_UDP",
+    "SOCK_TCP",
     "SOCK_RAW"
 };
 const char* socket_type_to_str(int type){
@@ -247,13 +248,17 @@ struct sock* sock_find_listen_tcp(uint16_t d_port)
 
 struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip)
 {
+    dbgprintf("[TCP] Looking for socket %d:%d\n", htons(s_port), htons(d_port));
     struct sock* _sk = NULL; /* save listen socket incase no established connection is found. */
     for (int i = 0; i < NET_NUMBER_OF_SOCKETS; i++){
         if(socket_table[i] == NULL || socket_table[i]->tcp == NULL)
             continue;
+
+        dbgprintf("[TCP] Checking %d:%d (%i %i)\n", htons(socket_table[i]->recv_addr.sin_port), htons(socket_table[i]->bound_port), socket_table[i]->recv_addr.sin_addr.s_addr, ip);
         
-        if(socket_table[i]->bound_port == d_port &&  socket_table[i]->tcp->state == TCP_LISTEN)
+        if(socket_table[i]->bound_port == d_port &&  socket_table[i]->tcp->state == TCP_LISTEN){
             _sk = socket_table[i];
+        }
 
         if(socket_table[i]->bound_port == d_port &&  socket_table[i]->recv_addr.sin_port == s_port && socket_table[i]->tcp->state != TCP_LISTEN && socket_table[i]->recv_addr.sin_addr.s_addr == ip)
             return socket_table[i];

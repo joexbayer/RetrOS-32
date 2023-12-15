@@ -22,7 +22,67 @@
 #include <ksyms.h>
 #include <kthreads.h>
 
-void __kthread_entry local_udp_server()
+void __kthread_entry tcp_server()
+{
+    struct sock* socket = kernel_socket_create(AF_INET, SOCK_STREAM, 0);
+    struct sockaddr_in dest_addr;
+
+    dest_addr.sin_addr.s_addr = INADDR_ANY;
+    dest_addr.sin_port = htons(8080);
+    dest_addr.sin_family = AF_INET;
+
+    kernel_bind(socket, (struct sockaddr*) &dest_addr, sizeof(dest_addr));
+
+    dbgprintf("TCP Server listening on port 8080\n");
+
+    kernel_listen(socket, 5);
+
+
+    struct sockaddr_in client_addr; 
+    struct sock* client = kernel_accept(socket, &client_addr, sizeof(client_addr));
+    if (client == NULL){
+        dbgprintf("Unable to accept connection: client is NULL\n");
+        kernel_exit();
+    }
+    
+
+    dbgprintf("Client connected from %i:%d\n", client_addr.sin_addr.s_addr, client_addr.sin_port);
+
+    char buffer[255];
+    while(1){
+        int ret = kernel_recv(client, buffer, 255, 0);
+        buffer[ret] = 0;
+
+        dbgprintf(" Recieved '%s' (%d bytes)\n", buffer, ret);
+
+        char* test = "Hello world!\n";
+        ret = kernel_send(client, test, strlen(test), 0);
+    }
+
+    kernel_sock_close(socket);
+}
+EXPORT_KTHREAD(tcp_server);
+
+void __kthread_entry tcptest()
+{
+    struct sock* socket = kernel_socket_create(AF_INET, SOCK_STREAM, 0);
+    struct sockaddr_in dest_addr;
+
+    dest_addr.sin_addr.s_addr = ntohl(LOOPBACK_IP);
+    dest_addr.sin_port = htons(8080);
+    dest_addr.sin_family = AF_INET;
+
+    kernel_connect(socket, (struct sockaddr*) &dest_addr, sizeof(dest_addr));
+
+    char* test = "Hello world!\n";
+    int ret = kernel_send(socket, test, strlen(test), 0);
+
+    kernel_sock_close(socket);
+}
+EXPORT_KTHREAD(tcptest);
+
+
+void __kthread_entry udp_server()
 {
     struct sock* socket = kernel_socket_create(AF_INET, SOCK_DGRAM, 0);
     struct sockaddr_in dest_addr;
@@ -42,8 +102,10 @@ void __kthread_entry local_udp_server()
 
         dbgprintf(" Recieved '%s' (%d bytes)\n", buffer, ret);
     }
+
+    kernel_sock_close(socket);
 }
-EXPORT_KTHREAD(local_udp_server);
+EXPORT_KTHREAD(udp_server);
 
 void __kthread_entry udptest()
 {

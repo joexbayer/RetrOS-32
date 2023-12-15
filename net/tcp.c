@@ -64,16 +64,16 @@ int tcp_free_connection(struct sock* sock)
 
 inline int tcp_is_listening(struct sock* sock)
 {
-	/* create backlog queue, I do not check if there already is a queue... */
-	sock->backlog.queue = skb_new_queue();
-	ERR_ON_NULL(sock->backlog.queue);
-	sock->backlog.size = 0;
 	
 	return sock->tcp->state == TCP_LISTEN;
 }
 
 inline int tcp_set_listening(struct sock* sock, int backlog)
 {
+	/* create backlog queue, I do not check if there already is a queue... */
+	sock->backlog.queue = skb_new_queue();
+	ERR_ON_NULL(sock->backlog.queue);
+	sock->backlog.size = 0;
 	
 	sock->tcp->backlog = backlog;
 	sock->tcp->state = TCP_LISTEN;
@@ -130,7 +130,7 @@ uint16_t tcp_calculate_checksum(uint32_t src_ip, uint32_t dest_ip, unsigned shor
  */
 static int __tcp_send(struct sock* sock, struct tcp_header* hdr, struct sk_buff* skb, uint8_t* data, uint32_t len)
 {
-	if(net_ipv4_add_header(skb, ntohl(sock->recv_addr.sin_addr.s_addr), TCP, sizeof(struct tcp_header)+len) < 0){
+	if(net_ipv4_add_header(skb, sock->recv_addr.sin_addr.s_addr, TCP, sizeof(struct tcp_header)+len) < 0){
 		skb_free(skb);	
 		return -1;
 	}
@@ -224,6 +224,7 @@ int tcp_accept_connection(struct sock* sock, struct sock* new)
 {
 	int ret;
     if(sock->tcp == NULL || sock->tcp->state != TCP_LISTEN){
+		dbgprintf("[TCP] Socket %d is not listening\n", sock);
         return -1;
      }
 
@@ -478,7 +479,9 @@ int tcp_parse(struct sk_buff* skb)
 			 * This is techinically bad as we access IP in TCP.
 			 */
 			sk->recv_addr.sin_port = hdr->source;
-			sk->recv_addr.sin_addr.s_addr = htonl(skb->hdr.ip->saddr);
+			sk->recv_addr.sin_addr.s_addr = skb->hdr.ip->saddr;
+
+			dbgprintf("Socket %d received syn for %d\n", sk, hdr->seq);
 
 			return tcp_recv_syn(sk, hdr);
 		}

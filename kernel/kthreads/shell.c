@@ -446,7 +446,7 @@ void socks(void)
 		struct sock* sock = socks.sockets[i];
 		if(sock == NULL) continue;
 
-		term->ops->writef(term, "  %d) %i:%d %s %s %s\n  tx: %d  rx: %d\n", i, sock->bound_ip == 1 ? 0 : sock->bound_ip, ntohs(sock->bound_port), socket_type_to_str(sock->type), socket_domain_to_str(sock->domain), sock->tcp ? tcp_state_to_str(sock->tcp->state) : "", sock->tx, sock->rx);
+		term->ops->writef(term, "%d) %i:%d %s %s %s\n  tx: %d  rx: %d\n\n", i, sock->bound_ip == 1 ? 0 : sock->bound_ip, ntohs(sock->bound_port), socket_type_to_str(sock->type), socket_domain_to_str(sock->domain), sock->tcp ? tcp_state_to_str(sock->tcp->state) : "", sock->tx, sock->rx);
 	}
 }
 EXPORT_KSYMBOL(socks);
