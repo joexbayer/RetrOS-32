@@ -204,7 +204,7 @@ void __kthread_entry dhcpd()
 
     int ret;
     /* Create and bind DHCP socket to DHCP_SOURCE_PORT and INADDR_ANY. */
-    struct sock* dhcp_socket = kernel_socket(AF_INET, SOCK_DGRAM, 0);
+    struct sock* dhcp_socket = kernel_socket_create(AF_INET, SOCK_DGRAM, 0);
     struct sockaddr_in dest_addr;
 
     dhcp_state.state = DHCP_PENDING;

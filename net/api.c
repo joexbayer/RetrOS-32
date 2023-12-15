@@ -6,6 +6,8 @@
 #include <serial.h>
 #include <lib/net.h>
 
+#pragma GCC diagnostic ignored "-Wcast-function-type"
+
 /* systemcall layer */
 error_t sys_kernel_bind(socket_t socket, const struct sockaddr *address, socklen_t address_len)
 {
@@ -23,7 +25,11 @@ error_t sys_kernel_accept(socket_t socket, struct sockaddr *address, socklen_t *
     if(sock == NULL)
         return -ERROR_INVALID_SOCKET;
 
-    return kernel_accept(sock, address, address_len);
+    struct sock* new = kernel_accept(sock, address, address_len);
+    if(new == NULL)
+        return -ERROR_INVALID_SOCKET;
+
+    return new->socket;
 }
 EXPORT_SYSCALL(SYSCALL_NET_SOCK_ACCEPT, sys_kernel_accept);
 
@@ -97,14 +103,14 @@ error_t sys_kernel_sendto(socket_t socket, struct net_buffer *net_buffer, const 
 }
 EXPORT_SYSCALL(SYSCALL_NET_SOCK_SENDTO, sys_kernel_sendto);
 
-socket_t sys_kernel_socket(int domain, int type, int protocol)
+socket_t sys_socket_create(int domain, int type, int protocol)
 {
-    struct sock* sock = kernel_socket(domain, type, protocol);
+    struct sock* sock = kernel_socket_create(domain, type, protocol);
     if(sock == NULL)
         return -ERROR_INVALID_SOCKET;
     return sock->socket;
 }
-EXPORT_SYSCALL(SYSCALL_NET_SOCK_SOCKET, sys_kernel_socket);
+EXPORT_SYSCALL(SYSCALL_NET_SOCK_SOCKET, sys_socket_create);
 
 void sys_kernel_sock_close(socket_t socket)
 {
@@ -117,3 +123,5 @@ void sys_kernel_sock_close(socket_t socket)
     kernel_sock_close(sock);
 }
 EXPORT_SYSCALL(SYSCALL_NET_SOCK_CLOSE, sys_kernel_sock_close);
+
+#pragma GCC diagnostic pop

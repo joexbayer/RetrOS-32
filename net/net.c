@@ -158,17 +158,38 @@ error_t kernel_sendto(struct sock* socket, const void *message, int length, int 
     return length;
 }
 
-error_t kernel_accept(struct sock* socket, struct sockaddr *address, socklen_t *address_len)
+/**
+ * @brief Creates a new socket.
+ * Creates new socket and prepares it for remote sender.
+ * New socket inherits domain, type and protocol from parent socket.
+ * @see net_sock_accept 
+ * @warning Is blocking and assumes socket to be TCP
+ * @param domain Domain of socket.
+ * @param type Type of socket.
+ * @param protocol Protocol of socket.
+ * @return struct sock*, NULL if failed.
+ */
+struct sock* kernel_accept(struct sock* socket, struct sockaddr *address, socklen_t *address_len)
 {
-
     /* accept: only is valid in a TCP connection context. */
-    if(!tcp_is_listening(socket))
-        return -1;
+    if(!tcp_is_listening(socket)){
+        return NULL;
+    }
     
     /* Create new TCP socket? */
-    
+    struct sock* new_socket = kernel_socket_create(socket->domain, socket->type, socket->protocol);
+    if(new_socket == NULL){
+        return NULL;
+    }
 
-    return 0;
+    /* Wait for a new connection. */
+    net_sock_accept(socket, new_socket);
+
+    /* Copy address of sender to address. */
+    struct sockaddr_in* addr = (struct sockaddr_in*) address;
+    memcpy(addr, &new_socket->recv_addr, sizeof(struct sockaddr_in));
+
+    return new_socket;
 }
 
 error_t kernel_listen(struct sock* socket, int backlog)

@@ -32,7 +32,7 @@ static const char* socket_type_str[] = {
     "SOCK_UDP",
     "SOCK_RAW"
 };
-char* socket_type_to_str(int type){
+const char* socket_type_to_str(int type){
     return socket_type_str[type];
 }
 
@@ -41,7 +41,7 @@ static const char* socket_domain_str[] = {
     "AF_INET6",
     "AF_UNIX"
 };
-char* socket_domain_to_str(int domain){
+const char* socket_domain_to_str(int domain){
     return socket_domain_str[domain];
 }
 
@@ -50,7 +50,7 @@ static const char* socket_protocol_str[] = {
     "IPPROTO_UDP",
     "IPPROTO_ICMP"
 };
-char* socket_protocol_to_str(int protocol){
+const char* socket_protocol_to_str(int protocol){
     return socket_protocol_str[protocol];
 }
 
@@ -262,6 +262,27 @@ struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip)
     return _sk;
 }
 
+int net_prepare_tcp_sock(struct sock* sock, uint16_t port, struct sockaddr_in* addr)
+{
+    /* TODO: Should not be INADDR_ANY but the IP parent socket. */
+    net_sock_bind(sock, port, INADDR_ANY);
+
+    struct sockaddr_in* sptr = &sock->recv_addr;
+    memcpy(sptr, addr, sizeof(struct sockaddr_in));
+
+    tcp_new_connection(sock, addr->sin_port, port);
+    if(sock->tcp == NULL){
+        dbgprintf("[TCP] Unable to create new connection!\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+int net_sock_accept(struct sock* sock, struct sock* new)
+{
+    return tcp_accept_connection(sock, new);
+}
 
 struct sock* net_socket_find_udp(uint32_t ip, uint16_t port) 
 {   
@@ -308,7 +329,7 @@ void kernel_sock_close(struct sock* socket)
  * @param protocol Protocol (UDP / TCP)
  * @return socket_t 
  */
-struct sock* kernel_socket(int domain, int type, int protocol)
+struct sock* kernel_socket_create(int domain, int type, int protocol)
 {
 
     /* Should be a lock? */
@@ -316,6 +337,12 @@ struct sock* kernel_socket(int domain, int type, int protocol)
 
     //int current = get_free_bitmap(socket_map, NET_NUMBER_OF_SOCKETS);
     int current = get_free_bitmap(socket_map, NET_NUMBER_OF_SOCKETS);
+    if(current == -1){
+        warningf("Unable to create socket, no free sockets!\n");
+        LEAVE_CRITICAL();
+        return NULL;
+    }
+
 
     socket_table[current] = kalloc(sizeof(struct sock)); /* Allocate space for a socket. Needs to be freed. */
     memset(socket_table[current], 0, sizeof(struct sock));

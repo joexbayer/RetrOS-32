@@ -13,7 +13,7 @@ error_t sys_kernel_recvfrom(socket_t socket, struct net_buffer *net_buffer, stru
 error_t sys_kernel_recv_timeout(socket_t socket, struct net_buffer *net_buffer, int timeout);
 error_t sys_kernel_send(socket_t socket, struct net_buffer *net_buffer);
 error_t sys_kernel_sendto(socket_t socket, struct net_buffer *net_buffer, const struct sockaddr *dest_addr, socklen_t dest_len);
-socket_t sys_kernel_socket(int domain, int type, int protocol);
+socket_t sys_kernel_socket_create(int domain, int type, int protocol);
 void sys_kernel_sock_close(socket_t socket);
 
 #endif // !__NET_API_H

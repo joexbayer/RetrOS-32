@@ -24,7 +24,7 @@
 
 void __kthread_entry local_udp_server()
 {
-    struct sock* socket = kernel_socket(AF_INET, SOCK_DGRAM, 0);
+    struct sock* socket = kernel_socket_create(AF_INET, SOCK_DGRAM, 0);
     struct sockaddr_in dest_addr;
 
     dest_addr.sin_addr.s_addr = INADDR_ANY;
@@ -47,7 +47,7 @@ EXPORT_KTHREAD(local_udp_server);
 
 void __kthread_entry udptest()
 {
-    struct sock* socket = kernel_socket(AF_INET, SOCK_DGRAM, 0);
+    struct sock* socket = kernel_socket_create(AF_INET, SOCK_DGRAM, 0);
     struct sockaddr_in dest_addr;
 
     dest_addr.sin_addr.s_addr = htonl(LOOPBACK_IP); 
@@ -67,7 +67,7 @@ EXPORT_KTHREAD(udptest);
 void __kthread_entry tcpd()
 {
     int ret;
-    struct sock* socket = kernel_socket(AF_INET, SOCK_STREAM, 0);
+    struct sock* socket = kernel_socket_create(AF_INET, SOCK_STREAM, 0);
     struct sockaddr_in dest_addr;
 
     int ip = gethostname("tcpbin.com\0");

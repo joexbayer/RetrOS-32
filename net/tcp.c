@@ -9,6 +9,8 @@
 #include <scheduler.h>
 #include <errors.h>
 
+#define IS_TCP_SOCKET(sock) (sock->type == SOCK_STREAM && sock->tcp != NULL)	
+
 static const char* tcp_state_str[] = {
 	"TCP_CREATED",
 	"TCP_CLOSED",
@@ -24,15 +26,23 @@ static const char* tcp_state_str[] = {
 	"TCP_CLOSE_WAIT",
 	"TCP_LAST_ACK"
 };
-
-char* tcp_state_to_str(tcp_state_t state)
-{
+char* tcp_state_to_str(tcp_state_t state){
 	return (char*)tcp_state_str[state];
 }
 
+/**
+ * @brief Creates a new TCP connection.
+ * Function allocates memory for a new TCP connection and initializes it.
+ * @param sock generic socket to create connection for.
+ * @param dst_port destination port.
+ * @param src_port source port.
+ * @return int 0 on success, -1 on failure.
+ */
 int tcp_new_connection(struct sock* sock, uint16_t dst_port, uint16_t src_port)
 {
 	sock->tcp = kalloc(sizeof(struct tcp_connection));
+	ERR_ON_NULL(sock->tcp);
+
 	memset(sock->tcp, 0, sizeof(struct tcp_connection));
 	sock->tcp->dport = dst_port;
 	sock->tcp->sport = src_port;
@@ -54,6 +64,11 @@ int tcp_free_connection(struct sock* sock)
 
 inline int tcp_is_listening(struct sock* sock)
 {
+	/* create backlog queue, I do not check if there already is a queue... */
+	sock->backlog.queue = skb_new_queue();
+	ERR_ON_NULL(sock->backlog.queue);
+	sock->backlog.size = 0;
+	
 	return sock->tcp->state == TCP_LISTEN;
 }
 
@@ -205,6 +220,52 @@ int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t pus
 	return -1;
 }
 
+int tcp_accept_connection(struct sock* sock, struct sock* new)
+{
+	int ret;
+    if(sock->tcp == NULL || sock->tcp->state != TCP_LISTEN){
+        return -1;
+     }
+
+    /**
+     * @brief Wait till new socket has recieved a ACK packet. 
+     * Here we will block/wait for a the new socket to have state 
+     * ESTABLISHED. Although the original socket will be used in 
+     * get the first SYN.
+     */
+    while(sock->tcp->state == TCP_LISTEN){
+        sock->waiting = current_running;
+        current_running->state = BLOCKED;
+        kernel_yield();
+    }
+
+    /**
+     * @brief At this point we can assume the state
+     * is TCP_SYN_RCVD. We can now configure the new socket.
+     * A tcp SYN/ACK packet has been sent to the client.
+     */ 
+    assert(sock->tcp->state == TCP_SYN_RCVD);
+
+    ret = net_prepare_tcp_sock(new, sock->bound_port, &sock->recv_addr);
+    if(ret < 0){
+        dbgprintf("[TCP] Unable to prepare new socket!\n");
+        return -2;
+    }
+   
+	/**
+     * @brief Now we wait for the client to send a ACK packet. 
+     * After that we are ready to go!
+	 * TODO: What if the ACK is lost? Probably needs a timeout.
+     */
+    while(sock->tcp->state != TCP_LISTEN){
+        sock->waiting = current_running;
+        current_running->state = BLOCKED;
+        kernel_yield();
+    }
+
+	return ERROR_OK; 
+}
+
 int tcp_send_ack(struct sock* sock, struct tcp_header* tcp, int len)
 {
 	struct sk_buff* skb = skb_new();
@@ -352,6 +413,9 @@ int tcp_recv_syn(struct sock* sock, struct tcp_header* tcp)
     sock->tcp->acknowledgement = htonl(tcp->seq) + 1;
 	sock->tcp->state = TCP_SYN_RCVD;
 
+	/* store information from remote in recv_addr */
+	sock->recv_addr.sin_port = tcp->source;
+
 	return ERROR_OK;
 }
 
@@ -387,7 +451,6 @@ int tcp_close_connection(struct sock* sock)
 	return ERROR_OK;
 }
 
-
 int tcp_parse(struct sk_buff* skb)
 {
 	/* Look if there is an active TCP connection, if not look for accept. */
@@ -408,12 +471,27 @@ int tcp_parse(struct sk_buff* skb)
 	switch (sk->tcp->state){
 	case TCP_LISTEN:
 		if(hdr->syn == 1 && hdr->ack == 0){
+			/**
+			 * @brief Store the remote address in recv_addr of
+			 * listening socket. This will be overwritten for each
+			 * new accepted socket.
+			 * This is techinically bad as we access IP in TCP.
+			 */
+			sk->recv_addr.sin_port = hdr->source;
+			sk->recv_addr.sin_addr.s_addr = htonl(skb->hdr.ip->saddr);
+
 			return tcp_recv_syn(sk, hdr);
 		}
 		break;
 	case TCP_SYN_RCVD:
 		if(hdr->syn == 0 && hdr->ack == 1){
-			/* Handle syn / ack */
+			/**
+			 * @brief Should this ACK be received by the LISTEN socket
+			 * or newly created socket? 
+			 * Currently it is the LISTEN socket.
+			 */
+			dbgprintf("Socket %d received ack for %d\n", sk, hdr->ack_seq);
+			sk->tcp->state = TCP_ESTABLISHED;
 		}
 		break;
 	

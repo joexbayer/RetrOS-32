@@ -32,11 +32,16 @@ struct sock {
     uint16_t bound_ip;
 
     struct skb_queue* skb_queue;
+    struct _backlog {
+        struct skb_queue* queue;
+        int size;
+    } backlog;
 
     struct ring_buffer* recv_buffer;
 	signal_value_t data_ready;
 	uint32_t recvd;
 
+    /* address info of remote socket */
     struct sockaddr_in recv_addr;
 
     /* if tcp socket */
@@ -73,12 +78,14 @@ error_t net_sock_read(struct sock* sock, uint8_t* buffer, unsigned int length);
 
 struct sock* sock_find_listen_tcp(uint16_t d_port);
 
+int net_sock_accept(struct sock* sock, struct sock* new);
+int net_prepare_tcp_sock(struct sock* sock, uint16_t port, struct sockaddr_in* addr);
 struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip);
 struct sock* net_socket_find_udp(uint32_t ip, uint16_t port);
 
-char* socket_type_to_str(int type);
-char* socket_state_to_str(int state);
-char* socket_protocol_to_str(int protocol);
+const char* socket_type_to_str(int type);
+const char* socket_domain_to_str(int domain);
+const char* socket_protocol_to_str(int protocol);
 
 
 
