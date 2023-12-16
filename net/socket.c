@@ -263,6 +263,7 @@ struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip)
         if(socket_table[i]->bound_port == d_port && socket_table[i]->recv_addr.sin_port == s_port
             && socket_table[i]->tcp->state != TCP_LISTEN
             && socket_table[i]->tcp->state != TCP_SYN_RCVD
+            && socket_table[i]->tcp->state != TCP_PREPARE
             && ntohl(socket_table[i]->recv_addr.sin_addr.s_addr) == ip
             //&& (socket_table[i]->tcp->state == TCP_ESTABLISHED || socket_table[i]->tcp->state == TCP_SYN_SENT)
             ){
@@ -271,8 +272,9 @@ struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip)
             }
     }
 
-    if(_sk != NULL)
+    if(_sk != NULL){
         dbgprintf("[TCP] Found socket %d\n", _sk->socket);
+    }
     return _sk;
 }
 
@@ -289,7 +291,7 @@ int net_prepare_tcp_sock(struct sock* sock, uint16_t port, struct sockaddr_in* a
         dbgprintf("[TCP] Unable to create new connection!\n");
         return -1;
     }
-    sock->tcp->state = TCP_ESTABLISHED;
+    sock->tcp->state = TCP_PREPARE;
 
     dbgprintf("[TCP] Preparing socket %d\n", sock->socket);
 

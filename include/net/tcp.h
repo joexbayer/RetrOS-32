@@ -21,7 +21,8 @@ typedef enum {
 	TCP_CLOSING,
 	TCP_TIME_WAIT,
 	TCP_CLOSE_WAIT,
-	TCP_LAST_ACK
+	TCP_LAST_ACK,
+	TCP_PREPARE
 } tcp_state_t;
 
 struct tcp_connection {

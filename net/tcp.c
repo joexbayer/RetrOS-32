@@ -24,7 +24,8 @@ static const char* tcp_state_str[] = {
 	"TCP_CLOSING",
 	"TCP_TIME_WAIT",
 	"TCP_CLOSE_WAIT",
-	"TCP_LAST_ACK"
+	"TCP_LAST_ACK",
+	"TCP_PREPARE"
 };
 char* tcp_state_to_str(tcp_state_t state){
 	return (char*)tcp_state_str[state];
@@ -484,9 +485,16 @@ int tcp_parse(struct sk_buff* skb)
 			 * @brief Should this ACK be received by the LISTEN socket
 			 * or newly created socket? 
 			 * Currently it is the LISTEN socket.
+			 * 
+			 * Everything bad:
 			 */
 			dbgprintf("Socket %d received ack for %d\n", sk, hdr->ack_seq);
 			sk->tcp->state = TCP_LISTEN;
+			sk->accept_sock->tcp->state = TCP_ESTABLISHED;
+			sk->accept_sock->tcp->acknowledgement = htonl(hdr->seq);
+			sk->accept_sock->tcp->sequence = hdr->ack_seq;
+			sk->accept_sock = NULL;
+			memset(&sk->recv_addr, 0, sizeof(struct sockaddr_in));
 		}
 		break;
 	
@@ -521,7 +529,7 @@ int tcp_parse(struct sk_buff* skb)
 			 * sock->tcp->sequence == htonl(tcp->seq)
 			 */
 			if (sk->tcp->acknowledgement != htonl(hdr->seq)) {
-				dbgprintf("[TCP] Out-of-order packet received. Expected seq: %d, received seq: %d\n", htonl(sk->tcp->acknowledgement), htonl(hdr->seq));
+				dbgprintf("[TCP] Out-of-order packet received. Expected seq: %d, received seq: %d\n",sk->tcp->acknowledgement, htonl(hdr->seq));
 				return -1;
 			}
 
