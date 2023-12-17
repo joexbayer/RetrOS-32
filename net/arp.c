@@ -8,12 +8,17 @@
  * @copyright Copyright (c) 2022
  * 
  */
-
+#include <kconfig.h>
 #include <net/arp.h>
 #include <net/dhcp.h>
 #include <net/net.h>
 #include <terminal.h>
 #include <serial.h>
+
+#ifndef KDEBUG_NET_ARP
+#undef dbgprintf
+#define dbgprintf(...)
+#endif
 
 #define MAX_ARP_ENTRIES 25
 

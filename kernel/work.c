@@ -1,9 +1,16 @@
+
+#include <kconfig.h>
 #include <work.h>
 #include <util.h>
 #include <scheduler.h>
 #include <serial.h>
 #include <assert.h>
 #include <memory.h>
+
+#ifndef KDEBUG_WORKER
+#undef dbgprintf
+#define dbgprintf(...)
+#endif
 
 /* Limits amount of works in queue and eliminates the need for kalloc */
 #define WORK_POOL_SIZE 25

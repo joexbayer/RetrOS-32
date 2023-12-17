@@ -170,7 +170,7 @@ static void sysinf_draw_net(struct window* w, struct tab* tab)
     struct net_interface** interfaces = net_get_interfaces();
     for (int i = 0; i < 2; i++){ /* we only currently support 2 interfaces */
         if(interfaces[i] == NULL) continue;
-        w->draw->textf(w, 30, (HEIGHT/3+10) + (HEIGHT/3-48)+10+10 + (i*40), 0,     "%s\n. Address:    %i\n. Netmask:    %i\n. Gateway:    %i", interfaces[i]->name, ntohl(interfaces[i]->ip), ntohl(interfaces[i]->netmask), ntohl(interfaces[i]->gateway));
+        w->draw->textf(w, 30, (HEIGHT/3+10) + (HEIGHT/3-48)+10+10 + (i*40), 0,     "%s\n. Address:    %i\n. Netmask:    %i\n. Gateway:    %i", interfaces[i]->name, interfaces[i]->ip, ntohl(interfaces[i]->netmask), ntohl(interfaces[i]->gateway));
     }
 }
 

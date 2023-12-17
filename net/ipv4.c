@@ -8,6 +8,7 @@
  * @copyright Copyright (c) 2022
  * 
  */
+#include <kconfig.h>
 
 #include <net/ipv4.h>
 #include <net/net.h>
@@ -21,6 +22,11 @@
 #include <net/dhcp.h>
 #include <serial.h>
 #include <net/interface.h>
+
+#ifndef KDEBUG_NET_IP
+#undef dbgprintf
+#define dbgprintf(...)
+#endif
 
 int net_ipv4_print(struct ip_header* hdr)
 {

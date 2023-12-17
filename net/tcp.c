@@ -56,7 +56,6 @@ int tcp_new_connection(struct sock* sock, uint16_t dst_port, uint16_t src_port)
 int tcp_free_connection(struct sock* sock)
 {
 	/* TODO: check for active connections */
-	tcp_close_connection(sock);
 	kfree(sock->tcp);
 	sock->tcp = NULL;
 
@@ -274,7 +273,9 @@ int tcp_send_ack(struct sock* sock, struct tcp_header* tcp, int len)
 	};
 
 	sock->tcp->sequence = htonl(tcp->ack_seq);
-	sock->tcp->acknowledgement = htonl(tcp->seq)+1;
+	sock->tcp->acknowledgement = htonl(tcp->seq)+len;
+
+	dbgprintf("[TCP] Sending ack for %d (seq: %d, ack: %d)\n", htonl(tcp->seq)+len, htonl(tcp->ack_seq), htonl(tcp->seq)+1);
 
 	__tcp_send(sock, &hdr, skb, NULL, 0);
 	return ERROR_OK;
@@ -411,6 +412,28 @@ int tcp_recv_syn(struct sock* sock, struct tcp_header* tcp)
 	return ERROR_OK;
 }
 
+int tcp_send_fin_ack(struct sock* sock)
+{
+	struct sk_buff* skb = skb_new();
+	assert(skb != NULL);
+
+	struct tcp_header hdr = {
+		.source = sock->bound_port,
+		.dest = sock->recv_addr.sin_port,
+		.window = 1500,
+		.seq = sock->tcp->sequence,
+		.ack_seq = sock->tcp->acknowledgement,
+		.doff = 0x05,
+		.ack = 1,
+		.fin = 1
+	};
+
+	sock->tcp->sequence += 1;
+
+	__tcp_send(sock, &hdr, skb, NULL, 0);
+	return ERROR_OK;
+}
+
 int tcp_send_fin(struct sock* sock)
 {
 	struct sk_buff* skb = skb_new();
@@ -476,6 +499,11 @@ int tcp_parse(struct sk_buff* skb)
 
 			dbgprintf("Socket %d received syn for %d\n", sk, hdr->seq);
 
+			if(sk->waiting != NULL){
+				sk->waiting->state = RUNNING;
+				sk->waiting = NULL;
+			}
+
 			return tcp_recv_syn(sk, hdr);
 		}
 		break;
@@ -486,15 +514,23 @@ int tcp_parse(struct sk_buff* skb)
 			 * or newly created socket? 
 			 * Currently it is the LISTEN socket.
 			 * 
-			 * Everything bad:
+			 * Everything bad: all the changes to accept_sock should not be done here.
+			 * Also has the risk of overwriting the recv_addr of the LISTEN socket.
+			 * And a packet for accept_sock could be received before the ACK for the LISTEN socket. 
 			 */
 			dbgprintf("Socket %d received ack for %d\n", sk, hdr->ack_seq);
 			sk->tcp->state = TCP_LISTEN;
+
 			sk->accept_sock->tcp->state = TCP_ESTABLISHED;
 			sk->accept_sock->tcp->acknowledgement = htonl(hdr->seq);
 			sk->accept_sock->tcp->sequence = hdr->ack_seq;
 			sk->accept_sock = NULL;
 			memset(&sk->recv_addr, 0, sizeof(struct sockaddr_in));
+
+			if(sk->waiting != NULL){
+				sk->waiting->state = RUNNING;
+				sk->waiting = NULL;
+			}
 		}
 		break;
 	
@@ -509,14 +545,14 @@ int tcp_parse(struct sk_buff* skb)
 		break;
 	case TCP_WAIT_ACK:
 		if(hdr->syn == 0 && hdr->ack == 1){
-			dbgprintf("Socket %d received ack for %d\n", sk, hdr->ack_seq);
+			dbgprintf("Socket %d received ack for %d\n", sk, htonl(hdr->ack_seq));
 			tcp_recv_ack(sk, hdr);
 			return ERROR_OK;
 		}
 		break;
 	case TCP_ESTABLISHED:
-		if(hdr->syn == 0 && hdr->ack == 1){
-			dbgprintf("Socket %d received data for %d\n", sk, hdr->ack_seq);
+		if(hdr->syn == 0 && hdr->ack == 1 && hdr->fin == 0){
+			dbgprintf("Socket %d received data for %d\n", sk, htonl(hdr->ack_seq));
 			/**
 			 * @brief This is where we should check if the packet is in order.
 			 * @see https://github.com/joexbayer/RetrOS-32/issues/34
@@ -540,11 +576,25 @@ int tcp_parse(struct sk_buff* skb)
 				skb_free(skb);
 			return ERROR_OK;
 		}
+
+		if(hdr->fin == 1){
+			dbgprintf("Socket %d received fin for %d\n", sk, htonl(hdr->ack_seq));
+			tcp_send_fin(sk);
+			sk->tcp->state = TCP_CLOSE_WAIT;
+			return ERROR_OK;
+		}
 		break;
 	case TCP_FIN_WAIT:
 		if(hdr->fin == 1 && hdr->ack == 1){
 			/* Connection succesfully closed */
 			tcp_send_ack(sk, hdr, 1);
+			sk->tcp->state = TCP_CLOSED;
+		}
+		skb_free(skb);
+		break;
+	case TCP_CLOSE_WAIT:
+		if(hdr->fin == 0 && hdr->ack == 1){
+			kernel_sock_cleanup(sk);
 			sk->tcp->state = TCP_CLOSED;
 		}
 		skb_free(skb);

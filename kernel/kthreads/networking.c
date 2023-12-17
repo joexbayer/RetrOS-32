@@ -140,7 +140,7 @@ int net_configure_iface(char* dev, uint32_t ip, uint32_t netmask, uint32_t gatew
     struct net_interface* interface = __net_find_interface(dev);
     if(interface == NULL) return -1;
 
-    interface->ip = ntohl(ip);
+    interface->ip = ip;
     interface->netmask = 0xffffff00;
     interface->gateway = ntohl(gateway);
     interface->ops->configure(interface, "eth0");

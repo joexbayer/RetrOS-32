@@ -8,11 +8,18 @@
  * @copyright Copyright (c) 2023
  * 
  */
+#include <kconfig.h>
 #include <memory.h>
 #include <serial.h>
 #include <sync.h>
 #include <bitmap.h>
 #include <assert.h>
+
+
+#ifndef KDEBUG_MEMORY
+#undef dbgprintf
+#define dbgprintf(...)
+#endif
 
 /* Dynamic kernel memory */
 

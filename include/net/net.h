@@ -23,6 +23,8 @@ struct net_interface** net_get_interfaces();
 /* defined in loopback.c */
 int net_init_loopback();
 
+void kernel_sock_cleanup(struct sock* socket);
+
 error_t kernel_bind(struct sock* socket, const struct sockaddr *address, socklen_t address_len);
 struct sock* kernel_accept(struct sock* socket, struct sockaddr *address, socklen_t *address_len);
 error_t kernel_connect(struct sock* socket, const struct sockaddr *address, socklen_t address_len);

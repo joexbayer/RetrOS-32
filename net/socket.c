@@ -254,7 +254,9 @@ struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip)
         if(socket_table[i] == NULL || socket_table[i]->tcp == NULL)
             continue;
 
-        dbgprintf("[TCP] Checking %d: source %d: destination %d (%i %i) %s\n", i, htons(socket_table[i]->recv_addr.sin_port), htons(socket_table[i]->bound_port), ntohl(socket_table[i]->recv_addr.sin_addr.s_addr), ip, tcp_state_to_str(socket_table[i]->tcp->state));
+        dbgprintf("[TCP] Checking %d: source %d: destination %d (%i %i) %s (seq: %d - ack: %d)\n",
+            i, htons(socket_table[i]->recv_addr.sin_port), htons(socket_table[i]->bound_port), ntohl(socket_table[i]->recv_addr.sin_addr.s_addr), ip, tcp_state_to_str(socket_table[i]->tcp->state),
+            socket_table[i]->tcp->sequence, socket_table[i]->tcp->acknowledgement);
         
         if(socket_table[i]->bound_port == d_port && (socket_table[i]->tcp->state == TCP_LISTEN || socket_table[i]->tcp->state == TCP_SYN_RCVD)){
             _sk = socket_table[i];
@@ -317,9 +319,16 @@ struct sock* net_socket_find_udp(uint32_t ip, uint16_t port)
     return NULL;
 }
 
-void kernel_sock_close(struct sock* socket)
+void kernel_sock_shutdown(struct sock* socket, int how)
 {
-    dbgprintf("Closing socket...\n");
+    if(socket->type == SOCK_STREAM && socket->tcp != NULL){
+        tcp_close_connection(socket);
+    }
+}
+
+void kernel_sock_cleanup(struct sock* socket)
+{
+    tcp_free_connection(socket);
 
     while(SKB_QUEUE_READY(socket->skb_queue)){
         struct sk_buff* skb = socket->skb_queue->ops->remove(socket->skb_queue);
@@ -329,15 +338,21 @@ void kernel_sock_close(struct sock* socket)
     skb_free_queue(socket->skb_queue);
     rbuffer_free(socket->recv_buffer);
 
-    if(socket->type == SOCK_STREAM && socket->tcp != NULL)
-        tcp_free_connection(socket);
-
     kfree((void*) socket);
     unset_bitmap(socket_map, (int)socket->socket);
 
     socket_table[socket->socket] = NULL;
 
     total_sockets--;
+}
+
+void kernel_sock_close(struct sock* socket)
+{
+    dbgprintf("Closing socket...\n");
+
+    kernel_sock_shutdown(socket, 0);
+
+    kernel_sock_cleanup(socket);
 }
 
 /**

@@ -37,26 +37,26 @@ void __kthread_entry tcp_server()
 
     kernel_listen(socket, 5);
 
-
-    struct sockaddr_in client_addr; 
-    struct sock* client = kernel_accept(socket, &client_addr, sizeof(client_addr));
-    if (client == NULL){
-        dbgprintf("Unable to accept connection: client is NULL\n");
-        kernel_exit();
-    }
-    
-
-    dbgprintf("Client connected from %i:%d\n", client_addr.sin_addr.s_addr, client_addr.sin_port);
-
-    char buffer[255];
     while(1){
-        int ret = kernel_recv(client, buffer, 255, 0);
-        buffer[ret] = 0;
+        struct sockaddr_in client_addr; 
+        struct sock* client = kernel_accept(socket, &client_addr, sizeof(client_addr));
+        if (client == NULL){
+            dbgprintf("Unable to accept connection: client is NULL\n");
+            kernel_exit();
+        }
 
-        dbgprintf(" Recieved '%s' (%d bytes)\n", buffer, ret);
+        dbgprintf("Client connected from %i:%d\n", client_addr.sin_addr.s_addr, client_addr.sin_port);
+
+        char buffer[255];
+        while(1){
+            int ret = kernel_recv(client, buffer, 255, 0);
+            buffer[ret] = 0;
+
+            dbgprintf(" Recieved '%s' (%d bytes)\n", buffer, ret);
+        }
+
+        kernel_sock_close(client);
     }
-
-    kernel_sock_close(socket);
 }
 EXPORT_KTHREAD(tcp_server);
 
