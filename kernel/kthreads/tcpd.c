@@ -47,36 +47,26 @@ void __kthread_entry tcp_server()
 
         dbgprintf("Client connected from %i:%d\n", client_addr.sin_addr.s_addr, client_addr.sin_port);
 
-        char buffer[255];
-        int ret = kernel_recv(client, buffer, 255, 0);
+        char* buffer = kalloc(2000);
+        int ret = kernel_recv(client, buffer, 2000, 0);
         buffer[ret] = 0;
 
         dbgprintf(" Recieved '%s' (%d bytes)\n", buffer, ret);
 
+        kfree(buffer);
+
+        const char *http_response = 
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: text/plain\r\n"
+            "\r\n"
+            "Hello, world!";
+
+        ret = kernel_send(client, http_response, strlen(http_response), 0);
 
         kernel_sock_close(client);
     }
 }
 EXPORT_KTHREAD(tcp_server);
-
-void __kthread_entry tcptest()
-{
-    struct sock* socket = kernel_socket_create(AF_INET, SOCK_STREAM, 0);
-    struct sockaddr_in dest_addr;
-
-    dest_addr.sin_addr.s_addr = ntohl(LOOPBACK_IP);
-    dest_addr.sin_port = htons(8080);
-    dest_addr.sin_family = AF_INET;
-
-    kernel_connect(socket, (struct sockaddr*) &dest_addr, sizeof(dest_addr));
-
-    char* test = "Hello world!\n";
-    int ret = kernel_send(socket, test, strlen(test), 0);
-
-    kernel_sock_close(socket);
-}
-EXPORT_KTHREAD(tcptest);
-
 
 void __kthread_entry udp_server()
 {

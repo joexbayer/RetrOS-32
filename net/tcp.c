@@ -1,3 +1,4 @@
+#include <work.h>
 #include <net/tcp.h>
 #include <memory.h>
 #include <net/skb.h>
@@ -60,7 +61,7 @@ int tcp_new_connection(struct sock* sock, uint16_t dst_port, uint16_t src_port)
 	sock->tcp->dport = dst_port;
 	sock->tcp->sport = src_port;
 	sock->tcp->state = TCP_CREATED;
-	sock->tcp->sequence = 227728011;
+	sock->tcp->sequence = 1;
 
 	return ERROR_OK;
 }
@@ -420,28 +421,6 @@ int tcp_recv_syn(struct sock* sock, struct tcp_header* tcp)
 	return ERROR_OK;
 }
 
-int tcp_send_fin_ack(struct sock* sock)
-{
-	struct sk_buff* skb = skb_new();
-	assert(skb != NULL);
-
-	struct tcp_header hdr = {
-		.source = sock->bound_port,
-		.dest = sock->recv_addr.sin_port,
-		.window = 1500,
-		.seq = sock->tcp->sequence,
-		.ack_seq = sock->tcp->acknowledgement,
-		.doff = 0x05,
-		.ack = 1,
-		.fin = 1
-	};
-
-	sock->tcp->sequence += 1;
-
-	__tcp_send(sock, &hdr, skb, NULL, 0);
-	return ERROR_OK;
-}
-
 int tcp_send_fin(struct sock* sock)
 {
 	struct sk_buff* skb = skb_new();
@@ -460,13 +439,15 @@ int tcp_send_fin(struct sock* sock)
 
 	sock->tcp->sequence += 1;
 
+	dbgprintf("[TCP] Sending fin for %d\n", sock->socket);
+
 	__tcp_send(sock, &hdr, skb, NULL, 0);
 	return ERROR_OK;
 }
 
 int tcp_close_connection(struct sock* sock)
 {
-	sock->tcp->state = TCP_FIN_WAIT;
+	sock->tcp->state = TCP_CLOSE_WAIT;
 	tcp_send_fin(sock);
 
 	WAIT(!(sock->tcp->state == TCP_CLOSED));
@@ -494,6 +475,16 @@ int tcp_parse(struct sk_buff* skb)
 	switch (sk->tcp->state){
 	case TCP_LISTEN:
 		if(hdr->syn == 1 && hdr->ack == 0){
+			
+			/**
+			 * @brief Temporary solution to the problem of the LISTEN socket 
+			 * @see https://github.com/joexbayer/RetrOS-32/issues/104
+			 */
+			if(sk->accept_sock == NULL){
+				skb_free(skb);
+				break;
+			}
+
 			/**
 			 * @brief Store the remote address in recv_addr of
 			 * listening socket. This will be overwritten for each
@@ -523,7 +514,7 @@ int tcp_parse(struct sk_buff* skb)
 			 * Also has the risk of overwriting the recv_addr of the LISTEN socket.
 			 * And a packet for accept_sock could be received before the ACK for the LISTEN socket. 
 			 */
-			dbgprintf("Socket %d received ack for %d\n", sk, hdr->ack_seq);
+			dbgprintf("Received ACK for SYN (%d)\n", sk->socket);
 			sk->tcp->state = TCP_LISTEN;
 
 			sk->accept_sock->tcp->state = TCP_ESTABLISHED;
@@ -533,7 +524,15 @@ int tcp_parse(struct sk_buff* skb)
 			memset(&sk->recv_addr, 0, sizeof(struct sockaddr_in));
 
 			TCP_UNBLOCK(sk);
+			return ERROR_OK;
 		}
+		/*if(hdr->syn == 1 && hdr->ack == 0){
+			if(sk->backlog.size > 0){
+				sk->backlog.queue->ops->add(sk->backlog.queue, skb);
+				sk->backlog.size--;
+			}
+			return ERROR_OK;
+		}*/
 		break;
 	
 	case TCP_SYN_SENT:
@@ -571,7 +570,6 @@ int tcp_parse(struct sk_buff* skb)
 				return -1;
 			}
 
-
 			int ret = net_sock_add_data(sk, skb);
 			tcp_send_ack(sk, hdr, skb->data_len);
 			if(ret == 0)
@@ -579,10 +577,17 @@ int tcp_parse(struct sk_buff* skb)
 			return ERROR_OK;
 		}
 
-		if(hdr->fin == 1){
+		if(hdr->fin == 1 && hdr->ack == 1){
 			dbgprintf("Socket %d received fin for %d\n", sk, htonl(hdr->ack_seq));
+			tcp_send_ack(sk, hdr, 1);
+
+			/**
+			 * @brief Wait if data still needs to be sent.
+			 * If we receive a fin/ack, we ack it but only send
+			 * a fin if we have no more data to send.
+			 */
 			tcp_send_fin(sk);
-			sk->tcp->state = TCP_CLOSE_WAIT;
+			sk->tcp->state = TCP_CLOSE_WAIT2;
 			return ERROR_OK;
 		}
 		break;
@@ -596,10 +601,16 @@ int tcp_parse(struct sk_buff* skb)
 		break;
 	case TCP_CLOSE_WAIT:
 		if(hdr->fin == 0 && hdr->ack == 1){	
-			sk->tcp->state = TCP_CLOSED;
+			sk->tcp->state = TCP_FIN_WAIT;
 		}
 		skb_free(skb);
 		break;
+	case TCP_CLOSE_WAIT2:
+		if(hdr->fin == 0 && hdr->ack == 1){	
+			sk->tcp->state = TCP_CLOSED;
+		}
+		skb_free(skb);
+		break;	
 	default:
 		break;
 	}

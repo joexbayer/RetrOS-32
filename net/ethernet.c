@@ -9,7 +9,13 @@
  * 
  */
 #include <net/ethernet.h>
+#include <kconfig.h>
 #include <serial.h>
+
+#ifndef KDEBUG_ETH
+#undef dbgprintf
+#define dbgprintf(...)
+#endif // !KDEBUG_ETH
 
 static void net_ethernet_print(struct ethernet_header* hdr)
 {

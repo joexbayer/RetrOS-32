@@ -8,6 +8,8 @@
  * @copyright Copyright (c) 2022
  * 
  */
+
+#include <kconfig.h>
 #include <kutils.h>
 #include <scheduler.h>
 #include <serial.h>
@@ -28,6 +30,11 @@
 #include <net/net.h>
 #include <net/dhcp.h>
 #include <net/arp.h>
+
+#ifndef KDEBUG_NET_DAEMON
+#undef dbgprintf
+#define dbgprintf(...)
+#endif // !#define KDEBUG_NET_DAEMON
 
 #define MAX_PACKET_SIZE 0x600
 
@@ -268,70 +275,6 @@ error_t net_get_info(struct net_info* info)
     return ERROR_OK;
 }
 
-int net_debug_packet(struct sk_buff* skb)
-{
-    /* Print all packet information */
-    dbgprintf("Printing packet information\n");
-    dbgprintf("Ethernet header:\n");
-    dbgprintf("  Destination MAC: %x:%x:%x:%x:%x:%x\n", skb->hdr.eth->dmac[0], skb->hdr.eth->dmac[1], skb->hdr.eth->dmac[2], skb->hdr.eth->dmac[3], skb->hdr.eth->dmac[4], skb->hdr.eth->dmac[5]);
-    dbgprintf("  Source MAC: %x:%x:%x:%x:%x:%x\n", skb->hdr.eth->smac[0], skb->hdr.eth->smac[1], skb->hdr.eth->smac[2], skb->hdr.eth->smac[3], skb->hdr.eth->smac[4], skb->hdr.eth->smac[5]);
-
-    switch(ntohs(skb->hdr.eth->ethertype)){
-        case ARP:
-            dbgprintf("  Ethertype: ARP\n");
-            break;
-        case IP:
-            dbgprintf("  Ethertype: IP\n");
-            dbgprintf("IP header:\n");
-            dbgprintf("  Version: %d\n", skb->hdr.ip->version);
-            dbgprintf("  IHL: %d\n", skb->hdr.ip->ihl);
-            dbgprintf("  TOS: %d\n", skb->hdr.ip->tos);
-            dbgprintf("  Length: %d\n", skb->hdr.ip->len);
-            dbgprintf("  Fragment offset: %d\n", skb->hdr.ip->frag_offset);
-            dbgprintf("  TTL: %d\n", skb->hdr.ip->ttl);
-            dbgprintf("  Protocol: %d\n", skb->hdr.ip->proto);
-            dbgprintf("  Source IP: %i\n", ntohl(skb->hdr.ip->saddr));
-            dbgprintf("  Destination IP: %i\n", ntohl(skb->hdr.ip->daddr));
-
-            switch(skb->hdr.ip->proto){
-                case ICMPV4:
-                    dbgprintf("  Protocol: ICMP\n");
-                    dbgprintf("ICMP header:\n");
-                    dbgprintf("  Type: %d\n", skb->hdr.icmp->type);
-                    dbgprintf("  Code: %d\n", skb->hdr.icmp->code);
-                    dbgprintf("  Checksum: %d\n", skb->hdr.icmp->csum);
-                    break;
-                case UDP:
-                    dbgprintf("  Protocol: UDP\n");
-                    dbgprintf("UDP header:\n");
-                    dbgprintf("  Source port: %d\n", ntohs(skb->hdr.udp->srcport));
-                    dbgprintf("  Destination port: %d\n", ntohs(skb->hdr.udp->destport));
-                    dbgprintf("  Length: %d\n", skb->hdr.udp->udp_length);
-                    dbgprintf("  Checksum: %d\n", skb->hdr.udp->checksum);
-                    break;
-                case TCP:
-                    dbgprintf("  Protocol: TCP\n");
-                    dbgprintf("TCP header:\n");
-                    dbgprintf("  Source port: %d\n", ntohs(skb->hdr.tcp->source));
-                    dbgprintf("  Destination port: %d\n", ntohs(skb->hdr.tcp->dest));
-                    dbgprintf("  Sequence number: %d\n", skb->hdr.tcp->seq);
-                    dbgprintf("  Acknowledgement number: %d\n", skb->hdr.tcp->ack);
-                    dbgprintf("  Data offset: %d\n", skb->hdr.tcp->doff);
-                    dbgprintf("  Window size: %d\n", skb->hdr.tcp->window);
-                    dbgprintf("  Checksum: %d\n", skb->hdr.tcp->check);
-                    dbgprintf("  Urgent pointer: %d\n", skb->hdr.tcp->urg_ptr);
-                    break;
-                default:
-                    dbgprintf("  Protocol: Unknown\n");
-                    break;
-            }
-            
-            break;
-        default:
-            dbgprintf("  Ethertype: Unknown\n");
-            break;
-    }
-}
 
 static int net_handle_recieve(struct sk_buff* skb)
 {

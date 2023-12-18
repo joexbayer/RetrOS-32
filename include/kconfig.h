@@ -28,6 +28,8 @@
 //#define KDEBUG_WORKER
 
 /* net */
+//#define KDEBUG_ETH
+//#define KDEBUG_NET_DAEMON
 //#define KDEBUG_NET_ARP
 #define KDEBUG_NET_ICMP
 //#define KDEBUG_NET_IP

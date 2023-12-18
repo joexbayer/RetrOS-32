@@ -160,7 +160,7 @@ drop:
 	rx_desc_list[next].status = 0;
 	next = (next + 1) % RX_SIZE;
 	E1000_DEVICE_SET(E1000_RDT) = (tail + 1 ) % RX_SIZE;
-	dbgprintf("[e1000] received %d bytes! (tail: %d) (\n", length, next);
+	//dbgprintf("[e1000] received %d bytes! (tail: %d) (\n", length, next);
 	return length;
 }
 

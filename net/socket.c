@@ -254,8 +254,8 @@ struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip)
         if(socket_table[i] == NULL || socket_table[i]->tcp == NULL)
             continue;
 
-        dbgprintf("[TCP] Checking %d: source %d: destination %d (%i %i) %s (seq: %d - ack: %d)\n",
-            i, htons(socket_table[i]->recv_addr.sin_port), htons(socket_table[i]->bound_port), ntohl(socket_table[i]->recv_addr.sin_addr.s_addr), ip, tcp_state_to_str(socket_table[i]->tcp->state),
+        dbgprintf("[TCP] Checking %d %s: source %d: destination %d (%i %i) %s (seq: %d - ack: %d)\n", i,
+            socket_table[i]->owner->name, htons(socket_table[i]->recv_addr.sin_port), htons(socket_table[i]->bound_port), ntohl(socket_table[i]->recv_addr.sin_addr.s_addr), ip, tcp_state_to_str(socket_table[i]->tcp->state),
             socket_table[i]->tcp->sequence, socket_table[i]->tcp->acknowledgement);
         
         if(socket_table[i]->bound_port == d_port && (socket_table[i]->tcp->state == TCP_LISTEN || socket_table[i]->tcp->state == TCP_SYN_RCVD)){
@@ -282,6 +282,8 @@ struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip)
 
 int net_prepare_tcp_sock(struct sock* sock, uint16_t port, struct sockaddr_in* addr)
 {
+ 
+
     /* TODO: Should not be INADDR_ANY but the IP parent socket. */
     net_sock_bind(sock, port, INADDR_ANY);
 
@@ -399,6 +401,8 @@ struct sock* kernel_socket_create(int domain, int type, int protocol)
 
     socket_table[current]->waiting = NULL;
     socket_table[current]->accept_sock = NULL;
+
+    socket_table[current]->owner = current_running;
 
     mutex_init(&(socket_table[current]->lock));
 

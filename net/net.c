@@ -172,7 +172,7 @@ error_t kernel_sendto(struct sock* socket, const void *message, int length, int 
 struct sock* kernel_accept(struct sock* socket, struct sockaddr *address, socklen_t *address_len)
 {
     /* accept: only is valid in a TCP connection context. */
-    if(!tcp_is_listening(socket)){
+    if(socket->tcp == NULL){
         return NULL;
     }
     
@@ -181,16 +181,16 @@ struct sock* kernel_accept(struct sock* socket, struct sockaddr *address, sockle
     if(new_socket == NULL){
         return NULL;
     }
-
     socket->accept_sock = new_socket;
+   
 
     /* Wait for a new connection. */
-    net_sock_accept(socket, new_socket);
+    net_sock_accept(socket, socket->accept_sock);
 
     /* Copy address of sender to address. */
     if(address != NULL){
         struct sockaddr_in* addr = (struct sockaddr_in*) address;
-        memcpy(addr, &new_socket->recv_addr, sizeof(struct sockaddr_in));
+        memcpy(addr, &socket->accept_sock->recv_addr, sizeof(struct sockaddr_in));
     }
 
     return new_socket;
