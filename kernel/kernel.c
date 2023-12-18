@@ -3,6 +3,7 @@
 #include <windowmanager.h>
 #include <util.h>
 #include <pci.h>
+#include <smp.h>
 #include <terminal.h>
 #include <keyboard.h>
 #include <arch/interrupts.h>
@@ -86,6 +87,8 @@ void kernel(uint32_t magic)
 
 	ENTER_CRITICAL();
     init_serial();
+
+	smp_init();
 
 	dbgprintf("INF: %s - %s\n", KERNEL_NAME, KERNEL_VERSION);
 

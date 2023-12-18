@@ -43,7 +43,7 @@
 #include <vbe.h>
 
 #define SHELL_HEIGHT 225 /* 275 */
-#define SHELL_WIDTH 350 /* 300 */
+#define SHELL_WIDTH 375 /* 300 */
 #define SHELL_POSITION shell_height-8
 #define SHELL_MAX_SIZE SHELL_WIDTH/2
 

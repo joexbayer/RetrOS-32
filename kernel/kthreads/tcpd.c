@@ -48,12 +48,11 @@ void __kthread_entry tcp_server()
         dbgprintf("Client connected from %i:%d\n", client_addr.sin_addr.s_addr, client_addr.sin_port);
 
         char buffer[255];
-        while(1){
-            int ret = kernel_recv(client, buffer, 255, 0);
-            buffer[ret] = 0;
+        int ret = kernel_recv(client, buffer, 255, 0);
+        buffer[ret] = 0;
 
-            dbgprintf(" Recieved '%s' (%d bytes)\n", buffer, ret);
-        }
+        dbgprintf(" Recieved '%s' (%d bytes)\n", buffer, ret);
+
 
         kernel_sock_close(client);
     }
@@ -135,7 +134,7 @@ void __kthread_entry tcpd()
         kernel_exit();
     }
 
-    dest_addr.sin_addr.s_addr = ip;
+    dest_addr.sin_addr.s_addr = htonl(ip);
     dest_addr.sin_port = htons(4242);
     dest_addr.sin_family = AF_INET;
 

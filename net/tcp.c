@@ -9,7 +9,19 @@
 #include <scheduler.h>
 #include <errors.h>
 
-#define IS_TCP_SOCKET(sock) (sock->type == SOCK_STREAM && sock->tcp != NULL)	
+#define IS_TCP_SOCKET(sock) (sock->type == SOCK_STREAM && sock->tcp != NULL)
+
+#define TCP_BLOCK(sock)\
+	sock->waiting = current_running;\
+	current_running->state = BLOCKED;\
+	kernel_yield();
+
+#define TCP_UNBLOCK(sock)\
+	if(sock->waiting != NULL){\
+		sock->waiting->state = RUNNING;\
+		sock->waiting = NULL;\
+	}
+
 
 static const char* tcp_state_str[] = {
 	"TCP_CREATED",
@@ -131,7 +143,7 @@ uint16_t tcp_calculate_checksum(uint32_t src_ip, uint32_t dest_ip, unsigned shor
 static int __tcp_send(struct sock* sock, struct tcp_header* hdr, struct sk_buff* skb, uint8_t* data, uint32_t len)
 {
 	if(net_ipv4_add_header(skb, sock->recv_addr.sin_addr.s_addr, TCP, sizeof(struct tcp_header)+len) < 0){
-		skb_free(skb);	
+		skb_free(skb);
 		return -1;
 	}
 	TCP_HTONS(hdr);
@@ -150,7 +162,7 @@ static int __tcp_send(struct sock* sock, struct tcp_header* hdr, struct sk_buff*
 		skb->data += len;
 	}
 
-	hdr->check = tcp_calculate_checksum(dhcp_get_ip(), sock->recv_addr.sin_addr.s_addr, (unsigned short*)hdr, sizeof(struct tcp_header)+len);
+	hdr->check = tcp_calculate_checksum(skb->hdr.ip->daddr, skb->hdr.ip->saddr, (unsigned short*)hdr, sizeof(struct tcp_header)+len);
 
 	net_send_skb(skb);
 
@@ -235,9 +247,7 @@ int tcp_accept_connection(struct sock* sock, struct sock* new)
      * get the first SYN.
      */
     while(tcp_is_listening(sock)){
-        sock->waiting = current_running;
-        current_running->state = BLOCKED;
-        kernel_yield();
+		TCP_BLOCK(sock);
     }
 
 	dbgprintf("[TCP] New socket %d created\n", new);
@@ -249,9 +259,7 @@ int tcp_accept_connection(struct sock* sock, struct sock* new)
 	 * TODO: What if the ACK is lost? Probably needs a timeout.
      */
     while(sock->tcp->state != TCP_LISTEN){
-        sock->waiting = current_running;
-        current_running->state = BLOCKED;
-        kernel_yield();
+        TCP_BLOCK(sock);
     }
 
 	return ERROR_OK; 
@@ -499,10 +507,7 @@ int tcp_parse(struct sk_buff* skb)
 
 			dbgprintf("Socket %d received syn for %d\n", sk, hdr->seq);
 
-			if(sk->waiting != NULL){
-				sk->waiting->state = RUNNING;
-				sk->waiting = NULL;
-			}
+			TCP_UNBLOCK(sk);
 
 			return tcp_recv_syn(sk, hdr);
 		}
@@ -527,10 +532,7 @@ int tcp_parse(struct sk_buff* skb)
 			sk->accept_sock = NULL;
 			memset(&sk->recv_addr, 0, sizeof(struct sockaddr_in));
 
-			if(sk->waiting != NULL){
-				sk->waiting->state = RUNNING;
-				sk->waiting = NULL;
-			}
+			TCP_UNBLOCK(sk);
 		}
 		break;
 	
@@ -593,8 +595,7 @@ int tcp_parse(struct sk_buff* skb)
 		skb_free(skb);
 		break;
 	case TCP_CLOSE_WAIT:
-		if(hdr->fin == 0 && hdr->ack == 1){
-			kernel_sock_cleanup(sk);
+		if(hdr->fin == 0 && hdr->ack == 1){	
 			sk->tcp->state = TCP_CLOSED;
 		}
 		skb_free(skb);

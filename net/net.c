@@ -209,6 +209,10 @@ error_t kernel_send(struct sock* socket, void *message, int length, int flags)
         return -ERROR_MSS_SIZE;
     }
 
+    if(socket == NULL || (socket->tcp == NULL && socket->tcp->state == TCP_CLOSED)){
+        return -ERROR_INVALID_SOCKET;
+    }
+
     /**
      * This should not be done by the process calling this function. 
      * Instead by another process, perhaps the worker thread.

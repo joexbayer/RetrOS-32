@@ -321,7 +321,7 @@ struct sock* net_socket_find_udp(uint32_t ip, uint16_t port)
 
 void kernel_sock_shutdown(struct sock* socket, int how)
 {
-    if(socket->type == SOCK_STREAM && socket->tcp != NULL){
+    if(socket->type == SOCK_STREAM && socket->tcp != NULL && socket->tcp->state != TCP_CLOSED){
         tcp_close_connection(socket);
     }
 }

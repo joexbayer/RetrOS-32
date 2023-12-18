@@ -93,6 +93,7 @@ int net_ipv4_add_header(struct sk_buff* skb, uint32_t ip, uint8_t proto, uint32_
 
     /* Add IP header to packet */
     memcpy(skb->data, &hdr, sizeof(struct ip_header));
+    skb->hdr.ip = (struct ip_header*) skb->data;
     skb->len += hdr.ihl * 4;
     skb->data += hdr.ihl * 4;
 
