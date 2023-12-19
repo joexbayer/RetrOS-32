@@ -21,6 +21,9 @@
 FILE* filesystem = NULL;
 #define DEBUG 1
 
+/* TODO: as argv */
+static const int IMG_SIZE = 16*1024*1024;
+
 int mkfsv2_load_bootloader()
 {
     char bootblock[BOOTBLOCK_SIZE];
@@ -79,8 +82,6 @@ int mkfsv2_load_kernel()
     return kernel_block_count;
 }
 
-/* TODO: as argv */
-static const int IMG_SIZE = 32*1024*1024;
 
 int main(int argc, char const *argv[])
 {

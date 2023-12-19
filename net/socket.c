@@ -282,8 +282,6 @@ struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip)
 
 int net_prepare_tcp_sock(struct sock* sock, uint16_t port, struct sockaddr_in* addr)
 {
- 
-
     /* TODO: Should not be INADDR_ANY but the IP parent socket. */
     net_sock_bind(sock, port, INADDR_ANY);
 

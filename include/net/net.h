@@ -1,11 +1,70 @@
 #ifndef __NET_H
 #define __NET_H
 
+#include <stdint.h>
+#include <kutils.h>
 #include <net/skb.h>
 #include <net/interface.h>
 #include <net/socket.h>
 
 #define LOOPBACK_IP 0x7f000001
+
+typedef enum net_connection_states {
+    NET_CONN_NEW,
+    NET_CONN_IN_PROGRESS,
+    NET_CONN_ESTABLISHED,
+} net_connection_state_t;
+
+/* prototypes */
+struct net;
+struct net_connection;
+
+struct network {
+    uint32_t root;
+    uint32_t netmask;
+    uint32_t gateway;
+    uint32_t broadcast;
+};
+
+struct net_connection_ops {
+    int (*init)(struct net* net);
+    int (*destroy)(struct net* net);
+    int (*send)(struct net* net, struct sk_buff* skb);
+    int (*recv)(struct net* net, struct sk_buff* skb);
+};
+
+struct net_connection {
+    net_connection_state_t state;
+    struct net_connection_ops* ops;
+
+    uint32_t src_ip;
+    uint32_t dst_ip;
+    uint16_t src_port;
+    uint16_t dst_port;
+    uint8_t protocol;
+};
+
+struct net_ops {
+    struct net_connection* (*connect)(struct net* net, ...);
+};
+
+struct net {
+    struct network network;
+    struct net_interface* interface;
+
+    /* connections */
+    struct net_connection* connections[32];
+    int connection_count;
+
+    struct kref ref;
+};
+
+struct net* net_create();
+void net_destroy(struct net* net);
+
+
+/* legacy  */
+
 struct net_info {
     int dropped;
     int sent;

@@ -1,3 +1,15 @@
+/**
+ * @file tcp.c
+ * @author your name (you@domain.com)
+ * @brief 
+ * @version 0.1
+ * @date 2023-12-19
+ * 
+ * @see https://ietf.org/rfc/rfc793.txt
+ * @copyright Copyright (c) 2023
+ * 
+ */
+
 #include <work.h>
 #include <net/tcp.h>
 #include <memory.h>
@@ -86,9 +98,10 @@ inline int tcp_set_listening(struct sock* sock, int backlog)
 	/* create backlog queue, I do not check if there already is a queue... */
 	sock->backlog.queue = skb_new_queue();
 	ERR_ON_NULL(sock->backlog.queue);
-	sock->backlog.size = 0;
-	
-	sock->tcp->backlog = backlog;
+
+	sock->backlog.size = backlog;
+	sock->backlog.count = 0;
+
 	sock->tcp->state = TCP_LISTEN;
 
 	return 1;
@@ -241,27 +254,30 @@ int tcp_accept_connection(struct sock* sock, struct sock* new)
         return -1;
      }
 
-    /**
-     * @brief Wait till new socket has recieved a ACK packet. 
-     * Here we will block/wait for a the new socket to have state 
-     * ESTABLISHED. Although the original socket will be used in 
-     * get the first SYN.
-     */
-    while(tcp_is_listening(sock)){
+    while(sock->backlog.count == 0){
+		dbgprintf("[TCP] Socket %d is listening but backlog is empty\n", sock);
 		TCP_BLOCK(sock);
-    }
+	}
 
-	dbgprintf("[TCP] New socket %d created\n", new);
-	memset(&sock->recv_addr, 0, sizeof(struct sockaddr_in));
-   
+	struct sk_buff* skb = sock->backlog.queue->ops->remove(sock->backlog.queue);
+	ERR_ON_NULL(skb);
+	sock->backlog.count--;
+
+	struct tcp_header* hdr = (struct tcp_header*) skb->hdr.tcp;
+
 	/**
-     * @brief Now we wait for the client to send a ACK packet. 
-     * After that we are ready to go!
-	 * TODO: What if the ACK is lost? Probably needs a timeout.
-     */
-    while(sock->tcp->state != TCP_LISTEN){
-        TCP_BLOCK(sock);
-    }
+	 * @brief This assumes that sock has a valid recv_addr. 
+	 */
+	net_prepare_tcp_sock(new, sock->bound_port, &sock->recv_addr);
+
+	new->tcp->state = TCP_ESTABLISHED;
+	new->tcp->acknowledgement = htonl(hdr->seq);
+	new->tcp->sequence = hdr->ack_seq;
+	sock->accept_sock = NULL;
+
+	memset(&sock->recv_addr, 0, sizeof(struct sockaddr_in));
+	
+	skb_free(skb);
 
 	return ERROR_OK; 
 }
@@ -475,14 +491,10 @@ int tcp_parse(struct sk_buff* skb)
 	switch (sk->tcp->state){
 	case TCP_LISTEN:
 		if(hdr->syn == 1 && hdr->ack == 0){
-			
-			/**
-			 * @brief Temporary solution to the problem of the LISTEN socket 
-			 * @see https://github.com/joexbayer/RetrOS-32/issues/104
-			 */
-			if(sk->accept_sock == NULL){
-				skb_free(skb);
-				break;
+
+			if(sk->backlog.count == sk->backlog.size){
+				dbgprintf("[TCP] Backlog is full, dropping packet\n");
+				return -1;
 			}
 
 			/**
@@ -494,11 +506,7 @@ int tcp_parse(struct sk_buff* skb)
 			sk->recv_addr.sin_port = hdr->source;
 			sk->recv_addr.sin_addr.s_addr = skb->hdr.ip->saddr;
 
-			net_prepare_tcp_sock(sk->accept_sock, sk->bound_port, &sk->recv_addr);
-
 			dbgprintf("Socket %d received syn for %d\n", sk, hdr->seq);
-
-			TCP_UNBLOCK(sk);
 
 			return tcp_recv_syn(sk, hdr);
 		}
@@ -506,33 +514,20 @@ int tcp_parse(struct sk_buff* skb)
 	case TCP_SYN_RCVD:
 		if(hdr->syn == 0 && hdr->ack == 1){
 			/**
-			 * @brief Should this ACK be received by the LISTEN socket
-			 * or newly created socket? 
-			 * Currently it is the LISTEN socket.
+			 * @brief Add to backlog 
 			 * 
-			 * Everything bad: all the changes to accept_sock should not be done here.
-			 * Also has the risk of overwriting the recv_addr of the LISTEN socket.
-			 * And a packet for accept_sock could be received before the ACK for the LISTEN socket. 
 			 */
+			if(sk->backlog.count < sk->backlog.size){
+				sk->backlog.queue->ops->add(sk->backlog.queue, skb);
+				sk->backlog.count++;
+			}
+
 			dbgprintf("Received ACK for SYN (%d)\n", sk->socket);
 			sk->tcp->state = TCP_LISTEN;
-
-			sk->accept_sock->tcp->state = TCP_ESTABLISHED;
-			sk->accept_sock->tcp->acknowledgement = htonl(hdr->seq);
-			sk->accept_sock->tcp->sequence = hdr->ack_seq;
-			sk->accept_sock = NULL;
-			memset(&sk->recv_addr, 0, sizeof(struct sockaddr_in));
 
 			TCP_UNBLOCK(sk);
 			return ERROR_OK;
 		}
-		/*if(hdr->syn == 1 && hdr->ack == 0){
-			if(sk->backlog.size > 0){
-				sk->backlog.queue->ops->add(sk->backlog.queue, skb);
-				sk->backlog.size--;
-			}
-			return ERROR_OK;
-		}*/
 		break;
 	
 	case TCP_SYN_SENT:
@@ -541,6 +536,7 @@ int tcp_parse(struct sk_buff* skb)
 			sk->tcp->state = TCP_ESTABLISHED;
 
 			dbgprintf("Socket %d set to established\n", sk);
+			skb_free(skb);
 			return ERROR_OK;
 		}
 		break;
@@ -548,6 +544,7 @@ int tcp_parse(struct sk_buff* skb)
 		if(hdr->syn == 0 && hdr->ack == 1){
 			dbgprintf("Socket %d received ack for %d\n", sk, htonl(hdr->ack_seq));
 			tcp_recv_ack(sk, hdr);
+			skb_free(skb);
 			return ERROR_OK;
 		}
 		break;
@@ -588,6 +585,7 @@ int tcp_parse(struct sk_buff* skb)
 			 */
 			tcp_send_fin(sk);
 			sk->tcp->state = TCP_CLOSE_WAIT2;
+			skb_free(skb);
 			return ERROR_OK;
 		}
 		break;
@@ -597,19 +595,16 @@ int tcp_parse(struct sk_buff* skb)
 			tcp_send_ack(sk, hdr, 1);
 			sk->tcp->state = TCP_CLOSED;
 		}
-		skb_free(skb);
 		break;
 	case TCP_CLOSE_WAIT:
 		if(hdr->fin == 0 && hdr->ack == 1){	
 			sk->tcp->state = TCP_FIN_WAIT;
 		}
-		skb_free(skb);
 		break;
 	case TCP_CLOSE_WAIT2:
 		if(hdr->fin == 0 && hdr->ack == 1){	
 			sk->tcp->state = TCP_CLOSED;
 		}
-		skb_free(skb);
 		break;	
 	default:
 		break;
