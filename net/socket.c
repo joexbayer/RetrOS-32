@@ -250,13 +250,19 @@ struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip)
 {
     dbgprintf("[TCP] Looking for socket destintation %d: source %d\n", htons(d_port), htons(s_port));
     struct sock* _sk = NULL; /* save listen socket incase no established connection is found. */
+
+    for (int i = 0; i < NET_NUMBER_OF_SOCKETS; i++){
+        if(socket_table[i] == NULL || socket_table[i]->tcp == NULL)
+            continue;
+       dbgprintf("[TCP] Checking %d %s: source %d: destination %d (%i %i) %s (seq: %d - ack: %d)\n", i,
+            socket_table[i]->owner->name, htons(socket_table[i]->recv_addr.sin_port), htons(socket_table[i]->bound_port), ntohl(socket_table[i]->recv_addr.sin_addr.s_addr), ip, tcp_state_to_str(socket_table[i]->tcp->state),
+            socket_table[i]->tcp->sequence, socket_table[i]->tcp->acknowledgement); 
+    }
+    
     for (int i = 0; i < NET_NUMBER_OF_SOCKETS; i++){
         if(socket_table[i] == NULL || socket_table[i]->tcp == NULL)
             continue;
 
-        dbgprintf("[TCP] Checking %d %s: source %d: destination %d (%i %i) %s (seq: %d - ack: %d)\n", i,
-            socket_table[i]->owner->name, htons(socket_table[i]->recv_addr.sin_port), htons(socket_table[i]->bound_port), ntohl(socket_table[i]->recv_addr.sin_addr.s_addr), ip, tcp_state_to_str(socket_table[i]->tcp->state),
-            socket_table[i]->tcp->sequence, socket_table[i]->tcp->acknowledgement);
         
         if(socket_table[i]->bound_port == d_port && (socket_table[i]->tcp->state == TCP_LISTEN || socket_table[i]->tcp->state == TCP_SYN_RCVD)){
             _sk = socket_table[i];

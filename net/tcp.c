@@ -197,19 +197,11 @@ int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t pus
 {
 	uint8_t retries;
 	uint32_t timeout;
+	int seq = sock->tcp->sequence;
+	int ack = sock->tcp->acknowledgement;
 	struct sk_buff* skb;
 
 	dbgprintf("[TCP] Sending segment with size %d, seq: %d (%d after)\n", len, sock->tcp->sequence, sock->tcp->sequence+len);
-	struct tcp_header hdr = {
-		.source = sock->bound_port,
-		.dest = sock->recv_addr.sin_port,
-		.window = 1500,
-		.seq = sock->tcp->sequence,
-		.ack_seq = sock->tcp->acknowledgement,
-		.doff = 0x05,
-		.ack = 1,
-		.psh = push
-	};
 
 	sock->tcp->sequence += len;
 
@@ -225,6 +217,17 @@ int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t pus
 	retries = 0;
 
 	do {
+		struct tcp_header hdr = {
+			.source = sock->bound_port,
+			.dest = sock->recv_addr.sin_port,
+			.window = 1500,
+			.seq = seq,
+			.ack_seq = ack,
+			.doff = 0x05,
+			.ack = 1,
+			.psh = push
+		};
+
 		skb = skb_new();
 		ERR_ON_NULL(skb);
 
@@ -232,14 +235,14 @@ int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t pus
 		__tcp_send(sock, &hdr, skb, data, len);
 
 		/* Wait for ACK */
-		timeout = get_time() + 500;
+		timeout = get_time() + 1;
 
 		/* check if ack was receiver for timeout seconds. */
 		while((uint32_t)get_time() < timeout){
 			kernel_yield();
 			if(!net_sock_awaiting_ack(sock)) return ERROR_OK;
 		}
-
+		dbgprintf("[TCP] Timeout for %d\n", htonl(hdr.seq));
 	} while (retries++ < 3);
 
 	dbgprintf("[TCP] Failed to send segment\n");
@@ -542,6 +545,14 @@ int tcp_parse(struct sk_buff* skb)
 		break;
 	case TCP_WAIT_ACK:
 		if(hdr->syn == 0 && hdr->ack == 1){
+			
+			/* check if i get a already acked retransmit */
+			if(sk->tcp->sequence > htonl(hdr->ack_seq)){
+				dbgprintf("[TCP] Received ack for already acked packet %d - %d\n", htonl(hdr->ack_seq), sk->tcp->acknowledgement);
+				skb_free(skb);
+				return ERROR_OK;
+			}
+
 			dbgprintf("Socket %d received ack for %d\n", sk, htonl(hdr->ack_seq));
 			tcp_recv_ack(sk, hdr);
 			skb_free(skb);
@@ -567,8 +578,9 @@ int tcp_parse(struct sk_buff* skb)
 				return -1;
 			}
 
-			int ret = net_sock_add_data(sk, skb);
 			tcp_send_ack(sk, hdr, skb->data_len);
+
+			int ret = net_sock_add_data(sk, skb);
 			if(ret == 0)
 				skb_free(skb);
 			return ERROR_OK;

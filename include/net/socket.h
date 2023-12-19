@@ -32,8 +32,9 @@ struct sock {
     uint16_t bound_ip;
 
     struct skb_queue* skb_queue;
-    struct _backlog {
+    volatile struct _backlog {
         struct skb_queue* queue;
+        int count;
         int size;
     } backlog;
 

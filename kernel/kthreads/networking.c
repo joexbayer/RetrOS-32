@@ -290,10 +290,8 @@ static int net_handle_recieve(struct sk_buff* skb)
                 break;
             
             case TCP:
-                if(tcp_parse(skb) < 0) return net_drop_packet(skb);
-                skb_free(skb);
+                if(tcp_parse(skb) < 0) return net_drop_packet(skb); 
                 break;
-            
             case ICMPV4:
                 if(net_icmp_parse(skb) < 0) return net_drop_packet(skb);
                 net_icmp_handle(skb);

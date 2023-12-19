@@ -53,7 +53,7 @@ void init_pit(uint32_t frequency)
 	/* The value we send to the PIT is the value to divide it's input clock */
 	/* (1193180 Hz) by, to get our required frequency. */
 	
-	uint32_t divisor = (1193180/2) / frequency;
+	uint32_t divisor = (1193180) / frequency;
 	//uint32_t divisor = (1193180) / frequency;
 
 	/* Send the command byte. */
