@@ -7,6 +7,8 @@ ASFLAGS=
 LDFLAGS= 
 MAKEFLAGS += --no-print-directory
 
+QEMU_OPS = -no-reboot -device e1000,netdev=net0 -serial stdio -netdev user,id=net0,hostfwd=tcp::8080-:8080 -object filter-dump,id=net0,netdev=net0,file=dump.dat -m 32m
+
 # ---------------- For counting how many files to compile ----------------
 ifneq ($(words $(MAKECMDGOALS)),1)
 .DEFAULT_GOAL = all
@@ -79,6 +81,7 @@ bootblock: $(BOOTOBJ)
 
 multiboot_kernel: bin/multiboot.o $(KERNELOBJ)
 	@$(LD) -o bin/kernelout $^ $(LDFLAGS) -T ./boot/multiboot.ld
+	@echo "[KERNEL]     Finished compiling kernel."
 
 # Idea taken from SerenityOS
 symbols: bin/multiboot.o $(KERNELOBJ)
@@ -190,6 +193,9 @@ grub: grub_fix apps multiboot_kernel
 	cp bin/kernelout legacy/multiboot/boot/myos.bin
 	$(GRUB)
 
+qemu_kernel: CCFLAGS += -DUSE_MULTIBOOT
+qemu_kernel: grub_fix grub_fix multiboot_kernel
+	sudo qemu-system-i386 $(QEMU_OPS) -kernel bin/kernelout
 
 docker-rebuild:
 	docker-compose build --no-cache
@@ -201,7 +207,7 @@ vdi: cleanvid docker
 	qemu-img convert -f raw -O vdi boot.img boot.vdi
 
 qemu:
-	sudo qemu-system-i386 -smp cores=4 -no-reboot -device e1000,netdev=net0 -serial stdio -netdev user,id=net0,hostfwd=tcp::8080-:8080 -object filter-dump,id=net0,netdev=net0,file=dump.dat filesystemv2.img -m 32m
+	sudo qemu-system-i386 $(QEMU_OPS) -drive file=filesystemv2.img,format=raw,index=0,media=disk
 
 sync:
 	mkdir -p mnt
