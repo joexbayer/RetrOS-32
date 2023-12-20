@@ -328,10 +328,6 @@ void echo(int argc, char* argv[])
 	}
 
 	term->ops->writef(term, "%s\n", argv[1]);
-
-	int* ptr = (int*) 0x1000000;
-	*ptr = 0xdeadbeef;
-
 }
 EXPORT_KSYMBOL(echo);
 
@@ -579,7 +575,7 @@ void __kthread_entry shell(int argc, char* argv[])
 	term->ops->writef(term, "%s\n", welcome);
 	term->ops->writef(term, "Memory: %d%s/%d%s\n", used.size, used.unit, total.size, total.unit);
 	term->ops->writef(term, "Type 'help' for a list of commands\n");
-	terminal_commit(current_running->term);
+	terminal_commit();
 
 	kernel_gfx_set_header("/");
 

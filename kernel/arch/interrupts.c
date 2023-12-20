@@ -222,10 +222,6 @@ static void init_idt()
 
 	idt_flush((uint32_t)&idt);
 }
-EXPORT_KSYMBOL(_page_fault_entry);
-EXPORT_KSYMBOL(_syscall_entry);
-EXPORT_KSYMBOL(isr_handler);
-EXPORT_KSYMBOL(isr14);
 
 
 void init_interrupts()

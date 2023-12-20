@@ -41,7 +41,7 @@
 /* fs */
 
 
-#define KERNEL_PANIC_ON_PAGE_FAULT
+// #define KERNEL_PANIC_ON_PAGE_FAULT
 
 
 

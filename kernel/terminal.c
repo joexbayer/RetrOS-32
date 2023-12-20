@@ -209,8 +209,6 @@ static int __terminal_putchar_textmode(struct terminal* term, char c)
 {
 	if(term == NULL) return -1;
 
-
-
 	return 1;
 }
 

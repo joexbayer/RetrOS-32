@@ -45,7 +45,7 @@ struct net_connection {
 };
 
 struct net_ops {
-    struct net_connection* (*connect)(struct net* net, ...);
+    struct net_connection* (*connect)(struct net* net);
 };
 
 struct net {
