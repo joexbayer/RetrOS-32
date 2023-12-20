@@ -240,7 +240,7 @@ void kernel(uint32_t magic)
 
 	kernel_boot_printf("Deamons initialized.");
 
-	init_pit(1);
+	init_pit(100);
 	kernel_boot_printf("Timer initialized.");
 
 	dbgprintf("[KERNEL] %d\n", cli_cnt);
