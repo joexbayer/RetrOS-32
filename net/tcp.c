@@ -18,7 +18,6 @@
 #include <net/net.h>
 #include <assert.h>
 #include <serial.h>
-#include <rbuffer.h>
 #include <scheduler.h>
 #include <errors.h>
 

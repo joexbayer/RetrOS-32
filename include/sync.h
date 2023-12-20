@@ -1,16 +1,15 @@
 #ifndef SYNC_H
 #define SYNC_H
-
 #include <stdint.h>
 
 #define MAX_BLOCKED 20
+
 
 typedef enum {
     UNDEFINED,
     LOCKED,
     UNLOCKED
 } lock_state_t;
-
 typedef enum {
     SPINLOCK_UNLOCKED,
     SPINLOCK_LOCKED

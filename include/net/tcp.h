@@ -121,8 +121,8 @@ struct tcb {
 	uint16_t sport;
 	uint32_t sip;
 
-	struct rbuffer* rbuf;
-	struct rbuffer* sbuf;
+	struct ring_buffer* rbuf;
+	struct ring_buffer* sbuf;
 
 	struct skb_queue* retransmit;
 	

@@ -93,6 +93,7 @@ void terminal_commit()
 
 void terminal_putchar(char c)
 {
+	return;
 	current_running->term->ops->putchar(current_running->term, c);
 }
 

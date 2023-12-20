@@ -462,7 +462,7 @@ struct fat16_file_identifier fat16_get_directory_entry(char* path, struct fat16_
     int last_start_block = 0;
     struct fat16_directory_entry entry = {0};
 
-    dbgprintf("Searching for %s\n", path);
+    dbgprintf("Searching for %s %c\n", path, path[0]);
     if(path[0] == '/'){
         start_block = get_root_directory_start_block();
         path++;
@@ -474,6 +474,7 @@ struct fat16_file_identifier fat16_get_directory_entry(char* path, struct fat16_
                 .directory = get_root_directory_start_block(),
                 .index = 0
             };
+            dbgprintf("Found entry %s.%s (%d bytes) Attributes: 0x%x Cluster: %d %s\n", entry.filename, entry.extension, entry.file_size, entry.attributes, entry.first_cluster, entry.attributes & 0x10 ? "<DIR>" : "");
             return identifier;
         }
 
