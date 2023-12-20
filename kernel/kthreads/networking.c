@@ -365,8 +365,8 @@ void __kthread_entry networking_main()
             assert(skb != NULL);
 
             /* Offload skb parsing to worker thread. */
-            //work_queue_add(&net_handle_recieve, (void*)skb, NULL);
-            net_handle_recieve(skb);
+            work_queue_add(&net_handle_recieve, (void*)skb, NULL);
+            //net_handle_recieve(skb);
         }
 
         if(todos == 0){

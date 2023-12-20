@@ -1,7 +1,7 @@
 /**
  * @file tcp.c
- * @author your name (you@domain.com)
- * @brief 
+ * @author Joe Bayer (joexbayer)
+ * @brief TCP implementation.
  * @version 0.1
  * @date 2023-12-19
  * 
@@ -21,6 +21,74 @@
 #include <rbuffer.h>
 #include <scheduler.h>
 #include <errors.h>
+
+#define TCB_MAX 32
+
+/** new implementation **/
+
+static struct tcp_manager {
+	struct tcb* tcbs[TCB_MAX];
+	int tcb_count;
+} tcp_manager = {0};
+
+int tcb_init()
+{
+	memset(&tcp_manager, 0, sizeof(struct tcp_manager));
+	return ERROR_OK;
+}
+
+/**
+ * @brief Creates a new TCB. 
+ * Allocates all necessary memory for a new TCB.
+ * @return struct tcb*, NULL on failure.
+ */
+struct tcb* tcb_new()
+{
+	if(tcp_manager.tcb_count >= TCB_MAX){
+		dbgprintf("[TCP] Max number of TCBs reached!\n");
+		goto tcb_new_error;
+	}
+
+	struct tcb* tcb = kalloc(sizeof(struct tcb));
+	if(tcb == NULL){
+		dbgprintf("[TCP] Failed to allocate TCB!\n");
+		goto tcb_new_error;
+	}
+
+	memset(tcb, 0, sizeof(struct tcb));
+
+	tcb->rbuf = rbuffer_new(1024);
+	if(tcb->rbuf == NULL){
+		dbgprintf("[TCP] Failed to allocate receive buffer!\n");
+		goto tcb_new_error;
+	}
+
+	tcb->sbuf = rbuffer_new(1024);
+	if(tcb->sbuf == NULL){
+		dbgprintf("[TCP] Failed to allocate send buffer!\n");
+		goto tcb_new_error;
+	}
+
+	tcb->retransmit = skb_new_queue();
+	if(tcb->retransmit == NULL){
+		dbgprintf("[TCP] Failed to allocate retransmit queue!\n");
+		goto tcb_new_error;
+	}
+	/* register in manager */
+	tcp_manager.tcbs[tcp_manager.tcb_count++] = tcb;
+
+	tcb->state = TCP_CREATED;
+
+	return tcb;
+
+tcb_new_error:
+	if(tcb != NULL) kfree(tcb);
+	if(tcb != NULL && tcb->rbuf != NULL) rbuffer_free(tcb->rbuf);
+	if(tcb != NULL && tcb->sbuf != NULL) rbuffer_free(tcb->sbuf);
+	if(tcb != NULL && tcb->retransmit != NULL) skb_free_queue(tcb->retransmit);
+	return NULL;
+}
+
 
 #define IS_TCP_SOCKET(sock) (sock->type == SOCK_STREAM && sock->tcp != NULL)
 
@@ -89,7 +157,6 @@ int tcp_free_connection(struct sock* sock)
 
 inline int tcp_is_listening(struct sock* sock)
 {
-	
 	return sock->tcp->state == TCP_LISTEN;
 }
 
@@ -165,8 +232,6 @@ static int __tcp_send(struct sock* sock, struct tcp_header* hdr, struct sk_buff*
 	memcpy(skb->data, hdr, sizeof(struct tcp_header));
 	hdr = (struct tcp_header*) skb->data;
 
-	dbgprintf("Sending TCP %d\n", sizeof(struct tcp_header));
-
 	skb->len += sizeof(struct tcp_header);
 	skb->data += sizeof(struct tcp_header);
 
@@ -176,6 +241,10 @@ static int __tcp_send(struct sock* sock, struct tcp_header* hdr, struct sk_buff*
 		skb->data += len;
 	}
 
+	/**
+	 * @brief TCP header checksum is calculated over the pseudo header and the TCP header.
+	 * This pseudo header contains the Source Address, the Destination Address, the Protocol, and TCP length.
+	 */
 	hdr->check = tcp_calculate_checksum(skb->hdr.ip->daddr, skb->hdr.ip->saddr, (unsigned short*)hdr, sizeof(struct tcp_header)+len);
 
 	net_send_skb(skb);
