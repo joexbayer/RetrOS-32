@@ -367,7 +367,7 @@ static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char f
  */
 struct windowmanager* wm_new(int flags)
 {
-    struct windowmanager* wm = kalloc(sizeof(struct windowmanager));
+    struct windowmanager* wm = create(struct windowmanager);
     if(wm == NULL){
         return NULL;
     }

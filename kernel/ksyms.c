@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <fs/fs.h>
 #include <math.h>
+#include <vbe.h>
 
 #define KSYMS_MAX_SYMBOLS 100
 #define KSYMS_MAX_DEPTH 100
@@ -38,7 +39,7 @@ static struct symbols* __symbols;
 
 static int __init_symbols(void)
 {
-    __symbols = (struct symbols*) kalloc(sizeof(struct symbols));
+    __symbols = create(struct symbols);
     if(__symbols == NULL) return -1;
 
     __symbols->num_symbols = 0;
@@ -184,6 +185,12 @@ void __backtrace_from(uintptr_t* ebp){
             if (__symbols->symtable[j].addr <= addr && (j == __symbols->num_symbols - 1 || __symbols->symtable[j + 1].addr > addr)) {
                 
                 dbgprintf("%s: 0x%x - 0x%x = 0x%x\n", 
+                    __symbols->symtable[j].name, 
+                    addr, 
+                    __symbols->symtable[j].addr, 
+                    addr - __symbols->symtable[j].addr);
+
+                vesa_printf((uint8_t*)vbe_info->framebuffer, 0, i*8 + 100, 0, "%s: 0x%x - 0x%x = 0x%x\n", 
                     __symbols->symtable[j].name, 
                     addr, 
                     __symbols->symtable[j].addr, 

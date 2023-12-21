@@ -403,7 +403,7 @@ struct window* gfx_new_window(int width, int height, window_flag_t flags)
     if(current_running->gfx_window != NULL)
         return current_running->gfx_window;
 
-    struct window* w = (struct window*) kalloc(sizeof(struct window));
+    struct window* w = create(struct window);
     if(w == NULL){
         warningf("window is NULL\n");
         return NULL;

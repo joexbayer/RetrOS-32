@@ -50,7 +50,7 @@ int net_register_netdev(char* name, struct netdev* device)
 
 struct net_interface* net_interface_create()
 {
-    struct net_interface* interface = (struct net_interface*)kalloc(sizeof(struct net_interface));
+    struct net_interface* interface = create(struct net_interface);
     if(interface == NULL) {
         return NULL;
     }

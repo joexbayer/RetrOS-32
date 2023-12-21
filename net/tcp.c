@@ -48,7 +48,7 @@ struct tcb* tcb_new()
 		goto tcb_new_error;
 	}
 
-	struct tcb* tcb = kalloc(sizeof(struct tcb));
+	struct tcb* tcb = create(struct tcb); 
 	if(tcb == NULL){
 		dbgprintf("[TCP] Failed to allocate TCB!\n");
 		goto tcb_new_error;
@@ -133,7 +133,7 @@ char* tcp_state_to_str(tcp_state_t state){
  */
 int tcp_new_connection(struct sock* sock, uint16_t dst_port, uint16_t src_port)
 {
-	sock->tcp = kalloc(sizeof(struct tcp_connection));
+	sock->tcp = create(struct tcp_connection);
 	ERR_ON_NULL(sock->tcp);
 
 	memset(sock->tcp, 0, sizeof(struct tcp_connection));

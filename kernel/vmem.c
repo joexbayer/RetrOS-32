@@ -148,7 +148,7 @@ static int vmem_page_align_size(int size)
 
 static struct vmem_page_region* vmem_create_page_region(struct pcb* pcb, void* base, int num, int access)
 {
-	struct vmem_page_region* allocation = kalloc(sizeof(struct vmem_page_region));
+	struct vmem_page_region* allocation = create(struct vmem_page_region);
 	if(allocation == NULL){
 		return NULL;
 	}
@@ -237,13 +237,12 @@ int vmem_free_allocations(struct pcb* pcb)
 	uint32_t heap_table = (uint32_t)pcb->page_dir[DIRECTORY_INDEX(VMEM_HEAP)] & ~PAGE_MASK;
 	assert(heap_table != 0);
 
-	ENTER_CRITICAL();
 	if(pcb->allocations->head == NULL){
 		kfree(pcb->allocations);
 		return 0;
 	}
-
-
+	ENTER_CRITICAL();
+	
 	/* Free all malloc allocation */
 	struct allocation* iter = pcb->allocations->head;
 	/**
@@ -262,11 +261,12 @@ int vmem_free_allocations(struct pcb* pcb)
 		kfree(old);
 	}
 
-	ENTER_CRITICAL();
 	vmem_default->ops->free(vmem_default, (void*) heap_table);
 	
 	/* Free allocation list */
 	kfree(pcb->allocations);
+
+	LEAVE_CRITICAL();
 
 	return 0;
 }
@@ -365,7 +365,7 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 	int size = vmem_page_align_size(_size);
 	int num_pages = size / PAGE_SIZE;
 
-	struct allocation* allocation = kalloc(sizeof(struct allocation));
+	struct allocation* allocation = create(struct allocation);
 	if(allocation == NULL){
 		warningf("Out memory\n");
 		return NULL;
@@ -659,7 +659,7 @@ void vmem_init_process(struct pcb* pcb, byte_t* data, int size)
 	vmem_add_table(process_directory, VMEM_STACK, process_stack_table, USER);
 	vmem_add_table(process_directory, VMEM_DATA, process_data_table, USER); 
 
-	pcb->allocations = kalloc(sizeof(struct virtual_allocations));
+	pcb->allocations = create(struct virtual_allocations);
 	if(pcb->allocations == NULL){
 		kernel_panic("Out of memory while allocating virtual memory allocations.");
 	}

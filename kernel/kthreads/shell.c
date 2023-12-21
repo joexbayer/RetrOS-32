@@ -550,9 +550,9 @@ void testfn()
 int c_test = 0;
 void __kthread_entry shell(int argc, char* argv[])
 {
-	dbgprintf("shell is running %d!\n", argc);
+	dbgprintf("shell is running %d!\n", cli_cnt);
 
-	testfn();
+	//testfn();
 	struct window* window = gfx_new_window(SHELL_WIDTH, SHELL_HEIGHT, GFX_IS_RESIZABLE);
 	if(window == NULL){
 		warningf("Failed to create window for shell");
@@ -561,7 +561,7 @@ void __kthread_entry shell(int argc, char* argv[])
 	
 	dbgprintf("shell: window 0x%x\n", window);
 	kernel_gfx_draw_rectangle(current_running->gfx_window, 0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_VGA_BG);
-
+	
 	term = terminal_create();
 	term->ops->attach(term);
 

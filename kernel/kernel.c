@@ -201,6 +201,8 @@ void kernel(uint32_t magic)
 
 #pragma GCC diagnostic pop
 	
+	int* a = (int*)0x0;
+	*a = 0xBAADF00D;
 
 	kernel_boot_printf("Systemcalls initialized.");
 

@@ -6,9 +6,6 @@
 #include <gfx/window.h>
 #include <util.h>
 
-#define TERMINAL_BUFFER_SIZE 2000
-
-
 #define twritef(a, ...) \
  if(current_running != NULL && current_running->term != NULL) { \
     current_running->term->ops->writef(current_running->term, a, ##__VA_ARGS__); \
@@ -31,8 +28,7 @@ struct terminal_ops {
     int (*reset)(struct terminal* term);
 };
 struct terminal {
-    char textbuffer[TERMINAL_BUFFER_SIZE];
-    struct terminal_ops* ops;
+    char* textbuffer;
 
     int tail;
     int head;
@@ -41,6 +37,7 @@ struct terminal {
     struct kref ref;
 
     struct window* screen;
+    struct terminal_ops* ops;
     color_t text_color;
     color_t bg_color;
 };

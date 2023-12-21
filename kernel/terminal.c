@@ -126,16 +126,22 @@ struct terminal_ops terminal_ops = {
  */
 struct terminal* terminal_create()
 {
-	struct terminal* term = (struct terminal*) malloc(sizeof(struct terminal));
+	struct terminal* term = create(struct terminal);
 	if(term == NULL) return NULL;
 
-	memset(term->textbuffer, 0, TERMINAL_BUFFER_SIZE);
+	term->textbuffer = (char*) kalloc(1024);
+	if(term->textbuffer == NULL){
+		kfree(term);
+		return NULL;
+	}
+
 	term->ops = &terminal_ops;
 	term->head = 0;
 	term->tail = 0;
 	term->lines = 0;
 	term->text_color = COLOR_WHITE;
 	term->bg_color = COLOR_BLACK;
+	term->screen = NULL;
 
 	kref_init(&term->ref);
 
@@ -155,7 +161,7 @@ int terminal_destroy(struct terminal* term)
 		return 0;
 	}
 
-	free(term);
+	kfree(term);
 	return 0;
 }
 
@@ -169,7 +175,7 @@ static int __terminal_reset(struct terminal* term)
 	term->tail = 0;
 	term->lines = 0;
 
-	memset(term->textbuffer, 0, TERMINAL_BUFFER_SIZE);
+	memset(term->textbuffer, 0, 1024);
 
 	return 0;
 }
@@ -190,7 +196,6 @@ static int __terminal_putchar_graphics(struct terminal* term, char c)
 			term->ops->commit(term);
 		}
 	}
-
 	term->textbuffer[term->head] = c;
 	term->head++;
 
@@ -245,7 +250,7 @@ static int __terminal_detach(struct terminal* term)
 	current_running->term = NULL;
 	term->screen = NULL;
 
-	kref_put(&term->ref);
+	ref_put(&term->ref);
 
 	return 0;
 }
@@ -259,7 +264,7 @@ static int __terminal_commit_textmode(struct terminal* term)
 
 static int __terminal_commit_graphics(struct terminal* term)
 {
-	if(term == NULL) return -1;
+	if(term == NULL || term->screen == NULL) return -1;
 
 	struct gfx_theme* theme = kernel_gfx_current_theme();
 	int x = 0, y = 0;

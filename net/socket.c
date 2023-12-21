@@ -384,7 +384,7 @@ struct sock* kernel_socket_create(int domain, int type, int protocol)
     }
 
 
-    socket_table[current] = kalloc(sizeof(struct sock)); /* Allocate space for a socket. Needs to be freed. */
+    socket_table[current] = create(struct sock); /* Allocate space for a socket. Needs to be freed. */
     memset(socket_table[current], 0, sizeof(struct sock));
 
     socket_table[current]->domain = domain;

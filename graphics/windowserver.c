@@ -301,7 +301,7 @@ static int ws_draw(struct windowserver* ws)
 
 struct windowserver* ws_new()
 {
-    struct windowserver* ws = (struct windowserver*)kalloc(sizeof(struct windowserver));
+    struct windowserver* ws = create(struct windowserver);
     if(ws == NULL){
         return NULL;
     }

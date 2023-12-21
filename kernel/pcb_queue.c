@@ -43,7 +43,7 @@ static struct pcb_queue_operations pcb_queue_default_ops = {
  */ 
 struct pcb_queue* pcb_new_queue()
 {
-	struct pcb_queue* queue = kalloc(sizeof(struct pcb_queue));
+	struct pcb_queue* queue = create(struct pcb_queue); 
 	if(queue == NULL){
 		return NULL;
 	}

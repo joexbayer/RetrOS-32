@@ -367,7 +367,9 @@ static void __callback taskbar_wolfstein()
 
 static void __callback taskbar_terminal()
 {
+    dbgprintf("Starting terminal %d\n", cli_cnt);
     start("shell",  0, NULL);
+    dbgprintf("Started terminal %d\n", cli_cnt);
 }
 
 static void __callback taskbar_finder()

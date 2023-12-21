@@ -99,11 +99,13 @@ void page_fault_interrupt(unsigned long cr2, unsigned long err)
     dbgprintf("Return address for iret: 0x%x\n", return_address_for_iret);
     dbgprintf("Original ebp: 0x%x\n", original_ebp);
 	*/
+ 	vesa_fillrect((uint8_t*)vbe_info->framebuffer, 0, 0, vbe_info->width, vbe_info->height, 1);
     __backtrace_from((uintptr_t*)ebp);
 
 	interrupt_counter[14]++;
 	ENTER_CRITICAL();
 	dbgprintf("Page fault: 0x%x (Stack: 0x%x) %d (%s)\n", cr2, current_running->stackptr, err, current_running->name);
+	vesa_printf(vbe_info->framebuffer, 10, 10, 0, "Page fault: 0x%x (Stack: 0x%x) %d (%s)\n", cr2, current_running->stackptr, err, current_running->name);
 
 	/* print page_table entry */
 	print_page_fault_info(cr2);

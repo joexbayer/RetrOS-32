@@ -160,6 +160,11 @@ int32_t twritef(char* fmt, ...)
 void* kalloc(int size){
     return malloc(size);
 }
+
+int kcalloc(int size){
+    return kalloc(size);
+}
+
 #endif
 
 #ifdef __FS_TEST
