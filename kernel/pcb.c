@@ -378,7 +378,7 @@ error_t pcb_create_thread(struct pcb* parent, void (*entry)(), void* arg, byte_t
 	pcb->args = (uint32_t)arg;
 
 	/* name */
-	csprintf(pcb->name, "%s#%d", parent->name, pcb->pid);
+	memcpy(pcb->name, parent->name, strlen(parent->name)+1);
 
 	/* inheret parents virtual memory */
 	vmem_init_process_thread(parent, pcb);

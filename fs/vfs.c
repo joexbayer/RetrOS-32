@@ -33,17 +33,15 @@ void mkdir(int argc, char* argv[])
 
     twritef("Created directory.\n");
 }
-EXPORT_KSYMBOL(mkdir);
 
 void sync()
 {
 	twritef("[FS] Synchronizing filesystem.\n");
 	ext_sync();
 }
-EXPORT_KSYMBOL(sync);
 
 void mkfs()
 {
     ext_create_file_system();
 }
-EXPORT_KSYMBOL(mkfs);
+

@@ -275,10 +275,11 @@ static int ws_draw(struct windowserver* ws)
 
     __ws_key_event(ws, key);
     
-    if(ws->window_changes && !ws->_is_fullscreen){
+    if((ws->window_changes || mouse_changed ) && !ws->_is_fullscreen){
         memcpy(ws->_wm->composition_buffer, ws->background, ws->_wm->composition_buffer_size);
 
         ws->_wm->ops->draw(ws->_wm, ws->_wm->windows);
+        vesa_put_icon16(ws->_wm->composition_buffer, ws->m.x, ws->m.y);
     }
 
     /* Move out of this module */
@@ -294,7 +295,7 @@ static int ws_draw(struct windowserver* ws)
         /* internal mouse event for windows */
         ws->_wm->ops->mouse_event(ws->_wm, ws->m.x, ws->m.y, ws->m.flags);
     }
-    vesa_put_icon16((uint8_t*)vbe_info->framebuffer, ws->m.x, ws->m.y);
+    //vesa_put_icon16((uint8_t*)vbe_info->framebuffer, ws->m.x, ws->m.y);
 
     return ERROR_OK;
 }

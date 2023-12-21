@@ -24,6 +24,7 @@ struct terminal_ops {
     int (*putchar)(struct terminal* term, char c);
     int (*commit)(struct terminal* term);
     int (*attach)(struct terminal* term);
+    int (*set)(struct terminal* term, struct terminal_ops* ops);
     int (*detach)(struct terminal* term);
     int (*reset)(struct terminal* term);
 };

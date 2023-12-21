@@ -107,6 +107,7 @@ static int __terminal_commit_graphics(struct terminal* term);
 static int __terminal_attach(struct terminal* term);
 static int __terminal_detach(struct terminal* term);
 static int __terminal_reset(struct terminal* term);
+static int __terminal_set_ops(struct terminal* term, struct terminal_ops* ops);
 
 /* default terminal ops (graphics) */
 struct terminal_ops terminal_ops = {
@@ -116,7 +117,8 @@ struct terminal_ops terminal_ops = {
 	.commit = __terminal_commit_graphics,
 	.attach = __terminal_attach,
 	.detach = __terminal_detach,
-	.reset = __terminal_reset
+	.reset = __terminal_reset,
+	.set = __terminal_set_ops,
 };
 
 /**
@@ -143,6 +145,8 @@ struct terminal* terminal_create()
 	term->bg_color = COLOR_BLACK;
 	term->screen = NULL;
 
+	current_running->term = term;
+
 	kref_init(&term->ref);
 
 	return term;
@@ -166,6 +170,24 @@ int terminal_destroy(struct terminal* term)
 }
 
 /* Terminal operations implementations */
+
+static int __terminal_set_ops(struct terminal* term, struct terminal_ops* ops)
+{
+	if(term == NULL) return -1;
+
+	/* overwrite ops that are not 0 */
+	if(ops->write == 0) ops->write = term->ops->write;
+	if(ops->writef == 0) ops->writef = term->ops->writef;
+	if(ops->putchar == 0) ops->putchar = term->ops->putchar;
+	if(ops->commit == 0) ops->commit = term->ops->commit;
+	if(ops->attach == 0) ops->attach = term->ops->attach;
+	if(ops->detach == 0) ops->detach = term->ops->detach;
+	if(ops->reset == 0) ops->reset = term->ops->reset;
+	
+	term->ops = ops;
+
+	return 0;
+}
 
 static int __terminal_reset(struct terminal* term)
 {
@@ -250,7 +272,7 @@ static int __terminal_detach(struct terminal* term)
 	current_running->term = NULL;
 	term->screen = NULL;
 
-	ref_put(&term->ref);
+	kref_put(&term->ref);
 
 	return 0;
 }

@@ -43,9 +43,10 @@ int exec_cmd(char* str)
 		return -1;
 	}
 
-
+    dbgprintf("Executing %s\n", args.argv[0]);
     /* execute command */
 	ptr(args.argc, args.argv);
+    dbgprintf("Done executing %s\n", args.argv[0]);
 
 	gfx_commit();
 
@@ -131,14 +132,11 @@ int kref_put(struct kref* ref)
 #define MAX_FMT_STR_SIZE 256
 
 /* Custom sprintf function */
-int32_t csprintf(char *buffer, const char *fmt, ...)
+int32_t csprintf(char *buffer, const char *fmt, va_list args)
 {
-    va_list args;
     int written = 0; /* Number of characters written */
     char str[MAX_FMT_STR_SIZE];
     int num = 0;
-
-    va_start(args, fmt);
 
     while (*fmt != '\0' && written < MAX_FMT_STR_SIZE) {
         if (*fmt == '%') {
@@ -157,8 +155,18 @@ int32_t csprintf(char *buffer, const char *fmt, ...)
                         num = va_arg(args, unsigned int);
                         written += itohex(num, str);
                         break;
-                    case 's':
-                        {
+                    case 'p': /* p for padded int */
+                        num = va_arg(args, int);
+                        itoa(num, str);
+
+                        if (strlen(str) < 5) {
+                            int pad = 5 - strlen(str);
+                            for (int i = 0; i < pad; i++) {
+                                buffer[written++] = '0';
+                            }
+                        }
+                        break;
+                    case 's':{
                             char *str_arg = va_arg(args, char*);
                             while (*str_arg != '\0' && written < MAX_FMT_STR_SIZE - 1) {
                                 buffer[written++] = *str_arg++;
@@ -186,8 +194,6 @@ int32_t csprintf(char *buffer, const char *fmt, ...)
         }
         fmt++;
     }
-
-    va_end(args);
 
     /* Ensure the buffer is null-terminated */
     buffer[written < MAX_FMT_STR_SIZE ? written : MAX_FMT_STR_SIZE - 1] = '\0';

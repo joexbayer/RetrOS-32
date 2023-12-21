@@ -243,6 +243,8 @@ void kernel_gfx_set_position(struct window* w, int x, int y)
 
 void gfx_commit()
 {
+	if(current_running->gfx_window == NULL)
+		return;
 	current_running->gfx_window->changed = 1;
 }
 
