@@ -31,6 +31,11 @@ enum gfx_lib_api_options {
     GFX_DRAW_UNUSED,
 };
 
+enum gfx_color_opts {
+    GFX_RGB,
+    GFX_VGA
+};
+
 struct gfx_pixel {
     int x, y;
     unsigned char color;
@@ -39,6 +44,7 @@ struct gfx_pixel {
 struct gfx_rectangle {
     int x, y, width, height;
     unsigned char color;
+    unsigned char palette;
 };
 
 struct gfx_circle {
@@ -69,6 +75,7 @@ int gfx_draw_text(int x, int y, const char* text, unsigned char color);
 int gfx_draw_format_text(int x, int y, unsigned char color, const char* fmt, ...);
 int gfx_draw_char(int x, int y, char data, unsigned char color);
 int gfx_draw_rectangle(int x, int y, int width, int height, unsigned char color);
+int gfx_draw_rectangle_rgb(int x, int y, int width, int height, unsigned char color);
 int gfx_draw_circle(int x, int y, int r, unsigned char color, char fill);
 int gfx_draw_line(int x0, int y0, int x1, int y1, unsigned char color);
 int gfx_get_event(struct gfx_event*, gfx_event_flag_t flags);

@@ -39,7 +39,7 @@ typedef unsigned char ubyte_t;
 #define __kthread_entry
 /* This function does not return */
 #define __noreturn //__attribute__((noreturn))
-#define __deprecated //__attribute__((deprecated))
+#define __deprecated  __attribute__((deprecated))
 
 /**
  * @brief EXPORT_KCTOR

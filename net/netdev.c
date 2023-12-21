@@ -37,7 +37,7 @@ void netdev_attach_driver(
 
 int is_netdev_attached()
 {
-    return netdev_attached;
+    return current_netdev.write != NULL;
 }
 
 int netdev_transmit(void* buffer, uint32_t size)

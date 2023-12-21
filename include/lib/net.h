@@ -20,6 +20,7 @@ extern "C" {
 /* Protocol */
 #define SOCK_DGRAM 1
 #define SOCK_STREAM 2
+#define SOCK_RAW 3
 
 #define INADDR_ANY 1
 

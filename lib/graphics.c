@@ -63,6 +63,22 @@ int gfx_draw_line(int x0, int y0, int x1, int y1, unsigned char color)
 	return 0;
 }
 
+int gfx_draw_rectangle_rgb(int x, int y, int width, int height, unsigned char color)
+{
+	struct gfx_rectangle rect = {
+		.color = color,
+		.x = x,
+		.y = y,
+		.width = width,
+		.height = height,
+		.palette = GFX_RGB
+	};
+
+	gfx_draw_syscall(GFX_DRAW_RECTANGLE_OPT, &rect, 0);
+
+	return 0;
+}
+
 int gfx_draw_rectangle(int x, int y, int width, int height, unsigned char color)
 {
     struct gfx_rectangle rect = {
@@ -70,7 +86,8 @@ int gfx_draw_rectangle(int x, int y, int width, int height, unsigned char color)
 		.x = x,
 		.y = y,
 		.width = width,
-		.height = height
+		.height = height,
+		.palette = GFX_VGA
 	};
 
     gfx_draw_syscall(GFX_DRAW_RECTANGLE_OPT, &rect, 0);

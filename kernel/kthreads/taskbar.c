@@ -16,13 +16,13 @@
 
 #define TASKBAR_HEIGHT 20
 
-#define TASKBAR_MAX_OPTIONS 10
+#define TASKBAR_MAX_OPTIONS 15
 #define TASKBAR_OPTIONS_HEIGHT 16
 #define TASKBAR_OPTIONS_HEIGHT_TOTAL TASKBAR_OPTIONS_HEIGHT * TASKBAR_MAX_OPTIONS
 #define TASKBAR_MAX_HEADERS 5
 
 #define TASKBAR_EXT_OPT_WIDTH 100
-#define TASKBAR_EXT_OPT_HEIGHT 160
+#define TASKBAR_EXT_OPT_HEIGHT 170
 
 #define TIME_PREFIX(unit) unit < 10 ? "0" : ""
 
@@ -41,6 +41,7 @@ static void __callback taskbar_bg_retro();
 static void __callback taskbar_bg_calc();
 static void __callback taskbar_bg_graph();
 static void __callback taskbar_bg_default_color();
+static void __callback taskbar_sysinf();
 
 /* prototype to taskbar thread */
 static void __kthread_entry taskbar(void);
@@ -83,6 +84,11 @@ struct taskbar_options {
                     .icon = finder_16,
                     .name = "Finder",
                     .callback = &taskbar_finder
+                },
+                {
+                    .icon = desktop_16,
+                    .name = "SysInfo",
+                    .callback = &taskbar_sysinf
                 },
                 {
                     .icon = editor_16,
@@ -290,6 +296,8 @@ static void __kthread_entry taskbar(void)
         }
     while (1){
 
+        gfx_put_icon16(wlan_16, w->inner_width - (timedate_length*8) - 20, 4);
+
         get_current_time(&time);
         w->draw->rect(w, w->inner_width - (timedate_length*8), 5, timedate_length*8, 10, 30);
         w->draw->textf(w, w->inner_width - (timedate_length*8), 5, COLOR_BLACK,
@@ -318,7 +326,7 @@ static void __kthread_entry taskbar(void)
                             default_taskbar.headers[i].x,
                             default_taskbar.headers[i].y+20,
                             TASKBAR_EXT_OPT_WIDTH, 
-                            TASKBAR_OPTIONS_HEIGHT_TOTAL+5,
+                            TASKBAR_EXT_OPT_HEIGHT,
                             COLOR_TRANSPARENT
                         );
                     }
@@ -352,14 +360,16 @@ EXPORT_KTHREAD(taskbar);
 
 static void __callback taskbar_wolfstein()
 {
-    int pid = pcb_create_process("/bin/wolf.o", 0, NULL, 0);
+    int pid = pcb_create_process("/bin/wolf3d.o", 0, NULL, 0);
     if(pid < 0)
         dbgprintf("%s does not exist\n", "wolf.o");
 }
 
 static void __callback taskbar_terminal()
 {
+    dbgprintf("Starting terminal %d\n", cli_cnt);
     start("shell",  0, NULL);
+    dbgprintf("Started terminal %d\n", cli_cnt);
 }
 
 static void __callback taskbar_finder()
@@ -434,4 +444,9 @@ static void __callback taskbar_bg_calc()
     int pid = pcb_create_process("/bin/calc.o", 0, NULL, 0);
     if(pid < 0)
         dbgprintf("%s does not exist\n", "calc.o");
+}
+
+static void __callback taskbar_sysinf()
+{
+    start("sysinf", 0, NULL); 
 }

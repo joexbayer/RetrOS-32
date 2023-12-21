@@ -7,6 +7,8 @@
 #include <kutils.h>
 #include <sync.h>
 
+#define create(type) ((type *)kcalloc(sizeof(type)))
+
 extern byte_t _code[], _end[], _code_end[], _ro_s[], _ro_e[], _data_s[], _data_e[], _bss_s[], _bss_e[], _bss_size[];
 extern int kernel_size;
 
@@ -111,6 +113,7 @@ void vmem_init();
 
 /* Kernel memory*/
 void* kalloc(int size);
+void* kcalloc(int size);
 void kfree(void* ptr);
 int kmemory_used();
 int kmemory_total();

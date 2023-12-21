@@ -179,6 +179,7 @@ static int sched_round_robin(struct scheduler* sched)
     /* If queue is empty, return error */
     next = sched->queue->ops->peek(sched->queue); 
     if(next == NULL){
+        warningf("Queue is empty");
         return -ERROR_PCB_QUEUE_EMPTY;
     }
 
@@ -194,7 +195,7 @@ static int sched_round_robin(struct scheduler* sched)
      * Uses a switch case for all relevant states.
      */
     do {
-        next = sched->queue->ops->pop(sched->queue); 
+        next = sched->queue->ops->pop(sched->queue);
 
         switch (next->state){
         case RUNNING:
@@ -209,7 +210,6 @@ static int sched_round_robin(struct scheduler* sched)
                 if(next->is_process){
                     tss.esp_0 = (uint32_t)next->kebp;
                     tss.ss_0 = GDT_KERNEL_DS;
-                    dbgprintf("%d ss\n", cli_cnt);
                 }
 
                 sched->ctx.running = next;
@@ -227,7 +227,7 @@ static int sched_round_robin(struct scheduler* sched)
                  * The ZOMBIE pcb will not be scheduled again and a work thread will deal with cleaning up the pcb.
                  * This is because we want to spend as little time as possible in the scheduler.
                  */
-                RETURN_ON_ERR(work_queue_add(&pcb_cleanup_routine, (void*)((int)next->pid), NULL));
+                work_queue_add(&pcb_cleanup_routine, (void*)((int)next->pid), NULL);
             }
             break;
         /* If next is sleeping, check if it should be woken up */
@@ -309,15 +309,16 @@ static int sched_exit(struct scheduler* sched)
     sched->exits++;  
 
     /* Add cleanup routine to work queue */
-    RETURN_ON_ERR(work_queue_add(&pcb_cleanup_routine, (void*)((int)sched->ctx.running->pid), NULL));
+    work_queue_add(&pcb_cleanup_routine, (void*)((int)sched->ctx.running->pid), NULL);
     sched->ctx.running = NULL;
-
+    
     CRITICAL_SECTION({
         /* Switch to next PCB, dont need to store context */
         PANIC_ON_ERR(sched_round_robin(sched));
 
         pcb_restore_context(sched->ctx.running);
     });
+
 
     return ERROR_OK;
 }

@@ -87,7 +87,7 @@ int gethostname(char* hostname)
     memcpy(hostname_save, hostname, strlen(hostname)+1);
     //acquire(&__dns_mutex);
 
-    struct sock* __dns_socket = kernel_socket(AF_INET, SOCK_DGRAM, 0);
+    struct sock* __dns_socket = kernel_socket_create(AF_INET, SOCK_DGRAM, 0);
 
     uint8_t buf[2048]; /* Can be replaced with alloc. */
     struct dns_header* request;

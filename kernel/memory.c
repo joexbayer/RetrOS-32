@@ -101,7 +101,6 @@ void kfree(void* ptr);
  */
 void free(void* ptr)
 {
-	return;
 	dbgprintf("Freeing %x\n", ptr);
 	if(ptr == NULL)return;
 		
@@ -159,7 +158,6 @@ error_t get_mem_info(struct mem_info* info)
 	};
 
 	*info = inf;
-
 	return 0;
 }
 

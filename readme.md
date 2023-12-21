@@ -195,9 +195,9 @@ IBM Thinkpad a21p
     │   └── *.c
     ├── include
     │   ├── arch
-    │   │   └── *.c
+    │   │   └── *.h
     │   ├── fs
-    │   │   └── *.c
+    │   │   └── *.h
     │   ├── gfx
     │   │   └── *.h
     │   ├── lib
@@ -245,6 +245,8 @@ IBM Thinkpad a21p
 - [x] Networkstack
   - [x] Ethernet, IP, ARP, UDP
   - [x] Socket API
+  - [x] Interfaces
+    - [x] Loopback
   - [x] DHCP
   - [x] DNS
   - [x] TCP
@@ -273,6 +275,7 @@ IBM Thinkpad a21p
 - [x] Custom VM to run bytecode.
 - [x] Editor with Syntax Highlighting
 - [x] Calculator
+- [x] 3D Game
 - [x] Userspace threads (shared virtual memory)
 - [x] Tools
   - [x] Build
@@ -292,12 +295,10 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
-
 <!-- CONTACT -->
 ## Contact
 
-Joe Bayer - joeba@uio.com
+Joe Bayer - joeba@uio.no
 
 Project Link: [https://github.com/joexbayer/RetrOS-32](https://github.com/joexbayer/RetrOS-32)
 

@@ -44,6 +44,15 @@ void __noreturn kthread_entry(int argc, char* args[])
     UNREACHABLE();
 }
 
+int kthread_list()
+{
+    int i = 0;
+    while(i < total_kthreads){
+        twritef("%s", kthread_table[i].name);
+        i++;
+    }
+}
+
 /**
  * @brief Creates a kernel thread.
  * Registers the kthread entry function in the kthead table.

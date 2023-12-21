@@ -50,7 +50,8 @@ static struct window_draw_ops default_window_draw_ops = {
     .textf = &kernel_gfx_draw_format_text,
     .text = &kernel_gfx_draw_text,
     .line = &kernel_gfx_draw_line,
-    .circle = &kernel_gfx_draw_circle
+    .circle = &kernel_gfx_draw_circle,
+    .box = &kernel_gfx_draw_contoured_box
 };
 
 /**
@@ -164,7 +165,7 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
         vesa_line_vertical(buffer, window->x+window->width-7, window->y+8, window->height-16, COLOR_VGA_LIGHTER_GRAY+2);
     }
 
-    if(!HAS_FLAG(window->flags, GFX_HIDE_HEADER)){
+    if(!HAS_FLAG(window->flags, GFX_HIDE_HEADER) && !HAS_FLAG(window->flags, GFX_NO_OPTIONS)){
 
         /* full screen */
         vesa_inner_box(buffer, window->x+window->width-46+6,  window->y-3, 10, 9, theme->window.background);
@@ -234,7 +235,12 @@ static void gfx_window_resize(struct window* w, int width, int height)
 static void gfx_default_click(struct window* window, int x, int y)
 {
     dbgprintf("[GFX WINDOW] Clicked %s\n", window->name);
+    if(gfx_point_in_rectangle(window->x, window->y, window->x+window->width, window->y+10, x, y)){
+        dbgprintf("[GFX WINDOW] Clicked %s title\n", window->name);
+    }
 
+    if(HAS_FLAG(window->flags, GFX_NO_OPTIONS)) return;
+    
     if (x >= window->x + window->width - 22 + 6 && x <= window->x + window->width - 22 + 6 + 10 && y >= window->y - 3 && y <= window->y - 3 + 9) {
         dbgprintf("[GFX WINDOW] Clicked %s exit button\n", window->name);
         struct gfx_event e = {
@@ -251,7 +257,7 @@ static void gfx_default_click(struct window* window, int x, int y)
         dbgprintf("[GFX WINDOW] Clicked %s full screen button\n", window->name);
         if(window->is_maximized.state == 0){
             window->is_maximized.state = 1;
-            window->is_maximized.width = window->width;
+            window->is_maximized.width = window->width+4;
             window->is_maximized.height = window->height;
 
             window->ops->maximize(window);
@@ -288,9 +294,6 @@ static void gfx_default_click(struct window* window, int x, int y)
         return;
     }
 
-    if(gfx_point_in_rectangle(window->x, window->y, window->x+window->width, window->y+10, x, y)){
-        dbgprintf("[GFX WINDOW] Clicked %s title\n", window->name);
-    }
 }
 
 
@@ -372,7 +375,6 @@ int gfx_destory_window(struct window* w)
     LEAVE_CRITICAL();
 
     return ERROR_OK;
-
 }
 
 
@@ -401,7 +403,7 @@ struct window* gfx_new_window(int width, int height, window_flag_t flags)
     if(current_running->gfx_window != NULL)
         return current_running->gfx_window;
 
-    struct window* w = (struct window*) kalloc(sizeof(struct window));
+    struct window* w = create(struct window);
     if(w == NULL){
         warningf("window is NULL\n");
         return NULL;

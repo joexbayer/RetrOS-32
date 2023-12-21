@@ -187,6 +187,8 @@ choice_1_str:
     .asciz "   1. 640x480                    "
 choice_2_str:
     .asciz "   2. 800x600                    "
+choice_3_str:
+    .asciz "   3. 1024x768                   "
 memory_error_str:
     .asciz "Memory detection: ERROR          "
 mem_str:
@@ -397,6 +399,13 @@ set_video_mode:
     movw $straight_line_end, %si
     call print
 
+    movw $straight_line, %si
+    call print
+    movw $choice_3_str, %si
+    call print
+    movw $straight_line_end, %si
+    call print
+
     call draw_bottom_separator
 
     /* Print message asking for resolution choice */
@@ -409,6 +418,8 @@ set_video_mode:
     je set_640x480
     cmp $'2', %al
     je set_800x600
+    cmp $'3', %al
+    je set_800x600
 
     jmp set_video_mode
 
@@ -420,6 +431,10 @@ set_640x480:
 set_800x600:
     mov $0x4F02, %ax	
     mov $0x4103, %bx /* 103 = 800x600 */
+
+set_1024x768:
+    mov $0x4F02, %ax	
+    mov $0x4105, %bx /* 105 = 1024x768 */
 
 set_resolution:
     int $0x10 

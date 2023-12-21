@@ -19,10 +19,103 @@
 #include <util.h>
 #include <serial.h>
 
+#include <ksyms.h>
+#include <kthreads.h>
+
+void __kthread_entry tcp_server()
+{
+    struct sock* socket = kernel_socket_create(AF_INET, SOCK_STREAM, 0);
+    struct sockaddr_in dest_addr;
+
+    dest_addr.sin_addr.s_addr = INADDR_ANY;
+    dest_addr.sin_port = htons(8080);
+    dest_addr.sin_family = AF_INET;
+
+    kernel_bind(socket, (struct sockaddr*) &dest_addr, sizeof(dest_addr));
+
+    dbgprintf("TCP Server listening on port 8080\n");
+
+    kernel_listen(socket, 5);
+
+    while(1){
+        struct sockaddr_in client_addr; 
+        struct sock* client = kernel_accept(socket, &client_addr, sizeof(client_addr));
+        if (client == NULL){
+            dbgprintf("Unable to accept connection: client is NULL\n");
+            kernel_exit();
+        }
+
+        dbgprintf("Client connected from %i:%d\n", client_addr.sin_addr.s_addr, client_addr.sin_port);
+
+        char* buffer = kalloc(2000);
+        int ret = kernel_recv(client, buffer, 2000, 0);
+        buffer[ret] = 0;
+
+        dbgprintf(" Recieved '%s' (%d bytes)\n", buffer, ret);
+
+        kfree(buffer);
+
+        const char *http_response = 
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: text/plain\r\n"
+            "\r\n"
+            "Hello, world!";
+
+        ret = kernel_send(client, http_response, strlen(http_response), 0);
+
+        kernel_sock_close(client);
+    }
+}
+EXPORT_KTHREAD(tcp_server);
+
+void __kthread_entry udp_server()
+{
+    struct sock* socket = kernel_socket_create(AF_INET, SOCK_DGRAM, 0);
+    struct sockaddr_in dest_addr;
+
+    dest_addr.sin_addr.s_addr = INADDR_ANY;
+    dest_addr.sin_port = htons(4242);
+    dest_addr.sin_family = AF_INET;
+
+    kernel_bind(socket, (struct sockaddr*) &dest_addr, sizeof(dest_addr));
+
+    dbgprintf("UDP Server listening on port 4242\n");
+
+    char buffer[255];
+    while(1){
+        int ret = kernel_recv(socket, buffer, 255, 0);
+        buffer[ret] = 0;
+
+        dbgprintf(" Recieved '%s' (%d bytes)\n", buffer, ret);
+    }
+
+    kernel_sock_close(socket);
+}
+EXPORT_KTHREAD(udp_server);
+
+void __kthread_entry udptest()
+{
+    struct sock* socket = kernel_socket_create(AF_INET, SOCK_DGRAM, 0);
+    struct sockaddr_in dest_addr;
+
+    dest_addr.sin_addr.s_addr = htonl(LOOPBACK_IP); 
+    dest_addr.sin_port = htons(4242);
+    dest_addr.sin_family = AF_INET;
+
+    char* test = "Hello world!";
+    int ret = kernel_sendto(socket, test, strlen(test), 0, (struct sockaddr*) &dest_addr, sizeof(dest_addr));
+    if(ret < 0){
+        dbgprintf("Unable to send UDP packet\n");
+    }
+
+    kernel_sock_close(socket);
+}
+EXPORT_KTHREAD(udptest);
+
 void __kthread_entry tcpd()
 {
     int ret;
-    struct sock* socket = kernel_socket(AF_INET, SOCK_STREAM, 0);
+    struct sock* socket = kernel_socket_create(AF_INET, SOCK_STREAM, 0);
     struct sockaddr_in dest_addr;
 
     int ip = gethostname("tcpbin.com\0");
@@ -31,7 +124,7 @@ void __kthread_entry tcpd()
         kernel_exit();
     }
 
-    dest_addr.sin_addr.s_addr = ip;
+    dest_addr.sin_addr.s_addr = htonl(ip);
     dest_addr.sin_port = htons(4242);
     dest_addr.sin_family = AF_INET;
 

@@ -2,10 +2,12 @@ CCFLAGS=-m32 -std=gnu11 -O1 -D__KERNEL \
 		-Wall -Wextra -Wpedantic -Wstrict-aliasing \
 		-Wno-pointer-arith -Wno-unused-parameter -nostdlib \
 		-nostdinc -ffreestanding -fno-pie -fno-stack-protector \
-		-Wno-conversion -I ./include/
+		-Wno-conversion -fno-omit-frame-pointer -I ./include/
 ASFLAGS=
 LDFLAGS= 
 MAKEFLAGS += --no-print-directory
+
+QEMU_OPS = -no-reboot -device e1000,netdev=net0 -serial stdio -netdev user,id=net0,hostfwd=tcp::8080-:8080 -object filter-dump,id=net0,netdev=net0,file=dump.dat -m 32m
 
 # ---------------- For counting how many files to compile ----------------
 ifneq ($(words $(MAKECMDGOALS)),1)
@@ -54,12 +56,12 @@ PROGRAMOBJ = bin/shell.o bin/networking.o bin/dhcpd.o bin/tcpd.o bin/logd.o bin/
 GFXOBJ = bin/window.o bin/component.o bin/composition.o bin/gfxlib.o bin/api.o bin/theme.o
 
 KERNELOBJ = bin/kernel.o bin/terminal.o bin/helpers.o bin/pci.o bin/virtualdisk.o bin/windowmanager.o bin/icons.o \
-			bin/util.o bin/interrupts.o bin/irs_entry.o bin/timer.o bin/gdt.o bin/interpreter.o bin/vm.o bin/lex.o \
+			bin/util.o bin/interrupts.o bin/irs_entry.o bin/timer.o bin/gdt.o bin/interpreter.o bin/vm.o bin/lex.o bin/smp.o \
 			bin/keyboard.o bin/pcb.o bin/pcb_queue.o bin/memory.o bin/vmem.o bin/kmem.o bin/e1000.o bin/display.o bin/env.o \
 			bin/sync.o bin/kthreads.o bin/ata.o bin/bitmap.o bin/rtc.o bin/tss.o bin/kutils.o bin/script.o bin/login.o \
-			bin/diskdev.o bin/scheduler.o bin/work.o bin/rbuffer.o bin/errors.o bin/kclock.o bin/tar.o bin/color.o\
+			bin/diskdev.o bin/scheduler.o bin/work.o bin/rbuffer.o bin/errors.o bin/kclock.o bin/tar.o bin/color.o bin/loopback.o \
 			bin/serial.o bin/io.o bin/syscalls.o bin/list.o bin/hashmap.o bin/vbe.o bin/ksyms.o bin/windowserver.o bin/encoding.o\
-			bin/mouse.o bin/ipc.o ${PROGRAMOBJ} ${GFXOBJ} bin/font8.o bin/net.o bin/fs.o bin/ext.o bin/fat16.o bin/partition.o
+			bin/mouse.o bin/ipc.o bin/sysinf.o ${PROGRAMOBJ} ${GFXOBJ} bin/font8.o bin/net.o bin/fs.o bin/ext.o bin/fat16.o bin/partition.o
 
 BOOTOBJ = bin/bootloader.o
 
@@ -67,7 +69,7 @@ LIBOBJ = bin/printf.o bin/syscall.o bin/graphics.o bin/netlib.o
 
 # ---------------- Makefile rules ----------------
 
-.PHONY: all new image clean boot net kernel grub time tests build apps bin/mkfsv2
+.PHONY: all new image clean boot net kernel grub time tests build apps bin/mkfsv2 symbols
 all: iso
 	$(TIME-END)
 
@@ -79,6 +81,13 @@ bootblock: $(BOOTOBJ)
 
 multiboot_kernel: bin/multiboot.o $(KERNELOBJ)
 	@$(LD) -o bin/kernelout $^ $(LDFLAGS) -T ./boot/multiboot.ld
+	@echo "[KERNEL]     Finished compiling kernel."
+
+# Idea taken from SerenityOS
+symbols: bin/multiboot.o $(KERNELOBJ)
+	@$(LD) -o bin/symbols $^ $(LDFLAGS) -T ./kernel/linkersym.ld
+	@nm -C -n bin/symbols | grep ' [Tt] ' | sed 's/ [Tt] / /' > rootfs/symbols.map
+
 
 kernel: bin/kcrt0.o $(KERNELOBJ)
 	@$(LD) -o bin/kernelout $^ $(LDFLAGS) -T ./kernel/linker.ld
@@ -153,7 +162,7 @@ create_fs:
 
 bare: compile create_fs
 
-img: grub_fix tools compile tests create_fs sync
+img: grub_fix tools compile symbols tests create_fs sync
 	@echo "Finished creating the image."
 	$(TIME-END)
 
@@ -184,6 +193,9 @@ grub: grub_fix apps multiboot_kernel
 	cp bin/kernelout legacy/multiboot/boot/myos.bin
 	$(GRUB)
 
+qemu_kernel: CCFLAGS += -DUSE_MULTIBOOT
+qemu_kernel: grub_fix grub_fix multiboot_kernel
+	sudo qemu-system-i386 $(QEMU_OPS) -kernel bin/kernelout
 
 docker-rebuild:
 	docker-compose build --no-cache
@@ -195,10 +207,11 @@ vdi: cleanvid docker
 	qemu-img convert -f raw -O vdi boot.img boot.vdi
 
 qemu:
-	sudo qemu-system-i386 -no-reboot -device e1000,netdev=net0 -serial stdio -netdev user,id=net0 -object filter-dump,id=net0,netdev=net0,file=dump.dat filesystemv2.img -m 32m
+	sudo qemu-system-i386 $(QEMU_OPS) -drive file=filesystemv2.img,format=raw,index=0,media=disk
 
 sync:
 	mkdir -p mnt
+	sudo fsck -a filesystemv2.img
 	sudo mount -o shortname=winnt filesystemv2.img ./mnt
 	sudo cp -vvv -r rootfs/* ./mnt/
 	sudo umount ./mnt

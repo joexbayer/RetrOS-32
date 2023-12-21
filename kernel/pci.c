@@ -48,8 +48,68 @@ struct pci_driver registered_drivers[] = {
     {0, 0, 0}
 };
 
-struct pci_device _pci_devices[25];
+
+
+struct pci_device _pci_devices[25] = {0};
 int _pci_devices_size = 0;
+
+const char* pci_get_class_name(struct pci_device* dev)
+{
+    return pci_classes[dev->class];
+}
+
+const char* pci_get_device_name(struct pci_device* dev)
+{
+    switch (dev->vendor)
+    {
+    case 0x8086:
+        switch (dev->device){
+        case E1000_DEVICE_ID:
+            return "Gigabit Ethernet Controller";
+        case 0x7010:
+            return "PIIX3 IDE [Natoma/Triton II]";
+        default:
+            break;
+        }
+        break;
+    case 0x1234:
+        switch (dev->device){
+        case 0x1111:
+            return "QEMU Virtual STDVGA";
+        default:
+            break;
+        }
+    default:
+        break;
+    }
+    return "Unknown";
+}
+
+const char* pci_get_vendor_name(struct pci_device* dev)
+{
+    switch (dev->vendor)
+    {
+    case 0x8086:
+        return "Intel"; 
+        break;
+    case 0x1234:
+        return "QEMU"; 
+        break;
+    case 0x10DE:
+        return "NVIDIA Corporation"; 
+        break;
+    default:
+        break;
+    }
+    return "Unknown";
+}
+
+
+
+struct pci_device* pci_get_devices()
+{
+    return _pci_devices;
+}
 
 /* https://wiki.osdev.org/PCI */
 uint16_t pci_read_word(uint16_t bus, uint16_t slot, uint16_t func, uint16_t offset)

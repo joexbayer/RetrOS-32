@@ -8,8 +8,10 @@
  * @copyright Copyright (c) 2022
  * 
  */
+#include <kconfig.h>
 
 #include <net/ipv4.h>
+#include <net/net.h>
 #include <net/utils.h>
 #include <terminal.h>
 #include <util.h>
@@ -19,6 +21,30 @@
 
 #include <net/dhcp.h>
 #include <serial.h>
+#include <net/interface.h>
+
+#ifndef KDEBUG_NET_IP
+#undef dbgprintf
+#define dbgprintf(...)
+#endif
+
+int net_ipv4_print(struct ip_header* hdr)
+{
+    dbgprintf("IPv4 Header:\n");
+    dbgprintf("  Version: %d\n", hdr->version);
+    dbgprintf("  IHL: %d\n", hdr->ihl);
+    dbgprintf("  TOS: %d\n", hdr->tos);
+    dbgprintf("  Length: %d\n", hdr->len);
+    dbgprintf("  ID: %d\n", hdr->id);
+    dbgprintf("  Frag Offset: %d\n", hdr->frag_offset);
+    dbgprintf("  TTL: %d\n", hdr->ttl);
+    dbgprintf("  Protocol: %d\n", hdr->proto);
+    dbgprintf("  Checksum: %d\n", hdr->csum);
+    dbgprintf("  Source IP: %i\n", hdr->saddr);
+    dbgprintf("  Destination IP: %i\n", hdr->daddr );
+
+    return 0;
+}
 
 /**
  * @brief Creates and attaches IP header to SKB
@@ -31,6 +57,15 @@
  */
 int net_ipv4_add_header(struct sk_buff* skb, uint32_t ip, uint8_t proto, uint32_t length)
 {
+    /* Setup interface */
+    uint32_t next_hop = route(ip);
+    struct net_interface* iface = net_get_iface(next_hop);
+    if(NULL == iface){
+        dbgprintf("No interface found for %d\n", next_hop);
+        return -1;
+    }
+    skb->interface = iface;
+
     struct ip_header hdr = {
         .version = IPV4,
         .ihl = 0x05,
@@ -39,17 +74,17 @@ int net_ipv4_add_header(struct sk_buff* skb, uint32_t ip, uint8_t proto, uint32_
         .frag_offset = 0x4000,
         .ttl = 64,
         .proto = proto,
-        .saddr = dhcp_get_ip(),
+        .saddr = iface->ip,
         .daddr = ip,
         .csum = 0
     };
+    net_ipv4_print(&hdr); 
     IP_HTONL(&hdr);
     hdr.csum = checksum(&hdr, hdr.ihl * 4, 0);
 
     skb->proto = IP;
 
     /* Add ethernet header */
-    uint32_t next_hop = route(ip);
 	int ret = net_ethernet_add_header(skb, next_hop);
 	if(ret < 0){
 		dbgprintf("Error adding ethernet header\n");
@@ -58,6 +93,7 @@ int net_ipv4_add_header(struct sk_buff* skb, uint32_t ip, uint8_t proto, uint32_
 
     /* Add IP header to packet */
     memcpy(skb->data, &hdr, sizeof(struct ip_header));
+    skb->hdr.ip = (struct ip_header*) skb->data;
     skb->len += hdr.ihl * 4;
     skb->data += hdr.ihl * 4;
 
@@ -90,9 +126,10 @@ int net_ipv4_parse(struct sk_buff* skb)
 
     IP_NTOHL(hdr);
     skb->data = skb->data+hdr_len;
+    net_ipv4_print(hdr);
 
-    if(BROADCAST_IP != ntohl(skb->hdr.ip->daddr) && ntohl(skb->hdr.ip->daddr) != (uint32_t)dhcp_get_ip()){
-        dbgprintf("IP mismatch: %d %d\n", skb->hdr.ip->daddr, dhcp_get_ip());
+    if(BROADCAST_IP != ntohl(skb->hdr.ip->daddr) && ntohl(skb->hdr.ip->daddr) != (uint32_t)skb->interface->ip){
+        dbgprintf("IP mismatch: destination %i, interface: %i\n", ntohl(skb->hdr.ip->daddr), (uint32_t)skb->interface->ip);
         return -1; /* Currently only accept broadcast packets. */
     }
 
@@ -100,7 +137,7 @@ int net_ipv4_parse(struct sk_buff* skb)
     int arp = net_arp_find_entry(hdr->saddr, (uint8_t*)&mac);
     if(arp < 0){
         struct arp_content content = {
-            .sip = hdr->saddr
+            .sip = ntohl(hdr->saddr)
         };
 
         struct ethernet_header* ehdr= (struct ethernet_header*) skb->head;

@@ -1,3 +1,16 @@
+/**
+ * @file tcp.c
+ * @author Joe Bayer (joexbayer)
+ * @brief TCP implementation.
+ * @version 0.1
+ * @date 2023-12-19
+ * 
+ * @see https://ietf.org/rfc/rfc793.txt
+ * @copyright Copyright (c) 2023
+ * 
+ */
+
+#include <work.h>
 #include <net/tcp.h>
 #include <memory.h>
 #include <net/skb.h>
@@ -5,18 +18,129 @@
 #include <net/net.h>
 #include <assert.h>
 #include <serial.h>
-#include <rbuffer.h>
 #include <scheduler.h>
 #include <errors.h>
 
+#define TCB_MAX 32
+
+/** new implementation **/
+
+static struct tcp_manager {
+	struct tcb* tcbs[TCB_MAX];
+	int tcb_count;
+} tcp_manager = {0};
+
+int tcb_init()
+{
+	memset(&tcp_manager, 0, sizeof(struct tcp_manager));
+	return ERROR_OK;
+}
+
+/**
+ * @brief Creates a new TCB. 
+ * Allocates all necessary memory for a new TCB.
+ * @return struct tcb*, NULL on failure.
+ */
+struct tcb* tcb_new()
+{
+	if(tcp_manager.tcb_count >= TCB_MAX){
+		dbgprintf("[TCP] Max number of TCBs reached!\n");
+		goto tcb_new_error;
+	}
+
+	struct tcb* tcb = create(struct tcb); 
+	if(tcb == NULL){
+		dbgprintf("[TCP] Failed to allocate TCB!\n");
+		goto tcb_new_error;
+	}
+
+	memset(tcb, 0, sizeof(struct tcb));
+
+	tcb->rbuf = rbuffer_new(1024);
+	if(tcb->rbuf == NULL){
+		dbgprintf("[TCP] Failed to allocate receive buffer!\n");
+		goto tcb_new_error;
+	}
+
+	tcb->sbuf = rbuffer_new(1024);
+	if(tcb->sbuf == NULL){
+		dbgprintf("[TCP] Failed to allocate send buffer!\n");
+		goto tcb_new_error;
+	}
+
+	tcb->retransmit = skb_new_queue();
+	if(tcb->retransmit == NULL){
+		dbgprintf("[TCP] Failed to allocate retransmit queue!\n");
+		goto tcb_new_error;
+	}
+	/* register in manager */
+	tcp_manager.tcbs[tcp_manager.tcb_count++] = tcb;
+
+	tcb->state = TCP_CREATED;
+
+	return tcb;
+
+tcb_new_error:
+	if(tcb != NULL) kfree(tcb);
+	if(tcb != NULL && tcb->rbuf != NULL) rbuffer_free(tcb->rbuf);
+	if(tcb != NULL && tcb->sbuf != NULL) rbuffer_free(tcb->sbuf);
+	if(tcb != NULL && tcb->retransmit != NULL) skb_free_queue(tcb->retransmit);
+	return NULL;
+}
+
+
+#define IS_TCP_SOCKET(sock) (sock->type == SOCK_STREAM && sock->tcp != NULL)
+
+#define TCP_BLOCK(sock)\
+	sock->waiting = current_running;\
+	current_running->state = BLOCKED;\
+	kernel_yield();
+
+#define TCP_UNBLOCK(sock)\
+	if(sock->waiting != NULL){\
+		sock->waiting->state = RUNNING;\
+		sock->waiting = NULL;\
+	}
+
+
+static const char* tcp_state_str[] = {
+	"TCP_CREATED",
+	"TCP_CLOSED",
+	"TCP_LISTEN",
+	"TCP_WAIT_ACK",
+	"TCP_SYN_RCVD",
+	"TCP_SYN_SENT",
+	"TCP_ESTABLISHED",
+	"TCP_FIN_WAIT",
+	"TCP_FIN_WAIT_2",
+	"TCP_CLOSING",
+	"TCP_TIME_WAIT",
+	"TCP_CLOSE_WAIT",
+	"TCP_LAST_ACK",
+	"TCP_PREPARE"
+};
+char* tcp_state_to_str(tcp_state_t state){
+	return (char*)tcp_state_str[state];
+}
+
+/**
+ * @brief Creates a new TCP connection.
+ * Function allocates memory for a new TCP connection and initializes it.
+ * @param sock generic socket to create connection for.
+ * @param dst_port destination port.
+ * @param src_port source port.
+ * @return int 0 on success, -1 on failure.
+ */
 int tcp_new_connection(struct sock* sock, uint16_t dst_port, uint16_t src_port)
 {
-	sock->tcp = kalloc(sizeof(struct tcp_connection));
+	sock->tcp = create(struct tcp_connection);
+	ERR_ON_NULL(sock->tcp);
+
 	memset(sock->tcp, 0, sizeof(struct tcp_connection));
 	sock->tcp->dport = dst_port;
 	sock->tcp->sport = src_port;
 	sock->tcp->state = TCP_CREATED;
-	sock->tcp->sequence = 227728011;
+	sock->tcp->sequence = 1;
 
 	return ERROR_OK;
 }
@@ -24,7 +148,6 @@ int tcp_new_connection(struct sock* sock, uint16_t dst_port, uint16_t src_port)
 int tcp_free_connection(struct sock* sock)
 {
 	/* TODO: check for active connections */
-	tcp_close_connection(sock);
 	kfree(sock->tcp);
 	sock->tcp = NULL;
 
@@ -38,8 +161,13 @@ inline int tcp_is_listening(struct sock* sock)
 
 inline int tcp_set_listening(struct sock* sock, int backlog)
 {
-	
-	sock->tcp->backlog = backlog;
+	/* create backlog queue, I do not check if there already is a queue... */
+	sock->backlog.queue = skb_new_queue();
+	ERR_ON_NULL(sock->backlog.queue);
+
+	sock->backlog.size = backlog;
+	sock->backlog.count = 0;
+
 	sock->tcp->state = TCP_LISTEN;
 
 	return 1;
@@ -94,16 +222,14 @@ uint16_t tcp_calculate_checksum(uint32_t src_ip, uint32_t dest_ip, unsigned shor
  */
 static int __tcp_send(struct sock* sock, struct tcp_header* hdr, struct sk_buff* skb, uint8_t* data, uint32_t len)
 {
-	if(net_ipv4_add_header(skb, ntohl(sock->recv_addr.sin_addr.s_addr), TCP, sizeof(struct tcp_header)+len) < 0){
-		skb_free(skb);	
+	if(net_ipv4_add_header(skb, sock->recv_addr.sin_addr.s_addr, TCP, sizeof(struct tcp_header)+len) < 0){
+		skb_free(skb);
 		return -1;
 	}
 	TCP_HTONS(hdr);
 
 	memcpy(skb->data, hdr, sizeof(struct tcp_header));
 	hdr = (struct tcp_header*) skb->data;
-
-	dbgprintf("Sending TCP %d\n", sizeof(struct tcp_header));
 
 	skb->len += sizeof(struct tcp_header);
 	skb->data += sizeof(struct tcp_header);
@@ -114,7 +240,11 @@ static int __tcp_send(struct sock* sock, struct tcp_header* hdr, struct sk_buff*
 		skb->data += len;
 	}
 
-	hdr->check = tcp_calculate_checksum(dhcp_get_ip(), sock->recv_addr.sin_addr.s_addr, (unsigned short*)hdr, sizeof(struct tcp_header)+len);
+	/**
+	 * @brief TCP header checksum is calculated over the pseudo header and the TCP header.
+	 * This pseudo header contains the Source Address, the Destination Address, the Protocol, and TCP length.
+	 */
+	hdr->check = tcp_calculate_checksum(skb->hdr.ip->daddr, skb->hdr.ip->saddr, (unsigned short*)hdr, sizeof(struct tcp_header)+len);
 
 	net_send_skb(skb);
 
@@ -135,19 +265,11 @@ int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t pus
 {
 	uint8_t retries;
 	uint32_t timeout;
+	int seq = sock->tcp->sequence;
+	int ack = sock->tcp->acknowledgement;
 	struct sk_buff* skb;
 
 	dbgprintf("[TCP] Sending segment with size %d, seq: %d (%d after)\n", len, sock->tcp->sequence, sock->tcp->sequence+len);
-	struct tcp_header hdr = {
-		.source = sock->bound_port,
-		.dest = sock->recv_addr.sin_port,
-		.window = 1500,
-		.seq = sock->tcp->sequence,
-		.ack_seq = sock->tcp->acknowledgement,
-		.doff = 0x05,
-		.ack = 1,
-		.psh = push
-	};
 
 	sock->tcp->sequence += len;
 
@@ -163,6 +285,17 @@ int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t pus
 	retries = 0;
 
 	do {
+		struct tcp_header hdr = {
+			.source = sock->bound_port,
+			.dest = sock->recv_addr.sin_port,
+			.window = 1500,
+			.seq = seq,
+			.ack_seq = ack,
+			.doff = 0x05,
+			.ack = 1,
+			.psh = push
+		};
+
 		skb = skb_new();
 		ERR_ON_NULL(skb);
 
@@ -170,18 +303,54 @@ int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t pus
 		__tcp_send(sock, &hdr, skb, data, len);
 
 		/* Wait for ACK */
-		timeout = get_time() + 500;
+		timeout = get_time() + 1;
 
 		/* check if ack was receiver for timeout seconds. */
 		while((uint32_t)get_time() < timeout){
 			kernel_yield();
 			if(!net_sock_awaiting_ack(sock)) return ERROR_OK;
 		}
-
+		dbgprintf("[TCP] Timeout for %d\n", htonl(hdr.seq));
 	} while (retries++ < 3);
 
 	dbgprintf("[TCP] Failed to send segment\n");
 	return -1;
+}
+
+int tcp_accept_connection(struct sock* sock, struct sock* new)
+{
+	int ret;
+    if(sock->tcp == NULL || sock->tcp->state != TCP_LISTEN){
+		dbgprintf("[TCP] Socket %d is not listening\n", sock);
+        return -1;
+     }
+
+    while(sock->backlog.count == 0){
+		dbgprintf("[TCP] Socket %d is listening but backlog is empty\n", sock);
+		TCP_BLOCK(sock);
+	}
+
+	struct sk_buff* skb = sock->backlog.queue->ops->remove(sock->backlog.queue);
+	ERR_ON_NULL(skb);
+	sock->backlog.count--;
+
+	struct tcp_header* hdr = (struct tcp_header*) skb->hdr.tcp;
+
+	/**
+	 * @brief This assumes that sock has a valid recv_addr. 
+	 */
+	net_prepare_tcp_sock(new, sock->bound_port, &sock->recv_addr);
+
+	new->tcp->state = TCP_ESTABLISHED;
+	new->tcp->acknowledgement = htonl(hdr->seq);
+	new->tcp->sequence = hdr->ack_seq;
+	sock->accept_sock = NULL;
+
+	memset(&sock->recv_addr, 0, sizeof(struct sockaddr_in));
+	
+	skb_free(skb);
+
+	return ERROR_OK; 
 }
 
 int tcp_send_ack(struct sock* sock, struct tcp_header* tcp, int len)
@@ -200,7 +369,9 @@ int tcp_send_ack(struct sock* sock, struct tcp_header* tcp, int len)
 	};
 
 	sock->tcp->sequence = htonl(tcp->ack_seq);
-	sock->tcp->acknowledgement = htonl(tcp->seq)+1;
+	sock->tcp->acknowledgement = htonl(tcp->seq)+len;
+
+	dbgprintf("[TCP] Sending ack for %d (seq: %d, ack: %d)\n", htonl(tcp->seq)+len, htonl(tcp->ack_seq), htonl(tcp->seq)+1);
 
 	__tcp_send(sock, &hdr, skb, NULL, 0);
 	return ERROR_OK;
@@ -273,7 +444,7 @@ int tcp_connect(struct sock* sock)
 
 int tcp_send_syn(struct sock* sock, uint16_t dst_port, uint16_t src_port)
 {
-
+	
 	return ERROR_OK;
 }
 
@@ -331,6 +502,9 @@ int tcp_recv_syn(struct sock* sock, struct tcp_header* tcp)
     sock->tcp->acknowledgement = htonl(tcp->seq) + 1;
 	sock->tcp->state = TCP_SYN_RCVD;
 
+	/* store information from remote in recv_addr */
+	sock->recv_addr.sin_port = tcp->source;
+
 	return ERROR_OK;
 }
 
@@ -352,20 +526,21 @@ int tcp_send_fin(struct sock* sock)
 
 	sock->tcp->sequence += 1;
 
+	dbgprintf("[TCP] Sending fin for %d\n", sock->socket);
+
 	__tcp_send(sock, &hdr, skb, NULL, 0);
 	return ERROR_OK;
 }
 
 int tcp_close_connection(struct sock* sock)
 {
-	sock->tcp->state = TCP_FIN_WAIT;
+	sock->tcp->state = TCP_CLOSE_WAIT;
 	tcp_send_fin(sock);
 
 	WAIT(!(sock->tcp->state == TCP_CLOSED));
 
 	return ERROR_OK;
 }
-
 
 int tcp_parse(struct sk_buff* skb)
 {
@@ -382,17 +557,47 @@ int tcp_parse(struct sk_buff* skb)
 		return -1;
 	}
 
-	dbgprintf("[TCP] Incoming TCP packet: %d syn, %d ack, %d fin\n", hdr->syn, hdr->ack, hdr->fin);
+	dbgprintf("[TCP] Incoming TCP packet: %d syn, %d ack, %d fin %d push\n", hdr->syn, hdr->ack, hdr->fin, hdr->psh);
 
 	switch (sk->tcp->state){
 	case TCP_LISTEN:
 		if(hdr->syn == 1 && hdr->ack == 0){
+
+			if(sk->backlog.count == sk->backlog.size){
+				dbgprintf("[TCP] Backlog is full, dropping packet\n");
+				return -1;
+			}
+
+			/**
+			 * @brief Store the remote address in recv_addr of
+			 * listening socket. This will be overwritten for each
+			 * new accepted socket.
+			 * This is techinically bad as we access IP in TCP.
+			 */
+			sk->recv_addr.sin_port = hdr->source;
+			sk->recv_addr.sin_addr.s_addr = skb->hdr.ip->saddr;
+
+			dbgprintf("Socket %d received syn for %d\n", sk, hdr->seq);
+
 			return tcp_recv_syn(sk, hdr);
 		}
 		break;
 	case TCP_SYN_RCVD:
 		if(hdr->syn == 0 && hdr->ack == 1){
-			/* Handle syn / ack */
+			/**
+			 * @brief Add to backlog 
+			 * 
+			 */
+			if(sk->backlog.count < sk->backlog.size){
+				sk->backlog.queue->ops->add(sk->backlog.queue, skb);
+				sk->backlog.count++;
+			}
+
+			dbgprintf("Received ACK for SYN (%d)\n", sk->socket);
+			sk->tcp->state = TCP_LISTEN;
+
+			TCP_UNBLOCK(sk);
+			return ERROR_OK;
 		}
 		break;
 	
@@ -402,19 +607,29 @@ int tcp_parse(struct sk_buff* skb)
 			sk->tcp->state = TCP_ESTABLISHED;
 
 			dbgprintf("Socket %d set to established\n", sk);
+			skb_free(skb);
 			return ERROR_OK;
 		}
 		break;
 	case TCP_WAIT_ACK:
 		if(hdr->syn == 0 && hdr->ack == 1){
-			dbgprintf("Socket %d received ack for %d\n", sk, hdr->ack_seq);
+			
+			/* check if i get a already acked retransmit */
+			if(sk->tcp->sequence > htonl(hdr->ack_seq)){
+				dbgprintf("[TCP] Received ack for already acked packet %d - %d\n", htonl(hdr->ack_seq), sk->tcp->acknowledgement);
+				skb_free(skb);
+				return ERROR_OK;
+			}
+
+			dbgprintf("Socket %d received ack for %d\n", sk, htonl(hdr->ack_seq));
 			tcp_recv_ack(sk, hdr);
+			skb_free(skb);
 			return ERROR_OK;
 		}
 		break;
 	case TCP_ESTABLISHED:
-		if(hdr->syn == 0 && hdr->ack == 1){
-			dbgprintf("Socket %d received data for %d\n", sk, hdr->ack_seq);
+		if(hdr->syn == 0 && hdr->ack == 1 && hdr->fin == 0){
+			dbgprintf("Socket %d received data for %d\n", sk, htonl(hdr->ack_seq));
 			/**
 			 * @brief This is where we should check if the packet is in order.
 			 * @see https://github.com/joexbayer/RetrOS-32/issues/34
@@ -427,15 +642,30 @@ int tcp_parse(struct sk_buff* skb)
 			 * sock->tcp->sequence == htonl(tcp->seq)
 			 */
 			if (sk->tcp->acknowledgement != htonl(hdr->seq)) {
-				dbgprintf("[TCP] Out-of-order packet received. Expected seq: %d, received seq: %d\n", htonl(sk->tcp->acknowledgement), htonl(hdr->seq));
+				dbgprintf("[TCP] Out-of-order packet received. Expected seq: %d, received seq: %d\n",sk->tcp->acknowledgement, htonl(hdr->seq));
 				return -1;
 			}
 
+			tcp_send_ack(sk, hdr, skb->data_len);
 
 			int ret = net_sock_add_data(sk, skb);
-			tcp_send_ack(sk, hdr, skb->data_len);
 			if(ret == 0)
 				skb_free(skb);
+			return ERROR_OK;
+		}
+
+		if(hdr->fin == 1 && hdr->ack == 1){
+			dbgprintf("Socket %d received fin for %d\n", sk, htonl(hdr->ack_seq));
+			tcp_send_ack(sk, hdr, 1);
+
+			/**
+			 * @brief Wait if data still needs to be sent.
+			 * If we receive a fin/ack, we ack it but only send
+			 * a fin if we have no more data to send.
+			 */
+			tcp_send_fin(sk);
+			sk->tcp->state = TCP_CLOSE_WAIT2;
+			skb_free(skb);
 			return ERROR_OK;
 		}
 		break;
@@ -445,8 +675,17 @@ int tcp_parse(struct sk_buff* skb)
 			tcp_send_ack(sk, hdr, 1);
 			sk->tcp->state = TCP_CLOSED;
 		}
-		skb_free(skb);
 		break;
+	case TCP_CLOSE_WAIT:
+		if(hdr->fin == 0 && hdr->ack == 1){	
+			sk->tcp->state = TCP_FIN_WAIT;
+		}
+		break;
+	case TCP_CLOSE_WAIT2:
+		if(hdr->fin == 0 && hdr->ack == 1){	
+			sk->tcp->state = TCP_CLOSED;
+		}
+		break;	
 	default:
 		break;
 	}

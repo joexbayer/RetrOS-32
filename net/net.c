@@ -153,24 +153,52 @@ error_t kernel_sendto(struct sock* socket, const void *message, int length, int 
         return -ERROR_INVALID_SOCKET_TYPE;
     }
 
+    socket->tx += length;
+
     return length;
 }
 
-error_t kernel_accept(struct sock* socket, struct sockaddr *address, socklen_t *address_len)
+/**
+ * @brief Creates a new socket.
+ * Creates new socket and prepares it for remote sender.
+ * New socket inherits domain, type and protocol from parent socket.
+ * @see net_sock_accept 
+ * @warning Is blocking and assumes socket to be TCP
+ * @param domain Domain of socket.
+ * @param type Type of socket.
+ * @param protocol Protocol of socket.
+ * @return struct sock*, NULL if failed.
+ */
+struct sock* kernel_accept(struct sock* socket, struct sockaddr *address, socklen_t *address_len)
 {
-
     /* accept: only is valid in a TCP connection context. */
-    if(!tcp_is_listening(socket))
-        return -1;
+    if(socket->tcp == NULL){
+        return NULL;
+    }
     
-
     /* Create new TCP socket? */
+    struct sock* new_socket = kernel_socket_create(socket->domain, socket->type, socket->protocol);
+    if(new_socket == NULL){
+        return NULL;
+    }
+    socket->accept_sock = new_socket;
+   
 
-    return 0;
+    /* Wait for a new connection. */
+    net_sock_accept(socket, socket->accept_sock);
+
+    /* Copy address of sender to address. */
+    if(address != NULL){
+        struct sockaddr_in* addr = (struct sockaddr_in*) address;
+        memcpy(addr, &socket->accept_sock->recv_addr, sizeof(struct sockaddr_in));
+    }
+
+    return new_socket;
 }
 
 error_t kernel_listen(struct sock* socket, int backlog)
 {
+    tcp_new_connection(socket, 0, socket->bound_port);
     return tcp_set_listening(socket, backlog);
 }
 
@@ -179,6 +207,10 @@ error_t kernel_send(struct sock* socket, void *message, int length, int flags)
     /* for the time being, only send messages under 1500 bytes */
     if(length > 1400){
         return -ERROR_MSS_SIZE;
+    }
+
+    if(socket == NULL || (socket->tcp == NULL && socket->tcp->state == TCP_CLOSED)){
+        return -ERROR_INVALID_SOCKET;
     }
 
     /**

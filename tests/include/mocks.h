@@ -24,6 +24,8 @@ void init_memory();
 void kmem_init();
 void vmem_init();
 
+char* error_get_string(int err);
+
 void* kalloc(int size);
 void kfree(void* ptr);
 
@@ -42,6 +44,7 @@ extern struct pcb* current_running;
 extern int failed;
 
 void testprintf(int test,  const char* test_str);
+void test_summary();
 
 struct memory_map {
 	struct kernel_memory {

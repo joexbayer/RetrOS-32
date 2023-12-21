@@ -42,5 +42,8 @@ struct mbr {
 
 int mbr_partitions_parse();
 int mbr_partition_load();
+struct mbr* mbr_get();
+
+const char* mbr_partition_type_string(mbr_partition_type_t type);
 
 #endif /* MBR_H */

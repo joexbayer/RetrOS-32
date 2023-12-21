@@ -4,10 +4,10 @@
 #include <stdint.h>
 #include <pci.h>
 
-#define MAX_NETDEV_NAME_SIZE 10
+#define MAX_NETDEV_NAME_SIZE 20
 
 /**
- * @brief Main struct that keeps track of the network, especially its stats and read / write functions.
+ * @brief Main struct that keeps track of a network interface card, especially its stats and read / write functions.
  * 
  */
 struct netdev {

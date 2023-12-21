@@ -12,6 +12,9 @@ RUN apt-get update                      && \
     apt-get install -y grub2            && \
     apt-get install -y xorriso          && \
     apt-get install -y xxd              && \
-    apt-get install -y sudo
+    apt-get install -y sudo             && \
+    apt-get install -y kmod             && \
+    apt-get install -y mtools           && \
+    apt-get install -y dosfstools
 
 WORKDIR /RetrOS-32

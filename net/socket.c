@@ -27,6 +27,34 @@ static int total_sockets;
 static bitmap_t port_map;
 static bitmap_t socket_map;
 
+static const char* socket_type_str[] = {
+    "SOCK",
+    "SOCK_UDP",
+    "SOCK_TCP",
+    "SOCK_RAW"
+};
+const char* socket_type_to_str(int type){
+    return socket_type_str[type];
+}
+
+static const char* socket_domain_str[] = {
+    "AF_INET",
+    "AF_INET6",
+    "AF_UNIX"
+};
+const char* socket_domain_to_str(int domain){
+    return socket_domain_str[domain];
+}
+
+static const char* socket_protocol_str[] = {
+    "IPPROTO_TCP",
+    "IPPROTO_UDP",
+    "IPPROTO_ICMP"
+};
+const char* socket_protocol_to_str(int protocol){
+    return socket_protocol_str[protocol];
+}
+
 /**
  * Example:
  * 
@@ -63,11 +91,29 @@ static int __sock_add_skb(struct sock* socket, struct sk_buff* skb)
     return ERROR_OK;
 }
 
+int net_get_sockets(struct sockets* sockets)
+{
+    struct sockets _sockets = {
+        .sockets = socket_table,
+        .total_sockets = NET_NUMBER_OF_SOCKETS 
+    };
+
+    *sockets = _sockets;
+
+    return ERROR_OK;
+}
+
 error_t net_sock_read(struct sock* sock, uint8_t* buffer, unsigned int length)
 {
 	dbgprintf(" [SOCK] Waiting for data... %d\n", sock);
 	/* Should be blocking */
-	WAIT(!net_sock_data_ready(sock, length));
+    while(!net_sock_data_ready(sock, length)){
+        sock->waiting = current_running;
+        current_running->state = BLOCKED;
+	    kernel_yield();
+    }
+	//WAIT(!net_sock_data_ready(sock, length));
+    dbgprintf(" [SOCK] Data ready! %d\n", sock);
 
     int to_read = -1;
 
@@ -85,7 +131,7 @@ error_t net_sock_read(struct sock* sock, uint8_t* buffer, unsigned int length)
 
         dbgprintf("[SOCK] Received %d from socket %d\n", to_read, sock);
     });
-
+  
 	return to_read;
 }
 
@@ -108,6 +154,15 @@ static inline error_t net_sock_add_data_segment(struct sock* sock, struct sk_buf
     }
     sock->recvd += skb->data_len;
     sock->data_ready = sock->tcp == NULL ? 1 : skb->hdr.tcp->psh;
+
+    if(sock->waiting->state == BLOCKED){
+        /* need to clear waiting before setting it to run */
+        struct pcb* pcb = sock->waiting;
+        sock->waiting = NULL;
+        pcb->state = RUNNING;
+    }
+
+    sock->rx += skb->data_len;
 
     return ERROR_OK;
 }
@@ -193,21 +248,68 @@ struct sock* sock_find_listen_tcp(uint16_t d_port)
 
 struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip)
 {
+    dbgprintf("[TCP] Looking for socket destintation %d: source %d\n", htons(d_port), htons(s_port));
     struct sock* _sk = NULL; /* save listen socket incase no established connection is found. */
+
     for (int i = 0; i < NET_NUMBER_OF_SOCKETS; i++){
         if(socket_table[i] == NULL || socket_table[i]->tcp == NULL)
             continue;
-        
-        if(socket_table[i]->bound_port == d_port &&  socket_table[i]->tcp->state == TCP_LISTEN)
-            _sk = socket_table[i];
+       dbgprintf("[TCP] Checking %d %s: source %d: destination %d (%i %i) %s (seq: %d - ack: %d)\n", i,
+            socket_table[i]->owner->name, htons(socket_table[i]->recv_addr.sin_port), htons(socket_table[i]->bound_port), ntohl(socket_table[i]->recv_addr.sin_addr.s_addr), ip, tcp_state_to_str(socket_table[i]->tcp->state),
+            socket_table[i]->tcp->sequence, socket_table[i]->tcp->acknowledgement); 
+    }
+    
+    for (int i = 0; i < NET_NUMBER_OF_SOCKETS; i++){
+        if(socket_table[i] == NULL || socket_table[i]->tcp == NULL)
+            continue;
 
-        if(socket_table[i]->bound_port == d_port &&  socket_table[i]->recv_addr.sin_port == s_port && socket_table[i]->tcp->state != TCP_LISTEN && socket_table[i]->recv_addr.sin_addr.s_addr == ip)
-            return socket_table[i];
+        
+        if(socket_table[i]->bound_port == d_port && (socket_table[i]->tcp->state == TCP_LISTEN || socket_table[i]->tcp->state == TCP_SYN_RCVD)){
+            _sk = socket_table[i];
+        }
+
+        if(socket_table[i]->bound_port == d_port && socket_table[i]->recv_addr.sin_port == s_port
+            && socket_table[i]->tcp->state != TCP_LISTEN
+            && socket_table[i]->tcp->state != TCP_SYN_RCVD
+            && socket_table[i]->tcp->state != TCP_PREPARE
+            && ntohl(socket_table[i]->recv_addr.sin_addr.s_addr) == ip
+            //&& (socket_table[i]->tcp->state == TCP_ESTABLISHED || socket_table[i]->tcp->state == TCP_SYN_SENT)
+            ){
+                dbgprintf("[TCP] Found socket %d\n", i);
+                return socket_table[i];
+            }
     }
 
+    if(_sk != NULL){
+        dbgprintf("[TCP] Found socket %d\n", _sk->socket);
+    }
     return _sk;
 }
 
+int net_prepare_tcp_sock(struct sock* sock, uint16_t port, struct sockaddr_in* addr)
+{
+    /* TODO: Should not be INADDR_ANY but the IP parent socket. */
+    net_sock_bind(sock, port, INADDR_ANY);
+
+    struct sockaddr_in* sptr = &sock->recv_addr;
+    memcpy(sptr, addr, sizeof(struct sockaddr_in));
+
+    tcp_new_connection(sock, addr->sin_port, port);
+    if(sock->tcp == NULL){
+        dbgprintf("[TCP] Unable to create new connection!\n");
+        return -1;
+    }
+    sock->tcp->state = TCP_PREPARE;
+
+    dbgprintf("[TCP] Preparing socket %d\n", sock->socket);
+
+    return 0;
+}
+
+int net_sock_accept(struct sock* sock, struct sock* new)
+{
+    return tcp_accept_connection(sock, new);
+}
 
 struct sock* net_socket_find_udp(uint32_t ip, uint16_t port) 
 {   
@@ -223,9 +325,16 @@ struct sock* net_socket_find_udp(uint32_t ip, uint16_t port)
     return NULL;
 }
 
-void kernel_sock_close(struct sock* socket)
+void kernel_sock_shutdown(struct sock* socket, int how)
 {
-    dbgprintf("Closing socket...\n");
+    if(socket->type == SOCK_STREAM && socket->tcp != NULL && socket->tcp->state != TCP_CLOSED){
+        tcp_close_connection(socket);
+    }
+}
+
+void kernel_sock_cleanup(struct sock* socket)
+{
+    tcp_free_connection(socket);
 
     while(SKB_QUEUE_READY(socket->skb_queue)){
         struct sk_buff* skb = socket->skb_queue->ops->remove(socket->skb_queue);
@@ -235,13 +344,21 @@ void kernel_sock_close(struct sock* socket)
     skb_free_queue(socket->skb_queue);
     rbuffer_free(socket->recv_buffer);
 
-    if(socket->type == SOCK_STREAM && socket->tcp != NULL)
-        tcp_free_connection(socket);
-
     kfree((void*) socket);
     unset_bitmap(socket_map, (int)socket->socket);
 
+    socket_table[socket->socket] = NULL;
+
     total_sockets--;
+}
+
+void kernel_sock_close(struct sock* socket)
+{
+    dbgprintf("Closing socket...\n");
+
+    kernel_sock_shutdown(socket, 0);
+
+    kernel_sock_cleanup(socket);
 }
 
 /**
@@ -252,12 +369,22 @@ void kernel_sock_close(struct sock* socket)
  * @param protocol Protocol (UDP / TCP)
  * @return socket_t 
  */
-struct sock* kernel_socket(int domain, int type, int protocol)
+struct sock* kernel_socket_create(int domain, int type, int protocol)
 {
+
+    /* Should be a lock? */
+    ENTER_CRITICAL();
+
     //int current = get_free_bitmap(socket_map, NET_NUMBER_OF_SOCKETS);
     int current = get_free_bitmap(socket_map, NET_NUMBER_OF_SOCKETS);
+    if(current == -1){
+        warningf("Unable to create socket, no free sockets!\n");
+        LEAVE_CRITICAL();
+        return NULL;
+    }
 
-    socket_table[current] = kalloc(sizeof(struct sock)); /* Allocate space for a socket. Needs to be freed. */
+
+    socket_table[current] = create(struct sock); /* Allocate space for a socket. Needs to be freed. */
     memset(socket_table[current], 0, sizeof(struct sock));
 
     socket_table[current]->domain = domain;
@@ -265,7 +392,10 @@ struct sock* kernel_socket(int domain, int type, int protocol)
     socket_table[current]->type = type;
     socket_table[current]->socket = current;
     socket_table[current]->bound_port = 0;
+    socket_table[current]->bound_ip = 0;
     socket_table[current]->tcp = NULL;
+    socket_table[current]->rx = 0;
+    socket_table[current]->tx = 0;
 
     socket_table[current]->recv_buffer = rbuffer_new(NET_MAX_BUFFER_SIZE);
 	socket_table[current]->data_ready = 0;
@@ -273,11 +403,18 @@ struct sock* kernel_socket(int domain, int type, int protocol)
 
     socket_table[current]->skb_queue = skb_new_queue();
 
+    socket_table[current]->waiting = NULL;
+    socket_table[current]->accept_sock = NULL;
+
+    socket_table[current]->owner = current_running;
+
     mutex_init(&(socket_table[current]->lock));
 
     total_sockets++;
 
-    dbgprintf("Created new sock\n");
+    dbgprintf("Created new sock %d\n", current);
+
+    LEAVE_CRITICAL();
 
     return socket_table[current];
 }

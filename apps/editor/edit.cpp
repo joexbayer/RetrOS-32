@@ -63,7 +63,7 @@ void Editor::Reset()
 void Editor::reDraw(int from, int to) {
     /* Clamp from and to values */
     from = from < 0 ? 0 : from;
-    to = to > m_bufferHead ? m_bufferHead : to;
+    to = to > m_bufferSize ? m_bufferSize : to;
 
 	m_x = 0;
 	m_y = 0;

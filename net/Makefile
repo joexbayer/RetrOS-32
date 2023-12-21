@@ -1,8 +1,8 @@
-CCFLAGS=-m32 -std=gnu99 -O2 \
+CCFLAGS=-m32 -std=gnu99 -O1 \
 		-Wall -Wextra -Wpedantic -Wstrict-aliasing \
 		-Wno-pointer-arith -Wno-unused-parameter -nostdlib \
 		-nostdinc -ffreestanding -fno-pie -fno-stack-protector \
-		-fno-builtin-function -fno-builtin -I ./../include/
+		-fno-builtin-function -fno-omit-frame-pointer -fno-builtin -I ./../include/
 ASFLAGS=
 LDFLAGS=
 MAKEFLAGS += --no-print-directory
@@ -40,7 +40,7 @@ endif
 OUTPUTDIR = ../bin/
 
 NETOBJS = netdev.o ethernet.o skb.o arp.o ipv4.o utils.o icmp.o udp.o \
-	socket.o dns.o routing.o tcp.o net.o api.o
+	socket.o dns.o routing.o tcp.o net.o api.o interface.o
 
 .PHONY: all new network clean bindir
 all: new

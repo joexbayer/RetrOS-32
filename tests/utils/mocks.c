@@ -33,6 +33,7 @@ struct pcb __current_running = {
 struct pcb* current_running = &__current_running;
 
 int failed = 0;
+int tests = 0;
 void testprintf(int test,  const char* test_str)
 {
     if(test)
@@ -41,6 +42,12 @@ void testprintf(int test,  const char* test_str)
         fprintf(stderr, "[ " RED "FAILED" RESET " ] %s\n", test_str);
         failed++;
     }
+    tests++;
+}
+
+char* error_get_string(int err)
+{
+    return "No error";
 }
 
 void pcb_queue_attach_ops()
@@ -153,6 +160,11 @@ int32_t twritef(char* fmt, ...)
 void* kalloc(int size){
     return malloc(size);
 }
+
+int kcalloc(int size){
+    return kalloc(size);
+}
+
 #endif
 
 #ifdef __FS_TEST

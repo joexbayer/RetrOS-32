@@ -18,6 +18,7 @@ extern "C" {
 #define LEX_MAX_SYMBOLS 128
 
 #include "lex.h"
+#include <terminal.h>
 #include "vm.h"
 //#include "interpreter.h"
 

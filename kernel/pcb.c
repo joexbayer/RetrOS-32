@@ -303,9 +303,8 @@ int pcb_cleanup_routine(void* arg)
 	int pid = (int)arg;
 	assert(pid != current_running->pid && !(pid < 0 || pid > MAX_NUM_OF_PCBS));
 
+	dbgprintf("%d\n", cli_cnt);
 	struct pcb* pcb = &pcb_table[pid];
-
-	dbgprintf("[PCB] Cleanup on PID %d stack: 0x%x (original: 0x%x)\n", pid, pcb_table[pid].ctx.esp, pcb_table[pid].stackptr+PCB_STACK_SIZE-1);
 
 	gfx_destory_window(pcb_table[pid].gfx_window);
 
@@ -342,6 +341,8 @@ int pcb_cleanup_routine(void* arg)
 	});
 
 	dbgprintf("[PCB] Cleanup on PID %d [DONE]\n", pid);
+
+	dbgprintf("%d\n", cli_cnt);
 
 	return pid;
 }
@@ -482,14 +483,13 @@ error_t pcb_create_kthread(void (*entry)(), char* name, int argc, char** argv)
 	memcpy(pcb->name, name, strlen(name)+1);
 	
 	/* this is done for processes in vmem.c, should probably be moved there? */
-	pcb->allocations = kalloc(sizeof(struct virtual_allocations));
+	pcb->allocations = create(struct virtual_allocations);
 	if(pcb->allocations == NULL){
 		__pcb_free(pcb);
 		dbgprintf("[PCB] Failed to allocate memory for virtual allocations\n");
 		LEAVE_CRITICAL();
 		return -ERROR_ALLOC;
 	}
-	memset(pcb->allocations, 0, sizeof(struct virtual_allocations));
 
 
 	dbgprintf("[PCB] Allocating %d args\n", argc);

@@ -154,7 +154,8 @@ int eval(struct vm* vm, int assembly)
                 break;
             case PRTF:
                 tmp = vm->sp + vm->pc[1];
-                vm->ax = twritef((char *)tmp[-1], tmp[-2], tmp[-3], tmp[-4], tmp[-5], tmp[-6]);
+                vm->ax = 0;
+                twritef((char *)tmp[-1], tmp[-2], tmp[-3], tmp[-4], tmp[-5], tmp[-6]);
                 break;
             case MALC:
                 vm->ax = (int)kalloc(*vm->sp);

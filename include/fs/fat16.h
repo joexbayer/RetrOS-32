@@ -91,6 +91,8 @@ uint32_t fat16_get_free_cluster(void);
 int fat16_delete_entry(int block, int index);
 int fat16_rename_entry(int directory, int index, char* name);
 
+int fat16_used_blocks();
+
 int fat16_read_data(int first_cluster, uint32_t start_offset, void* _buffer, int buffer_length, uint32_t max_length);
 int fat16_write_data(int first_cluster, int offset, void* data, int data_length);
 

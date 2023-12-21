@@ -8,12 +8,18 @@
  * @copyright Copyright (c) 2022
  * 
  */
+#include <kconfig.h>
 #include <sync.h>
 #include <terminal.h>
 #include <scheduler.h>
 #include <pcb.h>
 #include <serial.h>
 #include <assert.h>
+
+#ifndef KDEBUG_SYNC
+#undef dbgprintf
+#define dbgprintf(...)
+#endif
 
 void spin_lock(spinlock_t* lock) {
     WAIT(__sync_lock_test_and_set(lock, SPINLOCK_LOCKED));

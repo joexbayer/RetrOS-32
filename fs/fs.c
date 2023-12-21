@@ -128,6 +128,11 @@ int fs_unregister(struct filesystem* fs)
     return -1;
 }
 
+/**
+ * @brief Returns the current filesystem.
+ * 
+ * @return struct filesystem* (NULL if no filesystem is available)
+ */
 struct filesystem* fs_get()
 {
     return fs_current;

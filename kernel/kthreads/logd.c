@@ -23,7 +23,7 @@ void logd_attach_by_pid(int pid)
     pcb->term = &term;
 }
 
-void __kthread_entry logd()
+void __kthread_entry logd(int argc, char* argv[])
 {
     struct window* w = gfx_new_window(400, 300, 0);
     if(w == NULL){
@@ -33,13 +33,19 @@ void __kthread_entry logd()
 
     w->ops->move(w, 50, 50);
 
-
     while (1)
     {
-        terminal_commit();
+        struct gfx_event event;
+        int ret = gfx_event_loop(&event, GFX_EVENT_BLOCKING);
+        if(ret == -1) continue;
 
-        //kernel_sleep(100);
-        kernel_yield();
+        switch (event.event){
+        case GFX_EVENT_EXIT:
+            return;
+        default:
+            break;
+        }
+
     }
 }
 EXPORT_KTHREAD(logd);

@@ -56,7 +56,7 @@ int fat16_init()
     }
 
     /* register the filesystem */
-    struct filesystem* fs = (struct filesystem*)kalloc(sizeof(struct filesystem));
+    struct filesystem* fs = create(struct filesystem); 
     ERR_ON_NULL(fs);
 
     fs->ops = &fat16_ops;
@@ -494,7 +494,7 @@ static int fat16_list(struct filesystem* fs, const char* path, char* buf, int si
 
             twritef("%p %s %d, %d:%d - %s%s\n",
                 dir_entry->file_size,
-                months[month],
+                months[month-1],
                 day, hours, minutes,
                 name,
                 dir_entry->attributes & FAT16_FLAG_SUBDIRECTORY ? "/" : ""
@@ -505,6 +505,5 @@ static int fat16_list(struct filesystem* fs, const char* path, char* buf, int si
     }
 
     twritef("%d directory entries.\n", entries);
-
     return 0;
 }

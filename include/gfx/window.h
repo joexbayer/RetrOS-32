@@ -31,6 +31,7 @@ typedef enum window_flags {
     GFX_IS_HIDDEN = 1 << 4,
     GFX_HIDE_HEADER = 1 << 5,
     GFX_HIDE_BORDER = 1 << 6,
+    GFX_NO_OPTIONS = 1 << 7,
 } window_flag_t;
 
 /* window ops */
@@ -53,12 +54,12 @@ struct window_draw_ops {
     int (*text)(struct window*, int x, int y, char* text, color_t color);
     void (*line)(struct window*, int x1, int y1, int x2, int y2, color_t color);
     void (*circle)(struct window*, int x, int y, int radius, color_t color, bool_t fill);
+    int (*box)(struct window*, int x, int y, int width, int height, color_t color);
 
 };
 
 struct window {
     struct window* next;
-    //struct window* prev;
 
     char name[GFX_MAX_WINDOW_NAME_SIZE];
     char header[GFX_MAX_WINDOW_NAME_SIZE];
@@ -109,8 +110,6 @@ struct window {
         uint16_t height;
         byte_t state;
     } is_maximized;
-
-
 
     unsigned char flags;
     char changed;

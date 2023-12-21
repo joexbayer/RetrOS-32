@@ -20,10 +20,25 @@
 
 /* specifics */
 //#define KDEBUG_INTERRUPTS
-#define KDEBUG_MEMORY
+//#define KDEBUG_MEMORY
 #define KDEBUG_SCHEDULER
 #define KDEBUG_SYSCALLS
 #define KDEBUG_THREADS
+//#define KDEBUG_SYNC
+//#define KDEBUG_WORKER
+
+/* net */
+//#define KDEBUG_ETH
+//#define KDEBUG_NET_DAEMON
+//#define KDEBUG_NET_ARP
+#define KDEBUG_NET_ICMP
+//#define KDEBUG_NET_IP
+#define KDEBUG_NET_TCP
+#define KDEBUG_NET_UDP
+
+/* devices */
+
+/* fs */
 
 #define KERNEL_PANIC_ON_PAGE_FAULT
 

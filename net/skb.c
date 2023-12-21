@@ -32,7 +32,7 @@ void skb_free_queue(struct skb_queue* queue)
 
 struct skb_queue* skb_new_queue()
 {
-	struct skb_queue* queue = kalloc(sizeof(struct skb_queue));
+	struct skb_queue* queue = create(struct skb_queue);
 	assert(queue != NULL);
 
 	queue->ops = &skb_queue_ops;
@@ -120,7 +120,7 @@ struct sk_buff* skb_new()
  */
 struct sk_buff* skb_consume(struct sk_buff* skb)
 {
-	struct sk_buff* new = (struct sk_buff*) kalloc(sizeof(struct sk_buff));
+	struct sk_buff* new = create(struct sk_buff);
 
 	memcpy(new, skb, sizeof(struct sk_buff));
 	kfree(skb);

@@ -8,11 +8,18 @@
  * @copyright Copyright (c) 2023
  * 
  */
+#include <kconfig.h>
 #include <memory.h>
 #include <serial.h>
 #include <sync.h>
 #include <bitmap.h>
 #include <assert.h>
+
+
+#ifndef KDEBUG_MEMORY
+#undef dbgprintf
+#define dbgprintf(...)
+#endif
 
 /* Dynamic kernel memory */
 
@@ -98,7 +105,6 @@ void* kalloc(int size)
 
     void* ptr = (void*)(KERNEL_MEMORY_START + start_block * KMEM_BLOCK_SIZE + sizeof(int));
 
-    dbgprintf("[MEMORY] %s allocated %d blocks of data\n", current_running->name, num_blocks);
     __kmemory_used += num_blocks * KMEM_BLOCK_SIZE;
     current_running->kallocs++;
 
@@ -110,6 +116,15 @@ void* kalloc(int size)
 
     spin_unlock(&__kmemory_lock);
 
+    return ptr;
+}
+
+void* kcalloc(int size)
+{
+    void* ptr = kalloc(size);
+    if(ptr == NULL) return NULL;
+
+    memset(ptr, 0, size);
     return ptr;
 }
 

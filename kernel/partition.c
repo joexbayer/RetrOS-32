@@ -9,7 +9,8 @@
 #define BOOT_BLOCK 0
 #define BOOT_BLOCK_MEMORY 0x7c00
 
-static const char* mbr_partition_type_string(mbr_partition_type_t type) {
+const char* mbr_partition_type_string(mbr_partition_type_t type)
+{
     switch (type) {
         case MBR_TYPE_EMPTY: return "Empty or unused partition";
         case MBR_TYPE_FAT12: return "FAT12 filesystem";
@@ -21,13 +22,12 @@ static const char* mbr_partition_type_string(mbr_partition_type_t type) {
         case MBR_TYPE_NTFS: return "NTFS or exFAT filesystem";
         case MBR_TYPE_FAT32_CHS: return "FAT32 filesystem (CHS addressing)";
         case MBR_TYPE_FAT32_LBA: return "FAT32 filesystem (LBA addressing)";
-        case MBR_TYPE_FAT16_LBA: return "FAT16 filesystem (LBA addressing)";
+        case MBR_TYPE_FAT16_LBA: return "FAT16 filesystem";
         case MBR_TYPE_EXTENDED_LBA: return "Extended partition using LBA";
         case MBR_TYPE_LINUX: return "Linux native partition";
         default: return "Unknown partition type";
     }
 }
-
 
 static struct mbr mbr;
 
@@ -55,6 +55,11 @@ int mbr_partitions_parse()
     }
 
     return 0;
+}
+
+struct mbr* mbr_get()
+{
+    return &mbr;
 }
 
 /**

@@ -24,7 +24,7 @@ struct ring_buffer_operations default_ring_buffer_ops = {
  */
 struct ring_buffer* rbuffer_new(int size)
 {
-    struct ring_buffer* rbuf = kalloc(sizeof(struct ring_buffer));
+    struct ring_buffer* rbuf = create(struct ring_buffer);
     if(rbuf == NULL) return NULL;
 
     rbuf->buffer = kalloc(size);
