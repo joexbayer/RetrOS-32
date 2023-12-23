@@ -49,7 +49,8 @@ typedef unsigned char ubyte_t;
  * Expected function signature:
  * @param func void func(void);
  */
-#define EXPORT_KCTOR(func) uintptr_t __kctor_ptr_##func __attribute__((section(".kctor_table"), unused)) = (uintptr_t)&func
+#define EXPORT_KCTOR(func) \
+    uintptr_t __kctor_ptr_##func __attribute__((section(".kctor_table"), unused)) = (uintptr_t)&func
 
 void init_kctors();
 

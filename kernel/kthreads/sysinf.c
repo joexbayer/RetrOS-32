@@ -18,6 +18,8 @@
 #include <net/dhcp.h>
 #include <lib/display.h>
 
+#include <kernel.h>
+
 #define WIDTH 300
 #define HEIGHT 275
 
@@ -326,6 +328,9 @@ static void sysinf_draw(struct window* w)
         struct tab* tab = &tab_view.tabs[i];
         sysinf_draw_tab(w, tab);
     }
+
+    /* draw the bottom text */
+    w->draw->textf(w, 12, HEIGHT-10, 0, "Kernel: %s", KERNEL_VERSION);
 }
 
 static void sysinf_click_event(struct window* w, int x, int y)

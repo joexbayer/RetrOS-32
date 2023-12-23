@@ -42,6 +42,7 @@ static void __callback taskbar_bg_calc();
 static void __callback taskbar_bg_graph();
 static void __callback taskbar_bg_default_color();
 static void __callback taskbar_sysinf();
+static void __callback taskbar_about();
 
 /* prototype to taskbar thread */
 static void __kthread_entry taskbar(void);
@@ -163,6 +164,21 @@ struct taskbar_options {
                 },
             }
         },
+        {
+            .x = 240,
+            .y = 2,
+            .w = 100,
+            .h = 14,
+            .icon = NULL,
+            .name = "Help",
+            .options = {
+                {
+                    .icon = bin_16,
+                    .name = "About",
+                    .callback = &taskbar_about
+                }
+            }
+        },
     }
 };
 
@@ -239,28 +255,6 @@ static void taskbar_hdr_opt_event(struct window* w, struct taskbar_header* heade
     }
 }
 
-static void draw_memory_usage(struct window* w, struct mem_info mem_info) {
-    // Calculate the percentage of used memory
-    int mem_usage_percent = mem_info.kernel.used * 100 / mem_info.kernel.total;
-
-    // Define colors for different usage levels
-    color_t usage_color;
-    if (mem_usage_percent < 50) {
-        usage_color = COLOR_VGA_GREEN; // Low usage
-    } else if (mem_usage_percent < 75) {
-        usage_color = COLOR_VGA_YELLOW; // Moderate usage
-    } else {
-        usage_color = COLOR_VGA_RED; // High usage
-    }
-
-    // Calculate the width of the rectangle based on memory usage
-    int rect_width = (100 * mem_usage_percent) / 100;
-
-    // Draw the rectangle
-    w->draw->rect(w, w->inner_width/2 - rect_width/2, 5, 100, 10, COLOR_VGA_LIGHT_GRAY);
-    w->draw->rect(w, w->inner_width/2 - rect_width/2, 5, rect_width, 10, usage_color);
-}
-
 /**
  * @brief taskbar is the main taskbar thread
  */
@@ -281,19 +275,20 @@ static void __kthread_entry taskbar(void)
     struct mem_info mem_info;
     int timedate_length = strlen("00:00:00 00/00/0000");
 
-        w->draw->rect(w, 0, 1, vbe_info->width, TASKBAR_HEIGHT, 30);
-        w->draw->rect(w, 0, 0, vbe_info->width, 2, COLOR_VGA_LIGHTER_GRAY+1);
-        w->draw->rect(w, 0, TASKBAR_HEIGHT, vbe_info->width, 1, COLOR_VGA_LIGHT_GRAY);
-        w->draw->rect(w, 0, TASKBAR_HEIGHT+1, vbe_info->width, 1, 0);
+    w->draw->rect(w, 0, 1, vbe_info->width, TASKBAR_HEIGHT, 30);
+    w->draw->rect(w, 0, 0, vbe_info->width, 2, COLOR_VGA_LIGHTER_GRAY+1);
+    w->draw->rect(w, 0, TASKBAR_HEIGHT, vbe_info->width, 1, COLOR_VGA_LIGHT_GRAY);
+    w->draw->rect(w, 0, TASKBAR_HEIGHT+1, vbe_info->width, 1, 0);
 
-        /* print text for all headers */
-        for (int i = 0; i < TASKBAR_MAX_HEADERS; i++){
-            if(default_taskbar.headers[i].name[0] == 0) continue;
-            if(default_taskbar.headers[i].icon != NULL){
-                gfx_put_icon16(default_taskbar.headers[i].icon, default_taskbar.headers[i].x, default_taskbar.headers[i].y);
-            }
-            gfx_button(default_taskbar.headers[i].x+16, default_taskbar.headers[i].y, default_taskbar.headers[i].w, default_taskbar.headers[i].h, default_taskbar.headers[i].name);
+    /* print text for all headers */
+    for (int i = 0; i < TASKBAR_MAX_HEADERS; i++){
+        if(default_taskbar.headers[i].name[0] == 0) continue;
+        if(default_taskbar.headers[i].icon != NULL){
+            gfx_put_icon16(default_taskbar.headers[i].icon, default_taskbar.headers[i].x, default_taskbar.headers[i].y);
         }
+        gfx_button(default_taskbar.headers[i].x+16, default_taskbar.headers[i].y, default_taskbar.headers[i].w, default_taskbar.headers[i].h, default_taskbar.headers[i].name);
+    }
+    
     while (1){
 
         gfx_put_icon16(wlan_16, w->inner_width - (timedate_length*8) - 20, 4);
@@ -306,10 +301,6 @@ static void __kthread_entry taskbar(void)
             TIME_PREFIX(time.second), time.second, TIME_PREFIX(time.day), time.day,
             TIME_PREFIX(time.month), time.month, time.year
         );
-
-        get_mem_info(&mem_info);
-        draw_memory_usage(w, mem_info);
-
         
         /* draw options */
         gfx_event_loop(&event, GFX_EVENT_BLOCKING);
@@ -449,4 +440,9 @@ static void __callback taskbar_bg_calc()
 static void __callback taskbar_sysinf()
 {
     start("sysinf", 0, NULL); 
+}
+
+static void __callback taskbar_about()
+{
+    start("about", 0, NULL);
 }

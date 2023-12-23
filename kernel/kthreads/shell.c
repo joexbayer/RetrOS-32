@@ -300,12 +300,15 @@ void ths()
 }
 EXPORT_KSYMBOL(ths);
 
-void dig(int argc, char* argv[])
-{
-	int ret = gethostname(argv[1]);
-	twritef("%s IN (A) %i\n", argv[1], ret);
-}
-EXPORT_KSYMBOL(dig);
+#define COMMAND(name, func) \
+	void name(int argc, char* argv[])\
+		func\
+	EXPORT_KSYMBOL(name);
+
+COMMAND(dns, {
+	int val = gethostname(argv[1]);
+	twritef("%s IN (A) %i\n", argv[1], val);
+});
 
 void th(int argc, char* argv[])
 {
@@ -330,13 +333,6 @@ void echo(int argc, char* argv[])
 	twritef("%s\n", argv[1]);
 }
 EXPORT_KSYMBOL(echo);
-
-void log(int argc, char* argv[])
-{
-	int pid = atoi(argv[1]);
-	logd_attach_by_pid(pid);
-}
-EXPORT_KSYMBOL(log);
 
 void cd(int argc, char* argv[])
 {
@@ -407,6 +403,23 @@ void res(int argc, char* argv[])
 	twritef("Screen resolution: %dx%d\n", vbe_info->width, vbe_info->height);
 }
 EXPORT_KSYMBOL(res);
+
+void bg(int argc, char* argv[])
+{
+	if(argc == 1){
+		twritef("usage: bg [<hex>, reset]\n");
+		return;
+	}
+
+	if(memcmp(argv[1], "reset", 6) == 0){
+		gfx_set_background_color(3);
+		return;
+	}
+
+	uint32_t color = htoi(argv[1]);
+	gfx_set_background_color(color);
+}
+EXPORT_KSYMBOL(bg);
 
 void ls(int argc, char* argv[])
 {

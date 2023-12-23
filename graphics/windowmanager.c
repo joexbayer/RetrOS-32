@@ -354,6 +354,15 @@ static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char f
 
             return ERROR_OK;
         }
+        /**
+         * @brief Special edge case:
+         * When a window is moving (only 1 window should be moving at a time)
+         * and the mouse is not in the window, the window should snap to the mouse.
+         */
+        if(i->is_moving.state == GFX_WINDOW_MOVING){
+            i->ops->hover(i, x, y);
+            return ERROR_OK;
+        }
     }
 
     return ERROR_OK;

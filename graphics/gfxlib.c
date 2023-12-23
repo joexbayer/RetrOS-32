@@ -44,22 +44,6 @@ int gfx_push_event(struct window* w, struct gfx_event* e)
 	return 0;
 }
 
-/**
- drawRect(x, y, width, height, 30);
-        
-        // Top Inner Border
-        drawRect(x, y, width-1, 1, 31);
-        
-        // Left Inner Border
-        drawRect(x, y, 1, height, 31);
-        
-        // Right Inner Border
-        drawRect(x+width-1, y, 1, height, COLOR_VGA_MEDIUM_DARK_GRAY+5);
-        
-        // Bottom Inner Borders
-        drawRect(x, y+height-1, width-1, 1, COLOR_VGA_MEDIUM_DARK_GRAY+5);
-        drawRect(x, y+height, width-1, 1, 31);
-*/
 int kernel_gfx_draw_contoured_box(struct window* w, int x, int y, int width, int height, color_t color) 
 {
 	kernel_gfx_draw_rectangle(w, x, y, width, height, color);
@@ -153,7 +137,6 @@ int gfx_event_loop(struct gfx_event* event, gfx_event_flag_t flags)
 			continue;
 		}
 		
-		//dbgprintf("Getting event %d (tail %d)\n", current_running->gfx_window->events.list[current_running->gfx_window->events.tail].event, current_running->gfx_window->events.tail);
 		SPINLOCK(current_running->gfx_window, {
 			memcpy(event, &current_running->gfx_window->events.list[current_running->gfx_window->events.tail], sizeof(struct gfx_event));
 			current_running->gfx_window->events.tail = (current_running->gfx_window->events.tail + 1) % GFX_MAX_EVENTS;
@@ -228,9 +211,6 @@ int kernel_gfx_draw_char(struct window* w, int x, int y, unsigned char c, unsign
 		}
 	}
 	//LEAVE_CRITICAL();
-
-	//dbgprintf("[GFX] %s put %c\n", current_running->name, c);
-	//current_running->gfx_window->changed = 1;
 
 	return 0;
 }

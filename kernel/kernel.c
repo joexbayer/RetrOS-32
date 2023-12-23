@@ -53,7 +53,8 @@
 
 struct kernel_context kernel_context = {
 	.sched_ctx = NULL,
-	.window_server = NULL,
+	.graphics.window_server = NULL,
+	.graphics.ctx = NULL,
 	.total_memory = NULL,
 	.graphic_mode = KERNEL_FLAG_GRAPHICS,
 };

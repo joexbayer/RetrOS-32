@@ -19,6 +19,9 @@
 
 <!-- PROJECT LOGO -->
 <br />
+<p align="center">
+  <img src="https://github.com/joexbayer/RetrOS-32/blob/main/graphics/logo.png?raw=true">
+</p>
 <div align="center">
   <h1 align="center">RetrOS 32bit</h1>
 
@@ -277,6 +280,7 @@ IBM Thinkpad a21p
 - [x] Calculator
 - [x] 3D Game
 - [x] Userspace threads (shared virtual memory)
+- [x] Remote virtual terminal over TCP
 - [x] Tools
   - [x] Build
   - [ ] Sync / Migration Took
