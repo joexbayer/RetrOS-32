@@ -8,8 +8,10 @@
 
 #define KERNEL_NAME		"RetrOS-32"
 /* Define the kernel version with compilation date and time */
-#define KERNEL_VERSION  "0.0.1 " __DATE__ " " __TIME__
+#define KERNEL_VERSION  "0.0.1 "
 #define KERNEL_RELEASE 	"alpha"
+#define KERNEL_DATE		__DATE__
+#define KERNEL_TIME		__TIME__
 
 #define KERNEL_ARCH_I386
 

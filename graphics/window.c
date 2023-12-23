@@ -40,7 +40,6 @@ static struct window_ops default_window_ops = {
     .move = &kernel_gfx_set_position,
     .destroy = &gfx_destory_window,
     .maximize = &gfx_window_maximize
-
 };
 
 /* default windows draw ops */
@@ -51,7 +50,8 @@ static struct window_draw_ops default_window_draw_ops = {
     .text = &kernel_gfx_draw_text,
     .line = &kernel_gfx_draw_line,
     .circle = &kernel_gfx_draw_circle,
-    .box = &kernel_gfx_draw_contoured_box
+    .box = &kernel_gfx_draw_contoured_box,
+    .bitmap = &kernel_gfx_draw_bitmap
 };
 
 /**

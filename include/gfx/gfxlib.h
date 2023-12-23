@@ -27,6 +27,7 @@ int kernel_gfx_draw_char(struct window* w, int x, int y, unsigned char c, unsign
 int kernel_gfx_draw_text(struct window* w, int x, int y, char* str, unsigned char color);
 int kernel_gfx_draw_format_text(struct window* w, int x, int y, unsigned char color, char* fmt, ...);
 int kernel_gfx_draw_pixel(struct window* w, int x, int y, color_t color);
+int kernel_gfx_draw_bitmap(struct window* w, int x, int y, int width, int height, uint8_t* bitmap);
 
 void kernel_gfx_draw_circle(struct window* w, int xc, int yc, int r, unsigned char color, bool_t fill);
 void kernel_gfx_draw_line(struct window* w, int x0, int y0, int x1, int y1, unsigned char color);

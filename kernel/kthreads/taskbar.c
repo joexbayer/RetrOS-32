@@ -71,7 +71,7 @@ struct taskbar_options {
         {
             .x = 4,
             .y = 2,
-            .w = 60,
+            .w = 100,
             .h = 16,
             .name = "Start",
             .icon = menu_16,
@@ -134,7 +134,7 @@ struct taskbar_options {
             .y = 2,
             .w = 100,
             .h = 14,
-            .icon = NULL,
+            .icon = bin_16,
             .name = "Wallpaper",
             .options = {
                 {
@@ -169,11 +169,11 @@ struct taskbar_options {
             .y = 2,
             .w = 100,
             .h = 14,
-            .icon = NULL,
+            .icon = bin_16,
             .name = "Help",
             .options = {
                 {
-                    .icon = bin_16,
+                    .icon = desktop_16,
                     .name = "About",
                     .callback = &taskbar_about
                 }

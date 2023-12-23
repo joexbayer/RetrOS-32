@@ -185,6 +185,22 @@ int kernel_gfx_draw_pixel(struct window* w, int x, int y, color_t color)
 	return 0;
 }
 
+int kernel_gfx_draw_bitmap(struct window* w, int x, int y, int width, int height, uint8_t* bitmap)
+{
+	ERR_ON_NULL(w);
+
+	/* only draw rectangle inside window */
+	if(x < 0 || y < 0 || x+width > w->inner_width || y+height > w->inner_height)
+		return -2;
+
+	int i, j;
+	for (j = y; j < (y+height); j++)
+		for (i = x; i < (x+width); i++)
+			putpixel(w->inner, i, j, rgb_to_vga(bitmap[(j-y)*width+(i-x)]), w->pitch);
+
+	return 0;
+}
+
 /**
  * @brief Draws a character to the framebuffer of currently running process.
  * 
