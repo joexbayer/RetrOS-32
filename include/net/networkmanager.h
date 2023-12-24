@@ -42,8 +42,10 @@ struct networkmanager {
     struct pcb* instance;
 
     struct kref ref;
-
 };
+
+struct networkmanager* nm_new();
+void nm_free(struct networkmanager* netd);
 
 
 #endif /* B37DA3E3_2C55_4777_BB81_B23801925C4B */

@@ -15,12 +15,14 @@ struct network_manager_ops default_net_ops = {
     .stop = __default_stop,
 };
 
-struct networkmanager* nm_new(){
+struct networkmanager* nm_new()
+{    
     struct networkmanager* netd = create(struct networkmanager);
     if(netd == NULL) return NULL;
 
     netd->state = NETD_UNINITIALIZED;
     netd->packets = 0;
+    
     netd->skb_tx_queue = skb_new_queue();
     if(netd->skb_tx_queue == NULL){
         kfree(netd);
@@ -80,7 +82,12 @@ static int __default_stop(struct networkmanager* netd)
 {
     ERR_ON_NULL(netd);
 
-    
+    if(netd->instance == NULL){
+        return 0;
+    }
+
+    pcb_kill(netd->instance->pid);
+    netd->instance = NULL;
 
     return 0;
 }

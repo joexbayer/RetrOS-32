@@ -21,7 +21,7 @@
 #include <kutils.h>
 #include <lib/icons.h>
 
-#define __WINDOWS_95
+//#define __WINDOWS_95
 
 
 /* prototype window ops */
