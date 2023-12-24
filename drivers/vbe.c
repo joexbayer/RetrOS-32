@@ -283,7 +283,3 @@ int vesa_printf(uint8_t* buffer, int32_t x, int32_t y, int color, char* fmt, ...
 	written += x_offset;
 	return written;
 }
-
-void vesa_init()
-{
-}

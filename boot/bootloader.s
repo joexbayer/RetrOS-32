@@ -419,7 +419,7 @@ set_video_mode:
     cmp $'2', %al
     je set_800x600
     cmp $'3', %al
-    je set_800x600
+    je set_1024x768
 
     jmp set_video_mode
 
@@ -431,6 +431,7 @@ set_640x480:
 set_800x600:
     mov $0x4F02, %ax	
     mov $0x4103, %bx /* 103 = 800x600 */
+    jmp set_resolution
 
 set_1024x768:
     mov $0x4F02, %ax	

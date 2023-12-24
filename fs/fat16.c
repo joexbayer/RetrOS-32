@@ -36,7 +36,10 @@ static struct fat16_directory_entry root_directory = {
     .extension = "   ",
     .attributes = FAT16_FLAG_SUBDIRECTORY,
     .first_cluster = 0,
-    .file_size = 512
+    .file_size = 512,
+    .full_name = "ROOT    ",
+    .created_date = 0,
+    .created_time = 0
 };
 
 /* HELPER FUNCTIONS */

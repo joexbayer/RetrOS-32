@@ -820,20 +820,9 @@ void vmem_init_kernel()
 	}
 	dbgprintf("Initiated memory between 0x%x and 0x%x\n", 0x400000, 0x400000 + total_mem - 4*1024*1024);
 	
-	/**
-	 * Identity map vesa color framebuffer
-	 * TODO: Use vmem_map_driver_region
-	 */
-	uint32_t* kernel_page_table_vesa = vmem_default->ops->alloc(vmem_default);;
-	for (int addr = 0; addr < (vbe_info->width*vbe_info->height*(vbe_info->bpp/8))+1; addr += PAGE_SIZE)
-		vmem_map(kernel_page_table_vesa, vbe_info->framebuffer+addr, vbe_info->framebuffer+addr, SUPERVISOR);
-
-	vmem_add_table(kernel_page_dir, 0, kernel_page_table, SUPERVISOR);
-
-	vmem_add_table(kernel_page_dir, vbe_info->framebuffer, kernel_page_table_vesa, SUPERVISOR); 
-	
 	/* test if 0x80d000 is identity mapped */
 
+	vmem_add_table(kernel_page_dir, 0, kernel_page_table, SUPERVISOR);
 	
 	dbgprintf("[INIT KERNEL] Directory: 		0x%x\n", kernel_page_dir);
 	dbgprintf("[INIT KERNEL] 0x0 - 0x400000: 	0x%x\n", kernel_page_table);

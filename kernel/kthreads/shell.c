@@ -334,12 +334,6 @@ void echo(int argc, char* argv[])
 }
 EXPORT_KSYMBOL(echo);
 
-void cd(int argc, char* argv[])
-{
-	current_running->current_directory = change_directory(argv[1]);
-}
-EXPORT_KSYMBOL(cd);
-
 void fdisk(int argc, char* argv[])
 {
 	struct diskdev* dev = disk_device_get();
@@ -382,22 +376,6 @@ void meminfo(int argc, char* argv[])
 }
 EXPORT_KSYMBOL(meminfo);
 
-void cat(int argc, char* argv[])
-{
-	inode_t inode = fs_open(argv[1], FS_FILE_FLAG_READ);
-	if(inode < 0){
-		twritef("File %s not found.\n", argv[1]);
-		return;
-	}
-
-	char buf[512];
-	fs_read(inode, buf, 512);
-	twritef("%s\n", buf);
-	fs_close(inode);
-	return;
-}
-EXPORT_KSYMBOL(cat);
-
 void res(int argc, char* argv[])
 {
 	twritef("Screen resolution: %dx%d\n", vbe_info->width, vbe_info->height);
@@ -420,29 +398,6 @@ void bg(int argc, char* argv[])
 	gfx_set_background_color(color);
 }
 EXPORT_KSYMBOL(bg);
-
-void ls(int argc, char* argv[])
-{
-	struct filesystem* fs = fs_get();
-	if(fs == NULL){
-		twritef("No filesystem mounted\n");
-		return;
-	}
-
-	if(fs->ops->list == NULL){
-		twritef("Filesystem does not support listing\n");
-		return;
-	}
-
-	if(argc == 1){
-		fs->ops->list(fs, "/", NULL, 0);
-		return;
-	}
-	fs->ops->list(fs, argv[1], NULL, 0);
-
-	//listdir();
-}
-EXPORT_KSYMBOL(ls);
 
 void socks(void)
 {
@@ -594,6 +549,9 @@ void __kthread_entry shell(int argc, char* argv[])
 	dbgprintf("shell: entering event loop\n");
 	while(1)
 	{
+
+
+
 		struct gfx_event event;
 		gfx_event_loop(&event, GFX_EVENT_BLOCKING);
 
@@ -626,4 +584,3 @@ void __kthread_entry shell(int argc, char* argv[])
 	kernel_exit();
 }
 EXPORT_KTHREAD(shell);
-EXPORT_KSYMBOL(shell);

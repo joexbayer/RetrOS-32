@@ -235,13 +235,12 @@ static struct file* fat16_open(struct filesystem* fs, const char* path, int flag
     file->directory = id.directory;
     file->identifier = id.index; 
     file->nlinks = 1;
+    file->size = entry.file_size;
 
     dbgprintf("File %s:\n", path);
     dbgprintf("  Directory: %d\n", file->directory);
     dbgprintf("  Identifier: %d\n", file->identifier);
     dbgprintf("  Flags: 0x%x\n", file->flags);
-    
-
 
     return file;
 }

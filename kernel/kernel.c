@@ -116,16 +116,19 @@ void kernel(uint32_t magic)
 	init_memory();
 	kernel_boot_printf("Memory initialized.");
 
-	dbgprintf("[VBE] INFO:\n");
-	dbgprintf("[VBE] Height: %d\n", vbe_info->height);
-	dbgprintf("[VBE] Width: %d\n", vbe_info->width);
-	dbgprintf("[VBE] Pitch: %d\n", vbe_info->pitch);
-	dbgprintf("[VBE] Bpp: %d\n", vbe_info->bpp);
-	dbgprintf("[VBE] Memory Size: %d (0x%x)\n", vbe_info->width*vbe_info->height*(vbe_info->bpp/8), vbe_info->width*vbe_info->height*(vbe_info->bpp/8));
 	//vmem_map_driver_region((uint8_t*)vbe_info->framebuffer, (vbe_info->width*vbe_info->height*(vbe_info->bpp/8))+1);
 	
 	init_kctors();
 	kernel_boot_printf("Kernel constructors initialized.");
+
+
+	if(kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
+
+		kernel_context.graphics.ctx = gfx_new_ctx();
+		gfx_init_framebuffer(kernel_context.graphics.ctx, vbe_info);
+
+		kernel_boot_printf("Graphics initialized.");
+	}
 
 	//vga_set_palette();
 
@@ -225,12 +228,6 @@ void kernel(uint32_t magic)
 	dbgprintf("[KERNEL] Enabled paging!\n");
 	
 	ksyms_init();
-
-	if(kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
-		vesa_init();
-		kernel_boot_printf("Graphics initialized.");
-	}
-
 
 	start("idled", 0, NULL);
 

@@ -16,9 +16,17 @@
 #include <pcb.h>
 #include <terminal.h>
 #include <gfx/theme.h>
+#include <gfx/events.h>
 
 #define MAX_FMT_STR_SIZE 50
 /* OLD */
+
+int scan(ubyte_t* data, int size)
+{
+	if(current_running == NULL || current_running->term == NULL) return -1;
+
+	return current_running->term->ops->scan(current_running->term, data, size);
+}
 
 void terminal_set_color(color_t color)
 {
@@ -108,6 +116,8 @@ static int __terminal_attach(struct terminal* term);
 static int __terminal_detach(struct terminal* term);
 static int __terminal_reset(struct terminal* term);
 static int __terminal_set_ops(struct terminal* term, struct terminal_ops* ops);
+static int __terminal_scan(struct terminal* term, ubyte_t* data, int size);	
+static int __terminal_scanf(struct terminal* term, char* fmt, ...);
 
 /* default terminal ops (graphics) */
 struct terminal_ops terminal_ops = {
@@ -119,6 +129,8 @@ struct terminal_ops terminal_ops = {
 	.detach = __terminal_detach,
 	.reset = __terminal_reset,
 	.set = __terminal_set_ops,
+	.scan = __terminal_scan,
+	.scanf = __terminal_scanf,
 };
 
 /**
@@ -187,6 +199,50 @@ static int __terminal_set_ops(struct terminal* term, struct terminal_ops* ops)
 	term->ops = ops;
 
 	return 0;
+}
+
+static int __terminal_scan(struct terminal* term, ubyte_t* data, int size)
+{
+	if(term == NULL || data == NULL) return -1;
+
+	int i = 0;
+	ubyte_t c = 0;
+	while (i < size && c != '\n'){
+		struct gfx_event event;
+		gfx_event_loop(&event, GFX_EVENT_BLOCKING);
+
+		switch (event.event){
+		case GFX_EVENT_KEYBOARD:
+			switch (event.data){
+			case CTRLC:
+				return -1;
+			default:{
+					c = event.data;
+					data[i] = c;
+					i++;
+
+					term->ops->putchar(term, c);
+					term->ops->commit(term);
+				}
+				break;
+			}
+			break;
+		case GFX_EVENT_EXIT:
+			kernel_exit();
+			return;
+		default:
+			break;
+		}
+	}
+
+	data[i] = '\0';
+
+	return i;
+}
+
+static int __terminal_scanf(struct terminal* term, char* fmt, ...)
+{
+	return -1;
 }
 
 static int __terminal_reset(struct terminal* term)
@@ -302,6 +358,8 @@ static int __terminal_commit_graphics(struct terminal* term)
 		kernel_gfx_draw_char(term->screen, 1 + x*8, 1+ y*8, term->textbuffer[i], term->text_color);
 		x++;
 	}
+
+	term->screen->changed = 1;
 
 	return 0;
 }

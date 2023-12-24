@@ -35,6 +35,11 @@ inline uint32_t strncmp(const char* str, const char* str2, uint32_t len)
 	return memcmp((uint8_t*)str, (uint8_t*)str2, len);
 }
 
+inline uint32_t strcmp(const char* str, const char* str2)
+{
+    return memcmp((uint8_t*)str, (uint8_t*)str2, strlen(str));
+}
+
 inline inline uint32_t memcmp(const void* ptr, const void* ptr2, uint32_t len)
 {
 	char* ptr_c = (char*) ptr;

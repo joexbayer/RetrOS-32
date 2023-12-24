@@ -406,7 +406,7 @@ void Editor::putChar(unsigned char c)
 		reDraw(0, m_bufferSize);
 		return;
 	case KEY_F1:{
-			reDraw(0, m_bufferSize);
+			Save();
 		}
 		return;
 	default: /* Default add character to buffer and draw it */

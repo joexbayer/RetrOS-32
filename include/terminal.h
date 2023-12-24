@@ -27,6 +27,17 @@ struct terminal_ops {
     int (*set)(struct terminal* term, struct terminal_ops* ops);
     int (*detach)(struct terminal* term);
     int (*reset)(struct terminal* term);
+
+    /**
+     * @brief Read data from the terminal (keyboard)
+     * @param term Terminal to read from
+     * @param data Buffer to read into
+     * @param size Size of the buffer
+     * 
+     * @return int Amount of bytes read
+     */
+    int (*scan)(struct terminal* term, ubyte_t* data, int size);
+    int (*scanf)(struct terminal* term, char* fmt, ...);
 };
 struct terminal {
     char* textbuffer;
@@ -46,6 +57,7 @@ struct terminal {
 struct terminal* terminal_create();
 int terminal_destroy(struct terminal* term);
 
+int scan(ubyte_t* data, int size);
 
 void twrite(const char* data);
 void terminal_write(const char* data, int size);

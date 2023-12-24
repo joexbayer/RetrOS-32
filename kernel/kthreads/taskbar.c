@@ -393,9 +393,7 @@ static void __callback taskbar_colors()
 
 static void __callback taskbar_clock()
 {
-    int pid = pcb_create_process("/bin/clock", 0, NULL, 0);
-    if(pid < 0)
-        dbgprintf("%s does not exist\n", "clock");
+    start("kclock", 0, NULL);
 }
 
 static void __callback taskbar_bg_default()
