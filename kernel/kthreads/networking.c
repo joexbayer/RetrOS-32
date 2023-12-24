@@ -17,6 +17,7 @@
 #include <kthreads.h>
 #include <work.h>
 
+#include <net/networkmanager.h>
 #include <net/interface.h>
 #include <net/netdev.h>
 #include <net/net.h>
@@ -38,50 +39,11 @@
 
 #define MAX_PACKET_SIZE 0x600
 
-enum NETD_STATES {
-    NETD_UNINITIALIZED,
-    NETD_STARTED
-};
-
-static struct networkmanager;
-static struct network_manager_ops {
-    void (*start)();
-    void (*stop)();
-    void (*restart)();
-
-    void (*get_info)(struct net_info* info);
-    void (*send_skb)(struct networkmanager* nm, struct sk_buff* skb);
-};
-
-static struct networkmanager {
-    int state;
-
-    uint16_t packets;
-    struct skb_queue* skb_tx_queue;
-    struct skb_queue* skb_rx_queue;
-
-    struct net_info stats;
-
-    struct network_manager_ops ops;
-
-    struct net_interface* ifs[4];
-    uint8_t if_count;
-
-    struct pcb* instance;
-
-} netd = {
-    .ops = {
-        .start = NULL,
-        .stop = NULL,
-        .restart = NULL
-    },
+struct networkmanager netd = {
     .state = NETD_UNINITIALIZED,
-    .packets = 0,
-    .stats.dropped = 0, 
-    .stats.recvd = 0,
-    .stats.sent = 0,
-    .instance = NULL,
 };
+
+
 
 static struct net_interface* __net_find_interface(char* dev)
 {

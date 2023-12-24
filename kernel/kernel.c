@@ -85,6 +85,14 @@ void kernel(uint32_t magic)
 #else
 	vbe_info = (struct vbe_mode_info_structure*) magic;
 #endif
+	kernel_size = _end-_code;
+
+	dbgprintf("[KERNEL] TEXT: %d\n", _code_end-_code);
+	dbgprintf("[KERNEL] RODATA: %d\n", _ro_e-_ro_s);
+	dbgprintf("[KERNEL] DATA: %d\n", _data_e-_data_s);
+	dbgprintf("[KERNEL] BSS: %d (0x%x)\n", _bss_e-_bss_s, _bss_s);
+	dbgprintf("[KERNEL] Total: %d (%d sectors)\n", _end-_code, ((_end-_code)/512)+2);
+	dbgprintf("[KERNEL] Kernel reaching too: 0x%x\n", _end-_code);
 
 	ENTER_CRITICAL();
     init_serial();
@@ -92,35 +100,23 @@ void kernel(uint32_t magic)
 	smp_init();
 
 	dbgprintf("INF: %s - %s\n", KERNEL_NAME, KERNEL_VERSION);
+	dbgprintf("[KERNEL] Kernel starting...\n");
 
 	dbgprintf("Memory: 0x%x\n", kernel_context.total_memory->extended_memory_low);
 	dbgprintf("Memory: 0x%x\n", kernel_context.total_memory->extended_memory_high);
 
-	//memset(vbe_info->framebuffer, 0x1, VBE_SIZE());
-
 	kernel_boot_printf("Booting OS...");
-
-	dbgprintf("[KERNEL] Kernel starting...\n");
 
 	rgb_init_color_table();
 
-	/* Clear memory and BSS */
-	//memset((char*)_bss_s, 0, (unsigned int) _bss_size);
-    //memset((char*)0x100000, 0, 0x800000-0x100000);
-	//*((uint32_t*)0x0) = 0xBAADF00D;
-	dbgprintf("[KERNEL] BSS: 0x%x\n", _bss_s);
-
-	kernel_size = _end-_code;
-
 	memory_map_init(kernel_context.total_memory->extended_memory_low * 1024, kernel_context.total_memory->extended_memory_high * 64 * 1024);
 	init_memory();
+	
 	kernel_boot_printf("Memory initialized.");
-
-	//vmem_map_driver_region((uint8_t*)vbe_info->framebuffer, (vbe_info->width*vbe_info->height*(vbe_info->bpp/8))+1);
 	
 	init_kctors();
-	kernel_boot_printf("Kernel constructors initialized.");
 
+	kernel_boot_printf("Kernel constructors initialized.");
 
 	if(kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
 
@@ -130,10 +126,10 @@ void kernel(uint32_t magic)
 		kernel_boot_printf("Graphics initialized.");
 	}
 
-	//vga_set_palette();
-
 	init_interrupts();
+	
 	kernel_boot_printf("Interrupts initialized.");
+	
 	init_keyboard();
 
 	if(kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
@@ -169,8 +165,6 @@ void kernel(uint32_t magic)
 
 	kernel_boot_printf("Filesystem initialized.");
 
-	//ext_create_file_system();
-
 	register_kthread(&Genesis, "Genesis");
 	register_kthread(&networking_main, "netd");
 	register_kthread(&dhcpd, "dhcpd");
@@ -204,18 +198,10 @@ void kernel(uint32_t magic)
 	add_system_call(SYSCALL_CLOSE, (syscall_t)&fs_close);
 
 #pragma GCC diagnostic pop
-	
 	int* a = (int*)0x0;
 	*a = 0xBAADF00D;
 
 	kernel_boot_printf("Systemcalls initialized.");
-
-	dbgprintf("[KERNEL] TEXT: %d\n", _code_end-_code);
-	dbgprintf("[KERNEL] RODATA: %d\n", _ro_e-_ro_s);
-	dbgprintf("[KERNEL] DATA: %d\n", _data_e-_data_s);
-	dbgprintf("[KERNEL] BSS: %d (0x%x)\n", _bss_e-_bss_s, _bss_s);
-	dbgprintf("[KERNEL] Total: %d (%d sectors)\n", _end-_code, ((_end-_code)/512)+2);
-	dbgprintf("[KERNEL] Kernel reaching too: 0x%x\n", _end-_code);
 
 	load_page_directory(kernel_page_dir);
 	init_gdt();
@@ -230,27 +216,26 @@ void kernel(uint32_t magic)
 	ksyms_init();
 
 	start("idled", 0, NULL);
-
 	if(kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
 		start("wind", 0, NULL);
 	}
-
 	start("workd", 0, NULL);
 	start("netd", 0, NULL);
 
 	kernel_boot_printf("Deamons initialized.");
 
-	init_pit(100);
+	init_pit(1000);
+
 	kernel_boot_printf("Timer initialized.");
 
-	dbgprintf("[KERNEL] %d\n", cli_cnt);
+	dbgprintf("Critical counter: %d\n", cli_cnt);
+	
 	LEAVE_CRITICAL();
+	
 	kernel_boot_printf("Starting OS...");
 	asm ("sti");
 
-	while (1);
-	PANIC_ON_ERR(0);
-	
+	while (1);	
 }
 
 /**

@@ -8,12 +8,12 @@
  * @copyright Copyright (c) 2023
  * 
  */
+#include <stdint.h>
 #include <memory.h>
 #include <serial.h>
 #include <sync.h>
 #include <bitmap.h>
 #include <assert.h>
-#include <vbe.h>
 
 struct virtual_memory_allocator;
 
