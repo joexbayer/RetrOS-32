@@ -1,11 +1,12 @@
-/** DEPRECATED
- * @file screen.c
+/**
+ * @file vga.c
  * @author Joe Bayer (joexbayer)
  * @brief Handles drawing to the screen, mainly in VGA_MEMORY
- * @version 0.1
+ * @version 0.2
  * @date 2022-06-01
+ * @date 2023-12-25
  * 
- * @copyright Copyright (c) 2022
+ * @copyright Copyright (c) 2023
  * 
  */
 
@@ -27,7 +28,7 @@ static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg)
 {
 	return fg | bg << 4;
 }
-static uint8_t scrcolor = VGA_COLOR_BOX_WHITE | VGA_COLOR_BOX_BLACK << 4;
+static uint8_t scrcolor = VGA_COLOR_WHITE | VGA_COLOR_BLACK << 4;
  
 static inline uint16_t vga_entry(unsigned char uc, uint8_t color) 
 {
@@ -36,12 +37,6 @@ static inline uint16_t vga_entry(unsigned char uc, uint8_t color)
 
 void screen_set_cursor(int x, int y)
 {
-     if(current_running->window != NULL ){
-        y = current_running->window->y + y;
-        x = current_running->window->x + x;
-        if(is_window_visable() == 0)
-            return;
-     }
 	uint16_t pos = y * SCREEN_WIDTH + x + 1;
 	outportb(0x3D4, 0x0F);
 	outportb(0x3D5, (uint8_t) (pos & 0xFF));
@@ -65,23 +60,8 @@ void scrcolor_set(enum vga_color fg, enum vga_color bg)
  */
 void scrput(int x, int y, unsigned char c, uint8_t color)
 {
-    
-    if(current_running->window != NULL ){
-        y = (current_running->window->y + y);
-        x = (current_running->window->x + x);
-
-        //if(is_window_visable() == 0){
-        //    serial_put(c);
-        //   return;
-        //}
-
-    }
-
-	//const int index = y * SCREEN_WIDTH + x;
-	//VGA_MEMORY[index] = vga_entry(c, color);
-
-	//vesa_put_char(c, x , y);
-	//kernel_gfx_draw_char(x*8, y, c, color);
+	const int index = y * SCREEN_WIDTH + x;
+	VGA_MEMORY[index] = vga_entry(c, color);
 }
 
 /**
@@ -94,19 +74,8 @@ void scrput(int x, int y, unsigned char c, uint8_t color)
  */
 void scrwrite(int x, int y, char* str, uint8_t color)
 {
-    if(current_running->window != NULL ){
-        y = current_running->window->y + y;
-        x = current_running->window->x + x;
-        if(is_window_visable() == 0)
-            return;
-    }
-
-	for (int i = 0; i < strlen(str); i++)
-	{
-		//const int index = y * SCREEN_WIDTH + (x+i);
-		//VGA_MEMORY[index] = vga_entry(str[i], color);
-
-		//scrput(x+i, y, str[i], VGA_COLOR_BOX_BLACK);
+	for (int i = 0; i < strlen(str); i++){
+		scrput(x+i, y, str[i], color);
 	}
 }
 
@@ -117,48 +86,26 @@ void scrwrite(int x, int y, char* str, uint8_t color)
 void scr_clear()
 {
     ENTER_CRITICAL();
-	for (int y = 1; y < SCREEN_HEIGHT-2; y++)
-	{
-		for (int x = 1; x < SCREEN_WIDTH-1; x++)
-		{
-			//const int index = y * SCREEN_WIDTH + x;
-			//VGA_MEMORY[index] = vga_entry(' ', 0);
-			//vesa_put_char(' ', x, y);
-			
-			//scrput(x, y, ' ', VGA_COLOR_BOX_BLACK);
+	for (int y = 0; y < SCREEN_HEIGHT; y++){
+		for (int x = 0; x < SCREEN_WIDTH; x++){
+			scrput(x, y, ' ', VGA_COLOR_BLACK);
 		}
 	}
     LEAVE_CRITICAL();
 	
 }
 
-void scr_scroll(int from, int to, int width, int height)
+void scr_scroll()
 {
-    if(is_window_visable() == 0)
-        return;
-    ENTER_CRITICAL();
-    from = current_running->window->x + 1;
-    to = current_running->window->y + 1;
-    width = current_running->window->x  +  current_running->window->width +1;
-    height = current_running->window->y  + current_running->window->height +1;
-
     /* Move all lines up, overwriting the oldest message. */
-	for (int y = to; y < height-1; y++)
-	{
-		for (int x = from; x < width-1; x++)
-		{
+	for (int y = 0; y < SCREEN_HEIGHT-1; y++){
+		for (int x = 0; x < SCREEN_WIDTH; x++){
 			const int index = y * SCREEN_WIDTH + x;
 			const int index_b = (y+1) * SCREEN_WIDTH + x;
-
-            if(y+1 == height-1){
-                VGA_MEMORY[index] = ' ';
-                continue;
-            }
 
 			VGA_MEMORY[index] = VGA_MEMORY[index_b];
 		}
 	}
-    LEAVE_CRITICAL();
 }
 
 /**
@@ -171,13 +118,6 @@ void scr_scroll(int from, int to, int width, int height)
  */
 int32_t scrprintf(int32_t x, int32_t y, char* fmt, ...)
 {
-
-    if(current_running->window != NULL ){
-        y = current_running->window->y + y;
-        x = current_running->window->x + x;
-        if(is_window_visable() == 0)
-            return 0;
-    }
 	va_list args;
 
 	int x_offset = 0;

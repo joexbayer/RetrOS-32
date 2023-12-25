@@ -18,6 +18,8 @@
 #include <gfx/theme.h>
 #include <gfx/events.h>
 
+#include <screen.h>
+
 #define MAX_FMT_STR_SIZE 50
 /* OLD */
 
@@ -138,7 +140,7 @@ struct terminal_ops terminal_ops = {
  * Attaches terminal ops to the terminal.
  * @return void
  */
-struct terminal* terminal_create()
+struct terminal* terminal_create(terminal_flags_t flags)
 {
 	struct terminal* term = create(struct terminal);
 	if(term == NULL) return NULL;
@@ -150,6 +152,11 @@ struct terminal* terminal_create()
 	}
 
 	term->ops = &terminal_ops;
+	if(HAS_FLAG(flags, TERMINAL_TEXT_MODE)){
+		term->ops->putchar = __terminal_putchar_textmode;
+		term->ops->commit = __terminal_commit_textmode;
+	}
+
 	term->head = 0;
 	term->tail = 0;
 	term->lines = 0;
@@ -292,6 +299,17 @@ static int __terminal_putchar_textmode(struct terminal* term, char c)
 {
 	if(term == NULL) return -1;
 
+	if(c == '\n'){
+		if(SCREEN_HEIGHT-1 == term->lines){
+			__terminal_scroll(term);
+		} else {
+			term->lines++;
+		}
+	}
+
+	term->textbuffer[term->head] = c;
+	term->head++;
+
 	return 1;
 }
 
@@ -336,6 +354,19 @@ static int __terminal_detach(struct terminal* term)
 static int __terminal_commit_textmode(struct terminal* term)
 {
 	if(term == NULL) return -1;
+
+	scr_clear();
+	int x = 0, y = 0;
+	for (int i = term->tail; i < term->head; i++){
+		if(term->textbuffer[i] == '\n'){
+			x = 0;
+			y++;
+			continue;
+		}
+
+		scrput(x, y, term->textbuffer[i], term->text_color);
+		x++;
+	}
 
 	return 0;
 }

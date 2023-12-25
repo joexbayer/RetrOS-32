@@ -48,7 +48,7 @@ static int __net_terminal_writef(struct terminal* term, const char* fmt, ...)
 
 void __kthread_entry tcp_server()
 {
-    struct terminal* term = terminal_create();
+    struct terminal* term = terminal_create(TERMINAL_GRAPHICS_MODE);
     if(term == NULL){
         dbgprintf("Unable to create terminal\n");
         kernel_exit();

@@ -55,7 +55,7 @@ PROGRAMOBJ = bin/shell.o bin/networking.o bin/dhcpd.o bin/tcpd.o bin/logd.o bin/
 
 GFXOBJ = bin/window.o bin/component.o bin/composition.o bin/gfxlib.o bin/api.o bin/theme.o bin/core.o
 
-KERNELOBJ = bin/kernel.o bin/terminal.o bin/helpers.o bin/pci.o bin/virtualdisk.o bin/windowmanager.o bin/icons.o \
+KERNELOBJ = bin/kernel.o bin/terminal.o bin/helpers.o bin/pci.o bin/virtualdisk.o bin/windowmanager.o bin/icons.o bin/vga.o \
 			bin/util.o bin/interrupts.o bin/irs_entry.o bin/timer.o bin/gdt.o bin/interpreter.o bin/vm.o bin/lex.o bin/smp.o \
 			bin/keyboard.o bin/pcb.o bin/pcb_queue.o bin/memory.o bin/vmem.o bin/kmem.o bin/e1000.o bin/display.o bin/env.o \
 			bin/sync.o bin/kthreads.o bin/ata.o bin/bitmap.o bin/rtc.o bin/tss.o bin/kutils.o bin/script.o bin/login.o bin/cmds.o \
@@ -188,12 +188,12 @@ bindir:
 # Kernel.o must be recompiled with the multiboot flag.
 grub_fix:
 	@rm -f bin/kernel.o
-grub: CCFLAGS += -DUSE_MULTIBOOT
+grub: CCFLAGS += -DGRUB_MULTIBOOT
 grub: grub_fix apps multiboot_kernel
 	cp bin/kernelout legacy/multiboot/boot/myos.bin
 	$(GRUB)
 
-qemu_kernel: CCFLAGS += -DUSE_MULTIBOOT
+qemu_kernel: CCFLAGS += -DGRUB_MULTIBOOT
 qemu_kernel: grub_fix grub_fix multiboot_kernel
 	sudo qemu-system-i386 $(QEMU_OPS) -kernel bin/kernelout
 

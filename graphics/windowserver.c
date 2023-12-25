@@ -17,6 +17,7 @@
 #include <memory.h>
 #include <fs/fs.h>
 #include <vbe.h>
+#include <colors.h>
 
 static int ws_init(struct windowserver* ws);
 static int ws_add(struct windowserver* ws, struct window* window);
@@ -64,6 +65,25 @@ static int ws_init(struct windowserver* ws)
     }
 
     SET_FlAG(ws->flags, WINDOW_SERVER_INITIALIZED);
+    return 0;
+}
+
+static int ws_load_default_wallpaper(struct windowserver* ws)
+{
+    ERR_ON_NULL(ws);
+    WS_VALIDATE(ws);
+
+    int ret = fs_load_from_file("output.bin", ws->background, 640*480);
+    if(ret <= 0){
+        dbgprintf("[WSERVER] Could not read background file: %d.\n", ret);
+        return -ERROR_FILE_NOT_FOUND;
+    }
+
+    /* covert background to rgb */
+    for(int i = 0; i < 640*480; i++){
+        ws->background[i] = rgb_to_vga(ws->background[i]);
+    }
+
     return 0;
 }
 
@@ -315,6 +335,7 @@ struct windowserver* ws_new()
         return NULL;
     }
 
+    ws_load_default_wallpaper(ws);
 
     kref_get(&ws->_krefs);
     return ws;

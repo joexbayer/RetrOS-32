@@ -53,7 +53,7 @@ struct arp_entry
 
 int8_t arp_parse(struct sk_buff* skb);
 int net_arp_find_entry(uint32_t ip, uint8_t* mac);
-void init_arp();
+void net_init_arp();
 
 /* For testing. */
 void net_net_arp_request();

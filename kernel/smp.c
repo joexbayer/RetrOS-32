@@ -49,7 +49,7 @@ struct mp_info* find_mp_floating_ptr()
     return NULL;
 }
 
-int smp_init()
+int smp_parse()
 {
     struct mp_info* mp_ptr = find_mp_floating_ptr();
     if (mp_ptr == NULL) {

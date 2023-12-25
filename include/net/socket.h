@@ -68,7 +68,7 @@ int net_sock_read_skb(struct sock* socket);
 
 int net_get_sockets(struct sockets* sockets);
 
-void init_sockets();
+void net_init_sockets();
 int get_total_sockets();
 
 error_t net_sock_is_established(struct sock* sk);

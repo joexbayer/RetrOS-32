@@ -19,11 +19,12 @@
 
 <!-- PROJECT LOGO -->
 <br />
-<p align="center">
-  <img src="https://github.com/joexbayer/RetrOS-32/blob/main/graphics/logo.png?raw=true">
-</p>
 <div align="center">
   <h1 align="center">RetrOS 32bit</h1>
+
+  <p align="center">
+    <img src="https://github.com/joexbayer/RetrOS-32/blob/main/graphics/logo.png?raw=true">
+  </p>
 
   <p align="center">
     Hobby 32bit operatingsystem project focusing on networking on i386 architecture.

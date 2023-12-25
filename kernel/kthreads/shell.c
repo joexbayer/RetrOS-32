@@ -505,7 +505,6 @@ void cleanup_function(int** ptr)
     kfree(*ptr);
 }
 
-
 void testfn()
 {
 	dbgprintf("Testfn...\n");
@@ -523,11 +522,10 @@ void __kthread_entry shell(int argc, char* argv[])
 		warningf("Failed to create window for shell");
 		return;
 	}
-	
 	dbgprintf("shell: window 0x%x\n", window);
 	kernel_gfx_draw_rectangle(current_running->gfx_window, 0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_VGA_BG);
 	
-	term = terminal_create();
+	term = terminal_create(TERMINAL_GRAPHICS_MODE);
 	term->ops->attach(term);
 
 	struct mem_info minfo;
@@ -542,16 +540,11 @@ void __kthread_entry shell(int argc, char* argv[])
 	twritef("Type 'help' for a list of commands\n");
 	terminal_commit();
 
-	kernel_gfx_set_header("/");
-
 	reset_shell();
 
 	dbgprintf("shell: entering event loop\n");
 	while(1)
 	{
-
-
-
 		struct gfx_event event;
 		gfx_event_loop(&event, GFX_EVENT_BLOCKING);
 
@@ -584,3 +577,58 @@ void __kthread_entry shell(int argc, char* argv[])
 	kernel_exit();
 }
 EXPORT_KTHREAD(shell);
+
+
+
+#include <screen.h>
+static ubyte_t* text_shell_buffer = NULL;
+static int __kthread_entry textshell()
+{
+	ubyte_t c;
+	short x = 0;
+
+	struct terminal* term = terminal_create(TERMINAL_TEXT_MODE);
+	term->ops->attach(term);
+
+	text_shell_buffer = kalloc(1024);
+	if(text_shell_buffer == NULL){
+		warningf("Failed to allocate text shell buffer");
+		return -1;
+	}
+
+	twritef("Welcome to the text shell!\n");
+	term->ops->commit(term);
+
+	while (1){
+		c = kb_get_char();
+		if(c == 0) continue;
+
+		if(c == '\b'){
+			if(x == 0) continue;
+			x--;
+			scrput(x, SCREEN_HEIGHT-1, ' ', VGA_COLOR_WHITE);
+			text_shell_buffer[x] = 0;
+			term->ops->commit(term);
+			screen_set_cursor(x, SCREEN_HEIGHT-1);
+			continue;
+		}
+
+		if(c == '\n'){
+			x = 0;
+			twritef("kernel> %s\n", text_shell_buffer);
+
+			exec_cmd(text_shell_buffer);
+
+			memset(text_shell_buffer, 0, 1024);
+			term->ops->commit(term);
+			screen_set_cursor(x, SCREEN_HEIGHT-1);
+			continue;
+		}
+
+		scrput(x, SCREEN_HEIGHT-1, c, VGA_COLOR_WHITE);
+		text_shell_buffer[x] = c;
+		x++;
+		screen_set_cursor(x, SCREEN_HEIGHT-1);
+	}
+}
+EXPORT_KTHREAD(textshell);

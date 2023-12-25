@@ -54,7 +54,7 @@ struct terminal {
     color_t bg_color;
 };
 
-struct terminal* terminal_create();
+struct terminal* terminal_create(terminal_flags_t flags);
 int terminal_destroy(struct terminal* term);
 
 int scan(ubyte_t* data, int size);
