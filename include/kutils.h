@@ -19,6 +19,10 @@
 #define lcr3(val) __asm__ __volatile__ ("mov %0, %%cr3" : : "r" (val))
 #define lcr4(val) __asm__ __volatile__ ("mov %0, %%cr4" : : "r" (val))
 
+/* get / set gs register */
+#define get_gs() ({ unsigned int gs; __asm__ __volatile__ ("mov %%gs, %0" : "=r" (gs)); gs; })
+#define set_gs(val) __asm__ __volatile__ ("mov %0, %%gs" : : "r" (val))
+
 #endif /* X86_REGISTERS_H */
 
 extern char _start_kctor_table[];

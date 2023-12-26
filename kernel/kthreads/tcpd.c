@@ -95,15 +95,6 @@ void __kthread_entry tcp_server()
             buffer[ret] = 0;
 
             exec_cmd(buffer);
-
-            // const char *http_response = 
-            //     "HTTP/1.1 200 OK\r\n"
-            //     "Content-Type: text/plain\r\n"
-            //     "\r\n"
-            //     "Hello, world!";
-
-            // ret = kernel_send(client, http_response, strlen(http_response), 0);
-
         }
         
 

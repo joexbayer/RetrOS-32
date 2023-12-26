@@ -465,7 +465,6 @@ struct fat16_file_identifier fat16_get_directory_entry(char* path, struct fat16_
     int last_start_block = 0;
     struct fat16_directory_entry entry = {0};
 
-    dbgprintf("Searching for %s %c\n", path, path[0]);
     if(path[0] == '/'){
         start_block = get_root_directory_start_block();
         path++;
@@ -486,11 +485,8 @@ struct fat16_file_identifier fat16_get_directory_entry(char* path, struct fat16_
     }
 
     uint8_t* token = (uint8_t*)sstrtok(path, "/");
-    dbgprintf("Token: %s\n", token);
     while (token != NULL) {
         int found = 0;
-
-        dbgprintf("Searching for %s in %d\n", token, start_block);
 
         for(index = 0; index < ENTRIES_PER_BLOCK; index++) {
             if(fat16_read_entry(start_block, index, &entry) < 0) continue;

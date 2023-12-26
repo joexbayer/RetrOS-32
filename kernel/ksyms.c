@@ -12,7 +12,7 @@
 #define KSYMS_MAX_DEPTH 100
 #define KSYMS_MAX_SYMBOL_LENGTH 25
 
-#define MAX_SYMBOLS 750
+#define MAX_SYMBOLS 800
 
 /* kernel symbol table structure. */
 static struct kernel_symbols {
@@ -128,7 +128,6 @@ void ksyms_add_symbol(const char* name, uintptr_t addr) {
     if (__ksyms.num_symbols < KSYMS_MAX_SYMBOLS) {
         memcpy(__ksyms.symtable[__ksyms.num_symbols].name, name, strlen(name));
         __ksyms.symtable[__ksyms.num_symbols].addr = addr;
-        dbgprintf("Added new symbol %s at 0x%x\n", name, addr);
         __ksyms.num_symbols++;
     } else {
         twritef("Error: symbol table full\n");

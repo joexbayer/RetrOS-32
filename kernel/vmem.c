@@ -99,8 +99,6 @@ static uint32_t* vmem_alloc(struct virtual_memory_allocator* vmem)
 
 		paddr = (uint32_t*) (vmem->start + (bit * PAGE_SIZE));
 		vmem->used_pages++;
-
-		dbgprintf("[VMEM MANAGER] Allocated page %d at 0x%x\n", bit, paddr);
 	});
 
 	return paddr;

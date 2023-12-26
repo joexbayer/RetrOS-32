@@ -7,7 +7,7 @@
 #include <vbe.h>
 #include <pcb.h>
 
-static char *units[] = {"bytes", "kb", "mb"};
+static char *units[] = {"b ", "kb", "mb"};
 
 /* Function to align a given size to the size of a void* */
 int align_to_pointer_size(int size)

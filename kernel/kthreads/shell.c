@@ -89,8 +89,49 @@ void ifconfig()
 EXPORT_KSYMBOL(ifconfig);
 
 /* Shell commands */
-void ps()
+void ps(int argc, char* argv[])
 {
+	ubyte_t spin = 0;
+	if(argc == 2){
+		if(memcmp(argv[1], "-s", 2) == 0){
+			spin = 1;
+		}
+	}
+
+	if(spin){
+		while(1){
+			current_running->term->ops->reset(current_running->term);
+			twritef("  PID  USAGE    TYPE     STATE     NAME\n");
+			for (int i = 1; i < MAX_NUM_OF_PCBS; i++){
+				struct pcb_info info;
+				int ret = pcb_get_info(i, &info);
+				if(ret < 0) continue;
+				int usage = (int)(info.usage*100);
+				twritef("   %d    %s%d%      %s  %s  %s\n", info.pid, usage < 10 ? " ": "", usage, info.is_process ? "process" : "kthread", pcb_status[info.state], info.name);
+			}
+
+			current_running->term->ops->commit(current_running->term);
+			
+			struct gfx_event event;
+			gfx_event_loop(&event, GFX_EVENT_NONBLOCKING);
+
+			switch (event.event){
+			case GFX_EVENT_KEYBOARD:
+				switch (event.data){
+				case CTRLC:
+					return;
+				}
+				break;
+			case GFX_EVENT_EXIT:
+				kernel_exit();
+				return;
+			default:
+				break;
+			}
+			kernel_sleep(1000);
+		}
+	}
+
 	int ret;
 	int usage;
 	twritef("  PID  USAGE    TYPE     STATE     NAME\n");
@@ -399,6 +440,13 @@ void bg(int argc, char* argv[])
 }
 EXPORT_KSYMBOL(bg);
 
+void exit()
+{
+	twritef("Shell exited.\n");
+	kernel_exit();
+}
+EXPORT_KSYMBOL(exit);
+
 void socks(void)
 {
 	twritef("Sockets:\n");
@@ -557,6 +605,7 @@ void __kthread_entry shell(int argc, char* argv[])
 			default:
 				shell_put(event.data);
 				c_test++;
+				gfx_commit();
 				break;
 			}
 			break;
@@ -608,7 +657,6 @@ static int __kthread_entry textshell()
 			x--;
 			scrput(x, SCREEN_HEIGHT-1, ' ', VGA_COLOR_WHITE);
 			text_shell_buffer[x] = 0;
-			term->ops->commit(term);
 			screen_set_cursor(x, SCREEN_HEIGHT-1);
 			continue;
 		}

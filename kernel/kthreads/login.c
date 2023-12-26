@@ -11,7 +11,7 @@
 
 #include <lib/icons.h>
 
-struct memory_info {
+struct boot_info {
 		unsigned int extended_memory_low;
 		unsigned int extended_memory_high;
 	} *total_memory;
@@ -25,7 +25,7 @@ void __kthread_entry login()
         return;
     }
 
-    total_memory = (struct memory_info*) (0x7e00);
+    total_memory = (struct boot_info*) (0x7e00);
 
     struct unit unit = calculate_size_unit(total_memory->extended_memory_low * 1024);
     struct unit unit2 = calculate_size_unit(total_memory->extended_memory_high * 64 * 1024);

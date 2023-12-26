@@ -491,8 +491,12 @@ static int fat16_list(struct filesystem* fs, const char* path, char* buf, int si
             uint8_t month = (date >> 5) & 0x0F;
             uint16_t year = 1980 + ((date >> 9) & 0x7F);
 
-            twritef("%p %s %d, %d:%d - %s%s\n",
-                dir_entry->file_size,
+            /* get size unit */
+            struct unit size_unit = calculate_size_unit(dir_entry->file_size);
+
+            twritef("%p%s %s %d, %d:%d - %s%s\n",
+                size_unit.size,
+                size_unit.unit,
                 months[month-1],
                 day, hours, minutes,
                 name,

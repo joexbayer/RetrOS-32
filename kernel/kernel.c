@@ -57,7 +57,7 @@ struct kernel_context kernel_context = {
 	.sched_ctx = NULL,
 	.graphics.window_server = NULL,
 	.graphics.ctx = NULL,
-	.total_memory = NULL,
+	.boot_info = NULL,
 	.graphic_mode = KERNEL_FLAG_GRAPHICS,
 	//.graphic_mode = KERNEL_FLAG_TEXTMODE,
 };
@@ -97,7 +97,11 @@ void kernel(uint32_t magic)
 #else
 
 	/* Point VBE to magic input and update total memory. */
-	kernel_context.total_memory = (struct memory_info*) (0x7e00);
+	kernel_context.boot_info = (struct boot_info*) (0x7e00);
+	if(kernel_context.boot_info->textmode == 1){
+		kernel_context.graphic_mode = KERNEL_FLAG_TEXTMODE;
+	}
+
 	vbe_info = (struct vbe_mode_info_structure*) magic;
 #endif
 
@@ -113,7 +117,7 @@ void kernel(uint32_t magic)
 	smp_parse();
 
 	/* Initilize memory map and then kernel and virtual memory */
-	memory_map_init(kernel_context.total_memory->extended_memory_low * 1024, kernel_context.total_memory->extended_memory_high * 64 * 1024);
+	memory_map_init(kernel_context.boot_info->extended_memory_low * 1024, kernel_context.boot_info->extended_memory_high * 64 * 1024);
 	init_memory();
 	kernel_boot_printf("Memory initialized.");
 	

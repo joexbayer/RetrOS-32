@@ -21,13 +21,13 @@ static void smp_print_bus_info(const struct entry_bus* bus) {
 }
 
 static void smp_print_io_interrupt_info(const struct entry_io_interrupt* io_int) {
-    dbgprintf("I/O Interrupt: Type=%d, Flags=0x%x, Source Bus ID=%d, Source IRQ=%d, Dest IO APIC ID=%d, Dest IO APIC INTIN=%d\n",
-              io_int->interrupt_type, io_int->flags, io_int->source_bus_id, io_int->source_bus_irq, io_int->destination_io_apic_id, io_int->destination_io_apic_intin);
+    //dbgprintf("I/O Interrupt: Type=%d, Flags=0x%x, Source Bus ID=%d, Source IRQ=%d, Dest IO APIC ID=%d, Dest IO APIC INTIN=%d\n",
+    //          io_int->interrupt_type, io_int->flags, io_int->source_bus_id, io_int->source_bus_irq, io_int->destination_io_apic_id, io_int->destination_io_apic_intin);
 }
 
 static void smp_print_local_interrupt_info(const struct entry_local_interrupt* local_int) {
-    dbgprintf("Local Interrupt: Type=%d, Flags=0x%x, Source Bus ID=%d, Source IRQ=%d, Dest Local APIC ID=%d, Dest Local APIC LINTIN=%d\n",
-              local_int->interrupt_type, local_int->flags, local_int->source_bus_id, local_int->source_bus_irq, local_int->destination_local_apic_id, local_int->destination_local_apic_lintin);
+    //dbgprintf("Local Interrupt: Type=%d, Flags=0x%x, Source Bus ID=%d, Source IRQ=%d, Dest Local APIC ID=%d, Dest Local APIC LINTIN=%d\n",
+    //          local_int->interrupt_type, local_int->flags, local_int->source_bus_id, local_int->source_bus_irq, local_int->destination_local_apic_id, local_int->destination_local_apic_lintin);
 }
 
 

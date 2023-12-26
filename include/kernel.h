@@ -34,10 +34,11 @@ struct kernel_context {
 		void* user_heap;
 	} allocators;
 	
-	struct memory_info {
+	struct boot_info {
 		unsigned int extended_memory_low;
 		unsigned int extended_memory_high;
-	} *total_memory;
+		unsigned int textmode;
+	} *boot_info;
 
 	graphic_modes_t graphic_mode;
 };

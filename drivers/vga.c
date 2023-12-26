@@ -28,7 +28,7 @@ static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg)
 {
 	return fg | bg << 4;
 }
-static uint8_t scrcolor = VGA_COLOR_WHITE | VGA_COLOR_BLACK << 4;
+static uint8_t scrcolor = VGA_COLOR_WHITE | VGA_COLOR_BLUE << 4;
  
 static inline uint16_t vga_entry(unsigned char uc, uint8_t color) 
 {
@@ -61,7 +61,7 @@ void scrcolor_set(enum vga_color fg, enum vga_color bg)
 void scrput(int x, int y, unsigned char c, uint8_t color)
 {
 	const int index = y * SCREEN_WIDTH + x;
-	VGA_MEMORY[index] = vga_entry(c, color);
+	VGA_MEMORY[index] = vga_entry(c, scrcolor);
 }
 
 /**
@@ -75,7 +75,7 @@ void scrput(int x, int y, unsigned char c, uint8_t color)
 void scrwrite(int x, int y, char* str, uint8_t color)
 {
 	for (int i = 0; i < strlen(str); i++){
-		scrput(x+i, y, str[i], color);
+		scrput(x+i, y, str[i], scrcolor);
 	}
 }
 
@@ -88,7 +88,7 @@ void scr_clear()
     ENTER_CRITICAL();
 	for (int y = 0; y < SCREEN_HEIGHT; y++){
 		for (int x = 0; x < SCREEN_WIDTH; x++){
-			scrput(x, y, ' ', VGA_COLOR_BLACK);
+			scrput(x, y, ' ', scrcolor);
 		}
 	}
     LEAVE_CRITICAL();
