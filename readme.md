@@ -246,6 +246,7 @@ IBM Thinkpad a21p
 - [x] PCI.
 - [x] 8Bit RGB to 8Bit VGA
 - [x] Filesystem
+- [x] Textmode only
 - [x] Networkstack
   - [x] Ethernet, IP, ARP, UDP
   - [x] Socket API
