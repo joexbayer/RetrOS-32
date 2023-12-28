@@ -174,7 +174,7 @@ IBM Thinkpad a21p
     ├── Makefile
     ├── apps (userspace applications)
     │   ├── Makefile
-    │   ├── ...
+    │   ├── <app>
     │   ├── libcore.a
     │   ├── libgraphic.a
     │   ├── libnet.a
@@ -246,7 +246,7 @@ IBM Thinkpad a21p
 - [x] PCI.
 - [x] 8Bit RGB to 8Bit VGA
 - [x] Filesystem
-- [x] Textmode only
+- [x] Textmode VGA only
 - [x] Networkstack
   - [x] Ethernet, IP, ARP, UDP
   - [x] Socket API
@@ -255,6 +255,7 @@ IBM Thinkpad a21p
   - [x] DHCP
   - [x] DNS
   - [x] TCP
+  - [ ] Telnet
   - [ ] HTTP
   - [ ] HTML
 - [x] ATA IDE Driver
