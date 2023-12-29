@@ -262,6 +262,7 @@ IBM Thinkpad a21p
   - [x] Ext2 (like) Filesystem
   - [x] FAT16, support for up to 32mb files.
   - [x] read / write
+  - [ ] Atapi
 - [x] Memory
   - [x] 32bit Virtual Memory
   - [x] kalloc / kfree (kernel)
