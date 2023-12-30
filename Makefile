@@ -211,7 +211,6 @@ qemu:
 
 sync:
 	mkdir -p mnt
-	sudo fsck -a filesystemv2.img
 	sudo mount -o shortname=winnt filesystemv2.img ./mnt
 	sudo cp -vvv -r rootfs/* ./mnt/
 	sudo umount ./mnt
