@@ -120,6 +120,9 @@ static const char* tcp_state_str[] = {
 	"TCP_PREPARE"
 };
 char* tcp_state_to_str(tcp_state_t state){
+	if(state > TCP_PREPARE) return "UNKNOWN";
+	if(state < TCP_CREATED) return "UNKNOWN";
+	
 	return (char*)tcp_state_str[state];
 }
 

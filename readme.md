@@ -110,6 +110,7 @@ Crossplatform: Docker to compile the .iso file and QEMU for emulation.<br>
 For native compilation you will need:
  * i386-elf-gcc, i386-elf-ld and i386-elf-g++ for MacOS.
  * build-essential and gcc-multilib for Linux / WSL (ubuntu)
+ *   Also need: grub2, xorriso and xxd (for using Grub as bootloader)
 
 
 ### Installation
@@ -152,9 +153,10 @@ _To compile the kernel and its needed programs you simply need to run *make iso*
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
-
-_For more examples, please refer to the [Documentation](https://example.com)_
+To run RetrOS-32:
+  * http://copy.sh/v86/ : Upload .img file as Hard disk image.
+  * QEMU: `make qemu` or `qemu-system-i386 <image name>` 
+  * Real hardware: Burn .iso file to USB or CD (Use a GRUB iso)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

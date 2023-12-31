@@ -335,7 +335,11 @@ struct windowserver* ws_new()
         return NULL;
     }
 
-    ws_load_default_wallpaper(ws);
+    if(vbe_info->width == 640){
+        ws_load_default_wallpaper(ws);
+    } else {
+        ws_set_background(ws, 0x3);
+    }
 
     kref_get(&ws->_krefs);
     return ws;

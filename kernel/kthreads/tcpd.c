@@ -24,7 +24,10 @@
 #include <kthreads.h>
 #include <args.h>
 
+#include <kernel.h>
+
 static struct sock* client = NULL;
+static char* about_text = "\nRetrOS-32 - 32-bit operating system\n    " KERNEL_RELEASE " " KERNEL_VERSION " - " KERNEL_DATE "\n";
 
 static int __net_terminal_writef(struct terminal* term, const char* fmt, ...)
 {

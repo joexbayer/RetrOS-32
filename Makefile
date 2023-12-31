@@ -7,7 +7,7 @@ ASFLAGS=
 LDFLAGS= 
 MAKEFLAGS += --no-print-directory
 
-QEMU_OPS = -no-reboot -device e1000,netdev=net0 -serial stdio -netdev user,id=net0,hostfwd=tcp::8080-:8080 -object filter-dump,id=net0,netdev=net0,file=dump.dat -m 32m
+QEMU_OPS = -device e1000,netdev=net0 -serial stdio -netdev user,id=net0,hostfwd=tcp::8080-:8080 -object filter-dump,id=net0,netdev=net0,file=dump.dat -m 32m
 
 # ---------------- For counting how many files to compile ----------------
 ifneq ($(words $(MAKECMDGOALS)),1)
@@ -69,7 +69,7 @@ LIBOBJ = bin/printf.o bin/syscall.o bin/graphics.o bin/netlib.o
 
 # ---------------- Makefile rules ----------------
 
-.PHONY: all new image clean boot net kernel grub time tests build apps bin/mkfsv2 symbols
+.PHONY: all new image clean boot net kernel grub time tests build apps bin/build symbols
 all: iso
 	$(TIME-END)
 
@@ -111,19 +111,16 @@ bin/%.o: */%.s
 	@$(ECHO) [KERNEL]     Compiling $<
 	@$(AS) -o $@ -c $< $(ASFLAGS)
 
-bin/build: ./tools/build.c
-	@gcc ./tools/build.c -o ./bin/build
-	@echo [BUILD]      Compiling $<
 
 bin/mkfs: bin/ext.o bin/bitmap.o ./tools/mkfs.c
 	@gcc tools/mkfs.c bin/bitmap.o fs/bin/inode.o -I include/  -O2 -m32 -Wall -D_XOPEN_SOURCE -D_FILE_OFFSET_BITS=64 -D__KERNEL -o  ./bin/mkfs
 	@echo [BUILD]      Compiling $<
 
-bin/mkfsv2: tools/mkfsv2.c bin/fat16.o bin/bitmap.o ./tests/utils/mocks.c
-	@gcc tools/mkfsv2.c bin/bitmap.o ./tests/utils/mocks.c bin/fat16.o -I ./include/  -O2 -m32 -Wall -D__FS_TEST -D__KERNEL -o 	./bin/mkfsv2
+bin/build: tools/build.c bin/fat16.o bin/bitmap.o ./tests/utils/mocks.c
+	@gcc tools/build.c bin/bitmap.o ./tests/utils/mocks.c bin/fat16.o -I ./include/  -O2 -m32 -Wall -D__FS_TEST -D__KERNEL -o 	./bin/build
 	@echo [BUILD]      Compiling $<
 
-tools: bin/build bin/mkfs bin/mkfsv2
+tools: bin/build
 
 tests: compile
 	@make -C ./tests/
@@ -137,11 +134,8 @@ bin/ext.o: ./fs/*.c
 bin/fat16.o: ./fs/*.c
 	@make -C ./fs/
 
-build: tools
-	@echo [BUILD]      Building ISO file and attaching filesystem.
-	@rm -f boot.iso
-	@./bin/mkfs
-	@./bin/build
+build: bin/build
+	./bin/build
 
 apps:
 	@make -C ./apps/
@@ -158,7 +152,7 @@ compile: bindir $(LIBOBJ) bootblock kernel apps
 
 create_fs:
 	@dd if=/dev/zero of=filesystem.image bs=512 count=390
-	@./bin/mkfsv2
+	@./bin/build
 
 bare: compile create_fs
 
@@ -183,6 +177,7 @@ clean:
 test: clean compile tests
 
 bindir:
+	@mkdir -p rootfs/bin
 	@mkdir -p bin
 
 # Kernel.o must be recompiled with the multiboot flag.
@@ -207,17 +202,14 @@ vdi: cleanvid docker
 	qemu-img convert -f raw -O vdi boot.img boot.vdi
 
 qemu:
-	sudo qemu-system-i386 $(QEMU_OPS) -drive file=filesystemv2.img,format=raw,index=0,media=disk
+	sudo qemu-system-i386 $(QEMU_OPS) -drive file=RetrOS-32-debug.img,format=raw,index=0,media=disk
 
 sync:
-	mkdir -p mnt
-	sudo mount -o shortname=winnt filesystemv2.img ./mnt
-	sudo cp -vvv -r rootfs/* ./mnt/
-	sudo umount ./mnt
+	sh scripts/sync.sh RetrOS-32-debug.img
 # sudo cp -r mnt/* ./mnt/apps/
 
 mount:
-	sudo mount -o shortname=winnt filesystemv2.img ./mnt
+	sudo mount -o shortname=winnt RetrOS-32-debug.img ./mnt
 
 run: docker qemu
 endif

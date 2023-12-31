@@ -1,95 +1,180 @@
 #include <stdint.h>
+#include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <sync.h>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define RESET   "\033[0m"
-#define BLACK   "\033[30m"      /* Black */
-#define RED     "\033[31m"      /* Red */
-#define GREEN   "\033[32m"      /* Green */
-#define YELLOW  "\033[33m"      /* Yellow */
-#define BLUE    "\033[34m"      /* Blue */
-#define MAGENTA "\033[35m"      /* Magenta */
-#define CYAN    "\033[36m"      /* Cyan */
-#define WHITE   "\033[37m"      /* White */
-#define BOLDBLACK   "\033[1m\033[30m"      /* Bold Black */
-#define BOLDRED     "\033[1m\033[31m"      /* Bold Red */
-#define BOLDGREEN   "\033[1m\033[32m"      /* Bold Green */
-#define BOLDYELLOW  "\033[1m\033[33m"      /* Bold Yellow */
-#define BOLDBLUE    "\033[1m\033[34m"      /* Bold Blue */
-#define BOLDMAGENTA "\033[1m\033[35m"      /* Bold Magenta */
-#define BOLDCYAN    "\033[1m\033[36m"      /* Bold Cyan */
-#define BOLDWHITE   "\033[1m\033[37m"      /* Bold White */
+#include <time.h>
+#include <sync.h>
 
-int main(int argc, char* argv[])
+#include <fs/fat16.h>
+
+#include "../tests/include/mocks.h"
+
+#define BLOCK_SIZE 512
+#define BOOTBLOCK_SIZE BLOCK_SIZE*4
+
+FILE* filesystem = NULL;
+#define DEBUG 1
+
+/* TODO: as argv */
+static const int IMG_SIZE = 32*1024*1024;
+static const char* name = "RetrOS-32.img";
+
+int build_load_bootloader()
 {
-    printf("[" BLUE "BUILD" RESET "] Starting building...\n[" BLUE "BUILD" RESET "] Creating RetrOS-32 iso file.\n");
-
-    FILE* bootblock = fopen("./bin/bootblock", "rwb"); 
-    fseek(bootblock, 0L, SEEK_END);
-    int sz = ftell(bootblock);
-    rewind(bootblock);
-
-    FILE* kernel = fopen("./bin/kernelout", "rwb"); 
-    fseek(kernel, 0L, SEEK_END);
-    int sz_2 = ftell(kernel);
-    rewind(kernel);
-
-    FILE* fs = fopen("./filesystem.image", "rwb"); 
-    fseek(fs, 0L, SEEK_END);
-    int sz_3 = ftell(fs);
-    rewind(fs);
-
-    FILE* image = fopen("./boot.iso", "w+"); 
-
-    printf("[" BLUE "BUILD" RESET "] Bootblock: %d bytes\n", sz);
-    printf("[" BLUE "BUILD" RESET "] Kernel: %d bytes\n", sz_2);
-    printf("[" BLUE "BUILD" RESET "] Filesystem: %d bytes\n", sz_3);
-
-    fseek(image, 0, SEEK_SET);
-    
-    #define SIZE (512)
-
-    printf("[" BLUE "BUILD" RESET "] Attaching bootblock to the iso file... ");
-    char buffer[SIZE];
-    size_t bytes;
-    while (0 < (bytes = fread(buffer, 1, 512, bootblock))){
-        //printf("Writing %d bytes to image\n", bytes);
-        fwrite(buffer, 1, 512, image);
+    char bootblock[BOOTBLOCK_SIZE];
+    FILE* bootloader = fopen("bin/bootblock", "r");
+    if(bootloader == NULL){
+        return -1;
     }
-    printf(" (DONE)\n");
-    
-    printf("[" BLUE "BUILD" RESET "] Attaching kernel to the iso file... ");
-    fseek(image, 512, SEEK_SET);
-    while (0 < (bytes = fread(buffer, 1, sizeof(buffer), kernel))){
-        //printf("Writing %d bytes to image\n", bytes);
-        fwrite(buffer, 1, bytes, image);
+
+    int size = fread(bootblock, 1, BOOTBLOCK_SIZE, bootloader);
+    if(size != BOOTBLOCK_SIZE){
+        return -2;
     }
-    printf(" (DONE)\n");
 
-    printf("[" BLUE "BUILD" RESET "] Attaching filesystem to the iso file... ");
-    int ext_start = ((sz_2/512)+2)*512;
-    fseek(image, ext_start, SEEK_SET);
-    while (0 < (bytes = fread(buffer, 1, sizeof(buffer), fs))){
-        //printf("Writing %d bytes to image\n", bytes);
-        fwrite(buffer, 1, bytes, image);
+    /* write 4 bootblock blocks */
+    for(int i = 0; i < 4; i++){
+        write_block(bootblock + (i*512), i);
     }
-    printf(" (DONE)\n");
 
-    fflush(image);
+    fclose(bootloader);
+    return 0;
+}
 
+int build_load_kernel()
+{
+    int kernel_size;
+    int kernel_block_count = 0;
     
-    fseek(image, 0L, SEEK_END);
-    int sz_4 = ftell(image);
-    rewind(image);
-    printf("[" BLUE "BUILD" RESET "] Image: %d bytes\n", sz_4);
+    FILE* kernel = fopen("bin/kernelout", "r");
+    if(kernel == NULL){
+        return -1;
+    }
 
-    fclose(bootblock);
+    fseek(kernel, 0, SEEK_END);
+    kernel_size = ftell(kernel);
+    kernel_block_count = kernel_size / 512;
+    fseek(kernel, 0, SEEK_SET);
+    printf("Kernel size: %d\n", kernel_size);
+
+    char* kernel_data = malloc(kernel_size);
+    if(kernel_data == NULL){
+        return -2;
+    }
+
+    int size = fread(kernel_data, 1, kernel_size, kernel);
+    if(size != kernel_size){
+        return -3;
+    }
+
+    for(int i = 0; i < kernel_block_count; i++){
+        write_block(kernel_data + (i*512), i+4);
+    }
+
     fclose(kernel);
-    fclose(fs);
-    fclose(image);
+    free(kernel_data);
+
+    return kernel_block_count;
+}
+
+#include <stdio.h>
+#include <string.h>
+
+/**
+ * @brief build - Create RetrOS images
+ *
+ * Usage: ./build [-opts] <kernel> 
+ * Options
+ *  -k Specify the kernel (Default: kernelnout)
+ *  -b Specify bootloader (Default: bootblock)
+ *  -d Disk only (no kernel or bootloader)
+ *  -r Build release version
+ *
+ * @param argc Number of command-line arguments
+ * @param argv Array of command-line arguments
+ * @return int Exit status
+ */
+int main(int argc, char const *argv[]) {
+
+    char* outname;
+    int disk_only = 0;
+    int release = 0;
     
+    int kernel_block_count;
+    int ret;
+
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-k") == 0 && i + 1 < argc) {
+            i++;
+        } else if (strcmp(argv[i], "-b") == 0 && i + 1 < argc) {
+            i++;
+        } else if (strcmp(argv[i], "-d") == 0) {
+            disk_only = 1;
+        } else if (strcmp(argv[i], "-r") == 0) {
+            release = 1;
+        } 
+    }
+
+    if(release){
+        outname = "RetrOS-32.img";
+    } else {
+        outname = "RetrOS-32-debug.img";
+    }
+
+    if(disk_only){
+        outname = "RetrOS-32-disk.img";
+        printf("Building disk image only.\n");
+    } else {
+        printf("Building disk image with kernel and bootloader.\n");
+    }
+
+    filesystem = fopen(outname, "w+");
+    if(filesystem == NULL){
+        printf("Unable to open filesystem.");
+        return -1;
+    }
+
+    if(!disk_only){
+        ret = build_load_bootloader();
+        if(ret < 0){
+            printf("Unable to load bootloader: %d\n", ret);
+            return -1;
+        }
+
+        kernel_block_count = build_load_kernel();
+        if(kernel_block_count <= 0){
+            printf("Unable to load kernel: %d\n", kernel_block_count);
+            return -1;
+        }
+    }
+
+    /* We want to reserve blocks for the kernel before the filesystem starts. */
+
+    fat16_format("VOLUME1", kernel_block_count+4);
+    if(fat16_load() < 0){
+        printf("Unable to initialize FAT16 filesystem.\n");
+        return -1;
+    }
+
+
+    fseek(filesystem, 0, SEEK_END);
+    int size2 = ftell(filesystem);
+    printf("Size of filesystem: %d\n", size2);
+    /* pad to 32mb */
+    if(size2 < IMG_SIZE){
+        char* buf = malloc(IMG_SIZE - size2);
+        memset(buf, 0, IMG_SIZE - size2);
+        fwrite(buf, IMG_SIZE - size2, 1, filesystem);
+        free(buf);
+
+        printf("Padded filesystem to 32mb.\n");
+    }   
 
     return 0;
 }

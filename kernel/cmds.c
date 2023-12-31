@@ -11,8 +11,10 @@
  * @copyright Copyright (c) 2023
  */
 
+#include <kernel.h>
 #include <ksyms.h>
 #include <terminal.h>
+#include <memory.h>
 #include <fs/fs.h>
 
 #define COMMAND(name, func) \
@@ -82,6 +84,30 @@ static int list(int argc, char* argv[])
     return 0;
 }
 EXPORT_KSYMBOL(list);
+
+static int about(){
+
+    struct memory_map* map = memory_map_get();
+
+    /* neofetch style twritef */
+    #define RETROS_ASCII_ART_INFO \
+    "                  .----.      Kernel: RetrOS-32 0.0.1 alpha\n" \
+    "      .---------. | == |      Build Date: " __DATE__ "\n" \
+    "      |.-\"\"\"\"\"-.| |----|      Build Time: " __TIME__ "\n" \
+    "      ||       || | == |      Memory: %d bytes\n" \
+    "      ||RetrOS || |----|      Display: VGA\n" \
+    "      |'-.....-'| |::::|                \n" \
+    "      `\"\")---(\"\"` |___.|                \n" \
+    "     /:::::::::::\" _  \"                \n" \
+    "    /:::=======:::\\`\\`\\             \n" \
+    "    `\"\"\"\"\"\"\"\"\"\"\"\"\"`  '-'                \n"
+
+    twritef(RETROS_ASCII_ART_INFO, map->total);
+
+
+    return 0;
+}
+EXPORT_KSYMBOL(about);
 
 static int view(int argc, char* argv[]){
     if(argc < 2) {

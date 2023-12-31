@@ -356,7 +356,7 @@ static int __terminal_commit_textmode(struct terminal* term)
 	if(term == NULL) return -1;
 
 	scr_clear();
-	int x = 0, y = 0;
+	int x = 0, y = 1;
 	for (int i = term->tail; i < term->head; i++){
 		if(term->textbuffer[i] == '\n'){
 			x = 0;
@@ -364,7 +364,7 @@ static int __terminal_commit_textmode(struct terminal* term)
 			continue;
 		}
 
-		scrput(x, y, term->textbuffer[i], term->text_color);
+		scrput(x, y, term->textbuffer[i], VGA_COLOR_WHITE | VGA_COLOR_BLUE << 4);
 		x++;
 	}
 

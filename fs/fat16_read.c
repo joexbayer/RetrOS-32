@@ -53,9 +53,9 @@ int fat16_read_data(int first_cluster, uint32_t start_offset, void* _buffer, int
     byte_t *buf_pos = buffer;
     while (bytes_left_to_read > 0 && current_cluster != 0xFFFF) {
         int bytes_to_read = (bytes_left_to_read > (512 - offset_within_cluster)) ? (512 - offset_within_cluster) : bytes_left_to_read;
+        //dbgprintf("Read %d bytes from cluster 0x%x\n", bytes_to_read, current_cluster); 
         fat16_read_data_from_cluster(current_cluster, buf_pos, bytes_to_read, offset_within_cluster);
 
-        //dbgprintf("Read %d bytes from cluster 0x%x\n", bytes_to_read, current_cluster); 
 
         buf_pos += bytes_to_read;
         bytes_left_to_read -= bytes_to_read;

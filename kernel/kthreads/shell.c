@@ -8,6 +8,7 @@
  * @copyright Copyright (c) 2022
  * 
  */
+#include <kernel.h>
 #include <pci.h>
 #include <keyboard.h>
 #include <terminal.h>
@@ -61,6 +62,8 @@ static const char newline = '\n';
 static const char backspace = '\b';
 
 static char* shell_name = "Kernel >";
+
+static char* about_text = "\nRetrOS-32 - 32-bit operating system\n    " KERNEL_RELEASE " " KERNEL_VERSION " - " KERNEL_DATE "\n";
 
 static struct terminal* term = NULL; 
 /*
@@ -480,15 +483,6 @@ void help()
 EXPORT_KSYMBOL(help);
 
 
-char* welcome = "\n\
-       _..--=--..._\n\
-    .-'            '-.  .-.\n\
-   /.'              '.\\/  /\n\
-  |=-                -=| (  RetrOS-32\n\
-   \\'.              .'/\\  \\\n\
-    '-.,_____ _____.-'  '-'\n\
-         [_____]=8\n";
-
 /**
  * @brief Puts a character c into the shell line 
  * at correct position. Also detects enter.
@@ -582,8 +576,8 @@ void __kthread_entry shell(int argc, char* argv[])
 	struct unit used = calculate_size_unit(minfo.kernel.used+minfo.permanent.used);
 	struct unit total = calculate_size_unit(minfo.kernel.total+minfo.permanent.total);
 
-	twritef("_.--*/ \\*--._\nWelcome ADMIN!\n");
-	twritef("%s\n", welcome);
+	twritef("\n");
+	twritef("%s\n", about_text);
 	twritef("Memory: %d%s/%d%s\n", used.size, used.unit, total.size, total.unit);
 	twritef("Type 'help' for a list of commands\n");
 	terminal_commit();
@@ -645,7 +639,9 @@ static int __kthread_entry textshell()
 		return -1;
 	}
 
-	twritef("Welcome to the text shell!\n");
+	scrwrite(0, 0, "                              RetrOS 32 - Textmode                              ", VGA_COLOR_BLUE | VGA_COLOR_LIGHT_GREY << 4);
+
+	twritef("%s\n", about_text);
 	term->ops->commit(term);
 
 	while (1){
