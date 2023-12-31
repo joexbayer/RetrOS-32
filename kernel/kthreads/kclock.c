@@ -69,7 +69,7 @@ void __kthread_entry kclock(int argc, char* argv[])
         w->draw->textf(w, center_x(5), 112, theme->window.text, "%s%d:%s%d", now.hour > 9 ? "" : "0", now.hour, now.minute > 9 ? "" : "0", now.minute);
         w->draw->textf(w, center_x(6), 124, theme->window.text, "%d. %s", now.day, months[now.month-1]);
 
-        kernel_sleep(100);
+        kernel_sleep(1000);
 
         struct gfx_event event;
         int ret = gfx_event_loop(&event, GFX_EVENT_NONBLOCKING);

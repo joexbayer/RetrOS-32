@@ -14,16 +14,13 @@
 [![LinkedIn][linkedin-shield]][linkedin-url]
 -->
 
-
-
-
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
   <h1 align="center">RetrOS 32bit</h1>
 
   <p align="center">
-    <img src="https://github.com/joexbayer/RetrOS-32/blob/main/graphics/logo.png?raw=true">
+    <img src="https://github.com/joexbayer/RetrOS-32/blob/main/graphics/logo.png?raw=true" width="150">
   </p>
 
   <p align="center">

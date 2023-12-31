@@ -16,6 +16,7 @@
 #include <terminal.h>
 #include <memory.h>
 #include <fs/fs.h>
+#include <gfx/theme.h>
 
 #define COMMAND(name, func) \
 	int name\
@@ -85,6 +86,28 @@ static int list(int argc, char* argv[])
 }
 EXPORT_KSYMBOL(list);
 
+static int color(int argc, char* argv[]){
+    if(argc < 2) {
+        twritef("Usage: color <text> <background>\n Use hex values\n");
+        return 1;
+    }
+
+    color_t text = htoi(argv[1]);
+    color_t bg = 255;
+
+    if(argc == 3){
+        bg = htoi(argv[2]);
+    }
+
+    struct gfx_theme* theme = kernel_gfx_current_theme();
+    theme->terminal.text = text;
+
+    if(bg != 255) theme->terminal.background = bg;
+
+    return 0;
+}
+EXPORT_KSYMBOL(color);
+
 static int about(){
 
     struct memory_map* map = memory_map_get();
@@ -108,6 +131,24 @@ static int about(){
     return 0;
 }
 EXPORT_KSYMBOL(about);
+
+static int help(int argc, char* argv[])
+{
+    twritef("Available commands:\n\n");
+    twritef("Filesystem:      System:      Etc:\n");
+    twritef("  new             ps           help\n");
+    twritef("  list            tree         reset\n");
+    twritef("  view            kill         about\n");
+    twritef("  file            exec         xxd\n");
+    twritef("                  fdisk        bg\n");
+    twritef("Network:          meminfo      sh\n");
+    twritef(" socks                         echo\n");
+    twritef(" ifconfig                      cc\n");
+    twritef(" dns                           color\n");
+    return 0;
+}
+EXPORT_KSYMBOL(help);
+
 
 static int view(int argc, char* argv[]){
     if(argc < 2) {

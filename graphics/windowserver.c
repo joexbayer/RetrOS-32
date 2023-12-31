@@ -307,7 +307,7 @@ static int ws_draw(struct windowserver* ws)
 
     ENTER_CRITICAL();
     /* Copy buffer over to framebuffer. */
-    memcpy((uint8_t*)vbe_info->framebuffer, ws->_wm->composition_buffer, ws->_wm->composition_buffer_size);
+    xmemcpy((uint8_t*)vbe_info->framebuffer, ws->_wm->composition_buffer, ws->_wm->composition_buffer_size);
 
     LEAVE_CRITICAL();
 

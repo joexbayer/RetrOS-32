@@ -13,8 +13,8 @@ struct gfx_theme default1 = {
         .text = 0x16
     },
     .terminal = {
-        .background = COLOR_VGA_BG,
-        .text = COLOR_VGA_FG
+        .background = 0x0,
+        .text = 0x17
     },
     .name = "Light theme"
 };
@@ -31,8 +31,8 @@ struct gfx_theme macos = {
         .text = COLOR_VGA_MEDIUM_GRAY
     },
     .terminal = {
-        .background = COLOR_VGA_BG,
-        .text = COLOR_VGA_FG
+        .background = 0x0,
+        .text = 0x17 + 5
     },
     .name = "MacOS theme"
 };

@@ -181,7 +181,7 @@ int cc(int argc, char **argv)
     int i = 0;
 
     if(argc == 1){
-        twritef("usage: cc [-s] <file>\n");
+        twritef("usage: cc [-s] <file>.c\n");
         return -1;
     }
 

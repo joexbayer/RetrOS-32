@@ -291,7 +291,7 @@ static void __kthread_entry taskbar(void)
     
     while (1){
 
-        gfx_put_icon16(wlan_16, w->inner_width - (timedate_length*8) - 20, 4);
+        gfx_put_icon16(wlan_16, w->inner_width - (timedate_length*8) - 20, 2);
 
         get_current_time(&time);
         w->draw->rect(w, w->inner_width - (timedate_length*8), 5, timedate_length*8, 10, 30);

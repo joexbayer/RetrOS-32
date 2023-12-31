@@ -44,7 +44,7 @@
 #include <vbe.h>
 
 #define SHELL_HEIGHT 225 /* 275 */
-#define SHELL_WIDTH 375 /* 300 */
+#define SHELL_WIDTH 400 /* 300 */
 #define SHELL_POSITION shell_height-8
 #define SHELL_MAX_SIZE SHELL_WIDTH/2
 
@@ -63,7 +63,7 @@ static const char backspace = '\b';
 
 static char* shell_name = "Kernel >";
 
-static char* about_text = "\nRetrOS-32 - 32-bit operating system\n    " KERNEL_RELEASE " " KERNEL_VERSION " - " KERNEL_DATE "\n";
+static char* about_text = "\nRetrOS-32 - 32bit operating system\n    " KERNEL_RELEASE " " KERNEL_VERSION " - " KERNEL_DATE "\n";
 
 static struct terminal* term = NULL; 
 /*
@@ -274,13 +274,13 @@ void exec(int argc, char* argv[])
 	bool_t kthread_as_deamon = false;
 
 	if(argc == 1){
-		twritef("usage: exec [options] <file | kfunc> [args ...]\n");
+		twritef("usage: exec [options] <file | kfunc> [args ...]\n Note: Any command can be executed by as a thread\n Example: exec echo hi\n");
 		return;
 	}
 
 	/* check for potential options */
 	if(argv[1][0] == '-'){
-		switch (argv[1][1]){
+		switch (argv[1][1]){ 	
 		case 'd':{
 				kthread_as_deamon = true;	
 			}
@@ -474,13 +474,6 @@ void reset(int argc, char* argv[])
 	reset_shell();
 }
 EXPORT_KSYMBOL(reset);
-
-void help()
-{
-	twritef("Commands:\n");
-	ksyms_list();
-}
-EXPORT_KSYMBOL(help);
 
 
 /**

@@ -386,7 +386,7 @@ static int __terminal_commit_graphics(struct terminal* term)
 		}
 
 		__terminal_syntax(term->textbuffer[i]);
-		kernel_gfx_draw_char(term->screen, 1 + x*8, 1+ y*8, term->textbuffer[i], term->text_color);
+		kernel_gfx_draw_char(term->screen, 1 + x*8, 2+ y*8, term->textbuffer[i], term->text_color);
 		x++;
 	}
 
