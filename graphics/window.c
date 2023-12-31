@@ -21,6 +21,8 @@
 #include <kutils.h>
 #include <lib/icons.h>
 
+//#define __WINDOWS_95
+
 
 /* prototype window ops */
 static void gfx_default_click(struct window* window, int x, int y); 
@@ -40,7 +42,6 @@ static struct window_ops default_window_ops = {
     .move = &kernel_gfx_set_position,
     .destroy = &gfx_destory_window,
     .maximize = &gfx_window_maximize
-
 };
 
 /* default windows draw ops */
@@ -51,7 +52,8 @@ static struct window_draw_ops default_window_draw_ops = {
     .text = &kernel_gfx_draw_text,
     .line = &kernel_gfx_draw_line,
     .circle = &kernel_gfx_draw_circle,
-    .box = &kernel_gfx_draw_contoured_box
+    .box = &kernel_gfx_draw_contoured_box,
+    .bitmap = &kernel_gfx_draw_bitmap
 };
 
 /**
@@ -109,7 +111,7 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
 #else 
         color_t header_color = theme->window.background;
         color_t header_text_color = window->in_focus ? 0x00 : COLOR_VGA_LIGHT_GRAY;
-#endif // DEBUG
+#endif // __WINDOWS_95
 
         vesa_fillrect(buffer, window->x+6, window->y-4, window->width-8, 12, header_color);
 
@@ -120,23 +122,18 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
         vesa_line_horizontal(buffer, window->x+4, window->y+7, window->width-8, background_color);
 
         if(window->in_focus){
+#ifndef __WINDOWS_95
             for (int i = 0; i < 3; i++){
                 vesa_line_horizontal(buffer, window->x+8, (window->y-1)+i*3, window->width-16, background_color);
                 vesa_line_horizontal(buffer, window->x+8, (window->y-2)+i*3, window->width-16, COLOR_VGA_LIGHTER_GRAY+2);
             }
+#endif // __WINDOWS_95
         }
 
         /* Title */
         int title_position = (window->width/2) - ((strlen(window->name)*8)/2);
-        vesa_fillrect(buffer, window->x+title_position, window->y-2, strlen(window->name)*8 + 4, 8, theme->window.background);
+        vesa_fillrect(buffer, window->x+title_position, window->y-2, strlen(window->name)*8 + 4, 8, header_color);
         vesa_write_str(buffer, window->x+title_position+4, window->y-2, window->name, header_text_color);
-
-        //     /* Header */
-        // if(0 && window->header != 0){
-        //     int header_position = (window->width/2) - ((strlen(window->header)*8)/2);
-        //     vesa_fillrect(buffer, window->x+header_position, window->y-2, strlen(window->header)*8 + 4, 8, background_color);
-        //     vesa_write_str(buffer, window->x+header_position+4, window->y-2, window->header, header_text_color);
-        // }
     }
 
     if(!HAS_FLAG(window->flags, GFX_HIDE_BORDER)){

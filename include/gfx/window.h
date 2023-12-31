@@ -55,7 +55,7 @@ struct window_draw_ops {
     void (*line)(struct window*, int x1, int y1, int x2, int y2, color_t color);
     void (*circle)(struct window*, int x, int y, int radius, color_t color, bool_t fill);
     int (*box)(struct window*, int x, int y, int width, int height, color_t color);
-
+    int (*bitmap)(struct window*, int x, int y, int width, int height, uint8_t* bitmap);
 };
 
 struct window {

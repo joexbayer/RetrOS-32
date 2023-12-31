@@ -41,7 +41,7 @@ LIB_NET_OBJS = ../bin/netlib.o
 .PHONY: all new programs
 all: new
 
-new: ${UTILS} bindir programs
+new: bindir  ${UTILS} programs
 
 staticlibs:
 	$(AR) rcs libcore.a $(LIB_COMMON_OBJS)

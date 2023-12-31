@@ -67,7 +67,7 @@ void __kthread_entry kclock(int argc, char* argv[])
 		w->draw->line(w, 55, 55, 55 + (50*sin_60[now.second])/1.1, 55+ (50*cos_60[now.second])/1.1, COLOR_VGA_RED);
 
         w->draw->textf(w, center_x(5), 112, theme->window.text, "%s%d:%s%d", now.hour > 9 ? "" : "0", now.hour, now.minute > 9 ? "" : "0", now.minute);
-        w->draw->textf(w, center_x(6), 124, theme->window.text, "%d. %s", now.day, months[now.month]);
+        w->draw->textf(w, center_x(6), 124, theme->window.text, "%d. %s", now.day, months[now.month-1]);
 
         kernel_sleep(100);
 

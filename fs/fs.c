@@ -59,12 +59,7 @@ struct file* fs_alloc_file()
         return NULL;
     }
 
-    file->nlinks = 0;
-    file->offset = 0;
-    file->flags = 0;
-    file->identifier = 0;
-    file->directory = 0;
-    
+    memset(file, 0, sizeof(struct file));
     return file;
 }
 

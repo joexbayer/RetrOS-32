@@ -48,7 +48,7 @@ int kthread_list()
 {
     int i = 0;
     while(i < total_kthreads){
-        twritef("%s", kthread_table[i].name);
+        twritef("%s\n", kthread_table[i].name);
         i++;
     }
 }

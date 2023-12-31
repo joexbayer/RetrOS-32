@@ -24,10 +24,10 @@
 static struct dns_cache __dns_cache[DNS_CACHE_ENTRIES];
 static mutex_t __dns_mutex;
 
-void init_dns();
+void net_init_dns();
 int gethostname(char* hostname);
 
-void init_dns()
+void net_init_dns()
 {
     /* Set DNS cache to be "empty". */
     for (int i = 0; i < DNS_CACHE_ENTRIES; i++){

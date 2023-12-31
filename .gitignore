@@ -54,6 +54,8 @@ include/editor.h
 
 rootfs/bin/*
 
+RetrOS-32-debug.img
+
 # Executables
 *.exe
 *.out

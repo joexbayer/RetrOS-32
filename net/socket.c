@@ -419,7 +419,7 @@ struct sock* kernel_socket_create(int domain, int type, int protocol)
     return socket_table[current];
 }
 
-void init_sockets()
+void net_init_sockets()
 {
     socket_table = (struct sock**) kalloc(NET_NUMBER_OF_SOCKETS * sizeof(void*));
     port_map = create_bitmap(NET_NUMBER_OF_DYMANIC_PORTS);

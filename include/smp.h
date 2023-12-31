@@ -88,7 +88,7 @@ struct entry_local_interrupt {
 };
 
 
-int smp_init();
+int smp_parse();
 struct mp_info* find_mp_floating_ptr();
 
 #endif /* !__SMP_H */

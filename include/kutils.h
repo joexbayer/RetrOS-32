@@ -3,6 +3,7 @@
 
 #include <sync.h>
 #include <stdint.h>
+#include <args.h>
 
 #ifndef X86_REGISTERS_H
 #define X86_REGISTERS_H
@@ -17,6 +18,10 @@
 #define lcr0(val) __asm__ __volatile__ ("mov %0, %%cr0" : : "r" (val))
 #define lcr3(val) __asm__ __volatile__ ("mov %0, %%cr3" : : "r" (val))
 #define lcr4(val) __asm__ __volatile__ ("mov %0, %%cr4" : : "r" (val))
+
+/* get / set gs register */
+#define get_gs() ({ unsigned int gs; __asm__ __volatile__ ("mov %%gs, %0" : "=r" (gs)); gs; })
+#define set_gs(val) __asm__ __volatile__ ("mov %0, %%gs" : : "r" (val))
 
 #endif /* X86_REGISTERS_H */
 
@@ -39,7 +44,7 @@ typedef unsigned char ubyte_t;
 #define __kthread_entry
 /* This function does not return */
 #define __noreturn //__attribute__((noreturn))
-#define __deprecated  __attribute__((deprecated))
+#define __deprecated
 
 /**
  * @brief EXPORT_KCTOR
@@ -48,7 +53,8 @@ typedef unsigned char ubyte_t;
  * Expected function signature:
  * @param func void func(void);
  */
-#define EXPORT_KCTOR(func) uintptr_t __kctor_ptr_##func __attribute__((section(".kctor_table"), unused)) = (uintptr_t)&func
+#define EXPORT_KCTOR(func) \
+    uintptr_t __kctor_ptr_##func __attribute__((section(".kctor_table"), unused)) = (uintptr_t)&func
 
 void init_kctors();
 
@@ -122,7 +128,7 @@ int kref_get(struct kref* ref);
 int kref_put(struct kref* ref);
 int kref_init(struct kref* ref);
 
-int32_t csprintf(char *buffer, const char *fmt, ...);
+int32_t csprintf(char *buffer, const char *fmt, va_list args);
 
 int align_to_pointer_size(int size);
 unsigned char*  encode_run_length(const unsigned char* data, int length, unsigned char* out, int* encodedLength);

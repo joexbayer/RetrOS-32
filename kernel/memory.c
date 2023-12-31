@@ -59,13 +59,7 @@ int memory_map_init(int total_memory, int extended_memory)
 		.initialized 		= true
 	};
 	kernel_memory_map = map;
-
-	dbgprintf("Memory map:\n");
-	dbgprintf("Kernel:    0x%x - 0x%x (%d)\n", kernel_memory_map.kernel.from, kernel_memory_map.kernel.to, kernel);
-	dbgprintf("Permanent: 0x%x - 0x%x (%d)\n", kernel_memory_map.permanent.from, kernel_memory_map.permanent.to, permanent);
-	dbgprintf("Virtual:   0x%x - 0x%x (%d)\n", kernel_memory_map.virtual.from, kernel_memory_map.virtual.to, virtual);
-	dbgprintf("Total:     0x%x - 0x%x (%d - %d)\n", kernel_memory_map.kernel.from, kernel_memory_map.virtual.to, (permanent+kernel+virtual), total_memory);
-
+	
 	return 0;
 }
 

@@ -82,7 +82,7 @@ struct dns_cache
     (dns)->auth_count = 0; \
     (dns)->add_count = 0; \
 
-void init_dns();
+void net_init_dns();
 int gethostname(char* hostname);
 
 

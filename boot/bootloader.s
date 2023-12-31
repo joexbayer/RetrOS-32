@@ -148,9 +148,10 @@ bootsig:
  */
 
 .org 0x0200
-memory_info:
+boot_info:
     extended_memory_low: .long 0  
     extended_memory_high: .long 0
+    textmode: .long 0
 _stage2_init:
     jmp _stage2
 
@@ -189,6 +190,8 @@ choice_2_str:
     .asciz "   2. 800x600                    "
 choice_3_str:
     .asciz "   3. 1024x768                   "
+choice_4_str:
+    .asciz "   ESC. Textmode                 "
 memory_error_str:
     .asciz "Memory detection: ERROR          "
 mem_str:
@@ -406,6 +409,13 @@ set_video_mode:
     movw $straight_line_end, %si
     call print
 
+    movw $straight_line, %si
+    call print
+    movw $choice_4_str, %si
+    call print
+    movw $straight_line_end, %si
+    call print
+
     call draw_bottom_separator
 
     /* Print message asking for resolution choice */
@@ -419,7 +429,9 @@ set_video_mode:
     cmp $'2', %al
     je set_800x600
     cmp $'3', %al
-    je set_800x600
+    je set_1024x768
+    cmp $0x1B, %al
+    je set_textmode
 
     jmp set_video_mode
 
@@ -431,10 +443,17 @@ set_640x480:
 set_800x600:
     mov $0x4F02, %ax	
     mov $0x4103, %bx /* 103 = 800x600 */
+    jmp set_resolution
 
 set_1024x768:
     mov $0x4F02, %ax	
     mov $0x4105, %bx /* 105 = 1024x768 */
+    jmp set_resolution
+
+set_textmode:
+    mov $1, %AX
+    mov %ax, 0x7E08 /* Set textmode flag */
+    ret
 
 set_resolution:
     int $0x10 

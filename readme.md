@@ -23,6 +23,10 @@
   <h1 align="center">RetrOS 32bit</h1>
 
   <p align="center">
+    <img src="https://github.com/joexbayer/RetrOS-32/blob/main/graphics/logo.png?raw=true">
+  </p>
+
+  <p align="center">
     Hobby 32bit operatingsystem project focusing on networking on i386 architecture.
     <br />
     <a href="https://github.com/joexbayer/RetrOS-32"><strong>Explore the docs »</strong></a>
@@ -106,6 +110,7 @@ Crossplatform: Docker to compile the .iso file and QEMU for emulation.<br>
 For native compilation you will need:
  * i386-elf-gcc, i386-elf-ld and i386-elf-g++ for MacOS.
  * build-essential and gcc-multilib for Linux / WSL (ubuntu)
+ *   Also need: grub2, xorriso and xxd (for using Grub as bootloader)
 
 
 ### Installation
@@ -148,9 +153,10 @@ _To compile the kernel and its needed programs you simply need to run *make iso*
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
-
-_For more examples, please refer to the [Documentation](https://example.com)_
+To run RetrOS-32:
+  * http://copy.sh/v86/ : Upload .img file as Hard disk image.
+  * QEMU: `make qemu` or `qemu-system-i386 <image name>` 
+  * Real hardware: Burn .iso file to USB or CD (Use a GRUB iso)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -170,7 +176,7 @@ IBM Thinkpad a21p
     ├── Makefile
     ├── apps (userspace applications)
     │   ├── Makefile
-    │   ├── ...
+    │   ├── <app>
     │   ├── libcore.a
     │   ├── libgraphic.a
     │   ├── libnet.a
@@ -242,6 +248,7 @@ IBM Thinkpad a21p
 - [x] PCI.
 - [x] 8Bit RGB to 8Bit VGA
 - [x] Filesystem
+- [x] Textmode VGA only
 - [x] Networkstack
   - [x] Ethernet, IP, ARP, UDP
   - [x] Socket API
@@ -250,12 +257,14 @@ IBM Thinkpad a21p
   - [x] DHCP
   - [x] DNS
   - [x] TCP
+  - [ ] Telnet
   - [ ] HTTP
   - [ ] HTML
 - [x] ATA IDE Driver
   - [x] Ext2 (like) Filesystem
   - [x] FAT16, support for up to 32mb files.
   - [x] read / write
+  - [ ] Atapi
 - [x] Memory
   - [x] 32bit Virtual Memory
   - [x] kalloc / kfree (kernel)
@@ -277,6 +286,7 @@ IBM Thinkpad a21p
 - [x] Calculator
 - [x] 3D Game
 - [x] Userspace threads (shared virtual memory)
+- [x] Remote virtual terminal over TCP
 - [x] Tools
   - [x] Build
   - [ ] Sync / Migration Took

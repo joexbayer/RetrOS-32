@@ -4,11 +4,14 @@
 #include <kutils.h>
 #include <scheduler.h>
 #include <gfx/windowserver.h>
+#include <gfx/core.h>
 
 #define KERNEL_NAME		"RetrOS-32"
 /* Define the kernel version with compilation date and time */
-#define KERNEL_VERSION  "0.0.1 " __DATE__ " " __TIME__
+#define KERNEL_VERSION  "0.0.1 "
 #define KERNEL_RELEASE 	"alpha"
+#define KERNEL_DATE		__DATE__
+#define KERNEL_TIME		__TIME__
 
 #define KERNEL_ARCH_I386
 
@@ -20,15 +23,22 @@ typedef enum {
 
 struct kernel_context {
 	struct scheduler* sched_ctx;
-	struct windowserver* window_server;
+
+	struct graphics {
+		struct graphic_context* ctx;
+		struct windowserver* window_server;
+	} graphics;
+
 	struct allocators {
 		void* kernel_heap;
 		void* user_heap;
 	} allocators;
-	struct memory_info {
+	
+	struct boot_info {
 		unsigned int extended_memory_low;
 		unsigned int extended_memory_high;
-	} *total_memory;
+		unsigned int textmode;
+	} *boot_info;
 
 	graphic_modes_t graphic_mode;
 };

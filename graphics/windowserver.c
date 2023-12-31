@@ -17,6 +17,7 @@
 #include <memory.h>
 #include <fs/fs.h>
 #include <vbe.h>
+#include <colors.h>
 
 static int ws_init(struct windowserver* ws);
 static int ws_add(struct windowserver* ws, struct window* window);
@@ -64,6 +65,25 @@ static int ws_init(struct windowserver* ws)
     }
 
     SET_FlAG(ws->flags, WINDOW_SERVER_INITIALIZED);
+    return 0;
+}
+
+static int ws_load_default_wallpaper(struct windowserver* ws)
+{
+    ERR_ON_NULL(ws);
+    WS_VALIDATE(ws);
+
+    int ret = fs_load_from_file("output.bin", ws->background, 640*480);
+    if(ret <= 0){
+        dbgprintf("[WSERVER] Could not read background file: %d.\n", ret);
+        return -ERROR_FILE_NOT_FOUND;
+    }
+
+    /* covert background to rgb */
+    for(int i = 0; i < 640*480; i++){
+        ws->background[i] = rgb_to_vga(ws->background[i]);
+    }
+
     return 0;
 }
 
@@ -275,10 +295,11 @@ static int ws_draw(struct windowserver* ws)
 
     __ws_key_event(ws, key);
     
-    if(ws->window_changes && !ws->_is_fullscreen){
+    if((ws->window_changes || mouse_changed ) && !ws->_is_fullscreen){
         memcpy(ws->_wm->composition_buffer, ws->background, ws->_wm->composition_buffer_size);
 
         ws->_wm->ops->draw(ws->_wm, ws->_wm->windows);
+        vesa_put_icon16(ws->_wm->composition_buffer, ws->m.x, ws->m.y);
     }
 
     /* Move out of this module */
@@ -294,7 +315,7 @@ static int ws_draw(struct windowserver* ws)
         /* internal mouse event for windows */
         ws->_wm->ops->mouse_event(ws->_wm, ws->m.x, ws->m.y, ws->m.flags);
     }
-    vesa_put_icon16((uint8_t*)vbe_info->framebuffer, ws->m.x, ws->m.y);
+    //vesa_put_icon16((uint8_t*)vbe_info->framebuffer, ws->m.x, ws->m.y);
 
     return ERROR_OK;
 }
@@ -314,6 +335,11 @@ struct windowserver* ws_new()
         return NULL;
     }
 
+    if(vbe_info->width == 640){
+        ws_load_default_wallpaper(ws);
+    } else {
+        ws_set_background(ws, 0x3);
+    }
 
     kref_get(&ws->_krefs);
     return ws;

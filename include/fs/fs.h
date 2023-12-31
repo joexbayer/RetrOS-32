@@ -25,6 +25,7 @@ struct file {
     int nlinks;
     int identifier;
     int directory;
+    int size;
 };
 
 /* none of the functions can ever be NULL */

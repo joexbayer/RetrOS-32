@@ -378,7 +378,7 @@ error_t pcb_create_thread(struct pcb* parent, void (*entry)(), void* arg, byte_t
 	pcb->args = (uint32_t)arg;
 
 	/* name */
-	csprintf(pcb->name, "%s#%d", parent->name, pcb->pid);
+	memcpy(pcb->name, parent->name, strlen(parent->name)+1);
 
 	/* inheret parents virtual memory */
 	vmem_init_process_thread(parent, pcb);
@@ -491,8 +491,6 @@ error_t pcb_create_kthread(void (*entry)(), char* name, int argc, char** argv)
 		return -ERROR_ALLOC;
 	}
 
-
-	dbgprintf("[PCB] Allocating %d args\n", argc);
 	ret = pcb_kthread_init_args(pcb, argc, argv);
 	if(ret < 0){
 		__pcb_free(pcb);
@@ -512,7 +510,6 @@ error_t pcb_create_kthread(void (*entry)(), char* name, int argc, char** argv)
 void __noreturn start_pcb(struct pcb* pcb)
 {   
 	pcb->state = RUNNING;
-	dbgprintf("[START PCB] Starting pcb!\n");
 	_start_pcb(pcb); /* asm function */
 	
 	UNREACHABLE();

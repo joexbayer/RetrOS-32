@@ -48,30 +48,43 @@
 #include <fs/fs.h>
 #include <multiboot.h>
 
+#include <screen.h>
+
 #define TEXT_COLOR 15  /* White color for text */
 #define LINE_HEIGHT 8  /* Height of each line */
 
 struct kernel_context kernel_context = {
 	.sched_ctx = NULL,
-	.window_server = NULL,
-	.total_memory = NULL,
+	.graphics.window_server = NULL,
+	.graphics.ctx = NULL,
+	.boot_info = NULL,
 	.graphic_mode = KERNEL_FLAG_GRAPHICS,
+	//.graphic_mode = KERNEL_FLAG_TEXTMODE,
 };
 
 static void kernel_boot_printf(char* message) {
     static int kernel_msg = 0;
 	if(kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
 		vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10 + (kernel_msg++ * LINE_HEIGHT), TEXT_COLOR, message);
+	} else {
+		scrwrite(0, kernel_msg++, message, VGA_COLOR_WHITE);
 	}
 }
 
-/* This functions always needs to be on top? */
+/**
+ * @brief The kernel entry point.
+ * Responsible for initializing the kernel structs,
+ * and starting the kernel threads.
+ * Magic number depends on the bootloader.
+ * @param magic The magic number passed by the bootloader.
+ */
 void kernel(uint32_t magic) 
 {
-	asm ("cli");
-	kernel_context.total_memory = (struct memory_info*) (0x7e00);
+	ENTER_CRITICAL();
 
-#ifdef USE_MULTIBOOT
+#ifdef GRUB_MULTIBOOT
+
+	/* Update vbe struct based on multiboot info. */
   	struct multiboot_info* mb_info = (struct multiboot_info*) magic;
 	vbe_info->height = mb_info->framebuffer_height;
 	vbe_info->width = mb_info->framebuffer_width;
@@ -82,90 +95,75 @@ void kernel(uint32_t magic)
 	kernel_context.total_memory->extended_memory_low = 8*1024;
 	kernel_context.total_memory->extended_memory_high = 0;
 #else
+
+	/* Point VBE to magic input and update total memory. */
+	kernel_context.boot_info = (struct boot_info*) (0x7e00);
+	if(kernel_context.boot_info->textmode == 1){
+		kernel_context.graphic_mode = KERNEL_FLAG_TEXTMODE;
+	}
+
 	vbe_info = (struct vbe_mode_info_structure*) magic;
 #endif
 
-	ENTER_CRITICAL();
+	/* Calculate kernel size */
+	__deprecated kernel_size = _end-_code;
+
+	/* Serial is used for debuging purposes. */
     init_serial();
-
-	smp_init();
-
 	dbgprintf("INF: %s - %s\n", KERNEL_NAME, KERNEL_VERSION);
 
-	dbgprintf("Memory: 0x%x\n", kernel_context.total_memory->extended_memory_low);
-	dbgprintf("Memory: 0x%x\n", kernel_context.total_memory->extended_memory_high);
-
-	//memset(vbe_info->framebuffer, 0x1, VBE_SIZE());
-
 	kernel_boot_printf("Booting OS...");
+	
+	smp_parse();
 
-	dbgprintf("[KERNEL] Kernel starting...\n");
-
-	rgb_init_color_table();
-
-	/* Clear memory and BSS */
-	//memset((char*)_bss_s, 0, (unsigned int) _bss_size);
-    //memset((char*)0x100000, 0, 0x800000-0x100000);
-	//*((uint32_t*)0x0) = 0xBAADF00D;
-	dbgprintf("[KERNEL] BSS: 0x%x\n", _bss_s);
-
-	kernel_size = _end-_code;
-
-	memory_map_init(kernel_context.total_memory->extended_memory_low * 1024, kernel_context.total_memory->extended_memory_high * 64 * 1024);
+	/* Initilize memory map and then kernel and virtual memory */
+	memory_map_init(kernel_context.boot_info->extended_memory_low * 1024, kernel_context.boot_info->extended_memory_high * 64 * 1024);
 	init_memory();
 	kernel_boot_printf("Memory initialized.");
-
-	dbgprintf("[VBE] INFO:\n");
-	dbgprintf("[VBE] Height: %d\n", vbe_info->height);
-	dbgprintf("[VBE] Width: %d\n", vbe_info->width);
-	dbgprintf("[VBE] Pitch: %d\n", vbe_info->pitch);
-	dbgprintf("[VBE] Bpp: %d\n", vbe_info->bpp);
-	dbgprintf("[VBE] Memory Size: %d (0x%x)\n", vbe_info->width*vbe_info->height*(vbe_info->bpp/8), vbe_info->width*vbe_info->height*(vbe_info->bpp/8));
-	//vmem_map_driver_region((uint8_t*)vbe_info->framebuffer, (vbe_info->width*vbe_info->height*(vbe_info->bpp/8))+1);
 	
+	/* Initilize the kernel constructors */
 	init_kctors();
+	init_interrupts();
+	init_pcbs();
+	init_pci();
+	init_worker();
 	kernel_boot_printf("Kernel constructors initialized.");
 
-	//vga_set_palette();
+	/* Graphics */
+	if(kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
 
-	init_interrupts();
-	kernel_boot_printf("Interrupts initialized.");
+		kernel_context.graphics.ctx = gfx_new_ctx();
+		gfx_init_framebuffer(kernel_context.graphics.ctx, vbe_info);
+		kernel_boot_printf("Graphics initialized.");
+	} else {
+		scr_clear();
+		scrwrite(0, 0, "Welcome to RetrOS32-32 textmode.", VGA_COLOR_WHITE);
+	}
+	
+	/* Initilize the keyboard and mouse */
 	init_keyboard();
-
 	if(kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
 		mouse_init();
 	}
-
 	kernel_boot_printf("Peripherals initialized.");
-	init_pcbs();
-	init_pci();
-	net_init_loopback();
-	kernel_boot_printf("PCI initialized.");
-	init_worker();
 
 	/* initilize the default scheduler */
 	PANIC_ON_ERR(sched_init_default(get_scheduler(), 0));
-
 	kernel_boot_printf("Scheduler initialized.");
 
-	kernel_boot_printf("Hardware initialized.");
-
-	init_arp();
-	init_sockets();
-	init_dns();
-
+	/* initilize net structs */
+	net_init_arp();
+	net_init_sockets();
+	net_init_dns();
+	net_init_loopback();
 	kernel_boot_printf("Networking initialized.");
 
+	/* initilize file systems and disk */
 	mbr_partition_load();
-
-	/* check for disk */
 	if(!disk_attached()){
 		virtual_disk_attach();
 	}
-
 	kernel_boot_printf("Filesystem initialized.");
-
-	//ext_create_file_system();
 
 	register_kthread(&Genesis, "Genesis");
 	register_kthread(&networking_main, "netd");
@@ -174,7 +172,6 @@ void kernel(uint32_t magic)
 	register_kthread(&idletask, "idled");
 	register_kthread(&worker_thread, "workd");
 	register_kthread(&tcpd, "tcpd");
-
 	kernel_boot_printf("Kernel Threads initialized.");
 
 #pragma GCC diagnostic ignored "-Wcast-function-type"
@@ -198,61 +195,39 @@ void kernel(uint32_t magic)
 	add_system_call(SYSCALL_READ, (syscall_t)&fs_read);
 	add_system_call(SYSCALL_WRITE, (syscall_t)&fs_write);
 	add_system_call(SYSCALL_CLOSE, (syscall_t)&fs_close);
-
-#pragma GCC diagnostic pop
-	
-	int* a = (int*)0x0;
-	*a = 0xBAADF00D;
-
 	kernel_boot_printf("Systemcalls initialized.");
-
-	dbgprintf("[KERNEL] TEXT: %d\n", _code_end-_code);
-	dbgprintf("[KERNEL] RODATA: %d\n", _ro_e-_ro_s);
-	dbgprintf("[KERNEL] DATA: %d\n", _data_e-_data_s);
-	dbgprintf("[KERNEL] BSS: %d (0x%x)\n", _bss_e-_bss_s, _bss_s);
-	dbgprintf("[KERNEL] Total: %d (%d sectors)\n", _end-_code, ((_end-_code)/512)+2);
-	dbgprintf("[KERNEL] Kernel reaching too: 0x%x\n", _end-_code);
+#pragma GCC diagnostic pop
 
 	load_page_directory(kernel_page_dir);
 	init_gdt();
 	init_tss();
-	kernel_boot_printf("GDT & TSS initialized.");
 	enable_paging();
-
 	kernel_boot_printf("Virtual memory initialized.");
 
 	dbgprintf("[KERNEL] Enabled paging!\n");
 	
+	/* Initilize the kernel symbols from symbols.map */
 	ksyms_init();
 
-	if(kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
-		vesa_init();
-		kernel_boot_printf("Graphics initialized.");
-	}
-
-
 	start("idled", 0, NULL);
-
 	if(kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
 		start("wind", 0, NULL);
+	} else {
+		start("textshell", 0, NULL);	
 	}
-
 	start("workd", 0, NULL);
 	start("netd", 0, NULL);
-
 	kernel_boot_printf("Deamons initialized.");
 
-	init_pit(100);
+	init_pit(1000);
 	kernel_boot_printf("Timer initialized.");
 
-	dbgprintf("[KERNEL] %d\n", cli_cnt);
-	LEAVE_CRITICAL();
-	kernel_boot_printf("Starting OS...");
-	asm ("sti");
-
-	while (1);
-	PANIC_ON_ERR(0);
+	dbgprintf("Critical counter: %d\n", cli_cnt);
 	
+	kernel_boot_printf("Starting OS...");
+	LEAVE_CRITICAL();
+	
+	while (1);	
 }
 
 /**

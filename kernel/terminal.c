@@ -16,9 +16,19 @@
 #include <pcb.h>
 #include <terminal.h>
 #include <gfx/theme.h>
+#include <gfx/events.h>
+
+#include <screen.h>
 
 #define MAX_FMT_STR_SIZE 50
 /* OLD */
+
+int scan(ubyte_t* data, int size)
+{
+	if(current_running == NULL || current_running->term == NULL) return -1;
+
+	return current_running->term->ops->scan(current_running->term, data, size);
+}
 
 void terminal_set_color(color_t color)
 {
@@ -107,6 +117,9 @@ static int __terminal_commit_graphics(struct terminal* term);
 static int __terminal_attach(struct terminal* term);
 static int __terminal_detach(struct terminal* term);
 static int __terminal_reset(struct terminal* term);
+static int __terminal_set_ops(struct terminal* term, struct terminal_ops* ops);
+static int __terminal_scan(struct terminal* term, ubyte_t* data, int size);	
+static int __terminal_scanf(struct terminal* term, char* fmt, ...);
 
 /* default terminal ops (graphics) */
 struct terminal_ops terminal_ops = {
@@ -116,7 +129,10 @@ struct terminal_ops terminal_ops = {
 	.commit = __terminal_commit_graphics,
 	.attach = __terminal_attach,
 	.detach = __terminal_detach,
-	.reset = __terminal_reset
+	.reset = __terminal_reset,
+	.set = __terminal_set_ops,
+	.scan = __terminal_scan,
+	.scanf = __terminal_scanf,
 };
 
 /**
@@ -124,7 +140,7 @@ struct terminal_ops terminal_ops = {
  * Attaches terminal ops to the terminal.
  * @return void
  */
-struct terminal* terminal_create()
+struct terminal* terminal_create(terminal_flags_t flags)
 {
 	struct terminal* term = create(struct terminal);
 	if(term == NULL) return NULL;
@@ -136,12 +152,19 @@ struct terminal* terminal_create()
 	}
 
 	term->ops = &terminal_ops;
+	if(HAS_FLAG(flags, TERMINAL_TEXT_MODE)){
+		term->ops->putchar = __terminal_putchar_textmode;
+		term->ops->commit = __terminal_commit_textmode;
+	}
+
 	term->head = 0;
 	term->tail = 0;
 	term->lines = 0;
 	term->text_color = COLOR_WHITE;
 	term->bg_color = COLOR_BLACK;
 	term->screen = NULL;
+
+	current_running->term = term;
 
 	kref_init(&term->ref);
 
@@ -166,6 +189,68 @@ int terminal_destroy(struct terminal* term)
 }
 
 /* Terminal operations implementations */
+
+static int __terminal_set_ops(struct terminal* term, struct terminal_ops* ops)
+{
+	if(term == NULL) return -1;
+
+	/* overwrite ops that are not 0 */
+	if(ops->write == 0) ops->write = term->ops->write;
+	if(ops->writef == 0) ops->writef = term->ops->writef;
+	if(ops->putchar == 0) ops->putchar = term->ops->putchar;
+	if(ops->commit == 0) ops->commit = term->ops->commit;
+	if(ops->attach == 0) ops->attach = term->ops->attach;
+	if(ops->detach == 0) ops->detach = term->ops->detach;
+	if(ops->reset == 0) ops->reset = term->ops->reset;
+	
+	term->ops = ops;
+
+	return 0;
+}
+
+static int __terminal_scan(struct terminal* term, ubyte_t* data, int size)
+{
+	if(term == NULL || data == NULL) return -1;
+
+	int i = 0;
+	ubyte_t c = 0;
+	while (i < size && c != '\n'){
+		struct gfx_event event;
+		gfx_event_loop(&event, GFX_EVENT_BLOCKING);
+
+		switch (event.event){
+		case GFX_EVENT_KEYBOARD:
+			switch (event.data){
+			case CTRLC:
+				return -1;
+			default:{
+					c = event.data;
+					data[i] = c;
+					i++;
+
+					term->ops->putchar(term, c);
+					term->ops->commit(term);
+				}
+				break;
+			}
+			break;
+		case GFX_EVENT_EXIT:
+			kernel_exit();
+			return;
+		default:
+			break;
+		}
+	}
+
+	data[i] = '\0';
+
+	return i;
+}
+
+static int __terminal_scanf(struct terminal* term, char* fmt, ...)
+{
+	return -1;
+}
 
 static int __terminal_reset(struct terminal* term)
 {
@@ -214,6 +299,17 @@ static int __terminal_putchar_textmode(struct terminal* term, char c)
 {
 	if(term == NULL) return -1;
 
+	if(c == '\n'){
+		if(SCREEN_HEIGHT-1 == term->lines){
+			__terminal_scroll(term);
+		} else {
+			term->lines++;
+		}
+	}
+
+	term->textbuffer[term->head] = c;
+	term->head++;
+
 	return 1;
 }
 
@@ -250,7 +346,7 @@ static int __terminal_detach(struct terminal* term)
 	current_running->term = NULL;
 	term->screen = NULL;
 
-	ref_put(&term->ref);
+	kref_put(&term->ref);
 
 	return 0;
 }
@@ -258,6 +354,19 @@ static int __terminal_detach(struct terminal* term)
 static int __terminal_commit_textmode(struct terminal* term)
 {
 	if(term == NULL) return -1;
+
+	scr_clear();
+	int x = 0, y = 1;
+	for (int i = term->tail; i < term->head; i++){
+		if(term->textbuffer[i] == '\n'){
+			x = 0;
+			y++;
+			continue;
+		}
+
+		scrput(x, y, term->textbuffer[i], VGA_COLOR_WHITE | VGA_COLOR_BLUE << 4);
+		x++;
+	}
 
 	return 0;
 }
@@ -280,6 +389,8 @@ static int __terminal_commit_graphics(struct terminal* term)
 		kernel_gfx_draw_char(term->screen, 1 + x*8, 1+ y*8, term->textbuffer[i], term->text_color);
 		x++;
 	}
+
+	term->screen->changed = 1;
 
 	return 0;
 }

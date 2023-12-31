@@ -34,7 +34,7 @@ static void arp_list()
 	}
 }
 
-void init_arp()
+void net_init_arp()
 {
 	for (int i = 0; i < MAX_ARP_ENTRIES; i++)
 		arp_entry_table[i].sip = 0;
