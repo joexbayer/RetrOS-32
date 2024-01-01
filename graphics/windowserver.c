@@ -73,7 +73,7 @@ static int ws_load_default_wallpaper(struct windowserver* ws)
     ERR_ON_NULL(ws);
     WS_VALIDATE(ws);
 
-    int ret = fs_load_from_file("output.bin", ws->background, 640*480);
+    int ret = fs_load_from_file("imgs/output.bin", ws->background, 640*480);
     if(ret <= 0){
         dbgprintf("[WSERVER] Could not read background file: %d.\n", ret);
         return -ERROR_FILE_NOT_FOUND;

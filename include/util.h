@@ -32,6 +32,7 @@ char* strtok(char* str, const char* delim);
 
 char* strchr(const char* str, int ch);
 int strlen(const char* str);
+uint32_t strcpy(char* dest, const char* src);
 
 uint32_t strcmp(const char* str, const char* str2);
 uint32_t strncmp(const char* str, const char* str2, uint32_t len);

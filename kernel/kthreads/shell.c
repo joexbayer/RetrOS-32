@@ -65,7 +65,6 @@ static char* shell_name = "Kernel >";
 
 static char* about_text = "\nRetrOS-32 - 32bit operating system\n    " KERNEL_RELEASE " " KERNEL_VERSION " - " KERNEL_DATE "\n";
 
-static struct terminal* term = NULL; 
 /*
  *	IMPLEMENTATIONS
  */
@@ -470,7 +469,7 @@ EXPORT_KSYMBOL(socks);
 void reset(int argc, char* argv[])
 {
 	kernel_gfx_draw_rectangle(current_running->gfx_window, 0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_VGA_BG);
-	term->ops->reset(term);
+	current_running->term->ops->reset(current_running->term);
 	reset_shell();
 }
 EXPORT_KSYMBOL(reset);
@@ -560,7 +559,7 @@ void __kthread_entry shell(int argc, char* argv[])
 	dbgprintf("shell: window 0x%x\n", window);
 	kernel_gfx_draw_rectangle(current_running->gfx_window, 0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_VGA_BG);
 	
-	term = terminal_create(TERMINAL_GRAPHICS_MODE);
+	struct terminal* term = terminal_create(TERMINAL_GRAPHICS_MODE);
 	term->ops->attach(term);
 
 	struct mem_info minfo;
@@ -597,13 +596,15 @@ void __kthread_entry shell(int argc, char* argv[])
 			}
 			break;
 		case GFX_EVENT_RESOLUTION:
-			shell_height = event.data2;
+			shell_height  = event.data2;
 			shell_width = event.data;
 			terminal_commit();
 			reset_shell();
 			break;
-		case GFX_EVENT_EXIT:
-			kernel_exit();
+		case GFX_EVENT_EXIT:{
+				terminal_destroy(term);
+				kernel_exit();
+			}
 			return;
 		default:
 			break;

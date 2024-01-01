@@ -30,6 +30,18 @@ int strlen(const char* str)
 	return len;
 }
 
+inline uint32_t strcpy(char* dest, const char* src)
+{
+    uint32_t i = 0;
+    while (src[i] != '\0')
+    {
+        dest[i] = src[i];
+        i++;
+    }
+    dest[i] = '\0';
+    return i;
+}
+
 inline uint32_t strncmp(const char* str, const char* str2, uint32_t len)
 {
 	return memcmp((uint8_t*)str, (uint8_t*)str2, len);

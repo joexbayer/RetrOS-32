@@ -16,6 +16,7 @@
 #include <terminal.h>
 #include <memory.h>
 #include <fs/fs.h>
+#include <conf.h>
 #include <gfx/theme.h>
 
 #define COMMAND(name, func) \
@@ -142,7 +143,7 @@ static int help(int argc, char* argv[])
     twritef("  file            exec         xxd\n");
     twritef("                  fdisk        bg\n");
     twritef("Network:          meminfo      sh\n");
-    twritef(" socks                         echo\n");
+    twritef(" socks            conf         echo\n");
     twritef(" ifconfig                      cc\n");
     twritef(" dns                           color\n");
     return 0;
@@ -222,6 +223,40 @@ static int file(int argc, char* argv[]){
 }
 EXPORT_KSYMBOL(file);
 
+static int conf(int argc, char *argv[])
+{
+    if(argc < 2) {
+        twritef("Usage: conf <load, get, list>\n");
+        return 1;
+    }
+
+    if(strcmp(argv[1], "list") == 0) {
+        config_list();
+    } else if(strcmp(argv[1], "load") == 0) {
+        if(argc < 3) {
+            twritef("Usage: conf load <filename>\n");
+            return 1;
+        }
+        config_load(argv[2]);
+    } else if(strcmp(argv[1], "get") == 0) {
+        if(argc < 4) {
+            twritef("Usage: conf get <section> <value>\n");
+            return 1;
+        }
+        char* value = config_get_value(argv[2], argv[3]);
+        if(value == NULL) {
+            twritef("Value not found\n");
+            return 1;
+        }
+        twritef("%s\n", value);
+    } else {
+        twritef("Usage: conf <load, get, list>\n");
+        return 1;
+    }
+
+    return 0;
+}
+EXPORT_KSYMBOL(conf);
 
 
 /* Process management */

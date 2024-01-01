@@ -17,6 +17,7 @@
 #include <terminal.h>
 #include <gfx/theme.h>
 #include <gfx/events.h>
+#include <conf.h>
 
 #include <screen.h>
 
@@ -32,7 +33,7 @@ int scan(ubyte_t* data, int size)
 
 void terminal_set_color(color_t color)
 {
-	current_running->term->text_color = color;
+	//current_running->term->text_color = color;
 }
 
 static void __terminal_syntax(unsigned char c)
@@ -160,12 +161,22 @@ struct terminal* terminal_create(terminal_flags_t flags)
 	term->head = 0;
 	term->tail = 0;
 	term->lines = 0;
-	term->text_color = COLOR_WHITE;
+	term->text_color =  0x1c;
 	term->bg_color = COLOR_BLACK;
 	term->screen = NULL;
 
-	current_running->term = term;
+	char* bg_color = config_get_value("terminal", "background");
+	if(bg_color != NULL){
+		term->bg_color = htoi(bg_color);
+	}
 
+	char* text_color = config_get_value("terminal", "text");
+	if(text_color != NULL){
+		term->text_color = htoi(text_color);
+	}
+
+
+	current_running->term = term;
 	kref_init(&term->ref);
 
 	return term;

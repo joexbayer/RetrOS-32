@@ -49,6 +49,7 @@
 #include <multiboot.h>
 
 #include <screen.h>
+#include <conf.h>
 
 #define TEXT_COLOR 15  /* White color for text */
 #define LINE_HEIGHT 8  /* Height of each line */
@@ -218,6 +219,8 @@ void kernel(uint32_t magic)
 	start("workd", 0, NULL);
 	start("netd", 0, NULL);
 	kernel_boot_printf("Deamons initialized.");
+
+	config_load("default.cnf");
 
 	init_pit(1000);
 	kernel_boot_printf("Timer initialized.");

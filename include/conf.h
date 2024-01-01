@@ -6,26 +6,12 @@
 #include <kutils.h>
 #include <util.h>
 
-struct config_entry {
-    char* key;
-    char* value;
-};
+#define CONFIG_MAX_SECTIONS 32
+#define CONFIG_MAX_NAME_LEN 32
 
-struct config_section {
-    char* section_name;
-    struct config_entry* entries;
-    int entry_count;
-};
-
-struct config {
-    struct config_section* sections;
-    int section_count;
-
-    bool_t loaded;
-};
-
-int load_config(char* filename);
+int config_load(char* filename);
 char* config_get_value(char* section, char* name);
+int config_list();
 
 
 #endif /* __KCONF_H__ */
