@@ -9,6 +9,7 @@
 #include <terminal.h>
 #include <kutils.h>
 #include <scheduler.h>
+#include <math.h>
 
 #define center_x(size) ((110/2) - ((size*8)/2))
 
@@ -67,9 +68,9 @@ void __kthread_entry kclock(int argc, char* argv[])
 		w->draw->line(w, 55, 55, 55 + (50*sin_60[now.second])/1.1, 55+ (50*cos_60[now.second])/1.1, COLOR_VGA_RED);
 
         w->draw->textf(w, center_x(5), 112, theme->window.text, "%s%d:%s%d", now.hour > 9 ? "" : "0", now.hour, now.minute > 9 ? "" : "0", now.minute);
-        w->draw->textf(w, center_x(6), 124, theme->window.text, "%d. %s", now.day, months[now.month-1]);
+        w->draw->textf(w, center_x(6), 124, theme->window.text, "%d. %s", now.day, months[ABS(now.month-1)]);
 
-        kernel_sleep(1000);
+        kernel_sleep(10000);
 
         struct gfx_event event;
         int ret = gfx_event_loop(&event, GFX_EVENT_NONBLOCKING);

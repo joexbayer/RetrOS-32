@@ -211,7 +211,7 @@ sync:
 mount:
 	sudo mount -o shortname=winnt RetrOS-32-debug.img ./mnt
 
-run: docker qemu
+run: img qemu
 endif
 
 # qemu-system-i386 -cdrom myos.iso -serial stdio -drive file=boot.iso,if=ide,index=0,media=disk
