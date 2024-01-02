@@ -10,5 +10,6 @@ struct display_info {
     int color;
     char name[DISPLAY_MAX_NAME];
 };
+int display_get_info(struct display_info* info);
 
 #endif /* CB6305A9_E364_46B4_A6D9_005ADCCD8710 */

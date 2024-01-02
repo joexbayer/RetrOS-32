@@ -47,9 +47,8 @@ struct networkmanager netd = {
 
 static struct net_interface* __net_find_interface(char* dev)
 {
-    int len = strlen(dev);
     for (int i = 0; i < netd.if_count; i++){
-        if(strncmp(netd.ifs[i]->name, dev, strlen(len)) == 0) return netd.ifs[i];
+        if(strcmp(netd.ifs[i]->name, dev) == 0) return netd.ifs[i];
     }
     return NULL;
 }
@@ -76,10 +75,11 @@ static void __net_config_loopback()
     interface->netmask = 0xff000000;
     interface->gateway = 0x7f000001;
 
-    struct arp_entry entry = {
+    struct arp_content entry = {
         .sip = ntohl(LOOPBACK_IP), /* Store IP in host byte order */
         .smac = {0x69, 0x00, 0x00, 0x00, 0x00, 0x00}
     };
+
     net_arp_add_entry(&entry);
 }
 
@@ -125,7 +125,7 @@ void __callback net_incoming_packet(struct netdev* dev)
     if(interface == NULL) return;
 
     struct sk_buff* skb = skb_new();
-    skb->len = dev->read(skb->data, MAX_PACKET_SIZE);
+    skb->len = dev->read((byte_t*)skb->data, MAX_PACKET_SIZE);
     if(skb->len <= 0) {
         dbgprintf("Received an empty packet.\n");
         skb_free(skb);

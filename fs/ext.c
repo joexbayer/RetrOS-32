@@ -178,7 +178,6 @@ void ext_create_file_system()
 
 	/* Editor */
 	inode_t home_inode = alloc_inode(&superblock, FS_TYPE_FILE);
-	struct inode* home_disk_inode = inode_get(home_inode, &superblock);
 
 	struct directory_entry home = {
 		.inode = home_inode,

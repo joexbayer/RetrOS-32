@@ -248,7 +248,7 @@ int vmem_free_allocations(struct pcb* pcb)
 	 * causes a page fault when trying to free it.
 	 * This somehow fixes it, but I have no idea why.
 	 */
-	while(iter != NULL && iter != 0x1b0004){
+	while(iter != NULL && (int)iter != 0x1b0004){
 		struct allocation* old = iter;
 		iter = iter->next;
 

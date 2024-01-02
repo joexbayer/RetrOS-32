@@ -79,6 +79,8 @@ int rc(int argc, char **argv)
     kfree(vm.stack);
     //kfree(dec);
     kfree(src);
+
+    return 0;
 }
 EXPORT_KSYMBOL(rc);
 
@@ -170,6 +172,8 @@ int as(int argc, char **argv)
     kfree(src);
 
     twritef("Assembled file %s to %s\n", *argv, DEFAULT_OUT);
+
+    return 0;
 }
 EXPORT_KSYMBOL(as);
 
@@ -196,10 +200,10 @@ int cc(int argc, char **argv)
                 break;
             case '?':
                 twritef("Invalid option: %c\n", optarg[0]);
-                return;
+                return -1;
             case ':':
                 twritef("Option requires an argument: %c\n", optarg[0]);
-                return;
+                return -1;
             default:
                 twritef("Unknown argument %c\n", option);
                 break;
@@ -244,7 +248,7 @@ int cc(int argc, char **argv)
     }
     DEBUG_PRINT("Lexing [done]\n");
 
-    vm.pc = (int)vm.text+lexd.entry;
+    vm.pc = (int*)vm.text+lexd.entry;
     DEBUG_PRINT("Main entry %x\n", vm.pc);
 
     vm_setup_stack(&vm ,argc, argv);
@@ -254,5 +258,7 @@ int cc(int argc, char **argv)
     vm_free(&vm);
 
     kfree(src);
+
+    return 0;
 }
 EXPORT_KSYMBOL(cc);

@@ -272,7 +272,6 @@ static void __kthread_entry taskbar(void)
 
     struct time time;
     struct gfx_event event;
-    struct mem_info mem_info;
     int timedate_length = strlen("00:00:00 00/00/0000");
 
     w->draw->rect(w, 0, 1, vbe_info->width, TASKBAR_HEIGHT, 30);

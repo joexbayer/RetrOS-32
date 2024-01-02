@@ -2,6 +2,8 @@
 #include <scheduler.h>
 #include <pcb.h>
 #include <gfx/window.h>
+#include <gfx/events.h>
+#include <gfx/gfxlib.h>
 #include <terminal.h>
 #include <logd.h>
 #include <vbe.h>

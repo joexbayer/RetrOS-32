@@ -4,28 +4,27 @@
 #include <serial.h>
 #include <terminal.h>
 
-struct config_entry {
-    char key[32];
-    char value[32];
-};
-
-struct config_section {
-    char section_name[32];
-    struct config_entry entries[16];
-    int entry_count;
-};
-
-struct config {
-    struct config_section sections[16];
+static struct config {
+    struct config_section {
+        char section_name[32];
+        struct config_entry {
+            char key[32];
+            char value[32];
+        } entries[16];
+        int entry_count;
+    } sections[16];
     int section_count;
 
     bool_t loaded;
-};
-
-
-struct config __config = {
+} __config = {
     .loaded = false,
 };
+
+static int config_clear()
+{
+    memset(&__config, 0, sizeof(struct config));
+    return 0;
+}
 
 static int config_add_section(char* name)
 {
@@ -48,16 +47,20 @@ static int config_add_entry(char* section, char* key, char* value)
             break;
         }
     }
+
     if(sec == NULL){
         return -1;
     }
+
     if(sec->entry_count >= 16){
         return -1;
     }
+
     struct config_entry* entry = &sec->entries[sec->entry_count];
     strcpy(entry->key, key);
     strcpy(entry->value, value);
     sec->entry_count++;
+    
     return 0;
 }
 
@@ -85,14 +88,16 @@ int config_load(char* filename)
     }
     buf[len] = '\0';
 
+    config_clear();
+
     char* line = buf;
     char* section = NULL;
 
     while (*line != '\0' && (line - buf) < len) {
-        // Skip leading newlines
+        /* Skip leading newlines */
         while (*line == '\n' && (line - buf) < len) line++;
 
-        // Parse section
+        /* Parse section */
         if (*line == '[') {
             section = line + 1;
             while (*line != ']' && *line != '\0' && (line - buf) < len) {
@@ -103,14 +108,14 @@ int config_load(char* filename)
                 line++;
                 config_add_section(section);
             } else {
-                // Malformed section, skip to next line
+                /* Malformed section, skip to next line */
                 section = NULL;
                 while (*line != '\n' && *line != '\0' && (line - buf) < len) line++;
                 continue;
             }
         }
 
-        // Skip comments
+        /* Skip comments */
         if (*line == '#') {
             while (*line != '\n' && *line != '\0' && (line - buf) < len) {
                 line++;
@@ -118,8 +123,8 @@ int config_load(char* filename)
             continue;
         }
 
-        // Parse key-value pair
-        if (section != NULL) { // Ensure we are within a section
+        /* Parse key-value pair */
+        if (section != NULL) { /* Ensure we are within a section */
             char* name = (char*)line;
             while (*line != '=' && *line != '\n' && *line != '\0' && (line - buf) < len) {
                 line++;
@@ -139,9 +144,6 @@ int config_load(char* filename)
                 dbgprintf("config: %s.%s = %s\n", section, name, value);
             }
         }
-
-        // Skip to next line if current line hasn't ended
-        //while (*line != '\n' && *line != '\0' && (line - buf) < len) line++;
     }
 
 

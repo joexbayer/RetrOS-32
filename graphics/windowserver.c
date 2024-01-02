@@ -336,7 +336,8 @@ struct windowserver* ws_new()
     }
 
     if(vbe_info->width == 640){
-        ws_load_default_wallpaper(ws);
+        //sws_load_default_wallpaper(ws);
+        ws_set_background(ws, 0x3);
     } else {
         ws_set_background(ws, 0x3);
     }

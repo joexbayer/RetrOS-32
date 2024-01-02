@@ -322,7 +322,6 @@ int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t pus
 
 int tcp_accept_connection(struct sock* sock, struct sock* new)
 {
-	int ret;
     if(sock->tcp == NULL || sock->tcp->state != TCP_LISTEN){
 		dbgprintf("[TCP] Socket %d is not listening\n", sock);
         return -1;

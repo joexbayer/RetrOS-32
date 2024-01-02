@@ -68,17 +68,17 @@ static int list(int argc, char* argv[])
     struct filesystem* fs = fs_get();
 	if(fs == NULL){
 		twritef("No filesystem mounted.\n");
-		return;
+		return -1;
 	}
 
 	if(fs->ops->list == NULL){
 		twritef("Filesystem does not support listing\n");
-		return;
+		return -1;
 	}
 
 	if(argc == 1){
 		fs->ops->list(fs, "/", NULL, 0);
-		return;
+		return -1;
 	}
 
 	fs->ops->list(fs, argv[1], NULL, 0);
@@ -160,31 +160,31 @@ static int view(int argc, char* argv[]){
     struct filesystem* fs = fs_get();
     if(fs == NULL){
         twritef("No filesystem mounted.\n");
-        return;
+        return -1;
     }
 
     if(fs->ops->read == NULL){
-            twritef("Filesystem does not support reading\n");
-        return;
+        twritef("Filesystem does not support reading\n");
+        return -1;
     }
 
     struct file* file = fs->ops->open(fs, argv[1], FS_FILE_FLAG_READ);
-    if(file < 0) {
+    if(file == NULL) {
         twritef("Failed to open file %s\n", argv[1]);
-        return 1;
+        return -1;
     }
 
     if(file->size == 0) {
         twritef("File %s is empty\n", argv[1]);
         fs->ops->close(fs, file);
-        return 1;
+        return -1;
     }
 
-    ubyte_t buf = kalloc(file->size);
+    ubyte_t* buf = kalloc(file->size);
     int len = fs->ops->read(fs, file, buf, file->size);
     if(len < 0) {
         twritef("Failed to read file %s\n", argv[1]);
-        return 1;
+        return -1;
     }
 
     twritef("%s\n", buf);
@@ -204,13 +204,13 @@ static int file(int argc, char* argv[]){
     struct filesystem* fs = fs_get();
     if(fs == NULL){
         twritef("No filesystem mounted.\n");
-        return;
+        return -1;
     }
 
     struct file* file = fs->ops->open(fs, argv[1], FS_FILE_FLAG_READ);
-    if(file < 0) {
+    if(file == NULL) {
         twritef("Failed to open file %s\n", argv[1]);
-        return 1;
+        return -1;
     }
 
     twritef("File %s:\n", argv[1]);
@@ -225,6 +225,8 @@ EXPORT_KSYMBOL(file);
 
 static int conf(int argc, char *argv[])
 {
+    int ret;
+
     if(argc < 2) {
         twritef("Usage: conf <load, get, list>\n");
         return 1;
@@ -237,7 +239,13 @@ static int conf(int argc, char *argv[])
             twritef("Usage: conf load <filename>\n");
             return 1;
         }
-        config_load(argv[2]);
+        ret = config_load(argv[2]);
+        if(ret < 0) {
+            twritef("Failed to load config file: %d\n", ret);
+            return 1;
+        }
+        twritef("Loaded config file %s\n", argv[2]);
+
     } else if(strcmp(argv[1], "get") == 0) {
         if(argc < 4) {
             twritef("Usage: conf get <section> <value>\n");

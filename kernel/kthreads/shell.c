@@ -38,6 +38,7 @@
 
 #include <net/socket.h>
 #include <net/tcp.h>
+#include <net/net.h>
 
 #include <kutils.h>
 #include <script.h>
@@ -351,7 +352,7 @@ EXPORT_KSYMBOL(ths);
 COMMAND(dns, {
 	int val = gethostname(argv[1]);
 	twritef("%s IN (A) %i\n", argv[1], val);
-});
+})
 
 void th(int argc, char* argv[])
 {
@@ -618,8 +619,8 @@ EXPORT_KTHREAD(shell);
 
 
 #include <screen.h>
-static ubyte_t* text_shell_buffer = NULL;
-static int __kthread_entry textshell()
+static byte_t* text_shell_buffer = NULL;
+static void __kthread_entry textshell()
 {
 	ubyte_t c;
 	short x = 0;
@@ -630,7 +631,7 @@ static int __kthread_entry textshell()
 	text_shell_buffer = kalloc(1024);
 	if(text_shell_buffer == NULL){
 		warningf("Failed to allocate text shell buffer");
-		return -1;
+		return;
 	}
 
 	scrwrite(0, 0, "                              RetrOS 32 - Textmode                              ", VGA_COLOR_BLUE | VGA_COLOR_LIGHT_GREY << 4);

@@ -51,7 +51,7 @@ static int iface_loopback_read(char* buffer, uint32_t size)
         return -1;
 
     struct queue_entry* entry = &loopback_queue.entries[loopback_queue.head];
-    int read = MIN(entry->size, size);
+    int read = MIN(entry->size, (int)size);
     memcpy(buffer, entry->data, read);
 
     kfree(entry->data);

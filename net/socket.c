@@ -157,7 +157,7 @@ static inline error_t net_sock_add_data_segment(struct sock* sock, struct sk_buf
 
     if(sock->waiting->state == BLOCKED){
         /* need to clear waiting before setting it to run */
-        struct pcb* pcb = sock->waiting;
+        volatile struct pcb* pcb = sock->waiting;
         sock->waiting = NULL;
         pcb->state = RUNNING;
     }

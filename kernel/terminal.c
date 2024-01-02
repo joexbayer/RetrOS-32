@@ -175,7 +175,6 @@ struct terminal* terminal_create(terminal_flags_t flags)
 		term->text_color = htoi(text_color);
 	}
 
-
 	current_running->term = term;
 	kref_init(&term->ref);
 
@@ -247,7 +246,7 @@ static int __terminal_scan(struct terminal* term, ubyte_t* data, int size)
 			break;
 		case GFX_EVENT_EXIT:
 			kernel_exit();
-			return;
+			return -1;
 		default:
 			break;
 		}

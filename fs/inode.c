@@ -31,7 +31,6 @@ static int __inode_cache_insert(struct inode* inode, struct superblock* sb)
 {
 	int i;
 	int lowest_nlink = 9999;
-	int lowest_cache_entry = 0;
 
 	/* Check if there is a free cache slot and find cache with lowest nlink */
 	for (i = 0; i < INODE_CACHE_SIZE; i++){
@@ -42,7 +41,6 @@ static int __inode_cache_insert(struct inode* inode, struct superblock* sb)
 		}
 		if(__inode_cache[i].nlink < lowest_nlink){
 			lowest_nlink = __inode_cache[i].nlink;
-			lowest_cache_entry = i;
 		}
 	}
 

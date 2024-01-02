@@ -169,12 +169,12 @@ void kfree(void* ptr)
  * @brief Arena style permanent memory allocation scheme for memory that wont be freed.
  * Mainly by the windowservers framebuffer, and E1000's buffers.
  */
-static uintptr_t memory_permanent_start = NULL;
-static uintptr_t memory_permanent_end = NULL;
+static uintptr_t memory_permanent_start = 0;
+static uintptr_t memory_permanent_end = 0;
 void* palloc(int size)
 {
 	if(size <= 0) return NULL;
-    if(memory_permanent_start == NULL || memory_permanent_end == NULL) return NULL;
+    if(memory_permanent_start == 0 || memory_permanent_end == 0) return NULL;
 
     size = ALIGN(size, PTR_SIZE);
 

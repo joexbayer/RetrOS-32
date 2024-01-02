@@ -4,6 +4,7 @@
 #include <kconfig.h>
 #include <kutils.h>
 #include <memory.h>
+#include <kthreads.h>
 
 static int __default_restart(struct networkmanager*); 
 static int __default_start(struct networkmanager*);
