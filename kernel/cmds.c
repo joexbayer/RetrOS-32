@@ -223,6 +223,81 @@ static int file(int argc, char* argv[]){
 }
 EXPORT_KSYMBOL(file);
 
+#include <net/socket.h>
+#include <net/net.h>
+#include <net/ipv4.h>
+#include <net/utils.h>
+
+static int tcp(int argc, char *argv[])
+{
+    if(argc < 3) {
+        twritef("Usage: tcp <ip,domain> <port>\n");
+        return 1;
+    }
+
+    struct sock* socket = kernel_socket_create(AF_INET, SOCK_STREAM, 0);
+    if(socket == NULL) {
+        twritef("Failed to create socket\n");
+        return 1;
+    }
+
+    int ip = 0;
+    if(net_is_ipv4(argv[1])){
+        dbgprintf("Connecting to %i:%s\n", argv[1], argv[2]);
+        ip = ip_to_int(argv[1]);
+    } else {
+        dbgprintf("Resolving %s\n", argv[1]);
+        ip = gethostname(argv[1]);
+        if(ip == -1){
+            twritef("Unable to resolve %s\n", argv[1]);
+            kernel_exit();
+        }
+    }
+
+    struct sockaddr_in dest_addr;
+    dest_addr.sin_addr.s_addr = htonl(ip);
+    dest_addr.sin_port = htons(atoi(argv[2]));
+    dest_addr.sin_family = AF_INET;
+
+    int con = kernel_connect(socket, (struct sockaddr*) &dest_addr, sizeof(dest_addr));
+    if(con < 0) {
+        twritef("Unable to connect to %s:%s\n", argv[1], argv[2]);
+        kernel_exit();
+    }
+
+    twritef("Connected to %s:%s\n", argv[1], argv[2]);
+    current_running->term->ops->commit(current_running->term);    
+
+    int ret;
+    while(1){
+        char buffer[255];
+        ret = current_running->term->ops->scan(current_running->term, buffer, 255);
+        if(ret < 0){
+            break;
+        }
+        ret = kernel_send(socket, buffer, strlen(buffer), 0);
+        if(ret < 0){
+            twritef("Unable to send TCP packet\n");
+            break;
+        }
+
+        ret = kernel_recv(socket, buffer, 255, 0);
+        if(ret < 0){
+            twritef("Unable to recv TCP packet\n");
+            break;
+        }
+
+        buffer[ret] = 0;
+        twritef("%s\n", buffer);
+
+        current_running->term->ops->commit(current_running->term);
+    }
+
+    kernel_sock_close(socket);
+    return 0;
+}
+EXPORT_KSYMBOL(tcp);
+
 static int conf(int argc, char *argv[])
 {
     int ret;
@@ -266,6 +341,11 @@ static int conf(int argc, char *argv[])
 }
 EXPORT_KSYMBOL(conf);
 
+static int clear(){
+    current_running->term->ops->reset(current_running->term);
+    return 0;
+}
+EXPORT_KSYMBOL(clear);
 
 /* Process management */
 

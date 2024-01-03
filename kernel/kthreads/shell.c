@@ -8,6 +8,7 @@
  * @copyright Copyright (c) 2022
  * 
  */
+#include <memory.h>
 #include <kernel.h>
 #include <pci.h>
 #include <keyboard.h>
@@ -63,8 +64,7 @@ static const char newline = '\n';
 static const char backspace = '\b';
 
 static char* shell_name = "Kernel >";
-
-static char* about_text = "\nRetrOS-32 - 32bit operating system\n    " KERNEL_RELEASE " " KERNEL_VERSION " - " KERNEL_DATE "\n";
+static char* about_text = "\nRetrOS-32 - 32bit Operating System\n    " KERNEL_RELEASE " " KERNEL_VERSION " - " KERNEL_DATE "\n";
 
 /*
  *	IMPLEMENTATIONS
@@ -636,7 +636,16 @@ static void __kthread_entry textshell()
 
 	scrwrite(0, 0, "                              RetrOS 32 - Textmode                              ", VGA_COLOR_BLUE | VGA_COLOR_LIGHT_GREY << 4);
 
+	struct mem_info minfo;
+    get_mem_info(&minfo);
+
+	struct unit used = calculate_size_unit(minfo.kernel.used+minfo.permanent.used);
+	struct unit total = calculate_size_unit(minfo.kernel.total+minfo.permanent.total);
+
+	twritef("\n");
 	twritef("%s\n", about_text);
+	twritef("Memory: %d%s/%d%s\n", used.size, used.unit, total.size, total.unit);
+	twritef("Type 'help' for a list of commands\n");
 	term->ops->commit(term);
 
 	while (1){

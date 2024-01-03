@@ -102,6 +102,24 @@ int net_ipv4_add_header(struct sk_buff* skb, uint32_t ip, uint8_t proto, uint32_
     return 0;
 }
 
+int net_is_ipv4(char* ip)
+{
+    int i = 0;
+    int dots = 0;
+    while(ip[i] != '\0'){
+        if(ip[i] == '.'){
+            dots++;
+        }
+        i++;
+    }
+
+    if(dots != 3){
+        return 0;
+    }
+
+    return 1;
+}
+
 /**
  * @brief parses a packets IP header.
  * 
