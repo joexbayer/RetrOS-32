@@ -122,6 +122,8 @@ static int __terminal_set_ops(struct terminal* term, struct terminal_ops* ops);
 static int __terminal_scan_graphics(struct terminal* term, ubyte_t* data, int size);	
 static int __terminal_scan_textmode(struct terminal* term, ubyte_t* data, int size);
 static int __terminal_scanf(struct terminal* term, char* fmt, ...);
+static int __terminal_getchar_graphics(struct terminal* term);
+static int __terminal_getchar_textmode(struct terminal* term);
 
 /* default terminal ops (graphics) */
 struct terminal_ops terminal_ops = {
@@ -135,6 +137,7 @@ struct terminal_ops terminal_ops = {
 	.set = __terminal_set_ops,
 	.scan = __terminal_scan_graphics,
 	.scanf = __terminal_scanf,
+	.getchar = __terminal_getchar_graphics,
 };
 
 /**
@@ -176,6 +179,7 @@ struct terminal* terminal_create(terminal_flags_t flags)
 		term->ops->putchar = __terminal_putchar_textmode;
 		term->ops->commit = __terminal_commit_textmode;
 		term->ops->scan = __terminal_scan_textmode;
+		term->ops->getchar = __terminal_getchar_textmode;
 
 		term->bg_color = VGA_COLOR_BLUE;
 		term->text_color = VGA_COLOR_WHITE;
@@ -218,11 +222,45 @@ static int __terminal_set_ops(struct terminal* term, struct terminal_ops* ops)
 	if(ops->attach == 0) ops->attach = term->ops->attach;
 	if(ops->detach == 0) ops->detach = term->ops->detach;
 	if(ops->reset == 0) ops->reset = term->ops->reset;
+	if(ops->scan == 0) ops->scan = term->ops->scan;
+	if(ops->scanf == 0) ops->scanf = term->ops->scanf;
+	if(ops->getchar == 0) ops->getchar = term->ops->getchar;
 	
 	term->ops = ops;
 
 	return 0;
 }
+
+static int __terminal_getchar_graphics(struct terminal* term)
+{
+	if(term == NULL) return -1;
+
+	struct gfx_event event;
+	gfx_event_loop(&event, GFX_EVENT_BLOCKING);
+
+	switch (event.event){
+	case GFX_EVENT_KEYBOARD:
+		return event.data;
+	case GFX_EVENT_EXIT:
+		kernel_exit();
+		return -1;
+	default:
+		break;
+	}
+
+	return -1;
+}
+
+static int __terminal_getchar_textmode(struct terminal* term)
+{
+	if(term == NULL) return -1;
+
+	ubyte_t c = kb_get_char();
+	if(c == 0) return -1;
+
+	return c;
+}
+
 
 static int __terminal_scan_textmode(struct terminal* term, ubyte_t* data, int size)
 {
@@ -375,6 +413,7 @@ static int __terminal_putchar_textmode(struct terminal* term, char c)
 
 	return 1;
 }
+
 
 static int __terminal_write(struct terminal* term, const char* data, int size)
 {

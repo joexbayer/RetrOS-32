@@ -46,6 +46,7 @@ struct terminal_ops {
      */
     int (*scan)(struct terminal* term, ubyte_t* data, int size);
     int (*scanf)(struct terminal* term, char* fmt, ...);
+    unsigned char (*getchar)(struct terminal* term);
 };
 struct terminal {
     char* textbuffer;

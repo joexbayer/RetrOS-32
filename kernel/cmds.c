@@ -130,7 +130,6 @@ static int about(){
 
     twritef(RETROS_ASCII_ART_INFO, map->total);
 
-
     return 0;
 }
 EXPORT_KSYMBOL(about);
