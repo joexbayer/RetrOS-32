@@ -871,11 +871,11 @@ int vmem_total_usage()
 void vmem_init()
 {
 	/* first 1Mb is for virtual memory managment, this gives us 256 management pages */
-	VMEM_MANAGER_START 	= memory_map_get()->virtual.from;
-	VMEM_MANAGER_END 	= memory_map_get()->virtual.from + MB(1);
+	VMEM_MANAGER_START 	= memory_map_get()->virtual_memory.from;
+	VMEM_MANAGER_END 	= memory_map_get()->virtual_memory.from + MB(1);
 
-	VMEM_START_ADDRESS 	= memory_map_get()->virtual.from + MB(1);
-	VMEM_END_ADDRESS 	= memory_map_get()->virtual.to;
+	VMEM_START_ADDRESS 	= memory_map_get()->virtual_memory.from + MB(1);
+	VMEM_END_ADDRESS 	= memory_map_get()->virtual_memory.to;
 
 	vmem_allocator_create(vmem_default, VMEM_START_ADDRESS, VMEM_END_ADDRESS);
 	dbgprintf("Manager start: 0x%x - 0x%x (%d)\n", VMEM_MANAGER_START, VMEM_MANAGER_END, VMEM_MANAGER_PAGES);

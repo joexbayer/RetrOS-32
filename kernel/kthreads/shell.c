@@ -407,10 +407,10 @@ void meminfo(int argc, char* argv[])
 	struct unit permanent = calculate_size_unit(minfo.permanent.used);
 	struct unit permanent_total = calculate_size_unit(minfo.permanent.total);
 
-	struct unit virtual = calculate_size_unit(minfo.virtual.used);
-	struct unit virtual_total = calculate_size_unit(minfo.virtual.total);
+	struct unit virtual = calculate_size_unit(minfo.virtual_memory.used);
+	struct unit virtual_total = calculate_size_unit(minfo.virtual_memory.total);
 
-	struct unit total = calculate_size_unit(minfo.kernel.total+minfo.permanent.total+minfo.virtual.total);
+	struct unit total = calculate_size_unit(minfo.kernel.total+minfo.permanent.total+minfo.virtual_memory.total);
 
 	twritef("Memory:\n");
 	twritef("  Kernel:    %d%s/%d%s\n", kernel.size, kernel.unit, kernel_total.size, kernel_total.unit);

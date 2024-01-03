@@ -170,7 +170,7 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
 
         /* Minimize */
         vesa_inner_box(buffer, window->x+window->width-34+6,  window->y-3, 10, 9, theme->window.background);
-        vesa_write_str(buffer, window->x+window->width-32+6,  window->y-2, "-", COLOR_VGA_DARK_GRAY);
+        vesa_write_str(buffer, window->x+window->width-32+6,  window->y-2, " ", COLOR_VGA_DARK_GRAY);
 
         /* Exit */
         vesa_inner_box(buffer, window->x+window->width-22+6,  window->y-3, 10, 9, theme->window.background);

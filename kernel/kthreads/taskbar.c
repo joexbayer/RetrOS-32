@@ -217,10 +217,16 @@ static void taskbar_hdr_event(struct window* w, struct taskbar_header* header, i
         for (int j = 0; j < TASKBAR_MAX_OPTIONS; j++){
             if(header->options[j].name[0] == 0) break;
 
+            w->draw->box(w, header->x+4, header->y+20 + (j*TASKBAR_OPTIONS_HEIGHT) + 4, TASKBAR_EXT_OPT_WIDTH-8, 16, 30);
+
             if(header->options[j].icon != NULL){
                 gfx_put_icon16(header->options[j].icon, header->x+4, header->y+20 + (j*TASKBAR_OPTIONS_HEIGHT) + 4);
             }
             w->draw->text(w, header->x+24, header->y+20 + (j*TASKBAR_OPTIONS_HEIGHT) + 8, header->options[j].name, COLOR_BLACK);
+            
+
+            
+
             //w->draw->rect(w, header->x, header->y+18 + (j*8) +4+9, TASKBAR_EXT_OPT_WIDTH, 1, COLOR_VGA_DARK_GRAY);
         }
     }
@@ -242,10 +248,11 @@ static void taskbar_hdr_opt_event(struct window* w, struct taskbar_header* heade
                 header->x+4, /* x, 4 padding */
                 header->y+20 + (j*TASKBAR_OPTIONS_HEIGHT) + 4, /* y, 18 offset from header */
                 header->x+4 + TASKBAR_EXT_OPT_WIDTH, /* width */
-                header->y+20 + (j*TASKBAR_OPTIONS_HEIGHT) + 4 + 8, /* height */
+                header->y+20 + (j*TASKBAR_OPTIONS_HEIGHT) + 4 + 16, /* height */
                 x, y) /* mouse position */
             ){
             dbgprintf("Clicked option %s\n", header->options[j].name);
+
             
             if(header->options[j].callback != NULL){
                 header->options[j].callback();
