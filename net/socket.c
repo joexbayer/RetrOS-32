@@ -254,9 +254,12 @@ struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip)
     for (int i = 0; i < NET_NUMBER_OF_SOCKETS; i++){
         if(socket_table[i] == NULL || socket_table[i]->tcp == NULL)
             continue;
-       dbgprintf("[TCP] Checking %d %s: source %d: destination %d (%i %i) %s (seq: %d - ack: %d)\n", i,
-            socket_table[i]->owner->name, htons(socket_table[i]->recv_addr.sin_port), htons(socket_table[i]->bound_port), ntohl(socket_table[i]->recv_addr.sin_addr.s_addr), ip, tcp_state_to_str(socket_table[i]->tcp->state),
-            socket_table[i]->tcp->sequence, socket_table[i]->tcp->acknowledgement); 
+
+       dbgprintf("[TCP] %s (%i:%d %i:%d) %s\n",
+            socket_table[i]->owner->name,
+            ntohl(socket_table[i]->recv_addr.sin_addr.s_addr), htons(socket_table[i]->recv_addr.sin_port),
+            htons(socket_table[i]->bound_ip), htons(socket_table[i]->bound_port),
+            tcp_state_to_str(socket_table[i]->tcp->state)); 
     }
     
     for (int i = 0; i < NET_NUMBER_OF_SOCKETS; i++){

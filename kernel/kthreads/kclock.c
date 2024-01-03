@@ -13,7 +13,7 @@
 
 #define center_x(size) ((110/2) - ((size*8)/2))
 
-static char* months[] = {"NAN", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Nov", "Dec"};
+static char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Nov", "Dec"};
 
 void __kthread_entry kclock(int argc, char* argv[])
 {   

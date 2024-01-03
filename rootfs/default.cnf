@@ -1,7 +1,7 @@
+# conf file is loaded on boot
 [terminal]
 background=0x0
 text=0x1c
 
-[Section2]
-key3=value3
-key4=value4
+[network]
+loopback enable

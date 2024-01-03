@@ -452,16 +452,23 @@ EXPORT_KSYMBOL(exit);
 
 void socks(void)
 {
-	twritef("Sockets:\n");
-
 	struct sockets socks;
 	net_get_sockets(&socks);
 
+	twritef("%s)\n", socket_type_to_str(SOCK_STREAM));
 	for (int i = 0; i < socks.total_sockets; i++){
 		struct sock* sock = socks.sockets[i];
-		if(sock == NULL) continue;
+		if(sock == NULL || sock->bound_port == 0 || sock->type == SOCK_DGRAM) continue;
 
-		twritef("%d) %i:%d %s %s %s\n  tx: %d  rx: %d\n\n", i, sock->bound_ip == 1 ? 0 : sock->bound_ip, ntohs(sock->bound_port), socket_type_to_str(sock->type), socket_domain_to_str(sock->domain), sock->tcp ? tcp_state_to_str(sock->tcp->state) : "", sock->tx, sock->rx);
+		twritef(" %i:%d %i:%d %s  tx: %d  rx: %d\n\n", sock->bound_ip == 1 ? 0 : sock->bound_ip, ntohs(sock->bound_port), ntohl(sock->recv_addr.sin_addr.s_addr), ntohs(sock->recv_addr.sin_port), sock->tcp ? tcp_state_to_str(sock->tcp->state) : "", sock->tx, sock->rx);
+	}
+
+	twritef("%s)\n", socket_type_to_str(SOCK_DGRAM));
+	for (int i = 0; i < socks.total_sockets; i++){
+		struct sock* sock = socks.sockets[i];
+		if(sock == NULL || sock->bound_port == 0 || sock->type == SOCK_STREAM) continue;
+
+		twritef(" %i:%d %i:%d %s  tx: %d  rx: %d\n\n", sock->bound_ip == 1 ? 0 : sock->bound_ip, ntohs(sock->bound_port), ntohl(sock->recv_addr.sin_addr.s_addr), ntohs(sock->recv_addr.sin_port), sock->tcp ? tcp_state_to_str(sock->tcp->state) : "", sock->tx, sock->rx);
 	}
 }
 EXPORT_KSYMBOL(socks);

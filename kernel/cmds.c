@@ -100,10 +100,12 @@ static int color(int argc, char* argv[]){
         bg = htoi(argv[2]);
     }
 
-    struct gfx_theme* theme = kernel_gfx_current_theme();
-    theme->terminal.text = text;
-
-    if(bg != 255) theme->terminal.background = bg;
+    TERM_CONTEXT({
+        term->text_color = text;
+        if(bg != 255) {
+            term->bg_color = bg;
+        }
+    });
 
     return 0;
 }
@@ -241,17 +243,10 @@ static int tcp(int argc, char *argv[])
         return 1;
     }
 
-    int ip = 0;
-    if(net_is_ipv4(argv[1])){
-        dbgprintf("Connecting to %i:%s\n", argv[1], argv[2]);
-        ip = ip_to_int(argv[1]);
-    } else {
-        dbgprintf("Resolving %s\n", argv[1]);
-        ip = gethostname(argv[1]);
-        if(ip == -1){
-            twritef("Unable to resolve %s\n", argv[1]);
-            kernel_exit();
-        }
+    int ip = net_is_ipv4(argv[1]) ? ip_to_int(argv[1]) : gethostname(argv[1]);
+    if(ip == -1){
+        twritef("Unable to resolve %s\n", argv[1]);
+        return 1;
     }
 
     struct sockaddr_in dest_addr;
@@ -262,15 +257,15 @@ static int tcp(int argc, char *argv[])
     int con = kernel_connect(socket, (struct sockaddr*) &dest_addr, sizeof(dest_addr));
     if(con < 0) {
         twritef("Unable to connect to %s:%s\n", argv[1], argv[2]);
-        kernel_exit();
+        return 1;
     }
 
     twritef("Connected to %s:%s\n", argv[1], argv[2]);
     current_running->term->ops->commit(current_running->term);    
 
     int ret;
+    char* buffer = kalloc(1024);
     while(1){
-        char buffer[255];
         ret = current_running->term->ops->scan(current_running->term, buffer, 255);
         if(ret < 0){
             break;
@@ -281,7 +276,7 @@ static int tcp(int argc, char *argv[])
             break;
         }
 
-        ret = kernel_recv(socket, buffer, 255, 0);
+        ret = kernel_recv(socket, buffer, 1024, 0);
         if(ret < 0){
             twritef("Unable to recv TCP packet\n");
             break;

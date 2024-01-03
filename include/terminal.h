@@ -6,6 +6,14 @@
 #include <gfx/window.h>
 #include <util.h>
 
+#define TERM_CONTEXT(codeblock) do { \
+    struct terminal* term = current_running->term; \
+    if(term == NULL) { \
+        break;\
+    } \
+    codeblock \
+} while(0)
+
 #define twritef(a, ...) \
  if(current_running != NULL && current_running->term != NULL) { \
     current_running->term->ops->writef(current_running->term, a, ##__VA_ARGS__); \

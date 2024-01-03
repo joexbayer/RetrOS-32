@@ -18,7 +18,7 @@
 
 #include <terminal.h>
 
-static char* months[] = {"NAN", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Nov", "Dec"};
+static char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Nov", "Dec"};
 
 /* filesystem_ops prototypes */
 static int fat16_write(struct filesystem* fs, struct file* file, const void* buf, int size);
