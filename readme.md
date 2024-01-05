@@ -286,7 +286,7 @@ IBM Thinkpad a21p
 - [x] Remote virtual terminal over TCP
 - [x] Tools
   - [x] Build
-  - [ ] Sync / Migration Took
+  - [x] Sync / Migration Took
   - [x] mkfs
   - [x] Testing
   - [ ] Create & Encode icons and wallpapers
