@@ -112,6 +112,13 @@ error_t net_sock_read(struct sock* sock, uint8_t* buffer, unsigned int length)
         current_running->state = BLOCKED;
 	    kernel_yield();
     }
+    
+    if(sock->data_ready == -1){
+        dbgprintf(" [SOCK] Socket closed!\n");
+        return -1;
+    
+    }
+
 	//WAIT(!net_sock_data_ready(sock, length));
     dbgprintf(" [SOCK] Data ready! %d\n", sock);
 
@@ -229,7 +236,7 @@ error_t net_sock_awaiting_ack(struct sock* sk)
 error_t net_sock_data_ready(struct sock* sk, unsigned int length)
 {
     assert(sk != NULL);
-	return sk->data_ready == 1 || sk->recvd >= length;
+	return sk->data_ready == 1 || sk->recvd >= length || sk->data_ready == -1;
 }
 
 struct sock* sock_find_listen_tcp(uint16_t d_port)

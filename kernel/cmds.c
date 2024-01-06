@@ -16,6 +16,7 @@
 #include <terminal.h>
 #include <memory.h>
 #include <fs/fs.h>
+#include <work.h>
 #include <conf.h>
 #include <gfx/theme.h>
 
@@ -229,6 +230,46 @@ EXPORT_KSYMBOL(file);
 #include <net/ipv4.h>
 #include <net/utils.h>
 
+/**
+ * @brief Part of the TCP client
+ * 
+ * @param argc Should always be 1
+ * @param argv Contains socket as int
+ * @return int 
+ */
+static int __kthread_entry __tcp_reader(int argc, char *argv[])
+{
+    if(argc != 1){
+        dbgprintf("Invalid arguments\n");
+        return 1;
+    }
+
+    struct sock* socket = sock_get(atoi(argv[0]));
+    if(socket == NULL) {
+        dbgprintf("Invalid socket\n");
+        return 1;
+    }
+
+    dbgprintf("TCP reader started\n");
+
+    int ret;
+    char buffer[1024];
+    while(1){
+        ret = kernel_recv(socket, buffer, 1024, 0);
+        if(ret < 0){
+            twritef("Unable to recv TCP packet\n");
+            break;
+        }
+
+        buffer[ret] = 0;
+        twritef("%s", buffer);
+
+        current_running->term->ops->commit(current_running->term);
+    }
+
+    return 0;
+}
+
 static int tcp(int argc, char *argv[])
 {
     if(argc < 3) {
@@ -260,8 +301,13 @@ static int tcp(int argc, char *argv[])
     }
 
     twritef("Connected to %s:%s\n", argv[1], argv[2]);
-    current_running->term->ops->commit(current_running->term);    
+    current_running->term->ops->commit(current_running->term); 
 
+    char socket_str[10] = {0};
+    itoa(socket->socket, socket_str);
+
+    pid_t reader = pcb_create_kthread(__tcp_reader, "tcp_reader", 1, socket_str);
+    
     int ret;
     char* buffer = kalloc(1024);
     while(1){
@@ -274,18 +320,10 @@ static int tcp(int argc, char *argv[])
             twritef("Unable to send TCP packet\n");
             break;
         }
-
-        ret = kernel_recv(socket, buffer, 1024, 0);
-        if(ret < 0){
-            twritef("Unable to recv TCP packet\n");
-            break;
-        }
-
-        buffer[ret] = 0;
-        twritef("%s\n", buffer);
-
-        current_running->term->ops->commit(current_running->term);
     }
+
+    pcb_kill(reader);
+    pcb_await(reader);
 
     kernel_sock_close(socket);
     return 0;

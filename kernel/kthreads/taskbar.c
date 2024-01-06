@@ -41,6 +41,7 @@ static void __callback taskbar_bg_retro();
 static void __callback taskbar_bg_calc();
 static void __callback taskbar_bg_graph();
 static void __callback taskbar_bg_default_color();
+static void __callback taskbar_bg_default_color_gray();
 static void __callback taskbar_sysinf();
 static void __callback taskbar_about();
 
@@ -139,8 +140,13 @@ struct taskbar_options {
             .options = {
                 {
                     .icon = bin_16,
-                    .name = "Color",
+                    .name = "Turquoise",
                     .callback = &taskbar_bg_default_color
+                },
+                {
+                    .icon = bin_16,
+                    .name = "Gray",
+                    .callback = &taskbar_bg_default_color_gray
                 },
                 {
                     .icon = bin_16,
@@ -432,6 +438,11 @@ static void __callback taskbar_bg_graph()
 static void __callback taskbar_bg_default_color()
 {
     gfx_set_background_color(3);
+}
+
+static void __callback taskbar_bg_default_color_gray()
+{
+    gfx_set_background_color(0x18);
 }
 
 static void __callback taskbar_bg_calc()

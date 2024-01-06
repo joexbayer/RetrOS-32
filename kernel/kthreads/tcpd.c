@@ -81,7 +81,6 @@ void __kthread_entry tcp_server()
             kernel_exit();
         }
 
-
         dbgprintf("Client connected from %i:%d\n", client_addr.sin_addr.s_addr, client_addr.sin_port);
 
         while(1){

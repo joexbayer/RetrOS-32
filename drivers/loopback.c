@@ -15,6 +15,9 @@
 #include <memory.h>
 #include <math.h>
 
+//#undef dbgprintf
+//#define dbgprintf(...)
+
 static struct __queue {
     struct queue_entry {
         void* data;
@@ -61,6 +64,7 @@ static int iface_loopback_read(char* buffer, uint32_t size)
     dbgprintf("Removed packet from loopback queue.\n");
 
     loopback_queue.head = (loopback_queue.head + 1) % 32;
+    loopback_queue.size--;
 
     return read;
 }

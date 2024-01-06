@@ -87,7 +87,6 @@ int update() {
 }
 
 void game_loop() {
-    int last = 0;
     while (1) {
         draw();
         if(update() == -1) return;

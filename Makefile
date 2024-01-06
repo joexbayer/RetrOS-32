@@ -205,7 +205,12 @@ qemu:
 	sudo qemu-system-i386 $(QEMU_OPS) -drive file=RetrOS-32-debug.img,format=raw,index=0,media=disk
 
 sync:
-	sh scripts/sync.sh RetrOS-32-debug.img
+	mkdir -p mnt
+	sudo mount -o shortname=winnt RetrOS-32-debug.img ./mnt
+	sudo cp -r ./rootfs/* ./mnt/
+	sudo umount ./mnt
+	@echo "Finished syncing."
+# sh scripts/sync.sh RetrOS-32-debug.img
 # sudo cp -r mnt/* ./mnt/apps/
 
 mount:

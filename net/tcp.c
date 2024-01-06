@@ -225,6 +225,8 @@ uint16_t tcp_calculate_checksum(uint32_t src_ip, uint32_t dest_ip, unsigned shor
  */
 static int __tcp_send(struct sock* sock, struct tcp_header* hdr, struct sk_buff* skb, uint8_t* data, uint32_t len)
 {
+	int ret;
+
 	if(net_ipv4_add_header(skb, sock->recv_addr.sin_addr.s_addr, TCP, sizeof(struct tcp_header)+len) < 0){
 		skb_free(skb);
 		return -1;
@@ -249,7 +251,11 @@ static int __tcp_send(struct sock* sock, struct tcp_header* hdr, struct sk_buff*
 	 */
 	hdr->check = tcp_calculate_checksum(skb->hdr.ip->daddr, skb->hdr.ip->saddr, (unsigned short*)hdr, sizeof(struct tcp_header)+len);
 
-	net_send_skb(skb);
+	ret = net_send_skb(skb);
+	if(ret < 0){
+		dbgprintf("[TCP] Failed to send segment\n");
+		return -1;
+	}
 
 	return ERROR_OK;
 }
@@ -686,6 +692,13 @@ int tcp_parse(struct sk_buff* skb)
 	case TCP_CLOSE_WAIT2:
 		if(hdr->fin == 0 && hdr->ack == 1){	
 			sk->tcp->state = TCP_CLOSED;
+
+			if(sk->waiting != NULL){
+				sk->waiting->state = RUNNING;
+				sk->waiting = NULL;
+				sk->data_ready = -1;
+			}
+
 		}
 		break;	
 	default:

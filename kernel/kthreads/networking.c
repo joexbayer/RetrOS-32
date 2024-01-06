@@ -88,7 +88,10 @@ static void __net_transmit_skb(struct sk_buff* skb)
     if(skb == NULL || skb->interface == NULL) return;
 
     int ret = skb->interface->ops->send(skb->interface, skb->head, skb->len);
-    if(ret < 0) return;    
+    if(ret < 0){
+        warningf("Failed to send packet %d\n", ret);
+        return;
+    }    
    
     netd.packets++;
     netd.stats.sent++;
@@ -209,26 +212,23 @@ int net_register_interface(struct net_interface* interface)
 
 int net_send_skb(struct sk_buff* skb)
 {
+    dbgprintf("Sending SKB\n");
     ERR_ON_NULL(netd.skb_tx_queue);
-
 
     if (skb->interface == NULL){
         warningf("No interface specified for SKB. Dropping packet.\n");
         skb_free(skb);
         return -1;
     }
-    
 
     RETURN_ON_ERR(netd.skb_tx_queue->ops->add(netd.skb_tx_queue, skb));
     netd.packets++;
-    dbgprintf("Added SKB to TX queue\n");
 
     if(netd.instance != NULL && netd.instance->state == BLOCKED){ 
         netd.instance->state = RUNNING;
     }
 
     return 0;
-    
 }
 
 error_t net_get_info(struct net_info* info)
