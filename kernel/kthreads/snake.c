@@ -1,7 +1,8 @@
-#define SNAKE_LENGTH 20
+#define SNAKE_LENGTH 100
 #define SCREEN_WIDTH 80
 #define SCREEN_HEIGHT 25
 
+#include <kernel.h>
 #include <terminal.h>
 #include <util.h>
 #include <screen.h>
@@ -72,13 +73,13 @@ int update() {
     /* Collision with walls */
     if (snake[0].x < 0 || snake[0].x >= SCREEN_WIDTH ||
         snake[0].y < 0 || snake[0].y >= SCREEN_HEIGHT) {
-        return 0;
+        return -1;
     }
 
     /* Self-collision */
     for (int i = 1; i < length; i++) {
         if (snake[0].x == snake[i].x && snake[0].y == snake[i].y) {
-            return 0;
+            return -1;
         }
     }
 
@@ -96,6 +97,12 @@ void game_loop() {
 }
 
 static int snakegame() {
+    struct kernel_context* ctx = kernel_get_context();
+    if(ctx->graphic_mode == KERNEL_FLAG_GRAPHICS) {
+        twritef("This game is not compatible with graphics mode\n");
+        return 0;
+    }
+
     init_game();
     game_loop();
     return 0;

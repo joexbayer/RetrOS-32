@@ -254,6 +254,7 @@ IBM Thinkpad a21p
   - [x] DHCP
   - [x] DNS
   - [x] TCP
+  - [x] Netcat style commands
   - [ ] Telnet
   - [ ] HTTP
   - [ ] HTML
@@ -282,6 +283,7 @@ IBM Thinkpad a21p
 - [x] Editor with Syntax Highlighting
 - [x] Calculator
 - [x] 3D Game
+- [x] Snake game (Textmode only)
 - [x] Userspace threads (shared virtual memory)
 - [x] Remote virtual terminal over TCP
 - [x] Tools

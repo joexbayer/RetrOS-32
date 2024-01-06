@@ -250,6 +250,11 @@ void init_kctors()
     }
 }
 
+struct kernel_context* kernel_get_context()
+{
+	return &kernel_context;
+}
+
 #define HEXDUMP_COLS 8
 void hexdump(const void *data, int size)
 {
