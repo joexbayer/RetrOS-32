@@ -623,12 +623,61 @@ void __kthread_entry shell(int argc, char* argv[])
 }
 EXPORT_KTHREAD(shell);
 
-
-
 #include <screen.h>
+
+void draw_box(int x, int y, int width, int height, uint8_t border_color) {
+    // Extended ASCII characters for double line box drawing
+    unsigned char top_left = 201;     // '╔'
+    unsigned char top_right = 187;    // '╗'
+    unsigned char bottom_left = 200;  // '╚'
+    unsigned char bottom_right = 188; // '╝'
+    unsigned char horizontal = 205;   // '═'
+    unsigned char vertical = 186;     // '║'
+    unsigned char left_connector = 204; // '╠'
+    unsigned char right_connector = 185; // '╣'
+    unsigned char top_connector = 203; // '╦'
+    unsigned char bottom_connector = 202; // '╩'
+    unsigned char cross_connector = 206; // '╬'
+
+    // Draw corners
+    scrput(x, y, top_left, border_color);
+    scrput(x + width - 1, y, top_right, border_color);
+    scrput(x, y + height - 1, bottom_left, border_color);
+    scrput(x + width - 1, y + height - 1, bottom_right, border_color);
+
+    // Draw top and bottom borders with connectors
+    for (int i = x + 1; i < x + width - 1; ++i) {
+        scrput(i, y, horizontal, border_color); // Top border
+        scrput(i, y + height - 1, horizontal, border_color); // Bottom border
+    }
+
+    // Draw left, right borders, and connectors
+    for (int i = y + 1; i < y + height - 1; ++i) {
+        scrput(x, i, vertical, border_color); // Left border
+        scrput(x + width - 1, i, vertical, border_color); // Right border
+    }
+}
+
+static int __textshell_reset_box()
+{
+	ubyte_t color = VGA_COLOR_WHITE | VGA_COLOR_BLUE << 4;
+	draw_box(0, 1, SCREEN_WIDTH, SCREEN_HEIGHT-1,  color);
+	scrput(3, 1, '[', color);
+	scrput(4, 1, 'R', VGA_COLOR_WHITE | VGA_COLOR_GREEN << 4);
+	scrput(5, 1, ']', color);
+	scrwrite(3, SCREEN_HEIGHT-1, "[              ]", color);
+	
+	/* header */
+	scrwrite(40-(strlen(" Terminal ")/2) , 1, " Terminal ", color);
+
+	screen_set_cursor(3, SCREEN_HEIGHT-1);
+	return 0;
+}
+
 static byte_t* text_shell_buffer = NULL;
 static void __kthread_entry textshell()
 {
+	
 	ubyte_t c;
 	short x = 0;
 
@@ -655,6 +704,8 @@ static void __kthread_entry textshell()
 	twritef("Type 'help' for a list of commands\n");
 	term->ops->commit(term);
 
+	__textshell_reset_box();
+
 	while (1){
 		c = kb_get_char();
 		if(c == 0) continue;
@@ -662,9 +713,9 @@ static void __kthread_entry textshell()
 		if(c == '\b'){
 			if(x == 0) continue;
 			x--;
-			scrput(x, SCREEN_HEIGHT-1, ' ', VGA_COLOR_WHITE);
+			scrput(4+x, SCREEN_HEIGHT-1, ' ', VGA_COLOR_WHITE | VGA_COLOR_BLUE << 4);
 			text_shell_buffer[x] = 0;
-			screen_set_cursor(x, SCREEN_HEIGHT-1);
+			screen_set_cursor(4+x, SCREEN_HEIGHT-1);
 			continue;
 		}
 
@@ -676,14 +727,14 @@ static void __kthread_entry textshell()
 
 			memset(text_shell_buffer, 0, 1024);
 			term->ops->commit(term);
-			screen_set_cursor(x, SCREEN_HEIGHT-1);
+			__textshell_reset_box();
 			continue;
 		}
 
-		scrput(x, SCREEN_HEIGHT-1, c, VGA_COLOR_WHITE);
+		scrput(4+x, SCREEN_HEIGHT-1, c, VGA_COLOR_WHITE);
 		text_shell_buffer[x] = c;
 		x++;
-		screen_set_cursor(x, SCREEN_HEIGHT-1);
+		screen_set_cursor(4+x, SCREEN_HEIGHT-1);
 	}
 }
 EXPORT_KTHREAD(textshell);

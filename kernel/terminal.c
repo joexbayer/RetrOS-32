@@ -401,7 +401,7 @@ static int __terminal_putchar_textmode(struct terminal* term, char c)
 	if(term == NULL) return -1;
 
 	if(c == '\n'){
-		if(SCREEN_HEIGHT-1 == term->lines){
+		if(SCREEN_HEIGHT-2 <= term->lines){
 			__terminal_scroll(term);
 		} else {
 			term->lines++;
@@ -457,7 +457,13 @@ static int __terminal_commit_textmode(struct terminal* term)
 {
 	if(term == NULL) return -1;
 
-	scr_clear();
+	/* Clear screen */
+	for (int i = 1; i < SCREEN_HEIGHT-1; i++){
+		for (int j = 1; j < SCREEN_WIDTH-2; j++){
+			scrput(j, i, ' ', term->text_color | term->bg_color << 4);
+		}
+	}
+
 	int x = 0, y = 1;
 	for (int i = term->tail; i < term->head; i++){
 		if(term->textbuffer[i] == '\n'){
@@ -466,7 +472,7 @@ static int __terminal_commit_textmode(struct terminal* term)
 			continue;
 		}
 
-		scrput(x, y, term->textbuffer[i], term->text_color | term->bg_color << 4);
+		scrput(1+x, y, term->textbuffer[i], term->text_color | term->bg_color << 4);
 		x++;
 	}
 

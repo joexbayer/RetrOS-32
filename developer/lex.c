@@ -97,7 +97,7 @@ void match(int tk) {
 }
 
 void expression(int level) {
-    //DEBUG_PRINT("expression\n");
+    
     // expressions have various format.
     // but majorly can be divided into two parts: unit and operator
     // for example `(char) *a[10] = (int *) func(b > 0 ? 10 : 20);
@@ -879,7 +879,7 @@ void next() {
 }
 
 void statement() {
-    //DEBUG_PRINT("statement\n");
+    
     // there are 6 kinds of statements here:
     // 1. if (...) <statement> [else <statement>]
     // 2. while (...) <statement>
@@ -904,7 +904,7 @@ void statement() {
         //
         match(If);
         match('(');
-        //DEBUG_PRINT("IF expression\n");
+        
         expression(Assign);  // parse condition
         match(')');
 
@@ -912,7 +912,7 @@ void statement() {
         *++text = JZ;
         b = ++text;
 
-        //DEBUG_PRINT("IF statement\n");
+        
         statement();         // parse statement
         if (lexer_context.token == Else) { // parse else
             match(Else);
@@ -922,14 +922,14 @@ void statement() {
             *++text = JMP;
             b = ++text;
 
-            //DEBUG_PRINT("if else statementn");
+            
             statement();
         }
 
         *b = (int)(text + 1);
     }
     else if (lexer_context.token == While) {
-        //DEBUG_PRINT("while\n");
+        
         //
         // a:                     a:
         //    while (<cond>)        <cond>
@@ -959,7 +959,7 @@ void statement() {
         match('{');
 
         while (lexer_context.token != '}') {
-            //DEBUG_PRINT("Statement Body");
+            
             statement();
         }
 
@@ -989,9 +989,7 @@ void statement() {
     }
 }
 
-void function_parameter() {
-
-    //DEBUG_PRINT("function_parameter\n");
+void function_parameter() {    
     int type;
     int params;
     params = 0;
@@ -1025,7 +1023,7 @@ void function_parameter() {
 
         match(Id);
         // store the local variable
-        //DEBUG_PRINT("store the local variable\n");
+        
         lexer_context.current_id->Bclass = lexer_context.current_id->class; lexer_context.current_id->class  = Loc;
         lexer_context.current_id->Btype  = lexer_context.current_id->type;  lexer_context.current_id->type   = type;
         lexer_context.current_id->Bvalue = lexer_context.current_id->value; lexer_context.current_id->value  = params++;   // index of current parameter
@@ -1038,7 +1036,7 @@ void function_parameter() {
 }
 
 void function_body() {
-    //DEBUG_PRINT("function_body\n");
+    
     // type func_name (...) {...}
     //                   -->|   |<--
 
@@ -1078,7 +1076,7 @@ void function_body() {
             match(Id);
 
 
-            //DEBUG_PRINT("store the local variable\n");
+            
             // store the local variable
             lexer_context.current_id->Bclass = lexer_context.current_id->class; lexer_context.current_id->class  = Loc;
             lexer_context.current_id->Btype  = lexer_context.current_id->type;  lexer_context.current_id->type   = type;
@@ -1091,13 +1089,13 @@ void function_body() {
         match(';');
     }
 
-    //DEBUG_PRINT("save the stack size for local variables %x\n", text);
+    
     // save the stack size for local variables
     *++text = ENT;
     *++text = pos_local - lexer_context.index_of_bp;
 
     // statements
-    //DEBUG_PRINT("Function: statements\n");
+    
     while (lexer_context.token != '}') {
         statement();
     }
@@ -1109,7 +1107,7 @@ void function_body() {
 void function_declaration() {
     // type func_name (...) {...}
     //               | this part
-    //DEBUG_PRINT("function_declaration...\n");
+    
 
     match('(');
     function_parameter();
@@ -1172,9 +1170,6 @@ void global_declaration() {
     //
     // function_decl ::= type {'*'} id '(' parameter_decl ')' '{' body_decl '}'
 
-
-    //DEBUG_PRINT("global_declaration\n");
-
     int type; // tmp, actual type for variable
     int i; // tmp
 
@@ -1194,7 +1189,7 @@ void global_declaration() {
             match('}');
         }
 
-        //DEBUG_PRINT("enum parsed\n");
+        
 
         match(';');
         return;
@@ -1203,12 +1198,12 @@ void global_declaration() {
     // parse type information
     if (lexer_context.token == Int) {
         match(Int);
-        //DEBUG_PRINT("int matched\n");
+        
     }
     else if (lexer_context.token == Char) {
         match(Char);
         lexer_context.basetype = CHAR;
-        //DEBUG_PRINT("char matched\n");
+        
     }
 
     // parse the comma seperated variable declaration.
@@ -1218,7 +1213,7 @@ void global_declaration() {
         while (lexer_context.token == Mul) {
             match(Mul);
             type = type + PTR;
-            //DEBUG_PRINT("ptr type\n");
+            
         }
 
         if (lexer_context.token != Id) {
@@ -1234,16 +1229,16 @@ void global_declaration() {
         }
         match(Id);
         lexer_context.current_id->type = type;
-        //DEBUG_PRINT("current type %d\n", type);
+        
 
         if (lexer_context.token == '(') {
             lexer_context.current_id->class = Fun;
             lexer_context.current_id->value = (text + 1); // the memory address of function
-            //DEBUG_PRINT("function_declaration\n");
+            
             function_declaration();
         } else {
             // variable declaration
-            //DEBUG_PRINT("variable declaration\n");
+            
             lexer_context.current_id->class = Glo; // global variable
             lexer_context.current_id->value = (int)data; // assign memory address
             data = data + sizeof(int);
@@ -1282,7 +1277,7 @@ void lex_init()
 
     next(); lexer_context.current_id->token = Char; // handle void type
     next(); lexer_context.main = lexer_context.current_id; // keep track of main
-    //DEBUG_PRINT("Added important default lexer_context.tokens and system lexer_context.tokens\n");
+    
 }
 
 struct lexed_file program(int* _text, char* _data, char* _str)
