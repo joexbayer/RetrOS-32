@@ -26,7 +26,6 @@ struct lexed_file {
 
 struct lexed_file program(int* _text, char* _data, char* _str);
 char* lex_get_error();
-int lex_get_error_line();
 void lex_init();
 
 #ifdef __cplusplus

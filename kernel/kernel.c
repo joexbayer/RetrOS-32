@@ -220,7 +220,7 @@ void kernel(uint32_t magic)
 	start("netd", 0, NULL);
 	kernel_boot_printf("Deamons initialized.");
 
-	config_load("default.cnf");
+	config_load("default.cfg");
 
 	init_pit(1000);
 	kernel_boot_printf("Timer initialized.");
