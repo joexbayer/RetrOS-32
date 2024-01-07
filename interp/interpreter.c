@@ -16,6 +16,8 @@
 #include <ksyms.h>
 #include <stdint.h>
 #include <fs/fs.h>
+#include <kthreads.h>
+#include <pcb.h>
 
 #define DEFAULT_OUT "bytecode.o"
 
@@ -131,11 +133,6 @@ int as(int argc, char **argv)
     lex_init();
     struct lexed_file lexd = program(text, data, src);
     dbgprintf("%d : %d : %d\n", lexd.datasize, lexd.entry, lexd.textsize);
-    if(lexd.entry == 0)
-    {
-        twritef("%d: %s\n", lex_get_error_line(), lex_get_error());
-        return -1;
-    }
 
     if ((fd = fs_open(DEFAULT_OUT, FS_FILE_FLAG_CREATE)) <= 0) {
         twritef("could not open(%s)\n", *argv);
@@ -177,7 +174,7 @@ int as(int argc, char **argv)
 }
 EXPORT_KSYMBOL(as);
 
-int cc(int argc, char **argv)
+static int cc(int argc, char **argv)
 {
     struct vm vm;
     inode_t fd;
@@ -241,14 +238,9 @@ int cc(int argc, char **argv)
 
     DEBUG_PRINT("Lexing\n");
     struct lexed_file lexd = program(vm.text, vm.data, src);
-    if(lexd.entry == 0)
-    {
-        twritef("%d: %s\n", lex_get_error_line(), lex_get_error());
-        return -1;
-    }
     DEBUG_PRINT("Lexing [done]\n");
 
-    vm.pc = (int*)vm.text+lexd.entry;
+    vm.pc = (int)vm.text+lexd.entry;
     DEBUG_PRINT("Main entry %x\n", vm.pc);
 
     vm_setup_stack(&vm ,argc, argv);

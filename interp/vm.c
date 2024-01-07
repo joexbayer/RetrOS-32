@@ -184,7 +184,9 @@ void vm_setup(struct vm* vm, int* text, char* data)
     vm->text = text;
     vm->data = data;
     vm->stack = kalloc(VM_STACK_SIZE);
-    vm->old_text = (int)vm->text;
+    //memset(vm->stack, 0, VM_STACK_SIZE);
+
+    vm->old_text = vm->text;
     
     vm->bp = vm->sp = (int *)((int)vm->stack + VM_STACK_SIZE-2);
     vm->ax = 0;
@@ -195,7 +197,9 @@ void vm_init(struct vm* vm)
     /* allocate memory for virtual machine */
 
     vm->text = kalloc(VM_TEXT_SIZE);
+    memset(vm->text, 0, VM_TEXT_SIZE);
     vm->data = kalloc(VM_DATA_SIZE);
+    memset(vm->data, 0, VM_DATA_SIZE);
     vm_setup(vm, vm->text, vm->data);
 }
 
@@ -214,7 +218,7 @@ void vm_setup_stack(struct vm* vm, int argc, char* argv[])
     vm->sp = (int *)((int)vm->stack + VM_STACK_SIZE-2);
     *--vm->sp = EXIT; /* call exit if main returns */
     *--vm->sp = PUSH;
-    tmp = (int)vm->sp;
+    tmp = vm->sp;
     *--vm->sp = argc;
     *--vm->sp = (int)argv;
     *--vm->sp = (int)tmp;

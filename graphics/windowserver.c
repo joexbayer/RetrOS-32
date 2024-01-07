@@ -337,9 +337,9 @@ struct windowserver* ws_new()
 
     if(vbe_info->width == 640){
         //sws_load_default_wallpaper(ws);
-        ws_set_background(ws, 0x3);
+        ws_set_background(ws, 0x17);
     } else {
-        ws_set_background(ws, 0x3);
+        ws_set_background(ws, 0x17);
     }
 
     kref_get(&ws->_krefs);

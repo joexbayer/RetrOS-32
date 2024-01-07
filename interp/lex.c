@@ -25,7 +25,7 @@ extern "C" {
 struct identifier {
     int token;
     int hash;
-    char * name;
+    char* name;
     int class;
     int type;
     int value;
@@ -58,10 +58,11 @@ struct lexer {
 
 } lexer_context;
 
-char *src;
-int line = 1;
-char* data;
+/* Variables set at runtime */
 int* text;
+char* src;
+char* data;
+int line = 1;
 
 int error = 0;
 int error_line = 0;
@@ -82,10 +83,6 @@ char* lex_get_error()
     return lex_errors[error];
 }
 
-int lex_get_error_line()
-{
-    return error_line;
-}
 
 void next();
 
@@ -94,10 +91,9 @@ void match(int tk) {
         next();
         return;
     }
-    //twritef("%d: expected token: %c\n", line, tk);
+
     twritef("%d: %s\n", line, lex_errors[1]);
-kernel_exit();
-    if(error_line == 0) error_line =line;
+    kernel_exit();
 }
 
 void expression(int level) {
@@ -121,14 +117,12 @@ void expression(int level) {
     int *addr;
     {
         if (!lexer_context.token) {
-            //twritef("%d: unexpected token EOF of expression\n", line);
             twritef("%d: %s\n", line, lex_errors[2]);
-kernel_exit();
-            if(error_line == 0) error_line =line;
+            kernel_exit();
+            
         }
         if (lexer_context.token == Num) {
             match(Num);
-            //DEBUG_PRINT("number %d\n", lexer_context.token_val);
 
             // emit code
             *++text = IMM;
@@ -141,8 +135,6 @@ kernel_exit();
             *++text = IMM;
             *++text = lexer_context.token_val;
 
-            ////DEBUG_PRINT("expression string %s\n", lexer_context.token_val);
-
             match('"');
             // store the rest strings
             while (lexer_context.token == '"') {
@@ -154,7 +146,6 @@ kernel_exit();
             data = (char *)(((int)data + sizeof(int)) & (-sizeof(int)));
             lexer_context.expr_type = PTR;
         } else if (lexer_context.token == Sizeof) {
-            //DEBUG_PRINT("Sizeof\n");
             // sizeof is actually an unary operator
             // now only `sizeof(int)`, `sizeof(char)` and `sizeof(*...)` are
             // supported.
@@ -191,7 +182,6 @@ kernel_exit();
 
 
             id = lexer_context.current_id;
-            //DEBUG_PRINT("Context identifier: %s\n", id->name);
 
             if (lexer_context.token == '(') {
                 // function call
@@ -211,8 +201,6 @@ kernel_exit();
                 }
                 match(')');
 
-                //DEBUG_PRINT("New function\n");
-
                 // emit code
                 if (id->class == Sys) {
                     // system functions
@@ -224,10 +212,8 @@ kernel_exit();
                     *++text = id->value;
                 }
                 else {
-                    //twritef("%d: bad function call\n", line);
                     twritef("%d: %s\n", line, lex_errors[3]);
-kernel_exit();
-                    if(error_line == 0) error_line =line;
+                    kernel_exit();
                 }
 
                 // clean the stack for arguments
@@ -254,10 +240,8 @@ kernel_exit();
                     *++text = id->value;
                 }
                 else {
-                    //twritef("%d: undefined variable\n", line);
                     twritef("%d: %s\n", line, lex_errors[4]);
-kernel_exit();
-                    if(error_line == 0) error_line =line;
+                    kernel_exit();
                 }
 
                 // emit code, default behaviour is to load the value of the
@@ -296,10 +280,8 @@ kernel_exit();
             if (lexer_context.expr_type >= PTR) {
                 lexer_context.expr_type = lexer_context.expr_type - PTR;
             } else {
-                //twritef("%d: bad dereference\n", line);
                 twritef("%d: %s\n", line, lex_errors[5]);
-kernel_exit();
-                if(error_line == 0) error_line =line;
+                kernel_exit();
             }
 
             *++text = (lexer_context.expr_type == CHAR) ? LC : LI;
@@ -311,10 +293,9 @@ kernel_exit();
             if (*text == LC || *text == LI) {
                 text --;
             } else {
-                //twritef("%d: bad address of\n", line);
                 twritef("%d: %s\n", line, lex_errors[6]);
-kernel_exit();
-                if(error_line == 0) error_line =line;
+                kernel_exit();
+                
             }
 
             lexer_context.expr_type = lexer_context.expr_type + PTR;
@@ -382,10 +363,8 @@ kernel_exit();
                 *text = PUSH;
                 *++text = LI;
             } else {
-                //twritef("%d: bad lvalue of pre-increment\n", line);
                 twritef("%d: %s\n", line, lex_errors[7]);
-kernel_exit();
-                if(error_line == 0) error_line =line;
+                kernel_exit();
             }
             *++text = PUSH;
             *++text = IMM;
@@ -394,10 +373,8 @@ kernel_exit();
             *++text = (lexer_context.expr_type == CHAR) ? SC : SI;
         }
         else {
-            //twritef("%d: bad expression\n", line);
             twritef("%d: %s\n", line, lex_errors[8]);
-kernel_exit();
-            if(error_line == 0) error_line =line;
+            kernel_exit();
         }
     }
 
@@ -412,10 +389,8 @@ kernel_exit();
                 if (*text == LC || *text == LI) {
                     *text = PUSH; // save the lvalue's pointer
                 } else {
-                    //twritef("%d: bad lvalue in assignment\n", line);
                     twritef("%d: %s\n", line, lex_errors[9]);
-kernel_exit();
-                    if(error_line == 0) error_line =line;
+                    kernel_exit();
                 }
                 expression(Assign);
 
@@ -431,9 +406,8 @@ kernel_exit();
                 if (lexer_context.token == ':') {
                     match(':');
                 } else {
-                    //twritef("%d: missing colon in conditional\n", line);
-                    if(error == 0) error = 10;
-                    if(error_line == 0) error_line =line;
+                    twritef("%d: %s\n", line, lex_errors[10]);
+                    kernel_exit();
                 }
                 *addr = (int)(text + 3);
                 *++text = JMP;
@@ -627,9 +601,8 @@ kernel_exit();
                     *++text = LC;
                 }
                 else {
-                    //twritef("%d: bad value in increment\n", line);
-                    if(error == 0) error = 11;
-                    if(error_line == 0) error_line =line;
+                    twritef("%d: %s\n", line, lex_errors[11]);
+                    kernel_exit();
                 }
 
                 *++text = PUSH;
@@ -658,18 +631,17 @@ kernel_exit();
                     *++text = MUL;
                 }
                 else if (tmp < PTR) {
-                    //twritef("%d: pointer type expected\n", line);
-                    if(error == 0) error = 12;
-                    if(error_line == 0) error_line =line;
+                    twritef("%d: %s\n", line, lex_errors[12]);
+                    kernel_exit();
+                    
                 }
                 lexer_context.expr_type = tmp - PTR;
                 *++text = ADD;
                 *++text = (lexer_context.expr_type == CHAR) ? LC : LI;
             }
             else {
-                //twritef("%d: compiler error, token = %d\n", line, lexer_context.token);
-                if(error == 0) error = 13;
-                if(error_line == 0) error_line =line;
+                twritef("%d: %s\n", line, lex_errors[13]);
+                kernel_exit();
             }
         }
     }
@@ -682,25 +654,21 @@ void next() {
 
     while (lexer_context.token = *src) {
         ++src;
-        //DEBUG_PRINT("Token %c\n", lexer_context.token);
 
         // parse lexer_context.token here
         if (lexer_context.token == '\n') {
             ++line;
-            //DEBUG_PRINT("new line\n");
             continue;
         }
         else if (lexer_context.token == '#') {
             // skip macro, because we will not support it
             
-            //DEBUG_PRINT("skip # macro\n");
             while (*src != 0 && *src != '\n') {
                 src++;
             }
         }
         else if ((lexer_context.token >= 'a' && lexer_context.token <= 'z') || (lexer_context.token >= 'A' && lexer_context.token <= 'Z') || (lexer_context.token == '_')) {
 
-            //DEBUG_PRINT("Parsing new identifier\n");
             // parse identifier
             last_pos = src - 1;
             hash = lexer_context.token;
@@ -715,7 +683,6 @@ void next() {
                 if (lexer_context.current_id->hash == hash && !memcmp((char *)lexer_context.current_id->name, last_pos, src - last_pos)) {
                     //found one, return
                     lexer_context.token = lexer_context.current_id->token;
-                    ////DEBUG_PRINT("Found identifier %s\n", lexer_context.current_id->name);
                     return;
                 }
                 lexer_context.current_id += 1;
@@ -727,11 +694,10 @@ void next() {
             lexer_context.current_id->name = last_pos;
             lexer_context.current_id->hash = hash;
             lexer_context.token = lexer_context.current_id->token = Id;
-            ////DEBUG_PRINT("new identifier %s\n", lexer_context.current_id->name);
+
             return;
         }
         else if (lexer_context.token >= '0' && lexer_context.token <= '9') {
-            //DEBUG_PRINT("Parsing new number\n");
             // parse number, three kinds: dec(123) hex(0x123) oct(017)
             lexer_context.token_val = lexer_context.token - '0';
             if (lexer_context.token_val > 0) {
@@ -760,7 +726,6 @@ void next() {
             return;
         }
         else if (lexer_context.token == '"' || lexer_context.token == '\'') {
-            //DEBUG_PRINT("Parsing string literal\n");
             // parse string literal, currently, the only supported escape
             // character is '\n', store the string literal into data.
             last_pos = data;
@@ -791,7 +756,6 @@ void next() {
         }
         else if (lexer_context.token == '/') {
             if (*src == '/') {
-                //DEBUG_PRINT("Skipping comment...\n");
                 // skip comments
                 while (*src != 0 && *src != '\n') {
                     ++src;
@@ -1049,14 +1013,14 @@ void function_parameter() {
 
         // parameter name
         if (lexer_context.token != Id) {
-            //twritef("%d: bad parameter declaration\n", line);
-            if(error == 0) error = 14;
-            if(error_line == 0) error_line =line;
+           twritef("%d: %s\n", line, lex_errors[14]);
+            kernel_exit();
+            
         }
         if (lexer_context.current_id->class == Loc) {
-            //twritef("%d: duplicate parameter declaration\n", line);
-            if(error == 0) error = 15;
-            if(error_line == 0) error_line =line;
+            twritef("%d: %s\n", line, lex_errors[15]);
+            kernel_exit();
+            
         }
 
         match(Id);
@@ -1101,15 +1065,15 @@ void function_body() {
 
             if (lexer_context.token != Id) {
                 // invalid declaration
-                //twritef("%d: bad local declaration\n", line);
-                if(error == 0) error = 16;
-                if(error_line == 0) error_line =line;
+                twritef("%d: %s\n", line, lex_errors[16]);
+                kernel_exit();
+                
             }
             if (lexer_context.current_id->class == Loc) {
                 // identifier exists
-                //twritef("%d: duplicate local declaration\n", line);
-                if(error == 0) error = 17;
-                if(error_line == 0) error_line =line;
+                twritef("%d: %s\n", line, lex_errors[17]);
+                kernel_exit();
+                
             }
             match(Id);
 
@@ -1172,18 +1136,18 @@ void enum_declaration() {
     i = 0;
     while (lexer_context.token != '}') {
         if (lexer_context.token != Id) {
-            //twritef("%d: bad enum identifier %d\n", line, lexer_context.token);
-            if(error == 0) error = 18;
-            if(error_line == 0) error_line =line;
+            twritef("%d: %s\n", line, lex_errors[18]);
+            kernel_exit();
+            
         }
         next();
         if (lexer_context.token == Assign) {
             // like {a=10}
             next();
             if (lexer_context.token != Num) {
-                //twritef("%d: bad enum initializer\n", line);
-                if(error == 0) error = 19;
-                if(error_line == 0) error_line =line;
+                twritef("%d: %s\n", line, lex_errors[19]);
+                kernel_exit();
+                
             }
             i = lexer_context.token_val;
             next();
@@ -1259,15 +1223,14 @@ void global_declaration() {
 
         if (lexer_context.token != Id) {
             // invalid declaration
-            //twritef("%d: bad global declaration\n", line);
-            if(error == 0) error = 20;
-            if(error_line == 0) error_line =line;
+            twritef("%d: %s\n", line, lex_errors[20]);
+                    kernel_exit();
+            
         }
         if (lexer_context.current_id->class) {
             // identifier exists
-            //twritef("%d: duplicate global declaration %s\n", line, lexer_context.current_id->name);
-            if(error == 0) error = 21;
-            if(error_line == 0) error_line =line;
+            twritef("%d: %s\n", line, lex_errors[21]);
+            kernel_exit();
         }
         match(Id);
         lexer_context.current_id->type = type;

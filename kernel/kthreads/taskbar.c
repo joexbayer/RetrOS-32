@@ -442,7 +442,7 @@ static void __callback taskbar_bg_default_color()
 
 static void __callback taskbar_bg_default_color_gray()
 {
-    gfx_set_background_color(0x18);
+    gfx_set_background_color(0x17);
 }
 
 static void __callback taskbar_bg_calc()
