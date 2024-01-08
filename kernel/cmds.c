@@ -283,7 +283,7 @@ static int tcp(int argc, char *argv[])
         return 1;
     }
 
-    int ip = net_is_ipv4(argv[1]) ? ip_to_int(argv[1]) : gethostname(argv[1]);
+    int ip = net_is_ipv4(argv[1]) ? ip_to_int(argv[1]) : htonl(gethostname(argv[1]));
     if(ip == -1){
         twritef("Unable to resolve %s\n", argv[1]);
         return 1;
