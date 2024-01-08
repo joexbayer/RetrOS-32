@@ -192,8 +192,8 @@ Samsung N150 Plus,
 Samsung NP-NC10,
 IBM Thinkpad a21p
 
-<img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/hardware1.png?raw=true">
-<img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/hardware2.png?raw=true">
+<img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/hardware1.jpg?raw=true" width="250">
+<img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/hardware2.jpg?raw=true" width="250">
 
 ## Project Structure (TBD)
     NETOS - Project
