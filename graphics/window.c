@@ -165,12 +165,14 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
     if(!HAS_FLAG(window->flags, GFX_HIDE_HEADER) && !HAS_FLAG(window->flags, GFX_NO_OPTIONS)){
 
         /* full screen */
-        vesa_inner_box(buffer, window->x+window->width-46+6,  window->y-3, 10, 9, theme->window.background);
-        vesa_write_str(buffer, window->x+window->width-44+6,  window->y-2, "^", COLOR_VGA_DARK_GRAY);
+        if(window->is_resizable){    
+            vesa_inner_box(buffer, window->x+window->width-46+6,  window->y-3, 10, 9, theme->window.background);
+            vesa_write_str(buffer, window->x+window->width-44+6,  window->y-2, "^", COLOR_VGA_DARK_GRAY);
+        }
 
         /* Minimize */
         vesa_inner_box(buffer, window->x+window->width-34+6,  window->y-3, 10, 9, theme->window.background);
-        vesa_write_str(buffer, window->x+window->width-32+6,  window->y-2, "-", COLOR_VGA_DARK_GRAY);
+        vesa_write_str(buffer, window->x+window->width-32+6,  window->y-2, " ", COLOR_VGA_DARK_GRAY);
 
         /* Exit */
         vesa_inner_box(buffer, window->x+window->width-22+6,  window->y-3, 10, 9, theme->window.background);
@@ -249,7 +251,7 @@ static void gfx_default_click(struct window* window, int x, int y)
         return; 
     }
 
-    if (x >= window->x + window->width - 46 + 6 && x <= window->x + window->width - 46 + 6 + 10 && y >= window->y - 3 && y <= window->y - 3 + 9) {
+    if (x >= window->x + window->width - 46 + 6 && x <= window->x + window->width - 46 + 6 + 10 && y >= window->y - 3 && y <= window->y - 3 + 9 && window->is_resizable) {
         
         dbgprintf("[GFX WINDOW] Clicked %s full screen button\n", window->name);
         if(window->is_maximized.state == 0){

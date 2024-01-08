@@ -32,12 +32,12 @@ static int prevNewline(unsigned char* str, unsigned char* limit)
 void Editor::reDrawHeader()
 {
 	gfx_draw_rectangle(0, 0, this->c_width, this->c_height, COLOR_BG);
-	gfx_draw_line(17, 0, 17, this->c_height, COLOR_VGA_MEDIUM_GRAY);
+	gfx_draw_line(17, 0, 17, this->c_height, 0);
 	for (int i = 0; i < this->c_height/8; i++)gfx_draw_format_text(0, HEADER_OFFSET+ i*8, COLOR_VGA_MEDIUM_GRAY, "%s%d ", i < 10 ? " " : "", i);
 
 	drawHeaderTable(c_width+24);
 	gfx_draw_format_text(2, 2, COLOR_BLACK, "< >");
-	gfx_draw_format_text(c_width+24-strlen("Save")*8, 2, COLOR_BLACK, "%s", "Save");
+	gfx_draw_format_text(c_width+24-strlen("Save (F1)")*8, 2, COLOR_BLACK, "%s", "Save (F1)");
 }
 
 
@@ -165,7 +165,7 @@ void Editor::Save()
 		return;
 	}
 	
-	write(m_fd, m_textBuffer, m_bufferSize);
+	write(m_fd, m_textBuffer, m_bufferHead);
 	gfx_draw_rectangle(24, c_height-8, c_width-24, 8, COLOR_BG);
 	gfx_draw_format_text(24, c_height-8, COLOR_VGA_MEDIUM_DARK_GRAY, "Saved.");
 }

@@ -41,6 +41,7 @@ struct ip_header {
 
 int net_ipv4_add_header(struct sk_buff* skb, uint32_t ip, uint8_t proto, uint32_t length);
 int net_ipv4_parse(struct sk_buff* skb);
+int net_is_ipv4(char* ip);
 
 
 

@@ -4,7 +4,6 @@
 #include <lib/printf.h>
 #include <utils/Graphics.hpp>
 #include <gfx/events.h>
-#include "../../interp/lex.h"
 #include <util.h>
 #include <colors.h>
 #include <fs/ext.h>

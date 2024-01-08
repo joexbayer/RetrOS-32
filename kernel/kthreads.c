@@ -51,6 +51,8 @@ int kthread_list()
         twritef("%s\n", kthread_table[i].name);
         i++;
     }
+
+    return 0;
 }
 
 /**

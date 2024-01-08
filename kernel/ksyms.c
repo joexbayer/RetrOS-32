@@ -158,12 +158,13 @@ uintptr_t ksyms_resolve_symbol(const char* name)
         }
     }
 
-    return NULL;
+    return 0;
 }
 
 #define MAX_BACKTRACE_DEPTH 100
 
-void __backtrace_from(uintptr_t* ebp){
+void __backtrace_from(uintptr_t* ebp)
+{
     uintptr_t stack[MAX_BACKTRACE_DEPTH] = {0};
     int depth = 0;
     while (depth < MAX_BACKTRACE_DEPTH && ebp) {
@@ -189,11 +190,11 @@ void __backtrace_from(uintptr_t* ebp){
                     __symbols->symtable[j].addr, 
                     addr - __symbols->symtable[j].addr);
 
-                vesa_printf((uint8_t*)vbe_info->framebuffer, 0, i*8 + 100, 0, "%s: 0x%x - 0x%x = 0x%x\n", 
+                /*vesa_printf((uint8_t*)vbe_info->framebuffer, 0, i*8 + 100, 0, "%s: 0x%x - 0x%x = 0x%x\n", 
                     __symbols->symtable[j].name, 
                     addr, 
                     __symbols->symtable[j].addr, 
-                    addr - __symbols->symtable[j].addr);
+                    addr - __symbols->symtable[j].addr);*/
                 found = 1;
                 break;
             }

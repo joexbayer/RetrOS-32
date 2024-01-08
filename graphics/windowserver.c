@@ -27,6 +27,7 @@ static int ws_set_background(struct windowserver* ws, color_t color);
 static int ws_set_background_file(struct windowserver* ws, const char* path);
 static int ws_draw(struct windowserver* ws);
 static int ws_destroy(struct windowserver* ws);
+static int ws_raw_wallpaper(struct windowserver* ws, char* path);
 
 static struct window_server_ops ws_default_ops = {
     .init = ws_init,
@@ -36,7 +37,8 @@ static struct window_server_ops ws_default_ops = {
     .set_background = ws_set_background,
     .set_background_file = ws_set_background_file,
     .draw = ws_draw,
-    .destroy = ws_destroy
+    .destroy = ws_destroy,
+    .set_raw_wallpaper = ws_raw_wallpaper
 };
 
 static int ws_init(struct windowserver* ws)
@@ -68,12 +70,12 @@ static int ws_init(struct windowserver* ws)
     return 0;
 }
 
-static int ws_load_default_wallpaper(struct windowserver* ws)
+static int ws_raw_wallpaper(struct windowserver* ws, char* path)
 {
     ERR_ON_NULL(ws);
     WS_VALIDATE(ws);
 
-    int ret = fs_load_from_file("output.bin", ws->background, 640*480);
+    int ret = fs_load_from_file(path, ws->background, 640*480);
     if(ret <= 0){
         dbgprintf("[WSERVER] Could not read background file: %d.\n", ret);
         return -ERROR_FILE_NOT_FOUND;
@@ -307,7 +309,7 @@ static int ws_draw(struct windowserver* ws)
 
     ENTER_CRITICAL();
     /* Copy buffer over to framebuffer. */
-    memcpy((uint8_t*)vbe_info->framebuffer, ws->_wm->composition_buffer, ws->_wm->composition_buffer_size);
+    xmemcpy((uint8_t*)vbe_info->framebuffer, ws->_wm->composition_buffer, ws->_wm->composition_buffer_size);
 
     LEAVE_CRITICAL();
 
@@ -336,9 +338,10 @@ struct windowserver* ws_new()
     }
 
     if(vbe_info->width == 640){
-        ws_load_default_wallpaper(ws);
+        //sws_load_default_wallpaper(ws);
+        ws_set_background(ws, 0x17);
     } else {
-        ws_set_background(ws, 0x3);
+        ws_set_background(ws, 0x17);
     }
 
     kref_get(&ws->_krefs);

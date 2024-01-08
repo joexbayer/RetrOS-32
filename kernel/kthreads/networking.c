@@ -47,9 +47,8 @@ struct networkmanager netd = {
 
 static struct net_interface* __net_find_interface(char* dev)
 {
-    int len = strlen(dev);
     for (int i = 0; i < netd.if_count; i++){
-        if(strncmp(netd.ifs[i]->name, dev, strlen(len)) == 0) return netd.ifs[i];
+        if(strcmp(netd.ifs[i]->name, dev) == 0) return netd.ifs[i];
     }
     return NULL;
 }
@@ -76,10 +75,11 @@ static void __net_config_loopback()
     interface->netmask = 0xff000000;
     interface->gateway = 0x7f000001;
 
-    struct arp_entry entry = {
+    struct arp_content entry = {
         .sip = ntohl(LOOPBACK_IP), /* Store IP in host byte order */
         .smac = {0x69, 0x00, 0x00, 0x00, 0x00, 0x00}
     };
+
     net_arp_add_entry(&entry);
 }
 
@@ -88,7 +88,10 @@ static void __net_transmit_skb(struct sk_buff* skb)
     if(skb == NULL || skb->interface == NULL) return;
 
     int ret = skb->interface->ops->send(skb->interface, skb->head, skb->len);
-    if(ret < 0) return;    
+    if(ret < 0){
+        warningf("Failed to send packet %d\n", ret);
+        return;
+    }    
    
     netd.packets++;
     netd.stats.sent++;
@@ -125,7 +128,7 @@ void __callback net_incoming_packet(struct netdev* dev)
     if(interface == NULL) return;
 
     struct sk_buff* skb = skb_new();
-    skb->len = dev->read(skb->data, MAX_PACKET_SIZE);
+    skb->len = dev->read((byte_t*)skb->data, MAX_PACKET_SIZE);
     if(skb->len <= 0) {
         dbgprintf("Received an empty packet.\n");
         skb_free(skb);
@@ -209,26 +212,23 @@ int net_register_interface(struct net_interface* interface)
 
 int net_send_skb(struct sk_buff* skb)
 {
+    dbgprintf("Sending SKB\n");
     ERR_ON_NULL(netd.skb_tx_queue);
-
 
     if (skb->interface == NULL){
         warningf("No interface specified for SKB. Dropping packet.\n");
         skb_free(skb);
         return -1;
     }
-    
 
     RETURN_ON_ERR(netd.skb_tx_queue->ops->add(netd.skb_tx_queue, skb));
     netd.packets++;
-    dbgprintf("Added SKB to TX queue\n");
 
     if(netd.instance != NULL && netd.instance->state == BLOCKED){ 
         netd.instance->state = RUNNING;
     }
 
     return 0;
-    
 }
 
 error_t net_get_info(struct net_info* info)
@@ -303,7 +303,8 @@ void __kthread_entry networking_main()
     if(netd.if_count > 1){
         start("dhcpd", 0, NULL);
     }
-    start("udp_server", 0, NULL);
+    
+    //start("udp_server", 0, NULL);
     start("tcp_server", 0, NULL); 
     int todos =0;
     while(1){

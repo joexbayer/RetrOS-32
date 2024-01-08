@@ -29,7 +29,7 @@ const char* mbr_partition_type_string(mbr_partition_type_t type)
     }
 }
 
-static struct mbr mbr;
+static struct mbr mbr = {0};
 
 /**
  * @brief Parses the partition table and loads the filesystems.

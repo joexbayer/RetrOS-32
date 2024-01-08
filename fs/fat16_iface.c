@@ -18,7 +18,7 @@
 
 #include <terminal.h>
 
-static char* months[] = {"NAN", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Nov", "Dec"};
+static char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Nov", "Dec"};
 
 /* filesystem_ops prototypes */
 static int fat16_write(struct filesystem* fs, struct file* file, const void* buf, int size);
@@ -116,9 +116,7 @@ static int fat16_write(struct filesystem* fs, struct file* file, const void* buf
     }
 
     /* update the file size */
-    if ((uint32_t)(offset + written) > entry.file_size) {
-        entry.file_size = offset + written;
-    }
+    entry.file_size = offset + written;
 
     fat16_sync_directory_entry(file->directory, file->identifier, &entry);
 
@@ -481,7 +479,7 @@ static int fat16_list(struct filesystem* fs, const char* path, char* buf, int si
 
             /* get time */
             uint16_t time = dir_entry->created_time;
-            uint8_t seconds = (time & 0x1F) * 2;
+            //uint8_t seconds = (time & 0x1F) * 2;
             uint8_t minutes = (time >> 5) & 0x3F;
             uint8_t hours = (time >> 11) & 0x1F;
 
@@ -489,7 +487,7 @@ static int fat16_list(struct filesystem* fs, const char* path, char* buf, int si
             uint16_t date = dir_entry->created_date;
             uint8_t day = date & 0x1F;
             uint8_t month = (date >> 5) & 0x0F;
-            uint16_t year = 1980 + ((date >> 9) & 0x7F);
+            //uint16_t year = 1980 + ((date >> 9) & 0x7F);
 
             /* get size unit */
             struct unit size_unit = calculate_size_unit(dir_entry->file_size);

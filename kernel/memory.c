@@ -51,9 +51,9 @@ int memory_map_init(int total_memory, int extended_memory)
 		.permanent.to 		= start + kernel + permanent,
 		.permanent.total 	= permanent,
 
-		.virtual.from 		= start + kernel + permanent,
-		.virtual.to 		= start + kernel + permanent + virtual,
-		.virtual.total 		= virtual,
+		.virtual_memory.from 		= start + kernel + permanent,
+		.virtual_memory.to 		= start + kernel + permanent + virtual,
+		.virtual_memory.total 		= virtual,
 
 		.total 				= permanent+kernel+virtual,
 		.initialized 		= true
@@ -147,8 +147,8 @@ error_t get_mem_info(struct mem_info* info)
 		.kernel.used = kmemory_used(),
 		.permanent.total = memory_map_get()->permanent.total,
 		.permanent.used = pmemory_used(),
-		.virtual.total = memory_map_get()->virtual.total,
-		.virtual.used = vmem_total_usage(),
+		.virtual_memory.total = memory_map_get()->virtual_memory.total,
+		.virtual_memory.used = vmem_total_usage(),
 	};
 
 	*info = inf;

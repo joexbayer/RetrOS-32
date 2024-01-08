@@ -101,7 +101,7 @@ int main()
     while (1){
         demo.rotateCube();
         demo.drawCube();
-        sleep(20);
+        sleep(200);
 
         gfx_get_event(&e, GFX_EVENT_NONBLOCKING);
         switch (e.event)

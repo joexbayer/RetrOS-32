@@ -17,6 +17,7 @@
 #include <terminal.h>
 #include <gfx/theme.h>
 #include <gfx/events.h>
+#include <conf.h>
 
 #include <screen.h>
 
@@ -32,7 +33,7 @@ int scan(ubyte_t* data, int size)
 
 void terminal_set_color(color_t color)
 {
-	current_running->term->text_color = color;
+	//current_running->term->text_color = color;
 }
 
 static void __terminal_syntax(unsigned char c)
@@ -118,8 +119,11 @@ static int __terminal_attach(struct terminal* term);
 static int __terminal_detach(struct terminal* term);
 static int __terminal_reset(struct terminal* term);
 static int __terminal_set_ops(struct terminal* term, struct terminal_ops* ops);
-static int __terminal_scan(struct terminal* term, ubyte_t* data, int size);	
+static int __terminal_scan_graphics(struct terminal* term, ubyte_t* data, int size);	
+static int __terminal_scan_textmode(struct terminal* term, ubyte_t* data, int size);
 static int __terminal_scanf(struct terminal* term, char* fmt, ...);
+static int __terminal_getchar_graphics(struct terminal* term);
+static int __terminal_getchar_textmode(struct terminal* term);
 
 /* default terminal ops (graphics) */
 struct terminal_ops terminal_ops = {
@@ -131,8 +135,9 @@ struct terminal_ops terminal_ops = {
 	.detach = __terminal_detach,
 	.reset = __terminal_reset,
 	.set = __terminal_set_ops,
-	.scan = __terminal_scan,
+	.scan = __terminal_scan_graphics,
 	.scanf = __terminal_scanf,
+	.getchar = __terminal_getchar_graphics,
 };
 
 /**
@@ -152,20 +157,35 @@ struct terminal* terminal_create(terminal_flags_t flags)
 	}
 
 	term->ops = &terminal_ops;
-	if(HAS_FLAG(flags, TERMINAL_TEXT_MODE)){
-		term->ops->putchar = __terminal_putchar_textmode;
-		term->ops->commit = __terminal_commit_textmode;
-	}
 
 	term->head = 0;
 	term->tail = 0;
 	term->lines = 0;
-	term->text_color = COLOR_WHITE;
+	term->text_color =  0x1c;
 	term->bg_color = COLOR_BLACK;
 	term->screen = NULL;
 
-	current_running->term = term;
+	char* bg_color = config_get_value("terminal", "background");
+	if(bg_color != NULL){
+		term->bg_color = htoi(bg_color);
+	}
 
+	char* text_color = config_get_value("terminal", "text");
+	if(text_color != NULL){
+		term->text_color = htoi(text_color);
+	}
+
+	if(HAS_FLAG(flags, TERMINAL_TEXT_MODE)){
+		term->ops->putchar = __terminal_putchar_textmode;
+		term->ops->commit = __terminal_commit_textmode;
+		term->ops->scan = __terminal_scan_textmode;
+		term->ops->getchar = __terminal_getchar_textmode;
+
+		term->bg_color = VGA_COLOR_BLUE;
+		term->text_color = VGA_COLOR_WHITE;
+	}
+
+	current_running->term = term;
 	kref_init(&term->ref);
 
 	return term;
@@ -202,13 +222,83 @@ static int __terminal_set_ops(struct terminal* term, struct terminal_ops* ops)
 	if(ops->attach == 0) ops->attach = term->ops->attach;
 	if(ops->detach == 0) ops->detach = term->ops->detach;
 	if(ops->reset == 0) ops->reset = term->ops->reset;
+	if(ops->scan == 0) ops->scan = term->ops->scan;
+	if(ops->scanf == 0) ops->scanf = term->ops->scanf;
+	if(ops->getchar == 0) ops->getchar = term->ops->getchar;
 	
 	term->ops = ops;
 
 	return 0;
 }
 
-static int __terminal_scan(struct terminal* term, ubyte_t* data, int size)
+static int __terminal_getchar_graphics(struct terminal* term)
+{
+	if(term == NULL) return -1;
+
+	struct gfx_event event;
+	gfx_event_loop(&event, GFX_EVENT_BLOCKING);
+
+	switch (event.event){
+	case GFX_EVENT_KEYBOARD:
+		return event.data;
+	case GFX_EVENT_EXIT:
+		kernel_exit();
+		return -1;
+	default:
+		break;
+	}
+
+	return -1;
+}
+
+static int __terminal_getchar_textmode(struct terminal* term)
+{
+	if(term == NULL) return -1;
+
+	ubyte_t c = kb_get_char();
+	if(c == 0) return -1;
+
+	return c;
+}
+
+
+static int __terminal_scan_textmode(struct terminal* term, ubyte_t* data, int size)
+{
+	if(term == NULL || data == NULL) return -1;
+
+	int i = 0;
+	ubyte_t c = 0;
+	while (i < size && c != '\n'){
+		c = kb_get_char();
+		if(c == 0) continue;
+
+		if(c == CTRLC){
+			return -1;
+		}
+
+		if(c == '\b'){
+			data[i] = 0;
+			i--;
+			if(i < 0) i = 0;
+			term->head--;
+			term->textbuffer[term->head] = 0;
+			term->ops->commit(term);
+			continue;
+		}
+
+		data[i] = c;
+		i++;
+
+		term->ops->putchar(term, c);
+		term->ops->commit(term);
+	}
+
+	data[i] = '\0';
+
+	return i;
+}
+
+static int __terminal_scan_graphics(struct terminal* term, ubyte_t* data, int size)
 {
 	if(term == NULL || data == NULL) return -1;
 
@@ -225,6 +315,17 @@ static int __terminal_scan(struct terminal* term, ubyte_t* data, int size)
 				return -1;
 			default:{
 					c = event.data;
+
+					if(c == '\b'){
+						data[i] = 0;
+						i--;
+						if(i < 0) i = 0;
+						term->head--;
+						term->textbuffer[term->head] = 0;
+						term->ops->commit(term);
+						break;
+					}
+
 					data[i] = c;
 					i++;
 
@@ -236,7 +337,7 @@ static int __terminal_scan(struct terminal* term, ubyte_t* data, int size)
 			break;
 		case GFX_EVENT_EXIT:
 			kernel_exit();
-			return;
+			return -1;
 		default:
 			break;
 		}
@@ -300,7 +401,7 @@ static int __terminal_putchar_textmode(struct terminal* term, char c)
 	if(term == NULL) return -1;
 
 	if(c == '\n'){
-		if(SCREEN_HEIGHT-1 == term->lines){
+		if(SCREEN_HEIGHT-2 <= term->lines){
 			__terminal_scroll(term);
 		} else {
 			term->lines++;
@@ -312,6 +413,7 @@ static int __terminal_putchar_textmode(struct terminal* term, char c)
 
 	return 1;
 }
+
 
 static int __terminal_write(struct terminal* term, const char* data, int size)
 {
@@ -355,7 +457,13 @@ static int __terminal_commit_textmode(struct terminal* term)
 {
 	if(term == NULL) return -1;
 
-	scr_clear();
+	/* Clear screen */
+	for (int i = 1; i < SCREEN_HEIGHT-1; i++){
+		for (int j = 1; j < SCREEN_WIDTH-2; j++){
+			scrput(j, i, ' ', term->text_color | term->bg_color << 4);
+		}
+	}
+
 	int x = 0, y = 1;
 	for (int i = term->tail; i < term->head; i++){
 		if(term->textbuffer[i] == '\n'){
@@ -364,7 +472,7 @@ static int __terminal_commit_textmode(struct terminal* term)
 			continue;
 		}
 
-		scrput(x, y, term->textbuffer[i], VGA_COLOR_WHITE | VGA_COLOR_BLUE << 4);
+		scrput(1+x, y, term->textbuffer[i], term->text_color | term->bg_color << 4);
 		x++;
 	}
 
@@ -377,7 +485,7 @@ static int __terminal_commit_graphics(struct terminal* term)
 
 	struct gfx_theme* theme = kernel_gfx_current_theme();
 	int x = 0, y = 0;
-	kernel_gfx_draw_rectangle(term->screen, 0, 0, term->screen->inner_width, term->screen->inner_height, theme->terminal.background);
+	kernel_gfx_draw_rectangle(term->screen, 0, 0, term->screen->inner_width, term->screen->inner_height, term->bg_color);
 	for (int i = term->tail; i < term->head; i++){
 		if(term->textbuffer[i] == '\n'){
 			x = 0;
@@ -386,7 +494,7 @@ static int __terminal_commit_graphics(struct terminal* term)
 		}
 
 		__terminal_syntax(term->textbuffer[i]);
-		kernel_gfx_draw_char(term->screen, 1 + x*8, 1+ y*8, term->textbuffer[i], term->text_color);
+		kernel_gfx_draw_char(term->screen, 1 + x*8, 2+ y*8, term->textbuffer[i], term->text_color);
 		x++;
 	}
 

@@ -55,6 +55,14 @@ int gfx_set_background_color(color_t color)
     return ERROR_OK;
 }
 
+int gfx_raw_background(char* path)
+{
+    ERR_ON_NULL(ws);
+
+    ws->ops->set_raw_wallpaper(ws, path);
+    return ERROR_OK;
+}
+
 int gfx_decode_background_image(const char* file)
 {
     ERR_ON_NULL(ws);

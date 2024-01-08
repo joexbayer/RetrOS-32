@@ -49,6 +49,7 @@
 #include <multiboot.h>
 
 #include <screen.h>
+#include <conf.h>
 
 #define TEXT_COLOR 15  /* White color for text */
 #define LINE_HEIGHT 8  /* Height of each line */
@@ -92,8 +93,8 @@ void kernel(uint32_t magic)
 	vbe_info->pitch = mb_info->framebuffer_width;
 	vbe_info->framebuffer = mb_info->framebuffer_addr;
 
-	kernel_context.total_memory->extended_memory_low = 8*1024;
-	kernel_context.total_memory->extended_memory_high = 0;
+	kernel_context.boot_info->extended_memory_low = 8*1024;
+	kernel_context.boot_info->extended_memory_high = 0;
 #else
 
 	/* Point VBE to magic input and update total memory. */
@@ -109,7 +110,7 @@ void kernel(uint32_t magic)
 	__deprecated kernel_size = _end-_code;
 
 	/* Serial is used for debuging purposes. */
-    init_serial();
+    //init_serial();
 	dbgprintf("INF: %s - %s\n", KERNEL_NAME, KERNEL_VERSION);
 
 	kernel_boot_printf("Booting OS...");
@@ -159,9 +160,10 @@ void kernel(uint32_t magic)
 	kernel_boot_printf("Networking initialized.");
 
 	/* initilize file systems and disk */
-	mbr_partition_load();
 	if(!disk_attached()){
 		virtual_disk_attach();
+	} else {
+		mbr_partition_load();
 	}
 	kernel_boot_printf("Filesystem initialized.");
 
@@ -219,6 +221,8 @@ void kernel(uint32_t magic)
 	start("netd", 0, NULL);
 	kernel_boot_printf("Deamons initialized.");
 
+	config_load("default.cfg");
+
 	init_pit(1000);
 	kernel_boot_printf("Timer initialized.");
 
@@ -245,6 +249,11 @@ void init_kctors()
         __func();
         __address++;
     }
+}
+
+struct kernel_context* kernel_get_context()
+{
+	return &kernel_context;
 }
 
 #define HEXDUMP_COLS 8

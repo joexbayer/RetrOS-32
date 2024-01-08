@@ -45,10 +45,10 @@ struct mem_info {
 		int used;
 		int total;
 	} kernel;
-	struct virtual {
+	struct _virtual {
 		int used;
 		int total;
-	}virtual;
+	}virtual_memory;
 	struct permanent {
 		int used;
 		int total;
@@ -70,7 +70,7 @@ struct memory_map {
 		uintptr_t from;
 		uintptr_t to;
 		int total;
-	} virtual;
+	} virtual_memory;
 	int total;
 	bool_t initialized;
 };

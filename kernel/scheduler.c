@@ -309,10 +309,13 @@ static int sched_exit(struct scheduler* sched)
     sched->exits++;  
 
     /* Add cleanup routine to work queue */
-    work_queue_add(&pcb_cleanup_routine, (void*)((int)sched->ctx.running->pid), NULL);
-    sched->ctx.running = NULL;
+    //work_queue_add(&pcb_cleanup_routine, (void*)((int)sched->ctx.running->pid), NULL);
+    sched->ctx.running->state = ZOMBIE;
     
     CRITICAL_SECTION({
+
+        pcb_save_context(sched->ctx.running);
+
         /* Switch to next PCB, dont need to store context */
         PANIC_ON_ERR(sched_round_robin(sched));
 

@@ -28,6 +28,7 @@ struct window_server_ops {
     int (*fullscreen)(struct windowserver* ws, struct window* window);
     int (*set_background)(struct windowserver* ws, color_t color);
     int (*set_background_file)(struct windowserver* ws, const char* path);
+    int (*set_raw_wallpaper)(struct windowserver* ws, char* path);
     int (*draw)(struct windowserver* ws);
     int (*destroy)(struct windowserver* ws);
 };

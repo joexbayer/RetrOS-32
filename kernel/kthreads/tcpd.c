@@ -27,9 +27,7 @@
 #include <kernel.h>
 
 static struct sock* client = NULL;
-static char* about_text = "\nRetrOS-32 - 32-bit operating system\n    " KERNEL_RELEASE " " KERNEL_VERSION " - " KERNEL_DATE "\n";
-
-static int __net_terminal_writef(struct terminal* term, const char* fmt, ...)
+static int __net_terminal_writef(struct terminal* term, char* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
@@ -77,12 +75,11 @@ void __kthread_entry tcp_server()
 
     while(1){
         struct sockaddr_in client_addr; 
-        client = kernel_accept(socket, &client_addr, sizeof(client_addr));
+        client = kernel_accept(socket, (struct sockaddr*)&client_addr, sizeof(client_addr));
         if (client == NULL){
             dbgprintf("Unable to accept connection: client is NULL\n");
             kernel_exit();
         }
-
 
         dbgprintf("Client connected from %i:%d\n", client_addr.sin_addr.s_addr, client_addr.sin_port);
 

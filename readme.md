@@ -14,22 +14,19 @@
 [![LinkedIn][linkedin-shield]][linkedin-url]
 -->
 
-
-
-
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
   <h1 align="center">RetrOS 32bit</h1>
 
   <p align="center">
-    <img src="https://github.com/joexbayer/RetrOS-32/blob/main/graphics/logo.png?raw=true">
+    <img src="https://github.com/joexbayer/RetrOS-32/blob/main/graphics/logo.png?raw=true" width="150">
   </p>
 
   <p align="center">
     Hobby 32bit operatingsystem project focusing on networking on i386 architecture.
     <br />
-    <a href="https://github.com/joexbayer/RetrOS-32"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/joexbayer/RetrOS-32/tree/main/docs"><strong>Explore the docs »</strong></a>
     <br />
     <br />
     <a href="https://github.com/joexbayer/RetrOS-32">View Demo</a>
@@ -72,12 +69,12 @@
 
 <!-- ABOUT THE PROJECT -->
 <p align="center">
-  <img src="https://github.com/joexbayer/RetrOS-32/blob/main/graphics/screenshot2.png?raw=true">
+  <img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/retros.gif?raw=true">
 </p>
 
-| | |
-|:-------------------------:|:-------------------------:|
-| <img src="https://github.com/joexbayer/RetrOS-32/blob/main/graphics/screenshot1.png?raw=true"> | <img src="https://github.com/joexbayer/RetrOS-32/blob/main/graphics/screenshot3.png?raw=true">
+| | | |
+|:-------------------------:|:-------------------------:|:-------------------------:|
+| <img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/screenshot1.png?raw=true"> | <img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/screenshot2.png?raw=true"> | <img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/screenshot3.png?raw=true">
 ## About The Project
 
 <p align="center">32bit Hobby Operatingsystem with graphics, multitasking and networking!</p>
@@ -115,9 +112,30 @@ For native compilation you will need:
 
 ### Installation
 
-_To compile the kernel and its needed programs you simply need to run *make iso* and *make qemu* to open QEMU_
+_To compile the kernel and its needed programs you simply need to run *make img* and *make qemu* to open QEMU_
 
-#### MacOS / Linux
+#### Linux
+1. Clone the repo
+   ```sh
+   git clone https://github.com/joexbayer/RetrOS-32.git
+   ```
+2. Compile the kernel and create .img file
+   ```sh
+   make img
+   ```
+
+   _Note: needs sudo to mount the .img file and copy over files!_
+   
+3. Launch QEMU
+   ```sh
+   make qemu
+   ```
+
+4. Use GRUB (Optional)
+   ```sh
+   make grub
+   ```
+#### MacOS
 
 ##### MacOS can compile the kernel but not the needed tools.
 1. Clone the repo
@@ -133,6 +151,11 @@ _To compile the kernel and its needed programs you simply need to run *make iso*
 3. Launch QEMU
    ```sh
    make qemu
+   ```
+
+4. Use GRUB (Optional)
+   ```sh
+   make grub
    ```
 #### Windows
   Using Docker (can also compile in WSL)
@@ -168,6 +191,9 @@ Dell Optiplex 780,
 Samsung N150 Plus,
 Samsung NP-NC10,
 IBM Thinkpad a21p
+
+<img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/hardware1.png?raw=true">
+<img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/hardware2.png?raw=true">
 
 ## Project Structure (TBD)
     NETOS - Project
@@ -257,6 +283,7 @@ IBM Thinkpad a21p
   - [x] DHCP
   - [x] DNS
   - [x] TCP
+  - [x] Netcat style commands
   - [ ] Telnet
   - [ ] HTTP
   - [ ] HTML
@@ -285,11 +312,12 @@ IBM Thinkpad a21p
 - [x] Editor with Syntax Highlighting
 - [x] Calculator
 - [x] 3D Game
+- [x] Snake game (Textmode only)
 - [x] Userspace threads (shared virtual memory)
 - [x] Remote virtual terminal over TCP
 - [x] Tools
   - [x] Build
-  - [ ] Sync / Migration Took
+  - [x] Sync / Migration Took
   - [x] mkfs
   - [x] Testing
   - [ ] Create & Encode icons and wallpapers

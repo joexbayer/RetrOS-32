@@ -41,6 +41,7 @@ static void __callback taskbar_bg_retro();
 static void __callback taskbar_bg_calc();
 static void __callback taskbar_bg_graph();
 static void __callback taskbar_bg_default_color();
+static void __callback taskbar_bg_default_color_gray();
 static void __callback taskbar_sysinf();
 static void __callback taskbar_about();
 
@@ -139,8 +140,13 @@ struct taskbar_options {
             .options = {
                 {
                     .icon = bin_16,
-                    .name = "Color",
+                    .name = "Turquoise",
                     .callback = &taskbar_bg_default_color
+                },
+                {
+                    .icon = bin_16,
+                    .name = "Gray",
+                    .callback = &taskbar_bg_default_color_gray
                 },
                 {
                     .icon = bin_16,
@@ -151,11 +157,6 @@ struct taskbar_options {
                     .icon = bin_16,
                     .name = "LOTR 2",
                     .callback = &taskbar_bg_lotr2
-                },
-                {
-                    .icon = bin_16,
-                    .name = "WIN95",
-                    .callback = &taskbar_bg_default
                 },
                 {
                     .icon = bin_16,
@@ -217,10 +218,16 @@ static void taskbar_hdr_event(struct window* w, struct taskbar_header* header, i
         for (int j = 0; j < TASKBAR_MAX_OPTIONS; j++){
             if(header->options[j].name[0] == 0) break;
 
+            w->draw->box(w, header->x+4, header->y+20 + (j*TASKBAR_OPTIONS_HEIGHT) + 4, TASKBAR_EXT_OPT_WIDTH-8, 16, 30);
+
             if(header->options[j].icon != NULL){
                 gfx_put_icon16(header->options[j].icon, header->x+4, header->y+20 + (j*TASKBAR_OPTIONS_HEIGHT) + 4);
             }
             w->draw->text(w, header->x+24, header->y+20 + (j*TASKBAR_OPTIONS_HEIGHT) + 8, header->options[j].name, COLOR_BLACK);
+            
+
+            
+
             //w->draw->rect(w, header->x, header->y+18 + (j*8) +4+9, TASKBAR_EXT_OPT_WIDTH, 1, COLOR_VGA_DARK_GRAY);
         }
     }
@@ -242,10 +249,11 @@ static void taskbar_hdr_opt_event(struct window* w, struct taskbar_header* heade
                 header->x+4, /* x, 4 padding */
                 header->y+20 + (j*TASKBAR_OPTIONS_HEIGHT) + 4, /* y, 18 offset from header */
                 header->x+4 + TASKBAR_EXT_OPT_WIDTH, /* width */
-                header->y+20 + (j*TASKBAR_OPTIONS_HEIGHT) + 4 + 8, /* height */
+                header->y+20 + (j*TASKBAR_OPTIONS_HEIGHT) + 4 + 16, /* height */
                 x, y) /* mouse position */
             ){
             dbgprintf("Clicked option %s\n", header->options[j].name);
+
             
             if(header->options[j].callback != NULL){
                 header->options[j].callback();
@@ -272,7 +280,6 @@ static void __kthread_entry taskbar(void)
 
     struct time time;
     struct gfx_event event;
-    struct mem_info mem_info;
     int timedate_length = strlen("00:00:00 00/00/0000");
 
     w->draw->rect(w, 0, 1, vbe_info->width, TASKBAR_HEIGHT, 30);
@@ -291,7 +298,7 @@ static void __kthread_entry taskbar(void)
     
     while (1){
 
-        gfx_put_icon16(wlan_16, w->inner_width - (timedate_length*8) - 20, 4);
+        gfx_put_icon16(wlan_16, w->inner_width - (timedate_length*8) - 20, 2);
 
         get_current_time(&time);
         w->draw->rect(w, w->inner_width - (timedate_length*8), 5, timedate_length*8, 10, 30);
@@ -398,7 +405,7 @@ static void __callback taskbar_clock()
 
 static void __callback taskbar_bg_default()
 {
-    gfx_decode_background_image("/imgs/win2.img");
+    gfx_raw_background("/imgs/snow.bin");
 }
 
 static void __callback taskbar_bg_lotr()
@@ -413,7 +420,10 @@ static void __callback taskbar_bg_lotr2()
 
 static void __callback taskbar_bg_retro()
 {
-    gfx_decode_background_image("/imgs/retro.img");
+    if(vbe_info->height == 480)
+        gfx_raw_background("/imgs/output.bin");
+    else
+        gfx_decode_background_image("/imgs/retro.img");
 }
 
 static void __callback taskbar_bg_graph()
@@ -426,6 +436,11 @@ static void __callback taskbar_bg_graph()
 static void __callback taskbar_bg_default_color()
 {
     gfx_set_background_color(3);
+}
+
+static void __callback taskbar_bg_default_color_gray()
+{
+    gfx_set_background_color(0x17);
 }
 
 static void __callback taskbar_bg_calc()

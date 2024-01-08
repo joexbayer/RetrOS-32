@@ -23,7 +23,6 @@ FILE* filesystem = NULL;
 
 /* TODO: as argv */
 static const int IMG_SIZE = 32*1024*1024;
-static const char* name = "RetrOS-32.img";
 
 int build_load_bootloader()
 {
@@ -106,7 +105,7 @@ int main(int argc, char const *argv[]) {
     int disk_only = 0;
     int release = 0;
     
-    int kernel_block_count;
+    int kernel_block_count = 0;
     int ret;
 
     for (int i = 1; i < argc; i++) {

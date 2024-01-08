@@ -30,6 +30,18 @@ int strlen(const char* str)
 	return len;
 }
 
+inline uint32_t strcpy(char* dest, const char* src)
+{
+    uint32_t i = 0;
+    while (src[i] != '\0')
+    {
+        dest[i] = src[i];
+        i++;
+    }
+    dest[i] = '\0';
+    return i;
+}
+
 inline uint32_t strncmp(const char* str, const char* str2, uint32_t len)
 {
 	return memcmp((uint8_t*)str, (uint8_t*)str2, len);
@@ -263,6 +275,35 @@ void* memcpy(void *dest, const void *src, int n)
 
 	return dest;
 }
+
+
+void* xmemcpy(void *dest, const void *src, int n)
+{
+	uint32_t num_dwords	= n / 4;
+	uint32_t num_bytes	= n % 4;
+	uint32_t* dest32	= (uint32_t*) dest;
+	uint32_t* src32 	= (uint32_t*) src;
+	uint8_t* dest8 		= ((uint8_t*) dest) + num_dwords * 4;
+	uint8_t* src8 		= ((uint8_t*) src) + num_dwords * 4;
+	uint32_t i;
+
+	for (i=0; i < num_dwords; i++){
+        if(dest32[i] == src32[i]){
+            continue;
+        }
+		dest32[i] = src32[i];
+	}
+
+	for (i=0; i < num_bytes; i++){
+        if(dest8[i] == src8[i]){
+            continue;
+        }
+		dest8[i] = src8[i];
+	}
+
+	return dest;
+}
+
 /**
  * void *dest, int val, int n
  *

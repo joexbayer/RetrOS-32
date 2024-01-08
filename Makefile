@@ -57,11 +57,11 @@ GFXOBJ = bin/window.o bin/component.o bin/composition.o bin/gfxlib.o bin/api.o b
 
 KERNELOBJ = bin/kernel.o bin/terminal.o bin/helpers.o bin/pci.o bin/virtualdisk.o bin/windowmanager.o bin/icons.o bin/vga.o \
 			bin/util.o bin/interrupts.o bin/irs_entry.o bin/timer.o bin/gdt.o bin/interpreter.o bin/vm.o bin/lex.o bin/smp.o \
-			bin/keyboard.o bin/pcb.o bin/pcb_queue.o bin/memory.o bin/vmem.o bin/kmem.o bin/e1000.o bin/display.o bin/env.o \
+			bin/keyboard.o bin/pcb.o bin/pcb_queue.o bin/memory.o bin/vmem.o bin/kmem.o bin/e1000.o bin/display.o bin/env.o bin/conf.o \
 			bin/sync.o bin/kthreads.o bin/ata.o bin/bitmap.o bin/rtc.o bin/tss.o bin/kutils.o bin/script.o bin/login.o bin/cmds.o \
 			bin/diskdev.o bin/scheduler.o bin/work.o bin/rbuffer.o bin/errors.o bin/kclock.o bin/tar.o bin/color.o bin/loopback.o \
 			bin/serial.o bin/io.o bin/syscalls.o bin/list.o bin/hashmap.o bin/vbe.o bin/ksyms.o bin/windowserver.o bin/encoding.o\
-			bin/mouse.o bin/ipc.o bin/sysinf.o ${PROGRAMOBJ} ${GFXOBJ} bin/font8.o bin/net.o bin/fs.o bin/ext.o bin/fat16.o bin/partition.o
+			bin/mouse.o bin/ipc.o bin/sysinf.o ${PROGRAMOBJ} ${GFXOBJ} bin/font8.o bin/net.o bin/fs.o bin/ext.o bin/fat16.o bin/partition.o bin/snake.o
 
 BOOTOBJ = bin/bootloader.o
 
@@ -190,28 +190,33 @@ grub: grub_fix apps multiboot_kernel
 
 qemu_kernel: CCFLAGS += -DGRUB_MULTIBOOT
 qemu_kernel: grub_fix grub_fix multiboot_kernel
-	sudo qemu-system-i386 $(QEMU_OPS) -kernel bin/kernelout
+	qemu-system-i386 $(QEMU_OPS) -kernel bin/kernelout
 
 docker-rebuild:
 	docker-compose build --no-cache
 
 docker:
-	sudo docker-compose up
+	docker-compose up
 
 vdi: cleanvid docker
 	qemu-img convert -f raw -O vdi boot.img boot.vdi
 
 qemu:
-	sudo qemu-system-i386 $(QEMU_OPS) -drive file=RetrOS-32-debug.img,format=raw,index=0,media=disk
+	qemu-system-i386 $(QEMU_OPS) -drive file=RetrOS-32-debug.img,format=raw,index=0,media=disk
 
 sync:
-	sh scripts/sync.sh RetrOS-32-debug.img
+	mkdir -p mnt
+	sudo mount -o shortname=winnt RetrOS-32-debug.img ./mnt
+	sudo cp -r ./rootfs/* ./mnt/
+	sudo umount ./mnt
+	@echo "Finished syncing."
+# sh scripts/sync.sh RetrOS-32-debug.img
 # sudo cp -r mnt/* ./mnt/apps/
 
 mount:
 	sudo mount -o shortname=winnt RetrOS-32-debug.img ./mnt
 
-run: docker qemu
+run: img qemu
 endif
 
 # qemu-system-i386 -cdrom myos.iso -serial stdio -drive file=boot.iso,if=ide,index=0,media=disk

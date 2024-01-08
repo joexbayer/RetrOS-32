@@ -116,7 +116,7 @@ static void sysinf_draw_mem(struct window* w, struct tab* tab)
 
     w->draw->textf(w, 30, 45+40, 0,     "Total:        %d MB", map->total / 1024 / 1024);
     w->draw->textf(w, 30, 45+10, 0,     "Kernel:        %d MB", map->kernel.total / 1024 / 1024);
-    w->draw->textf(w, 30, 45+20, 0,     "Virtual:       %d MB", map->virtual.total / 1024 / 1024);
+    w->draw->textf(w, 30, 45+20, 0,     "Virtual:       %d MB", map->virtual_memory.total / 1024 / 1024);
     w->draw->textf(w, 30, 45+30, 0,     "Permanent:     %d MB", map->permanent.total / 1024 / 1024);
 
     char* kernel = "Usage";
@@ -124,7 +124,7 @@ static void sysinf_draw_mem(struct window* w, struct tab* tab)
 
     /* memory usage with rectangles based on percentage */
     int kernel_usage = (int)(((float)info.kernel.used / (float)info.kernel.total)*100);
-    int virtual_usage = (int)(((float)info.virtual.used / (float)info.virtual.total)*100);
+    int virtual_usage = (int)(((float)info.virtual_memory.used / (float)info.virtual_memory.total)*100);
     int permanent_usage = (int)(((float)info.permanent.used / (float)info.permanent.total)*100);
 
     w->draw->box(w, 30, HEIGHT/2+10+10, 100, 10, 0);

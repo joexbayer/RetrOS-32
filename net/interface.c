@@ -1,5 +1,6 @@
 #include <net/interface.h>
 #include <net/net.h>
+#include <net/ethernet.h>
 #include <kutils.h>
 #include <errors.h>
 #include <memory.h>

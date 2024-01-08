@@ -9,10 +9,11 @@
 #include <terminal.h>
 #include <kutils.h>
 #include <scheduler.h>
+#include <math.h>
 
 #define center_x(size) ((110/2) - ((size*8)/2))
 
-static char* months[] = {"NAN", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Nov", "Dec"};
+static char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Nov", "Dec"};
 
 void __kthread_entry kclock(int argc, char* argv[])
 {   
@@ -26,6 +27,9 @@ void __kthread_entry kclock(int argc, char* argv[])
     int angle_id;
     struct time now;
     struct gfx_theme* theme;
+
+    int timestamp = 0;
+    timestamp = 0;
     
     struct window* w = gfx_new_window(110, 140, 0);
     if(w == NULL){
@@ -34,7 +38,6 @@ void __kthread_entry kclock(int argc, char* argv[])
     }
 
     kernel_gfx_set_title("Clock");
-
     w->ops->move(w, 450, 50);
     while (1){
         theme = kernel_gfx_current_theme();
@@ -42,6 +45,12 @@ void __kthread_entry kclock(int argc, char* argv[])
         angle_id = (0.5 * (now.hour%12 * 60 + now.minute) / 6);
         
         get_current_time(&now);
+
+        if(get_time() - timestamp < 2){
+            kernel_yield();
+            continue;
+        }
+        timestamp = get_time();
 
         w->draw->rect(w, 0, 0, 110, 140, 30);
 
@@ -67,9 +76,7 @@ void __kthread_entry kclock(int argc, char* argv[])
 		w->draw->line(w, 55, 55, 55 + (50*sin_60[now.second])/1.1, 55+ (50*cos_60[now.second])/1.1, COLOR_VGA_RED);
 
         w->draw->textf(w, center_x(5), 112, theme->window.text, "%s%d:%s%d", now.hour > 9 ? "" : "0", now.hour, now.minute > 9 ? "" : "0", now.minute);
-        w->draw->textf(w, center_x(6), 124, theme->window.text, "%d. %s", now.day, months[now.month-1]);
-
-        kernel_sleep(100);
+        w->draw->textf(w, center_x(6), 124, theme->window.text, "%d. %s", now.day, months[ABS(now.month-1)]);
 
         struct gfx_event event;
         int ret = gfx_event_loop(&event, GFX_EVENT_NONBLOCKING);

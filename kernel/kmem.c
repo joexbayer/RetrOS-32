@@ -71,7 +71,7 @@ static inline void __kmemory_write_metadata(int start_block, int num_blocks)
 
 
 /**
- * @brief Allocates sequential chunks of fixed size (4KB each) from a region of kernel memory.
+ * @brief Allocates sequential chunks of fixed size (256 bytes each) from a region of kernel memory.
  * 
  * This function acquires a lock to ensure thread safety, and then searches the bitmap of kernel memory for a
  * contiguous region of free blocks that is large enough to accommodate the requested memory size. If such a region
@@ -96,6 +96,7 @@ void* kalloc(int size)
     if (start_block == -1) {
         /* No contiguous free region of memory was found */
         warningf("Out of memory: %d\n", __kmemory_used);
+        kernel_panic("Out of memory!");
         spin_unlock(&__kmemory_lock);
         return NULL;
     }
@@ -169,12 +170,12 @@ void kfree(void* ptr)
  * @brief Arena style permanent memory allocation scheme for memory that wont be freed.
  * Mainly by the windowservers framebuffer, and E1000's buffers.
  */
-static uintptr_t memory_permanent_start = NULL;
-static uintptr_t memory_permanent_end = NULL;
+static uintptr_t memory_permanent_start = 0;
+static uintptr_t memory_permanent_end = 0;
 void* palloc(int size)
 {
 	if(size <= 0) return NULL;
-    if(memory_permanent_start == NULL || memory_permanent_end == NULL) return NULL;
+    if(memory_permanent_start == 0 || memory_permanent_end == 0) return NULL;
 
     size = ALIGN(size, PTR_SIZE);
 

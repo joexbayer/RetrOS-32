@@ -1,7 +1,7 @@
 #ifndef FA63496D_7A22_4F07_86D6_F17E6448519A
 #define FA63496D_7A22_4F07_86D6_F17E6448519A
 
-const char lex_errors[22][35] = {
+char lex_errors[22][35] = {
     "All good.", "expected token",
     "unexpected token EOF of expression",
     "bad function call", "undefined variable",

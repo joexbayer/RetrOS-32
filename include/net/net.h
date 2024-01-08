@@ -81,6 +81,7 @@ struct net_interface* net_get_iface(uint32_t ip);
 struct net_interface** net_get_interfaces();
 /* defined in loopback.c */
 int net_init_loopback();
+int net_list_ifaces();
 
 void kernel_sock_cleanup(struct sock* socket);
 

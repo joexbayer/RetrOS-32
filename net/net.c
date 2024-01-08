@@ -106,7 +106,15 @@ error_t kernel_connect(struct sock* socket, const struct sockaddr *address, sock
 
     dbgprintf(" [%d] Connecting...\n", socket);
     /* block or spin */
-    WAIT(!net_sock_is_established(socket));
+
+    int time_start = get_time();
+    while(socket->tcp->state != TCP_ESTABLISHED){
+        if(get_time() - time_start > 2){
+            dbgprintf(" [%d] Connection timed out\n", socket);
+            return -1;
+        }
+        kernel_yield();
+    }
 
     dbgprintf(" [%d] succesfully connected!\n", socket);
 

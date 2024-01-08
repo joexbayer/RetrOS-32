@@ -8,6 +8,7 @@
  * @copyright Copyright (c) 2022
  * 
  */
+#include <memory.h>
 #include <kernel.h>
 #include <pci.h>
 #include <keyboard.h>
@@ -38,13 +39,14 @@
 
 #include <net/socket.h>
 #include <net/tcp.h>
+#include <net/net.h>
 
 #include <kutils.h>
 #include <script.h>
 #include <vbe.h>
 
 #define SHELL_HEIGHT 225 /* 275 */
-#define SHELL_WIDTH 375 /* 300 */
+#define SHELL_WIDTH 400 /* 300 */
 #define SHELL_POSITION shell_height-8
 #define SHELL_MAX_SIZE SHELL_WIDTH/2
 
@@ -62,10 +64,8 @@ static const char newline = '\n';
 static const char backspace = '\b';
 
 static char* shell_name = "Kernel >";
+static char* about_text = "\nRetrOS-32 - 32bit Operating System\n    " KERNEL_RELEASE " " KERNEL_VERSION " - " KERNEL_DATE "\n";
 
-static char* about_text = "\nRetrOS-32 - 32-bit operating system\n    " KERNEL_RELEASE " " KERNEL_VERSION " - " KERNEL_DATE "\n";
-
-static struct terminal* term = NULL; 
 /*
  *	IMPLEMENTATIONS
  */
@@ -274,13 +274,13 @@ void exec(int argc, char* argv[])
 	bool_t kthread_as_deamon = false;
 
 	if(argc == 1){
-		twritef("usage: exec [options] <file | kfunc> [args ...]\n");
+		twritef("usage: exec [options] <file | kfunc> [args ...]\n Note: Any command can be executed by as a thread\n Example: exec echo hi\n");
 		return;
 	}
 
 	/* check for potential options */
 	if(argv[1][0] == '-'){
-		switch (argv[1][1]){
+		switch (argv[1][1]){ 	
 		case 'd':{
 				kthread_as_deamon = true;	
 			}
@@ -350,9 +350,15 @@ EXPORT_KSYMBOL(ths);
 	EXPORT_KSYMBOL(name);
 
 COMMAND(dns, {
+
+	if(argc == 1){
+		twritef("usage: dns <domain>\n");
+		return;
+	}
+
 	int val = gethostname(argv[1]);
 	twritef("%s IN (A) %i\n", argv[1], val);
-});
+})
 
 void th(int argc, char* argv[])
 {
@@ -407,10 +413,10 @@ void meminfo(int argc, char* argv[])
 	struct unit permanent = calculate_size_unit(minfo.permanent.used);
 	struct unit permanent_total = calculate_size_unit(minfo.permanent.total);
 
-	struct unit virtual = calculate_size_unit(minfo.virtual.used);
-	struct unit virtual_total = calculate_size_unit(minfo.virtual.total);
+	struct unit virtual = calculate_size_unit(minfo.virtual_memory.used);
+	struct unit virtual_total = calculate_size_unit(minfo.virtual_memory.total);
 
-	struct unit total = calculate_size_unit(minfo.kernel.total+minfo.permanent.total+minfo.virtual.total);
+	struct unit total = calculate_size_unit(minfo.kernel.total+minfo.permanent.total+minfo.virtual_memory.total);
 
 	twritef("Memory:\n");
 	twritef("  Kernel:    %d%s/%d%s\n", kernel.size, kernel.unit, kernel_total.size, kernel_total.unit);
@@ -452,16 +458,23 @@ EXPORT_KSYMBOL(exit);
 
 void socks(void)
 {
-	twritef("Sockets:\n");
-
 	struct sockets socks;
 	net_get_sockets(&socks);
 
+	twritef("%s)\n", socket_type_to_str(SOCK_STREAM));
 	for (int i = 0; i < socks.total_sockets; i++){
 		struct sock* sock = socks.sockets[i];
-		if(sock == NULL) continue;
+		if(sock == NULL || sock->bound_port == 0 || sock->type == SOCK_DGRAM) continue;
 
-		twritef("%d) %i:%d %s %s %s\n  tx: %d  rx: %d\n\n", i, sock->bound_ip == 1 ? 0 : sock->bound_ip, ntohs(sock->bound_port), socket_type_to_str(sock->type), socket_domain_to_str(sock->domain), sock->tcp ? tcp_state_to_str(sock->tcp->state) : "", sock->tx, sock->rx);
+		twritef(" %i:%d %i:%d %s  tx: %d  rx: %d\n\n", sock->bound_ip == 1 ? 0 : sock->bound_ip, ntohs(sock->bound_port), ntohl(sock->recv_addr.sin_addr.s_addr), ntohs(sock->recv_addr.sin_port), sock->tcp ? tcp_state_to_str(sock->tcp->state) : "", sock->tx, sock->rx);
+	}
+
+	twritef("%s)\n", socket_type_to_str(SOCK_DGRAM));
+	for (int i = 0; i < socks.total_sockets; i++){
+		struct sock* sock = socks.sockets[i];
+		if(sock == NULL || sock->bound_port == 0 || sock->type == SOCK_STREAM) continue;
+
+		twritef(" %i:%d %i:%d %s  tx: %d  rx: %d\n\n", sock->bound_ip == 1 ? 0 : sock->bound_ip, ntohs(sock->bound_port), ntohl(sock->recv_addr.sin_addr.s_addr), ntohs(sock->recv_addr.sin_port), sock->tcp ? tcp_state_to_str(sock->tcp->state) : "", sock->tx, sock->rx);
 	}
 }
 EXPORT_KSYMBOL(socks);
@@ -470,17 +483,10 @@ EXPORT_KSYMBOL(socks);
 void reset(int argc, char* argv[])
 {
 	kernel_gfx_draw_rectangle(current_running->gfx_window, 0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_VGA_BG);
-	term->ops->reset(term);
+	current_running->term->ops->reset(current_running->term);
 	reset_shell();
 }
 EXPORT_KSYMBOL(reset);
-
-void help()
-{
-	twritef("Commands:\n");
-	ksyms_list();
-}
-EXPORT_KSYMBOL(help);
 
 
 /**
@@ -567,7 +573,7 @@ void __kthread_entry shell(int argc, char* argv[])
 	dbgprintf("shell: window 0x%x\n", window);
 	kernel_gfx_draw_rectangle(current_running->gfx_window, 0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_VGA_BG);
 	
-	term = terminal_create(TERMINAL_GRAPHICS_MODE);
+	struct terminal* term = terminal_create(TERMINAL_GRAPHICS_MODE);
 	term->ops->attach(term);
 
 	struct mem_info minfo;
@@ -604,13 +610,15 @@ void __kthread_entry shell(int argc, char* argv[])
 			}
 			break;
 		case GFX_EVENT_RESOLUTION:
-			shell_height = event.data2;
+			shell_height  = event.data2;
 			shell_width = event.data;
 			terminal_commit();
 			reset_shell();
 			break;
-		case GFX_EVENT_EXIT:
-			kernel_exit();
+		case GFX_EVENT_EXIT:{
+				terminal_destroy(term);
+				kernel_exit();
+			}
 			return;
 		default:
 			break;
@@ -621,12 +629,56 @@ void __kthread_entry shell(int argc, char* argv[])
 }
 EXPORT_KTHREAD(shell);
 
-
-
 #include <screen.h>
-static ubyte_t* text_shell_buffer = NULL;
-static int __kthread_entry textshell()
+
+void draw_box(int x, int y, int width, int height, uint8_t border_color) {
+    // Extended ASCII characters for double line box drawing
+    unsigned char top_left = 201;     // '╔'
+    unsigned char top_right = 187;    // '╗'
+    unsigned char bottom_left = 200;  // '╚'
+    unsigned char bottom_right = 188; // '╝'
+    unsigned char horizontal = 205;   // '═'
+    unsigned char vertical = 186;     // '║'
+
+    // Draw corners
+    scrput(x, y, top_left, border_color);
+    scrput(x + width - 1, y, top_right, border_color);
+    scrput(x, y + height - 1, bottom_left, border_color);
+    scrput(x + width - 1, y + height - 1, bottom_right, border_color);
+
+    // Draw top and bottom borders with connectors
+    for (int i = x + 1; i < x + width - 1; ++i) {
+        scrput(i, y, horizontal, border_color); // Top border
+        scrput(i, y + height - 1, horizontal, border_color); // Bottom border
+    }
+
+    // Draw left, right borders, and connectors
+    for (int i = y + 1; i < y + height - 1; ++i) {
+        scrput(x, i, vertical, border_color); // Left border
+        scrput(x + width - 1, i, vertical, border_color); // Right border
+    }
+}
+
+static int __textshell_reset_box()
 {
+	ubyte_t color = VGA_COLOR_WHITE | VGA_COLOR_BLUE << 4;
+	draw_box(0, 1, SCREEN_WIDTH, SCREEN_HEIGHT-1,  color);
+	scrput(3, 1, '[', color);
+	scrput(4, 1, 'R', VGA_COLOR_WHITE | VGA_COLOR_GREEN << 4);
+	scrput(5, 1, ']', color);
+	scrwrite(3, SCREEN_HEIGHT-1, "[              ]", color);
+	
+	/* header */
+	scrwrite(40-(strlen(" Terminal ")/2) , 1, " Terminal ", color);
+
+	screen_set_cursor(3, SCREEN_HEIGHT-1);
+	return 0;
+}
+
+static byte_t* text_shell_buffer = NULL;
+static void __kthread_entry textshell()
+{
+	
 	ubyte_t c;
 	short x = 0;
 
@@ -636,13 +688,24 @@ static int __kthread_entry textshell()
 	text_shell_buffer = kalloc(1024);
 	if(text_shell_buffer == NULL){
 		warningf("Failed to allocate text shell buffer");
-		return -1;
+		return;
 	}
 
 	scrwrite(0, 0, "                              RetrOS 32 - Textmode                              ", VGA_COLOR_BLUE | VGA_COLOR_LIGHT_GREY << 4);
 
+	struct mem_info minfo;
+    get_mem_info(&minfo);
+
+	struct unit used = calculate_size_unit(minfo.kernel.used+minfo.permanent.used);
+	struct unit total = calculate_size_unit(minfo.kernel.total+minfo.permanent.total);
+
+	twritef("\n");
 	twritef("%s\n", about_text);
+	twritef("Memory: %d%s/%d%s\n", used.size, used.unit, total.size, total.unit);
+	twritef("Type 'help' for a list of commands\n");
 	term->ops->commit(term);
+
+	__textshell_reset_box();
 
 	while (1){
 		c = kb_get_char();
@@ -651,9 +714,9 @@ static int __kthread_entry textshell()
 		if(c == '\b'){
 			if(x == 0) continue;
 			x--;
-			scrput(x, SCREEN_HEIGHT-1, ' ', VGA_COLOR_WHITE);
+			scrput(4+x, SCREEN_HEIGHT-1, ' ', VGA_COLOR_WHITE | VGA_COLOR_BLUE << 4);
 			text_shell_buffer[x] = 0;
-			screen_set_cursor(x, SCREEN_HEIGHT-1);
+			screen_set_cursor(4+x, SCREEN_HEIGHT-1);
 			continue;
 		}
 
@@ -665,14 +728,14 @@ static int __kthread_entry textshell()
 
 			memset(text_shell_buffer, 0, 1024);
 			term->ops->commit(term);
-			screen_set_cursor(x, SCREEN_HEIGHT-1);
+			__textshell_reset_box();
 			continue;
 		}
 
-		scrput(x, SCREEN_HEIGHT-1, c, VGA_COLOR_WHITE);
+		scrput(4+x, SCREEN_HEIGHT-1, c, VGA_COLOR_WHITE);
 		text_shell_buffer[x] = c;
 		x++;
-		screen_set_cursor(x, SCREEN_HEIGHT-1);
+		screen_set_cursor(4+x, SCREEN_HEIGHT-1);
 	}
 }
 EXPORT_KTHREAD(textshell);
