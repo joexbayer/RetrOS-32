@@ -69,12 +69,12 @@
 
 <!-- ABOUT THE PROJECT -->
 <p align="center">
-  <img src="https://github.com/joexbayer/RetrOS-32/blob/main/graphics/screenshot2.png?raw=true">
+  <img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/retros.gif?raw=true">
 </p>
 
-| | |
-|:-------------------------:|:-------------------------:|
-| <img src="https://github.com/joexbayer/RetrOS-32/blob/main/graphics/screenshot1.png?raw=true"> | <img src="https://github.com/joexbayer/RetrOS-32/blob/main/graphics/screenshot3.png?raw=true">
+| | | |
+|:-------------------------:|:-------------------------:|:-------------------------:|
+| <img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/screenshot1.png?raw=true"> | <img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/screenshot2.png?raw=true"> | <img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/screenshot3.png?raw=true">
 ## About The Project
 
 <p align="center">32bit Hobby Operatingsystem with graphics, multitasking and networking!</p>
@@ -191,6 +191,9 @@ Dell Optiplex 780,
 Samsung N150 Plus,
 Samsung NP-NC10,
 IBM Thinkpad a21p
+
+<img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/hardware1.png?raw=true">
+<img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/hardware2.png?raw=true">
 
 ## Project Structure (TBD)
     NETOS - Project
