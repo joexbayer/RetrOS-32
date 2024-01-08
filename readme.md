@@ -82,7 +82,9 @@
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
+<p align="center">
+  <img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/textmode.png?raw=true">
+</p>
 
 ### Built With
 
