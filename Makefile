@@ -190,19 +190,19 @@ grub: grub_fix apps multiboot_kernel
 
 qemu_kernel: CCFLAGS += -DGRUB_MULTIBOOT
 qemu_kernel: grub_fix grub_fix multiboot_kernel
-	sudo qemu-system-i386 $(QEMU_OPS) -kernel bin/kernelout
+	qemu-system-i386 $(QEMU_OPS) -kernel bin/kernelout
 
 docker-rebuild:
 	docker-compose build --no-cache
 
 docker:
-	sudo docker-compose up
+	docker-compose up
 
 vdi: cleanvid docker
 	qemu-img convert -f raw -O vdi boot.img boot.vdi
 
 qemu:
-	sudo qemu-system-i386 $(QEMU_OPS) -drive file=RetrOS-32-debug.img,format=raw,index=0,media=disk
+	qemu-system-i386 $(QEMU_OPS) -drive file=RetrOS-32-debug.img,format=raw,index=0,media=disk
 
 sync:
 	mkdir -p mnt

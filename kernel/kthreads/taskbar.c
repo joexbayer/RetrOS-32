@@ -160,11 +160,6 @@ struct taskbar_options {
                 },
                 {
                     .icon = bin_16,
-                    .name = "WIN95",
-                    .callback = &taskbar_bg_default
-                },
-                {
-                    .icon = bin_16,
                     .name = "Retro",
                    .callback = taskbar_bg_retro
                 },
@@ -410,7 +405,7 @@ static void __callback taskbar_clock()
 
 static void __callback taskbar_bg_default()
 {
-    gfx_decode_background_image("/imgs/win2.img");
+    gfx_raw_background("/imgs/snow.bin");
 }
 
 static void __callback taskbar_bg_lotr()
@@ -425,7 +420,10 @@ static void __callback taskbar_bg_lotr2()
 
 static void __callback taskbar_bg_retro()
 {
-    gfx_decode_background_image("/imgs/retro.img");
+    if(vbe_info->height == 480)
+        gfx_raw_background("/imgs/output.bin");
+    else
+        gfx_decode_background_image("/imgs/retro.img");
 }
 
 static void __callback taskbar_bg_graph()

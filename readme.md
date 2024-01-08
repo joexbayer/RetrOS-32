@@ -26,7 +26,7 @@
   <p align="center">
     Hobby 32bit operatingsystem project focusing on networking on i386 architecture.
     <br />
-    <a href="https://github.com/joexbayer/RetrOS-32"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/joexbayer/RetrOS-32/tree/main/docs"><strong>Explore the docs »</strong></a>
     <br />
     <br />
     <a href="https://github.com/joexbayer/RetrOS-32">View Demo</a>
@@ -112,9 +112,30 @@ For native compilation you will need:
 
 ### Installation
 
-_To compile the kernel and its needed programs you simply need to run *make iso* and *make qemu* to open QEMU_
+_To compile the kernel and its needed programs you simply need to run *make img* and *make qemu* to open QEMU_
 
-#### MacOS / Linux
+#### Linux
+1. Clone the repo
+   ```sh
+   git clone https://github.com/joexbayer/RetrOS-32.git
+   ```
+2. Compile the kernel and create .img file
+   ```sh
+   make img
+   ```
+
+   _Note: needs sudo to mount the .img file and copy over files!_
+   
+3. Launch QEMU
+   ```sh
+   make qemu
+   ```
+
+4. Use GRUB (Optional)
+   ```sh
+   make grub
+   ```
+#### MacOS
 
 ##### MacOS can compile the kernel but not the needed tools.
 1. Clone the repo
@@ -130,6 +151,11 @@ _To compile the kernel and its needed programs you simply need to run *make iso*
 3. Launch QEMU
    ```sh
    make qemu
+   ```
+
+4. Use GRUB (Optional)
+   ```sh
+   make grub
    ```
 #### Windows
   Using Docker (can also compile in WSL)

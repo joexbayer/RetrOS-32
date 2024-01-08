@@ -5,7 +5,9 @@
 #include <args.h>
 
 #include <arch/io.h>
-struct vbe_mode_info_structure* vbe_info;
+
+static struct vbe_mode_info_structure __vbe_info;
+struct vbe_mode_info_structure* vbe_info = &__vbe_info;
 
 uint8_t cursor[16][16] = {
     {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}

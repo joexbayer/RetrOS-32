@@ -350,6 +350,12 @@ EXPORT_KSYMBOL(ths);
 	EXPORT_KSYMBOL(name);
 
 COMMAND(dns, {
+
+	if(argc == 1){
+		twritef("usage: dns <domain>\n");
+		return;
+	}
+
 	int val = gethostname(argv[1]);
 	twritef("%s IN (A) %i\n", argv[1], val);
 })
@@ -633,11 +639,6 @@ void draw_box(int x, int y, int width, int height, uint8_t border_color) {
     unsigned char bottom_right = 188; // '╝'
     unsigned char horizontal = 205;   // '═'
     unsigned char vertical = 186;     // '║'
-    unsigned char left_connector = 204; // '╠'
-    unsigned char right_connector = 185; // '╣'
-    unsigned char top_connector = 203; // '╦'
-    unsigned char bottom_connector = 202; // '╩'
-    unsigned char cross_connector = 206; // '╬'
 
     // Draw corners
     scrput(x, y, top_left, border_color);

@@ -314,6 +314,8 @@ static int sched_exit(struct scheduler* sched)
     
     CRITICAL_SECTION({
 
+        pcb_save_context(sched->ctx.running);
+
         /* Switch to next PCB, dont need to store context */
         PANIC_ON_ERR(sched_round_robin(sched));
 

@@ -290,7 +290,7 @@ static int tcp(int argc, char *argv[])
     }
 
     struct sockaddr_in dest_addr;
-    dest_addr.sin_addr.s_addr = htonl(ip);
+    dest_addr.sin_addr.s_addr = ip == LOOPBACK_IP ? htonl(ip) : ip;
     dest_addr.sin_port = htons(atoi(argv[2]));
     dest_addr.sin_family = AF_INET;
 
@@ -323,7 +323,6 @@ static int tcp(int argc, char *argv[])
     }
 
     pcb_kill(reader);
-    pcb_await(reader);
 
     kernel_sock_close(socket);
     return 0;

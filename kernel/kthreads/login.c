@@ -1,4 +1,5 @@
 #include <kthreads.h>
+#include <kernel.h>
 #include <util.h>
 #include <colors.h>
 #include <gfx/gfxlib.h>
@@ -11,24 +12,17 @@
 
 #include <lib/icons.h>
 
-struct boot_info {
-		unsigned int extended_memory_low;
-		unsigned int extended_memory_high;
-	} *total_memory;
-
-
 void __kthread_entry login()
 {   
+    struct kernel_context* kernel_ctx = kernel_get_context();
     struct window* w = gfx_new_window(275, 100, GFX_NO_OPTIONS);
     if(w == NULL){
         warningf("Failed to create window for login");
         return;
     }
 
-    total_memory = (struct boot_info*) (0x7e00);
-
-    struct unit unit = calculate_size_unit(total_memory->extended_memory_low * 1024);
-    struct unit unit2 = calculate_size_unit(total_memory->extended_memory_high * 64 * 1024);
+    struct unit unit = calculate_size_unit(kernel_ctx->boot_info->extended_memory_low * 1024);
+    struct unit unit2 = calculate_size_unit(kernel_ctx->boot_info->extended_memory_high * 64 * 1024);
 
     /* set title */
     kernel_gfx_set_title("Welcome to RetrOS-32");
