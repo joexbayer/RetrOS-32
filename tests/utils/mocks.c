@@ -162,7 +162,7 @@ void* kalloc(int size){
 }
 
 int kcalloc(int size){
-    return kalloc(size);
+    return (int)kalloc(size);
 }
 
 #endif

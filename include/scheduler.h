@@ -26,13 +26,13 @@ typedef enum scheduler_flags {
 
 /* Scheduler operations */
 struct scheduler_ops {
-    int (*prioritize)(struct scheduler* sched, struct pcb* pcb);
-    int (*schedule)(struct scheduler* sched);
-    int (*add)(struct scheduler* sched, struct pcb* pcb);
-    int (*block)(struct scheduler* sched, struct pcb* pcb);
-    int (*sleep)(struct scheduler* sched, int time);
-    int (*exit)(struct scheduler* sched);
-    int (*yield)(struct scheduler* sched);
+    error_t (*prioritize)(struct scheduler* sched, struct pcb* pcb);
+    error_t (*schedule)(struct scheduler* sched);
+    error_t (*add)(struct scheduler* sched, struct pcb* pcb);
+    error_t (*block)(struct scheduler* sched, struct pcb* pcb);
+    error_t (*sleep)(struct scheduler* sched, int time);
+    error_t (*exit)(struct scheduler* sched);
+    error_t (*yield)(struct scheduler* sched);
     struct pcb* (*consume)(struct scheduler* sched);
 };
 
