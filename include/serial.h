@@ -6,13 +6,13 @@
 #include <args.h>
 
 #ifdef KDEBUG_SERIAL
-#define dbgprintf(a, ...) serial_printf("\033[33m%s(): \033[37m" a, __func__, ##__VA_ARGS__)
+#define dbgprintf(a, ...) serial_printf("%s(): " a, __func__, ##__VA_ARGS__)
 #else
 #define dbgprintf(a, ...)
 #endif // KDEBUG_SERIAL
 
 #ifdef KDEBUG_WARNINGS
-#define warningf(a, ...) serial_printf("\033[31m%s(): \033[37m" a, __func__, ##__VA_ARGS__)
+#define warningf(a, ...) serial_printf("DEBUG: %s(): " a, __func__, ##__VA_ARGS__)
 #else
 #define warningf(a, ...)
 #endif // KDEBUG_WARNINGS

@@ -44,7 +44,6 @@ static void __callback taskbar_bg_default_color();
 static void __callback taskbar_bg_default_color_gray();
 static void __callback taskbar_sysinf();
 static void __callback taskbar_about();
-static void __callback taskbar_readme();
 
 /* prototype to taskbar thread */
 static void __kthread_entry taskbar(void);
@@ -178,11 +177,6 @@ struct taskbar_options {
                     .icon = desktop_16,
                     .name = "About",
                     .callback = &taskbar_about
-                },
-                {
-                    .icon = desktop_16,
-                    .name = "Readme",
-                    .callback = &taskbar_readme
                 }
             }
         },
@@ -464,9 +458,4 @@ static void __callback taskbar_sysinf()
 static void __callback taskbar_about()
 {
     start("about", 0, NULL);
-}
-
-static void __callback taskbar_readme()
-{
-    start("readme", 0, NULL);
 }

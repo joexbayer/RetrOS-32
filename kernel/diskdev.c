@@ -13,7 +13,9 @@ void attach_disk_dev(
 ){
     disk_device.read = read;
     disk_device.write = write;
+
     disk_device.attached = 1;
+
     disk_device.dev = dev;
 }
 

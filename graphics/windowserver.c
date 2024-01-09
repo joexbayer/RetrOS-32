@@ -58,6 +58,7 @@ static int ws_init(struct windowserver* ws)
     ws->_wm = wm;
     ws->workspace = 0;
 
+
     ws->background = palloc(VBE_SIZE());
     if(ws->background == NULL){
         wm->ops->destroy(wm);
@@ -66,7 +67,7 @@ static int ws_init(struct windowserver* ws)
     }
 
     SET_FlAG(ws->flags, WINDOW_SERVER_INITIALIZED);
-    return ERROR_OK;
+    return 0;
 }
 
 static int ws_raw_wallpaper(struct windowserver* ws, char* path)
@@ -85,7 +86,7 @@ static int ws_raw_wallpaper(struct windowserver* ws, char* path)
         ws->background[i] = rgb_to_vga(ws->background[i]);
     }
 
-    return ERROR_OK;
+    return 0;
 }
 
 static int ws_add(struct windowserver* ws, struct window* window)
@@ -100,7 +101,7 @@ static int ws_add(struct windowserver* ws, struct window* window)
 
     dbgprintf("[WSERVER] Added window %x.\n", window);
 
-    return ERROR_OK;
+    return 0;
 }
 
 static int ws_remove(struct windowserver* ws, struct window* window)
@@ -113,7 +114,7 @@ static int ws_remove(struct windowserver* ws, struct window* window)
         return -ERROR_OPS_CORRUPTED;
     }
 
-    return ERROR_OK;
+    return 0;
 }
 
 static int ws_fullscreen(struct windowserver* ws, struct window* window)
@@ -152,7 +153,7 @@ static int ws_fullscreen(struct windowserver* ws, struct window* window)
         ws->_is_fullscreen = true;
     }
 
-    return ERROR_OK;
+    return 0;
 }
 
 static int ws_set_background(struct windowserver* ws, color_t color)
@@ -162,7 +163,7 @@ static int ws_set_background(struct windowserver* ws, color_t color)
 
     memset(ws->background, color, VBE_SIZE());
 
-    return ERROR_OK;
+    return 0;
 }
 
 static int ws_set_background_file(struct windowserver* ws, const char* path)
@@ -280,7 +281,7 @@ static int __ws_key_event(struct windowserver* ws, unsigned char key)
         break;
     }
 
-    return ERROR_OK;
+    return 0;
 }
 
 static int ws_draw(struct windowserver* ws)

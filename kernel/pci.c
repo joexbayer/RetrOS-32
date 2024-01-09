@@ -12,6 +12,7 @@
 #include <pci.h>
 #include <e1000.h>
 #include <ata.h>
+#include <atapi.h>
 #include <terminal.h>
 #include <serial.h>
 #include <arch/io.h>
@@ -78,15 +79,6 @@ const char* pci_get_device_name(struct pci_device* dev)
         default:
             break;
         }
-        break;
-    case 0x1AF4:
-        switch (dev->device){
-        case 0x1000:
-            return "Virtio Network Device";
-        default:
-            break;
-        }
-        break;
     default:
         break;
     }
@@ -105,9 +97,6 @@ const char* pci_get_vendor_name(struct pci_device* dev)
         break;
     case 0x10DE:
         return "NVIDIA Corporation"; 
-        break;
-    case 0x1AF4:
-        return "Red Hat, Inc."; 
         break;
     default:
         break;
@@ -227,29 +216,15 @@ void init_pci()
                     }
                     i++;
                 }
+                    
             }
         }
     }
     dbgprintf("[PCI] Peripheral Component Interconnect devices probed.\n");
 }
 
-void lspci(int argc, char** argv)
+void lspci()
 {
-    if(argc > 1){
-        if(strcmp(argv[1], "-v") == 0){
-            for (int i = 0; i < _pci_devices_size; i++){
-                twritef("Vendor: 0x%x Device:\n . 0x%x - %s - %s - %s\n",
-                    _pci_devices[i].vendor,
-                    _pci_devices[i].device,
-                    _pci_devices[i].class < 0x11 ? pci_classes[_pci_devices[i].class] : pci_classes[0],
-                    pci_get_vendor_name(&_pci_devices[i]),
-                    pci_get_device_name(&_pci_devices[i])
-                );
-            }   
-            return;
-        }
-    }
-
     for (int i = 0; i < _pci_devices_size; i++){
         twritef("V: 0x%x D: 0x%x - %s\n",
             _pci_devices[i].vendor,

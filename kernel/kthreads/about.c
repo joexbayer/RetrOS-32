@@ -161,57 +161,26 @@ void __kthread_entry about(int argc, char* argv[])
 EXPORT_KTHREAD(about);
 
 const char* readme_text[] = {
-    "Welcome to the RetrOS-32",
-    "kernel readme.\n",
-    " ", 
-    "Scroll using arrow keys!",
-    " ",
-    "Bugs: Yes, there are a lot!",
-    "Please report them to the",
-    "github page. Known bugs",
-    "are hang on boot after",
-    "Starting OS, occasional",
-    "hangs and freezes.",
-    " ",
-    "Processes can be started",
-    "via the taskbar at the",
-    "screen's top or using the",
-    "command line.",
-    "Command Line Usage:",
-    "exec <path> <args>",
-    "Binaries are located in /bin.",
-    "The 'exec' command can start",
-    "kernel threads or shell",
-    "commands as threads.",
-    " ",
-    "To use the C interpreter,",
-    "enter 'cc <path>' in the",
-    "terminal. Note: The C",
-    "interpreter is currently",
-    "under development and may",
-    "not be fully functional.",
-    " ",
-    "Networking: The kernel",
-    "supports Ethernet, IPv4,",
-    "ARP, ICMP, UDP, TCP,",
-    "DHCP and DNS. The kernel",
-    "will automatically attempt",
-    "to get an IP address and",
-    "DNS server from the",
-    "DHCP server.",
-    " ",
-    "A looback interface is",
-    "also supported.",
+    "Welcome to the RetrOS-32 kernel readme.\n"
+    "\n"
+    "Bugs: Yes, there are a lot! Please report them to the github page.\n"
+    "Known bugs are hang on boot after Starting OS.\nOccasional hangs and freezes\n"
+    "Processes can be started via the taskbar at the screen's top or using the command line.\n"
+    "Command Line Usage: exec <path> <args>\n"
+    "Binaries are located in /bin.\nThe 'exec' command can start kernel threads or shell commands as threads.\n"
+    "\n"
+    "To use the C interpreter, enter 'cc <path>' in the terminal.\n"
+    "Note: The C interpreter is currently under development and may not be fully functional.\n"
 };
-const int num_strings = sizeof(readme_text) / sizeof(readme_text[0]);
+
 
 void __kthread_entry readme()
 {
-    const int width = 250;
-    const int height = 300;
+    const int width = 400;
+    const int height = 400;
 
     int from = 0;
-    int to = 28;
+    int to = 50;
 
     struct window* w = gfx_new_window(width, height, 0);
     if(w == NULL){
@@ -221,17 +190,13 @@ void __kthread_entry readme()
 
     kernel_gfx_set_title("Readme");
 
+    w->draw->rect(w, 0, 0, width, height, 30);
+
     w->ops->move(w, 50, 50);
+
+    w->draw->text(w, 0, 0, readme_text, 0);
+
     while (1){
-        w->draw->rect(w, 0, 0, width, height, 30);
-        w->draw->box(w, 10, 10, width-20, height-20,31);
-
-        for(int i = from; i < to; i++){
-            w->draw->text(w, 12, 12+ (i-from)*10, readme_text[i], 0);
-        }
-
-        gfx_commit();
-
         struct gfx_event event;
         int ret = gfx_event_loop(&event, GFX_EVENT_BLOCKING);
         if(ret == -1) continue;
@@ -239,23 +204,6 @@ void __kthread_entry readme()
         switch (event.event){
         case GFX_EVENT_EXIT:
             return;
-        case GFX_EVENT_KEYBOARD:{
-                switch (event.data){
-                case KEY_DOWN:
-                    if(to < num_strings){
-                        from++;
-                        to++;
-                    }
-                    break;
-                case KEY_UP:
-                    if(from > 0){
-                        from--;
-                        to--;
-                    }
-                    break;
-                }
-            }
-            break;
         default:
             break;
         }
