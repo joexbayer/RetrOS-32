@@ -159,3 +159,55 @@ void __kthread_entry about(int argc, char* argv[])
     }
 }
 EXPORT_KTHREAD(about);
+
+const char* readme_text[] = {
+    "Welcome to the RetrOS-32 kernel readme.\n"
+    "\n"
+    "Bugs: Yes, there are a lot! Please report them to the github page.\n"
+    "Known bugs are hang on boot after Starting OS.\nOccasional hangs and freezes\n"
+    "Processes can be started via the taskbar at the screen's top or using the command line.\n"
+    "Command Line Usage: exec <path> <args>\n"
+    "Binaries are located in /bin.\nThe 'exec' command can start kernel threads or shell commands as threads.\n"
+    "\n"
+    "To use the C interpreter, enter 'cc <path>' in the terminal.\n"
+    "Note: The C interpreter is currently under development and may not be fully functional.\n"
+};
+
+
+void __kthread_entry readme()
+{
+    const int width = 400;
+    const int height = 400;
+
+    int from = 0;
+    int to = 50;
+
+    struct window* w = gfx_new_window(width, height, 0);
+    if(w == NULL){
+        warningf("Failed to create window for about");
+        return;
+    }
+
+    kernel_gfx_set_title("Readme");
+
+    w->draw->rect(w, 0, 0, width, height, 30);
+
+    w->ops->move(w, 50, 50);
+
+    w->draw->text(w, 0, 0, readme_text, 0);
+
+    while (1){
+        struct gfx_event event;
+        int ret = gfx_event_loop(&event, GFX_EVENT_BLOCKING);
+        if(ret == -1) continue;
+
+        switch (event.event){
+        case GFX_EVENT_EXIT:
+            return;
+        default:
+            break;
+        }
+
+    }
+}
+EXPORT_KTHREAD(readme);

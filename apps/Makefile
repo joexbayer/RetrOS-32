@@ -89,8 +89,11 @@ bindir:
 
 clean:
 	rm -f ./bin/*
-	make -C editor/ clean
-	make -C colors/ clean
-	make -C finder/ clean
-	make -C calculator/ clean
+	@make -C editor/ clean
+	@make -C wolfstein/ clean
+	@make -C colors/ clean
+	@make -C finder/ clean
+	@make -C calculator/ clean
+	@make -C graphs/ clean
+	@make -C cube/ clean
 	rm -f .depend

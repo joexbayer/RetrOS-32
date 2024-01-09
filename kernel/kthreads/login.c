@@ -47,8 +47,7 @@ void __kthread_entry login()
     w->draw->textf(w, 10+10, 10+10+10+10+20+10,0x0,"Memory: %d %s", unit.size, unit.unit);
     w->draw->textf(w, 10+10, 10+10+10+10+20+10+10, 0x0, "Extended Memory: %d %s", unit2.size, unit2.unit);
 
-
-
+    gfx_commit();
     while (1)
     {
         struct gfx_event event;
