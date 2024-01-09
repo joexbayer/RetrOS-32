@@ -18,11 +18,14 @@
 <br />
 <div align="center">
   <h1 align="center">RetrOS 32bit</h1>
+  
 
   <p align="center">
     <img src="https://github.com/joexbayer/RetrOS-32/blob/main/graphics/logo.png?raw=true" width="150">
   </p>
 
+  ![Build](https://github.com/joexbayer/RetrOS-32/actions/workflows/pipeline.yml/badge.svg)
+  
   <p align="center">
     Hobby 32bit operatingsystem project focusing on networking on i386 architecture.
     <br />
