@@ -4,6 +4,7 @@
 #include <serial.h>
 #include <kutils.h>
 
+/* error code from errors.h */
 typedef int error_t;
 
 enum errors {
