@@ -9,7 +9,7 @@
  * 
  */
 
-#include <util.h>
+#include <libc.h>
 #include <utils/Graphics.hpp>
 #include <utils/MsgBox.hpp>
 #include <gfx/events.h>

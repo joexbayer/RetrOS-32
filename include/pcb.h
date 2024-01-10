@@ -3,7 +3,7 @@
 
 struct pcb;
 
-#include <util.h>
+#include <libc.h>
 #include <sync.h>
 #include <gfx/window.h>
 #include <memory.h>
@@ -101,7 +101,7 @@ struct pcb_info {
 };
 
 extern const char* pcb_status[];
-extern struct pcb* current_running;
+extern struct pcb* $current_process;
 
 /* Forward declaration */
 struct pcb_queue;

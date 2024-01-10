@@ -9,7 +9,7 @@
  * 
  */
 
-#include <util.h>
+#include <libc.h>
 #include <ata.h>
 #include <diskdev.h>
 #include <stdint.h>

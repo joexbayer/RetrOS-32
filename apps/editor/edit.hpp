@@ -4,7 +4,7 @@
 #include <lib/printf.h>
 #include <utils/Graphics.hpp>
 #include <gfx/events.h>
-#include <util.h>
+#include <libc.h>
 #include <colors.h>
 #include <fs/ext.h>
 #include <fs/fs.h>

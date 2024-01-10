@@ -15,7 +15,7 @@ extern "C" {
 
 #endif
 
-#include <util.h>
+#include <libc.h>
 
 int cli_cnt = 0;
 

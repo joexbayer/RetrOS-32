@@ -36,7 +36,7 @@ void mkdir(int argc, char* argv[])
         return;
     }
 
-    int ret = ext_create_directory(argv[1], current_running->current_directory);
+    int ret = ext_create_directory(argv[1], $current_process->current_directory);
     if(ret == -FS_ERR_INODE_MISSING){
         twritef("Unable to find current directory\n");
         return;

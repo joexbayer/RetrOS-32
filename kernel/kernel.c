@@ -12,7 +12,7 @@
 #include <kernel.h>
 
 #include <windowmanager.h>
-#include <util.h>
+#include <libc.h>
 #include <pci.h>
 #include <smp.h>
 #include <terminal.h>

@@ -10,7 +10,7 @@
  */
 
 #include <utils/Graphics.hpp>
-#include <util.h>
+#include <libc.h>
 #include <colors.h>
 
 extern float sin_60[60];

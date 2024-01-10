@@ -10,7 +10,7 @@
  */
 
 #include <smp.h>
-#include <util.h>
+#include <libc.h>
 #include <kutils.h>
 #include <serial.h>
 

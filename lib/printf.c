@@ -14,7 +14,7 @@ extern "C" {
 
 #include <args.h>
 #include <lib/syscall.h>
-#include <util.h>
+#include <libc.h>
 
 /**
  * Writes the given string to the terminal with terminal_putchar

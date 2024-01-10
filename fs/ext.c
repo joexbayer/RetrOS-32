@@ -23,7 +23,7 @@
 #include <pcb.h>
 #include <ksyms.h>
 
-#include <util.h>
+#include <libc.h>
 #include <rtc.h>
 
 static struct superblock superblock;
@@ -83,7 +83,7 @@ inode_t ext_get_root()
 
 inode_t ext_get_current_dir()
 {
-	return current_running->current_directory;
+	return $current_process->current_directory;
 }
 
 

@@ -18,7 +18,7 @@
 #include <assert.h>
 #include <kthreads.h>
 #include <kutils.h>
-#include <util.h>
+#include <libc.h>
 #include <errors.h>
 
 #include <syscalls.h>
@@ -31,7 +31,7 @@ static struct pcb pcb_table[MAX_NUM_OF_PCBS];
  * Current running PCB, used for context aware
  * functions such as windows drawing to the screen.
  */
-struct pcb* current_running = NULL;
+struct pcb* $current_process = NULL;
 //#include <gfx/gfxlib.h>
 
 const char* pcb_status[] = {"stopped ", "running ", "new     ", "blocked ", "sleeping", "zombie"};
@@ -207,7 +207,7 @@ void init_pcbs()
 		pcb_table[i].next = NULL;
 	}
 
-	current_running = &pcb_table[0];
+	$current_process = &pcb_table[0];
 
 	dbgprintf("[PCB] All process control blocks are ready.\n");
 }
@@ -301,7 +301,7 @@ void pcb_dbg_print(struct pcb* pcb)
 int pcb_cleanup_routine(void* arg)
 {
 	int pid = (int)arg;
-	assert(pid != current_running->pid && !(pid < 0 || pid > MAX_NUM_OF_PCBS));
+	assert(pid != $current_process->pid && !(pid < 0 || pid > MAX_NUM_OF_PCBS));
 
 	dbgprintf("%d\n", cli_cnt);
 	struct pcb* pcb = &pcb_table[pid];
@@ -417,8 +417,8 @@ error_t pcb_create_process(char* program, int argc, char** argv, pcb_flag_t flag
 	pcb->data_size = size;
 	memcpy(pcb->name, program, strlen(program)+1);
 
-	pcb->term = current_running->term;
-	pcb->parent = current_running;
+	pcb->term = $current_process->term;
+	pcb->parent = $current_process;
 
 	pcb->thread_eip = 0;
 
@@ -471,7 +471,7 @@ error_t pcb_create_kthread(void (*entry)(), char* name, int argc, char** argv)
 	}
 
 	pcb->parent = NULL;
-	pcb->term = current_running->term;
+	pcb->term = $current_process->term;
 
 	pcb->thread_eip = (uintptr_t) entry;
 	pcb->page_dir = kernel_page_dir;

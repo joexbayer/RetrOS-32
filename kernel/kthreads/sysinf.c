@@ -17,7 +17,7 @@
 #include <gfx/window.h>
 #include <gfx/gfxlib.h>
 #include <kutils.h>
-#include <util.h>
+#include <libc.h>
 #include <lib/icons.h>
 #include <pci.h>
 

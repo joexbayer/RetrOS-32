@@ -39,7 +39,7 @@ struct pcb {
 
 };
 
-extern struct pcb* current_running;
+extern struct pcb* $current_process;
 
 extern int failed;
 

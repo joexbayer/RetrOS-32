@@ -3,7 +3,7 @@
 
 #include <serial.h>
 #include <sync.h>
-#include <util.h>
+#include <libc.h>
 #include <kutils.h>
 
 #define assert(expr) \

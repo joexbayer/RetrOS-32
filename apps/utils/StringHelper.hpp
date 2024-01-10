@@ -12,7 +12,7 @@
 #ifndef STRING_HELPER_H
 #define STRING_HELPER_H
 
-#include <util.h>
+#include <libc.h>
 #include "cppUtils.hpp"
 #include <lib/syscall.h>
 #include <lib/printf.h>

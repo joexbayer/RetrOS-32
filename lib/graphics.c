@@ -11,7 +11,7 @@
 
 #include <lib/graphics.h>
 #include <lib/syscall.h>
-#include <util.h>
+#include <libc.h>
 #include <args.h>
 
 #ifdef __cplusplus

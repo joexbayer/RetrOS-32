@@ -10,7 +10,7 @@
  */
 
 #include <diskdev.h>
-#include <util.h>
+#include <libc.h>
 #include <terminal.h>
 #include <errors.h>
 #include <serial.h>

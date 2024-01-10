@@ -1,5 +1,5 @@
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef __LIBC_H
+#define __LIBC_H
 
 #include <stdint.h>
 /*
@@ -74,26 +74,6 @@ do { \
 #ifdef __cplusplus
 }
 #endif
-
-
-#define roundup(x, n) (((x) + (n) - 1) / (n) * (n))
-#define rounddown(x, n) ((x) / (n) * (n))
-
-
-/* From linux kernel. */
-#define offsetof(st, m) \
-    ((int)((char *)&((st *)0)->m - (char *)0))
-#define container_of(ptr, type, member) ({         \
-    const typeof( ((type *)0)->member ) *__mptr = (ptr); \
-    (type *)( (char *)__mptr - offsetof(type,member) );})
-
-#define STRINGIFY(x) #x
-
-#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
-#define UNUSED(x) (void)(x)
-
-#define likely(x) (__builtin_expect(!!(x), 1))
-#define unlikely(x) (__builtin_expect(!!(x), 0))
 
 unsigned long long rdtsc(void);
 #endif

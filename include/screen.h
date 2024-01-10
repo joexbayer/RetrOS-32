@@ -1,7 +1,7 @@
 #ifndef SCREEN_H
 #define SCREEN_H
 
-#include <util.h>
+#include <libc.h>
 #include <colors.h>
 
 #define SCREEN_WIDTH 80

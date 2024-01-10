@@ -15,7 +15,7 @@
 
 #include <serial.h>
 
-#include <util.h>
+#include <libc.h>
 #include <diskdev.h>
 
 #define INODE_CACHE_SIZE 100

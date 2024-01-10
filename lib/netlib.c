@@ -14,7 +14,7 @@
 #include <lib/net.h>
 #include <errors.h>
 #include <kutils.h>
-#include <util.h>
+#include <libc.h>
 
 
 #ifdef __cplusplus

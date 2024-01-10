@@ -11,7 +11,7 @@
 
 #include <kthreads.h>
 #include <kernel.h>
-#include <util.h>
+#include <libc.h>
 #include <colors.h>
 #include <gfx/gfxlib.h>
 #include <gfx/composition.h>

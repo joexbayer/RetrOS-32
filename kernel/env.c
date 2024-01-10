@@ -10,7 +10,7 @@
  */
 
 #include <kutils.h>
-#include <util.h>
+#include <libc.h>
 
 struct environment_variable {
     char* name;

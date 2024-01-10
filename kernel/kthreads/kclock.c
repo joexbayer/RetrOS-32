@@ -10,7 +10,7 @@
  */
 
 #include <kthreads.h>
-#include <util.h>
+#include <libc.h>
 #include <colors.h>
 #include <gfx/gfxlib.h>
 #include <gfx/theme.h>

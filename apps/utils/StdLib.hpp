@@ -12,7 +12,7 @@
 #ifndef STDLIB_HELPER_H
 #define STDLIB_HELPER_H
 
-#include <util.h>
+#include <libc.h>
 #include <stdint.h>
 #include "cppUtils.hpp"
 #include <lib/syscall.h>

@@ -4,10 +4,10 @@
 #include <kutils.h>
 #include <colors.h>
 #include <gfx/window.h>
-#include <util.h>
+#include <libc.h>
 
 #define TERM_CONTEXT(codeblock) do { \
-    struct terminal* term = current_running->term; \
+    struct terminal* term = $current_process->term; \
     if(term == NULL) { \
         break;\
     } \
@@ -15,8 +15,8 @@
 } while(0)
 
 #define twritef(a, ...) \
- if(current_running != NULL && current_running->term != NULL) { \
-    current_running->term->ops->writef(current_running->term, a, ##__VA_ARGS__); \
+ if($current_process != NULL && $current_process->term != NULL) { \
+    $current_process->term->ops->writef($current_process->term, a, ##__VA_ARGS__); \
  }
 
 typedef enum {

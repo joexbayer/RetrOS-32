@@ -10,7 +10,7 @@
  */
 #include <kconfig.h>
 #include <work.h>
-#include <util.h>
+#include <libc.h>
 #include <scheduler.h>
 #include <serial.h>
 #include <assert.h>

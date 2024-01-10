@@ -18,7 +18,7 @@
 
 #include <scheduler.h>
 #include <memory.h>
-#include <util.h>
+#include <libc.h>
 #include <serial.h>
 
 

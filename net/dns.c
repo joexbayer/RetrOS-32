@@ -17,7 +17,7 @@
 #include <syscalls.h>
 #include <syscall_helper.h>
 
-#include <util.h>
+#include <libc.h>
 
 #define DNS_PORT 53
 

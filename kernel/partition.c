@@ -13,7 +13,7 @@
 #include <fs/fs.h>
 #include <fs/fat16.h>
 #include <kutils.h>
-#include <util.h>
+#include <libc.h>
 #include <serial.h>
 #include <diskdev.h>
 

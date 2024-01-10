@@ -23,9 +23,9 @@ static unsigned long tick = 0;
 static void __int_handler timer_callback()
 {
 	tick++;
-	current_running->preempts++;
+	$current_process->preempts++;
 	EOI(32);
-	if(current_running != NULL)
+	if($current_process != NULL)
 	{
 		kernel_yield();
 	}

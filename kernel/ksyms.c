@@ -8,7 +8,7 @@
  * @copyright Copyright (c) 2024
  * 
  */
-#include <util.h>
+#include <libc.h>
 #include <ksyms.h>
 #include <serial.h>
 #include <terminal.h>

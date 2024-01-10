@@ -92,6 +92,24 @@ extern int cli_cnt;
 #define CLEAR_FLAG(flags, flag) (flags &= ~flag)
 #define HAS_FLAG(flags, flag) (flags & flag)
 
+#define roundup(x, n) (((x) + (n) - 1) / (n) * (n))
+#define rounddown(x, n) ((x) / (n) * (n))
+
+/* From linux kernel. */
+#define offsetof(st, m) \
+    ((int)((char *)&((st *)0)->m - (char *)0))
+#define container_of(ptr, type, member) ({         \
+    const typeof( ((type *)0)->member ) *__mptr = (ptr); \
+    (type *)( (char *)__mptr - offsetof(type,member) );})
+
+#define STRINGIFY(x) #x
+
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+#define UNUSED(x) (void)(x)
+
+#define likely(x) (__builtin_expect(!!(x), 1))
+#define unlikely(x) (__builtin_expect(!!(x), 0))
+
 /**
  * @brief CRITICAL_SECTION
  * Enters critical section before the

@@ -15,7 +15,7 @@
 
 #include <kernel.h>
 #include <terminal.h>
-#include <util.h>
+#include <libc.h>
 #include <screen.h>
 #include <colors.h>
 #include <keyboard.h>
@@ -55,7 +55,7 @@ void draw() {
 }
 
 int get_input() {
-    return current_running->term->ops->getchar(current_running->term);
+    return $current_process->term->ops->getchar($current_process->term);
 }
 
 int update() {

@@ -224,7 +224,7 @@ static error_t sched_round_robin(struct scheduler* sched)
                 }
 
                 sched->ctx.running = next;
-                current_running = next;
+                $current_process = next;
                 load_page_directory(next->page_dir);
                 //load_data_segments(GDT_KERNEL_DS);
                 start_pcb(next);
@@ -264,7 +264,7 @@ static error_t sched_round_robin(struct scheduler* sched)
     } while(next->state != RUNNING);
     
     sched->ctx.running = next;
-    current_running = next;
+    $current_process = next;
 
     if(next->is_process){
         tss.esp_0 = (uint32_t)next->kebp;
@@ -285,7 +285,7 @@ static error_t sched_default(struct scheduler* sched)
     if (sched->ctx.running == NULL){
         sched->ctx.running = sched->queue->ops->pop(sched->queue);
         /* Temporary fix */
-        current_running = sched->ctx.running;
+        $current_process = sched->ctx.running;
     }
     
     sched->ctx.running->yields++;

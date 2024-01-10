@@ -10,7 +10,7 @@
  */
 
 #include <gfx/theme.h>
-#include <util.h>
+#include <libc.h>
 
 struct gfx_theme default1 = {
     .os = {

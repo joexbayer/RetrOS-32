@@ -11,7 +11,7 @@
 
 #include <vbe.h>
 #include <colors.h>
-#include <util.h>
+#include <libc.h>
 #include <font8.h>
 #include <args.h>
 

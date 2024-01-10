@@ -27,10 +27,10 @@ int disk_attached()
     return 1;
 }
 
-struct pcb __current_running = {
+struct pcb __$current_process = {
 
 };
-struct pcb* current_running = &__current_running;
+struct pcb* $current_process = &__$current_process;
 
 int failed = 0;
 int tests = 0;

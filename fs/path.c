@@ -12,7 +12,7 @@
 #include <fs/path.h>
 #include <fs/directory.h>
 #include <fs/ext.h>
-#include <util.h>
+#include <libc.h>
 #include <serial.h>
 
 static int path_next_iter(char* path, char* next)
