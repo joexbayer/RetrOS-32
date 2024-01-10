@@ -1,16 +1,28 @@
+/**
+ * @file ipc.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Inter process communication.
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <ipc.h>
 #include <memory.h>
 #include <syscalls.h>
 #include <syscall_helper.h>
 
 #define IPC_MAX_CHANNELS 16
+#define IPC_MAX_SIZE 1024
 
-#define IPC_VALID_CHANNEL(channel) if(channel < 0 || channel >= IPC_MAX_CHANNELS) {return -1;}
+#define IPC_VALID_CHANNEL(channel) if(channel < 0 || channel >= IPC_MAX_CHANNELS || channels[channel].rbuf == NULL) {return -1;}
 
 /* handel to channel implementation */
 static struct ipc_channel channels[IPC_MAX_CHANNELS] = {0};
 
-static int ipc_alloc_channel() {
+static int __ipc_alloc_channel() {
     for (int i = 0; i < IPC_MAX_CHANNELS; i++)
         if (!channels[i].rbuf)
             return i;
@@ -20,12 +32,12 @@ static int ipc_alloc_channel() {
 /* userspace interface */
 int sys_ipc_open()
 {
-    int channel = ipc_alloc_channel();
+    int channel = __ipc_alloc_channel();
     if (channel < 0) {
         return -1;
     }
 
-    channels[channel].rbuf = rbuffer_new(1024);
+    channels[channel].rbuf = rbuffer_new(IPC_MAX_SIZE);
     return channel;
 }
 EXPORT_SYSCALL(SYSCALL_IPC_OPEN, sys_ipc_open);

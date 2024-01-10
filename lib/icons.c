@@ -1,3 +1,14 @@
+/**
+ * @file icons.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Icons for the GUI. 
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <lib/icons.h>
 
 unsigned char screen_32[32*32] = {

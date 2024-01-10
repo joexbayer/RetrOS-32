@@ -17,7 +17,7 @@ extern "C"
 #include <syscall_helper.h>
 #include <lib/syscall.h>
 #include <stdint.h>
-#include <util.h>
+#include <libc.h>
 #include <rtc.h>
 
 int invoke_syscall(int i, int arg1, int arg2, int arg3)

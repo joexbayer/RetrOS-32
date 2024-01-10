@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <kernel.h>
 #include <kutils.h>
-#include <util.h>
+#include <libc.h>
 
 #define CONFIG_MAX_SECTIONS 32
 #define CONFIG_MAX_NAME_LEN 32

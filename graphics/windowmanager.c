@@ -10,7 +10,7 @@
  */
 
 #include <windowmanager.h>
-#include <util.h>
+#include <libc.h>
 #include <errors.h>
 #include <gfx/window.h>
 #include <gfx/gfxlib.h>

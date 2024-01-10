@@ -1,3 +1,14 @@
+/**
+ * @file ext.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Ext2 (like) filesystem driver.
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <fs/ext.h>
 #include <fs/ext_error.h>
 #include <fs/superblock.h>
@@ -12,7 +23,7 @@
 #include <pcb.h>
 #include <ksyms.h>
 
-#include <util.h>
+#include <libc.h>
 #include <rtc.h>
 
 static struct superblock superblock;
@@ -72,7 +83,7 @@ inode_t ext_get_root()
 
 inode_t ext_get_current_dir()
 {
-	return current_running->current_directory;
+	return $process->current->current_directory;
 }
 
 

@@ -1,3 +1,14 @@
+/**
+ * @file taskbar.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Taskbar for the GUI
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <kthreads.h>
 #include <pcb.h>
 #include <gfx/window.h>
@@ -44,6 +55,8 @@ static void __callback taskbar_bg_default_color();
 static void __callback taskbar_bg_default_color_gray();
 static void __callback taskbar_sysinf();
 static void __callback taskbar_about();
+static void __callback taskbar_readme();
+static void __callback taskbar_reboot();
 
 /* prototype to taskbar thread */
 static void __kthread_entry taskbar(void);
@@ -177,6 +190,16 @@ struct taskbar_options {
                     .icon = desktop_16,
                     .name = "About",
                     .callback = &taskbar_about
+                },
+                {
+                    .icon = desktop_16,
+                    .name = "Readme",
+                    .callback = &taskbar_readme
+                },
+                {
+                    .icon = desktop_16,
+                    .name = "Reboot",
+                    .callback = &taskbar_reboot
                 }
             }
         },
@@ -365,9 +388,9 @@ static void __callback taskbar_wolfstein()
 
 static void __callback taskbar_terminal()
 {
-    dbgprintf("Starting terminal %d\n", cli_cnt);
+    dbgprintf("Starting terminal %d\n", __cli_cnt);
     start("shell",  0, NULL);
-    dbgprintf("Started terminal %d\n", cli_cnt);
+    dbgprintf("Started terminal %d\n", __cli_cnt);
 }
 
 static void __callback taskbar_finder()
@@ -458,4 +481,13 @@ static void __callback taskbar_sysinf()
 static void __callback taskbar_about()
 {
     start("about", 0, NULL);
+}
+
+static void __callback taskbar_readme()
+{
+    start("readme", 0, NULL);
+}
+
+static void __callback taskbar_reboot(){
+    reboot();
 }

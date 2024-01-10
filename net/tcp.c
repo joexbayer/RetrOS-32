@@ -92,8 +92,8 @@ tcb_new_error:
 #define IS_TCP_SOCKET(sock) (sock->type == SOCK_STREAM && sock->tcp != NULL)
 
 #define TCP_BLOCK(sock)\
-	sock->waiting = current_running;\
-	current_running->state = BLOCKED;\
+	sock->waiting = $process->current;\
+	$process->current->state = BLOCKED;\
 	kernel_yield();
 
 #define TCP_UNBLOCK(sock)\

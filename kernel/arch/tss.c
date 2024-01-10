@@ -1,6 +1,6 @@
 #include <arch/tss.h>
 #include <arch/gdt.h>
-#include <util.h>
+#include <libc.h>
 
 #define FLUSH_TSS() asm volatile ("ltr %0" : : "m" (tss_selector))
 

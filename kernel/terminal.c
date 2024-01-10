@@ -26,14 +26,14 @@
 
 int scan(ubyte_t* data, int size)
 {
-	if(current_running == NULL || current_running->term == NULL) return -1;
+	if($process->current == NULL || $process->current->term == NULL) return -1;
 
-	return current_running->term->ops->scan(current_running->term, data, size);
+	return $process->current->term->ops->scan($process->current->term, data, size);
 }
 
 void terminal_set_color(color_t color)
 {
-	//current_running->term->text_color = color;
+	//$process->current->term->text_color = color;
 }
 
 static void __terminal_syntax(unsigned char c)
@@ -61,8 +61,8 @@ static void __terminal_syntax(unsigned char c)
 
 void terminal_attach(struct terminal* term)
 {
-	current_running->term = term;
-	term->screen = current_running->gfx_window;
+	$process->current->term = term;
+	term->screen = $process->current->gfx_window;
 }
 
 static int __next_newline(void* _data)
@@ -99,13 +99,13 @@ static void __terminal_scroll(struct terminal* term)
 
 void terminal_commit()
 {
-	current_running->term->ops->commit(current_running->term);
+	$process->current->term->ops->commit($process->current->term);
 }
 
 void terminal_putchar(char c)
 {
 	return;
-	current_running->term->ops->putchar(current_running->term, c);
+	$process->current->term->ops->putchar($process->current->term, c);
 }
 
 /* terminal prototypes */
@@ -185,7 +185,7 @@ struct terminal* terminal_create(terminal_flags_t flags)
 		term->text_color = VGA_COLOR_WHITE;
 	}
 
-	current_running->term = term;
+	$process->current->term = term;
 	kref_init(&term->ref);
 
 	return term;
@@ -378,7 +378,7 @@ static int __terminal_putchar_graphics(struct terminal* term, char c)
 		}
 
 		/* should be a flush syscall */
-		if(term->screen != NULL && term->screen != current_running->gfx_window){
+		if(term->screen != NULL && term->screen != $process->current->gfx_window){
 			term->ops->commit(term);
 		}
 	}
@@ -387,7 +387,7 @@ static int __terminal_putchar_graphics(struct terminal* term, char c)
 
 	serial_put(c);
 
-	if(term->screen != NULL && term->screen != current_running->gfx_window){
+	if(term->screen != NULL && term->screen != $process->current->gfx_window){
 		term->screen->changed = 1;
 	} else {
 		gfx_commit();
@@ -431,9 +431,9 @@ static int __terminal_attach(struct terminal* term)
 	if(term == NULL) return -1;
 
 	/* This is a BAD solution, FIXME Badly */
-	current_running->term = term;
+	$process->current->term = term;
 	if(term->screen == NULL){
-		term->screen = current_running->gfx_window;
+		term->screen = $process->current->gfx_window;
 	}
 
 	kref_get(&term->ref);
@@ -445,7 +445,7 @@ static int __terminal_detach(struct terminal* term)
 {
 	if(term == NULL) return -1;
 
-	current_running->term = NULL;
+	$process->current->term = NULL;
 	term->screen = NULL;
 
 	kref_put(&term->ref);

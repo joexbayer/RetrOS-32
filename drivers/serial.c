@@ -12,7 +12,7 @@
 #include <serial.h>
 #include <arch/io.h>
 #include <kconfig.h>
-#include <util.h>
+#include <libc.h>
 #include <args.h>
 #include <kutils.h>
 

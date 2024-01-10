@@ -1,3 +1,14 @@
+/**
+ * @file sysinf.c
+ * @author Joe Bayer (joexbayer)
+ * @brief System information tool.
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <kthreads.h>
 #include <net/net.h>
 #include <net/interface.h>
@@ -6,7 +17,7 @@
 #include <gfx/window.h>
 #include <gfx/gfxlib.h>
 #include <kutils.h>
-#include <util.h>
+#include <libc.h>
 #include <lib/icons.h>
 #include <pci.h>
 

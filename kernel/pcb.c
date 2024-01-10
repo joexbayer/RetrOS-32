@@ -18,7 +18,7 @@
 #include <assert.h>
 #include <kthreads.h>
 #include <kutils.h>
-#include <util.h>
+#include <libc.h>
 #include <errors.h>
 
 #include <syscalls.h>
@@ -27,12 +27,15 @@
 #include <fs/fs.h>
 
 static struct pcb pcb_table[MAX_NUM_OF_PCBS];
+static struct process __process = {
+	.current = NULL,
+};
+struct process* $process = &__process;
+
 /**
  * Current running PCB, used for context aware
  * functions such as windows drawing to the screen.
  */
-struct pcb* current_running = NULL;
-//#include <gfx/gfxlib.h>
 
 const char* pcb_status[] = {"stopped ", "running ", "new     ", "blocked ", "sleeping", "zombie"};
 static int pcb_count = 0;
@@ -167,6 +170,7 @@ static struct pcb* __pcb_init_process(byte_t flags, uint32_t entry_point)
 
 static int __pcb_init_virt_args(struct pcb* pcb, int argc, char** argv)
 {
+
 	if(argc == 0) return ERROR_OK;
 
 	struct args* virtual_args = vmem_stack_alloc(pcb, sizeof(struct args));
@@ -207,7 +211,7 @@ void init_pcbs()
 		pcb_table[i].next = NULL;
 	}
 
-	current_running = &pcb_table[0];
+	$process->current = &pcb_table[0];
 
 	dbgprintf("[PCB] All process control blocks are ready.\n");
 }
@@ -301,9 +305,9 @@ void pcb_dbg_print(struct pcb* pcb)
 int pcb_cleanup_routine(void* arg)
 {
 	int pid = (int)arg;
-	assert(pid != current_running->pid && !(pid < 0 || pid > MAX_NUM_OF_PCBS));
+	assert(pid != $process->current->pid && !(pid < 0 || pid > MAX_NUM_OF_PCBS));
 
-	dbgprintf("%d\n", cli_cnt);
+	dbgprintf("%d\n", __cli_cnt);
 	struct pcb* pcb = &pcb_table[pid];
 
 	gfx_destory_window(pcb_table[pid].gfx_window);
@@ -342,7 +346,7 @@ int pcb_cleanup_routine(void* arg)
 
 	dbgprintf("[PCB] Cleanup on PID %d [DONE]\n", pid);
 
-	dbgprintf("%d\n", cli_cnt);
+	dbgprintf("%d\n", __cli_cnt);
 
 	return pid;
 }
@@ -417,8 +421,8 @@ error_t pcb_create_process(char* program, int argc, char** argv, pcb_flag_t flag
 	pcb->data_size = size;
 	memcpy(pcb->name, program, strlen(program)+1);
 
-	pcb->term = current_running->term;
-	pcb->parent = current_running;
+	pcb->term = $process->current->term;
+	pcb->parent = $process->current;
 
 	pcb->thread_eip = 0;
 
@@ -471,7 +475,7 @@ error_t pcb_create_kthread(void (*entry)(), char* name, int argc, char** argv)
 	}
 
 	pcb->parent = NULL;
-	pcb->term = current_running->term;
+	pcb->term = $process->current->term;
 
 	pcb->thread_eip = (uintptr_t) entry;
 	pcb->page_dir = kernel_page_dir;

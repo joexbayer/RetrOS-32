@@ -11,7 +11,7 @@
 
 #include <hashmap.h>
 #include <memory.h>
-#include <util.h>
+#include <libc.h>
 
 inline int simple_hash(char* key)
 {

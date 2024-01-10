@@ -264,7 +264,7 @@ static int __kthread_entry __tcp_reader(int argc, char *argv[])
         buffer[ret] = 0;
         twritef("%s", buffer);
 
-        current_running->term->ops->commit(current_running->term);
+        $process->current->term->ops->commit($process->current->term);
     }
 
     return 0;
@@ -301,7 +301,7 @@ static int tcp(int argc, char *argv[])
     }
 
     twritef("Connected to %s:%s\n", argv[1], argv[2]);
-    current_running->term->ops->commit(current_running->term); 
+    $process->current->term->ops->commit($process->current->term); 
 
     char socket_str[10] = {0};
     itoa(socket->socket, socket_str);
@@ -311,7 +311,7 @@ static int tcp(int argc, char *argv[])
     int ret;
     char* buffer = kalloc(1024);
     while(1){
-        ret = current_running->term->ops->scan(current_running->term, buffer, 255);
+        ret = $process->current->term->ops->scan($process->current->term, buffer, 255);
         if(ret < 0){
             break;
         }
@@ -373,7 +373,7 @@ static int conf(int argc, char *argv[])
 EXPORT_KSYMBOL(conf);
 
 static int clear(){
-    current_running->term->ops->reset(current_running->term);
+    $process->current->term->ops->reset($process->current->term);
     return 0;
 }
 EXPORT_KSYMBOL(clear);

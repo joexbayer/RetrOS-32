@@ -14,7 +14,7 @@
 #include <net/skb.h>
 #include <memory.h>
 #include <bitmap.h>
-#include <util.h>
+#include <libc.h>
 #include <timer.h>
 #include <assert.h>
 #include <scheduler.h>
@@ -108,8 +108,8 @@ error_t net_sock_read(struct sock* sock, uint8_t* buffer, unsigned int length)
 	dbgprintf(" [SOCK] Waiting for data... %d\n", sock);
 	/* Should be blocking */
     while(!net_sock_data_ready(sock, length)){
-        sock->waiting = current_running;
-        current_running->state = BLOCKED;
+        sock->waiting = $process->current;
+        $process->current->state = BLOCKED;
 	    kernel_yield();
     }
     
@@ -416,7 +416,7 @@ struct sock* kernel_socket_create(int domain, int type, int protocol)
     socket_table[current]->waiting = NULL;
     socket_table[current]->accept_sock = NULL;
 
-    socket_table[current]->owner = current_running;
+    socket_table[current]->owner = $process->current;
 
     mutex_init(&(socket_table[current]->lock));
 

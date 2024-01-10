@@ -1,6 +1,17 @@
+/**
+ * @file login.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Login screen kthread
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <kthreads.h>
 #include <kernel.h>
-#include <util.h>
+#include <libc.h>
 #include <colors.h>
 #include <gfx/gfxlib.h>
 #include <gfx/composition.h>
@@ -14,15 +25,14 @@
 
 void __kthread_entry login()
 {   
-    struct kernel_context* kernel_ctx = kernel_get_context();
     struct window* w = gfx_new_window(275, 100, GFX_NO_OPTIONS);
     if(w == NULL){
         warningf("Failed to create window for login");
         return;
     }
 
-    struct unit unit = calculate_size_unit(kernel_ctx->boot_info->extended_memory_low * 1024);
-    struct unit unit2 = calculate_size_unit(kernel_ctx->boot_info->extended_memory_high * 64 * 1024);
+    struct unit unit = calculate_size_unit($kernel->boot_info->extended_memory_low * 1024);
+    struct unit unit2 = calculate_size_unit($kernel->boot_info->extended_memory_high * 64 * 1024);
 
     /* set title */
     kernel_gfx_set_title("Welcome to RetrOS-32");
@@ -47,36 +57,33 @@ void __kthread_entry login()
     w->draw->textf(w, 10+10, 10+10+10+10+20+10,0x0,"Memory: %d %s", unit.size, unit.unit);
     w->draw->textf(w, 10+10, 10+10+10+10+20+10+10, 0x0, "Extended Memory: %d %s", unit2.size, unit2.unit);
 
-
-
-    while (1)
-    {
+    gfx_commit();
+    while (1){
         struct gfx_event event;
-			int ret = gfx_event_loop(&event, GFX_EVENT_BLOCKING);
-			if(ret == -1) continue;
+        int ret = gfx_event_loop(&event, GFX_EVENT_BLOCKING);
+        if(ret == -1) continue;
 
-			switch (event.event){
-			case GFX_EVENT_MOUSE:{
-                    /* check if OK is clicked x = event.data, y = event.data2 */
-                    if(event.data > 10+10 && event.data < 10+10+50 && event.data2 > 10+10+10+10 && event.data2 < 10+10+10+10+20){
-                        /* OK is clicked */
-                        start("kclock", 0, NULL);
-                        pid_t taskbar = start("taskbar", 0, NULL);
-                        if(taskbar <= 0){
-                            warningf("Failed to start taskbar");
-                        }
-
-                        dbgprintf("Taskbar started with pid: %d\n", taskbar);
-
-                        gfx_set_taskbar(taskbar);
-                        return;
+        switch (event.event){
+        case GFX_EVENT_MOUSE:{
+                /* check if OK is clicked x = event.data, y = event.data2 */
+                if(event.data > 10+10 && event.data < 10+10+50 && event.data2 > 10+10+10+10 && event.data2 < 10+10+10+10+20){
+                    /* OK is clicked */
+                    start("kclock", 0, NULL);
+                    pid_t taskbar = start("taskbar", 0, NULL);
+                    if(taskbar <= 0){
+                        warningf("Failed to start taskbar");
                     }
-                }				
-				break;
-			default:
-				break;
-			}
 
+                    dbgprintf("Taskbar started with pid: %d\n", taskbar);
+
+                    gfx_set_taskbar(taskbar);
+                    return;
+                }
+            }				
+            break;
+        default:
+            break;
+        }
     }
 }
 EXPORT_KTHREAD(login);

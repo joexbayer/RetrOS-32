@@ -3,7 +3,7 @@
 
 struct sock;
 
-#include <util.h>
+#include <libc.h>
 #include <errors.h>
 #include <sync.h>
 #include <net/skb.h>

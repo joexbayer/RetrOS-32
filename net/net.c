@@ -1,3 +1,14 @@
+/**
+ * @file net.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Network implementation.
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <net/net.h>
 #include <net/tcp.h>
 #include <net/socket.h>

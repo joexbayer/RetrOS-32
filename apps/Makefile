@@ -32,11 +32,10 @@ UTILS = bin/cppUtils.o bin/crt0.o
 
 USROBJS =
 
-COMMON = ../bin/syscall.o ../bin/util.o ../bin/printf.o ../bin/graphics.o ../bin/netlib.o bin/cppUtils.o
-LIB_COMMON_OBJS = ../bin/syscall.o ../bin/util.o ../bin/printf.o bin/cppUtils.o
-LIB_GRAPHICS_OBJS = ../bin/graphics.o ../bin/util.o
+COMMON = ../bin/syscall.o ../bin/libc.o ../bin/printf.o ../bin/graphics.o ../bin/netlib.o bin/cppUtils.o
+LIB_COMMON_OBJS = ../bin/syscall.o ../bin/libc.o ../bin/printf.o bin/cppUtils.o
+LIB_GRAPHICS_OBJS = ../bin/graphics.o ../bin/libc.o
 LIB_NET_OBJS = ../bin/netlib.o
-
 
 .PHONY: all new programs
 all: new
@@ -59,18 +58,6 @@ programs: staticlibs bin/crt0.o ${USROBJS}
 	@make -C cube/
 	@echo [USR] All user programs created and linked!
 
-# bin/%.o: %.c bin/crt0.o
-# 	@$(CC) -o $@ -c $< $(CCFLAGS) 
-# 	@$(LD) -o $(basename $@) $@ -L. -l:lib.a $(LDFLAGS) -T ./utils/linker.ld
-# 	@cp $(basename $@) ../rootfs/bin/
-# 	@echo [USR] Compiling $(basename $@)
-
-# bin/%.o: %.cpp bin/crt0.o
-# 	@$(CPP) -o $@ -c $< $(CCFLAGS) -fno-exceptions -fno-rtti
-# 	@$(LD) -o $(basename $@) $@ $(LDFLAGS) -L. -l:lib.a -T ./utils/linker.ld
-# 	@cp $(basename $@) ../rootfs/bin/
-# 	@echo [USR] Compiling $(basename $@)
-
 bin/%.o: utils/%.cpp
 	@$(CPP) -o $@ -c $< $(CCFLAGS) -fno-exceptions -fno-rtti -I ./../include/
 	@echo [USR] Compiling C++ $(basename $@)
@@ -89,8 +76,11 @@ bindir:
 
 clean:
 	rm -f ./bin/*
-	make -C editor/ clean
-	make -C colors/ clean
-	make -C finder/ clean
-	make -C calculator/ clean
+	@make -C editor/ clean
+	@make -C wolfstein/ clean
+	@make -C colors/ clean
+	@make -C finder/ clean
+	@make -C calculator/ clean
+	@make -C graphs/ clean
+	@make -C cube/ clean
 	rm -f .depend

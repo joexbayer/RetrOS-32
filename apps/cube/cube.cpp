@@ -1,5 +1,16 @@
+/**
+ * @file cube.cpp
+ * @author Joe Bayer (joexbayer)
+ * @brief A simple cube demo
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <utils/Graphics.hpp>
-#include <util.h>
+#include <libc.h>
 #include <colors.h>
 
 extern float sin_60[60];

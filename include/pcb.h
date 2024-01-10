@@ -3,7 +3,7 @@
 
 struct pcb;
 
-#include <util.h>
+#include <libc.h>
 #include <sync.h>
 #include <gfx/window.h>
 #include <memory.h>
@@ -14,6 +14,16 @@ struct pcb;
 #define PCB_MAX_NAME_LENGTH 25
 
 #define PCB_STACK_SIZE 0x2000
+
+#define AS_THREAD(block) \
+do { \
+    void* __kthread_internal(void* _unused) { \
+        block \
+        return NULL; \
+    } \
+    pcb_create_kthread(_kthread_func, "kthread", 0, NULL); \
+} while (0)
+
 
 typedef int pid_t;
 
@@ -100,8 +110,13 @@ struct pcb_info {
     char name[PCB_MAX_NAME_LENGTH];
 };
 
+struct process {
+    struct pcb* current;
+    /* */
+};
+
 extern const char* pcb_status[];
-extern struct pcb* current_running;
+extern struct pcb* $current_process;
 
 /* Forward declaration */
 struct pcb_queue;

@@ -69,15 +69,18 @@ void init_kctors();
 #define call(addr) __asm__ __volatile__ ("call *%0" : : "m" (addr))
 #define ret() __asm__ __volatile__ ("ret")
 
-extern int cli_cnt;
+typedef volatile int signal_value_t;
+
+/* exeception to the exernal naming as its never supposed to be accessed without macro. */
+extern int __cli_cnt;
 
 #define ENTER_CRITICAL()\
-    cli_cnt++;\
+    __cli_cnt++;\
     asm ("cli");\
 
 #define LEAVE_CRITICAL()\
-    cli_cnt--;\
-    if(cli_cnt == 0){\
+    __cli_cnt--;\
+    if(__cli_cnt == 0){\
         asm ("sti");\
     }\
 
@@ -89,8 +92,26 @@ extern int cli_cnt;
 
 /* validate flag */
 #define SET_FlAG(flags, flag) (flags |= flag)
-#define CLEAR_FLAG(flags, flag) (flags &= ~flag)
 #define HAS_FLAG(flags, flag) (flags & flag)
+
+#define CLEAR_FLAG(flags, flag) (flags &= ~flag)
+#define roundup(x, n) (((x) + (n) - 1) / (n) * (n))
+#define rounddown(x, n) ((x) / (n) * (n))
+
+/* From linux kernel. */
+#define offsetof(st, m) \
+    ((int)((char *)&((st *)0)->m - (char *)0))
+#define container_of(ptr, type, member) ({         \
+    const typeof( ((type *)0)->member ) *__mptr = (ptr); \
+    (type *)( (char *)__mptr - offsetof(type,member) );})
+
+#define STRINGIFY(x) #x
+
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+#define UNUSED(x) (void)(x)
+
+#define likely(x) (__builtin_expect(!!(x), 1))
+#define unlikely(x) (__builtin_expect(!!(x), 0))
 
 /**
  * @brief CRITICAL_SECTION
@@ -105,7 +126,7 @@ extern int cli_cnt;
         LEAVE_CRITICAL(); \
     } while (0)
     
-#define ASSERT_CRITICAL() assert(cli_cnt > 0)
+#define ASSERT_CRITICAL() assert(__cli_cnt > 0)
 
 typedef enum {
     false = 0,
@@ -135,7 +156,7 @@ unsigned char*  encode_run_length(const unsigned char* data, int length, unsigne
 unsigned char* decode_run_length(const unsigned char* encodedData, int encodedLength, unsigned char* out, int* decodedLength);
 int exec_cmd(char* str);
 void kernel_panic(const char* reason);
-
+void reboot();
 
 
 #endif /* __KERNEL_UTILS_H */

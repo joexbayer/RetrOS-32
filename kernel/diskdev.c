@@ -1,5 +1,16 @@
+/**
+ * @file diskdev.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Disk device interface.
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <diskdev.h>
-#include <util.h>
+#include <libc.h>
 #include <terminal.h>
 #include <errors.h>
 #include <serial.h>
@@ -13,9 +24,7 @@ void attach_disk_dev(
 ){
     disk_device.read = read;
     disk_device.write = write;
-
     disk_device.attached = 1;
-
     disk_device.dev = dev;
 }
 

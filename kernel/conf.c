@@ -1,3 +1,14 @@
+/**
+ * @file conf.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Configuration file parser.
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <conf.h>
 #include <fs/fs.h>
 #include <memory.h>

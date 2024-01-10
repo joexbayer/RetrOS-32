@@ -1,6 +1,17 @@
+/**
+ * @file vbe.c
+ * @author Joe Bayer (joexbayer)
+ * @brief VESA / VBE code
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <vbe.h>
 #include <colors.h>
-#include <util.h>
+#include <libc.h>
 #include <font8.h>
 #include <args.h>
 

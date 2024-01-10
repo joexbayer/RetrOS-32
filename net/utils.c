@@ -1,3 +1,14 @@
+/**
+ * @file utils.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Network utilities.
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <net/utils.h>
 
 uint32_t ntohl(uint32_t data)

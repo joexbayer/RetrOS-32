@@ -1,7 +1,18 @@
+/**
+ * @file StringHelper.hpp
+ * @author Joe Bayer (joexbayer)
+ * @brief A string helper class 
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #ifndef STRING_HELPER_H
 #define STRING_HELPER_H
 
-#include <util.h>
+#include <libc.h>
 #include "cppUtils.hpp"
 #include <lib/syscall.h>
 #include <lib/printf.h>

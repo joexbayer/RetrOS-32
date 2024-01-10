@@ -1,7 +1,7 @@
 #ifndef __FS_MODULE_H
 #define __FS_MODULE_H
 
-#include <util.h>
+#include <libc.h>
 
 #define FS_VERSION 1
 #define FS_VALIDATE(fs) if(!fs || fs->version != FS_VERSION) return -1;
