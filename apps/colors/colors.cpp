@@ -1,3 +1,14 @@
+/**
+ * @file colors.cpp
+ * @author Joe Bayer (joexbayer)
+ * @brief A simple color picker app
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <lib/printf.h>
 #include <utils/Graphics.hpp>
 #include <gfx/events.h>

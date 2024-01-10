@@ -1,3 +1,14 @@
+/**
+ * @file interface.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Network interface implementation.
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <net/interface.h>
 #include <net/net.h>
 #include <net/ethernet.h>

@@ -72,7 +72,7 @@ static char* about_text = "\nRetrOS-32 - 32bit Operating System\n    " KERNEL_RE
 void shell_clear()
 {
 	struct gfx_theme* theme = kernel_gfx_current_theme();
-	kernel_gfx_draw_rectangle(current_running->gfx_window, 0, SHELL_POSITION, gfx_get_window_height(), 8, theme->terminal.background);
+	kernel_gfx_draw_rectangle($process->current->gfx_window, 0, SHELL_POSITION, gfx_get_window_height(), 8, theme->terminal.background);
 }
 
 void reset_shell()
@@ -81,7 +81,7 @@ void reset_shell()
 	memset(&shell_buffer, 0, SHELL_MAX_SIZE);
 	shell_column = strlen(shell_name)+1;
 	shell_buffer_length = 0;
-	kernel_gfx_draw_text(current_running->gfx_window, 0, SHELL_POSITION, shell_name, COLOR_VGA_MISC);
+	kernel_gfx_draw_text($process->current->gfx_window, 0, SHELL_POSITION, shell_name, COLOR_VGA_MISC);
 	shell_column += 1;
 }
 
@@ -103,7 +103,7 @@ void ps(int argc, char* argv[])
 
 	if(spin){
 		while(1){
-			current_running->term->ops->reset(current_running->term);
+			$process->current->term->ops->reset($process->current->term);
 			twritef("  PID  USAGE    TYPE     STATE     NAME\n");
 			for (int i = 1; i < MAX_NUM_OF_PCBS; i++){
 				struct pcb_info info;
@@ -113,7 +113,7 @@ void ps(int argc, char* argv[])
 				twritef("   %d    %s%d%      %s  %s  %s\n", info.pid, usage < 10 ? " ": "", usage, info.is_process ? "process" : "kthread", pcb_status[info.state], info.name);
 			}
 
-			current_running->term->ops->commit(current_running->term);
+			$process->current->term->ops->commit($process->current->term);
 			
 			struct gfx_event event;
 			gfx_event_loop(&event, GFX_EVENT_NONBLOCKING);
@@ -482,8 +482,8 @@ EXPORT_KSYMBOL(socks);
 
 void reset(int argc, char* argv[])
 {
-	kernel_gfx_draw_rectangle(current_running->gfx_window, 0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_VGA_BG);
-	current_running->term->ops->reset(current_running->term);
+	kernel_gfx_draw_rectangle($process->current->gfx_window, 0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_VGA_BG);
+	$process->current->term->ops->reset($process->current->term);
 	reset_shell();
 }
 EXPORT_KSYMBOL(reset);
@@ -527,7 +527,7 @@ void shell_put(unsigned char c)
 		if(shell_buffer_length < 1)
 			return;
 		shell_column -= 1;
-		kernel_gfx_draw_rectangle(current_running->gfx_window, shell_column*8, SHELL_POSITION, 8, 8, COLOR_VGA_BG);
+		kernel_gfx_draw_rectangle($process->current->gfx_window, shell_column*8, SHELL_POSITION, 8, 8, COLOR_VGA_BG);
 		gfx_commit();
 		shell_buffer[shell_buffer_length] = 0;
 		shell_buffer_length--;
@@ -537,7 +537,7 @@ void shell_put(unsigned char c)
 	if(shell_column == SHELL_MAX_SIZE)
 		return;
 
-	kernel_gfx_draw_char(current_running->gfx_window, shell_column*8, SHELL_POSITION, uc, COLOR_VGA_FG);
+	kernel_gfx_draw_char($process->current->gfx_window, shell_column*8, SHELL_POSITION, uc, COLOR_VGA_FG);
 	gfx_commit();
 	shell_buffer[shell_buffer_length] = uc;
 	shell_buffer_length++;
@@ -562,7 +562,7 @@ void testfn()
 int c_test = 0;
 void __kthread_entry shell(int argc, char* argv[])
 {
-	dbgprintf("shell is running %d!\n", cli_cnt);
+	dbgprintf("shell is running %d!\n", __cli_cnt);
 
 	//testfn();
 	struct window* window = gfx_new_window(SHELL_WIDTH, SHELL_HEIGHT, GFX_IS_RESIZABLE);
@@ -571,7 +571,7 @@ void __kthread_entry shell(int argc, char* argv[])
 		return;
 	}
 	dbgprintf("shell: window 0x%x\n", window);
-	kernel_gfx_draw_rectangle(current_running->gfx_window, 0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_VGA_BG);
+	kernel_gfx_draw_rectangle($process->current->gfx_window, 0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_VGA_BG);
 	
 	struct terminal* term = terminal_create(TERMINAL_GRAPHICS_MODE);
 	term->ops->attach(term);

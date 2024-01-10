@@ -9,7 +9,7 @@
  * 
  */
 
-#include <util.h>
+#include <libc.h>
 #include <fs/fat16.h>
 #include <fs/fs.h>
 #include <kutils.h>

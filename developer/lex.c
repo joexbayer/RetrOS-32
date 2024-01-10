@@ -67,7 +67,7 @@ int line = 1;
 int error = 0;
 int error_line = 0;
 
-const char lex_errors[22][35] = {
+char lex_errors[22][35] = {
     "All good.", "expected token",
     "unexpected token EOF of expression",
     "bad function call", "undefined variable",

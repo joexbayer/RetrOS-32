@@ -14,7 +14,7 @@
 #include <mouse.h>
 #include <arch/io.h>
 #include <serial.h>
-#include <util.h>
+#include <libc.h>
 #include <kutils.h>
 
 #include <vbe.h>

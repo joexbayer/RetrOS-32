@@ -1,3 +1,15 @@
+/**
+ * @file font8.c
+ * @author Joe Bayer (joexbayer)
+ * @brief 8x8 font for VESA.
+ * @version 0.1
+ * @date 2024-01-10
+ * @see https://github.com/dhepper/font8x8
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <font8.h>
 
 uint8_t font8x8_basic[128][8] = {

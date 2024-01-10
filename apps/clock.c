@@ -14,7 +14,7 @@
 #include <gfx/events.h>
 #include <colors.h>
 #include <rtc.h>
-#include <util.h>
+#include <libc.h>
 #include <syscall_helper.h>
 
 #define center_x(size) ((110/2) - ((size*8)/2))

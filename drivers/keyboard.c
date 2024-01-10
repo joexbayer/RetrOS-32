@@ -13,7 +13,7 @@
 #include <keyboard.h>
 #include <serial.h>
 #include <arch/interrupts.h>
-#include <util.h>
+#include <libc.h>
 #include <sync.h>
 #include <arch/io.h>
 #include <pcb.h>

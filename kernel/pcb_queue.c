@@ -14,7 +14,7 @@
 #include <memory.h>
 #include <assert.h>
 #include <kutils.h>
-#include <util.h>
+#include <libc.h>
 #include <errors.h>
 
 /* Prototype functions for pcb queue interface */

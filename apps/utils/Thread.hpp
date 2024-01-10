@@ -1,3 +1,14 @@
+/**
+ * @file Thread.hpp
+ * @author Joe Bayer (joexbayer)
+ * @brief RetrOS thread library
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #ifndef __THREAD_LIB_HPP
 #define __THREAD_LIB_HPP
 

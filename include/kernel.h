@@ -42,7 +42,9 @@ struct kernel_context {
 
 	graphic_modes_t graphic_mode;
 };
+extern struct kernel_context* $kernel;
 
 struct kernel_context* kernel_get_context();
+
 
 #endif /* !__RETROS_KERNEL_H__ */

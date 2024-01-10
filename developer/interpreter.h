@@ -6,7 +6,7 @@
 #include <fs/ext.h>
 #include <terminal.h>
 #include <memory.h>
-#include <util.h>
+#include <libc.h>
 #include <serial.h>
 
 #ifdef DEBUG

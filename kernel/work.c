@@ -1,7 +1,16 @@
-
+/**
+ * @file work.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Work queue for kernel.
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
 #include <kconfig.h>
 #include <work.h>
-#include <util.h>
+#include <libc.h>
 #include <scheduler.h>
 #include <serial.h>
 #include <assert.h>

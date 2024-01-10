@@ -79,7 +79,7 @@ int gethostname(char *name);
 
 #ifdef __cplusplus
 #include "../../apps/utils/cppUtils.hpp"
-#include <util.h>
+#include <libc.h>
 
 inline unsigned short htons(unsigned short data)
 {

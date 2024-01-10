@@ -1,3 +1,14 @@
+/**
+ * @file encoding.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Run length encoding.
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <kutils.h>
 
 unsigned char* encode_run_length(const unsigned char* data, int length, unsigned char* out, int* encodedLength)

@@ -2,7 +2,7 @@
 #define __TCP_H
 
 #include <stdint.h>
-#include <util.h>
+#include <libc.h>
 #include <sync.h>
 #include <rbuffer.h>
 

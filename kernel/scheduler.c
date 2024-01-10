@@ -1,3 +1,14 @@
+/**
+ * @file scheduler.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Scheduler implementation.
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <scheduler.h>
 #include <memory.h>
 #include <timer.h>
@@ -9,15 +20,15 @@
 #include <arch/tss.h>
 
 /* exposed operator functions */
-static int sched_prioritize(struct scheduler* sched, struct pcb* pcb);
-static int sched_default(struct scheduler* sched);
-static int sched_add(struct scheduler* sched, struct pcb* pcb);
-static int sched_block(struct scheduler* sched, struct pcb* pcb);
-static int sched_sleep(struct scheduler* sched, int time);
+static error_t sched_prioritize(struct scheduler* sched, struct pcb* pcb);
+static error_t sched_default(struct scheduler* sched);
+static error_t sched_add(struct scheduler* sched, struct pcb* pcb);
+static error_t sched_block(struct scheduler* sched, struct pcb* pcb);
+static error_t sched_sleep(struct scheduler* sched, int time);
 static struct pcb* sched_consume(struct scheduler* sched);
-static int sched_exit(struct scheduler* sched);
+static error_t sched_exit(struct scheduler* sched);
 
-static int sched_round_robin(struct scheduler* sched);
+static error_t sched_round_robin(struct scheduler* sched);
 
 /* Default scheduler operations */
 static struct scheduler_ops sched_default_ops = {
@@ -81,7 +92,7 @@ error_t sched_init_default(struct scheduler* sched, sched_flag_t flags)
  * @param time  The time to sleep for
  * @return int  0 on success, error code on failure
  */
-static int sched_sleep(struct scheduler* sched, int time)
+static error_t sched_sleep(struct scheduler* sched, int time)
 {
     ERR_ON_NULL(sched);
     SCHED_VALIDATE(sched);
@@ -103,7 +114,7 @@ static int sched_sleep(struct scheduler* sched, int time)
  * @param pcb  The pcb to prioritize
  * @return int  0 on success, error code on failure
  */
-static int sched_prioritize(struct scheduler* sched, struct pcb* pcb)
+static error_t sched_prioritize(struct scheduler* sched, struct pcb* pcb)
 {
     ERR_ON_NULL(sched);
     ERR_ON_NULL(pcb);
@@ -139,7 +150,7 @@ static struct pcb* sched_consume(struct scheduler* sched)
  * @param pcb  The pcb to block
  * @return int  0 on success, error code on failure
  */
-static int sched_block(struct scheduler* sched, struct pcb* pcb)
+static error_t sched_block(struct scheduler* sched, struct pcb* pcb)
 {
     ERR_ON_NULL(sched);
     ERR_ON_NULL(pcb);
@@ -168,7 +179,7 @@ static int sched_block(struct scheduler* sched, struct pcb* pcb)
  * @param sched  The scheduler to schedule on
  * @return int 0 on success, error code on failure
  */
-static int sched_round_robin(struct scheduler* sched)
+static error_t sched_round_robin(struct scheduler* sched)
 {
     struct pcb* next;
     
@@ -213,7 +224,7 @@ static int sched_round_robin(struct scheduler* sched)
                 }
 
                 sched->ctx.running = next;
-                current_running = next;
+                $process->current = next;
                 load_page_directory(next->page_dir);
                 //load_data_segments(GDT_KERNEL_DS);
                 start_pcb(next);
@@ -253,7 +264,7 @@ static int sched_round_robin(struct scheduler* sched)
     } while(next->state != RUNNING);
     
     sched->ctx.running = next;
-    current_running = next;
+    $process->current = next;
 
     if(next->is_process){
         tss.esp_0 = (uint32_t)next->kebp;
@@ -265,7 +276,7 @@ static int sched_round_robin(struct scheduler* sched)
 }
 
 /* Default round robin scheduler behavior */
-static int sched_default(struct scheduler* sched)
+static error_t sched_default(struct scheduler* sched)
 {
     ERR_ON_NULL(sched);
     SCHED_VALIDATE(sched);
@@ -274,7 +285,7 @@ static int sched_default(struct scheduler* sched)
     if (sched->ctx.running == NULL){
         sched->ctx.running = sched->queue->ops->pop(sched->queue);
         /* Temporary fix */
-        current_running = sched->ctx.running;
+        $process->current = sched->ctx.running;
     }
     
     sched->ctx.running->yields++;
@@ -301,7 +312,7 @@ static int sched_default(struct scheduler* sched)
  * @param sched The scheduler to clean up on
  * @return int 0 on success, error code on failure
  */
-static int sched_exit(struct scheduler* sched)
+static error_t sched_exit(struct scheduler* sched)
 {
     ERR_ON_NULL(sched);
     SCHED_VALIDATE(sched);
@@ -333,7 +344,7 @@ static int sched_exit(struct scheduler* sched)
  * @param pcb The pcb to add
  * @return int 0 on success, error code on failure
  */
-static int sched_add(struct scheduler* sched, struct pcb* pcb)
+static error_t sched_add(struct scheduler* sched, struct pcb* pcb)
 {
     SCHED_VALIDATE(sched);
 

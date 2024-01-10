@@ -85,7 +85,9 @@
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
+<p align="center">
+  <img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/textmode.png?raw=true">
+</p>
 
 ### Built With
 
@@ -96,10 +98,20 @@ Docker used for crossplatform compilation.
 ![](https://img.shields.io/badge/C-00599C?style=for-the-badge&logo=c&logoColor=white)
 ![](https://img.shields.io/badge/C%2B%2B-00599C?style=for-the-badge&logo=c%2B%2B&logoColor=white)
 
-
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+## Hardware
+Tested on:
+Lenovo x240,
+Asus Eee PC series,
+Dell Optiplex 780,
+Samsung N150 Plus,
+Samsung NP-NC10,
+IBM Thinkpad a21p
 
+| | |
+|:-------------------------:|:-------------------------:|
+| <img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/hardware1.jpg?raw=true" width="250"> | <img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/hardware2.jpg?raw=true" width="250">
 
 <!-- GETTING STARTED -->
 ## Getting Started
@@ -186,6 +198,7 @@ To run RetrOS-32:
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
+<<<<<<< HEAD
 ## Hardware
 Tested on:
 Lenovo x240,
@@ -195,9 +208,11 @@ Samsung N150 Plus,
 Samsung NP-NC10,
 IBM Thinkpad a21p
 
-<img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/hardware1.png?raw=true">
-<img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/hardware2.png?raw=true">
+<img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/hardware1.jpg?raw=true" width="250">
+<img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/hardware2.jpg?raw=true" width="250">
 
+=======
+>>>>>>> 26e4e17bf04130ec26fc6176f7d3d05259fc6796
 ## Project Structure (TBD)
     NETOS - Project
     ├── Dockerfile 

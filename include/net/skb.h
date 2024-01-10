@@ -6,7 +6,7 @@ struct sk_buff;
 #include <net/netdev.h>
 #include <memory.h>
 #include <net/utils.h>
-#include <util.h>
+#include <libc.h>
 #include <net/ethernet.h>
 #include <net/interface.h>
 

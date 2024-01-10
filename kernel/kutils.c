@@ -1,4 +1,15 @@
-#include <util.h>
+/**
+ * @file kutils.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Kernel utilities.
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
+#include <libc.h>
 #include <memory.h>
 #include <serial.h>
 #include <ksyms.h>
@@ -6,8 +17,21 @@
 #include <gfx/gfxlib.h>
 #include <vbe.h>
 #include <pcb.h>
+#include <arch/io.h>
+#include <script.h>
+#include <kutils.h>
 
 static char *units[] = {"b ", "kb", "mb"};
+
+void reboot()
+{
+    ENTER_CRITICAL();
+    uint8_t good = 0x02;
+    while (good & 0x02)
+        good = inportb(0x64);
+    outportb(0x64, 0xFE);
+    HLT();
+}
 
 /* Function to align a given size to the size of a void* */
 int align_to_pointer_size(int size)
@@ -92,7 +116,7 @@ void kernel_panic(const char* reason)
         vesa_put_char16((uint8_t*)vbe_info->framebuffer, message[i], 16+(i*16), vbe_info->height/3 - 24, 15);
     }
     
-    struct pcb* pcb = current_running;
+    struct pcb* pcb = $process->current;
     vesa_printf((uint8_t*)vbe_info->framebuffer, 16, vbe_info->height/3, 15, "A critical error has occurred and your system is unable to continue operating.\nThe cause of this failure appears to be an essential system component.\n\nReason:\n%s\n\n###### PCB ######\npid: %d\nname: %s\nesp: 0x%x\nebp: 0x%x\nkesp: 0x%x\nkebp: 0x%x\neip: 0x%x\nstate: %s\nstack limit: 0x%x\nstack size: 0x%x (0x%x - 0x%x)\nPage Directory: 0x%x\nCS: %d\nDS:%d\n\n\nPlease power off and restart your device.\nRestarting may resolve the issue if it was caused by a temporary problem.\nIf this screen appears again after rebooting, it indicates a more serious issue.",
     reason, pcb->pid, pcb->name, pcb->ctx.esp, pcb->ctx.ebp, pcb->kesp, pcb->kebp, pcb->ctx.eip, pcb_status[pcb->state], pcb->stackptr, (int)((pcb->stackptr+0x2000-1) - pcb->ctx.esp), (pcb->stackptr+0x2000-1), pcb->ctx.esp,  pcb->page_dir, pcb->cs, pcb->ds);
 
@@ -199,4 +223,41 @@ int32_t csprintf(char *buffer, const char *fmt, va_list args)
     buffer[written < MAX_FMT_STR_SIZE ? written : MAX_FMT_STR_SIZE - 1] = '\0';
 
     return written;
+}
+
+int script_parse(char* str)
+{
+    char* start = str;
+    int line = 0, ret;
+
+    if(*str == 0){
+        return -1;
+    }
+
+    /* This assumes that the given string is \0 terminated. */
+    do {
+        if(*str == '\n'){
+            *str = 0;
+            
+            ret = exec_cmd(start);
+            if(ret < 0){
+                twritef("script: error on '%s' line %d\n", start, line);
+                return -1;
+            }
+        
+            line++;
+            start = str+1;
+        }
+        str++;
+    } while (*str != 0);
+    
+    /* Try to execute the last line incase it ended with a \0 */
+    ret = exec_cmd(start);
+    if(ret < 0){
+        twritef("script: error on '%s' line %d\n", start, line);
+        return -1;
+    }
+        
+
+    return 0;
 }

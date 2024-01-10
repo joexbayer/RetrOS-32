@@ -1,14 +1,25 @@
+/**
+ * @file kernel.c
+ * @author Joe Bayer (joexbayer)
+ * @brief The kernel entry point.
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <kernel.h>
 
 #include <windowmanager.h>
-#include <util.h>
+#include <libc.h>
 #include <pci.h>
 #include <smp.h>
+#include <pcb.h>
 #include <terminal.h>
 #include <keyboard.h>
 #include <arch/interrupts.h>
 #include <timer.h>
-#include <pcb.h>
 #include <memory.h>
 #include <net/skb.h>
 #include <net/arp.h>
@@ -54,7 +65,7 @@
 #define TEXT_COLOR 15  /* White color for text */
 #define LINE_HEIGHT 8  /* Height of each line */
 
-struct kernel_context kernel_context = {
+struct kernel_context __kernel_context = {
 	.sched_ctx = NULL,
 	.graphics.window_server = NULL,
 	.graphics.ctx = NULL,
@@ -62,10 +73,11 @@ struct kernel_context kernel_context = {
 	.graphic_mode = KERNEL_FLAG_GRAPHICS,
 	//.graphic_mode = KERNEL_FLAG_TEXTMODE,
 };
+struct kernel_context* $kernel = &__kernel_context;
 
 static void kernel_boot_printf(char* message) {
     static int kernel_msg = 0;
-	if(kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
+	if(__kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
 		vesa_printf((uint8_t*)vbe_info->framebuffer, 10, 10 + (kernel_msg++ * LINE_HEIGHT), TEXT_COLOR, message);
 	} else {
 		scrwrite(0, kernel_msg++, message, VGA_COLOR_WHITE);
@@ -93,14 +105,14 @@ void kernel(uint32_t magic)
 	vbe_info->pitch = mb_info->framebuffer_width;
 	vbe_info->framebuffer = mb_info->framebuffer_addr;
 
-	kernel_context.boot_info->extended_memory_low = 8*1024;
-	kernel_context.boot_info->extended_memory_high = 0;
+	__kernel_context.boot_info->extended_memory_low = 8*1024;
+	__kernel_context.boot_info->extended_memory_high = 0;
 #else
 
 	/* Point VBE to magic input and update total memory. */
-	kernel_context.boot_info = (struct boot_info*) (0x7e00);
-	if(kernel_context.boot_info->textmode == 1){
-		kernel_context.graphic_mode = KERNEL_FLAG_TEXTMODE;
+	__kernel_context.boot_info = (struct boot_info*) (0x7e00);
+	if(__kernel_context.boot_info->textmode == 1){
+		__kernel_context.graphic_mode = KERNEL_FLAG_TEXTMODE;
 	}
 
 	vbe_info = (struct vbe_mode_info_structure*) magic;
@@ -109,8 +121,10 @@ void kernel(uint32_t magic)
 	/* Calculate kernel size */
 	__deprecated kernel_size = _end-_code;
 
+#ifdef KDEBUG_SERIAL
 	/* Serial is used for debuging purposes. */
-    //init_serial();
+    init_serial();
+#endif
 	dbgprintf("INF: %s - %s\n", KERNEL_NAME, KERNEL_VERSION);
 
 	kernel_boot_printf("Booting OS...");
@@ -118,7 +132,7 @@ void kernel(uint32_t magic)
 	smp_parse();
 
 	/* Initilize memory map and then kernel and virtual memory */
-	memory_map_init(kernel_context.boot_info->extended_memory_low * 1024, kernel_context.boot_info->extended_memory_high * 64 * 1024);
+	memory_map_init(__kernel_context.boot_info->extended_memory_low * 1024, __kernel_context.boot_info->extended_memory_high * 64 * 1024);
 	init_memory();
 	kernel_boot_printf("Memory initialized.");
 	
@@ -131,10 +145,10 @@ void kernel(uint32_t magic)
 	kernel_boot_printf("Kernel constructors initialized.");
 
 	/* Graphics */
-	if(kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
+	if(__kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
 
-		kernel_context.graphics.ctx = gfx_new_ctx();
-		gfx_init_framebuffer(kernel_context.graphics.ctx, vbe_info);
+		__kernel_context.graphics.ctx = gfx_new_ctx();
+		gfx_init_framebuffer(__kernel_context.graphics.ctx, vbe_info);
 		kernel_boot_printf("Graphics initialized.");
 	} else {
 		scr_clear();
@@ -143,7 +157,7 @@ void kernel(uint32_t magic)
 	
 	/* Initilize the keyboard and mouse */
 	init_keyboard();
-	if(kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
+	if(__kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
 		mouse_init();
 	}
 	kernel_boot_printf("Peripherals initialized.");
@@ -212,7 +226,7 @@ void kernel(uint32_t magic)
 	ksyms_init();
 
 	start("idled", 0, NULL);
-	if(kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
+	if(__kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
 		start("wind", 0, NULL);
 	} else {
 		start("textshell", 0, NULL);	
@@ -226,7 +240,7 @@ void kernel(uint32_t magic)
 	init_pit(1000);
 	kernel_boot_printf("Timer initialized.");
 
-	dbgprintf("Critical counter: %d\n", cli_cnt);
+	dbgprintf("Critical counter: %d\n", __cli_cnt);
 	
 	kernel_boot_printf("Starting OS...");
 	LEAVE_CRITICAL();
@@ -253,7 +267,7 @@ void init_kctors()
 
 struct kernel_context* kernel_get_context()
 {
-	return &kernel_context;
+	return &__kernel_context;
 }
 
 #define HEXDUMP_COLS 8

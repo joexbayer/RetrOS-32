@@ -1,7 +1,7 @@
 #include <usb.h>
 #include <pci.h>
 #include <kutils.h>
-#include <util.h>
+#include <libc.h>
 #include <errors.h>
 #include <serial.h>
 

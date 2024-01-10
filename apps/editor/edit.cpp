@@ -1,3 +1,14 @@
+/**
+ * @file edit.cpp
+ * @author Joe Bayer (joexbayer)
+ * @brief A text editor app
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include "edit.hpp"
 #include <utils/cppUtils.hpp>
 #include <utils/Graphics.hpp>

@@ -63,7 +63,7 @@ void print_page_fault_info(unsigned long cr2) {
     unsigned long page_table_entry;
 
     /* Get the directory entry from the page directory */
-    page_dir_entry = current_running->page_dir[DIRECTORY_INDEX(cr2)];
+    page_dir_entry = $process->current->page_dir[DIRECTORY_INDEX(cr2)];
 
     /* Check if the page directory entry is present */
     if (page_dir_entry & PRESENT_BIT) {
@@ -102,20 +102,20 @@ void page_fault_interrupt(unsigned long cr2, unsigned long err)
 	interrupt_counter[14]++;
 	ENTER_CRITICAL();
 
-	dbgprintf("Page fault: 0x%x (Stack: 0x%x) %d (%s)\n", cr2, current_running->stackptr, err, current_running->name);
+	dbgprintf("Page fault: 0x%x (Stack: 0x%x) %d (%s)\n", cr2, $process->current->stackptr, err, $process->current->name);
 	/* print page_table entry */
 	print_page_fault_info(cr2);
 
-	pcb_dbg_print(current_running);
+	pcb_dbg_print($process->current);
 
-	if(current_running->is_process){
+	if($process->current->is_process){
 		kernel_exit();
 	}
 
 #ifdef KERNEL_PANIC_ON_PAGE_FAULT
 	kernel_panic("A critical kernel thread encountered a page fault.");
 #endif
-	//vesa_printf(0, 0, "Page fault: 0x%x (Stack: 0x%x) %d (%s)\n", cr2, current_running->stackptr, err, current_running->name);
+	//vesa_printf(0, 0, "Page fault: 0x%x (Stack: 0x%x) %d (%s)\n", cr2, $process->current->stackptr, err, $process->current->name);
 	kernel_exit();
 
 	UNREACHABLE();
@@ -124,8 +124,8 @@ void page_fault_interrupt(unsigned long cr2, unsigned long err)
 void general_protection_fault()
 {
 	ENTER_CRITICAL();
-	dbgprintf("General Protection Fault: 0x%x - %s\n", current_running->stackptr, current_running->name);
-	pcb_dbg_print(current_running);
+	dbgprintf("General Protection Fault: 0x%x - %s\n", $process->current->stackptr, $process->current->name);
+	pcb_dbg_print($process->current);
 
 	/* TODO: Some kind of feedback */
 	EOI(13);
@@ -146,9 +146,9 @@ void interrupt_install_handler(int i, void (*handler)())
 static void __interrupt_exception_handler(int i)
 {
 	interrupt_counter[i]++;
-	dbgprintf("[exception] %d %s (%s)\n", i, __exceptions_names[i], current_running->name);
-	pcb_dbg_print(current_running);
-	if(current_running->is_process){
+	dbgprintf("[exception] %d %s (%s)\n", i, __exceptions_names[i], $process->current->name);
+	pcb_dbg_print($process->current);
+	if($process->current->is_process){
 		kernel_exit();
 		UNREACHABLE();
 	}

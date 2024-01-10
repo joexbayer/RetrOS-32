@@ -1,3 +1,14 @@
+/**
+ * @file vfs.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Deprecated filesystem API
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <fs/ext.h>
 #include <fs/inode.h>
 #include <diskdev.h>
@@ -25,7 +36,7 @@ void mkdir(int argc, char* argv[])
         return;
     }
 
-    int ret = ext_create_directory(argv[1], current_running->current_directory);
+    int ret = ext_create_directory(argv[1], $process->current->current_directory);
     if(ret == -FS_ERR_INODE_MISSING){
         twritef("Unable to find current directory\n");
         return;

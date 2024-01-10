@@ -110,7 +110,7 @@ syscall_return_value:
 .global _syscall_entry
 _syscall_entry:
     cli
-    addl $1, cli_cnt
+    addl $1, __cli_cnt
 
     pushl %ebp
     movl %esp, %ebp
@@ -147,7 +147,7 @@ _syscall_entry:
     movl %ebp, %esp
     popl %ebp
 
-    subl $1, cli_cnt
+    subl $1, __cli_cnt
     iret
 
 page_fault_save:

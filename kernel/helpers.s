@@ -133,8 +133,8 @@ pcb_restore_context:
 
 .global _start_pcb
 _start_pcb:
-    subl $1, cli_cnt
-    # movl current_running, %eax
+    subl $1, __cli_cnt
+    # movl $process->current, %eax
     movl 4(%esp), %eax
 
     movl PCB_KESP(%eax), %esp

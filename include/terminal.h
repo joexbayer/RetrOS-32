@@ -1,13 +1,14 @@
 #ifndef TERMINAL_H
 #define TERMINAL_H
 
+#include <pcb.h>
 #include <kutils.h>
 #include <colors.h>
 #include <gfx/window.h>
-#include <util.h>
+#include <libc.h>
 
 #define TERM_CONTEXT(codeblock) do { \
-    struct terminal* term = current_running->term; \
+    struct terminal* term = $process->current->term; \
     if(term == NULL) { \
         break;\
     } \
@@ -15,8 +16,8 @@
 } while(0)
 
 #define twritef(a, ...) \
- if(current_running != NULL && current_running->term != NULL) { \
-    current_running->term->ops->writef(current_running->term, a, ##__VA_ARGS__); \
+ if($process->current != NULL && $process->current->term != NULL) { \
+    $process->current->term->ops->writef($process->current->term, a, ##__VA_ARGS__); \
  }
 
 typedef enum {

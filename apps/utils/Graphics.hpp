@@ -1,3 +1,14 @@
+/**
+ * @file Graphics.hpp
+ * @author Joe Bayer (joexbayer)
+ * @brief Graphics library for C++
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #ifndef __GRAPHICS_CPP_H
 #define __GRAPHICS_CPP_H
 

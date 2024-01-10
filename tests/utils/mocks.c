@@ -17,7 +17,6 @@
 #include <fs/superblock.h>
 #include <fs/directory.h>
 
-
 #define DEBUG 0
 #define DISKSIZE (32*1024*1024)
 
@@ -27,10 +26,13 @@ int disk_attached()
     return 1;
 }
 
-struct pcb __current_running = {
+struct pcb __mock_pcb = {
 
 };
-struct pcb* current_running = &__current_running;
+struct process __mock_process = {
+    .current = &__mock_pcb,
+};
+struct process* $process = &__mock_process;
 
 int failed = 0;
 int tests = 0;
@@ -162,7 +164,7 @@ void* kalloc(int size){
 }
 
 int kcalloc(int size){
-    return kalloc(size);
+    return (int)kalloc(size);
 }
 
 #endif

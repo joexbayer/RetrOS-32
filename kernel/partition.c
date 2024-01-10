@@ -1,8 +1,19 @@
+/**
+ * @file partition.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Partition table parsing.
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <mbr.h>
 #include <fs/fs.h>
 #include <fs/fat16.h>
 #include <kutils.h>
-#include <util.h>
+#include <libc.h>
 #include <serial.h>
 #include <diskdev.h>
 

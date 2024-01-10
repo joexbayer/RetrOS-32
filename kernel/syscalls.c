@@ -1,3 +1,14 @@
+/**
+ * @file syscalls.c
+ * @author Joe Bayer (joexbayer)
+ * @brief System calls.
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <syscalls.h>
 #include <pcb.h>
 #include <kutils.h>
@@ -15,7 +26,7 @@ void add_system_call(int index, syscall_t fn)
 
 int sys_create_thread(void (*entry)(), void* arg, byte_t flags)
 {
-	return pcb_create_thread(current_running, entry, arg, flags);
+	return pcb_create_thread($process->current, entry, arg, flags);
 }
 EXPORT_SYSCALL(SYSCALL_CREATE_THREAD, sys_create_thread);
 

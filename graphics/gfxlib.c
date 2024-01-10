@@ -21,12 +21,12 @@
 
 int gfx_get_window_width()
 {
-	return current_running->gfx_window->inner_width;
+	return $process->current->gfx_window->inner_width;
 }
 
 int gfx_get_window_height()
 {
-	return current_running->gfx_window->inner_height;
+	return $process->current->gfx_window->inner_height;
 }
 
 int gfx_push_event(struct window* w, struct gfx_event* e)
@@ -63,12 +63,12 @@ int gfx_button(int x, int y, int width, int height, char* name)
 
 int gfx_button_ext(int x, int y, int width, int height, char* name, color_t color)
 {
-	kernel_gfx_draw_rectangle(current_running->gfx_window, x, y, width, height, color);
-	kernel_gfx_draw_rectangle(current_running->gfx_window, x, y, width-1, 1, 31);
-	kernel_gfx_draw_rectangle(current_running->gfx_window, x, y, 1, height, 31);
-	kernel_gfx_draw_rectangle(current_running->gfx_window, x+width-1, y, 1, height, COLOR_VGA_MEDIUM_DARK_GRAY+5);
-	kernel_gfx_draw_rectangle(current_running->gfx_window, x, y+height-1, width-1, 1, COLOR_VGA_MEDIUM_DARK_GRAY+5);
-	kernel_gfx_draw_rectangle(current_running->gfx_window, x, y+height, width-1, 1, 31);
+	kernel_gfx_draw_rectangle($process->current->gfx_window, x, y, width, height, color);
+	kernel_gfx_draw_rectangle($process->current->gfx_window, x, y, width-1, 1, 31);
+	kernel_gfx_draw_rectangle($process->current->gfx_window, x, y, 1, height, 31);
+	kernel_gfx_draw_rectangle($process->current->gfx_window, x+width-1, y, 1, height, COLOR_VGA_MEDIUM_DARK_GRAY+5);
+	kernel_gfx_draw_rectangle($process->current->gfx_window, x, y+height-1, width-1, 1, COLOR_VGA_MEDIUM_DARK_GRAY+5);
+	kernel_gfx_draw_rectangle($process->current->gfx_window, x, y+height, width-1, 1, 31);
 
 	/* center the text */
 	int text_width = strlen(name)*PIXELS_PER_CHAR;
@@ -76,7 +76,7 @@ int gfx_button_ext(int x, int y, int width, int height, char* name, color_t colo
 	int text_x = x + (width/2) - (text_width/2);
 	int text_y = y + (height/2) - (text_height/2);
 
-	kernel_gfx_draw_text(current_running->gfx_window, text_x, text_y, name, 0x0);
+	kernel_gfx_draw_text($process->current->gfx_window, text_x, text_y, name, 0x0);
 
 	return 0;
 }
@@ -89,9 +89,9 @@ int gfx_put_icon16(unsigned char icon[], int x, int y)
 			/* for new icons we use 0xfa for transparent */
 			if (icon[l*16+i] != 0xfa) {
 
-				if((x)+i < 0 || (y)+l < 0 || (x)+i > current_running->gfx_window->inner_width || (y)+l > current_running->gfx_window->inner_height)
+				if((x)+i < 0 || (y)+l < 0 || (x)+i > $process->current->gfx_window->inner_width || (y)+l > $process->current->gfx_window->inner_height)
 					continue;
-				putpixel(current_running->gfx_window->inner, (x)+i, (y)+l, rgb_to_vga(icon[l*16+i]), current_running->gfx_window->pitch);
+				putpixel($process->current->gfx_window->inner, (x)+i, (y)+l, rgb_to_vga(icon[l*16+i]), $process->current->gfx_window->pitch);
 			}
 		}
 	}
@@ -106,9 +106,9 @@ int gfx_put_icon32(unsigned char icon[], int x, int y)
 			/* for new icons we use 0xfa for transparent */
 			if (icon[l*32+i] != 0xfa) {
 
-				if((x)+i < 0 || (y)+l < 0 || (x)+i > current_running->gfx_window->inner_width || (y)+l > current_running->gfx_window->inner_height)
+				if((x)+i < 0 || (y)+l < 0 || (x)+i > $process->current->gfx_window->inner_width || (y)+l > $process->current->gfx_window->inner_height)
 					continue;
-				putpixel(current_running->gfx_window->inner, (x)+i, (y)+l, rgb_to_vga(icon[l*32+i]), current_running->gfx_window->pitch);
+				putpixel($process->current->gfx_window->inner, (x)+i, (y)+l, rgb_to_vga(icon[l*32+i]), $process->current->gfx_window->pitch);
 			}
 		}
 	}
@@ -118,18 +118,18 @@ int gfx_put_icon32(unsigned char icon[], int x, int y)
 int gfx_event_loop(struct gfx_event* event, gfx_event_flag_t flags)
 {
 
-	ERR_ON_NULL(current_running->gfx_window);
+	ERR_ON_NULL($process->current->gfx_window);
 	/**
 	 * The gfx event loop is PCB specific,
 	 * checks if there is an event if true return.
 	 * Else block.
 	 */
 	while(1){
-		if(current_running->gfx_window->events.tail == current_running->gfx_window->events.head){
+		if($process->current->gfx_window->events.tail == $process->current->gfx_window->events.head){
 			
 			if(flags & GFX_EVENT_BLOCKING){
 				/* FIXME: Should not global block, perhaps window manager block queue? */
-				current_running->state = BLOCKED;
+				$process->current->state = BLOCKED;
 				kernel_yield();
 			} else {
 				return -1;
@@ -137,9 +137,9 @@ int gfx_event_loop(struct gfx_event* event, gfx_event_flag_t flags)
 			continue;
 		}
 		
-		SPINLOCK(current_running->gfx_window, {
-			memcpy(event, &current_running->gfx_window->events.list[current_running->gfx_window->events.tail], sizeof(struct gfx_event));
-			current_running->gfx_window->events.tail = (current_running->gfx_window->events.tail + 1) % GFX_MAX_EVENTS;
+		SPINLOCK($process->current->gfx_window, {
+			memcpy(event, &$process->current->gfx_window->events.list[$process->current->gfx_window->events.tail], sizeof(struct gfx_event));
+			$process->current->gfx_window->events.tail = ($process->current->gfx_window->events.tail + 1) % GFX_MAX_EVENTS;
 		});
 		return 0;
 	}
@@ -239,9 +239,9 @@ void kernel_gfx_set_position(struct window* w, int x, int y)
 
 void gfx_commit()
 {
-	if(current_running->gfx_window == NULL)
+	if($process->current->gfx_window == NULL)
 		return;
-	current_running->gfx_window->changed = 1;
+	$process->current->gfx_window->changed = 1;
 }
 
 /**
@@ -269,8 +269,8 @@ int kernel_gfx_set_title(char* title)
 	if(strlen(title) > GFX_MAX_WINDOW_NAME_SIZE)
 		return -1;
 	
-	memset(current_running->gfx_window->name, 0, GFX_MAX_WINDOW_NAME_SIZE);
-	memcpy(current_running->gfx_window->name, title, strlen(title));
+	memset($process->current->gfx_window->name, 0, GFX_MAX_WINDOW_NAME_SIZE);
+	memcpy($process->current->gfx_window->name, title, strlen(title));
 
 	return 0;
 }
@@ -280,8 +280,8 @@ int kernel_gfx_set_header(const char* header)
 	if(strlen(header) > GFX_MAX_WINDOW_NAME_SIZE)
 		return -1;
 	
-	memset(current_running->gfx_window->header, 0, GFX_MAX_WINDOW_NAME_SIZE);
-	memcpy(current_running->gfx_window->header, header, strlen(header));
+	memset($process->current->gfx_window->header, 0, GFX_MAX_WINDOW_NAME_SIZE);
+	memcpy($process->current->gfx_window->header, header, strlen(header));
 
 	return 0;
 }

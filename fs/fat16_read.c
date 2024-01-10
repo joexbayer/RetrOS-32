@@ -1,3 +1,14 @@
+/**
+ * @file fat16_read.c
+ * @author Joe Bayer (joexbayer)
+ * @brief FAT16 read functions.
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <stdint.h>
 #include <fs/fat16.h>
 #include <kutils.h>

@@ -9,7 +9,7 @@
  * @copyright Copyright (c) 2023
  * 
  */
-#include <util.h>
+#include <libc.h>
 #include <stdint.h>
 #include <fs/fat16.h>
 #include <kutils.h>

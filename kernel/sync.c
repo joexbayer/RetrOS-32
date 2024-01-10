@@ -38,7 +38,7 @@ void mutex_init(mutex_t* l)
 {
     l->blocked = pcb_new_queue();
     l->state = UNLOCKED;
-    dbgprintf("Lock 0x%x initiated by %s\n", l, current_running->name);
+    dbgprintf("Lock 0x%x initiated by %s\n", l, $process->current->name);
 }
 
 
@@ -85,7 +85,6 @@ void acquire(mutex_t* l)
  */
 void release(mutex_t* l)
 {
-
     dbgprintf("Unlocking 0x%x\n", l);
     if(l->state == UNLOCKED){
         warningf("Lock 0x%x is already unlocked\n", l);

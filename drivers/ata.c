@@ -15,7 +15,7 @@
 #include <memory.h>
 #include <arch/io.h>
 #include <diskdev.h>
-#include <util.h>
+#include <libc.h>
 
 #include <kutils.h>
 

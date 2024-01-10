@@ -1,7 +1,18 @@
+/**
+ * @file path.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Path helper functions
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <fs/path.h>
 #include <fs/directory.h>
 #include <fs/ext.h>
-#include <util.h>
+#include <libc.h>
 #include <serial.h>
 
 static int path_next_iter(char* path, char* next)
