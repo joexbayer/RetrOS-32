@@ -15,11 +15,11 @@
 #include <libc.h>
 #include <pci.h>
 #include <smp.h>
+#include <pcb.h>
 #include <terminal.h>
 #include <keyboard.h>
 #include <arch/interrupts.h>
 #include <timer.h>
-#include <pcb.h>
 #include <memory.h>
 #include <net/skb.h>
 #include <net/arp.h>

@@ -15,16 +15,6 @@ struct pcb;
 
 #define PCB_STACK_SIZE 0x2000
 
-#define AS_THREAD(block) \
-do { \
-    void* __kthread_internal(void* _unused) { \
-        block \
-        return NULL; \
-    } \
-    pcb_create_kthread(_kthread_func, "kthread", 0, NULL); \
-} while (0)
-
-
 typedef int pid_t;
 
 /* TODO: Move to new file */
@@ -117,6 +107,8 @@ struct process {
 
 extern const char* pcb_status[];
 extern struct pcb* $current_process;
+
+struct process* $process;
 
 /* Forward declaration */
 struct pcb_queue;

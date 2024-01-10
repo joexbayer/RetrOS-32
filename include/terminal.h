@@ -1,6 +1,7 @@
 #ifndef TERMINAL_H
 #define TERMINAL_H
 
+#include <pcb.h>
 #include <kutils.h>
 #include <colors.h>
 #include <gfx/window.h>
