@@ -17,7 +17,6 @@
 #include <fs/superblock.h>
 #include <fs/directory.h>
 
-
 #define DEBUG 0
 #define DISKSIZE (32*1024*1024)
 
@@ -27,10 +26,13 @@ int disk_attached()
     return 1;
 }
 
-struct pcb __$current_process = {
+struct pcb __mock_pcb = {
 
 };
-struct pcb* $current_process = &__$current_process;
+struct process __mock_process = {
+    .current = &__mock_pcb,
+};
+struct process* $process = &__mock_process;
 
 int failed = 0;
 int tests = 0;

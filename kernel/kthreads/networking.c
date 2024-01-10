@@ -289,7 +289,7 @@ void __kthread_entry networking_main()
         netd.skb_tx_queue = skb_new_queue();
     }
 
-    netd.instance = $current_process;
+    netd.instance = $process->current;
 
     /* sanity check that loopback interface exists */
     __net_config_loopback();
@@ -333,7 +333,7 @@ void __kthread_entry networking_main()
         }
 
         if(todos == 0){
-            $current_process->state = BLOCKED;
+            $process->current->state = BLOCKED;
         }
 
         kernel_yield();

@@ -55,8 +55,6 @@ int isdigit(char c);
 int isspace(char c);
 int rand(void);
 
-typedef volatile int signal_value_t;
-
 struct args {
     int argc;
     char* argv[10];

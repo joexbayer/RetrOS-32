@@ -83,7 +83,7 @@ inode_t ext_get_root()
 
 inode_t ext_get_current_dir()
 {
-	return $current_process->current_directory;
+	return $process->current->current_directory;
 }
 
 

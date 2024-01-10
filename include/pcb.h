@@ -100,8 +100,13 @@ struct pcb_info {
     char name[PCB_MAX_NAME_LENGTH];
 };
 
+struct process {
+    struct pcb* current;
+    /* more */
+};
+extern struct process* $process;
+
 extern const char* pcb_status[];
-extern struct pcb* $current_process;
 
 /* Forward declaration */
 struct pcb_queue;

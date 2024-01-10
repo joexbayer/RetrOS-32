@@ -69,15 +69,18 @@ void init_kctors();
 #define call(addr) __asm__ __volatile__ ("call *%0" : : "m" (addr))
 #define ret() __asm__ __volatile__ ("ret")
 
-extern int cli_cnt;
+typedef volatile int signal_value_t;
+
+/* exeception to the exernal naming as its never supposed to be accessed without macro. */
+extern int __cli_cnt;
 
 #define ENTER_CRITICAL()\
-    cli_cnt++;\
+    __cli_cnt++;\
     asm ("cli");\
 
 #define LEAVE_CRITICAL()\
-    cli_cnt--;\
-    if(cli_cnt == 0){\
+    __cli_cnt--;\
+    if(__cli_cnt == 0){\
         asm ("sti");\
     }\
 
@@ -123,7 +126,7 @@ extern int cli_cnt;
         LEAVE_CRITICAL(); \
     } while (0)
     
-#define ASSERT_CRITICAL() assert(cli_cnt > 0)
+#define ASSERT_CRITICAL() assert(__cli_cnt > 0)
 
 typedef enum {
     false = 0,

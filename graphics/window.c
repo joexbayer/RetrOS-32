@@ -185,7 +185,7 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
 
 void gfx_window_set_resizable()
 {
-    $current_process->gfx_window->is_resizable = 1;
+    $process->current->gfx_window->is_resizable = 1;
 }
 
 /* under construction */
@@ -353,8 +353,8 @@ static void gfx_default_mouse_up(struct window* window, int x, int y)
 
 int kernel_gfx_window_border_color(uint8_t color)
 {
-    if($current_process->gfx_window == NULL) return -1;
-    $current_process->gfx_window->color.border = color;
+    if($process->current->gfx_window == NULL) return -1;
+    $process->current->gfx_window->color.border = color;
 
     return ERROR_OK;
 }
@@ -399,8 +399,8 @@ static int gfx_window_maximize(struct window* window)
  */
 struct window* gfx_new_window(int width, int height, window_flag_t flags)
 {
-    if($current_process->gfx_window != NULL)
-        return $current_process->gfx_window;
+    if($process->current->gfx_window != NULL)
+        return $process->current->gfx_window;
 
     struct window* w = create(struct window);
     if(w == NULL){
@@ -434,7 +434,7 @@ struct window* gfx_new_window(int width, int height, window_flag_t flags)
         w->height += 16;
     }
 
-    w->owner = $current_process;
+    w->owner = $process->current;
     w->pitch = w->inner_width;
     w->x = 32;
     w->y = 32;
@@ -464,13 +464,13 @@ struct window* gfx_new_window(int width, int height, window_flag_t flags)
 
     w->is_moving.state = GFX_WINDOW_STATIC;
     /* Window can just use the name of the owner? */
-    memcpy(w->name, $current_process->name, strlen($current_process->name)+1);
+    memcpy(w->name, $process->current->name, strlen($process->current->name)+1);
     memset(w->header, 0, GFX_MAX_WINDOW_NAME_SIZE);
     w->in_focus = 0;
 
-    dbgprintf("[Window] Created new window for %s at 0x%x: inner 0x%x (total %x - %x)\n", $current_process->name, w, w->inner, sizeof(struct window), width*height);
+    dbgprintf("[Window] Created new window for %s at 0x%x: inner 0x%x (total %x - %x)\n", $process->current->name, w, w->inner, sizeof(struct window), width*height);
 
-    $current_process->gfx_window = w;
+    $process->current->gfx_window = w;
     gfx_composition_add_window(w);
 
     return w;

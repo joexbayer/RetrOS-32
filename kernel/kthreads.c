@@ -33,12 +33,12 @@ static struct kthread {
  */
 void __noreturn kthread_entry(int argc, char* args[])
 {   
-    if($current_process->is_process){
+    if($process->current->is_process){
         kernel_exit();
     }
 
-    void (*entry)(int argc, char* argv[]) = (void (*)(int argc, char* argv[]))$current_process->thread_eip;
-    entry($current_process->args, $current_process->argv);
+    void (*entry)(int argc, char* argv[]) = (void (*)(int argc, char* argv[]))$process->current->thread_eip;
+    entry($process->current->args, $process->current->argv);
 
     kernel_exit();
     UNREACHABLE();

@@ -26,7 +26,7 @@ void add_system_call(int index, syscall_t fn)
 
 int sys_create_thread(void (*entry)(), void* arg, byte_t flags)
 {
-	return pcb_create_thread($current_process, entry, arg, flags);
+	return pcb_create_thread($process->current, entry, arg, flags);
 }
 EXPORT_SYSCALL(SYSCALL_CREATE_THREAD, sys_create_thread);
 

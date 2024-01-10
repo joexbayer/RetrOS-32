@@ -25,15 +25,14 @@
 
 void __kthread_entry login()
 {   
-    struct kernel_context* kernel_ctx = kernel_get_context();
     struct window* w = gfx_new_window(275, 100, GFX_NO_OPTIONS);
     if(w == NULL){
         warningf("Failed to create window for login");
         return;
     }
 
-    struct unit unit = calculate_size_unit(kernel_ctx->boot_info->extended_memory_low * 1024);
-    struct unit unit2 = calculate_size_unit(kernel_ctx->boot_info->extended_memory_high * 64 * 1024);
+    struct unit unit = calculate_size_unit($kernel->boot_info->extended_memory_low * 1024);
+    struct unit unit2 = calculate_size_unit($kernel->boot_info->extended_memory_high * 64 * 1024);
 
     /* set title */
     kernel_gfx_set_title("Welcome to RetrOS-32");

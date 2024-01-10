@@ -37,7 +37,6 @@ LIB_COMMON_OBJS = ../bin/syscall.o ../bin/libc.o ../bin/printf.o bin/cppUtils.o
 LIB_GRAPHICS_OBJS = ../bin/graphics.o ../bin/libc.o
 LIB_NET_OBJS = ../bin/netlib.o
 
-
 .PHONY: all new programs
 all: new
 
@@ -58,18 +57,6 @@ programs: staticlibs bin/crt0.o ${USROBJS}
 	@make -C graphs/
 	@make -C cube/
 	@echo [USR] All user programs created and linked!
-
-# bin/%.o: %.c bin/crt0.o
-# 	@$(CC) -o $@ -c $< $(CCFLAGS) 
-# 	@$(LD) -o $(basename $@) $@ -L. -l:lib.a $(LDFLAGS) -T ./utils/linker.ld
-# 	@cp $(basename $@) ../rootfs/bin/
-# 	@echo [USR] Compiling $(basename $@)
-
-# bin/%.o: %.cpp bin/crt0.o
-# 	@$(CPP) -o $@ -c $< $(CCFLAGS) -fno-exceptions -fno-rtti
-# 	@$(LD) -o $(basename $@) $@ $(LDFLAGS) -L. -l:lib.a -T ./utils/linker.ld
-# 	@cp $(basename $@) ../rootfs/bin/
-# 	@echo [USR] Compiling $(basename $@)
 
 bin/%.o: utils/%.cpp
 	@$(CPP) -o $@ -c $< $(CCFLAGS) -fno-exceptions -fno-rtti -I ./../include/

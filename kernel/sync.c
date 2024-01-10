@@ -38,7 +38,7 @@ void mutex_init(mutex_t* l)
 {
     l->blocked = pcb_new_queue();
     l->state = UNLOCKED;
-    dbgprintf("Lock 0x%x initiated by %s\n", l, $current_process->name);
+    dbgprintf("Lock 0x%x initiated by %s\n", l, $process->current->name);
 }
 
 

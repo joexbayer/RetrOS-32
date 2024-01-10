@@ -49,7 +49,6 @@ else
 	LD=i386-elf-ld
 endif
 
-
 # ---------------- Objects to compile ----------------
 PROGRAMOBJ = bin/shell.o bin/networking.o bin/dhcpd.o bin/tcpd.o bin/logd.o bin/taskbar.o bin/about.o
 

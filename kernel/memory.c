@@ -99,11 +99,11 @@ void free(void* ptr)
 	if(ptr == NULL)return;
 		
 	/* lock on free as multiple threads can free at the same time */
-	spin_lock(&$current_process->allocations->spinlock);
+	spin_lock(&$process->current->allocations->spinlock);
 	
-	vmem_stack_free($current_process, ptr);	
+	vmem_stack_free($process->current, ptr);	
 
-	spin_unlock(&$current_process->allocations->spinlock);
+	spin_unlock(&$process->current->allocations->spinlock);
 }
 
 void* malloc(unsigned int size)
@@ -115,19 +115,19 @@ void* malloc(unsigned int size)
 	size = ALIGN(size, PTR_SIZE);
 
 	/* lock on malloc as multiple threads can malloc at the same time */
-	spin_lock(&$current_process->allocations->spinlock);
+	spin_lock(&$process->current->allocations->spinlock);
 
-	void* ptr = vmem_stack_alloc($current_process, size);
+	void* ptr = vmem_stack_alloc($process->current, size);
 	if(ptr == NULL){
-		spin_unlock(&$current_process->allocations->spinlock);
+		spin_unlock(&$process->current->allocations->spinlock);
 		return NULL;
 	}
 
-	//vmem_dump_heap($current_process->allocations->head);
+	//vmem_dump_heap($process->current->allocations->head);
 
 	dbgprintf("Allocated %d bytes at %x\n", size, ptr);
 
-	spin_unlock(&$current_process->allocations->spinlock);
+	spin_unlock(&$process->current->allocations->spinlock);
 	return ptr;
 }
 

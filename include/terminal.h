@@ -7,7 +7,7 @@
 #include <libc.h>
 
 #define TERM_CONTEXT(codeblock) do { \
-    struct terminal* term = $current_process->term; \
+    struct terminal* term = $process->current->term; \
     if(term == NULL) { \
         break;\
     } \
@@ -15,8 +15,8 @@
 } while(0)
 
 #define twritef(a, ...) \
- if($current_process != NULL && $current_process->term != NULL) { \
-    $current_process->term->ops->writef($current_process->term, a, ##__VA_ARGS__); \
+ if($process->current != NULL && $process->current->term != NULL) { \
+    $process->current->term->ops->writef($process->current->term, a, ##__VA_ARGS__); \
  }
 
 typedef enum {

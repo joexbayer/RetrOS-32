@@ -55,7 +55,7 @@ void draw() {
 }
 
 int get_input() {
-    return $current_process->term->ops->getchar($current_process->term);
+    return $process->current->term->ops->getchar($process->current->term);
 }
 
 int update() {
