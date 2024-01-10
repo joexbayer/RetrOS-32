@@ -1,3 +1,14 @@
+/**
+ * @file finder.cpp
+ * @author Joe Bayer (joexbayer)
+ * @brief A file manager app
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <util.h>
 #include <utils/Graphics.hpp>
 #include <gfx/events.h>

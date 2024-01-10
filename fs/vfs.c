@@ -1,3 +1,14 @@
+/**
+ * @file vfs.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Deprecated filesystem API
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <fs/ext.h>
 #include <fs/inode.h>
 #include <diskdev.h>

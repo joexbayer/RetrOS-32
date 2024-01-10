@@ -1,3 +1,14 @@
+/**
+ * @file about.c
+ * @author Joe Bayer (joexbayer)
+ * @brief About and readme threads
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <kthreads.h>
 #include <gfx/window.h>
 #include <gfx/gfxlib.h>

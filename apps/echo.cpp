@@ -4,7 +4,6 @@
 #include <lib/net.h>
 #include "../apps/utils/cppUtils.hpp"
 
-
 class TcpEcho : public Window {
 public:
     TcpEcho(int width, int height) : Window(200, 200, "Echo", 0) {

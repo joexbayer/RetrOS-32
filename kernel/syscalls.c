@@ -1,3 +1,14 @@
+/**
+ * @file syscalls.c
+ * @author Joe Bayer (joexbayer)
+ * @brief System calls.
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <syscalls.h>
 #include <pcb.h>
 #include <kutils.h>

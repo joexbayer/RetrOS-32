@@ -1,3 +1,14 @@
+/**
+ * @file taskbar.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Taskbar for the GUI
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <kthreads.h>
 #include <pcb.h>
 #include <gfx/window.h>

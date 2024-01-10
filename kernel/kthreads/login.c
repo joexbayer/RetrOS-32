@@ -1,3 +1,14 @@
+/**
+ * @file login.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Login screen kthread
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <kthreads.h>
 #include <kernel.h>
 #include <util.h>

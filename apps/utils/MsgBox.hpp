@@ -1,3 +1,14 @@
+/**
+ * @file MsgBox.hpp
+ * @author Joe Bayer (joexbayer)
+ * @brief A message box widget
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #ifndef MSGBOX_HPP
 #define MSGBOX_HPP
 

@@ -1,3 +1,14 @@
+/**
+ * @file api.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Graphics API from userspace
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <gfx/api.h>
 #include <gfx/gfxlib.h>
 #include <lib/graphics.h>

@@ -1,4 +1,13 @@
-
+/**
+ * @file ksyms.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Kernel symbol table.
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
 #include <util.h>
 #include <ksyms.h>
 #include <serial.h>

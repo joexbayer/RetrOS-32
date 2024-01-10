@@ -1,3 +1,14 @@
+/**
+ * @file snake.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Textmode only snake game
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #define SNAKE_LENGTH 100
 #define SCREEN_WIDTH 80
 #define SCREEN_HEIGHT 25

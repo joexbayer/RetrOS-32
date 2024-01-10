@@ -1,3 +1,14 @@
+/**
+ * @file diskdev.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Disk device interface.
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <diskdev.h>
 #include <util.h>
 #include <terminal.h>

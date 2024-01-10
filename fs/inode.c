@@ -1,3 +1,14 @@
+/**
+ * @file inode.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Inode functions.
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <fs/inode.h>
 #include <fs/superblock.h>
 #include <fs/directory.h>

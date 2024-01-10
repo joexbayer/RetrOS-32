@@ -1,3 +1,14 @@
+/**
+ * @file graphs.cpp
+ * @author Joe Bayer (joexbayer)
+ * @brief A simple graph demo
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <utils/Graphics.hpp>
 #include <util.h>
 #include <colors.h>

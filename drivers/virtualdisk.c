@@ -1,3 +1,14 @@
+/**
+ * @file virtualdisk.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Virtual disk driver.
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <util.h>
 #include <ata.h>
 #include <diskdev.h>

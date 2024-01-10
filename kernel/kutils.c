@@ -1,3 +1,14 @@
+/**
+ * @file kutils.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Kernel utilities.
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <util.h>
 #include <memory.h>
 #include <serial.h>
@@ -6,6 +17,9 @@
 #include <gfx/gfxlib.h>
 #include <vbe.h>
 #include <pcb.h>
+
+#include <script.h>
+#include <kutils.h>
 
 static char *units[] = {"b ", "kb", "mb"};
 
@@ -199,4 +213,41 @@ int32_t csprintf(char *buffer, const char *fmt, va_list args)
     buffer[written < MAX_FMT_STR_SIZE ? written : MAX_FMT_STR_SIZE - 1] = '\0';
 
     return written;
+}
+
+int script_parse(char* str)
+{
+    char* start = str;
+    int line = 0, ret;
+
+    if(*str == 0){
+        return -1;
+    }
+
+    /* This assumes that the given string is \0 terminated. */
+    do {
+        if(*str == '\n'){
+            *str = 0;
+            
+            ret = exec_cmd(start);
+            if(ret < 0){
+                twritef("script: error on '%s' line %d\n", start, line);
+                return -1;
+            }
+        
+            line++;
+            start = str+1;
+        }
+        str++;
+    } while (*str != 0);
+    
+    /* Try to execute the last line incase it ended with a \0 */
+    ret = exec_cmd(start);
+    if(ret < 0){
+        twritef("script: error on '%s' line %d\n", start, line);
+        return -1;
+    }
+        
+
+    return 0;
 }

@@ -1,3 +1,14 @@
+/**
+ * @file path.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Path helper functions
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <fs/path.h>
 #include <fs/directory.h>
 #include <fs/ext.h>

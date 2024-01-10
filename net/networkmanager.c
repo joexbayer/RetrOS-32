@@ -1,3 +1,14 @@
+/**
+ * @file networkmanager.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Network manager.
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <net/networkmanager.h>
 
 #include <net/skb.h>

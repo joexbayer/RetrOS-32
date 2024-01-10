@@ -1,3 +1,14 @@
+/**
+ * @file netlib.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Userspace network library.
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <syscall_helper.h>
 #include <lib/syscall.h>
 #include <lib/net.h>

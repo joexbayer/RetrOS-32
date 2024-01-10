@@ -1,3 +1,14 @@
+/**
+ * @file calc.cpp
+ * @author Joe Bayer (joexbayer)
+ * @brief A simple calculator app
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <util.h>
 #include <utils/Graphics.hpp>
 #include <utils/MsgBox.hpp>

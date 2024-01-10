@@ -1,3 +1,14 @@
+/**
+ * @file kernel.c
+ * @author Joe Bayer (joexbayer)
+ * @brief The kernel entry point.
+ * @version 0.1
+ * @date 2024-01-10
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <kernel.h>
 
 #include <windowmanager.h>

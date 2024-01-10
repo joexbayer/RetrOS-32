@@ -85,7 +85,6 @@ void acquire(mutex_t* l)
  */
 void release(mutex_t* l)
 {
-
     dbgprintf("Unlocking 0x%x\n", l);
     if(l->state == UNLOCKED){
         warningf("Lock 0x%x is already unlocked\n", l);
