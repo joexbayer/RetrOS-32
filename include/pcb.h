@@ -107,8 +107,7 @@ struct process {
 
 extern const char* pcb_status[];
 extern struct pcb* $current_process;
-
-struct process* $process;
+extern struct process* $process;
 
 /* Forward declaration */
 struct pcb_queue;
