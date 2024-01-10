@@ -17,11 +17,21 @@
 #include <gfx/gfxlib.h>
 #include <vbe.h>
 #include <pcb.h>
-
+#include <arch/io.h>
 #include <script.h>
 #include <kutils.h>
 
 static char *units[] = {"b ", "kb", "mb"};
+
+void reboot()
+{
+    ENTER_CRITICAL();
+    uint8_t good = 0x02;
+    while (good & 0x02)
+        good = inportb(0x64);
+    outportb(0x64, 0xFE);
+    HLT();
+}
 
 /* Function to align a given size to the size of a void* */
 int align_to_pointer_size(int size)

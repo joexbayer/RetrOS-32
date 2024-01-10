@@ -58,34 +58,32 @@ void __kthread_entry login()
     w->draw->textf(w, 10+10, 10+10+10+10+20+10+10, 0x0, "Extended Memory: %d %s", unit2.size, unit2.unit);
 
     gfx_commit();
-    while (1)
-    {
+    while (1){
         struct gfx_event event;
-			int ret = gfx_event_loop(&event, GFX_EVENT_BLOCKING);
-			if(ret == -1) continue;
+        int ret = gfx_event_loop(&event, GFX_EVENT_BLOCKING);
+        if(ret == -1) continue;
 
-			switch (event.event){
-			case GFX_EVENT_MOUSE:{
-                    /* check if OK is clicked x = event.data, y = event.data2 */
-                    if(event.data > 10+10 && event.data < 10+10+50 && event.data2 > 10+10+10+10 && event.data2 < 10+10+10+10+20){
-                        /* OK is clicked */
-                        start("kclock", 0, NULL);
-                        pid_t taskbar = start("taskbar", 0, NULL);
-                        if(taskbar <= 0){
-                            warningf("Failed to start taskbar");
-                        }
-
-                        dbgprintf("Taskbar started with pid: %d\n", taskbar);
-
-                        gfx_set_taskbar(taskbar);
-                        return;
+        switch (event.event){
+        case GFX_EVENT_MOUSE:{
+                /* check if OK is clicked x = event.data, y = event.data2 */
+                if(event.data > 10+10 && event.data < 10+10+50 && event.data2 > 10+10+10+10 && event.data2 < 10+10+10+10+20){
+                    /* OK is clicked */
+                    start("kclock", 0, NULL);
+                    pid_t taskbar = start("taskbar", 0, NULL);
+                    if(taskbar <= 0){
+                        warningf("Failed to start taskbar");
                     }
-                }				
-				break;
-			default:
-				break;
-			}
 
+                    dbgprintf("Taskbar started with pid: %d\n", taskbar);
+
+                    gfx_set_taskbar(taskbar);
+                    return;
+                }
+            }				
+            break;
+        default:
+            break;
+        }
     }
 }
 EXPORT_KTHREAD(login);

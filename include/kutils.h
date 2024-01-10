@@ -92,9 +92,9 @@ extern int __cli_cnt;
 
 /* validate flag */
 #define SET_FlAG(flags, flag) (flags |= flag)
-#define CLEAR_FLAG(flags, flag) (flags &= ~flag)
 #define HAS_FLAG(flags, flag) (flags & flag)
 
+#define CLEAR_FLAG(flags, flag) (flags &= ~flag)
 #define roundup(x, n) (((x) + (n) - 1) / (n) * (n))
 #define rounddown(x, n) ((x) / (n) * (n))
 
@@ -156,7 +156,7 @@ unsigned char*  encode_run_length(const unsigned char* data, int length, unsigne
 unsigned char* decode_run_length(const unsigned char* encodedData, int encodedLength, unsigned char* out, int* decodedLength);
 int exec_cmd(char* str);
 void kernel_panic(const char* reason);
-
+void reboot();
 
 
 #endif /* __KERNEL_UTILS_H */

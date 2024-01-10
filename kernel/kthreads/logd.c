@@ -46,8 +46,7 @@ void __kthread_entry logd(int argc, char* argv[])
 
     w->ops->move(w, 50, 50);
 
-    while (1)
-    {
+    while (1){
         struct gfx_event event;
         int ret = gfx_event_loop(&event, GFX_EVENT_BLOCKING);
         if(ret == -1) continue;

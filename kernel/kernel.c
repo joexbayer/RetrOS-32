@@ -121,8 +121,10 @@ void kernel(uint32_t magic)
 	/* Calculate kernel size */
 	__deprecated kernel_size = _end-_code;
 
+#ifdef KDEBUG_SERIAL
 	/* Serial is used for debuging purposes. */
     init_serial();
+#endif
 	dbgprintf("INF: %s - %s\n", KERNEL_NAME, KERNEL_VERSION);
 
 	kernel_boot_printf("Booting OS...");
