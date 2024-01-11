@@ -58,6 +58,14 @@ typedef unsigned char ubyte_t;
 
 void init_kctors();
 
+/* Define a series of macros to count the number of arguments */
+#define VA_NUM_ARGS_IMPL(_1, _2, _3, _4, _5, _6, _7, _8, N, ...) N
+#define VA_NUM_ARGS(...) VA_NUM_ARGS_IMPL(__VA_ARGS__, 8, 7, 6, 5, 4, 3, 2, 1)
+
+/* Define the main macro that takes variable number of arguments */
+#define ARGS(...) VA_NUM_ARGS(__VA_ARGS__), (char*[]){__VA_ARGS__}
+
+
 #define PTR_SIZE sizeof(void*)
 #define ALIGN(x, a) (((x) + ((a) - 1)) & ~((a) - 1))
 #define ALIGN_DOWN(size, boundary) ((size) & ~((boundary) - 1));

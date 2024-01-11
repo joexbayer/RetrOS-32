@@ -24,6 +24,7 @@
 #include <gfx/composition.h>
 #include <lib/icons.h>
 #include <scheduler.h>
+#include <msgbox.h>
 
 #define TASKBAR_HEIGHT 20
 
@@ -488,6 +489,19 @@ static void __callback taskbar_readme()
     start("readme", 0, NULL);
 }
 
+static void __callback __reboot(int opt)
+{
+    if(opt == MSGBOX_OK) reboot();
+}
+
 static void __callback taskbar_reboot(){
-    reboot();
+    struct msgbox* box = msgbox_create(
+        MSGBOX_TYPE_INFO,
+        MSGBOX_BUTTON_OK | MSGBOX_BUTTON_CANCEL, 
+        "Reboot", "Do you want to reboot?",
+        &__reboot
+    );
+    msgbox_show(box);
+
+    //reboot();
 }
