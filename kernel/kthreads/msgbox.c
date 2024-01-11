@@ -74,17 +74,17 @@ static void __kthread_entry __msgbox(int argc, char* argv[])
 
     w->draw->rect(w, 0, 0, width, height, 30);
 
-    w->draw->text(w, 44, 22, box->message, 0);
+    w->draw->text(w, 44, 32, box->message, 0);
 
     switch (box->type){
     case MSGBOX_TYPE_INFO:
-        gfx_put_icon32(info_32, 10, 10);
+        gfx_put_icon32(info_32, 10, 20);
         break;
     case MSGBOX_TYPE_WARNING:
-        gfx_put_icon32(warning_32, 10, 10);
+        gfx_put_icon32(warning_32, 10, 20);
         break;
     case MSGBOX_TYPE_ERROR:
-        gfx_put_icon32(error_32, 10, 10);
+        gfx_put_icon32(error_32, 10, 20);
         break;
     }
 
