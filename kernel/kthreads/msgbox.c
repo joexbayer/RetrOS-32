@@ -1,5 +1,5 @@
 /**
- * @file msbox.c
+ * @file msgbox.c
  * @author Joe Bayer (joexbayer)
  * @brief Generic message box
  * @version 0.1

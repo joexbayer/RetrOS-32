@@ -9,6 +9,7 @@
  * 
  */
 
+#include <kutils.h>
 #include <kthreads.h>
 #include <kernel.h>
 #include <libc.h>
@@ -20,8 +21,18 @@
 #include <gfx/events.h>
 #include <kutils.h>
 #include <vbe.h>
+#include <msgbox.h>
+#include <virtualdisk.h>
+#include <diskdev.h>
 
 #include <lib/icons.h>
+
+static void __callback __login_create_virt_disk(int opt){
+    if(opt == MSGBOX_OK){
+        virtual_disk_attach();
+        dbgprintf("Creating virtual disk\n");
+    }
+}
 
 void __kthread_entry login()
 {   
@@ -63,7 +74,7 @@ void __kthread_entry login()
         int ret = gfx_event_loop(&event, GFX_EVENT_BLOCKING);
         if(ret == -1) continue;
 
-        switch (event.event){
+        switch (event.event){   
         case GFX_EVENT_MOUSE:{
                 /* check if OK is clicked x = event.data, y = event.data2 */
                 if(event.data > 10+10 && event.data < 10+10+50 && event.data2 > 10+10+10+10 && event.data2 < 10+10+10+10+20){
@@ -75,6 +86,16 @@ void __kthread_entry login()
                     }
 
                     dbgprintf("Taskbar started with pid: %d\n", taskbar);
+
+                    if(!disk_attached()){
+                        struct msgbox* box = msgbox_create(
+                            MSGBOX_TYPE_WARNING,
+                            MSGBOX_BUTTON_OK | MSGBOX_BUTTON_CANCEL,
+                            "No disk attached", " Create virtual disk?",
+                            __login_create_virt_disk
+                        );
+                        msgbox_show(box);
+                    }
 
                     gfx_set_taskbar(taskbar);
                     return;

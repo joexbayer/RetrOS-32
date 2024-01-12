@@ -58,7 +58,6 @@
 #include <colors.h>
 #include <fs/fs.h>
 #include <multiboot.h>
-
 #include <screen.h>
 #include <conf.h>
 
@@ -175,7 +174,7 @@ void kernel(uint32_t magic)
 
 	/* initilize file systems and disk */
 	if(!disk_attached()){
-		virtual_disk_attach();
+		
 	} else {
 		mbr_partition_load();
 	}

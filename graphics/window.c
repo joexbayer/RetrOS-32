@@ -233,9 +233,8 @@ static void gfx_window_resize(struct window* w, int width, int height)
  */
 static void gfx_default_click(struct window* window, int x, int y)
 {
-    dbgprintf("[GFX WINDOW] Clicked %s\n", window->name);
     if(gfx_point_in_rectangle(window->x, window->y, window->x+window->width, window->y+10, x, y)){
-        dbgprintf("[GFX WINDOW] Clicked %s title\n", window->name);
+        
     }
 
     if(HAS_FLAG(window->flags, GFX_NO_OPTIONS)) return;
