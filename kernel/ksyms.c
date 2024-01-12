@@ -62,7 +62,7 @@ static int __load_symbols(void)
     struct filesystem* fs = fs_get();
     if(fs == NULL) return -1;
 
-    struct file* file = fs->ops->open(fs, "/symbols.map", FS_FILE_FLAG_READ);
+    struct file* file = fs->ops->open(fs, "/sysutil/symbols.map", FS_FILE_FLAG_READ);
     if(file == NULL) return -2;
 
     char* buf = (char*) kalloc(MAX_SYMBOLS*50);

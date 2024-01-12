@@ -17,12 +17,17 @@ struct user_manager_ops {
     int (*remove)(struct usermanager *manager, struct user *user);
     int (*change)(struct usermanager *manager, struct user *user, permission_t permissions);
     int (*list)(struct usermanager *manager);
+    int (*load)(struct usermanager *manager);
+    int (*save)(struct usermanager *manager);
 };
 
 struct usermanager {
     struct user_manager_ops *ops;
-    struct user users[8];
-    struct group groups[8];
+    struct _db {
+        uint32_t magic;
+        struct user users[8];
+        struct group groups[8];
+    } db;
 };
 
 struct usermanager* usermanager_create();

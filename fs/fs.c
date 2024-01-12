@@ -152,6 +152,25 @@ int fs_load_from_file(const char* file, void* buf, int size)
 	return read;
 }
 
+int fs_save_to_file(const char* file, void* buf, int size)
+{
+    int inode = fs_open(file, FS_FILE_FLAG_WRITE);
+    if(inode < 0){
+        dbgprintf("Error opening %s\n", file);
+        return -ERROR_FILE_NOT_FOUND;
+    }
+
+    dbgprintf("Writing %s to disk\n", file);
+    int written = fs_write(inode, buf, size);
+    if(written < 0){
+        fs_close(inode);
+        return -ERROR_FILE_NOT_FOUND;
+    }
+
+    fs_close(inode);
+    return written;
+}
+
 int fs_close(int fd)
 {
     /* check if a filesystem is available */
