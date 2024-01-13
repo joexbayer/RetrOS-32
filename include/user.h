@@ -12,7 +12,7 @@ typedef int uid_t;
 struct user {
     uid_t uid;
     char name[32];
-    char password[32];
+    unsigned int hash;
     permission_t permissions;
     
 };

@@ -166,5 +166,7 @@ int exec_cmd(char* str);
 void kernel_panic(const char* reason);
 void reboot();
 
+unsigned int advanced_hash(char *input);
+
 
 #endif /* __KERNEL_UTILS_H */

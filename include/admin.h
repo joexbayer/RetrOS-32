@@ -19,11 +19,12 @@ struct user_manager_ops {
     int (*list)(struct usermanager *manager);
     int (*load)(struct usermanager *manager);
     int (*save)(struct usermanager *manager);
+    struct user* (*authenticate)(struct usermanager *manager, const char* username, const char* password);
 };
 
 struct usermanager {
     struct user_manager_ops *ops;
-    struct _db {
+    struct userdb {
         uint32_t magic;
         struct user users[8];
         struct group groups[8];
