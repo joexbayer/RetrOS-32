@@ -9,6 +9,7 @@ struct pcb;
 #include <memory.h>
 #include <fs/inode.h>
 #include <errors.h>
+#include <user.h>
 
 #define MAX_NUM_OF_PCBS 64
 #define PCB_MAX_NAME_LENGTH 25
@@ -89,6 +90,8 @@ struct pcb {
 
     struct window* gfx_window;
     struct terminal* term;
+
+    struct user* user;
 
     inode_t current_directory;
     

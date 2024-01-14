@@ -4,7 +4,7 @@
 
 static struct user __default_admin = {
     .name = "admin",
-    .password = "admin",
+    .hash = 0,
     .uid = 1,
     .permissions = _
 };

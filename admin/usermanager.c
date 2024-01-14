@@ -1,8 +1,19 @@
 #include <admin.h>
 #include <memory.h>
+#include <kernel.h>
 #include <fs/fs.h>
 
+#include <terminal.h>
+
+#include <usermanager.h>
+#include <user.h>
+#include <group.h>
+#include <admin.h>
+#include <ksyms.h>
+
 #include <errors.h>
+
+#include <kernel.h>
 
 #define USRMAN_MAGIC 0x55DB
 
@@ -15,15 +26,18 @@ static int __change_user(struct usermanager* usrman, struct user* user, permissi
 static int __list_users(struct usermanager* usrman);
 static int __load_users(struct usermanager* usrman);
 static int __save_users(struct usermanager* usrman);
-static int __authenticate_user(struct usermanager* usrman, const char* username, const char* password);
+static struct user* __authenticate_user(struct usermanager* usrman, const char* username, const char* password);
 
 /* consts */
 static const char* userdb = "/sysutil/users.db";
-static const struct user_manager_ops default_ops = {
+static struct user_manager_ops default_ops = {
 	.add = __add_user,
 	.remove = __remove_user,
 	.change = __change_user,
-	.list = __list_users
+	.list = __list_users,
+	.load = __load_users,
+	.save = __save_users,
+	.authenticate = __authenticate_user
 };
 static const struct userdb default_db = {
 	.magic = USRMAN_MAGIC,
@@ -59,10 +73,13 @@ struct usermanager* usermanager_create()
 
 static struct user* __find_user(struct usermanager* usrman, const char* username)
 {
-	ERR_ON_NULL(usrman);
-	ERR_ON_NULL(username);
+	ERR_ON_NULL_PTR(usrman);
+	ERR_ON_NULL_PTR(username);
 
-	IS_LOADED(usrman);
+	if(!IS_LOADED(usrman)){
+		return NULL;
+	}
+
 
 	for(int i = 0; i < 8; i++){
 		if(strcmp(usrman->db.users[i].name, username) == 0){
@@ -90,6 +107,8 @@ static int __load_users(struct usermanager* usrman)
 		return -1;
 	}
 
+	dbgprintf("Loaded userdb from file.\n");
+
 	return 0;
 }
 
@@ -98,9 +117,10 @@ static int __save_users(struct usermanager* usrman)
 	int ret;
 	ERR_ON_NULL(usrman);
 
-	if(usrman->db.magic != USRMAN_MAGIC){
+	if(!IS_LOADED(usrman)){
 		return -1;
 	}
+
 
 	ret = fs_save_to_file(userdb, &usrman->db, sizeof(usrman->db));
 	if(ret < 0){
@@ -113,18 +133,21 @@ static int __save_users(struct usermanager* usrman)
 
 static struct user* __authenticate_user(struct usermanager* usrman, const char* username, const char* password)
 {
-	ERR_ON_NULL(usrman);
-	ERR_ON_NULL(username);
-	ERR_ON_NULL(password);
+	ERR_ON_NULL_PTR(usrman);
+	ERR_ON_NULL_PTR(username);
+	ERR_ON_NULL_PTR(password);
 
-	IS_LOADED(usrman);
+	if(!IS_LOADED(usrman)){
+		return NULL;
+	}
+
 
 	struct user* user = __find_user(usrman, username);
 	if(user == NULL){
 		return NULL;
 	}
 
-	int hash = advanced_hash(password);
+	unsigned int hash = advanced_hash(password);
 	if(hash == user->hash){
 		return user;
 	}
@@ -137,9 +160,68 @@ static int __add_user(struct usermanager* usrman, struct user* user)
 	ERR_ON_NULL(usrman);
 	ERR_ON_NULL(user);
 
-	IS_LOADED(usrman);
+	if(!IS_LOADED(usrman)){
+		return -1;
+	}
+
 
 	/* TBD */
 	
 	return -1;
 }
+
+static int __list_users(struct usermanager* usrman)
+{
+	ERR_ON_NULL(usrman);
+
+	if(!IS_LOADED(usrman)){
+		return -1;
+	}
+
+
+	for(int i = 0; i < 8; i++){
+		if(usrman->db.users[i].uid == 0){
+			continue;
+		}
+		twritef("%s\n", usrman->db.users[i].name);
+	}
+
+	return 0;
+}
+
+static int __remove_user(struct usermanager* usrman, struct user* user)
+{
+	ERR_ON_NULL(usrman);
+	ERR_ON_NULL(user);
+
+	if(!IS_LOADED(usrman)){
+		return -1;
+	}
+
+	/* TBD */
+	
+	return -1;
+}
+
+static int __change_user(struct usermanager* usrman, struct user* user, permission_t permission)
+{
+	ERR_ON_NULL(usrman);
+	ERR_ON_NULL(user);
+
+	if(!IS_LOADED(usrman)){
+		return -1;
+	}
+
+	/* TBD */
+	
+	return -1;
+}
+
+static int admin(int argc, char** argv)
+{
+	/* list, create, remove, add */
+	$services->user_manager->ops->list($services->user_manager);
+
+	return -1;
+}
+EXPORT_KSYMBOL(admin);

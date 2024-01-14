@@ -4,6 +4,7 @@
 #include <kutils.h>
 #include <scheduler.h>
 #include <gfx/windowserver.h>
+#include <usermanager.h>
 #include <gfx/core.h>
 
 #define KERNEL_NAME		"RetrOS-32"
@@ -22,7 +23,12 @@ typedef enum {
 } graphic_modes_t;
 
 struct kernel_context {
-	struct scheduler* sched_ctx;
+
+	struct kernel_services {
+		struct usermanager* user_manager;
+		struct scheduler* sched_ctx;
+	} services;
+
 
 	struct graphics {
 		struct graphic_context* ctx;
@@ -43,6 +49,7 @@ struct kernel_context {
 	graphic_modes_t graphic_mode;
 };
 extern struct kernel_context* $kernel;
+extern struct kernel_services* $services;
 
 struct kernel_context* kernel_get_context();
 

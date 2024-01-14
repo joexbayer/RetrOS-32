@@ -65,7 +65,8 @@
 #define LINE_HEIGHT 8  /* Height of each line */
 
 struct kernel_context __kernel_context = {
-	.sched_ctx = NULL,
+	.services.sched_ctx = NULL,
+	.services.user_manager = NULL,
 	.graphics.window_server = NULL,
 	.graphics.ctx = NULL,
 	.boot_info = NULL,
@@ -73,6 +74,7 @@ struct kernel_context __kernel_context = {
 	//.graphic_mode = KERNEL_FLAG_TEXTMODE,
 };
 struct kernel_context* $kernel = &__kernel_context;
+struct kernel_services* $services = &__kernel_context.services;
 
 static void kernel_boot_printf(char* message) {
     static int kernel_msg = 0;
@@ -235,6 +237,10 @@ void kernel(uint32_t magic)
 	kernel_boot_printf("Deamons initialized.");
 
 	config_load("sysutil/default.cfg");
+
+	$services->user_manager = usermanager_create();
+	$services->user_manager->ops->load($services->user_manager);
+
 
 	init_pit(1000);
 	kernel_boot_printf("Timer initialized.");

@@ -1,7 +1,6 @@
 #ifndef __GROUP_H
 #define __GROUP_H
 
-#include <kernel.h>
 #include <kutils.h>
 
 typedef int gid_t;
