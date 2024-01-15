@@ -26,6 +26,8 @@
 #include <diskdev.h>
 #include <gfx/component.h>
 
+#include <user.h>
+#include <usermanager.h>
 #include <lib/icons.h>
 
 struct gfx_input_manager input_manager = {0};
@@ -47,6 +49,8 @@ void __kthread_entry login()
 
     struct unit unit = calculate_size_unit($kernel->boot_info->extended_memory_low * 1024);
     struct unit unit2 = calculate_size_unit($kernel->boot_info->extended_memory_high * 64 * 1024);
+
+    struct usermanager* usermanager= $services->user_manager;
 
     /* set title */
     kernel_gfx_set_title("Welcome to RetrOS-32");
@@ -82,7 +86,7 @@ void __kthread_entry login()
     });
 
     /* ok button */
-    //gfx_button(10+10, 10+10+10+10, 50, 20, "OK");
+    gfx_button(10+10+120, 10+10+10+10, 50, 20, "OK");
 
     /* icon to the right middle 32x32 */
     gfx_put_icon32(computer_icon, 275-64-16, 10+20+5);
@@ -103,9 +107,22 @@ void __kthread_entry login()
 
         switch (event.event){   
         case GFX_EVENT_MOUSE:{
-                break;
                 /* check if OK is clicked x = event.data, y = event.data2 */
-                if(event.data > 10+10 && event.data < 10+10+50 && event.data2 > 10+10+10+10 && event.data2 < 10+10+10+10+20){
+                if(event.data > 10+10+120 && event.data < 10+10+120+50 && event.data2 > 10+10+10+10 && event.data2 < 10+10+10+10+20){
+
+                    
+                    /* check if username and password is correct */
+                    struct user* usr = usermanager->ops->authenticate(usermanager,
+                        input_manager.inputs[0].buffer,
+                        input_manager.inputs[1].buffer
+                    );
+                    if(usr == NULL){
+                        warningf("Failed to authenticate user\n");
+                        break;
+                    }
+
+                    $process->current->user = usr;
+
                     /* OK is clicked */
                     start("kclock", 0, NULL);
                     pid_t taskbar = start("taskbar", 0, NULL);

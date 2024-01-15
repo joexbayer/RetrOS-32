@@ -25,10 +25,17 @@
 #include <syscall_helper.h>
 
 #include <fs/fs.h>
+#include <user.h>
 
 static struct pcb pcb_table[MAX_NUM_OF_PCBS];
 static struct process __process = {
-	.current = NULL,
+	.current = &(struct pcb){
+		.name = "kernel",
+		.pid = 0,
+		.user = &(struct user){
+			.name = "system"
+		}
+	},
 };
 struct process* $process = &__process;
 
@@ -211,8 +218,6 @@ void init_pcbs()
 		pcb_table[i].next = NULL;
 	}
 
-	$process->current = &pcb_table[0];
-
 	dbgprintf("[PCB] All process control blocks are ready.\n");
 }
 
@@ -241,6 +246,7 @@ error_t pcb_get_info(int pid, struct pcb_info* info)
 		.name = {0}
 	};
 	memcpy(_info.name, pcb_table[pid].name, PCB_MAX_NAME_LENGTH);
+	memcpy(_info.user, pcb_table[pid].user->name, USER_MAX_NAME_LENGTH);
 
 	*info = _info;
 

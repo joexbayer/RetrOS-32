@@ -226,6 +226,11 @@ void kernel(uint32_t magic)
 	/* Initilize the kernel symbols from symbols.map */
 	ksyms_init();
 
+	config_load("sysutil/default.cfg");
+
+	$services->user_manager = usermanager_create();
+	$services->user_manager->ops->load($services->user_manager);
+
 	start("idled", 0, NULL);
 	if(__kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
 		start("wind", 0, NULL);
@@ -235,12 +240,6 @@ void kernel(uint32_t magic)
 	start("workd", 0, NULL);
 	start("netd", 0, NULL);
 	kernel_boot_printf("Deamons initialized.");
-
-	config_load("sysutil/default.cfg");
-
-	$services->user_manager = usermanager_create();
-	$services->user_manager->ops->load($services->user_manager);
-
 
 	init_pit(1000);
 	kernel_boot_printf("Timer initialized.");
