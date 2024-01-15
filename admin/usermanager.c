@@ -42,10 +42,22 @@ static struct user_manager_ops default_ops = {
 static const struct userdb default_db = {
 	.magic = USRMAN_MAGIC,
 	.users = {
-			{
+		{
 			.name = "admin",
-			.hash = 0,
+			.hash = 525286959, /* admin */
 			.uid = 1,
+			.permissions = _
+		},
+		{
+			.name = "system",
+			.hash = 1,
+			.uid = 2,
+			.permissions = _
+		},
+		{
+			.name = "guest",
+			.hash = 0,
+			.uid = 3,
 			.permissions = _
 		}
 	},
@@ -147,7 +159,9 @@ static struct user* __authenticate_user(struct usermanager* usrman, const char* 
 		return NULL;
 	}
 
+
 	unsigned int hash = advanced_hash(password);
+	dbgprintf("Authenticating %s with %s: %d %d\n", user->name, password, hash, user->hash);
 	if(hash == user->hash){
 		return user;
 	}

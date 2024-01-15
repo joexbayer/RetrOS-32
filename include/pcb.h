@@ -13,6 +13,7 @@ struct pcb;
 
 #define MAX_NUM_OF_PCBS 64
 #define PCB_MAX_NAME_LENGTH 25
+#define USER_MAX_NAME_LENGTH 32 
 
 #define PCB_STACK_SIZE 0x2000
 
@@ -111,6 +112,7 @@ struct pcb_info {
     uint8_t is_process;
     float usage;
     char name[PCB_MAX_NAME_LENGTH];
+    char user[USER_MAX_NAME_LENGTH];
 };
 
 struct process {
@@ -119,8 +121,7 @@ struct process {
 };
 
 extern const char* pcb_status[];
-extern struct pcb* $current_process;
-extern struct process* $process;
+extern struct process* $process; 
 
 /* Forward declaration */
 struct pcb_queue;
