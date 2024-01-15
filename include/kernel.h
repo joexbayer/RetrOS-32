@@ -5,7 +5,7 @@
 #include <scheduler.h>
 #include <gfx/windowserver.h>
 #include <usermanager.h>
-#include <networkmanager.h>
+#include <net/networkmanager.h>
 
 #include <gfx/core.h>
 

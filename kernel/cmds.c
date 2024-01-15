@@ -396,6 +396,7 @@ static int services(int argc, char *argv[])
 
     return 0;
 }
+EXPORT_KSYMBOL(services);
 
 /* Process management */
 

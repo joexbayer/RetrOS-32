@@ -61,6 +61,7 @@ struct terminal {
 
     struct window* screen;
     struct terminal_ops* ops;
+    color_t org_text_color;
     color_t text_color;
     color_t bg_color;
 };

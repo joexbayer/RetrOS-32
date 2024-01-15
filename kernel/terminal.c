@@ -33,7 +33,7 @@ int scan(ubyte_t* data, int size)
 
 void terminal_set_color(color_t color)
 {
-	//$process->current->term->text_color = color;
+	$process->current->term->text_color = color;
 }
 
 static void __terminal_syntax(unsigned char c)
@@ -54,7 +54,7 @@ static void __terminal_syntax(unsigned char c)
 			terminal_set_color(COLOR_VGA_GREEN);
 			break;
 		default:
-			terminal_set_color(theme->terminal.text);
+			terminal_set_color($process->current->term->org_text_color);
 			break;
 	}
 }
@@ -162,6 +162,7 @@ struct terminal* terminal_create(terminal_flags_t flags)
 	term->tail = 0;
 	term->lines = 0;
 	term->text_color =  0x1c;
+	term->org_text_color = term->text_color;
 	term->bg_color = COLOR_BLACK;
 	term->screen = NULL;
 
@@ -173,6 +174,7 @@ struct terminal* terminal_create(terminal_flags_t flags)
 	char* text_color = config_get_value("terminal", "text");
 	if(text_color != NULL){
 		term->text_color = htoi(text_color);
+		term->org_text_color = term->text_color;
 	}
 
 	if(HAS_FLAG(flags, TERMINAL_TEXT_MODE)){
