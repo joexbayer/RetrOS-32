@@ -65,7 +65,8 @@
 #define LINE_HEIGHT 8  /* Height of each line */
 
 struct kernel_context __kernel_context = {
-	.services.sched_ctx = NULL,
+	.services.scheduler = NULL,
+	.services.networking = NULL,
 	.services.user_manager = NULL,
 	.graphics.window_server = NULL,
 	.graphics.ctx = NULL,
@@ -240,7 +241,6 @@ void kernel(uint32_t magic)
 
 	$services->user_manager = usermanager_create();
 	$services->user_manager->ops->load($services->user_manager);
-
 
 	init_pit(1000);
 	kernel_boot_printf("Timer initialized.");

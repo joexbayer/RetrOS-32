@@ -378,6 +378,25 @@ static int clear(){
 }
 EXPORT_KSYMBOL(clear);
 
+static int services(int argc, char *argv[])
+{
+    if(argc < 2) {
+        twritef("Usage: services <list, start, stop>\n");
+        return 1;
+    }
+
+    if(strcmp(argv[1], "list") == 0) {
+        twritef("Services:\n");
+        
+        twritef("UserManager:    %s\n", $services->user_manager != NULL ? "running" : "stopped");
+        twritef("Scheduler:      %s\n", $services->scheduler != NULL ? "running" : "stopped");
+        twritef("NetworkManager: %s\n", $services->networking != NULL ? "running" : "stopped");
+        return 0;   
+    }
+
+    return 0;
+}
+
 /* Process management */
 
 /* System management */
