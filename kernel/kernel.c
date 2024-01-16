@@ -58,7 +58,6 @@
 #include <colors.h>
 #include <fs/fs.h>
 #include <multiboot.h>
-
 #include <screen.h>
 #include <conf.h>
 
@@ -66,7 +65,9 @@
 #define LINE_HEIGHT 8  /* Height of each line */
 
 struct kernel_context __kernel_context = {
-	.sched_ctx = NULL,
+	.services.scheduler = NULL,
+	.services.networking = NULL,
+	.services.usermanager = NULL,
 	.graphics.window_server = NULL,
 	.graphics.ctx = NULL,
 	.boot_info = NULL,
@@ -74,6 +75,7 @@ struct kernel_context __kernel_context = {
 	//.graphic_mode = KERNEL_FLAG_TEXTMODE,
 };
 struct kernel_context* $kernel = &__kernel_context;
+struct kernel_services* $services = &__kernel_context.services;
 
 static void kernel_boot_printf(char* message) {
     static int kernel_msg = 0;
@@ -175,7 +177,7 @@ void kernel(uint32_t magic)
 
 	/* initilize file systems and disk */
 	if(!disk_attached()){
-		virtual_disk_attach();
+		
 	} else {
 		mbr_partition_load();
 	}
@@ -225,6 +227,11 @@ void kernel(uint32_t magic)
 	/* Initilize the kernel symbols from symbols.map */
 	ksyms_init();
 
+	config_load("sysutil/default.cfg");
+
+	$services->usermanager = usermanager_create();
+	$services->usermanager->ops->load($services->usermanager);
+
 	start("idled", 0, NULL);
 	if(__kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
 		start("wind", 0, NULL);
@@ -234,8 +241,6 @@ void kernel(uint32_t magic)
 	start("workd", 0, NULL);
 	start("netd", 0, NULL);
 	kernel_boot_printf("Deamons initialized.");
-
-	config_load("default.cfg");
 
 	init_pit(1000);
 	kernel_boot_printf("Timer initialized.");

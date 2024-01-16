@@ -258,6 +258,10 @@ int kernel_gfx_draw_text(struct window* w, int x, int y, char* str, unsigned cha
 	ERR_ON_NULL(w);
 
 	for (int i = 0; i < strlen(str); i++){
+		if(x+(i*8) >= w->inner_width-10){
+			y += 8;
+			x = 0;
+		}
 		kernel_gfx_draw_char(w, x+(i*8), y, str[i], color);
 	}
 

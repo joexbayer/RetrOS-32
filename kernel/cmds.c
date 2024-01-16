@@ -146,8 +146,9 @@ static int help(int argc, char* argv[])
     twritef("                  fdisk        bg\n");
     twritef("Network:          meminfo      sh\n");
     twritef(" socks            conf         echo\n");
-    twritef(" ifconfig                      cc\n");
-    twritef(" dns                           color\n");
+    twritef(" ifconfig         services     cc\n");
+    twritef(" dns              admin        color\n");
+    twritef(" tcp              clear        \n");
     return 0;
 }
 EXPORT_KSYMBOL(help);
@@ -377,6 +378,33 @@ static int clear(){
     return 0;
 }
 EXPORT_KSYMBOL(clear);
+
+static int services(int argc, char *argv[])
+{
+    if(argc < 2) {
+        twritef("Usage: services <list, start, stop>\n");
+        return 1;
+    }
+
+    if(strcmp(argv[1], "list") == 0) {
+        twritef("Services:\n");
+        
+        twritef("UserManager:    %s\n", $services->usermanager != NULL ? "running" : "stopped");
+        twritef("Scheduler:      %s\n", $services->scheduler != NULL ? "running" : "stopped");
+        twritef("NetworkManager: %s\n", $services->networking != NULL ? "running" : "stopped");
+        return 0;   
+    }
+
+    return 0;
+}
+EXPORT_KSYMBOL(services);
+
+static int reboot(){
+    twritef("Rebooting...\n");
+    system_reboot();
+    return 0;
+}
+EXPORT_KSYMBOL(reboot);
 
 /* Process management */
 

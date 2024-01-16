@@ -25,10 +25,17 @@
 #include <syscall_helper.h>
 
 #include <fs/fs.h>
+#include <user.h>
 
 static struct pcb pcb_table[MAX_NUM_OF_PCBS];
 static struct process __process = {
-	.current = NULL,
+	.current = &(struct pcb){
+		.name = "kernel",
+		.pid = 0,
+		.user = &(struct user){
+			.name = "system"
+		}
+	},
 };
 struct process* $process = &__process;
 
@@ -211,8 +218,6 @@ void init_pcbs()
 		pcb_table[i].next = NULL;
 	}
 
-	$process->current = &pcb_table[0];
-
 	dbgprintf("[PCB] All process control blocks are ready.\n");
 }
 
@@ -241,6 +246,7 @@ error_t pcb_get_info(int pid, struct pcb_info* info)
 		.name = {0}
 	};
 	memcpy(_info.name, pcb_table[pid].name, PCB_MAX_NAME_LENGTH);
+	memcpy(_info.user, pcb_table[pid].user->name, USER_MAX_NAME_LENGTH);
 
 	*info = _info;
 
@@ -370,6 +376,7 @@ error_t pcb_create_thread(struct pcb* parent, void (*entry)(), void* arg, byte_t
     
     /* Inherit parent's attributes */
     pcb->term = parent->term;
+	pcb->user = parent->user;
     pcb->parent = parent;
 	pcb->thread_eip = (uintptr_t) entry;
 	pcb->is_process = PCB_THREAD;
@@ -422,6 +429,7 @@ error_t pcb_create_process(char* program, int argc, char** argv, pcb_flag_t flag
 	memcpy(pcb->name, program, strlen(program)+1);
 
 	pcb->term = $process->current->term;
+	pcb->user = $process->current->user;
 	pcb->parent = $process->current;
 
 	pcb->thread_eip = 0;
@@ -476,6 +484,7 @@ error_t pcb_create_kthread(void (*entry)(), char* name, int argc, char** argv)
 
 	pcb->parent = NULL;
 	pcb->term = $process->current->term;
+	pcb->user = $process->current->user;
 
 	pcb->thread_eip = (uintptr_t) entry;
 	pcb->page_dir = kernel_page_dir;

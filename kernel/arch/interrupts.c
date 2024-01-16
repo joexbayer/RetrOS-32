@@ -18,6 +18,7 @@
 #include <assert.h>
 #include <kutils.h>
 #include <vbe.h>
+#include <msgbox.h>
 
 #include <kconfig.h>
 //TEMP
@@ -97,7 +98,7 @@ void page_fault_interrupt(unsigned long cr2, unsigned long err)
     dbgprintf("Return address for iret: 0x%x\n", return_address_for_iret);
     dbgprintf("Original ebp: 0x%x\n", original_ebp);
 	*/
-    __backtrace_from((uintptr_t*)ebp);
+   // __backtrace_from((uintptr_t*)ebp);
 
 	interrupt_counter[14]++;
 	ENTER_CRITICAL();
@@ -109,6 +110,9 @@ void page_fault_interrupt(unsigned long cr2, unsigned long err)
 	pcb_dbg_print($process->current);
 
 	if($process->current->is_process){
+		struct msgbox* box = msgbox_create(MSGBOX_TYPE_WARNING, MSGBOX_BUTTON_OK, "Crash Report", " A program has crashed!", NULL);
+		msgbox_show(box);
+
 		kernel_exit();
 	}
 

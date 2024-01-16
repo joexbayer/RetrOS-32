@@ -14,5 +14,9 @@ extern unsigned char desktop_16[16*16];
 extern unsigned char wlanerr_16[16*16];
 extern unsigned char wlan_16[16*16];
 extern unsigned char screen_32[32*32];
+extern unsigned char error_32[32*32];
+extern unsigned char warning_32[32*32];
+extern unsigned char info_32[32*32];
+
 
 #endif

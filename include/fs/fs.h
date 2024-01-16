@@ -69,6 +69,7 @@ int fs_register(struct filesystem* fs);
 int fs_unregister(struct filesystem* fs);
 
 int fs_load_from_file(const char* file, void* buf, int size);
+int fs_save_to_file(const char* file, void* buf, int size);
 
 struct file* fs_alloc_file();
 

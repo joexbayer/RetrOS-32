@@ -104,13 +104,13 @@ void ps(int argc, char* argv[])
 	if(spin){
 		while(1){
 			$process->current->term->ops->reset($process->current->term);
-			twritef("  PID  USAGE    TYPE     STATE     NAME\n");
+			twritef("\nPID  USER    USAGE    TYPE     STATE    NAME    \n");
 			for (int i = 1; i < MAX_NUM_OF_PCBS; i++){
 				struct pcb_info info;
 				int ret = pcb_get_info(i, &info);
 				if(ret < 0) continue;
 				int usage = (int)(info.usage*100);
-				twritef("   %d    %s%d%      %s  %s  %s\n", info.pid, usage < 10 ? " ": "", usage, info.is_process ? "process" : "kthread", pcb_status[info.state], info.name);
+				twritef(" %d   %8s %s%d%      %s  %s  %s\n", info.pid, info.user, usage < 10 ? " ": "", usage, info.is_process ? "process" : "kthread", pcb_status[info.state], info.name);
 			}
 
 			$process->current->term->ops->commit($process->current->term);
@@ -137,13 +137,13 @@ void ps(int argc, char* argv[])
 
 	int ret;
 	int usage;
-	twritef("  PID  USAGE    TYPE     STATE     NAME\n");
+	twritef("\nPID  USER    USAGE    TYPE     STATE     NAME    \n");
 	for (int i = 1; i < MAX_NUM_OF_PCBS; i++){
 		struct pcb_info info;
-		ret = pcb_get_info(i, &info);
+		int ret = pcb_get_info(i, &info);
 		if(ret < 0) continue;
-		usage = (int)(info.usage*100);
-		twritef("   %d    %s%d%      %s  %s  %s\n", info.pid, usage < 10 ? " ": "", usage, info.is_process ? "process" : "kthread", pcb_status[info.state], info.name);
+		int usage = (int)(info.usage*100);
+		twritef(" %d   %8s %s%d%      %s  %s  %s\n", info.pid, info.user, usage < 10 ? " ": "", usage, info.is_process ? "process" : "kthread", pcb_status[info.state], info.name);
 	}
 }
 EXPORT_KSYMBOL(ps);
@@ -583,7 +583,7 @@ void __kthread_entry shell(int argc, char* argv[])
 	struct unit total = calculate_size_unit(minfo.kernel.total+minfo.permanent.total);
 
 	twritef("\n");
-	twritef("%s\n", about_text);
+	twritef("%s\nWelcome %s!\n\n", about_text, $process->current->user->name);
 	twritef("Memory: %d%s/%d%s\n", used.size, used.unit, total.size, total.unit);
 	twritef("Type 'help' for a list of commands\n");
 	terminal_commit();
@@ -675,6 +675,39 @@ static int __textshell_reset_box()
 	return 0;
 }
 
+
+static int textshell_login(struct terminal* term)
+{
+	struct usermanager* usrman = $services->usermanager;
+
+	char username[32];
+	char password[32];
+
+	while(1){
+		twritef("Username: ");
+		term->ops->commit(term);
+		term->ops->scan(term, username, 32);
+		twritef("\n");
+		
+		twritef("Password: ");
+		term->ops->commit(term);
+		term->ops->scan(term, password, 32);
+		twritef("\n");
+
+		struct user* user =  usrman->ops->authenticate(usrman, username, password);
+		if(user == NULL){
+			twritef("Invalid username or password\n");
+			term->ops->commit(term);
+			continue;
+		}
+
+		$process->current->user = user;
+		return 0;
+	}
+
+	return -1;
+}
+
 static byte_t* text_shell_buffer = NULL;
 static void __kthread_entry textshell()
 {
@@ -693,6 +726,7 @@ static void __kthread_entry textshell()
 
 	scrwrite(0, 0, "                              RetrOS 32 - Textmode                              ", VGA_COLOR_BLUE | VGA_COLOR_LIGHT_GREY << 4);
 
+
 	struct mem_info minfo;
     get_mem_info(&minfo);
 
@@ -701,12 +735,13 @@ static void __kthread_entry textshell()
 
 	twritef("\n");
 	twritef("%s\n", about_text);
-	twritef("Memory: %d%s/%d%s\n", used.size, used.unit, total.size, total.unit);
-	twritef("Type 'help' for a list of commands\n");
-	term->ops->commit(term);
+	textshell_login(term);
 
 	__textshell_reset_box();
 
+	twritef("Memory: %d%s/%d%s\n", used.size, used.unit, total.size, total.unit);
+	twritef("Type 'help' for a list of commands\n");
+	term->ops->commit(term);
 	while (1){
 		c = kb_get_char();
 		if(c == 0) continue;

@@ -9,11 +9,23 @@ struct pcb;
 #include <memory.h>
 #include <fs/inode.h>
 #include <errors.h>
+#include <user.h>
 
 #define MAX_NUM_OF_PCBS 64
 #define PCB_MAX_NAME_LENGTH 25
+#define USER_MAX_NAME_LENGTH 32 
 
 #define PCB_STACK_SIZE 0x2000
+
+#define AS_THREAD(block) \
+do { \
+    void* __kthread_internal(void* _unused) { \
+        block \
+        return NULL; \
+    } \
+    pcb_create_kthread(_kthread_func, "kthread", 0, NULL); \
+} while (0)
+
 
 typedef int pid_t;
 
@@ -80,6 +92,8 @@ struct pcb {
     struct window* gfx_window;
     struct terminal* term;
 
+    struct user* user;
+
     inode_t current_directory;
     
     struct virtual_allocations* allocations;
@@ -98,6 +112,7 @@ struct pcb_info {
     uint8_t is_process;
     float usage;
     char name[PCB_MAX_NAME_LENGTH];
+    char user[USER_MAX_NAME_LENGTH];
 };
 
 struct process {
@@ -106,8 +121,7 @@ struct process {
 };
 
 extern const char* pcb_status[];
-extern struct pcb* $current_process;
-extern struct process* $process;
+extern struct process* $process; 
 
 /* Forward declaration */
 struct pcb_queue;

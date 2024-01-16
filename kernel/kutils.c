@@ -23,7 +23,7 @@
 
 static char *units[] = {"b ", "kb", "mb"};
 
-void reboot()
+void system_reboot()
 {
     ENTER_CRITICAL();
     uint8_t good = 0x02;
@@ -100,6 +100,19 @@ struct unit calculate_size_unit(int bytes)
     };
 
     return unit;
+}
+
+unsigned int advanced_hash(char *input)
+{
+    unsigned int hash = 0;
+    int c;
+
+    /* Loop through each character in the password */
+    while ((c = *input++)) {
+        hash = c + (hash << 6) + (hash << 16) - hash;
+    }
+
+    return hash;
 }
 
 void kernel_panic(const char* reason)

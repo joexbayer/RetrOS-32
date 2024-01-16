@@ -33,7 +33,7 @@ int scan(ubyte_t* data, int size)
 
 void terminal_set_color(color_t color)
 {
-	//$process->current->term->text_color = color;
+	$process->current->term->text_color = color;
 }
 
 static void __terminal_syntax(unsigned char c)
@@ -54,7 +54,7 @@ static void __terminal_syntax(unsigned char c)
 			terminal_set_color(COLOR_VGA_GREEN);
 			break;
 		default:
-			terminal_set_color(theme->terminal.text);
+			terminal_set_color($process->current->term->org_text_color);
 			break;
 	}
 }
@@ -162,6 +162,7 @@ struct terminal* terminal_create(terminal_flags_t flags)
 	term->tail = 0;
 	term->lines = 0;
 	term->text_color =  0x1c;
+	term->org_text_color = term->text_color;
 	term->bg_color = COLOR_BLACK;
 	term->screen = NULL;
 
@@ -173,6 +174,7 @@ struct terminal* terminal_create(terminal_flags_t flags)
 	char* text_color = config_get_value("terminal", "text");
 	if(text_color != NULL){
 		term->text_color = htoi(text_color);
+		term->org_text_color = term->text_color;
 	}
 
 	if(HAS_FLAG(flags, TERMINAL_TEXT_MODE)){
@@ -274,6 +276,10 @@ static int __terminal_scan_textmode(struct terminal* term, ubyte_t* data, int si
 
 		if(c == CTRLC){
 			return -1;
+		}
+
+		if(c == '\n') {
+			break;
 		}
 
 		if(c == '\b'){
@@ -513,6 +519,7 @@ static int __terminal_writef(struct terminal* term, char* fmt, ...)
 	int written = 0;
 	char str[MAX_FMT_STR_SIZE];
 	int num = 0;
+	int padding = 0;
 
 	va_start(args, fmt);
 
@@ -520,6 +527,14 @@ static int __terminal_writef(struct terminal* term, char* fmt, ...)
 		switch (*fmt){
 			case '%':
 				memset(str, 0, MAX_FMT_STR_SIZE);
+				
+				/* Check if the format specifier is a digit (for padding) */
+				padding = 0;
+				if (*(fmt+1) >= '0' && *(fmt+1) <= '9') {
+					padding = *(fmt+1) - '0';
+					fmt++;
+				}
+
 				switch (*(fmt+1))
 				{
 					case 'd': ;
@@ -560,8 +575,18 @@ static int __terminal_writef(struct terminal* term, char* fmt, ...)
 						break;
 					case 's': ;
 						char* str_arg = va_arg(args, char *);
-						term->ops->write(term, str_arg, strlen(str_arg));
+						int len = strlen(str_arg);
+						term->ops->write(term, str_arg, len);
 						x_offset += strlen(str_arg);
+
+						/* Pad the string if needed */
+						if (padding > len) {
+							for (int i = 0; i < padding - len; i++) {
+								term->ops->putchar(term, ' ');
+								x_offset++;
+							}
+						}
+
 						break;
 					case 'c': ;
 						char char_arg = (char)va_arg(args, int);

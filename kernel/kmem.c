@@ -107,6 +107,7 @@ void* kalloc(int size)
     void* ptr = (void*)(KERNEL_MEMORY_START + start_block * KMEM_BLOCK_SIZE + sizeof(int));
 
     __kmemory_used += num_blocks * KMEM_BLOCK_SIZE;
+    
     $process->current->kallocs++;
 
     /* sanity check */

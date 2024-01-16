@@ -111,7 +111,7 @@ static int fat16_write(struct filesystem* fs, struct file* file, const void* buf
     /* write the data */
     int written = fat16_write_data(cluster, offset, (void*)buf, size);
     if(written < 0){
-        dbgprintf("Failed to write data\n");
+        warningf("Failed to write data: %d\n", written);
         return -4;
     }
 
