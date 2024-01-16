@@ -27,7 +27,7 @@ typedef enum {
 struct kernel_context {
 
 	struct kernel_services {
-		struct usermanager* user_manager;
+		struct usermanager* usermanager;
 		struct scheduler* scheduler;
 		struct networkmanager* networking;
 	} services;

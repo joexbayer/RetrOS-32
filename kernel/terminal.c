@@ -278,6 +278,10 @@ static int __terminal_scan_textmode(struct terminal* term, ubyte_t* data, int si
 			return -1;
 		}
 
+		if(c == '\n') {
+			break;
+		}
+
 		if(c == '\b'){
 			data[i] = 0;
 			i--;

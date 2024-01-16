@@ -491,7 +491,7 @@ static void __callback taskbar_readme()
 
 static void __callback __reboot(int opt)
 {
-    if(opt == MSGBOX_OK) reboot();
+    if(opt == MSGBOX_OK) system_reboot();
 }
 
 static void __callback taskbar_reboot(){

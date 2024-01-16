@@ -89,6 +89,15 @@
   <img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/textmode.png?raw=true">
 </p>
 
+### Login
+There are 3 default users: system, admin and guest. The password for admin is 'admin', while guest has no password.
+Currently there is no difference between admin and guest.
+
+You can create a user with the 'admin' command:
+```sh
+admin create <username> <password>
+```
+
 ### Built With
 
 This project is built with C & Assembly for the kernel, utilities and build system. C++ for userspace applications and Make for compilation.
@@ -198,21 +207,6 @@ To run RetrOS-32:
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-<<<<<<< HEAD
-## Hardware
-Tested on:
-Lenovo x240,
-Asus Eee PC series,
-Dell Optiplex 780,
-Samsung N150 Plus,
-Samsung NP-NC10,
-IBM Thinkpad a21p
-
-<img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/hardware1.jpg?raw=true" width="250">
-<img src="https://github.com/joexbayer/RetrOS-32/blob/main/docs/pictures/hardware2.jpg?raw=true" width="250">
-
-=======
->>>>>>> 26e4e17bf04130ec26fc6176f7d3d05259fc6796
 ## Project Structure (TBD)
     NETOS - Project
     ├── Dockerfile 
@@ -284,7 +278,8 @@ IBM Thinkpad a21p
 - [x] Custom Bootloader & GRUB compatible
 - [x] Stage 2 bootloader 
 - [x] Wallpapers
-- [x] Mountable image 
+- [x] Mountable image
+- [x] Users 
 - [x] Multi-threaded pre-emptive scheduling
 - [x] GDT & TSS kernel / userspace separation
 - [x] Interrupt handling

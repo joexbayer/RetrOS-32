@@ -67,7 +67,7 @@
 struct kernel_context __kernel_context = {
 	.services.scheduler = NULL,
 	.services.networking = NULL,
-	.services.user_manager = NULL,
+	.services.usermanager = NULL,
 	.graphics.window_server = NULL,
 	.graphics.ctx = NULL,
 	.boot_info = NULL,
@@ -229,8 +229,8 @@ void kernel(uint32_t magic)
 
 	config_load("sysutil/default.cfg");
 
-	$services->user_manager = usermanager_create();
-	$services->user_manager->ops->load($services->user_manager);
+	$services->usermanager = usermanager_create();
+	$services->usermanager->ops->load($services->usermanager);
 
 	start("idled", 0, NULL);
 	if(__kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){

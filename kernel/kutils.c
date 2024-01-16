@@ -23,7 +23,7 @@
 
 static char *units[] = {"b ", "kb", "mb"};
 
-void reboot()
+void system_reboot()
 {
     ENTER_CRITICAL();
     uint8_t good = 0x02;

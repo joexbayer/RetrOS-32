@@ -50,7 +50,7 @@ void __kthread_entry login()
     struct unit unit = calculate_size_unit($kernel->boot_info->extended_memory_low * 1024);
     struct unit unit2 = calculate_size_unit($kernel->boot_info->extended_memory_high * 64 * 1024);
 
-    struct usermanager* usermanager= $services->user_manager;
+    struct usermanager* usermanager= $services->usermanager;
 
     /* set title */
     kernel_gfx_set_title("Welcome to RetrOS-32");
