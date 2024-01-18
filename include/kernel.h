@@ -32,7 +32,6 @@ struct kernel_context {
 		struct networkmanager* networking;
 	} services;
 
-
 	struct graphics {
 		struct graphic_context* ctx;
 		struct windowserver* window_server;
