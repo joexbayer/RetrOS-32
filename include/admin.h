@@ -43,7 +43,7 @@ typedef enum {
 
     /* Special Administrative Permissions */
     ADMIN_FULL_ACCESS = 1 << 22,
-    ADMIN_RESERVED = 1 << 23,
+    SYSTEM_FULL_ACCESS = 1 << 23,
     ADMIN_RESERVED1 = 1 << 24
     
 } permission_t;

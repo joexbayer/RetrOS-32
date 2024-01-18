@@ -27,6 +27,8 @@
 #include <fs/fs.h>
 #include <user.h>
 
+#include <usermanager.h>
+
 static struct pcb pcb_table[MAX_NUM_OF_PCBS];
 static struct process __process = {
 	.current = &(struct pcb){
@@ -310,19 +312,22 @@ void pcb_dbg_print(struct pcb* pcb)
  */
 int pcb_cleanup_routine(void* arg)
 {
+	AUTHORIZED_GUARD(SYSTEM_FULL_ACCESS);
+
 	int pid = (int)arg;
 	assert(pid != $process->current->pid && !(pid < 0 || pid > MAX_NUM_OF_PCBS));
 
 	dbgprintf("%d\n", __cli_cnt);
 	struct pcb* pcb = &pcb_table[pid];
 
-	gfx_destory_window(pcb_table[pid].gfx_window);
+	if(pcb->gfx_window != NULL){
+		gfx_destory_window(pcb_table[pid].gfx_window);
+	}
 
 	/**
 	 * @brief A process cannot exit before all its children have exited.
 	 * Therefor loop over all pcbs and kill them if current is their parent.
 	 */
-
 	for (int i = 0; i < MAX_NUM_OF_PCBS; i++){
 		if(pcb_table[i].parent == pcb && pcb_table[i].is_process == PCB_THREAD){
 			pcb_table[i].state = ZOMBIE;
@@ -368,6 +373,8 @@ int pcb_cleanup_routine(void* arg)
  */
 error_t pcb_create_thread(struct pcb* parent, void (*entry)(), void* arg, byte_t flags)
 {
+	AUTHORIZED_GUARD(CTRL_PROC_CREATE | SYSTEM_FULL_ACCESS | ADMIN_FULL_ACCESS);
+
 	/* Initialize PCB and set privileges */
     struct pcb* pcb = __pcb_init_process(flags, VMEM_DATA);
 	if(pcb == NULL){
@@ -402,6 +409,8 @@ error_t pcb_create_thread(struct pcb* parent, void (*entry)(), void* arg, byte_t
 
 error_t pcb_create_process(char* program, int argc, char** argv, pcb_flag_t flags)
 {
+	AUTHORIZED_GUARD(CTRL_PROC_CREATE | SYSTEM_FULL_ACCESS | ADMIN_FULL_ACCESS);
+
 	char* buf;
 	int ret, size;
 	struct pcb* pcb;
@@ -465,6 +474,9 @@ error_t pcb_create_process(char* program, int argc, char** argv, pcb_flag_t flag
  */
 error_t pcb_create_kthread(void (*entry)(), char* name, int argc, char** argv)
 {   
+
+	AUTHORIZED_GUARD(CTRL_PROC_CREATE | SYSTEM_FULL_ACCESS | ADMIN_FULL_ACCESS);
+
 	ENTER_CRITICAL();
 	
 	struct pcb* pcb = __pcb_get_free();

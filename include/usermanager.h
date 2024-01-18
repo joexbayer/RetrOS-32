@@ -6,9 +6,10 @@
 #include <group.h>
 #include <stdint.h>
 #include <admin.h>
+#include <errors.h>
 
 #define IS_AUTHORIZED(user, permission) ((user)->permissions & (permission))
-#define AUTHORIZED_GUARD(permission) if (!IS_AUTHORIZED($process->current->user, permission)) return ERR_ACCESS_DENIED
+#define AUTHORIZED_GUARD(permission) if (!IS_AUTHORIZED($process->current->user, permission)) return ERROR_ACCESS_DENIED
 
 struct usermanager;
 
