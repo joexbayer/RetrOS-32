@@ -267,7 +267,7 @@
 0001a22e kenv_init
 0001a245 kenv_set
 0001a27a config_list
-0001a34b config_load
+0001a34b kernel_config_load
 0001a736 config_get_value
 0001a7f1 spin_lock
 0001a811 spin_unlock

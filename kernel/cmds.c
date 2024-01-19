@@ -365,7 +365,7 @@ static int conf(int argc, char *argv[])
             twritef("Usage: conf load <filename>\n");
             return 1;
         }
-        ret = config_load(argv[2]);
+        ret = kernel_config_load(argv[2]);
         if(ret < 0) {
             twritef("Failed to load config file: %d\n", ret);
             return 1;

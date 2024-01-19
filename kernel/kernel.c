@@ -227,7 +227,7 @@ void kernel(uint32_t magic)
 	/* Initilize the kernel symbols from symbols.map */
 	ksyms_init();
 
-	config_load("sysutil/default.cfg");
+	kernel_config_load("sysutil/default.cfg");
 
 	$services->usermanager = usermanager_create();
 	$services->usermanager->ops->load($services->usermanager);
