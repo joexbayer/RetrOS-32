@@ -25,8 +25,9 @@
 #include <syscall_helper.h>
 
 #include <fs/fs.h>
-#include <user.h>
 
+#include <user.h>
+#include <admin.h>
 #include <usermanager.h>
 
 static struct pcb pcb_table[MAX_NUM_OF_PCBS];
@@ -35,7 +36,8 @@ static struct process __process = {
 		.name = "kernel",
 		.pid = 0,
 		.user = &(struct user){
-			.name = "system"
+			.name = "system",
+			.permissions = SYSTEM_FULL_ACCESS,
 		}
 	},
 };

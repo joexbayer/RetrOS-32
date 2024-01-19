@@ -19,6 +19,7 @@
 #include <work.h>
 #include <conf.h>
 #include <gfx/theme.h>
+#include <kevents.h>
 
 #define COMMAND(name, func) \
 	int name\
@@ -152,6 +153,24 @@ static int help(int argc, char* argv[])
     return 0;
 }
 EXPORT_KSYMBOL(help);
+
+static int kevents(int argc, char* argv[])
+{
+    if(argc < 2) {
+        twritef("Usage: kevents <list>\n");
+        return 1;
+    }
+
+    if(strcmp(argv[1], "list") == 0) {
+        $services->kevents->ops->list($services->kevents);
+    } else {
+        twritef("Usage: kevents <list>\n");
+        return 1;
+    }
+
+    return 0;
+}
+EXPORT_KSYMBOL(kevents);
 
 
 static int view(int argc, char* argv[]){
