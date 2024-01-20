@@ -156,6 +156,11 @@ EXPORT_KSYMBOL(help);
 
 static int kevents(int argc, char* argv[])
 {
+    if(IS_AUTHORIZED(ADMIN_FULL_ACCESS) == 0) {
+        twritef("You are not authorized to use this command\n");
+        return 1;
+    }
+
     if(argc < 2) {
         twritef("Usage: kevents <list>\n");
         return 1;
@@ -353,6 +358,11 @@ static int conf(int argc, char *argv[])
 {
     int ret;
 
+    if(IS_AUTHORIZED(ADMIN_FULL_ACCESS) == 0) {
+        twritef("You are not authorized to use this command\n");
+        return 1;
+    }
+
     if(argc < 2) {
         twritef("Usage: conf <load, get, list>\n");
         return 1;
@@ -412,6 +422,22 @@ static int services(int argc, char *argv[])
         twritef("Scheduler:      %s\n", $services->scheduler != NULL ? "running" : "stopped");
         twritef("NetworkManager: %s\n", $services->networking != NULL ? "running" : "stopped");
         return 0;   
+    }
+
+    if(strcmp(argv[1], "start") == 0) {
+        
+        if(IS_AUTHORIZED(ADMIN_FULL_ACCESS) == 0) {
+            twritef("You are not authorized to use this command\n");
+            return 1;
+        }
+
+        if(argc < 3) {
+            twritef("Usage: services start <service>\n");
+            return 1;
+        }
+
+
+        return 1;
     }
 
     return 0;

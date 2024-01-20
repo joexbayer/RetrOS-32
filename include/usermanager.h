@@ -9,8 +9,8 @@
 #include <errors.h>
 #include <serial.h>
 
-#define IS_AUTHORIZED(user, permission) ((user)->permissions & (permission))
-#define AUTHORIZED_GUARD(permission) if (!IS_AUTHORIZED($process->current->user, permission)){ warningf("%s is not authorized!\n"); return ERROR_ACCESS_DENIED; }
+#define IS_AUTHORIZED(permission) (($process->current->user)->permissions & (permission))
+#define AUTHORIZED_GUARD(permission) if (!IS_AUTHORIZED(permission)){ warningf("%s is not authorized!\n"); return ERROR_ACCESS_DENIED; }
 
 struct usermanager;
 
