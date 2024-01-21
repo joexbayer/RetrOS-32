@@ -159,12 +159,12 @@ static int ws_fullscreen(struct windowserver* ws, struct window* window)
 #define DIAMONDS() int color = (((i / (size + spacing)) + (j / (size + spacing))) % 2 == 0 &&\
             (i % (size + spacing) < size) && (j % (size + spacing) < size) &&\
             (ABS(i % (size + spacing) - size/2) + ABS(j % (size + spacing) - size/2) <= size/2)\
-            ) ? 22 :\
+            ) ? 20 :\
             (\
                 ((i % (size + spacing) == size/2) || (i % (size + spacing) == size/2 + 1)) &&\
                 ((j % (size + spacing) == size/2) || (j % (size + spacing) == size/2 + 1)) &&\
                 ((i / (size + spacing)) + (j / (size + spacing))) % 2 == 1\
-            ) ? 21 : 23;\
+            ) ? 19 : 21;\
 
 
 static int ws_set_background(struct windowserver* ws, color_t color)

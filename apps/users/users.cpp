@@ -21,11 +21,11 @@ public:
 
         Input* input = new Input(10, 50, 100, 12, "Input");
         widgets->addWidget(input);
-        widgets->addWidget(new Button(10, 70, 100, 12, "Print input", []() {
-            
-        }));
-
-
+    
+        widgets->addWidget(new Checkbox(10, 110, true));
+        widgets->addWidget(new Label(30, 110, 100, 12, "Checkbox"));
+        widgets->addWidget(new Checkbox(10, 130, false));
+        
     }
 
     int eventHandler(struct gfx_event* event) {
@@ -38,10 +38,11 @@ public:
             /* exit */
             return 0;
         case GFX_EVENT_KEYBOARD:
+            widgets->Keyboard(event->data);
             /* keyboard event in e.data */
             break;
         case GFX_EVENT_MOUSE:
-            /* mouse event in e.data and e.data2 */
+            widgets->Mouse(event->data, event->data2);
             break;
         }
         return 0;

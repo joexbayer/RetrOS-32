@@ -16,7 +16,7 @@
 #include <utils/Graphics.hpp>
 #include <utils/StdLib.hpp>
 
-#define MAX_WIDGETS 10
+#define MAX_WIDGETS 32
 
 typedef void (*Callback)();
 
@@ -53,7 +53,7 @@ public:
 
     /* Draws the button */
     void draw(Window* window) {
-        window->drawRect(x, y, width, height, focused ? COLOR_WHITE : COLOR_VGA_LIGHT_GRAY);
+        window->drawContouredBox(x, y, width, height, focused ? COLOR_VGA_LIGHT_GRAY : 30);
         window->drawText(x + 4, y + 4, text, COLOR_BLACK);
     }
 
@@ -82,10 +82,17 @@ public:
         this->width = width;
         this->height = height;
         this->text = text;
+        memset(data, 0, 100);
     }
 
     void draw(Window* window) {
+        window->drawContouredBox(x, y, width, height, focused ? 28 : 30);
 
+        if(size == 0){
+            window->drawText(x + 4, y + 4, text, COLOR_VGA_LIGHT_GRAY);
+        } else {
+            window->drawText(x + 4, y + 4, data, COLOR_BLACK);
+        }
     }
 
     char* getData() {
@@ -94,6 +101,7 @@ public:
 
     /* Handles keyboard events */
     void Keyboard(char c) {
+        printf("Input: %c\n", c);
         if (c == '\b') {
             if (size > 0) {
                 size--;
@@ -106,7 +114,9 @@ public:
         }
     }
 
-    void Mouse() {}
+    void Mouse() {
+        printf("Input clicked!\n");
+    }
 
     bool focusable() {
         return true;
@@ -118,6 +128,98 @@ private:
     int size = 0;
 };
 
+/* A simple label widget */
+class Label : public Widget {
+public:
+    Label(int x, int y, int width, int height, char* text) {
+        this->x = x;
+        this->y = y;
+        this->width = width;
+        this->height = height;
+        this->text = text;
+    }
+
+    void draw(Window* window) {
+        window->drawText(x, y, text, COLOR_BLACK);
+    }
+
+    void Keyboard(char c) {}
+
+    void Mouse() {}
+
+    bool focusable() {
+        return false;
+    }
+
+private:
+    char* text;
+};
+
+/* A simple list widget */
+class List : public Widget {
+public:
+    List(int x, int y, int width, int height, char** items, int itemCount) {
+        this->x = x;
+        this->y = y;
+        this->width = width;
+        this->height = height;
+        this->items = items;
+        this->itemCount = itemCount;
+    }
+
+    void draw(Window* window) {
+        //window->drawContouredBox(x, y, width, height, focused ? 28 : 30);
+
+        for (int i = 0; i < itemCount; i++) {
+            window->drawCircle(x + 2, y + 6 + i * 12, 2, COLOR_VGA_LIGHT_GRAY, 1);
+            window->drawText(x + 4, y + 4 + i * 12, items[i], COLOR_BLACK);
+        }
+    }
+
+    void Keyboard(char c) {}
+
+    void Mouse() {}
+
+    bool focusable() {
+        return false;
+    }
+
+private:
+    char** items;
+    int itemCount;
+};
+
+/* Simple Checkbox widget */
+class Checkbox : public Widget {
+public:
+    Checkbox(int x, int y, bool value) {
+        this->x = x;
+        this->y = y;
+        this->width = 12;
+        this->height = 12;
+        this->value = value;
+    }
+
+    void draw(Window* window) {
+        window->drawContouredBox(x, y, width, height, 30);
+        if (value) {
+            window->drawCircle(x + width - 6, y + 6, 2, COLOR_VGA_LIGHT_GRAY, 1);
+        }
+    }
+
+    void Keyboard(char c) {}
+
+    void Mouse() {
+        value = !value;
+    }
+
+    bool focusable() {
+        return true;
+    }
+
+private:
+    bool value;
+};
 
 class WidgetManager {
 public:
@@ -162,20 +264,23 @@ public:
 
             /* Check if the widget is focusable and the mouse is within its bounds */
             bool isWithinBounds = 
-                widget->focusable() &&
                 x >= widget->x && x <= widget->x + widget->width &&
                 y >= widget->y && y <= widget->y + widget->height;
 
             if (isWithinBounds) {
-                /* Unfocus the previously focused widget, if any */
-                if (focusedWidget != -1) {
-                    widgets[focusedWidget]->focused = false;
+                if (widget->focusable()) {
+
+                    /* Unfocus the previously focused widget, if any */
+                    if(focusedWidget != -1)
+                        widgets[focusedWidget]->focused = false;
+                    
+                    /* Focus the current widget */
+                    focusedWidget = i;
+                    widget->focused = true;
+                    printf("Focused widget: %d\n", focusedWidget);
                 }
 
-                /* Focus the current widget */
-                focusedWidget = i;
                 widget->Mouse();
-                widget->focused = true;
                 return;
             }
         }

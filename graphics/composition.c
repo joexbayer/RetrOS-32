@@ -76,7 +76,7 @@ int gfx_set_taskbar(pid_t pid)
 {
     ERR_ON_NULL(ws);
 
-    ws->taskbar = pcb_get_by_pid(pid);
+    ws->taskbar = pcb_get_by_name("taskbar");
     return ERROR_OK;
 }
 
