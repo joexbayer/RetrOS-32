@@ -53,7 +53,8 @@ public:
 
     /* Draws the button */
     void draw(Window* window) {
-
+        window->drawRect(x, y, width, height, focused ? COLOR_WHITE : COLOR_VGA_LIGHT_GRAY);
+        window->drawText(x + 4, y + 4, text, COLOR_BLACK);
     }
 
     /* Ignores keyboard events */

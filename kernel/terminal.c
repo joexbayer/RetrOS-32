@@ -104,7 +104,8 @@ void terminal_commit()
 
 void terminal_putchar(char c)
 {
-	return;
+	if($process->current == NULL || $process->current->term == NULL) return;
+	
 	$process->current->term->ops->putchar($process->current->term, c);
 }
 
