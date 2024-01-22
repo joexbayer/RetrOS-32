@@ -25,7 +25,6 @@ public:
         widgets->addWidget(new Checkbox(10, 110, true));
         widgets->addWidget(new Label(30, 110, 100, 12, "Checkbox"));
         widgets->addWidget(new Checkbox(10, 130, false));
-        
     }
 
     int eventHandler(struct gfx_event* event) {
