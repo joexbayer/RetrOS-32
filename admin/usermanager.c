@@ -46,26 +46,26 @@ static const struct userdb default_db = {
 			.name = "admin",
 			.hash = 525286959, /* admin */
 			.uid = 1,
-			.permissions = _
+			.permissions = ADMIN_FULL_ACCESS
 		},
 		{
 			.name = "system",
 			.hash = 1,
 			.uid = 2,
-			.permissions = _
+			.permissions = SYSTEM_FULL_ACCESS
 		},
 		{
 			.name = "guest",
 			.hash = 0,
 			.uid = 3,
-			.permissions = _
+			.permissions = CTRL_PROC_CREATE | ACCESS_NET | ACCESS_FS_READ
 		}
 	},
 	.groups = {
 		{
 			.name = "admin",
 			.gid = 1,
-			.permissions = _
+			.permissions = USER_CREATE | USER_PWD_MANAGE | USER_GROUP_MANAGE
 		}
 	}
 };

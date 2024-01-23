@@ -33,6 +33,7 @@ enum errors {
     ERROR_WINDOW_NOT_FOUND,
     ERROR_OPS_CORRUPTED,
     ERROR_OUT_OF_MEMORY,
+    ERROR_ACCESS_DENIED,
 };
 
 char* error_get_string(error_t err);

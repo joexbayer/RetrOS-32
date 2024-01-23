@@ -1,10 +1,16 @@
 #ifndef F2B1F79B_0C15_4F82_B78A_5ABEC923D093
 #define F2B1F79B_0C15_4F82_B78A_5ABEC923D093
 
+#include <kernel.h>
 #include <user.h>
 #include <group.h>
 #include <stdint.h>
 #include <admin.h>
+#include <errors.h>
+#include <serial.h>
+
+#define IS_AUTHORIZED(permission) (($process->current->user)->permissions & (permission))
+#define AUTHORIZED_GUARD(permission) if (!IS_AUTHORIZED(permission)){ warningf("%s is not authorized!\n"); return ERROR_ACCESS_DENIED; }
 
 struct usermanager;
 

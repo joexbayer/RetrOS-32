@@ -55,6 +55,6 @@ int gfx_syscall_hook(int option, void* data, int flags)
     default:
         break;
     }
-     gfx_commit();
+    gfx_commit();
     return ERROR_OK;
 }

@@ -68,20 +68,16 @@ void print_page_fault_info(unsigned long cr2) {
 
     /* Check if the page directory entry is present */
     if (page_dir_entry & PRESENT_BIT) {
-        /* Assuming PAGE_TABLE_ADDRESS extracts the address of the page table from the directory entry */
         unsigned long *page_table = (unsigned long *)PAGE_TABLE_ADDRESS(page_dir_entry);
 
-        /* Get the page table entry */
         page_table_entry = page_table[TABLE_INDEX(cr2)];
 
-		/* Print detailed information */
 		dbgprintf("Page Fault Address: 0x%x\n", cr2);
 		dbgprintf("Page Directory Entry: 0x%x\n", page_dir_entry);
 
 		if(page_table_entry & PRESENT_BIT){
 			dbgprintf("Page Table Entry: 0x%x\n", page_table_entry);
 
-			/* Analyzing and printing permissions */
 			dbgprintf("Permissions: %s, %s\n",
 					(page_table_entry & READ_WRITE_BIT) ? "Read/Write" : "Read-Only",
 					(page_table_entry & USER_SUPERVISOR_BIT) ? "User" : "Supervisor");
@@ -94,32 +90,20 @@ void print_page_fault_info(unsigned long cr2) {
 void page_fault_interrupt(unsigned long cr2, unsigned long err)
 {
     uint32_t *ebp = (uint32_t*) __builtin_frame_address(0);
-	/*
-    dbgprintf("Return address for iret: 0x%x\n", return_address_for_iret);
-    dbgprintf("Original ebp: 0x%x\n", original_ebp);
-	*/
-   // __backtrace_from((uintptr_t*)ebp);
-
-	interrupt_counter[14]++;
-	ENTER_CRITICAL();
-
-	dbgprintf("Page fault: 0x%x (Stack: 0x%x) %d (%s)\n", cr2, $process->current->stackptr, err, $process->current->name);
-	/* print page_table entry */
+   	__backtrace_from((uintptr_t*)ebp);
+	
 	print_page_fault_info(cr2);
 
 	pcb_dbg_print($process->current);
-
 	if($process->current->is_process){
 		struct msgbox* box = msgbox_create(MSGBOX_TYPE_WARNING, MSGBOX_BUTTON_OK, "Crash Report", " A program has crashed!", NULL);
 		msgbox_show(box);
-
 		kernel_exit();
 	}
 
 #ifdef KERNEL_PANIC_ON_PAGE_FAULT
 	kernel_panic("A critical kernel thread encountered a page fault.");
 #endif
-	//vesa_printf(0, 0, "Page fault: 0x%x (Stack: 0x%x) %d (%s)\n", cr2, $process->current->stackptr, err, $process->current->name);
 	kernel_exit();
 
 	UNREACHABLE();
@@ -131,7 +115,13 @@ void general_protection_fault()
 	dbgprintf("General Protection Fault: 0x%x - %s\n", $process->current->stackptr, $process->current->name);
 	pcb_dbg_print($process->current);
 
-	/* TODO: Some kind of feedback */
+	struct msgbox* box = msgbox_create(
+		MSGBOX_TYPE_WARNING, MSGBOX_BUTTON_OK,
+		"Crash Report", " A program has crashed",
+		NULL
+	);
+	msgbox_show(box);
+	
 	EOI(13);
 	kernel_exit();
 	UNREACHABLE();

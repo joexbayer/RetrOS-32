@@ -19,6 +19,7 @@
 #include <work.h>
 #include <conf.h>
 #include <gfx/theme.h>
+#include <kevents.h>
 
 #define COMMAND(name, func) \
 	int name\
@@ -152,6 +153,29 @@ static int help(int argc, char* argv[])
     return 0;
 }
 EXPORT_KSYMBOL(help);
+
+static int kevents(int argc, char* argv[])
+{
+    if(IS_AUTHORIZED(ADMIN_FULL_ACCESS) == 0) {
+        twritef("You are not authorized to use this command\n");
+        return 1;
+    }
+
+    if(argc < 2) {
+        twritef("Usage: kevents <list>\n");
+        return 1;
+    }
+
+    if(strcmp(argv[1], "list") == 0) {
+        $services->kevents->ops->list($services->kevents);
+    } else {
+        twritef("Usage: kevents <list>\n");
+        return 1;
+    }
+
+    return 0;
+}
+EXPORT_KSYMBOL(kevents);
 
 
 static int view(int argc, char* argv[]){
@@ -334,6 +358,11 @@ static int conf(int argc, char *argv[])
 {
     int ret;
 
+    if(IS_AUTHORIZED(ADMIN_FULL_ACCESS) == 0) {
+        twritef("You are not authorized to use this command\n");
+        return 1;
+    }
+
     if(argc < 2) {
         twritef("Usage: conf <load, get, list>\n");
         return 1;
@@ -346,7 +375,7 @@ static int conf(int argc, char *argv[])
             twritef("Usage: conf load <filename>\n");
             return 1;
         }
-        ret = config_load(argv[2]);
+        ret = kernel_config_load(argv[2]);
         if(ret < 0) {
             twritef("Failed to load config file: %d\n", ret);
             return 1;
@@ -393,6 +422,22 @@ static int services(int argc, char *argv[])
         twritef("Scheduler:      %s\n", $services->scheduler != NULL ? "running" : "stopped");
         twritef("NetworkManager: %s\n", $services->networking != NULL ? "running" : "stopped");
         return 0;   
+    }
+
+    if(strcmp(argv[1], "start") == 0) {
+        
+        if(IS_AUTHORIZED(ADMIN_FULL_ACCESS) == 0) {
+            twritef("You are not authorized to use this command\n");
+            return 1;
+        }
+
+        if(argc < 3) {
+            twritef("Usage: services start <service>\n");
+            return 1;
+        }
+
+
+        return 1;
     }
 
     return 0;

@@ -25,6 +25,7 @@
 #include <virtualdisk.h>
 #include <diskdev.h>
 #include <gfx/component.h>
+#include <script.h>
 
 #include <user.h>
 #include <usermanager.h>
@@ -123,14 +124,7 @@ void __kthread_entry login()
 
                     $process->current->user = usr;
 
-                    /* OK is clicked */
-                    start("kclock", 0, NULL);
-                    pid_t taskbar = start("taskbar", 0, NULL);
-                    if(taskbar <= 0){
-                        warningf("Failed to start taskbar");
-                    }
-
-                    dbgprintf("Taskbar started with pid: %d\n", taskbar);
+                    exec_cmd("sh /sysutil/startup.sh");
 
                     if(!disk_attached()){
                         struct msgbox* box = msgbox_create(
@@ -142,7 +136,7 @@ void __kthread_entry login()
                         msgbox_show(box);
                     }
 
-                    gfx_set_taskbar(taskbar);
+                    gfx_set_taskbar(0);
                     return;
                 }
             }				

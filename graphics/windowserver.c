@@ -18,6 +18,7 @@
 #include <fs/fs.h>
 #include <vbe.h>
 #include <colors.h>
+#include <math.h>
 
 static int ws_init(struct windowserver* ws);
 static int ws_add(struct windowserver* ws, struct window* window);
@@ -155,12 +156,38 @@ static int ws_fullscreen(struct windowserver* ws, struct window* window)
     return ERROR_OK;
 }
 
+#define DIAMONDS() int color = (((i / (size + spacing)) + (j / (size + spacing))) % 2 == 0 &&\
+            (i % (size + spacing) < size) && (j % (size + spacing) < size) &&\
+            (ABS(i % (size + spacing) - size/2) + ABS(j % (size + spacing) - size/2) <= size/2)\
+            ) ? 19 :\
+            (\
+                ((i % (size + spacing) == size/2) || (i % (size + spacing) == size/2 + 1)) &&\
+                ((j % (size + spacing) == size/2) || (j % (size + spacing) == size/2 + 1)) &&\
+                ((i / (size + spacing)) + (j / (size + spacing))) % 2 == 1\
+            ) ? 18 : 20;\
+
+
 static int ws_set_background(struct windowserver* ws, color_t color)
 {
     ERR_ON_NULL(ws);
     WS_VALIDATE(ws);
 
     memset(ws->background, color, VBE_SIZE());
+    // int j, i;
+    // for (i = 0; i < 640; i++) {
+    //     for (j = 0; j < 480; j++) {
+    //         /* Checkered pattern */
+    //         int size = 30;
+    //         int spacing = 10;
+    //         int dot_size = 2;
+
+    //         DIAMONDS();
+            
+    //         vesa_put_pixel(ws->background, i, j, color);
+    //     }
+    // }
+
+
 
     return ERROR_OK;
 }
@@ -171,10 +198,10 @@ static int ws_set_background_file(struct windowserver* ws, const char* path)
     ERR_ON_NULL(path);
     WS_VALIDATE(ws);
 
-    int originalWidth = 320;   // Original image width
-    int originalHeight = 240;  // Original image height
-    int targetWidth = vbe_info->width;     // Target screen width
-    int targetHeight = vbe_info->height;    // Target screen height
+    int originalWidth = 320;  
+    int originalHeight = 240; 
+    int targetWidth = vbe_info->width;    
+    int targetHeight = vbe_info->height;   
 
      /* upscale image */
     float scaleX = (float)targetWidth / (float)originalWidth;
@@ -205,14 +232,14 @@ static int ws_set_background_file(struct windowserver* ws, const char* path)
 
     for (int i = 0; i < originalWidth; i++){
         for (int j = 0; j < originalHeight; j++){
-            // Calculate the position on the screen based on the scaling factors
+           
             int screenX = (int)(i * scaleX);
             int screenY = (int)(j * scaleY);
 
-            // Retrieve the pixel value from the original image
+           
             unsigned char pixelValue = rgb_to_vga(temp_window[j * originalWidth + i]);
 
-            // Set the pixel value on the screen at the calculated position
+           
             for (int x = 0; x < scaleX; x++){
                 for (int y = 0; y < scaleY; y++){
                     vesa_put_pixel(ws->background, screenX + x, screenY + y, pixelValue);

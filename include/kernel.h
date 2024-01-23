@@ -6,7 +6,7 @@
 #include <gfx/windowserver.h>
 #include <usermanager.h>
 #include <net/networkmanager.h>
-
+#include <kevents.h>
 #include <gfx/core.h>
 
 #define KERNEL_NAME		"RetrOS-32"
@@ -30,8 +30,8 @@ struct kernel_context {
 		struct usermanager* usermanager;
 		struct scheduler* scheduler;
 		struct networkmanager* networking;
+		struct kevents* kevents;
 	} services;
-
 
 	struct graphics {
 		struct graphic_context* ctx;

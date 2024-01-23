@@ -88,7 +88,7 @@ int config_list()
     return 0;
 }
 
-int config_load(char* filename)
+int kernel_config_load(char* filename)
 {
     int len;
     char* buf = kalloc(1024);

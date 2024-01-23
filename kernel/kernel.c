@@ -227,10 +227,13 @@ void kernel(uint32_t magic)
 	/* Initilize the kernel symbols from symbols.map */
 	ksyms_init();
 
-	config_load("sysutil/default.cfg");
+	kernel_config_load("sysutil/default.cfg");
 
 	$services->usermanager = usermanager_create();
 	$services->usermanager->ops->load($services->usermanager);
+
+	$services->kevents = kevents_create(64);
+	$services->kevents->ops->init($services->kevents);
 
 	start("idled", 0, NULL);
 	if(__kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
@@ -246,6 +249,8 @@ void kernel(uint32_t magic)
 	kernel_boot_printf("Timer initialized.");
 
 	dbgprintf("Critical counter: %d\n", __cli_cnt);
+
+	$services->kevents->ops->add($services->kevents, KEVENT_INFO, "Kernel successfully booted.");
 	
 	kernel_boot_printf("Starting OS...");
 	LEAVE_CRITICAL();

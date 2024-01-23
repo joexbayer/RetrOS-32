@@ -75,8 +75,18 @@ int gfx_decode_background_image(const char* file)
 int gfx_set_taskbar(pid_t pid)
 {
     ERR_ON_NULL(ws);
+    struct pcb* taskbar = pcb_get_by_name("taskbar");
+    if(taskbar == NULL){
+        pid_t pid = start("taskbar", 0, NULL);
+        if(pid < 0){
+            dbgprintf("[WSERVER] Could not start taskbar.\n");
+            return -1;
+        }
 
-    ws->taskbar = pcb_get_by_pid(pid);
+        taskbar = pcb_get_by_name("taskbar");
+    }
+
+    ws->taskbar = taskbar;
     return ERROR_OK;
 }
 
