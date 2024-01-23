@@ -173,19 +173,19 @@ static int ws_set_background(struct windowserver* ws, color_t color)
     WS_VALIDATE(ws);
 
     memset(ws->background, color, VBE_SIZE());
-    int j, i;
-    for (i = 0; i < 640; i++) {
-        for (j = 0; j < 480; j++) {
-            /* Checkered pattern */
-            int size = 10;
-            int spacing = 10;
-            int dot_size = 2;
+    // int j, i;
+    // for (i = 0; i < 640; i++) {
+    //     for (j = 0; j < 480; j++) {
+    //         /* Checkered pattern */
+    //         int size = 30;
+    //         int spacing = 10;
+    //         int dot_size = 2;
 
-            DIAMONDS();
+    //         DIAMONDS();
             
-            vesa_put_pixel(ws->background, i, j, color);
-        }
-    }
+    //         vesa_put_pixel(ws->background, i, j, color);
+    //     }
+    // }
 
 
 
