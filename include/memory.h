@@ -114,6 +114,7 @@ void vmem_init();
 /* Kernel memory*/
 void* kalloc(int size);
 void* kcalloc(int size);
+void* krealloc(void* ptr, int new_size);
 void kfree(void* ptr);
 int kmemory_used();
 int kmemory_total();
