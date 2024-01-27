@@ -14,7 +14,13 @@ public:
 
         /* Create widgets */
         widgets = new WidgetManager();
-        widgets->addWidget(new Button(10, 10, 100, 12, "Button", []() {
+        LayoutHandle main = widgets->addLayout(new Layout(
+            10, 10,
+            100, 12,
+            VERTICAL
+        ));
+
+        widgets->addWidget(main, LEFT, new Button(100, 12, "Button", []() {
             printf("Button pressed!\n");
         }));
     }
@@ -64,6 +70,7 @@ void editorEntry(void* arg) {
     return;
 }
 
+
 class Users : public Window {
 public:
     Users(int width, int height) : Window(200, 200, "Users", 1) {
@@ -72,27 +79,32 @@ public:
 
         /* Create widgets */
         widgets = new WidgetManager();
-        widgets->addWidget(new Button(10, 10, 100, 12, "Button", []() {
+        LayoutHandle main = widgets->addLayout(new Layout(
+            10, 10,
+            180, 180,
+            VERTICAL
+        ));
+
+        widgets->addWidget(main, LEFT, new Button(100, 14, "Button", []() {
             printf("Button pressed!\n");
         }));
-        widgets->addWidget(new Button(10, 30, 100, 12, "Start Edit", []() {
+        widgets->addWidget(main, RIGHT, new Button(100, 14, "Start Edit", []() {
 
             Thread* editor = new Thread(editorEntry, 0);
             editor->start(0);
 
         }));
 
-        Input* input = new Input(10, 50, 100, 12, "Input");
-        widgets->addWidget(input);
+        Input* input = new Input(100, 12, "Input");
+        widgets->addWidget(main, CENTER, input);
     
-        widgets->addWidget(new Checkbox(10, 110, true));
-        widgets->addWidget(new Label(30, 110, 100, 12, "Checkbox"));
-        widgets->addWidget(new Checkbox(10, 130, false));
+        widgets->addWidget(main, LEFT, new Checkbox(true));
+        widgets->addWidget(main, LEFT, new Label(100, 12, "Checkbox"));
+        widgets->addWidget(main, LEFT, new Checkbox(false));
     }
 
     int eventHandler(struct gfx_event* event) {
-        switch (event->event)
-        {
+        switch (event->event){
         case GFX_EVENT_RESOLUTION:
             /* update screensize */
             break;
@@ -128,6 +140,7 @@ private:
 int main()
 {
     Users t(200, 200);
+    t.draw();
 
     struct gfx_event e;
     while (1){

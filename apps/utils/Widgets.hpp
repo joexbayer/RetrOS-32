@@ -17,6 +17,7 @@
 #include <utils/StdLib.hpp>
 
 #define MAX_WIDGETS 32
+#define MAX_LAYOUTS 32
 
 typedef void (*Callback)();
 
@@ -42,9 +43,7 @@ protected:
 /* A simple button widget */
 class Button : public Widget {
 public:
-    Button(int x, int y, int width, int height, char* text, Callback callback) {
-        this->x = x;
-        this->y = y;
+    Button(int width, int height, char* text, Callback callback) {
         this->width = width;
         this->height = height;
         this->text = text;
@@ -54,7 +53,10 @@ public:
     /* Draws the button */
     void draw(Window* window) {
         window->drawContouredBox(x, y, width, height, focused ? COLOR_VGA_LIGHT_GRAY : 30);
-        window->drawText(x + 4, y + 4, text, COLOR_BLACK);
+        /* draw text in center */
+        int textWidth = strlen(text) * 8;
+        int textHeight = 8;
+        window->drawText(x + width / 2 - textWidth / 2, y + height / 2 - textHeight / 2, text, COLOR_BLACK);
     }
 
     /* Ignores keyboard events */
@@ -73,12 +75,29 @@ private:
     Callback callback;
 };
 
+class Spacing : public Widget {
+public:
+    Spacing(int width, int height) {
+        this->width = width;
+        this->height = height;
+    }
+
+    void draw(Window* window) {}
+
+    void Keyboard(char c) {}
+
+    void Mouse() {}
+
+    bool focusable() {
+        return false;
+    }
+};
+
+
 /* A simple input widget */
 class Input : public Widget {
 public:
-    Input(int x, int y, int width, int height, char* text) {
-        this->x = x;
-        this->y = y;
+    Input(int width, int height, char* text) {
         this->width = width;
         this->height = height;
         this->text = text;
@@ -131,9 +150,7 @@ private:
 /* A simple label widget */
 class Label : public Widget {
 public:
-    Label(int x, int y, int width, int height, char* text) {
-        this->x = x;
-        this->y = y;
+    Label(int width, int height, char* text) {
         this->width = width;
         this->height = height;
         this->text = text;
@@ -158,9 +175,7 @@ private:
 /* A simple list widget */
 class List : public Widget {
 public:
-    List(int x, int y, int width, int height, char** items, int itemCount) {
-        this->x = x;
-        this->y = y;
+    List(int width, int height, char** items, int itemCount) {
         this->width = width;
         this->height = height;
         this->items = items;
@@ -192,9 +207,7 @@ private:
 /* Simple Checkbox widget */
 class Checkbox : public Widget {
 public:
-    Checkbox(int x, int y, bool value) {
-        this->x = x;
-        this->y = y;
+    Checkbox(bool value) {
         this->width = 12;
         this->height = 12;
         this->value = value;
@@ -221,44 +234,86 @@ private:
     bool value;
 };
 
-class WidgetManager {
+typedef enum {
+    HORIZONTAL,
+    VERTICAL
+} LayoutType;
+
+typedef enum {
+    LEFT,
+    RIGHT,
+    TOP,
+    BOTTOM,
+    CENTER
+} LayoutPosition;
+
+typedef int LayoutHandle;
+
+class Layout {
 public:
-    /**
-     * @brief Adds a widget to the widget manager
-     * 
-     * @param widget The widget to add
-     * @return int The index of the widget in the widget manager
-     */
-    int addWidget(Widget* widget) {
-        if (widgetCount >= MAX_WIDGETS) {
-            return -1;
+    Layout(int x, int y, int width, int height, LayoutType type) {
+        this->x = x;
+        this->y = y;
+        this->width = width;
+        this->height = height;
+        this->type = type;
+    }
+
+    ~Layout() {
+        for (int i = 0; i < widgetCount; i++) {
+            delete widgets[i];
         }
-
-        widgets[widgetCount] = widget;
-        widgetCount++;
-
-        return widgetCount - 1;
     }
 
     void draw(Window* window) {
+        window->drawContouredBox(x, y, width, height, 30);
         for (int i = 0; i < widgetCount; i++) {
             widgets[i]->draw(window);
         }
     }
 
     void Keyboard(char c) {
-        if(focusedWidget != -1){
+        if (focusedWidget != -1) {
             widgets[focusedWidget]->Keyboard(c);
         }
     }
 
-    /**
-     * @brief Handles mouse events
-     * 
-     * @param x coordinate
-     * @param y coordinate
-     */
-    void Mouse(int x, int y) {
+    int addWidget(Widget* widget, LayoutPosition position) {
+        widgets[widgetCount] = widget;
+        widgetCount++;
+
+        switch(type) {
+            case HORIZONTAL:
+                widget->x = x + offset + 2;
+                widget->y = y + 2;
+                offset += widget->width;
+                break;
+            case VERTICAL:
+                /* switch based on position, put widgets under each other */
+                switch (position) {
+                    case LEFT:
+                        widget->x = x + 2;
+                        widget->y = y + offset + 2;
+                        break;
+                    case RIGHT:
+                        widget->x = x + width - widget->width -2;
+                        widget->y = y + offset + 4;
+                        break;
+                    case CENTER:
+                        /* puts widget in the middle but still stacked under last */
+                        widget->x = x + width / 2 - widget->width / 2;
+                        widget->y = y + offset + 2;
+                        break;
+                }
+                offset += widget->height;
+                break;
+        }
+
+
+        return widgetCount;
+    }
+
+     void Mouse(int x, int y) {
         for (int i = 0; i < widgetCount; i++) {
             Widget* widget = widgets[i];
 
@@ -286,19 +341,92 @@ public:
         }
     }
 
-
-    Widget* getWidget(int index) {
-        return widgets[index];
-    }
-
-    int getWidgetCount() {
-        return widgetCount;
-    }
+    int x;
+    int y;
+    int width;
+    int height;
 
 private:
+    LayoutType type;
     Widget* widgets[MAX_WIDGETS];
     int widgetCount = 0;
     int focusedWidget = -1;
+
+    int offset = 0;
+};
+
+class WidgetManager {
+public:
+
+    ~WidgetManager() {
+        for (int i = 0; i < layoutCount; i++) {
+            delete layouts[i];
+        }
+    }
+
+    int addLayout(Layout* layout) {
+        layouts[layoutCount] = layout;
+        layoutCount++;
+
+        return layoutCount-1;
+    }
+
+    /**
+     * @brief Adds a widget to the widget manager
+     * 
+     * @param widget The widget to add
+     * @return int The index of the widget in the widget manager
+     */
+    int addWidget(LayoutHandle lh, LayoutPosition lp,  Widget* widget) {
+        if (lh >= layoutCount) {
+            return -1;
+        }
+
+        layouts[lh]->addWidget(widget, lp);
+
+        return layouts[lh]->addWidget(widget, lp);;
+    }
+
+    void draw(Window* window) {
+        for (int i = 0; i < layoutCount; i++) {
+            layouts[i]->draw(window);
+        }
+    }
+
+    void Keyboard(char c) {
+        if (focusedLayout != -1) {
+            layouts[focusedLayout]->Keyboard(c);
+        }
+    }
+
+    /**
+     * @brief Handles mouse events
+     * 
+     * @param x coordinate
+     * @param y coordinate
+     */
+    void Mouse(int x, int y) {
+        for (int i = 0; i < layoutCount; i++) {
+            Layout* layout = layouts[i];
+
+            /* Check if the widget is focusable and the mouse is within its bounds */
+            bool isWithinBounds = 
+                x >= layout->x && x <= layout->x + layout->width &&
+                y >= layout->y && y <= layout->y + layout->height;
+
+            focusedLayout = i;
+
+            if (isWithinBounds) {
+                layout->Mouse(x, y);
+                return;
+            }
+        }
+    }
+
+private:
+    Layout* layouts[MAX_LAYOUTS];
+    int layoutCount = 0;
+    int focusedLayout = -1;
 };
 
 

@@ -137,6 +137,7 @@ void __kthread_entry login()
                     }
 
                     gfx_set_taskbar(0);
+                    kernel_exit();
                     return;
                 }
             }				
