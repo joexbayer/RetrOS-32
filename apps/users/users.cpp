@@ -29,12 +29,15 @@ public:
             LAYOUT_FLAG_BORDER
         ));
 
+        username = new Input(100, 14, "Username"); 
+        password = new Input(100, 14, "Password");
+
         widgets->addWidget(main, CENTER, new Label("Create a new user"));
         widgets->addWidget(main, LEFT, new Spacing(0, 8));
         widgets->addWidget(main, LEFT, new Label("Username:"));
-        widgets->addWidget(main, LEFT, new Input(100, 14, "Input"));
+        widgets->addWidget(main, LEFT, username);
         widgets->addWidget(main, LEFT, new Label("Password:"));
-        widgets->addWidget(main, LEFT, new Input(100, 14, "Input"));
+        widgets->addWidget(main, LEFT, password);
         widgets->addWidget(main, LEFT, new Spacing(0, 8));
         widgets->addWidget(main, CENTER, new Label("Permissions:"));
         widgets->addWidget(main, LEFT, new Checkbox(false, "Admin"));
@@ -42,10 +45,13 @@ public:
         widgets->addWidget(main, LEFT, new Checkbox(false, "Guest"));
 
         widgets->addWidget(bottom, RIGHT, new Button(50, 14, "Cancel", Function([this]() {
-            printf("Button pressed %d!\n", test);
+            delete widgets;
+            exit();
         })));
+
         widgets->addWidget(bottom, RIGHT, new Button(50, 14, "Create", Function([this]() {
-            printf("Button pressed!\n");
+            printf("Username: %s\n", username->getData());
+            printf("Password: %s\n", password->getData());
         })));
     }
 
@@ -82,6 +88,9 @@ private:
     int width;
     int height;
     WidgetManager* widgets;
+
+    Input* username;
+    Input* password;
 };
 
 void editorEntry(void* arg) {

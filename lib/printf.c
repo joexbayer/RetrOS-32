@@ -45,7 +45,7 @@ void println(const char* data)
 	print_put('\n');
 }
 
-#define MAX_FMT_STR_SIZE 50
+#define MAX_FMT_STR_SIZE 256
 
 int printf(const char* fmt, ...)
 {
@@ -124,6 +124,76 @@ int printf(const char* fmt, ...)
     }
 	written += x_offset;
 	return written;
+}
+
+/* Custom sprintf function */
+int sprintf(char *buffer, const char *fmt, va_list args)
+{
+    int written = 0; /* Number of characters written */
+    char str[MAX_FMT_STR_SIZE];
+    int num = 0;
+
+    while (*fmt != '\0' && written < MAX_FMT_STR_SIZE) {
+        if (*fmt == '%') {
+            memset(str, 0, MAX_FMT_STR_SIZE); /* Clear the buffer */
+            fmt++; /* Move to the format specifier */
+
+            if (written < MAX_FMT_STR_SIZE - 1) {
+                switch (*fmt) {
+                    case 'd':
+                    case 'i':
+                        num = va_arg(args, int);
+                        itoa(num, str);
+                        break;
+                    case 'x':
+                    case 'X':
+                        num = va_arg(args, unsigned int);
+                        written += itohex(num, str);
+                        break;
+                    case 'p': /* p for padded int */
+                        num = va_arg(args, int);
+                        itoa(num, str);
+
+                        if (strlen(str) < 5) {
+                            int pad = 5 - strlen(str);
+                            for (int i = 0; i < pad; i++) {
+                                buffer[written++] = '0';
+                            }
+                        }
+                        break;
+                    case 's':{
+                            char *str_arg = va_arg(args, char*);
+                            while (*str_arg != '\0' && written < MAX_FMT_STR_SIZE - 1) {
+                                buffer[written++] = *str_arg++;
+                            }
+                        }
+                        break;
+                    case 'c':
+                        if (written < MAX_FMT_STR_SIZE - 1) {
+                            buffer[written++] = (char)va_arg(args, int);
+                        }
+                        break;
+                    /* Add additional format specifiers as needed */
+                }
+
+                /* Copy formatted string to buffer */
+                for (int i = 0; str[i] != '\0'; i++) {
+                    buffer[written++] = str[i];
+                }
+            }
+        } else {
+            /* Directly copy characters that are not format specifiers */
+            if (written < MAX_FMT_STR_SIZE - 1) {
+                buffer[written++] = *fmt;
+            }
+        }
+        fmt++;
+    }
+
+    /* Ensure the buffer is null-terminated */
+    buffer[written < MAX_FMT_STR_SIZE ? written : MAX_FMT_STR_SIZE - 1] = '\0';
+
+    return written;
 }
 
 #ifdef __cplusplus

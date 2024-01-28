@@ -118,6 +118,11 @@ int fclose(int fd)
     return invoke_syscall(SYSCALL_CLOSE, fd, 0, 0);
 }
 
+int system(const char* command)
+{
+    return invoke_syscall(SYSCALL_SYSTEM, (int)command, 0, 0);
+}
+
 #ifdef __cplusplus
 }
 #endif

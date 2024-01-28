@@ -37,9 +37,6 @@ public:
 
     Function(const Function& other) {
         if (other.callable) {
-            // The challenge is to clone `other.callable`.
-            // This requires a mechanism in `BaseCallable` and its derived classes
-            // to clone themselves.
             callable = other.callable->clone();
         } else {
             callable = nullptr;

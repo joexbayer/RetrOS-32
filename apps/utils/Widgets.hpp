@@ -31,6 +31,14 @@ public:
     virtual void Mouse() = 0;
     virtual bool focusable() = 0; /* Indicates if the widget can receive focus */
     virtual ~Widget() {}
+
+    void disable() {
+        disabled = true;
+    }
+
+    void enable() {
+        disabled = false;
+    }
     
     /* Widget properties */
     int x = 0;
@@ -38,6 +46,7 @@ public:
     int width = 0;
     int height = 0;
     bool focused = false;
+    bool disabled = false;
 
 protected:
 };

@@ -20,6 +20,8 @@
 #include <arch/io.h>
 #include <script.h>
 #include <kutils.h>
+#include <syscalls.h>
+#include <syscall_helper.h>
 
 static char *units[] = {"b ", "kb", "mb"};
 
@@ -44,6 +46,16 @@ int align_to_pointer_size(int size)
 
     return aligned_size;
 }
+
+static int sys_system(const char *command)
+{
+    int ret = 0;
+
+    ret = exec_cmd(command);
+
+    return ret;
+}
+EXPORT_SYSCALL(SYSCALL_SYSTEM, sys_system);
 
 int exec_cmd(char* str)
 {
