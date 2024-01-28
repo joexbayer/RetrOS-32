@@ -14,7 +14,9 @@
 
 #include <utils/StringHelper.hpp>
 #include <utils/Graphics.hpp>
+#include <utils/Function.hpp>
 #include <utils/StdLib.hpp>
+
 
 #define MAX_WIDGETS 32
 #define MAX_LAYOUTS 32
@@ -43,11 +45,10 @@ protected:
 /* A simple button widget */
 class Button : public Widget {
 public:
-    Button(int width, int height, char* text, Callback callback) {
+    Button(int width, int height, char* text, Function callback) : callback(callback) {
         this->width = width;
         this->height = height;
         this->text = text;
-        this->callback = callback;
     }
 
     /* Draws the button */
@@ -72,7 +73,7 @@ public:
 
 private:
     char* text;
-    Callback callback;
+    Function callback;
 };
 
 class Spacing : public Widget {
@@ -150,9 +151,9 @@ private:
 /* A simple label widget */
 class Label : public Widget {
 public:
-    Label(int width, int height, char* text) {
-        this->width = width;
-        this->height = height;
+    Label(char* text) {
+        this->width = strlen(text) * 8;
+        this->height = 8;
         this->text = text;
     }
 
@@ -207,14 +208,16 @@ private:
 /* Simple Checkbox widget */
 class Checkbox : public Widget {
 public:
-    Checkbox(bool value) {
+    Checkbox(bool value, char* text = "") {
         this->width = 12;
         this->height = 12;
         this->value = value;
+        this->text = text;
     }
 
     void draw(Window* window) {
         window->drawContouredBox(x, y, width, height, 30);
+        window->drawText(x + 16, y + 4, text, COLOR_BLACK);
         if (value) {
             window->drawCircle(x + width - 6, y + 6, 2, COLOR_VGA_LIGHT_GRAY, 1);
         }
@@ -232,6 +235,7 @@ public:
 
 private:
     bool value;
+    char* text;
 };
 
 typedef enum {
@@ -249,14 +253,22 @@ typedef enum {
 
 typedef int LayoutHandle;
 
+enum {
+    LAYOUT_FLAG_NONE = 0,
+    LAYOUT_FLAG_BORDER = 1
+};
+
 class Layout {
 public:
-    Layout(int x, int y, int width, int height, LayoutType type) {
+    Layout(int x, int y, int width, int height, LayoutType type, int flags) {
         this->x = x;
         this->y = y;
         this->width = width;
         this->height = height;
         this->type = type;
+        this->offset = 0;
+        this->flags = flags;
+        memset(widgets, 0, MAX_WIDGETS * sizeof(Widget*));
     }
 
     ~Layout() {
@@ -266,7 +278,9 @@ public:
     }
 
     void draw(Window* window) {
-        window->drawContouredBox(x, y, width, height, 30);
+        if (flags & LAYOUT_FLAG_BORDER) 
+            window->drawContouredBox(x, y, width, height, 30);
+        
         for (int i = 0; i < widgetCount; i++) {
             widgets[i]->draw(window);
         }
@@ -286,28 +300,30 @@ public:
             case HORIZONTAL:
                 widget->x = x + offset + 2;
                 widget->y = y + 2;
-                offset += widget->width;
+                offset += widget->width + 4;
                 break;
             case VERTICAL:
                 /* switch based on position, put widgets under each other */
                 switch (position) {
                     case LEFT:
                         widget->x = x + 2;
-                        widget->y = y + offset + 2;
+                        widget->y = y + offset;
                         break;
                     case RIGHT:
                         widget->x = x + width - widget->width -2;
-                        widget->y = y + offset + 4;
+                        widget->y = y + offset;
                         break;
                     case CENTER:
                         /* puts widget in the middle but still stacked under last */
                         widget->x = x + width / 2 - widget->width / 2;
-                        widget->y = y + offset + 2;
+                        widget->y = y + offset;
                         break;
                 }
-                offset += widget->height;
+                offset += widget->height + 4;
                 break;
         }
+
+        printf("Added widget, new offset %d\n", offset);
 
 
         return widgetCount;
@@ -351,6 +367,7 @@ private:
     Widget* widgets[MAX_WIDGETS];
     int widgetCount = 0;
     int focusedWidget = -1;
+    int flags = 0;
 
     int offset = 0;
 };
@@ -381,8 +398,6 @@ public:
         if (lh >= layoutCount) {
             return -1;
         }
-
-        layouts[lh]->addWidget(widget, lp);
 
         return layouts[lh]->addWidget(widget, lp);;
     }

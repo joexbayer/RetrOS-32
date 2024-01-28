@@ -104,6 +104,7 @@ void terminal_commit()
 
 void terminal_putchar(char c)
 {
+	serial_put(c);
 	if($process->current == NULL || $process->current->term == NULL) return;
 	
 	$process->current->term->ops->putchar($process->current->term, c);
