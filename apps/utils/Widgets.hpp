@@ -39,6 +39,15 @@ public:
     void enable() {
         disabled = false;
     }
+
+    Widget* setTag(char* tag) {
+        strcpy(this->tag, tag);
+        return this;
+    }
+
+    char* getTag() {
+        return tag;
+    }
     
     /* Widget properties */
     int x = 0;
@@ -49,6 +58,7 @@ public:
     bool disabled = false;
 
 protected:
+    char tag[16] = {0};
 };
 
 /* A simple button widget */
@@ -107,15 +117,16 @@ public:
 /* A simple input widget */
 class Input : public Widget {
 public:
-    Input(int width, int height, char* text) {
+    Input(int width, int height, char* text, char* tag = "") {
         this->width = width;
         this->height = height;
         this->text = text;
+        strcpy(this->tag, tag);
         memset(data, 0, 100);
     }
 
     void draw(Window* window) {
-        window->drawContouredBox(x, y, width, height, focused ? 28 : 30);
+        window->drawContouredBox(x, y, width, height, focused ? 31 : 30);
 
         if(size == 0){
             window->drawText(x + 4, y + 4, text, COLOR_VGA_LIGHT_GRAY);
@@ -130,7 +141,6 @@ public:
 
     /* Handles keyboard events */
     void Keyboard(char c) {
-        printf("Input: %c\n", c);
         if (c == '\b') {
             if (size > 0) {
                 size--;
@@ -286,6 +296,15 @@ public:
         }
     }
 
+    Widget* getByTag(char* tag) {
+        for (int i = 0; i < widgetCount; i++) {
+            if (strlen(widgets[i]->getTag()) > 1 && strcmp(widgets[i]->getTag(), tag) == 0) {
+                return widgets[i];
+            }
+        }
+        return nullptr;
+    }
+
     void draw(Window* window) {
         if (flags & LAYOUT_FLAG_BORDER) 
             window->drawContouredBox(x, y, width, height, 30);
@@ -415,6 +434,18 @@ public:
         for (int i = 0; i < layoutCount; i++) {
             layouts[i]->draw(window);
         }
+    }
+
+    Widget* getByTag(char* tag) {
+        printf("Searching for widget with tag %s\n", tag);
+        for (int i = 0; i < layoutCount; i++) {
+            Widget* widget = layouts[i]->getByTag(tag);
+            if (widget != nullptr) {
+                return widget;
+            }
+        }
+
+        return nullptr;
     }
 
     void Keyboard(char c) {

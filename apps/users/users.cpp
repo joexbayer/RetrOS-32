@@ -14,45 +14,46 @@ public:
         this->height = height;
 
         /* Create widgets */
-        widgets = new WidgetManager();
-        LayoutHandle main = widgets->addLayout(new Layout(
+        widgets = new WidgetManager(); 
+        Layout* main = new Layout(
             10, 10,
             180, 160,
             VERTICAL,
             LAYOUT_FLAG_NONE
-        ));
+        );
 
-        LayoutHandle bottom = widgets->addLayout(new Layout(
+        Layout* bottom = new Layout(
             10, 170,
             180, 24,
             HORIZONTAL,
             LAYOUT_FLAG_BORDER
-        ));
+        );
 
-        username = new Input(100, 14, "Username"); 
-        password = new Input(100, 14, "Password");
+        main->addWidget(new Label("Create a new user"), CENTER);
+        main->addWidget(new Spacing(0, 8), LEFT);
+        main->addWidget(new Label("Username:"), LEFT);
+        main->addWidget(new Input(100, 14, "Username", "#username"), LEFT);
+        main->addWidget(new Label("Password:"), LEFT);
+        main->addWidget(new Input(100, 14, "Password", "#password"), LEFT);
+        main->addWidget(new Spacing(0, 8), LEFT);
+        main->addWidget(new Label("Permissions:"), CENTER);
+        main->addWidget(new Checkbox(false, "Admin"), LEFT);
+        main->addWidget(new Checkbox(true, "User"), LEFT);
+        main->addWidget(new Checkbox(false, "Guest"), LEFT);
 
-        widgets->addWidget(main, CENTER, new Label("Create a new user"));
-        widgets->addWidget(main, LEFT, new Spacing(0, 8));
-        widgets->addWidget(main, LEFT, new Label("Username:"));
-        widgets->addWidget(main, LEFT, username);
-        widgets->addWidget(main, LEFT, new Label("Password:"));
-        widgets->addWidget(main, LEFT, password);
-        widgets->addWidget(main, LEFT, new Spacing(0, 8));
-        widgets->addWidget(main, CENTER, new Label("Permissions:"));
-        widgets->addWidget(main, LEFT, new Checkbox(false, "Admin"));
-        widgets->addWidget(main, LEFT, new Checkbox(true, "User"));
-        widgets->addWidget(main, LEFT, new Checkbox(false, "Guest"));
-
-        widgets->addWidget(bottom, RIGHT, new Button(50, 14, "Cancel", Function([this]() {
+        bottom->addWidget(new Button(50, 14, "Cancel", Function([this]() {
             delete widgets;
             exit();
-        })));
+        })), RIGHT);
 
-        widgets->addWidget(bottom, RIGHT, new Button(50, 14, "Create", Function([this]() {
-            printf("Username: %s\n", username->getData());
-            printf("Password: %s\n", password->getData());
-        })));
+        bottom->addWidget(new Button(50, 14, "Create", Function([this]() {
+            printf("Username: %s\n", ((Input*)widgets->getByTag("#username"))->getData()); 
+            printf("Password: %s\n", ((Input*)widgets->getByTag("#password"))->getData());
+        })), RIGHT);
+
+
+        widgets->addLayout(main);
+        widgets->addLayout(bottom);
     }
 
     int eventHandler(struct gfx_event* event) {
@@ -88,9 +89,6 @@ private:
     int width;
     int height;
     WidgetManager* widgets;
-
-    Input* username;
-    Input* password;
 };
 
 void editorEntry(void* arg) {
