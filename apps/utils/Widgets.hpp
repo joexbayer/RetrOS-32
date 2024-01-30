@@ -61,7 +61,10 @@ protected:
     char tag[16] = {0};
 };
 
-/* A simple button widget */
+/**
+ * @brief A simple button widget
+ * 
+ */
 class Button : public Widget {
 public:
     Button(int width, int height, char* text, Function callback) : callback(callback) {
@@ -95,6 +98,7 @@ private:
     Function callback;
 };
 
+/* A simple spacing widget */
 class Spacing : public Widget {
 public:
     Spacing(int width, int height) {
@@ -279,6 +283,17 @@ enum {
 
 class Layout {
 public:
+    Layout(int width, int height, LayoutType type, int flags) {
+        this->x = 0;
+        this->y = 0;
+        this->width = width;
+        this->height = height;
+        this->type = type;
+        this->offset = 0;
+        this->flags = flags;
+        memset(widgets, 0, MAX_WIDGETS * sizeof(Widget*));
+    }
+    
     Layout(int x, int y, int width, int height, LayoutType type, int flags) {
         this->x = x;
         this->y = y;
@@ -353,7 +368,6 @@ public:
 
         printf("Added widget, new offset %d\n", offset);
 
-
         return widgetCount;
     }
 
@@ -412,6 +426,8 @@ public:
     int addLayout(Layout* layout) {
         layouts[layoutCount] = layout;
         layoutCount++;
+
+        yOffset += layout->height + 2;
 
         return layoutCount-1;
     }
@@ -477,6 +493,9 @@ public:
             }
         }
     }
+    
+    int xOffset = 0;
+    int yOffset = 0;
 
 private:
     Layout* layouts[MAX_LAYOUTS];
