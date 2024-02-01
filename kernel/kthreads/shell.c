@@ -735,9 +735,9 @@ static void __kthread_entry textshell()
 
 	twritef("\n");
 	twritef("%s\n", about_text);
+	__textshell_reset_box();
 	textshell_login(term);
 
-	__textshell_reset_box();
 
 	twritef("Memory: %d%s/%d%s\n", used.size, used.unit, total.size, total.unit);
 	twritef("Type 'help' for a list of commands\n");
