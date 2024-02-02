@@ -64,6 +64,21 @@ static int textbuffer_new_line(struct textbuffer *buffer)
     return 0;
 }
 
+static int textbuffer_remove_last_line(struct textbuffer *buffer)
+{
+    if (buffer->line_count == 0) {
+        return -1;
+    }
+
+    kfree(buffer->lines[buffer->line_count - 1]->text);
+    buffer->lines[buffer->line_count - 1]->text = NULL;
+    buffer->lines[buffer->line_count - 1]->length = 0;
+    buffer->lines[buffer->line_count - 1]->capacity = 0;
+    buffer->line_count--;
+
+    return 0;
+}
+
 /* Function to display the content of the text buffer on the screen */
 static void textbuffer_display(const struct textbuffer *buffer, enum vga_color fg, enum vga_color bg) {
     uint8_t color = (bg << 4) | fg;
@@ -98,18 +113,17 @@ static void textbuffer_display(const struct textbuffer *buffer, enum vga_color f
 static void textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
     /* Handle the backspace key */
     if (c == '\b') {
-        /* If the cursor is at the beginning of the line, go to the previous line */
+        /* If we are at the end of the line */
         if (buffer->cursor.x == 0) {
             /* If the cursor is at the beginning of the first line, do nothing */
             if (buffer->cursor.y == 0 ) {
                 return;
             }
 
-            /* TODO: move rest of line up */
+            /* Move the rest of the current line up if there is space. */
             if(buffer->lines[buffer->cursor.y]->length > 0 && buffer->lines[buffer->cursor.y - 1]->capacity - buffer->lines[buffer->cursor.y - 1]->length > buffer->lines[buffer->cursor.y]->length){
                 memcpy(buffer->lines[buffer->cursor.y - 1]->text + buffer->lines[buffer->cursor.y - 1]->length, buffer->lines[buffer->cursor.y]->text, buffer->lines[buffer->cursor.y]->length);
             }
-
             /* update new length */
             buffer->lines[buffer->cursor.y - 1]->length += buffer->lines[buffer->cursor.y]->length;
             
@@ -123,11 +137,7 @@ static void textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
             }
 
             /* Remove the last line */
-            kfree(buffer->lines[buffer->line_count - 1]->text);
-            buffer->lines[buffer->line_count - 1]->text = NULL;
-            buffer->lines[buffer->line_count - 1]->length = 0;
-            buffer->lines[buffer->line_count - 1]->capacity = 0;
-            buffer->line_count--;
+            textbuffer_remove_last_line(buffer);
 
             buffer->cursor.x = buffer->lines[buffer->cursor.y - 1]->length;
             buffer->cursor.y--;
@@ -138,6 +148,7 @@ static void textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
                 return;
             }
 
+            /* If x is behind length, then we move content back */
             if(buffer->cursor.x < buffer->lines[buffer->cursor.y]->length) {
                 for (size_t i = buffer->cursor.x; i < buffer->lines[buffer->cursor.y]->length; i++) {
                     buffer->lines[buffer->cursor.y]->text[i - 1] = buffer->lines[buffer->cursor.y]->text[i];
@@ -148,6 +159,7 @@ static void textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
                 return;
             }
 
+            /* If x is at length, then we just remove the last character */
             buffer->lines[buffer->cursor.y]->text[buffer->cursor.x - 1] = '\0';
             buffer->lines[buffer->cursor.y]->length--;
             buffer->cursor.x--;
@@ -160,12 +172,7 @@ static void textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
                 return;
             }
 
-            /* Create a new line */
-            buffer->lines[buffer->line_count] = kalloc(sizeof(struct line));
-            buffer->lines[buffer->line_count]->text = kalloc(32);
-            buffer->lines[buffer->line_count]->length = 0;
-            buffer->lines[buffer->line_count]->capacity = 32;
-            buffer->line_count++;
+            textbuffer_new_line(buffer);
 
             /* Move the cursor to the beginning of the new line */
             buffer->cursor.x = 0;
@@ -178,18 +185,12 @@ static void textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
                 buffer->lines[i]->capacity = buffer->lines[i - 1]->capacity;
             }
 
-            /* Create a new line */
-            buffer->lines[buffer->cursor.y + 1] = kalloc(sizeof(struct line));
-            buffer->lines[buffer->cursor.y + 1]->text = kalloc(32);
-            buffer->lines[buffer->cursor.y + 1]->length = 0;
-            buffer->lines[buffer->cursor.y + 1]->capacity = 32;
-            buffer->line_count++;
-
+            textbuffer_new_line(buffer);
 
             /* clear next line */
             memset(buffer->lines[buffer->cursor.y + 1]->text, 0, buffer->lines[buffer->cursor.y + 1]->capacity);
 
-            /* Move the content from x to end down one line */
+            /* Move the content from x to length down one line */
             for (size_t i = buffer->lines[buffer->cursor.y]->length; i > buffer->cursor.x; i--) {
                 buffer->lines[buffer->cursor.y + 1]->text[i - buffer->cursor.x - 1] = buffer->lines[buffer->cursor.y]->text[i - 1];
             }
@@ -198,6 +199,7 @@ static void textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
             buffer->lines[buffer->cursor.y + 1]->length = buffer->lines[buffer->cursor.y]->length - buffer->cursor.x;
 
             memset(buffer->lines[buffer->cursor.y]->text + buffer->cursor.x, 0, buffer->lines[buffer->cursor.y]->capacity - buffer->cursor.x);
+            
             /* Set the length of the old line */
             buffer->lines[buffer->cursor.y]->length = buffer->cursor.x;
 
