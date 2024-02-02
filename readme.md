@@ -316,6 +316,7 @@ To run RetrOS-32:
   - [x] Mouse events
   - [x] Dynamic resize
   - [x] Fullscreen
+  - [x] Widgets Library 
 - [x] Terminal, Window Server, Process Informtaion, Finder.
 - [x] Library (printf, memcpy, etc)
 - [x] IPC
