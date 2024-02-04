@@ -888,7 +888,9 @@
 0003281c kevents_add
 000328d3 kevents_create
 00032956 __ksymbol_editor
-00032970 textbuffer_new_line
-00032a21 textbuffer_display
-00032abd editor
-0003307e _code_end
+00032970 textbuffer_destroy
+000329e3 textbuffer_new_line
+00032a99 textbuffer_handle_char
+00032fda textbuffer_display
+00033097 editor
+000331eb _code_end

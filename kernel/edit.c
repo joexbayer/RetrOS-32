@@ -6,11 +6,17 @@
 #include <ksyms.h>
 #include <kthreads.h>
 #include <keyboard.h>
+#include <fs/fs.h>
 
 #define MAX_LINES 512
 #define LINE_CAPACITY 78
 
 struct textbuffer {
+    struct textbuffer_ops {
+        int (*destroy)(struct textbuffer *buffer);
+        int (*display)(const struct textbuffer *buffer, enum vga_color fg, enum vga_color bg);
+        int (*put)(struct textbuffer *buffer, unsigned char c);
+    } *ops;
     struct line {
         char *text;
         size_t length;
@@ -22,7 +28,20 @@ struct textbuffer {
     } cursor;
     size_t line_count;
 };
+
+/* Function prototypes */
 static int textbuffer_new_line(struct textbuffer *buffer);
+static int textbuffer_remove_last_line(struct textbuffer *buffer);
+static int textbuffer_free_line(struct textbuffer *buffer, size_t line);
+static int textbuffer_destroy(struct textbuffer *buffer);
+static int textbuffer_display(const struct textbuffer *buffer, enum vga_color fg, enum vga_color bg);
+static int textbuffer_handle_char(struct textbuffer *buffer, unsigned char c);
+
+static struct textbuffer_ops textbuffer_default_ops = {
+    .destroy = textbuffer_destroy,
+    .display = textbuffer_display,
+    .put = textbuffer_handle_char,
+};
 
 static struct textbuffer *textbuffer_create(void)
 {
@@ -44,14 +63,15 @@ static struct textbuffer *textbuffer_create(void)
         kfree(buffer);
         return NULL;
     }
-
+    
+    buffer->ops = &textbuffer_default_ops;
     buffer->cursor.x = 0;
     buffer->cursor.y = 0;
 
     return buffer;
 }
 
-static void textbuffer_destroy(struct textbuffer *buffer)
+static int textbuffer_destroy(struct textbuffer *buffer)
 {
     for (size_t i = 0; i < buffer->line_count; i++) {
         if (buffer->lines[i]->text) {
@@ -61,6 +81,8 @@ static void textbuffer_destroy(struct textbuffer *buffer)
     }
     kfree(buffer->lines);
     kfree(buffer);
+
+    return 0;
 }
 
 static int textbuffer_new_line(struct textbuffer *buffer)
@@ -123,8 +145,51 @@ static int textbuffer_free_line(struct textbuffer *buffer, size_t line)
     return 0;
 }
 
+static int textbuffer_save_file(struct textbuffer *buffer, const char *filename)
+{
+    byte_t *file = kalloc(1024);
+    if(file == NULL){
+        return -1;
+    }
+    size_t len = 0;
+    for(size_t i = 0; i < buffer->line_count; i++){
+        if(buffer->lines[i]->text){
+            memcpy(file + len, buffer->lines[i]->text, buffer->lines[i]->length);
+            len += buffer->lines[i]->length;
+        }
+    }
+    int ret = fs_save_to_file(filename, file, len);
+    if(ret < 0){
+        kfree(file);
+        return -1;
+    }
+    kfree(file);
+    return 0;
+}
+
+static int textbuffer_load_file(struct textbuffer *buffer, const char *filename)
+{
+    byte_t *file = kalloc(1024);
+    if(file == NULL){
+        return -1;
+    }
+    int ret = fs_load_from_file(filename, file, 1024);
+    if(ret < 0){
+        kfree(file);
+        return -1;
+    }
+    size_t len = strlen(file);
+    for(size_t i = 0; i < len; i++){
+      textbuffer_handle_char(buffer, file[i]);
+    }
+    
+    textbuffer_display(buffer, VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
+    
+    return 0;
+}
+
 /* Function to display the content of the text buffer on the screen */
-static void textbuffer_display(const struct textbuffer *buffer, enum vga_color fg, enum vga_color bg) {
+static int textbuffer_display(const struct textbuffer *buffer, enum vga_color fg, enum vga_color bg) {
     uint8_t color = (bg << 4) | fg;
     uint32_t x_start = 0;
     uint32_t y_start = 0;
@@ -138,9 +203,15 @@ static void textbuffer_display(const struct textbuffer *buffer, enum vga_color f
         int32_t y = y_start + i;
 
         /* Write the line to the screen */
-        if (buffer->lines[i]->text) {
-            scrprintf(x, 1+y, "%d: %s (l: %d)", i, buffer->lines[i]->text, buffer->lines[i]->length);
+        if(!buffer->lines[i]->text) {
+            continue;
         }
+        if(buffer->cursor.y == i){
+            scrprintf(x, 1+y, "%d: %s (l: %d)", i, buffer->lines[i]->text, buffer->lines[i]->length);
+        } else {    
+            scrprintf(x, 1+y, "%d: %s", i, buffer->lines[i]->text);
+        }
+
     }
 
     /* Set the cursor to the end of the text */
@@ -151,10 +222,12 @@ static void textbuffer_display(const struct textbuffer *buffer, enum vga_color f
     screen_set_cursor(buffer->cursor.x-1+3, 1+buffer->cursor.y);
     /* write stats at the bottom */
     scrprintf(0, 24, "line_count: %d, x: %d, y: %d", buffer->line_count, buffer->cursor.x, buffer->cursor.y);
+
+    return 0;
 }
 
 /* Function to handle keyboard input of a char */
-static void textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
+static int textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
     int ret;
     
     /* Handle the backspace key */
@@ -163,7 +236,7 @@ static void textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
         if (buffer->cursor.x == 0) {
             /* If the cursor is at the beginning of the first line, do nothing */
             if (buffer->cursor.y == 0 ) {
-                return;
+                return -1;
             }
 
             /* Move the rest of the current line up if there is space. */
@@ -183,7 +256,7 @@ static void textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
             if(buffer->lines[buffer->cursor.y] == NULL) {
                 buffer->cursor.x = 0;
                 dbgprintf("buffer->lines[buffer->cursor.y] == NULL %d, 0x%x\n", buffer->cursor.y, buffer->lines[buffer->cursor.y]);
-                return;
+                return -1;
             }
 
             /* If x is behind length, then we move content back */
@@ -194,7 +267,7 @@ static void textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
                 buffer->lines[buffer->cursor.y]->text[buffer->lines[buffer->cursor.y]->length - 1] = '\0';
                 buffer->lines[buffer->cursor.y]->length--;
                 buffer->cursor.x--; 
-                return;
+                return -1;
             }
 
             /* If x is at length, then we just remove the last character */
@@ -207,13 +280,13 @@ static void textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
         if (buffer->cursor.x == buffer->lines[buffer->cursor.y]->length) {
             /* If the buffer is full, do nothing */
             if (buffer->line_count == MAX_LINES) {
-                return;
+                return -1;
             }
 
             ret = textbuffer_new_line(buffer);
             if(ret < 0){
                 warningf("textbuffer_new_line failed\n");
-                return;
+                return -1;
             }
 
             if(buffer->cursor.y != buffer->line_count - 1){
@@ -236,7 +309,7 @@ static void textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
             ret = textbuffer_new_line(buffer);
             if(ret < 0){
                 warningf("textbuffer_new_line failed\n");
-                return;
+                return -1;
             }
 
             /* Move down the content of all lines below current */
@@ -297,7 +370,7 @@ static void textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
     } else {
         /* If the buffer is full, do nothing */
         if (buffer->lines[buffer->cursor.y]->length == buffer->lines[buffer->cursor.y]->capacity) {
-            return;
+            return -1;
         }
 
         /* If x is behind length, then we move content forward */
@@ -313,6 +386,8 @@ static void textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
         buffer->lines[buffer->cursor.y]->length++;
         buffer->cursor.x++;
     }
+
+    return 0;
 }
 
 
@@ -325,6 +400,7 @@ static __kthread_entry void editor()
     }
     
     textbuffer_display(buffer, VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
+    textbuffer_load_file(buffer, "/sysutil/default.cfg");
     while (1){
 		c = kb_get_char();
 		if(c == 0) continue;
