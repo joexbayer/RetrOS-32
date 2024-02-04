@@ -26,6 +26,10 @@ struct textbuffer {
         size_t x;
         size_t y;
     } cursor;
+    struct scroll {
+      size_t start;
+      size_t end;
+    } scroll;
     size_t line_count;
 };
 
@@ -67,6 +71,8 @@ static struct textbuffer *textbuffer_create(void)
     buffer->ops = &textbuffer_default_ops;
     buffer->cursor.x = 0;
     buffer->cursor.y = 0;
+    buffer->scroll.start = 0;
+    buffer->scroll.end = 0;
 
     return buffer;
 }
@@ -155,7 +161,9 @@ static int textbuffer_save_file(struct textbuffer *buffer, const char *filename)
     for(size_t i = 0; i < buffer->line_count; i++){
         if(buffer->lines[i]->text){
             memcpy(file + len, buffer->lines[i]->text, buffer->lines[i]->length);
-            len += buffer->lines[i]->length;
+            /* Add a newline character after each line */
+            file[len + buffer->lines[i]->length] = '\n';
+            len += buffer->lines[i]->length + 1;
         }
     }
     int ret = fs_save_to_file(filename, file, len);
@@ -192,24 +200,25 @@ static int textbuffer_load_file(struct textbuffer *buffer, const char *filename)
 static int textbuffer_display(const struct textbuffer *buffer, enum vga_color fg, enum vga_color bg) {
     uint8_t color = (bg << 4) | fg;
     uint32_t x_start = 0;
-    uint32_t y_start = 0;
+    uint32_t y_start = buffer->scroll.start;
 
     /* Clear the screen before displaying new content */
     scr_clear();
-
-    for (size_t i = 0; i < buffer->line_count; i++) {
+    
+    /* write from start to end, or line_count */
+    for (size_t i = 0; i+y_start < buffer->line_count && i < 22; i++) {
         /* Calculate the position for each line */
         int32_t x = x_start;
         int32_t y = y_start + i;
 
         /* Write the line to the screen */
-        if(!buffer->lines[i]->text) {
+        if(!buffer->lines[y]->text) {
             continue;
         }
-        if(buffer->cursor.y == i){
-            scrprintf(x, 1+y, "%d: %s (l: %d)", i, buffer->lines[i]->text, buffer->lines[i]->length);
+        if(buffer->cursor.y == y){
+            scrprintf(x, 1+i, "%d: %s (l: %d)", y, buffer->lines[y]->text, buffer->lines[y]->length);
         } else {    
-            scrprintf(x, 1+y, "%d: %s", i, buffer->lines[i]->text);
+            scrprintf(x, 1+i, "%d: %s", y, buffer->lines[y]->text);
         }
 
     }
@@ -221,7 +230,7 @@ static int textbuffer_display(const struct textbuffer *buffer, enum vga_color fg
 
     screen_set_cursor(buffer->cursor.x-1+3, 1+buffer->cursor.y);
     /* write stats at the bottom */
-    scrprintf(0, 24, "line_count: %d, x: %d, y: %d", buffer->line_count, buffer->cursor.x, buffer->cursor.y);
+    scrprintf(0, 24, "lc: %d, x: %d, y: %d,   Save CTRL-S, Exit CTRL-C", buffer->line_count, buffer->cursor.x, buffer->cursor.y);
 
     return 0;
 }
@@ -356,6 +365,9 @@ static int textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
                     if(buffer->cursor.x > buffer->lines[buffer->cursor.y]->length){
                         buffer->cursor.x = buffer->lines[buffer->cursor.y]->length;
                     }
+                    if (buffer->scroll.start > 0 && buffer->cursor.y < buffer->scroll.start) {
+                        buffer->scroll.start--;
+                    }
                 }
                 break;
             case ARROW_DOWN:
@@ -363,6 +375,10 @@ static int textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
                     buffer->cursor.y++;
                     if(buffer->cursor.x > buffer->lines[buffer->cursor.y]->length){
                         buffer->cursor.x = buffer->lines[buffer->cursor.y]->length;
+                    }
+
+                    if (buffer->cursor.y >= 22 + buffer->scroll.start) {
+                        buffer->scroll.start++;
                     }
                 }
                 break;
