@@ -10,6 +10,12 @@
 
 #define MAX_LINES 512
 #define LINE_CAPACITY 78
+#define MAX_VISABLE_LINES 22
+
+typdef enum __line_flags {
+    LINE_FLAG_NONE = 0 << 0,
+    LINE_FLAG_DIRTY = 1 << 0,
+} line_flags_t;
 
 struct textbuffer {
     struct textbuffer_ops {
@@ -20,7 +26,8 @@ struct textbuffer {
     struct line {
         char *text;
         size_t length;
-        size_t capacity;
+        size_t capacityi;
+        line_flags_t flags;
     } **lines;
     struct cursor {
         size_t x;
@@ -72,7 +79,7 @@ static struct textbuffer *textbuffer_create(void)
     buffer->cursor.x = 0;
     buffer->cursor.y = 0;
     buffer->scroll.start = 0;
-    buffer->scroll.end = 0;
+    buffer->scroll.end = MAX_VISABLE_LINES;
 
     return buffer;
 }
@@ -206,7 +213,7 @@ static int textbuffer_display(const struct textbuffer *buffer, enum vga_color fg
     scr_clear();
     
     /* write from start to end, or line_count */
-    for (size_t i = 0; i+y_start < buffer->line_count && i < 22; i++) {
+    for (size_t i = 0; i+y_start < buffer->line_count && i < buffer->scroll.end; i++) {
         /* Calculate the position for each line */
         int32_t x = x_start;
         int32_t y = y_start + i;
@@ -228,7 +235,7 @@ static int textbuffer_display(const struct textbuffer *buffer, enum vga_color fg
         screen_set_cursor(x_start, y_start + buffer->line_count - 1);
     }
 
-    screen_set_cursor(buffer->cursor.x-1+3, 1+buffer->cursor.y);
+    screen_set_cursor(buffer->cursor.x+2, 1+buffer->cursor.y);
     /* write stats at the bottom */
     scrprintf(0, 24, "lc: %d, x: %d, y: %d,   Save CTRL-S, Exit CTRL-C", buffer->line_count, buffer->cursor.x, buffer->cursor.y);
 
@@ -377,7 +384,7 @@ static int textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
                         buffer->cursor.x = buffer->lines[buffer->cursor.y]->length;
                     }
 
-                    if (buffer->cursor.y >= 22 + buffer->scroll.start) {
+                    if (buffer->cursor.y >= buffer->scroll.end + buffer->scroll.start) {
                         buffer->scroll.start++;
                     }
                 }

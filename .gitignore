@@ -32,6 +32,7 @@ boot.iso
 boot2.iso
 boot.img
 *.dat
+*.a
 
 log.txt
 filesystemv2.img

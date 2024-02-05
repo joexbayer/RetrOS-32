@@ -21,7 +21,7 @@
 #define KSYMS_MAX_DEPTH 100
 #define KSYMS_MAX_SYMBOL_LENGTH 25
 
-#define MAX_SYMBOLS 800
+#define MAX_SYMBOLS 1000
 
 /* kernel symbol table structure. */
 static struct kernel_symbols {
