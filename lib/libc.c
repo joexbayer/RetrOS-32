@@ -41,6 +41,22 @@ int strlen(const char* str)
 	return len;
 }
 
+int strstr(const char* haystack, const char* needle)
+{
+    int i, j;
+    for (i = 0; haystack[i] != '\0'; i++){
+        for (j = 0; needle[j] != '\0'; j++){
+            if (haystack[i + j] != needle[j]){
+                break;
+            }
+        }
+        if (needle[j] == '\0'){
+            return i;
+        }
+    }
+    return -1;
+}
+
 inline uint32_t strcpy(char* dest, const char* src)
 {
     uint32_t i = 0;

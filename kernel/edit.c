@@ -9,12 +9,13 @@
 #include <fs/fs.h>
 
 #define MAX_LINES 512
-#define LINE_CAPACITY 78
+#define LINE_CAPACITY 76
 #define MAX_VISABLE_LINES 22
 
-typdef enum __line_flags {
-    LINE_FLAG_NONE = 0 << 0,
-    LINE_FLAG_DIRTY = 1 << 0,
+typedef enum __line_flags {
+    LINE_FLAG_NONE = 1 << 0,
+    LINE_FLAG_DIRTY = 1 << 1,
+    LINE_FLAG_EXTENSION = 1 << 2,
 } line_flags_t;
 
 struct textbuffer {
@@ -26,7 +27,7 @@ struct textbuffer {
     struct line {
         char *text;
         size_t length;
-        size_t capacityi;
+        size_t capacity;
         line_flags_t flags;
     } **lines;
     struct cursor {
@@ -82,6 +83,22 @@ static struct textbuffer *textbuffer_create(void)
     buffer->scroll.end = MAX_VISABLE_LINES;
 
     return buffer;
+}
+
+static int textbuffer_find(struct textbuffer *buffer, char* str)
+{
+    int ret;
+    /* find str in lines and goto line */
+    for(size_t i = 0; i < buffer->line_count; i++){
+        ret = strstr(buffer->lines[i]->text, str);
+        if(ret >= 0){
+            buffer->cursor.y = i;
+            buffer->cursor.x = ret;
+            return 0;
+        }
+    }
+
+    return -1;
 }
 
 static int textbuffer_destroy(struct textbuffer *buffer)
@@ -168,9 +185,14 @@ static int textbuffer_save_file(struct textbuffer *buffer, const char *filename)
     for(size_t i = 0; i < buffer->line_count; i++){
         if(buffer->lines[i]->text){
             memcpy(file + len, buffer->lines[i]->text, buffer->lines[i]->length);
-            /* Add a newline character after each line */
-            file[len + buffer->lines[i]->length] = '\n';
-            len += buffer->lines[i]->length + 1;
+            
+            /* Add newline if not extension */
+            if(!HAS_FLAG(buffer->lines[i]->flags, LINE_FLAG_EXTENSION)){
+                file[len + buffer->lines[i]->length] = '\n';
+                len++;
+            }
+
+            len += buffer->lines[i]->length;
         }
     }
     int ret = fs_save_to_file(filename, file, len);
@@ -393,7 +415,9 @@ static int textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
     } else {
         /* If the buffer is full, do nothing */
         if (buffer->lines[buffer->cursor.y]->length == buffer->lines[buffer->cursor.y]->capacity) {
-            return -1;
+            /* Create new line, but flag it as extension */
+            textbuffer_handle_char(buffer, '\n');
+            buffer->lines[buffer->cursor.y]->flags |= LINE_FLAG_EXTENSION;
         }
 
         /* If x is behind length, then we move content forward */
