@@ -22,6 +22,7 @@ struct user_manager_ops {
     int (*load)(struct usermanager *manager);
     int (*save)(struct usermanager *manager);
     struct user* (*authenticate)(struct usermanager *manager, const char* username, const char* password);
+    struct user* (*get)(struct usermanager *manager, const char* username);
 };
 
 struct usermanager {

@@ -31,7 +31,7 @@ enum vga_color {
 void scrcolor_set(enum vga_color fg, enum vga_color bg);
 void scrput(int x, int y, unsigned char c, uint8_t color);
 void scrwrite(int x, int y, char* str, uint8_t color);
-void screen_set_cursor(int x, int y);
+int screen_set_cursor(int x, int y);
 void scr_clear();
 void scr_scroll();
 int scrprintf(int32_t x, int32_t y, char* fmt, ...);

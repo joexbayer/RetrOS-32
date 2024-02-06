@@ -33,7 +33,7 @@ UTILS = bin/cppUtils.o bin/crt0.o
 USROBJS =
 
 COMMON = ../bin/syscall.o ../bin/libc.o ../bin/printf.o ../bin/graphics.o ../bin/netlib.o bin/cppUtils.o
-LIB_COMMON_OBJS = ../bin/syscall.o ../bin/libc.o ../bin/printf.o bin/cppUtils.o
+LIB_COMMON_OBJS = ../bin/syscall.o ../bin/libc.o ../bin/printf.o 
 LIB_GRAPHICS_OBJS = ../bin/graphics.o ../bin/libc.o
 LIB_NET_OBJS = ../bin/netlib.o
 
@@ -57,6 +57,7 @@ programs: staticlibs bin/crt0.o ${USROBJS}
 	@make -C graphs/
 	@make -C cube/
 	@make -C users/
+	@make -C texed/
 	@echo [USR] All user programs created and linked!
 
 bin/%.o: utils/%.cpp
@@ -85,4 +86,5 @@ clean:
 	@make -C graphs/ clean
 	@make -C cube/ clean
 	@make -C users/ clean
+	@make -C texed/ clean
 	rm -f .depend

@@ -67,7 +67,7 @@
 000121d2 wm_default_remove
 000122e3 wm_destroy
 000123c1 wm_new
-00012428 screen_set_cursor
+00012428 scr_set_cursor
 00012488 scrcolor_set
 0001249c scrput
 000124c2 scrwrite

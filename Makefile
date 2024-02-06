@@ -61,7 +61,7 @@ KERNELOBJ = bin/kernel.o bin/terminal.o bin/helpers.o bin/pci.o bin/virtualdisk.
 			bin/diskdev.o bin/scheduler.o bin/work.o bin/rbuffer.o bin/errors.o bin/kclock.o bin/tar.o bin/color.o bin/loopback.o \
 			bin/serial.o bin/io.o bin/syscalls.o bin/list.o bin/hashmap.o bin/vbe.o bin/ksyms.o bin/windowserver.o bin/encoding.o\
 			bin/mouse.o bin/ipc.o bin/sysinf.o ${PROGRAMOBJ} ${GFXOBJ} bin/font8.o bin/net.o bin/fs.o bin/ext.o bin/fat16.o bin/partition.o\
-			bin/admin.o bin/usermanager.o bin/user.o bin/group.o bin/snake.o bin/msgbox.o bin/kevents.o bin/edit.o
+			bin/admin.o bin/usermanager.o bin/user.o bin/group.o bin/snake.o bin/msgbox.o bin/kevents.o 
 
 BOOTOBJ = bin/bootloader.o
 

@@ -10,11 +10,13 @@
  */
 
 #include <syscalls.h>
+#include <screen.h>
 #include <pcb.h>
 #include <kutils.h>
 #include <arch/interrupts.h>
 #include <syscall_helper.h>
 #include <assert.h>
+#include <keyboard.h>
 
 syscall_t syscall[255];
 
@@ -29,6 +31,40 @@ int sys_create_thread(void (*entry)(), void* arg, byte_t flags)
 	return pcb_create_thread($process->current, entry, arg, flags);
 }
 EXPORT_SYSCALL(SYSCALL_CREATE_THREAD, sys_create_thread);
+
+/* Macro to deserialize a short back into a character */
+#define DESERIALIZE_CHAR(serialized) ((char)((serialized) >> 8))
+/* Macro to deserialize a short back into a color */
+#define DESERIALIZE_COLOR(serialized) ((char)(serialized))
+int sys_screen_put(int x, int y, short packet)
+{
+	/* validate coordinates */
+	if(x < 0 || x >= SCREEN_WIDTH || y < 0 || y >= SCREEN_HEIGHT){
+		return -1;
+	}
+
+	/* get character and color from packet */
+	char c = DESERIALIZE_CHAR(packet);
+	char color = DESERIALIZE_COLOR(packet);
+
+	scrput(x, y, c, color);
+	return 0;
+}
+EXPORT_SYSCALL(SYSCALL_SCREEN_PUT, sys_screen_put);
+
+char sys_screen_get()
+{
+	return kb_get_char();
+}
+EXPORT_SYSCALL(SYSCALL_SCREEN_GET, sys_screen_get);
+
+int sys_scr_set_cursor(int x, int y)
+{
+	scr_set_cursor(x, y);
+	return 0;
+}
+EXPORT_SYSCALL(SYSCALL_SET_CURSOR, sys_scr_set_cursor);
+
 
 int system_call(int index, int arg1, int arg2, int arg3)
 {	

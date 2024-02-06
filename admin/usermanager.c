@@ -27,6 +27,7 @@ static int __list_users(struct usermanager* usrman);
 static int __load_users(struct usermanager* usrman);
 static int __save_users(struct usermanager* usrman);
 static struct user* __authenticate_user(struct usermanager* usrman, const char* username, const char* password);
+static struct user* __find_user(struct usermanager* usrman, const char* username);
 
 /* consts */
 static const char* userdb = "/sysutil/users.db";
@@ -37,7 +38,8 @@ static struct user_manager_ops default_ops = {
 	.list = __list_users,
 	.load = __load_users,
 	.save = __save_users,
-	.authenticate = __authenticate_user
+	.authenticate = __authenticate_user,
+	.get = __find_user
 };
 static const struct userdb default_db = {
 	.magic = USRMAN_MAGIC,

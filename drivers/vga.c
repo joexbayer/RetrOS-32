@@ -35,7 +35,7 @@ static inline uint16_t vga_entry(unsigned char uc, uint8_t color)
 	return (uint16_t) uc | (uint16_t) color << 8;
 }
 
-void screen_set_cursor(int x, int y)
+void scr_set_cursor(int x, int y)
 {
 	uint16_t pos = y * SCREEN_WIDTH + x + 1;
 	outportb(0x3D4, 0x0F);

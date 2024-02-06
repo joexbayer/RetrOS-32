@@ -30,6 +30,7 @@
 #include <user.h>
 #include <usermanager.h>
 #include <lib/icons.h>
+#include <conf.h>
 
 struct gfx_input_manager input_manager = {0};
 
@@ -40,8 +41,47 @@ static void __callback __login_create_virt_disk(int opt){
     }
 }
 
+static int login_startup(struct user* usr){
+
+    $process->current->user = usr;
+
+    exec_cmd("sh /sysutil/startup.sh");
+
+    if(!disk_attached()){
+        struct msgbox* box = msgbox_create(
+            MSGBOX_TYPE_WARNING,
+            MSGBOX_BUTTON_OK | MSGBOX_BUTTON_CANCEL,
+            "No disk attached", " Create virtual disk?",
+            __login_create_virt_disk
+        );
+        msgbox_show(box);
+    }
+
+    gfx_set_taskbar(0);
+    kernel_exit();
+    return;
+}
+
 void __kthread_entry login()
 {   
+    /* check if logon is disabled and a default usr is set. */ 
+    char* logon = config_get_value("system", "logon");
+    if(logon != NULL){
+       if(strcmp(logon, "disabled") == 0){
+            char* username = config_get_value("system", "user");
+            if(username != NULL){
+                struct user* usr = $services->usermanager->ops->get($services->usermanager, username);
+                if(usr == NULL){
+                    warningf("Failed to get user");
+                    return;
+                }
+
+                login_startup(usr);
+                return;
+            }
+        }
+    }
+
     struct window* w = gfx_new_window(275, 100, GFX_NO_OPTIONS);
     if(w == NULL){
         warningf("Failed to create window for login");
@@ -110,8 +150,6 @@ void __kthread_entry login()
         case GFX_EVENT_MOUSE:{
                 /* check if OK is clicked x = event.data, y = event.data2 */
                 if(event.data > 10+10+120 && event.data < 10+10+120+50 && event.data2 > 10+10+10+10 && event.data2 < 10+10+10+10+20){
-
-                    
                     /* check if username and password is correct */
                     struct user* usr = usermanager->ops->authenticate(usermanager,
                         input_manager.inputs[0].buffer,
@@ -122,22 +160,7 @@ void __kthread_entry login()
                         break;
                     }
 
-                    $process->current->user = usr;
-
-                    exec_cmd("sh /sysutil/startup.sh");
-
-                    if(!disk_attached()){
-                        struct msgbox* box = msgbox_create(
-                            MSGBOX_TYPE_WARNING,
-                            MSGBOX_BUTTON_OK | MSGBOX_BUTTON_CANCEL,
-                            "No disk attached", " Create virtual disk?",
-                            __login_create_virt_disk
-                        );
-                        msgbox_show(box);
-                    }
-
-                    gfx_set_taskbar(0);
-                    kernel_exit();
+                    login_startup(usr);
                     return;
                 }
             }				

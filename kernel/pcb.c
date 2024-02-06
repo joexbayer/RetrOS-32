@@ -293,7 +293,9 @@ struct pcb* pcb_get_by_name(char* name)
 int pcb_await(int pid)
 {
 	if(pid < 0 || pid > MAX_NUM_OF_PCBS) return -1;
-	while(pcb_table[pid].state != STOPPED);
+	while(pcb_table[pid].state != STOPPED){
+		kernel_yield();
+	}
 	return 0;
 }
 EXPORT_SYSCALL(SYSCALL_AWAIT_PROCESS, pcb_await);
