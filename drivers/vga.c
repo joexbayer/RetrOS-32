@@ -18,10 +18,14 @@
 #include <serial.h>
 #include <vbe.h>
 #include <gfx/gfxlib.h>
+#include <kernel.h>
+#include <scheduler.h>
 
 #define MAX_FMT_STR_SIZE 50
 
 uint16_t* const VGA_MEMORY = (uint16_t*) 0xB8000;
+
+uint16_t* VGA_BUFFER = NULL;
 //uint16_t* const VGA_MEMORY = (uint16_t*) 0xa0000;
 
 static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg) 
@@ -62,6 +66,19 @@ void scrput(int x, int y, unsigned char c, uint8_t color)
 {
 	const int index = y * SCREEN_WIDTH + x;
 	VGA_MEMORY[index] = vga_entry(c, color);
+	if(VGA_BUFFER != NULL){
+		VGA_BUFFER[index] = vga_entry(c, color);
+	}
+}
+
+uint16_t scrget(int x, int y)
+{
+	if(VGA_BUFFER == NULL){
+		return 0;
+	}
+
+	const int index = y * SCREEN_WIDTH + x;
+	return VGA_BUFFER[index];
 }
 
 /**
@@ -191,4 +208,43 @@ int32_t scrprintf(int32_t x, int32_t y, char* fmt, ...)
     }
 	written += x_offset;
 	return written;
+}
+
+int init_vga()
+{
+	VGA_BUFFER = (uint16_t*)kalloc(SCREEN_WIDTH*SCREEN_HEIGHT*sizeof(uint16_t));
+	if(VGA_BUFFER == NULL){
+		return -1;
+	}
+	for(int i = 0; i < SCREEN_WIDTH*SCREEN_HEIGHT; i++){
+		VGA_BUFFER[i] = vga_entry(' ', scrcolor);
+	}
+	return 0;
+}
+
+
+/* MOVE TO A BETTER PLACE */
+static unsigned char kb_buffer[256] = {0};
+static int kb_buffer_tail = 0;
+static int kb_buffer_head = 0;
+
+void scr_keyboard_add(unsigned char c)
+{
+	kb_buffer[kb_buffer_head] = c;
+	kb_buffer_head = (kb_buffer_head + 1) % 256;
+}
+
+unsigned char scr_keyboard_get()
+{
+	if($kernel->graphic_mode == KERNEL_FLAG_TEXTMODE){
+		return kb_get_char(1);
+	} else {
+
+		while(kb_buffer_tail == kb_buffer_head){
+			kernel_yield();
+		}
+		unsigned char c = kb_buffer[kb_buffer_tail];
+		kb_buffer_tail = (kb_buffer_tail + 1) % 256;
+		return c;
+	}
 }

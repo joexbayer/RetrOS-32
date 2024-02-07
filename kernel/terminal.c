@@ -18,6 +18,7 @@
 #include <gfx/theme.h>
 #include <gfx/events.h>
 #include <conf.h>
+#include <screen.h>
 
 #include <screen.h>
 
@@ -259,7 +260,7 @@ static int __terminal_getchar_textmode(struct terminal* term)
 {
 	if(term == NULL) return -1;
 
-	ubyte_t c = kb_get_char();
+	ubyte_t c = scr_keyboard_get();
 	if(c == 0) return -1;
 
 	return c;
@@ -273,7 +274,7 @@ static int __terminal_scan_textmode(struct terminal* term, ubyte_t* data, int si
 	int i = 0;
 	ubyte_t c = 0;
 	while (i < size && c != '\n'){
-		c = kb_get_char();
+		c = scr_keyboard_get();
 		if(c == 0) continue;
 
 		if(c == CTRLC){

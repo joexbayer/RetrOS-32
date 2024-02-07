@@ -726,7 +726,6 @@ static int textshell_login(struct terminal* term)
 static byte_t* text_shell_buffer = NULL;
 static void __kthread_entry textshell()
 {
-	
 	ubyte_t c;
 	short x = 0;
 
@@ -758,7 +757,7 @@ static void __kthread_entry textshell()
 	twritef("Type 'help' for a list of commands\n");
 	term->ops->commit(term);
 	while (1){
-		c = kb_get_char();
+		c = scr_keyboard_get();
 		if(c == 0) continue;
 
 		if(c == '\b'){

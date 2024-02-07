@@ -35,5 +35,10 @@ int screen_set_cursor(int x, int y);
 void scr_clear();
 void scr_scroll();
 int scrprintf(int32_t x, int32_t y, char* fmt, ...);
+int init_vga();
+uint16_t scrget(int x, int y);
+
+void scr_keyboard_add(unsigned char c);
+unsigned char scr_keyboard_get();
 
 #endif

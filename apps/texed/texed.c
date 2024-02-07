@@ -1,3 +1,14 @@
+/**
+ * @file texed.c
+ * @author Joe Bayer (joexbayer)
+ * @brief Textmode editor
+ * @version 0.1
+ * @date 2024-02-07
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ */
+
 #include <libc.h>
 #include <lib/syscall.h>
 #include <stdint.h>
@@ -458,6 +469,8 @@ int main(int argc, char *argv[]) {
 	if (buffer == NULL) {
 		return -1;
 	}
+
+	screen_clear(0, 0, COLOR(VGA_COLOR_WHITE, VGA_COLOR_BLUE));
 
 	screen_draw_box(0, 1, 80, 23, COLOR(VGA_COLOR_WHITE, VGA_COLOR_BLUE));
 	if(argc > 1) {

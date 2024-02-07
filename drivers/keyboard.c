@@ -18,6 +18,7 @@
 #include <arch/io.h>
 #include <pcb.h>
 #include <kutils.h>
+#include <scheduler.h>
 
 #include <vbe.h>
 #include <vbe.h>
@@ -75,18 +76,31 @@ static uint8_t __alt_pressed = 0;
 static uint8_t __ctrl_pressed = 0;
 static uint8_t __super_pressed = 0;
 
-
-unsigned char kb_get_char()
+unsigned char kb_get_char(int spin)
 {
-	//acquire(&kb_lock);
-	if(kb_buffer_tail == kb_buffer_head){
-		//release(&kb_lock);
-		return 0;
-	}
+	acquire(&kb_lock);
+  
+  if(spin){
+
+    while(kb_buffer_tail == kb_buffer_head){
+      release(&kb_lock);
+      
+      kernel_yield();
+      
+      acquire(&kb_lock);
+    }
+  
+  } else {
+    if(kb_buffer_tail == kb_buffer_head){
+      release(&kb_lock);
+      return 0;
+    }
+  }
 	
 	unsigned char c = kb_buffer[kb_buffer_tail];
 	kb_buffer_tail = (kb_buffer_tail + 1) % KB_BUFFER_SIZE;
-	//release(&kb_lock);
+
+	release(&kb_lock);
 	return c;
 }
 
