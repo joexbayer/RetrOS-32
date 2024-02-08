@@ -25,6 +25,9 @@
 
 #define CTRLC 227
 #define CTRLE 229
+#define CTRLS 243
+#define CTRLF 230
+
 
 #define COLOR(fg, bg) (fg | bg << 4)
 
@@ -54,5 +57,6 @@ char screen_get_char();
 int screen_clear(int from , int to, unsigned char color);
 void screen_draw_box(int x, int y, int width, int height, char border_color);
 int screen_clear_line(int y, unsigned char color);
+int screen_set_cursor(int x, int y);
 
 #endif // __TEXED_SCREEN_H__

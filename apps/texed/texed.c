@@ -13,56 +13,29 @@
 #include <lib/syscall.h>
 #include <stdint.h>
 #include <colors.h>
+#include <math.h>
 #include <fs/fs.h>
 
 #include "include/screen.h"
+#include "include/textbuffer.h"
 
 #define MAX_LINES 512
 #define LINE_CAPACITY 78
 #define MAX_VISABLE_LINES 21
 
-typedef enum __line_flags {
-	LINE_FLAG_NONE = 1 << 0,
-	LINE_FLAG_DIRTY = 1 << 1,
-	LINE_FLAG_EXTENSION = 1 << 2,
-} line_flags_t;
-
-struct textbuffer {
-	struct textbuffer_ops {
-		int (*destroy)(struct textbuffer *buffer);
-		int (*display)(const struct textbuffer *buffer, enum vga_color fg, enum vga_color bg);
-		int (*put)(struct textbuffer *buffer, unsigned char c);
-	} *ops;
-	struct line {
-		char *text;
-		size_t length;
-		size_t capacity;
-		line_flags_t flags;
-	} **lines;
-	struct cursor {
-		size_t x;
-		size_t y;
-	} cursor;
-	struct scroll {
-		size_t start;
-		size_t end;
-	} scroll;
-	size_t line_count;
-	char filename[256];
-};
-
 /* Function prototypes */
 static int textbuffer_new_line(struct textbuffer *buffer);
-static int textbuffer_remove_last_line(struct textbuffer *buffer);
 static int textbuffer_free_line(struct textbuffer *buffer, size_t line);
 static int textbuffer_destroy(struct textbuffer *buffer);
 static int textbuffer_display(const struct textbuffer *buffer, enum vga_color fg, enum vga_color bg);
 static int textbuffer_handle_char(struct textbuffer *buffer, unsigned char c);
+static int textbuffer_jump(struct textbuffer *buffer, unsigned int x, unsigned int y);	
 
 static struct textbuffer_ops textbuffer_default_ops = {
 		.destroy = textbuffer_destroy,
 		.display = textbuffer_display,
 		.put = textbuffer_handle_char,
+		.jump = textbuffer_jump,
 };
 
 static struct textbuffer *textbuffer_create(void) {
@@ -235,13 +208,24 @@ static int textbuffer_load_file(struct textbuffer *buffer, const char *filename)
 	return 0;
 }
 
+static int textbuffer_jump(struct textbuffer *buffer, unsigned int x, unsigned int y) {
+    buffer->cursor.y = y;
+	buffer->cursor.x = x;
+
+	if(buffer->cursor.y > MAX_VISABLE_LINES) {
+		buffer->scroll.start = buffer->cursor.y - MAX_VISABLE_LINES;
+	}
+
+	return 0;
+}
+
 /* Function to display the content of the text buffer on the screen */
 static int textbuffer_display(const struct textbuffer *buffer, enum vga_color fg, enum vga_color bg) {
 	uint32_t x_start = 0;
 	uint32_t y_start = buffer->scroll.start;
 
 	/* Clear the screen before displaying new content */
-	//screen_clear(0, 0, COLOR(VGA_COLOR_WHITE, VGA_COLOR_BLUE));
+	screen_clear(0, 0, COLOR(VGA_COLOR_WHITE, VGA_COLOR_BLUE));
 
 	/* fill top row with light grey */
 	for (size_t i = 0; i < 80; i++) {
@@ -257,15 +241,15 @@ static int textbuffer_display(const struct textbuffer *buffer, enum vga_color fg
 	/* write from start to end, or line_count */
 	for (size_t i = 0; i + y_start < buffer->line_count && i < buffer->scroll.end; i++) {
 		/* Calculate the position for each line */
-		int32_t x = x_start;
-		int32_t y = y_start + i;
+		uint32_t x = x_start;
+		uint32_t y = y_start + i;
 
 		/* Write the line to the screen */
 		if (!buffer->lines[y]->text) {
 			continue;
 		}
 
-		screen_clear_line(2 + i, COLOR(VGA_COLOR_WHITE, VGA_COLOR_BLUE));
+		//screen_clear_line(2 + i, COLOR(VGA_COLOR_WHITE, VGA_COLOR_BLUE));
 		if (buffer->cursor.y == y) {
 			screen_printf(1+x, 2 + i, COLOR(VGA_COLOR_WHITE, VGA_COLOR_BLUE) , "%s %c", buffer->lines[y]->text, 27);
 		} else {
@@ -344,7 +328,6 @@ static int textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
 
 			ret = textbuffer_new_line(buffer);
 			if (ret < 0) {
-				printf("textbuffer_new_line failed\n");
 				return -1;
 			}
 
@@ -367,7 +350,6 @@ static int textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
 			/* Create a new line */
 			ret = textbuffer_new_line(buffer);
 			if (ret < 0) {
-				printf("textbuffer_new_line failed\n");
 				return -1;
 			}
 
@@ -464,6 +446,7 @@ static int textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
 }
 
 int main(int argc, char *argv[]) {
+	int ret;
 	unsigned char c;
 	struct textbuffer *buffer = textbuffer_create();
 	if (buffer == NULL) {
@@ -478,13 +461,25 @@ int main(int argc, char *argv[]) {
 	}
 
 	textbuffer_display(buffer, VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
+
 	while (1) {
 		c = screen_get_char();
 		if (c == 0)
 			continue;
 		if (c == CTRLC)
 			break;
-
+		if (c == CTRLS){
+			textbuffer_save_file(buffer, buffer->filename);
+			continue;
+		}
+		if (c == CTRLF){
+			ret = textbuffer_search_main(buffer);
+			textbuffer_display(buffer, VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
+			if(ret < 0)
+				screen_write(0, 24, "Search failed", COLOR(VGA_COLOR_WHITE, VGA_COLOR_LIGHT_GREY));
+			continue;
+		}
+			
 		textbuffer_handle_char(buffer, c);
 		textbuffer_display(buffer, VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
 	}

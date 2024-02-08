@@ -20,8 +20,6 @@
 #include <conf.h>
 #include <screen.h>
 
-#include <screen.h>
-
 #define MAX_FMT_STR_SIZE 50
 /* OLD */
 

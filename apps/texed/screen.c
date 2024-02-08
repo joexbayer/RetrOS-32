@@ -52,30 +52,30 @@ int screen_set_cursor(int x, int y)
 
 
 void screen_draw_box(int x, int y, int width, int height, char border_color) {
-    // Extended ASCII characters for double line box drawing
-    unsigned char top_left = 201;     // '╔'
-    unsigned char top_right = 187;    // '╗'
-    unsigned char bottom_left = 200;  // '╚'
-    unsigned char bottom_right = 188; // '╝'
-    unsigned char horizontal = 205;   // '═'
-    unsigned char vertical = 186;     // '║'
+    /* Extended ASCII characters for double line box drawing */
+    unsigned char top_left = 201;     /* '╔' */
+    unsigned char top_right = 187;    /* '╗' */
+    unsigned char bottom_left = 200;  /* '╚' */
+    unsigned char bottom_right = 188; /* '╝' */
+    unsigned char horizontal = 205;   /* '═' */
+    unsigned char vertical = 186;     /* '║' */
 
-    // Draw corners
+    /* Draw corners */
     screen_put_char(x, y, top_left, border_color);
     screen_put_char(x + width - 1, y, top_right, border_color);
     screen_put_char(x, y + height - 1, bottom_left, border_color);
     screen_put_char(x + width - 1, y + height - 1, bottom_right, border_color);
 
-    // Draw top and bottom borders with connectors
+    /* Draw top and bottom borders with connectors */
     for (int i = x + 1; i < x + width - 1; ++i) {
-        screen_put_char(i, y, horizontal, border_color); // Top border
-        screen_put_char(i, y + height - 1, horizontal, border_color); // Bottom border
+        screen_put_char(i, y, horizontal, border_color); /* Top border */
+        screen_put_char(i, y + height - 1, horizontal, border_color); /* Bottom border */
     }
 
-    // Draw left, right borders, and connectors
+    /* Draw left, right borders, and connectors */
     for (int i = y + 1; i < y + height - 1; ++i) {
-        screen_put_char(x, i, vertical, border_color); // Left border
-        screen_put_char(x + width - 1, i, vertical, border_color); // Right border
+        screen_put_char(x, i, vertical, border_color); /* Left border */
+        screen_put_char(x + width - 1, i, vertical, border_color); /* Right border */
     }
 }
 

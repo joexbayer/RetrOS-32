@@ -25,7 +25,7 @@
 
 uint16_t* const VGA_MEMORY = (uint16_t*) 0xB8000;
 
-uint16_t* VGA_BUFFER = NULL;
+volatile uint16_t* VGA_BUFFER = NULL;
 //uint16_t* const VGA_MEMORY = (uint16_t*) 0xa0000;
 
 static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg) 
@@ -41,11 +41,14 @@ static inline uint16_t vga_entry(unsigned char uc, uint8_t color)
 
 void scr_set_cursor(int x, int y)
 {
-	uint16_t pos = y * SCREEN_WIDTH + x + 1;
-	outportb(0x3D4, 0x0F);
-	outportb(0x3D5, (uint8_t) (pos & 0xFF));
-	outportb(0x3D4, 0x0E);
-	outportb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
+	if($kernel->graphic_mode == KERNEL_FLAG_TEXTMODE){
+		uint16_t pos = y * SCREEN_WIDTH + x;
+		outportb(0x3D4, 0x0F);
+		outportb(0x3D5, (uint8_t) (pos & 0xFF));
+		outportb(0x3D4, 0x0E);
+		outportb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
+		return;
+	}
 }
 
 void scrcolor_set(enum vga_color fg, enum vga_color bg)
@@ -79,6 +82,11 @@ uint16_t scrget(int x, int y)
 
 	const int index = y * SCREEN_WIDTH + x;
 	return VGA_BUFFER[index];
+}
+
+uint16_t* scr_buffer()
+{
+	return VGA_BUFFER;
 }
 
 /**
@@ -225,8 +233,8 @@ int init_vga()
 
 /* MOVE TO A BETTER PLACE */
 static unsigned char kb_buffer[256] = {0};
-static int kb_buffer_tail = 0;
-static int kb_buffer_head = 0;
+static volatile int kb_buffer_tail = 0;
+static volatile int kb_buffer_head = 0;
 
 void scr_keyboard_add(unsigned char c)
 {
@@ -243,8 +251,10 @@ unsigned char scr_keyboard_get()
 		while(kb_buffer_tail == kb_buffer_head){
 			kernel_yield();
 		}
+		
 		unsigned char c = kb_buffer[kb_buffer_tail];
 		kb_buffer_tail = (kb_buffer_tail + 1) % 256;
+		dbgprintf("Got %c from buffer\n", c);
 		return c;
 	}
 }

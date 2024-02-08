@@ -57,6 +57,9 @@ rootfs/bin/*
 
 RetrOS-32-debug.img
 
+rootfs/symbols.map
+rootfs/sysutil/symbols.map
+
 # Executables
 *.exe
 *.out
