@@ -246,7 +246,7 @@ void kernel(uint32_t magic)
 	start("netd", 0, NULL);
 	kernel_boot_printf("Deamons initialized.");
 
-	init_pit(100);
+	init_pit(1000);
 	kernel_boot_printf("Timer initialized.");
 
 	dbgprintf("Critical counter: %d\n", __cli_cnt);

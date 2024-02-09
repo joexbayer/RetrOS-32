@@ -258,7 +258,7 @@ static int __terminal_getchar_textmode(struct terminal* term)
 {
 	if(term == NULL) return -1;
 
-	ubyte_t c = scr_keyboard_get();
+	ubyte_t c = scr_keyboard_get(1);
 	if(c == 0) return -1;
 
 	return c;
@@ -272,7 +272,7 @@ static int __terminal_scan_textmode(struct terminal* term, ubyte_t* data, int si
 	int i = 0;
 	ubyte_t c = 0;
 	while (i < size && c != '\n'){
-		c = scr_keyboard_get();
+		c = scr_keyboard_get(1);
 		if(c == 0) continue;
 
 		if(c == CTRLC){

@@ -54,7 +54,7 @@ EXPORT_SYSCALL(SYSCALL_SCREEN_PUT, sys_screen_put);
 
 char sys_screen_get()
 {
-	return scr_keyboard_get();
+	return scr_keyboard_get(1);
 }
 EXPORT_SYSCALL(SYSCALL_SCREEN_GET, sys_screen_get);
 

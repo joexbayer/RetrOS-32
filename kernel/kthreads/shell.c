@@ -757,7 +757,7 @@ static void __kthread_entry textshell()
 	twritef("Type 'help' for a list of commands\n");
 	term->ops->commit(term);
 	while (1){
-		c = scr_keyboard_get();
+		c = scr_keyboard_get(1);
 		if(c == 0) continue;
 
 		if(c == '\b'){

@@ -28,6 +28,11 @@ enum vga_color {
 	VGA_COLOR_WHITE = 15,
 };
 
+struct screen_cursor {
+	int x;
+	int y;
+};
+
 void scrcolor_set(enum vga_color fg, enum vga_color bg);
 void scrput(int x, int y, unsigned char c, uint8_t color);
 void scrwrite(int x, int y, char* str, uint8_t color);
@@ -39,6 +44,8 @@ uint16_t scrget(int x, int y);
 uint16_t* scr_buffer();
 
 void scr_keyboard_add(unsigned char c);
-unsigned char scr_keyboard_get();
+unsigned char scr_keyboard_get(int wait);
+
+struct screen_cursor scr_get_cursor();
 
 #endif
