@@ -68,7 +68,7 @@ int update() {
         dbgprintf("Exiting game\n");
         return -1;
     }
-    if (input != 255 && input != 0) {
+    if (input == ARROW_UP || input == ARROW_DOWN || input == ARROW_LEFT || input == ARROW_RIGHT) {
         direction = input; 
     }
 
@@ -83,8 +83,8 @@ int update() {
 
     if (snake[0].x == fruit.x && snake[0].y == fruit.y) {
         length++;
-        fruit.x = rand() % SCREEN_WIDTH;
-        fruit.y = rand() % SCREEN_HEIGHT;
+        fruit.x = 2+ (rand() % (SCREEN_WIDTH-4));
+        fruit.y = 2+ (rand() % (SCREEN_HEIGHT-4));
         speed -= 2;
     }
 
