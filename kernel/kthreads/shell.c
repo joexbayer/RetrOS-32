@@ -738,8 +738,6 @@ static void __kthread_entry textshell()
 		return;
 	}
 
-	scrwrite(0, 0, "                              RetrOS 32 - Textmode                              ", VGA_COLOR_BLUE | VGA_COLOR_LIGHT_GREY << 4);
-
 
 	struct mem_info minfo;
     get_mem_info(&minfo);
@@ -757,6 +755,7 @@ static void __kthread_entry textshell()
 	twritef("Type 'help' for a list of commands\n");
 	term->ops->commit(term);
 	while (1){
+		scrwrite(0, 0, "                              RetrOS 32 - Textmode                              ", VGA_COLOR_BLUE | VGA_COLOR_LIGHT_GREY << 4);
 		c = scr_keyboard_get(1);
 		if(c == 0) continue;
 

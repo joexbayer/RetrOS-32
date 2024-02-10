@@ -49,13 +49,22 @@ void init_game() {
 
 void draw() {
     scr_clear();
+
+    for(int i = 0; i < SCREEN_WIDTH; i++) {
+        scrput(i, 0, ' ', VGA_COLOR_BLUE | VGA_COLOR_LIGHT_GREY << 4 );
+        scrput(i, SCREEN_HEIGHT-1, ' ', VGA_COLOR_BLUE | VGA_COLOR_LIGHT_GREY << 4);
+    }
+
+    scrwrite(10, 0, "Snake Game - Use arrow keys to move", VGA_COLOR_BLUE | VGA_COLOR_LIGHT_GREY << 4);;
  
     for (int i = 1; i < length; i++) {
-        scrput(snake[i].x, snake[i].y, 'a', 0x0A);
+        scrput(snake[i].x, snake[i].y, 'a', VGA_COLOR_WHITE | VGA_COLOR_BLUE << 4);
     }
-    scrput(snake[0].x, snake[0].y, '@', 0x0A);
+    scrput(snake[0].x, snake[0].y, '@', VGA_COLOR_WHITE | VGA_COLOR_BLUE << 4);
 
-    scrput(fruit.x, fruit.y, 'F', 0x0C);
+    scrput(fruit.x, fruit.y, 'F', VGA_COLOR_WHITE | VGA_COLOR_BLUE << 4);
+
+    scrprintf(0, SCREEN_HEIGHT-2, "Score: %d", length-5);
 }
 
 int get_input() {
@@ -90,7 +99,7 @@ int update() {
 
     /* Collision with walls */
     if (snake[0].x < 0 || snake[0].x >= SCREEN_WIDTH ||
-        snake[0].y < 0 || snake[0].y >= SCREEN_HEIGHT) {
+        snake[0].y < 1 || snake[0].y >= SCREEN_HEIGHT-1) {
             dbgprintf("Collision with wall at %d, %d\n", snake[0].x, snake[0].y);
         return -1;
     }
