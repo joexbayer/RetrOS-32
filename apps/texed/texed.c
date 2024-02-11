@@ -151,9 +151,9 @@ static int textbuffer_free_line(struct textbuffer *buffer, size_t line) {
 
 	return 0;
 }
+#define HAS_FLAG(flags, flag) (flags & flag)
 
 static int textbuffer_save_file(struct textbuffer *buffer, const char *filename) {
-	return -1;
 	char* file = malloc(2048);
 	if (file == NULL) {
 		return -1;
@@ -169,9 +169,26 @@ static int textbuffer_save_file(struct textbuffer *buffer, const char *filename)
 				len++;
 			}	
 
-		len += buffer->lines[i]->length;
+			len += buffer->lines[i]->length;
 		}
 	}
+
+	int fd = open(buffer->filename, FS_FILE_FLAG_CREATE | FS_FILE_FLAG_READ | FS_FILE_FLAG_WRITE);
+	if (fd < 0) {
+		free(file);
+		return -1;
+	}
+
+	int ret = write(fd, file, len);
+	if (ret < 0) {
+		fclose(fd);
+		free(file);
+		return -1;
+	}
+
+	fclose(fd);
+	free(file);
+
 	return 0;
 }
 
@@ -181,7 +198,7 @@ static int textbuffer_load_file(struct textbuffer *buffer, const char *filename)
 		return -1;
 	}
 
-	int fd = open(filename, FS_FILE_FLAG_CREATE | FS_FILE_FLAG_READ | FS_FILE_FLAG_WRITE);
+	int fd = open(filename, FS_FILE_FLAG_READ | FS_FILE_FLAG_WRITE);
 	if (fd < 0) {
 		return -1;
 	}
@@ -238,6 +255,9 @@ static int textbuffer_display(const struct textbuffer *buffer, enum vga_color fg
 	screen_put_char(4, 1, 'R', COLOR(VGA_COLOR_GREEN, VGA_COLOR_BLUE));
 	screen_put_char(5, 1, ']', COLOR(VGA_COLOR_WHITE, VGA_COLOR_BLUE));
 
+	/* draw filename */
+	screen_printf(6, 1, COLOR(VGA_COLOR_WHITE, VGA_COLOR_BLUE), " %s", buffer->filename);
+
 	/* write from start to end, or line_count */
 	for (size_t i = 0; i + y_start < buffer->line_count && i < buffer->scroll.end; i++) {
 		/* Calculate the position for each line */
@@ -257,7 +277,7 @@ static int textbuffer_display(const struct textbuffer *buffer, enum vga_color fg
 		}
 	}
 
-	screen_set_cursor(buffer->cursor.x, 2+buffer->cursor.y - buffer->scroll.start);
+	screen_set_cursor(buffer->cursor.x+1, 2+buffer->cursor.y - buffer->scroll.start);
 
 	/* fill bottom row with light grey */
 	for (size_t i = 0; i < 80; i++) {
@@ -419,7 +439,7 @@ static int textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
 			}
 			break;
 		}
-		screen_set_cursor(buffer->cursor.x, 1+buffer->cursor.y);
+		//screen_set_cursor(buffer->cursor.x, 1+buffer->cursor.y);
 	} else {
 		/* If the buffer is full, do nothing */
 		if (buffer->lines[buffer->cursor.y]->length == buffer->lines[buffer->cursor.y]->capacity) {
@@ -458,6 +478,7 @@ int main(int argc, char *argv[]) {
 	screen_draw_box(0, 1, 80, 23, COLOR(VGA_COLOR_WHITE, VGA_COLOR_BLUE));
 	if(argc > 1) {
 		textbuffer_load_file(buffer, argv[1]);
+		strcpy(buffer->filename, argv[1]);
 	}
 
 	textbuffer_display(buffer, VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);

@@ -298,7 +298,7 @@ static void __kthread_entry taskbar(void)
         return;
     }
 
-    w->ops->move(w, 0, 20);
+    w->ops->move(w, 0, 0);
     w->draw->rect(w, 0, TASKBAR_HEIGHT+1, vbe_info->width, 1, COLOR_VGA_DARK_GRAY);
     w->draw->rect(w, 0, 0, vbe_info->width, 2, 0xf);
 
