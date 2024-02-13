@@ -33,7 +33,7 @@ UTILS = bin/cppUtils.o bin/crt0.o
 USROBJS =
 
 COMMON = ../bin/syscall.o ../bin/libc.o ../bin/printf.o ../bin/graphics.o ../bin/netlib.o bin/cppUtils.o
-LIB_COMMON_OBJS = ../bin/syscall.o ../bin/libc.o ../bin/printf.o 
+LIB_COMMON_OBJS = ../bin/syscall.o ../bin/libc.o ../bin/printf.o bin/cppUtils.o
 LIB_GRAPHICS_OBJS = ../bin/graphics.o ../bin/libc.o
 LIB_NET_OBJS = ../bin/netlib.o
 
