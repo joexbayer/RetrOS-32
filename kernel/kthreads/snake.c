@@ -31,6 +31,7 @@ struct point {
 
 struct point snake[SNAKE_LENGTH];
 int length = 5;
+int speed = 100;
 struct point fruit;
 int direction = ARROW_RIGHT;
 
@@ -42,27 +43,41 @@ void init_game() {
 
     fruit.x = 20;
     fruit.y = 15;
+
+    speed = 100;
 }
 
 void draw() {
     scr_clear();
 
-    for (int i = 0; i < length; i++) {
-        scrput(snake[i].x, snake[i].y, 'O', 0x0A);
+    for(int i = 0; i < SCREEN_WIDTH; i++) {
+        scrput(i, 0, ' ', VGA_COLOR_BLUE | VGA_COLOR_LIGHT_GREY << 4 );
+        scrput(i, SCREEN_HEIGHT-1, ' ', VGA_COLOR_BLUE | VGA_COLOR_LIGHT_GREY << 4);
     }
 
-    scrput(fruit.x, fruit.y, 'F', 0x0C);
+    scrwrite(10, 0, "Snake Game - Use arrow keys to move", VGA_COLOR_BLUE | VGA_COLOR_LIGHT_GREY << 4);;
+ 
+    for (int i = 1; i < length; i++) {
+        scrput(snake[i].x, snake[i].y, 'a', VGA_COLOR_WHITE | VGA_COLOR_BLUE << 4);
+    }
+    scrput(snake[0].x, snake[0].y, '@', VGA_COLOR_WHITE | VGA_COLOR_BLUE << 4);
+
+    scrput(fruit.x, fruit.y, 'F', VGA_COLOR_WHITE | VGA_COLOR_BLUE << 4);
+
+    scrprintf(0, SCREEN_HEIGHT-2, "Score: %d", length-5);
 }
 
 int get_input() {
-    return $process->current->term->ops->getchar($process->current->term);
+    return scr_keyboard_get(0);
 }
 
 int update() {
     int input = get_input();
-    if(input == CTRLC) return -1;
-
-    if (input != 255) {
+    if(input == CTRLC){
+        dbgprintf("Exiting game\n");
+        return -1;
+    }
+    if (input == ARROW_UP || input == ARROW_DOWN || input == ARROW_LEFT || input == ARROW_RIGHT) {
         direction = input; 
     }
 
@@ -77,13 +92,15 @@ int update() {
 
     if (snake[0].x == fruit.x && snake[0].y == fruit.y) {
         length++;
-        fruit.x = rand() % SCREEN_WIDTH;
-        fruit.y = rand() % SCREEN_HEIGHT;
+        fruit.x = 2+ (rand() % (SCREEN_WIDTH-4));
+        fruit.y = 2+ (rand() % (SCREEN_HEIGHT-4));
+        speed -= 2;
     }
 
     /* Collision with walls */
     if (snake[0].x < 0 || snake[0].x >= SCREEN_WIDTH ||
-        snake[0].y < 0 || snake[0].y >= SCREEN_HEIGHT) {
+        snake[0].y < 1 || snake[0].y >= SCREEN_HEIGHT-1) {
+            dbgprintf("Collision with wall at %d, %d\n", snake[0].x, snake[0].y);
         return -1;
     }
 
@@ -102,17 +119,11 @@ void game_loop() {
         draw();
         if(update() == -1) return;
 
-        kernel_sleep(100);
+        kernel_sleep(speed);
     }
 }
 
 static int snakegame() {
-    struct kernel_context* ctx = kernel_get_context();
-    if(ctx->graphic_mode == KERNEL_FLAG_GRAPHICS) {
-        twritef("This game is not compatible with graphics mode\n");
-        return 0;
-    }
-
     init_game();
     game_loop();
     return 0;

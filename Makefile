@@ -7,7 +7,7 @@ ASFLAGS=
 LDFLAGS= 
 MAKEFLAGS += --no-print-directory
 
-QEMU_OPS = -device e1000,netdev=net0 -serial stdio -netdev user,id=net0,hostfwd=tcp::8080-:8080 -object filter-dump,id=net0,netdev=net0,file=dump.dat -m 32m
+QEMU_OPS = -display sdl -device e1000,netdev=net0 -serial stdio -netdev user,id=net0,hostfwd=tcp::8080-:8080 -object filter-dump,id=net0,netdev=net0,file=dump.dat -m 32m
 
 # ---------------- For counting how many files to compile ----------------
 ifneq ($(words $(MAKECMDGOALS)),1)
@@ -61,7 +61,7 @@ KERNELOBJ = bin/kernel.o bin/terminal.o bin/helpers.o bin/pci.o bin/virtualdisk.
 			bin/diskdev.o bin/scheduler.o bin/work.o bin/rbuffer.o bin/errors.o bin/kclock.o bin/tar.o bin/color.o bin/loopback.o \
 			bin/serial.o bin/io.o bin/syscalls.o bin/list.o bin/hashmap.o bin/vbe.o bin/ksyms.o bin/windowserver.o bin/encoding.o\
 			bin/mouse.o bin/ipc.o bin/sysinf.o ${PROGRAMOBJ} ${GFXOBJ} bin/font8.o bin/net.o bin/fs.o bin/ext.o bin/fat16.o bin/partition.o\
-			bin/admin.o bin/usermanager.o bin/user.o bin/group.o bin/snake.o bin/msgbox.o bin/kevents.o
+			bin/admin.o bin/usermanager.o bin/user.o bin/group.o bin/snake.o bin/msgbox.o bin/kevents.o bin/textmode.o
 
 BOOTOBJ = bin/bootloader.o
 
@@ -80,16 +80,19 @@ bootblock: $(BOOTOBJ)
 	@$(LD) $(LDFLAGS) -o bin/bootblock $^ -Ttext 0x7C00 --oformat=binary
 
 multiboot_kernel: bin/multiboot.o $(KERNELOBJ)
+	@echo "[KERNEL]     Linking kernel..."
 	@$(LD) -o bin/kernelout $^ $(LDFLAGS) -T ./boot/multiboot.ld
 	@echo "[KERNEL]     Finished compiling kernel."
 
 # Idea taken from SerenityOS
 symbols: bin/multiboot.o $(KERNELOBJ)
+	@echo "[KERNEL]     Creating symbols..."
 	@$(LD) -o bin/symbols $^ $(LDFLAGS) -T ./kernel/linkersym.ld
-	@nm -C -n bin/symbols | grep ' [Tt] ' | sed 's/ [Tt] / /' > rootfs/symbols.map
+	@nm -C -n bin/symbols | grep ' [Tt] ' | sed 's/ [Tt] / /' > rootfs/sysutil/symbols.map
 
 
 kernel: bin/kcrt0.o $(KERNELOBJ)
+	@echo "[KERNEL]     Linking kernel..."
 	@$(LD) -o bin/kernelout $^ $(LDFLAGS) -T ./kernel/linker.ld
 
 .depend: **/*.[cSh]	
@@ -103,7 +106,7 @@ bin/%.o: */%.c
 	@$(ECHO) [KERNEL]     Compiling $<
 	@$(CC) -o $@ -c $< $(CCFLAGS)
 
-bin/%.o: */*/%.c
+bin/%.o: kernel/*/%.c
 	@$(ECHO) [PROGRAM]    Compiling $<
 	@$(CC) -o $@ -c $< $(CCFLAGS)
 
@@ -156,7 +159,7 @@ create_fs:
 
 bare: compile create_fs
 
-img: grub_fix tools compile symbols tests create_fs sync
+img: grub_fix tools compile symbols create_fs sync
 	@echo "Finished creating the image."
 	$(TIME-END)
 

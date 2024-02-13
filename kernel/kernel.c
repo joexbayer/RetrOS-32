@@ -144,6 +144,7 @@ void kernel(uint32_t magic)
 	init_pcbs();
 	init_pci();
 	init_worker();
+	init_vga();
 	kernel_boot_printf("Kernel constructors initialized.");
 
 	/* Graphics */

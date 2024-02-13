@@ -21,6 +21,31 @@
 #define KB(kb) (kb*1024)
 
 static struct memory_map kernel_memory_map = {0};
+static int memory_test(){
+	for (int i = 0; i < (15 * 1024*1024)+(1*1024*1024); i++){
+		volatile char value = *(volatile char *)i;
+		*(volatile char *)i = value;
+
+		if (i % (1024*1024) == 0){
+			dbgprintf("[KERNEL] 0x%x MB tested\n", i);
+		}
+	}
+	return 0;
+}
+
+error_t get_mem_info(struct mem_info* info)
+{
+	*info = (struct mem_info) {
+		.kernel.total = memory_map_get()->kernel.total,
+		.kernel.used = kmemory_used(),
+		.permanent.total = memory_map_get()->permanent.total,
+		.permanent.used = pmemory_used(),
+		.virtual_memory.total = memory_map_get()->virtual_memory.total,
+		.virtual_memory.used = vmem_total_usage(),
+	};
+	return 0;
+}
+
 
 int memory_map_init(int total_memory, int extended_memory)
 {
@@ -34,44 +59,28 @@ int memory_map_init(int total_memory, int extended_memory)
 	int remaining_memory = total_memory - permanent - kernel;
 	int virtual = ALIGN_DOWN(remaining_memory, 4096);
 
-	/* Ensure the total of aligned segments does not exceed total_memory */
 	if (permanent + kernel + virtual > total_memory) {
-		/* Adjust virtual to fit within the total_memory */
 		virtual = total_memory - permanent - kernel;
-		/* Re-align after adjustment */
 		virtual = ALIGN_DOWN(virtual, 4096);
 	}
 
-	struct memory_map map = {
-		.kernel.from 		= start,
-		.kernel.to 			= start + kernel,
-		.kernel.total 		= kernel,
+	kernel_memory_map = (struct memory_map) {
+		.kernel.from 			= start,
+		.kernel.to 				= start + kernel,
+		.kernel.total 			= kernel,
 
-		.permanent.from 	= start + kernel,
-		.permanent.to 		= start + kernel + permanent,
-		.permanent.total 	= permanent,
+		.permanent.from 		= start + kernel,
+		.permanent.to 			= start + kernel + permanent,
+		.permanent.total 		= permanent,
 
-		.virtual_memory.from 		= start + kernel + permanent,
+		.virtual_memory.from 	= start + kernel + permanent,
 		.virtual_memory.to 		= start + kernel + permanent + virtual,
-		.virtual_memory.total 		= virtual,
+		.virtual_memory.total 	= virtual,
 
-		.total 				= permanent+kernel+virtual,
-		.initialized 		= true
+		.total 					= permanent+kernel+virtual,
+		.initialized 			= true
 	};
-	kernel_memory_map = map;
 	
-	return 0;
-}
-
-static int memory_test(){
-	for (int i = 0; i < (15 * 1024*1024)+(1*1024*1024); i++){
-		volatile char value = *(volatile char *)i;
-		*(volatile char *)i = value;
-
-		if (i % (1024*1024) == 0){
-			dbgprintf("[KERNEL] 0x%x MB tested\n", i);
-		}
-	}
 	return 0;
 }
 
@@ -95,15 +104,12 @@ void kfree(void* ptr);
  */
 void free(void* ptr)
 {
-	dbgprintf("Freeing %x\n", ptr);
 	if(ptr == NULL)return;
 		
 	/* lock on free as multiple threads can free at the same time */
-	spin_lock(&$process->current->allocations->spinlock);
-	
+	spin_lock(&($process->current->allocations->spinlock));	
 	vmem_stack_free($process->current, ptr);	
-
-	spin_unlock(&$process->current->allocations->spinlock);
+	spin_unlock(&($process->current->allocations->spinlock));
 }
 
 void* malloc(unsigned int size)
@@ -115,19 +121,12 @@ void* malloc(unsigned int size)
 	size = ALIGN(size, PTR_SIZE);
 
 	/* lock on malloc as multiple threads can malloc at the same time */
-	spin_lock(&$process->current->allocations->spinlock);
+	spin_lock(&($process->current->allocations->spinlock));
 
+	/* No need to check if ptr is null as we simply return it */
 	void* ptr = vmem_stack_alloc($process->current, size);
-	if(ptr == NULL){
-		spin_unlock(&$process->current->allocations->spinlock);
-		return NULL;
-	}
 
-	//vmem_dump_heap($process->current->allocations->head);
-
-	dbgprintf("Allocated %d bytes at %x\n", size, ptr);
-
-	spin_unlock(&$process->current->allocations->spinlock);
+	spin_unlock(&($process->current->allocations->spinlock));
 	return ptr;
 }
 
@@ -140,19 +139,26 @@ void* calloc(int size, int val)
 	return m;
 }
 
-error_t get_mem_info(struct mem_info* info)
+void* krealloc(void* ptr, int new_size)
 {
-	struct mem_info inf = {
-		.kernel.total = memory_map_get()->kernel.total,
-		.kernel.used = kmemory_used(),
-		.permanent.total = memory_map_get()->permanent.total,
-		.permanent.used = pmemory_used(),
-		.virtual_memory.total = memory_map_get()->virtual_memory.total,
-		.virtual_memory.used = vmem_total_usage(),
-	};
+    if (new_size == 0) {
+        kfree(ptr);
+        return NULL;
+    }
 
-	*info = inf;
-	return 0;
+    if (ptr == NULL) {
+        return kalloc(new_size);
+    }
+
+    void *new_ptr = kalloc(new_size);
+    if (new_ptr == NULL) {
+        return NULL;
+    }
+
+    memcpy(new_ptr, ptr, new_size);
+
+    kfree(ptr);
+    return new_ptr;
 }
 
 /**

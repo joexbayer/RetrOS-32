@@ -319,7 +319,7 @@ static int ws_draw(struct windowserver* ws)
     int mouse_changed = mouse_get_event(&ws->m);
     get_current_time(&ws->time);
     ws->window_changes = ws->_wm->ops->changes(ws->_wm);
-    unsigned char key = kb_get_char();
+    unsigned char key = kb_get_char(0);
 
     __ws_key_event(ws, key);
     

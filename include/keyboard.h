@@ -24,6 +24,6 @@
 #define CTRLE 229
 
 void init_keyboard();
-unsigned char kb_get_char();
+unsigned char kb_get_char(int block);
 
 #endif

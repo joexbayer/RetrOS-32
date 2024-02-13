@@ -40,6 +40,7 @@
 #include <net/socket.h>
 #include <net/tcp.h>
 #include <net/net.h>
+#include <conf.h>
 
 #include <kutils.h>
 #include <script.h>
@@ -299,7 +300,7 @@ void exec(int argc, char* argv[])
 
 	pid = pcb_create_process(argv[idx], argc-idx, &argv[idx], 0 /* PCB_FLAG_KERNEL */);
 	if(pid > 0){
-		//pcb_await(pid);
+		if(!kthread_as_deamon) pcb_await(pid);
 		return;
 	}
 
@@ -671,7 +672,7 @@ static int __textshell_reset_box()
 	/* header */
 	scrwrite(40-(strlen(" Terminal ")/2) , 1, " Terminal ", color);
 
-	screen_set_cursor(3, SCREEN_HEIGHT-1);
+	scr_set_cursor(3, SCREEN_HEIGHT-1);
 	return 0;
 }
 
@@ -679,6 +680,20 @@ static int __textshell_reset_box()
 static int textshell_login(struct terminal* term)
 {
 	struct usermanager* usrman = $services->usermanager;
+
+	char* logon = config_get_value("system", "logon");
+	if(logon != NULL){
+		if(strcmp(logon, "disabled") == 0){
+			char* user = config_get_value("system", "user");
+			if(user != NULL){
+				struct user* u = usrman->ops->get(usrman, user);
+				if(u != NULL){
+					$process->current->user = u;
+					return 0;
+				}
+			}
+		}
+	}
 
 	char username[32];
 	char password[32];
@@ -711,7 +726,6 @@ static int textshell_login(struct terminal* term)
 static byte_t* text_shell_buffer = NULL;
 static void __kthread_entry textshell()
 {
-	
 	ubyte_t c;
 	short x = 0;
 
@@ -724,8 +738,6 @@ static void __kthread_entry textshell()
 		return;
 	}
 
-	scrwrite(0, 0, "                              RetrOS 32 - Textmode                              ", VGA_COLOR_BLUE | VGA_COLOR_LIGHT_GREY << 4);
-
 
 	struct mem_info minfo;
     get_mem_info(&minfo);
@@ -735,15 +747,16 @@ static void __kthread_entry textshell()
 
 	twritef("\n");
 	twritef("%s\n", about_text);
+	__textshell_reset_box();
 	textshell_login(term);
 
-	__textshell_reset_box();
 
 	twritef("Memory: %d%s/%d%s\n", used.size, used.unit, total.size, total.unit);
 	twritef("Type 'help' for a list of commands\n");
 	term->ops->commit(term);
 	while (1){
-		c = kb_get_char();
+		scrwrite(0, 0, "                              RetrOS 32 - Textmode                              ", VGA_COLOR_BLUE | VGA_COLOR_LIGHT_GREY << 4);
+		c = scr_keyboard_get(1);
 		if(c == 0) continue;
 
 		if(c == '\b'){
@@ -751,7 +764,7 @@ static void __kthread_entry textshell()
 			x--;
 			scrput(4+x, SCREEN_HEIGHT-1, ' ', VGA_COLOR_WHITE | VGA_COLOR_BLUE << 4);
 			text_shell_buffer[x] = 0;
-			screen_set_cursor(4+x, SCREEN_HEIGHT-1);
+			scr_set_cursor(4+x, SCREEN_HEIGHT-1);
 			continue;
 		}
 
@@ -770,7 +783,7 @@ static void __kthread_entry textshell()
 		scrput(4+x, SCREEN_HEIGHT-1, c, VGA_COLOR_WHITE);
 		text_shell_buffer[x] = c;
 		x++;
-		screen_set_cursor(4+x, SCREEN_HEIGHT-1);
+		scr_set_cursor(4+x, SCREEN_HEIGHT-1);
 	}
 }
 EXPORT_KTHREAD(textshell);

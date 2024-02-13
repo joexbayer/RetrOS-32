@@ -32,6 +32,7 @@ boot.iso
 boot2.iso
 boot.img
 *.dat
+*.a
 
 log.txt
 filesystemv2.img
@@ -55,6 +56,9 @@ include/editor.h
 rootfs/bin/*
 
 RetrOS-32-debug.img
+
+rootfs/symbols.map
+rootfs/sysutil/symbols.map
 
 # Executables
 *.exe

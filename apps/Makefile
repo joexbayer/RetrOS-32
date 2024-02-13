@@ -57,6 +57,7 @@ programs: staticlibs bin/crt0.o ${USROBJS}
 	@make -C graphs/
 	@make -C cube/
 	@make -C users/
+	@make -C texed/
 	@echo [USR] All user programs created and linked!
 
 bin/%.o: utils/%.cpp
@@ -85,4 +86,5 @@ clean:
 	@make -C graphs/ clean
 	@make -C cube/ clean
 	@make -C users/ clean
+	@make -C texed/ clean
 	rm -f .depend

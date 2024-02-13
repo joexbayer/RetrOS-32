@@ -18,11 +18,16 @@
 #include <serial.h>
 #include <vbe.h>
 #include <gfx/gfxlib.h>
+#include <kernel.h>
+#include <scheduler.h>
 
 #define MAX_FMT_STR_SIZE 50
 
-uint16_t* const VGA_MEMORY = (uint16_t*) 0xB8000;
 //uint16_t* const VGA_MEMORY = (uint16_t*) 0xa0000;
+uint16_t* const VGA_MEMORY = (uint16_t*) 0xB8000;
+static volatile uint16_t* VGA_BUFFER = NULL;
+
+static struct screen_cursor cursor = {0, 0};
 
 static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg) 
 {
@@ -35,13 +40,24 @@ static inline uint16_t vga_entry(unsigned char uc, uint8_t color)
 	return (uint16_t) uc | (uint16_t) color << 8;
 }
 
-void screen_set_cursor(int x, int y)
+void scr_set_cursor(int x, int y)
 {
-	uint16_t pos = y * SCREEN_WIDTH + x + 1;
-	outportb(0x3D4, 0x0F);
-	outportb(0x3D5, (uint8_t) (pos & 0xFF));
-	outportb(0x3D4, 0x0E);
-	outportb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
+	cursor.x = x;
+	cursor.y = y;
+
+	if($kernel->graphic_mode == KERNEL_FLAG_TEXTMODE){
+		uint16_t pos = y * SCREEN_WIDTH + x;
+		outportb(0x3D4, 0x0F);
+		outportb(0x3D5, (uint8_t) (pos & 0xFF));
+		outportb(0x3D4, 0x0E);
+		outportb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
+		return;
+	}
+}
+
+struct screen_cursor scr_get_cursor()
+{
+	return cursor;
 }
 
 void scrcolor_set(enum vga_color fg, enum vga_color bg)
@@ -62,6 +78,24 @@ void scrput(int x, int y, unsigned char c, uint8_t color)
 {
 	const int index = y * SCREEN_WIDTH + x;
 	VGA_MEMORY[index] = vga_entry(c, color);
+	if(VGA_BUFFER != NULL){
+		VGA_BUFFER[index] = vga_entry(c, color);
+	}
+}
+
+uint16_t scrget(int x, int y)
+{
+	if(VGA_BUFFER == NULL){
+		return 0;
+	}
+
+	const int index = y * SCREEN_WIDTH + x;
+	return VGA_BUFFER[index];
+}
+
+uint16_t* scr_buffer()
+{
+	return VGA_BUFFER;
 }
 
 /**
@@ -191,4 +225,48 @@ int32_t scrprintf(int32_t x, int32_t y, char* fmt, ...)
     }
 	written += x_offset;
 	return written;
+}
+
+int init_vga()
+{
+	VGA_BUFFER = (uint16_t*)kalloc(SCREEN_WIDTH*SCREEN_HEIGHT*sizeof(uint16_t));
+	if(VGA_BUFFER == NULL){
+		return -1;
+	}
+	for(int i = 0; i < SCREEN_WIDTH*SCREEN_HEIGHT; i++){
+		VGA_BUFFER[i] = vga_entry(' ', scrcolor);
+	}
+	return 0;
+}
+
+
+/* MOVE TO A BETTER PLACE */
+static unsigned char kb_buffer[256] = {0};
+static volatile int kb_buffer_tail = 0;
+static volatile int kb_buffer_head = 0;
+
+void scr_keyboard_add(unsigned char c)
+{
+	kb_buffer[kb_buffer_head] = c;
+	kb_buffer_head = (kb_buffer_head + 1) % 256;
+}
+
+unsigned char scr_keyboard_get(int wait)
+{
+	if($kernel->graphic_mode == KERNEL_FLAG_TEXTMODE){
+		return kb_get_char(wait);
+	} else {
+
+		while(kb_buffer_tail == kb_buffer_head){
+			kernel_yield();
+
+			if(!wait){
+				return 0;
+			}
+		}
+		
+		unsigned char c = kb_buffer[kb_buffer_tail];
+		kb_buffer_tail = (kb_buffer_tail + 1) % 256;
+		return c;
+	}
 }
