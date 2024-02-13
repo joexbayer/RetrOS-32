@@ -69,6 +69,27 @@ inline uint32_t strcpy(char* dest, const char* src)
     return i;
 }
 
+inline void* memmove(void *dest, const void *src, size_t n)
+{
+    unsigned char *d = dest;
+    const unsigned char *s = src;
+    if (d == s) {
+        return dest;
+    }
+
+    if (d < s) {
+        for (size_t i = 0; i < n; i++) {
+            d[i] = s[i];
+        }
+    } else {
+        for (size_t i = n; i != 0; i--) {
+            d[i - 1] = s[i - 1];
+        }
+    }
+    return dest;
+}
+
+
 inline uint32_t strncmp(const char* str, const char* str2, uint32_t len)
 {
 	return memcmp((uint8_t*)str, (uint8_t*)str2, len);

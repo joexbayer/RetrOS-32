@@ -1,23 +1,111 @@
+#include "../include/screen.h"
+
+#define MAX_FMT_STR_SIZE 256
+
+/* Only platform depedent syscall needed */
+#ifndef NCURSES
+
 #include <libc.h>
 #include <lib/syscall.h>
 #include <syscall_helper.h>
 #include <args.h>
 
-#include "../include/screen.h"
-
-#define MAX_FMT_STR_SIZE 256
-
-/* Macro to serialize a character and a color into a short */
-/* Only platform depedent syscall needed */
 int screen_put_char(int x, int y, unsigned char c, unsigned char color)
 {
     return invoke_syscall(SYSCALL_SCREEN_PUT, x, y, (((unsigned short)(c) << 8) | (unsigned char)(color)));
 }
+int screen_get_char(){return invoke_syscall(SYSCALL_SCREEN_GET, 0, 0, 0);}
+int screen_set_cursor(int x, int y){return invoke_syscall(SYSCALL_SET_CURSOR, x, y, 0);}
+#else
 
-char screen_get_char()
-{
-    return invoke_syscall(SYSCALL_SCREEN_GET, 0, 0, 0);
+#include <ncurses.h>
+#include <stdint.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+
+int screen_put_char(int x, int y, unsigned char c, unsigned char color) {
+    int fg = color & 0x0F; // Extract the foreground color
+    int bg = (color & 0xF0) >> 4; // Extract the background color
+
+    // Initialize color pair (if not already done)
+    // Assuming COLOR_PAIRS is large enough
+    int color_pair = bg * 8 + fg + 1; // Calculate a unique pair number
+    init_pair(color_pair, fg, bg);
+
+    // Move to the specified location and add the character
+    attron(COLOR_PAIR(color_pair));
+    mvaddch(y, x, c);
+    attroff(COLOR_PAIR(color_pair));
+
+    refresh(); // Refresh the screen to show changes
+    return 0; // Success
 }
+
+int screen_get_char() {
+    // Get the character at the current cursor position
+	int c = getch();
+	printf("%c\n", c);
+    return c;
+}
+
+int screen_set_cursor(int x, int y) {
+    // Move the cursor to the specified location
+    move(x, y);
+    return 0; // Success
+}
+
+inline void reverse(char s[])
+{
+	int c, i, j;
+
+	for (i = 0, j = strlen(s)-1; i < j; i++, j--)
+	{
+		c = s[i];
+		s[i] = s[j];
+		s[j] = c;
+	}
+}
+
+inline int itoa(int n, char s[])
+{
+	int i, sign;
+
+	if ((sign = n) < 0)
+		n = -n;
+	i = 0;
+	do {
+		s[i++] = n % 10 + '0';
+	} while ((n /= 10) > 0);
+
+	if(sign < 0)
+		s[i++] = '-';
+	
+	s[i] = '\0';
+	reverse(s);
+
+    return i;
+}
+
+inline int itohex(uint32_t n, char s[])
+{
+  uint32_t i, d;
+
+  i = 0;
+  do {
+    d = n % 16;
+    if (d < 10)
+      s[i++] = d + '0';
+    else
+      s[i++] = d - 10 + 'a';
+  } while ((n /= 16) > 0);
+  s[i] = 0;
+  reverse(s);
+
+  return i;
+}
+
+#endif
 
 int screen_write(int x, int y, const char* str, unsigned char color)
 {
@@ -44,12 +132,6 @@ int screen_clear(int from , int to, unsigned char color)
 		}
 	}
 }
-
-int screen_set_cursor(int x, int y)
-{
-    return invoke_syscall(SYSCALL_SET_CURSOR, x, y, 0);
-}
-
 
 void screen_draw_box(int x, int y, int width, int height, char border_color) {
     /* Extended ASCII characters for double line box drawing */

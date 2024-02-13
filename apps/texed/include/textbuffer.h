@@ -1,8 +1,9 @@
 #ifndef __TEXTBUFFER_H
 #define __TEXTBUFFER_H
 
-#include <colors.h>
 #include <stdint.h>
+
+#include "screen.h"
 
 typedef enum __line_flags {
 	LINE_FLAG_NONE = 1 << 0,
@@ -32,9 +33,23 @@ struct textbuffer {
 		size_t end;
 	} scroll;
 	size_t line_count;
+	/* Define a structure for keyword-color pairs */
+	struct syntax_highlight {
+		struct keyword {
+			char keyword[32];
+			char color;
+		} keywords[32]; 
+		int count;
+	} *syntax;
+
 	char filename[256];
 };
 
+/* helpers */
+int textbuffer_get_input(struct textbuffer* buffer,  char tag, char* message, int (*callback)(struct textbuffer*, char*));
+
+/* mains */
 int textbuffer_search_main(struct textbuffer* buffer);
+int textbuffer_command_main(struct textbuffer* buffer);
 
 #endif // !__TEXTBUFFER_H

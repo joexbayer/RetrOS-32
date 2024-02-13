@@ -42,6 +42,7 @@ uint32_t memcmp(const void* ptr, const void* ptr2, uint32_t len);
 void* memset (void *dest, int val, int len);
 void* memcpy(void *dest, const void *src, int n);
 void* xmemcpy(void *dest, const void *src, int n);
+void* memmove(void *dest, const void *src, size_t n);
 
 int parse_arguments(const char *input_string, char tokens[10][100]);
 

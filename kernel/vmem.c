@@ -15,6 +15,9 @@
 #include <bitmap.h>
 #include <assert.h>
 
+#undef dbgprintf
+#define dbgprintf(...)
+
 struct virtual_memory_allocator;
 
 /* allocator prototypes */
@@ -368,7 +371,6 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 		warningf("Out memory\n");
 		return NULL;
 	}
-	dbgprintf("New allocation: 0x%x\n", allocation);
 	
 	allocation->size = _size;
 	allocation->used = _size;

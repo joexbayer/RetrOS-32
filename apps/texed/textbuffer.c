@@ -8,13 +8,33 @@
  * @copyright Copyright (c) 2024
  * 
  */
-
+#ifndef NCURSES
 #include <libc.h>
 #include <lib/syscall.h>
 #include <stdint.h>
 #include <colors.h>
 #include <math.h>
 #include <fs/fs.h>
+#else
+
+#include <ncurses.h>
+#include <stdint.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#include <fcntl.h>  // For open
+#include <unistd.h> // For close
+#include <sys/types.h>
+#include <sys/stat.h>
+
+inline int isspace(char c)
+{
+    return c == ' ';
+}
+#endif // !NCURSES
+
 
 #include "include/screen.h"
 #include "include/textbuffer.h"
@@ -28,7 +48,7 @@ static int textbuffer_new_line(struct textbuffer *buffer);
 static int textbuffer_free_line(struct textbuffer *buffer, size_t line);
 static int textbuffer_destroy(struct textbuffer *buffer);
 static int textbuffer_display(const struct textbuffer *buffer, enum vga_color fg, enum vga_color bg);
-static int textbuffer_handle_char(struct textbuffer *buffer, unsigned char c);
+static int textbuffer_handle_char(struct textbuffer *buffer, int c);
 static int textbuffer_jump(struct textbuffer *buffer, unsigned int x, unsigned int y);	
 
 static struct textbuffer_ops textbuffer_default_ops = {
@@ -57,6 +77,32 @@ static struct textbuffer *textbuffer_create(void) {
 		free(buffer);
 		return NULL;
 	}
+
+	buffer->syntax = malloc(sizeof(struct syntax_highlight));
+	if (buffer->syntax == NULL) {
+		free(buffer->lines);
+		free(buffer);
+		return NULL;
+	}
+
+	/* Set default syntax highlighting */
+	buffer->syntax->count = 10;
+	strcpy(buffer->syntax->keywords[0].keyword, (const char*)"int");
+	buffer->syntax->keywords[0].color = VGA_COLOR_LIGHT_GREEN;
+	strcpy(buffer->syntax->keywords[1].keyword, (const char*)"char");
+	buffer->syntax->keywords[1].color = VGA_COLOR_LIGHT_GREEN;
+	strcpy(buffer->syntax->keywords[2].keyword, (const char*)"void");
+	buffer->syntax->keywords[2].color = VGA_COLOR_LIGHT_GREEN;
+	strcpy(buffer->syntax->keywords[3].keyword, (const char*)"if");
+	buffer->syntax->keywords[3].color = VGA_COLOR_LIGHT_BROWN;
+	strcpy(buffer->syntax->keywords[4].keyword, (const char*)"else");
+	buffer->syntax->keywords[4].color = VGA_COLOR_LIGHT_BROWN;
+	strcpy(buffer->syntax->keywords[5].keyword, (const char*)"while");
+	buffer->syntax->keywords[5].color = VGA_COLOR_LIGHT_BROWN;
+	strcpy(buffer->syntax->keywords[6].keyword, (const char*)"for");
+	buffer->syntax->keywords[6].color = VGA_COLOR_LIGHT_BROWN;
+	strcpy(buffer->syntax->keywords[7].keyword, (const char*)"return");
+	buffer->syntax->keywords[7].color = VGA_COLOR_LIGHT_RED;
 
 	buffer->ops = &textbuffer_default_ops;
 	buffer->cursor.x = 0;
@@ -113,6 +159,7 @@ static int textbuffer_new_line(struct textbuffer *buffer) {
 
 	memset(buffer->lines[buffer->line_count]->text, 0, LINE_CAPACITY);
 
+	buffer->lines[buffer->line_count]->flags = 0;	
 	buffer->lines[buffer->line_count]->length = 0;
 	buffer->lines[buffer->line_count]->capacity = LINE_CAPACITY;
 	buffer->line_count++;
@@ -165,15 +212,19 @@ static int textbuffer_save_file(struct textbuffer *buffer, const char *filename)
 			memcpy(file + len, buffer->lines[i]->text, buffer->lines[i]->length);
 			/* Add newline if not extension */
 			if (!HAS_FLAG(buffer->lines[i]->flags, LINE_FLAG_EXTENSION)) {
-				file[len + buffer->lines[i]->length] = '\n';
+				file[len + buffer->lines[i]->length] = ENTER;
 				len++;
 			}	
 
 			len += buffer->lines[i]->length;
 		}
 	}
-
+	
+#ifndef NCURSES
 	int fd = open(buffer->filename, FS_FILE_FLAG_CREATE | FS_FILE_FLAG_READ | FS_FILE_FLAG_WRITE);
+#else
+	int fd = open(buffer->filename, O_WRONLY | O_CREAT, 0644);
+#endif // !NCURSES
 	if (fd < 0) {
 		free(file);
 		return -1;
@@ -198,18 +249,26 @@ static int textbuffer_load_file(struct textbuffer *buffer, const char *filename)
 		return -1;
 	}
 
+#ifndef NCURSES
 	int fd = open(filename, FS_FILE_FLAG_READ | FS_FILE_FLAG_WRITE);
+#else
+	int fd = open(filename, O_RDONLY);
+#endif // !NCURSES
+
 	if (fd < 0) {
 		return -1;
 	}
-
 	int ret = read(fd, file, 2048);
 	if (ret < 0) {
 		fclose(fd);
 		return -1;
 	}
 
+#ifndef NCURSES
 	fclose(fd);
+#else
+	close(fd);
+#endif // !NCURSES
 
 	/* set filename */
 	strcpy(buffer->filename, filename);	
@@ -229,20 +288,67 @@ static int textbuffer_jump(struct textbuffer *buffer, unsigned int x, unsigned i
     buffer->cursor.y = y;
 	buffer->cursor.x = x;
 
-	if(buffer->cursor.y > MAX_VISABLE_LINES) {
-		buffer->scroll.start = buffer->cursor.y - MAX_VISABLE_LINES;
+	if(buffer->cursor.y > 20) {
+		buffer->scroll.start = buffer->cursor.y - 20;
 	}
+
+	textbuffer_display(buffer, VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
 
 	return 0;
 }
 
+/* Function to find a keyword in the text and return its color, or default color if not found */
+static enum vga_color get_keyword_color(const struct textbuffer *buffer, const char *text, size_t text_len, size_t *keyword_length) {
+    for (int i = 0; i < buffer->syntax->count; i++) {
+        const char *keyword = buffer->syntax->keywords[i].keyword;
+        size_t keyword_len = strlen(keyword);
+
+        if (text_len >= keyword_len && strncmp(text, keyword, keyword_len) == 0 &&
+            (text_len == keyword_len || isspace(text[keyword_len]))) {
+            *keyword_length = keyword_len;
+            return buffer->syntax->keywords[i].color;
+        }
+    }
+
+    *keyword_length = 0; 
+    return VGA_COLOR_WHITE;
+}
+
+static int textbuffer_print_line(struct textbuffer *buffer, int x, int y, size_t line) {
+    if (line >= buffer->line_count) {
+        return -1;
+    }
+
+    struct line *l = buffer->lines[line];
+    for (size_t i = 0; i < l->length;) {  
+        size_t remaining_length = l->length - i;
+        size_t keyword_len = 0;
+        enum vga_color color = get_keyword_color(buffer, &l->text[i], remaining_length, &keyword_len);
+
+        if (keyword_len > 0) {
+            for (size_t j = 0; j < keyword_len; j++) {
+                screen_put_char(x + i + j, y, l->text[i + j], COLOR(color, VGA_COLOR_BLUE));
+            }
+            i += keyword_len;
+        } else {
+            screen_put_char(x + i, y, l->text[i], COLOR(color, VGA_COLOR_BLUE));
+            i++;
+        }
+    }
+
+    return 0;
+}
+
+
+
 /* Function to display the content of the text buffer on the screen */
 static int textbuffer_display(const struct textbuffer *buffer, enum vga_color fg, enum vga_color bg) {
 	uint32_t x_start = 0;
+	uint32_t last_line_y = 0;
 	uint32_t y_start = buffer->scroll.start;
 
 	/* Clear the screen before displaying new content */
-	screen_clear(0, 0, COLOR(VGA_COLOR_WHITE, VGA_COLOR_BLUE));
+	//screen_clear(0, 0, COLOR(VGA_COLOR_WHITE, VGA_COLOR_BLUE));
 
 	/* fill top row with light grey */
 	for (size_t i = 0; i < 80; i++) {
@@ -255,27 +361,34 @@ static int textbuffer_display(const struct textbuffer *buffer, enum vga_color fg
 	screen_put_char(4, 1, 'R', COLOR(VGA_COLOR_GREEN, VGA_COLOR_BLUE));
 	screen_put_char(5, 1, ']', COLOR(VGA_COLOR_WHITE, VGA_COLOR_BLUE));
 
-	/* draw filename */
-	screen_printf(6, 1, COLOR(VGA_COLOR_WHITE, VGA_COLOR_BLUE), " %s", buffer->filename);
-
 	/* write from start to end, or line_count */
 	for (size_t i = 0; i + y_start < buffer->line_count && i < buffer->scroll.end; i++) {
 		/* Calculate the position for each line */
 		uint32_t x = x_start;
 		uint32_t y = y_start + i;
+		last_line_y = 2 + i;
 
 		/* Write the line to the screen */
-		if (!buffer->lines[y]->text) {
-			continue;
-		}
+		// if (!(buffer->lines[y]->flags & LINE_FLAG_DIRTY)) {
+		//	continue;
+		//}
 
-		//screen_clear_line(2 + i, COLOR(VGA_COLOR_WHITE, VGA_COLOR_BLUE));
+		screen_clear_line(2 + i, COLOR(VGA_COLOR_WHITE, VGA_COLOR_BLUE));
 		if (buffer->cursor.y == y) {
-			screen_printf(1+x, 2 + i, COLOR(VGA_COLOR_WHITE, VGA_COLOR_BLUE) , "%s %c", buffer->lines[y]->text, 27);
+			//screen_printf(1+x, 2 + i, COLOR(VGA_COLOR_WHITE, VGA_COLOR_BLUE) , "%s %c", buffer->lines[y]->text, 27);
 		} else {
-			screen_printf(1+x, 2 + i, COLOR(VGA_COLOR_WHITE, VGA_COLOR_BLUE), "%s", buffer->lines[y]->text);
+			//screen_printf(1+x, 2 + i, COLOR(VGA_COLOR_WHITE, VGA_COLOR_BLUE), "%s", buffer->lines[y]->text);
 		}
+		textbuffer_print_line(buffer, 1+x, 2 + i, y);
+
+		/* Clear DIRTY flag */
+		buffer->lines[y]->flags &= ~LINE_FLAG_DIRTY;
 	}
+
+	 /* Clear the line after the last actual line */
+    if (last_line_y < MAX_VISABLE_LINES) {
+        screen_clear_line(last_line_y + 1, COLOR(VGA_COLOR_WHITE, VGA_COLOR_BLUE));
+    }
 
 	screen_set_cursor(buffer->cursor.x+1, 2+buffer->cursor.y - buffer->scroll.start);
 
@@ -285,17 +398,17 @@ static int textbuffer_display(const struct textbuffer *buffer, enum vga_color fg
 	}
 
 	/* write stats at the bottom */
-	screen_printf(0, 24, COLOR(VGA_COLOR_BLACK, VGA_COLOR_LIGHT_GREY), "lc: %d, x: %d, y: %d,          Save CTRL-S, Exit CTRL-C", buffer->line_count, buffer->cursor.x, buffer->cursor.y);
+	screen_printf(0, 24, COLOR(VGA_COLOR_BLACK, VGA_COLOR_LIGHT_GREY), "lc: %d, x: %d, y: %d,          Save CTRL-S, Command CTRL-C, Search CTRL-F", buffer->line_count, buffer->cursor.x, buffer->cursor.y);
 
 	return 0;
 }
 
 /* Function to handle keyboard input of a char */
-static int textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
+static int textbuffer_handle_char(struct textbuffer *buffer, int c) {
 	int ret;
 
 	/* Handle the backspace key */
-	if (c == '\b') {
+	if (c == BACKSPACE) {
 		/* If we are at the end of the line */
 		if (buffer->cursor.x == 0) {
 			/* If the cursor is at the beginning of the first line, do nothing */
@@ -315,6 +428,9 @@ static int textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
 			textbuffer_free_line(buffer, buffer->cursor.y);
 
 			buffer->cursor.y--;
+
+			/* mark as dirty */
+			buffer->lines[buffer->cursor.y]->flags |= LINE_FLAG_DIRTY;
 		} else {
 			/* Remove the character before the cursor */
 			if (buffer->lines[buffer->cursor.y] == NULL) {
@@ -330,6 +446,9 @@ static int textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
 				buffer->lines[buffer->cursor.y]->text[buffer->lines[buffer->cursor.y]->length - 1] = '\0';
 				buffer->lines[buffer->cursor.y]->length--;
 				buffer->cursor.x--;
+
+				/* mark as dirty */
+				buffer->lines[buffer->cursor.y]->flags |= LINE_FLAG_DIRTY;
 				return -1;
 			}
 
@@ -337,6 +456,9 @@ static int textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
 			buffer->lines[buffer->cursor.y]->text[buffer->cursor.x - 1] = 0;
 			buffer->lines[buffer->cursor.y]->length--;
 			buffer->cursor.x--;
+
+			/* mark as dirty */
+			buffer->lines[buffer->cursor.y]->flags |= LINE_FLAG_DIRTY;
 		}
 	} else if (c == '\n') {
 		/* If the cursor is at the end of the line, create a new line */
@@ -357,6 +479,9 @@ static int textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
 					memset(buffer->lines[i]->text, 0, buffer->lines[i]->capacity);
 					memcpy(buffer->lines[i]->text, buffer->lines[i - 1]->text, buffer->lines[i - 1]->length);
 					buffer->lines[i]->length = buffer->lines[i - 1]->length;
+
+					/* mark as dirty */
+					buffer->lines[i]->flags |= LINE_FLAG_DIRTY;
 				}
 				/* clear next line */
 				memset(buffer->lines[buffer->cursor.y + 1]->text, 0, buffer->lines[buffer->cursor.y + 1]->capacity);
@@ -366,6 +491,9 @@ static int textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
 			/* Move the cursor to the beginning of the new line */
 			buffer->cursor.x = 0;
 			buffer->cursor.y++;
+
+			/* mark as dirty */
+			buffer->lines[buffer->cursor.y]->flags |= LINE_FLAG_DIRTY;
 		} else {
 			/* Create a new line */
 			ret = textbuffer_new_line(buffer);
@@ -377,6 +505,9 @@ static int textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
 			for (size_t i = buffer->line_count - 1; i > buffer->cursor.y + 1; i--) {
 				memcpy(buffer->lines[i]->text, buffer->lines[i - 1]->text, buffer->lines[i - 1]->length);
 				buffer->lines[i]->length = buffer->lines[i - 1]->length;
+
+				/* mark as dirty */
+				buffer->lines[i]->flags |= LINE_FLAG_DIRTY;
 			}
 
 			/* clear next line */
@@ -398,11 +529,14 @@ static int textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
 			/* Move the cursor to the beginning of the new line */
 			buffer->cursor.x = 0;
 			buffer->cursor.y++;
+
+			/* mark as dirty */
+			buffer->lines[buffer->cursor.y]->flags |= LINE_FLAG_DIRTY;
 		}
 		if (buffer->cursor.y >= buffer->scroll.end + buffer->scroll.start) {
 			buffer->scroll.start++;
 		}
-	} else if (c >= ARROW_RIGHT && c <= ARROW_UP) {
+	} else if (c == ARROW_RIGHT || c == ARROW_LEFT || c == ARROW_UP || c == ARROW_DOWN) {
 		switch (c) {
 		case ARROW_RIGHT:
 			if (buffer->cursor.x < buffer->lines[buffer->cursor.y]->length) {
@@ -453,6 +587,9 @@ static int textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
 			/* Move the content from x to end forward one character */
 			for (size_t i = buffer->lines[buffer->cursor.y]->length; i > buffer->cursor.x; i--) {
 				buffer->lines[buffer->cursor.y]->text[i] = buffer->lines[buffer->cursor.y]->text[i - 1];
+
+				/* mark as dirty */
+				buffer->lines[buffer->cursor.y]->flags |= LINE_FLAG_DIRTY;
 			}
 		}
 
@@ -460,14 +597,34 @@ static int textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
 		buffer->lines[buffer->cursor.y]->text[buffer->cursor.x] = c;
 		buffer->lines[buffer->cursor.y]->length++;
 		buffer->cursor.x++;
+
+		/* mark as dirty */
+		buffer->lines[buffer->cursor.y]->flags |= LINE_FLAG_DIRTY;
 	}
 
 	return 0;
 }
 
 int main(int argc, char *argv[]) {
+
+
+#ifdef NCURSES
+    initscr();
+
+    if (has_colors() == FALSE) {
+        endwin();
+        printf("Your terminal does not support color\n");
+        return -1;
+    }
+
+    start_color();
+
+    noecho();
+    keypad(stdscr, TRUE);
+#endif // !NCURSES
+
 	int ret;
-	unsigned char c;
+	int c;
 	struct textbuffer *buffer = textbuffer_create();
 	if (buffer == NULL) {
 		return -1;
@@ -487,12 +644,17 @@ int main(int argc, char *argv[]) {
 		c = screen_get_char();
 		if (c == 0)
 			continue;
-		if (c == CTRLC)
-			break;
+		if (c == CTRLC){
+				ret = textbuffer_command_main(buffer);
+				textbuffer_display(buffer, VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
+				if(ret == -117) break;
+				continue;
+			}
 		if (c == CTRLS){
 			textbuffer_save_file(buffer, buffer->filename);
 			continue;
 		}
+
 		if (c == CTRLF){
 			ret = textbuffer_search_main(buffer);
 			textbuffer_display(buffer, VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
@@ -506,6 +668,11 @@ int main(int argc, char *argv[]) {
 	}
 
 	textbuffer_destroy(buffer);
+
+
+	#ifdef NCURSES
+	endwin();
+	#endif // !NCURSES
 
 	return 0;
 }

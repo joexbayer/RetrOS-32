@@ -251,6 +251,8 @@ static int __cc(int argc, char **argv)
 
     kfree(src);
 
+    terminal_commit();
+
     return 0;
 }
 

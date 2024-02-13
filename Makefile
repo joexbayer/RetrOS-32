@@ -7,7 +7,7 @@ ASFLAGS=
 LDFLAGS= 
 MAKEFLAGS += --no-print-directory
 
-QEMU_OPS = -device e1000,netdev=net0 -serial stdio -netdev user,id=net0,hostfwd=tcp::8080-:8080 -object filter-dump,id=net0,netdev=net0,file=dump.dat -m 32m
+QEMU_OPS = -display sdl -device e1000,netdev=net0 -serial stdio -netdev user,id=net0,hostfwd=tcp::8080-:8080 -object filter-dump,id=net0,netdev=net0,file=dump.dat -m 32m
 
 # ---------------- For counting how many files to compile ----------------
 ifneq ($(words $(MAKECMDGOALS)),1)
@@ -88,7 +88,7 @@ multiboot_kernel: bin/multiboot.o $(KERNELOBJ)
 symbols: bin/multiboot.o $(KERNELOBJ)
 	@echo "[KERNEL]     Creating symbols..."
 	@$(LD) -o bin/symbols $^ $(LDFLAGS) -T ./kernel/linkersym.ld
-	@nm -C -n bin/symbols | grep ' [Tt] ' | sed 's/ [Tt] / /' > rootfs/symbols.map
+	@nm -C -n bin/symbols | grep ' [Tt] ' | sed 's/ [Tt] / /' > rootfs/sysutil/symbols.map
 
 
 kernel: bin/kcrt0.o $(KERNELOBJ)
@@ -106,7 +106,7 @@ bin/%.o: */%.c
 	@$(ECHO) [KERNEL]     Compiling $<
 	@$(CC) -o $@ -c $< $(CCFLAGS)
 
-bin/%.o: */*/%.c
+bin/%.o: kernel/*/%.c
 	@$(ECHO) [PROGRAM]    Compiling $<
 	@$(CC) -o $@ -c $< $(CCFLAGS)
 
@@ -159,7 +159,7 @@ create_fs:
 
 bare: compile create_fs
 
-img: grub_fix tools compile symbols tests create_fs sync
+img: grub_fix tools compile symbols create_fs sync
 	@echo "Finished creating the image."
 	$(TIME-END)
 
