@@ -157,8 +157,6 @@ int kref_get(struct kref* ref);
 int kref_put(struct kref* ref);
 int kref_init(struct kref* ref);
 
-int32_t csprintf(char *buffer, const char *fmt, va_list args);
-
 int align_to_pointer_size(int size);
 unsigned char*  encode_run_length(const unsigned char* data, int length, unsigned char* out, int* encodedLength);
 unsigned char* decode_run_length(const unsigned char* encodedData, int encodedLength, unsigned char* out, int* decodedLength);
