@@ -1,53 +1,34 @@
-### RetrOS-32 v0.0.1 Makefile ###
-# This makefile only works in the 
-# RetrOS-32 Environment. It depends
-# on static libraries.
-##################################
-ROOT = ../../
-
-CCFLAGS=-m32 -O2 -Wall -Wextra -Wpedantic -Wstrict-aliasing \
-		-Wno-pointer-arith -Wno-unused-parameter -nostdlib \
-		-nostdinc -ffreestanding -fno-pie -fno-stack-protector \
-		-fno-builtin-function -fno-builtin -I $(ROOT)include/ -I $(ROOT)apps/
-MAKEFLAGS += --no-print-directory
+### Standard Unix Environment Makefile ###
+# This makefile is adapted to compile with ncurses
+# in a standard Unix-like environment.
+##############################################
+CC=gcc
+CPP=g++
+AS=as
+LD=ld
 UNAME := $(shell uname)
 ifeq ($(UNAME),Linux)
-	CC=gcc
-	CPP=g++
-	AS=as
-	LD=ld
-
-	CCFLAGS += -elf_i386
-	ASFLAGS += --32
-	LDFLAGS += -m elf_i386
+	CCFLAGS=-O2 -Wall -Wextra -Wpedantic -Iinclude/ -Iapps/
+	LDFLAGS=-lncurses
 else
-	CC=i386-elf-gcc
-	CPP=i386-elf-g++
-	AS=i386-elf-as
-	LD=i386-elf-ld
+	# For macOS, adjust as needed (e.g., clang, ncurses path)
+	CCFLAGS=-O2  -Iinclude/ -I/usr/local/opt/ncurses/include -DNCURSES 
+	LDFLAGS=-L/usr/local/opt/ncurses/lib -lncurses
 endif
 
 #### ONLY EDIT THIS ####
-OUTPUT = texed.o
-LIBS = -lcore
-EXTENDED = 
+OUTPUT = texed
+SRC_FILES = $(wildcard *.c)
+OBJ_FILES = $(SRC_FILES:%.c=%.o)
 ########################
 
-SRC_FILES = $(wildcard *.c)
-OBJ_FILES = $(SRC_FILES:%.c=$(OUTPUTDIR)%.o)
-OUTPUTDIR = ./bin/
-
-all: $(OUTPUT) install
-
-install: $(OUTPUT)
-	@cp $(OUTPUT) $(ROOT)rootfs/bin
+all: $(OUTPUT)
 
 $(OUTPUT): $(OBJ_FILES)
-	$(LD) -o $@ $(LDFLAGS) $^ -L$(ROOT)apps $(LIBS) $(EXTENDED) -T $(ROOT)apps/utils/linker.ld
+	$(CC) -o $@ $^ $(LDFLAGS)
 
-$(OUTPUTDIR)%.o: %.c
-	@mkdir -p $(OUTPUTDIR)
+%.o: %.c
 	$(CC) $(CCFLAGS) -c $< -o $@
 
 clean:
-	rm -rf $(OUTPUTDIR)* *.o *.d $(OUTPUT) .depend
+	rm -f *.o $(OUTPUT)
