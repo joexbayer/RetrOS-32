@@ -297,6 +297,8 @@ To run RetrOS-32:
   - [x] DNS
   - [x] TCP
   - [x] Netcat style commands
+  - [ ] FTP
+  - [ ] IRC
   - [ ] Telnet
   - [ ] HTTP
   - [ ] HTML
