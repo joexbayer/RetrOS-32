@@ -2,6 +2,7 @@
 #define __LIBC_H
 
 #include <stdint.h>
+#include <args.h>
 /*
     Type Name	32–bit Size	    64–bit Size
     short	    2 bytes	        2 bytes
@@ -43,6 +44,8 @@ void* memset (void *dest, int val, int len);
 void* memcpy(void *dest, const void *src, int n);
 void* xmemcpy(void *dest, const void *src, int n);
 void* memmove(void *dest, const void *src, size_t n);
+
+int32_t csprintf(char *buffer, const char *fmt, va_list args);
 
 int parse_arguments(const char *input_string, char tokens[10][100]);
 
