@@ -299,6 +299,7 @@ To run RetrOS-32:
   - [x] Netcat style commands
   - [ ] FTP
   - [ ] IRC
+  - [ ] SSH
   - [ ] Telnet
   - [ ] HTTP
   - [ ] HTML
