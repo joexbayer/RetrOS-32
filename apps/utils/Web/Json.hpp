@@ -21,7 +21,7 @@ public:
         if (index >= 0) {
             return entries[index].value;
         }
-        return nullptr; /* Key not found */
+        return nullptr; 
     }
 
     void set(const char* key, const char* value) {

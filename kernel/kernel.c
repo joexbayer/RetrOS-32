@@ -243,7 +243,10 @@ void kernel(uint32_t magic)
 		start("textshell", 0, NULL);	
 	}
 	start("workd", 0, NULL);
-	start("netd", 0, NULL);
+
+	if(kernel_config_check("network", "netd", "enable")){
+		start("netd", 0, NULL);
+	}
 	kernel_boot_printf("Deamons initialized.");
 
 	init_pit(1000);

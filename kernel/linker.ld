@@ -40,6 +40,4 @@ SECTIONS
 
     _bss_size = _bss_e - _bss_s;
     _kctor_table_size = _stop_kctor_table - _start_kctor_table;
-
-
 }

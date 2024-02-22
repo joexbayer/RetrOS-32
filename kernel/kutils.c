@@ -131,12 +131,14 @@ void kernel_panic(const char* reason)
 {
     ENTER_CRITICAL();
     
+    dbgprintf("KERNEL PANIC: %s\n", reason);
     //backtrace();
+    /* fill screen with blue */
+    memset((uint8_t*)vbe_info->framebuffer, 0x01, vbe_info->pitch * vbe_info->height);
 
     const char* message = "KERNEL PANIC";
     int message_len = strlen(message);
-   
-    PANIC();
+
     for (int i = 0; i < message_len; i++){
         vesa_put_char16((uint8_t*)vbe_info->framebuffer, message[i], 16+(i*16), vbe_info->height/3 - 24, 15);
     }

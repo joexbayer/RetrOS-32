@@ -340,13 +340,16 @@ static int wm_default_mouse_event(struct windowmanager* wm, int x, int y, char f
                 i->ops->click(i, x, y);
                 i->ops->mouseup(i, x, y);
 
-                /* Send mouse event */
-                struct gfx_event e = {
-                    .data = x2,
-                    .data2 = y2,
-                    .event = GFX_EVENT_MOUSE
-                };
-                gfx_push_event(i, &e);
+                /* Send mouse event to all windows that are not hidden */
+                if(!HAS_FLAG(i->flags, GFX_IS_HIDDEN)){
+                     /* Send mouse event */
+                    struct gfx_event e = {
+                        .data = x2,
+                        .data2 = y2,
+                        .event = GFX_EVENT_MOUSE
+                    };
+                    gfx_push_event(i, &e);
+                }
             }
 
             /* always send a hover event */

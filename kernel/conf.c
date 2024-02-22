@@ -162,7 +162,7 @@ int kernel_config_load(char* filename)
 }
 
 
-char* config_get_value(char* section, char* name)
+char* kernel_config_get_value(char* section, char* name)
 {
     for(int i = 0; i < __config.section_count; i++){
         struct config_section* sec = &__config.sections[i];
@@ -176,4 +176,16 @@ char* config_get_value(char* section, char* name)
         }
     }
     return NULL;
+}
+
+bool_t kernel_config_check(char* section, char* name, char* value)
+{
+    char* val = kernel_config_get_value(section, name);
+    if(val == NULL){
+        return false;
+    }
+    if(strcmp(val, value) == 0){
+        return true;
+    }
+    return false;
 }

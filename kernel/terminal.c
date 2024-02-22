@@ -167,12 +167,12 @@ struct terminal* terminal_create(terminal_flags_t flags)
 	term->bg_color = COLOR_BLACK;
 	term->screen = NULL;
 
-	char* bg_color = config_get_value("terminal", "background");
+	char* bg_color = kernel_config_get_value("terminal", "background");
 	if(bg_color != NULL){
 		term->bg_color = htoi(bg_color);
 	}
 
-	char* text_color = config_get_value("terminal", "text");
+	char* text_color = kernel_config_get_value("terminal", "text");
 	if(text_color != NULL){
 		term->text_color = htoi(text_color);
 		term->org_text_color = term->text_color;

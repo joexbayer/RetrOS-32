@@ -681,10 +681,10 @@ static int textshell_login(struct terminal* term)
 {
 	struct usermanager* usrman = $services->usermanager;
 
-	char* logon = config_get_value("system", "logon");
+	char* logon = kernel_config_get_value("system", "logon");
 	if(logon != NULL){
 		if(strcmp(logon, "disabled") == 0){
-			char* user = config_get_value("system", "user");
+			char* user = kernel_config_get_value("system", "user");
 			if(user != NULL){
 				struct user* u = usrman->ops->get(usrman, user);
 				if(u != NULL){
