@@ -1,5 +1,5 @@
 /**
- * @file util.c
+ * @file libc.c
  * @author Joe Bayer (joexbayer)
  * @brief Utility functions.
  * @version 0.1
@@ -41,6 +41,24 @@ int strlen(const char* str)
 	while (str[len])
 		len++;
 	return len;
+}
+
+/* Function to concatenate strings */
+char* strcat(char *dest, const char *src)
+{
+    char *ptr = dest;
+    while (*ptr != '\0') {
+        ptr++;
+    }
+
+    /* Copy characters from src to the end of dest */
+    while (*src != '\0') {
+        *ptr = *src;
+        ptr++;
+        src++;
+    }
+    *ptr = '\0';
+    return dest;
 }
 
 int strstr(const char* haystack, const char* needle)

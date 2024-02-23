@@ -29,13 +29,13 @@ extern "C"
 #endif
 
 int getopt(int argc, char* argv[], const char* optstring, char** optarg);
-char* strtok(char* str, const char* delim);
 
+char* strtok(char* str, const char* delim);
+char* strcat(char *dest, const char *src);
 int strstr(const char* str, const char* str2);
 char* strchr(const char* str, int ch);
 int strlen(const char* str);
 uint32_t strcpy(char* dest, const char* src);
-
 uint32_t strcmp(const char* str, const char* str2);
 uint32_t strncmp(const char* str, const char* str2, uint32_t len);
 

@@ -31,6 +31,7 @@ static int fat16_rmdir(struct filesystem* fs, const char* path);
 static int fat16_rename(struct filesystem* fs, const char* path, const char* new_path);
 static int fat16_stat(struct filesystem* fs, const char* path, struct file* file);
 static int fat16_list(struct filesystem* fs, const char* path, char* buf, int size);
+static int fat16_find(struct filesystem* fs, char* origin, const char* needle);
 
 /* filesystem_ops struct */
 static struct filesystem_ops fat16_ops = {
@@ -43,7 +44,8 @@ static struct filesystem_ops fat16_ops = {
     .rmdir = fat16_rmdir,
     .rename = fat16_rename,
     .stat = fat16_stat,
-    .list = fat16_list
+    .list = fat16_list,
+    .find = fat16_find
 };
 
 
@@ -506,5 +508,70 @@ static int fat16_list(struct filesystem* fs, const char* path, char* buf, int si
     }
 
     twritef("%d directory entries.\n", entries);
+    return 0;
+}
+
+static int fat16_find(struct filesystem* fs, char* path, const char* needle){
+    int ret;
+    int entries = 0;
+    struct fat16_directory_entry entry;
+    struct fat16_directory_entry parent_entry;
+
+    /* check if the directory exists */
+    struct fat16_file_identifier id = fat16_get_directory_entry((char*)path, &parent_entry);
+    if(id.directory < 0 || parent_entry.attributes != FAT16_FLAG_SUBDIRECTORY){
+        return -1;
+    }
+
+    /* read the directory entry */
+    ret = fat16_read_entry(id.directory, id.index, &entry);
+    if(ret != 0){
+        return -2;
+    }
+
+    for (int i = 0; i < (int)ENTRIES_PER_BLOCK; i++) {
+        struct fat16_directory_entry _list_entry = {0};
+        struct fat16_directory_entry* dir_entry = &_list_entry;
+
+        fat16_read_entry(entry.first_cluster == 0 ? get_root_directory_start_block() : get_data_start_block() + entry.first_cluster, i, dir_entry);
+
+        /* Check if the entry is used (filename's first byte is not 0x00 or 0xE5) */
+        if (dir_entry->filename[0] != 0x00 && dir_entry->filename[0] != 0xE5) {
+            if(dir_entry->filename[0] == '.'){
+                continue;
+            }
+
+            /* parse name */
+            char name[13] = {0};
+            int j = 0;
+            while(dir_entry->filename[j] != ' '){
+                name[j] = dir_entry->filename[j];
+                j++;
+            }
+
+            if(dir_entry->extension[0] != ' '){
+                name[j++] = '.';
+                for(int k = 0; k < 3; k++){
+                    name[j++] = dir_entry->extension[k];
+                }
+            }
+
+            name[j] = '\0';
+
+            if(strstr(name, needle) != -1){
+                twritef("%s%s%s\n", path, name, dir_entry->attributes & FAT16_FLAG_SUBDIRECTORY ? "/" : "");
+            }
+
+            if(dir_entry->attributes & FAT16_FLAG_SUBDIRECTORY){
+                char new_path[255] = {0};
+                memcpy(new_path, path, strlen(path));
+                strcat(new_path, name);
+                strcat(new_path, "/");
+                fat16_find(fs, new_path, needle);
+            }
+
+            entries++;
+        }
+    }
     return 0;
 }

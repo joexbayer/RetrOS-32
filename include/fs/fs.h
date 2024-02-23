@@ -43,6 +43,7 @@ struct filesystem_ops {
     int (*rename)(struct filesystem* fs, const char* path, const char* new_path);
     int (*stat)(struct filesystem* fs, const char* path, struct file* file);
     int (*list)(struct filesystem* fs, const char* path, char* buf, int size);
+    int (*find)(struct filesystem* fs, char* path, const char* needle);
 };
 
 /* filesystem flags as enum */
