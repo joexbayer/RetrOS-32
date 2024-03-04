@@ -65,10 +65,10 @@ static int login_startup(struct user* usr){
 void __kthread_entry login()
 {   
     /* check if logon is disabled and a default usr is set. */ 
-    char* logon = config_get_value("system", "logon");
+    char* logon = kernel_config_get_value("system", "logon");
     if(logon != NULL){
        if(strcmp(logon, "disabled") == 0){
-            char* username = config_get_value("system", "user");
+            char* username = kernel_config_get_value("system", "user");
             if(username != NULL){
                 struct user* usr = $services->usermanager->ops->get($services->usermanager, username);
                 if(usr == NULL){

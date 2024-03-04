@@ -16,7 +16,7 @@
 #include <math.h>
 #include <fs/fs.h>
 #else
-
+#include <locale.h>
 #include <ncurses.h>
 #include <stdint.h>
 #include <stdarg.h>
@@ -618,7 +618,7 @@ int main(int argc, char *argv[]) {
     }
 
     start_color();
-
+    setlocale(LC_ALL, "");
     noecho();
     keypad(stdscr, TRUE);
 #endif // !NCURSES

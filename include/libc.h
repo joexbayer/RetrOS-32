@@ -2,6 +2,7 @@
 #define __LIBC_H
 
 #include <stdint.h>
+#include <args.h>
 /*
     Type Name	32–bit Size	    64–bit Size
     short	    2 bytes	        2 bytes
@@ -28,13 +29,13 @@ extern "C"
 #endif
 
 int getopt(int argc, char* argv[], const char* optstring, char** optarg);
-char* strtok(char* str, const char* delim);
 
+char* strtok(char* str, const char* delim);
+char* strcat(char *dest, const char *src);
 int strstr(const char* str, const char* str2);
 char* strchr(const char* str, int ch);
 int strlen(const char* str);
 uint32_t strcpy(char* dest, const char* src);
-
 uint32_t strcmp(const char* str, const char* str2);
 uint32_t strncmp(const char* str, const char* str2, uint32_t len);
 
@@ -43,6 +44,8 @@ void* memset (void *dest, int val, int len);
 void* memcpy(void *dest, const void *src, int n);
 void* xmemcpy(void *dest, const void *src, int n);
 void* memmove(void *dest, const void *src, size_t n);
+
+int32_t csprintf(char *buffer, const char *fmt, va_list args);
 
 int parse_arguments(const char *input_string, char tokens[10][100]);
 

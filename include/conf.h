@@ -10,8 +10,8 @@
 #define CONFIG_MAX_NAME_LEN 32
 
 int kernel_config_load(char* filename);
-char* config_get_value(char* section, char* name);
+char* kernel_config_get_value(char* section, char* name);
 int config_list();
-
+bool_t kernel_config_check(char* section, char* name, char* value);
 
 #endif /* __KCONF_H__ */

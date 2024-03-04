@@ -222,6 +222,28 @@ static int view(int argc, char* argv[]){
 }
 EXPORT_KSYMBOL(view);
 
+static int find(int argc, char* argv[]){    
+    if(argc < 2) {
+        twritef("Usage: find <path>\n");
+        return 1;
+    }
+
+    struct filesystem* fs = fs_get();
+    if(fs == NULL){
+        twritef("No filesystem mounted.\n");
+        return -1;
+    }
+
+    if(fs->ops->find == NULL){
+        twritef("Filesystem does not support finding\n");
+        return -1;
+    }
+
+    fs->ops->find(fs, "/", argv[1]);
+    return 0;
+}
+EXPORT_KSYMBOL(find);
+
 static int file(int argc, char* argv[]){
     if(argc < 2) {
         twritef("Usage: file <path>\n");
@@ -387,7 +409,7 @@ static int conf(int argc, char *argv[])
             twritef("Usage: conf get <section> <value>\n");
             return 1;
         }
-        char* value = config_get_value(argv[2], argv[3]);
+        char* value = kernel_config_get_value(argv[2], argv[3]);
         if(value == NULL) {
             twritef("Value not found\n");
             return 1;
@@ -407,6 +429,18 @@ static int clear(){
     return 0;
 }
 EXPORT_KSYMBOL(clear);
+
+static panic(int argc, char *argv[])
+{
+    if(argc < 2) {
+        twritef("Usage: panic <message>\n");
+        return 1;
+    }
+
+    kernel_panic(argv[1]);
+    return 0;
+}
+EXPORT_KSYMBOL(panic);
 
 static int services(int argc, char *argv[])
 {

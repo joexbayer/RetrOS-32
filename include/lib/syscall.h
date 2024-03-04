@@ -30,6 +30,7 @@ void free(void* ptr);
 int thread_create(void* entry, void* arg, int flags);
 void yield();
 
+int system(const char* command);
 
 #ifdef __cplusplus
 }

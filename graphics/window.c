@@ -64,9 +64,9 @@ static struct window_draw_ops default_window_draw_ops = {
  */
 void gfx_draw_window(uint8_t* buffer, struct window* window)
 {
-    if(HAS_FLAG(window->flags, GFX_IS_HIDDEN)) return;
-
     struct gfx_theme* theme = kernel_gfx_current_theme();
+    int padding = HAS_FLAG(window->flags, GFX_HIDE_HEADER) ? 0 : 8;
+    int background_color = window->in_focus ? window->color.border == 0 ? theme->window.border : window->color.border : theme->window.border;
 
     if((window->is_moving.state == GFX_WINDOW_MOVING || window->resize) && !HAS_FLAG(window->flags, GFX_IS_IMMUATABLE)){
         vesa_striped_line_horizontal(buffer, window->x, window->y, window->width, COLOR_VGA_DARKEST_GRAY, 2);
@@ -85,11 +85,8 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
         return;
     }
 
-    int background_color = window->in_focus ? window->color.border == 0 ? theme->window.border : window->color.border : theme->window.border;
-
-    /* Copy inner window framebuffer to given buffer with relativ pitch. */
-    int padding = HAS_FLAG(window->flags, GFX_HIDE_HEADER) ? 0 : 8;
-    if(window->inner != NULL){
+    /* Copy inner window framebuffer to given buffer with relativ pitch.  If it is NOT hidden.*/
+    if(window->inner != NULL && !HAS_FLAG(window->flags, GFX_IS_HIDDEN)){
         int i, j, c = 0;
         for (j = window->y+padding; j < (window->y+padding+window->inner_height); j++)
             for (i = window->x+padding; i < (window->x+padding+window->inner_width); i++){
@@ -101,9 +98,7 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
             }
     }
 
-     if(!HAS_FLAG(window->flags, GFX_HIDE_HEADER)){
-          /* Header */
-            
+     if(!HAS_FLAG(window->flags, GFX_HIDE_HEADER)){            
         /* Draw main frame of window with title bar and borders */
 #ifdef __WINDOWS_95
         color_t header_color = window->in_focus ? 0x1 : COLOR_VGA_DARK_GRAY;
@@ -136,7 +131,7 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
         vesa_write_str(buffer, window->x+title_position+4, window->y-2, window->name, header_text_color);
     }
 
-    if(!HAS_FLAG(window->flags, GFX_HIDE_BORDER)){
+    if(!HAS_FLAG(window->flags, GFX_HIDE_BORDER) && !HAS_FLAG(window->flags, GFX_IS_HIDDEN)){
          /* bottom */
         vesa_fillrect(buffer, window->x+4, window->y+window->height-8, window->width-8, 4, theme->window.background);
         vesa_line_horizontal(buffer, window->x+4, window->y+window->height-4, window->width-8, COLOR_VGA_DARKEST_GRAY);
@@ -172,7 +167,7 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
 
         /* Minimize */
         vesa_inner_box(buffer, window->x+window->width-34+6,  window->y-3, 10, 9, theme->window.background);
-        vesa_write_str(buffer, window->x+window->width-32+6,  window->y-2, " ", COLOR_VGA_DARK_GRAY);
+        vesa_write_str(buffer, window->x+window->width-32+6,  window->y-2, "-", COLOR_VGA_DARK_GRAY);
 
         /* Exit */
         vesa_inner_box(buffer, window->x+window->width-22+6,  window->y-3, 10, 9, theme->window.background);
@@ -233,12 +228,13 @@ static void gfx_window_resize(struct window* w, int width, int height)
  */
 static void gfx_default_click(struct window* window, int x, int y)
 {
-    if(gfx_point_in_rectangle(window->x, window->y, window->x+window->width, window->y+10, x, y)){
-        
-    }
-
     if(HAS_FLAG(window->flags, GFX_NO_OPTIONS)) return;
     
+    if(gfx_point_in_rectangle(window->x, window->y, window->x+window->width, window->y+10, x, y)){
+        //dbgprintf("Clicked %s header\n", window->name);
+    }
+
+    /* Exit button */
     if (x >= window->x + window->width - 22 + 6 && x <= window->x + window->width - 22 + 6 + 10 && y >= window->y - 3 && y <= window->y - 3 + 9) {
         dbgprintf("[GFX WINDOW] Clicked %s exit button\n", window->name);
         struct gfx_event e = {
@@ -250,8 +246,23 @@ static void gfx_default_click(struct window* window, int x, int y)
         return; 
     }
 
-    if (x >= window->x + window->width - 46 + 6 && x <= window->x + window->width - 46 + 6 + 10 && y >= window->y - 3 && y <= window->y - 3 + 9 && window->is_resizable) {
+    /* Minimize button */
+    if (x >= window->x + window->width - 34 + 6 && x <= window->x + window->width - 34 + 6 + 10 && y >= window->y - 3 && y <= window->y - 3 + 9) {
+        dbgprintf("[GFX WINDOW] Clicked %s minimize button\n", window->name);
         
+        /* toggle IS_HIDDEN flag */
+        if(HAS_FLAG(window->flags, GFX_IS_HIDDEN)){
+            window->flags &= ~GFX_IS_HIDDEN;
+        } else {
+            window->flags |= GFX_IS_HIDDEN;
+        }
+
+        window->changed = true;
+        return;
+    }
+
+    /* Full screen button */
+    if (x >= window->x + window->width - 46 + 6 && x <= window->x + window->width - 46 + 6 + 10 && y >= window->y - 3 && y <= window->y - 3 + 9 && window->is_resizable) {
         dbgprintf("[GFX WINDOW] Clicked %s full screen button\n", window->name);
         if(window->is_maximized.state == 0){
             window->is_maximized.state = 1;
@@ -259,29 +270,21 @@ static void gfx_default_click(struct window* window, int x, int y)
             window->is_maximized.height = window->height;
 
             window->ops->maximize(window);
-            struct gfx_event e = {
-                .data = window->inner_width,
-                .data2 = window->inner_height,
-                .event = GFX_EVENT_RESOLUTION
-            };
-            gfx_push_event(window, &e);
-            
+
         } else {
             window->is_maximized.state = 0;
             window->width = window->is_maximized.width;
             window->height = window->is_maximized.height;
 
             window->ops->resize(window, window->width-16, window->height-16);
-
-            struct gfx_event e = {
-                .data = window->inner_width,
-                .data2 = window->inner_height,
-                .event = GFX_EVENT_RESOLUTION
-            };
-            gfx_push_event(window, &e);
         }
-        
-        /* maximize widnow */
+
+        struct gfx_event e = {
+            .data = window->inner_width,
+            .data2 = window->inner_height,
+            .event = GFX_EVENT_RESOLUTION
+        };
+        gfx_push_event(window, &e);
 
         window->is_moving.state = GFX_WINDOW_STATIC;
         window->is_moving.x = x;
