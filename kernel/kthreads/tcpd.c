@@ -91,7 +91,6 @@ void __kthread_entry tcp_server()
                 dbgprintf("Client disconnected\n");
                 break;
             }
-
             buffer[ret] = 0;
 
             exec_cmd(buffer);

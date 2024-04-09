@@ -65,6 +65,16 @@ int sys_scr_set_cursor(int x, int y)
 }
 EXPORT_SYSCALL(SYSCALL_SET_CURSOR, sys_scr_set_cursor);
 
+static int sys_system(const char *command)
+{
+    int ret = 0;
+
+    ret = exec_cmd(command);
+
+    return ret;
+}
+EXPORT_SYSCALL(SYSCALL_SYSTEM, sys_system);
+
 
 int system_call(int index, int arg1, int arg2, int arg3)
 {	

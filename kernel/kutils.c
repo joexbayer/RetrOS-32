@@ -35,6 +35,16 @@ void system_reboot()
     HLT();
 }
 
+/* Function to shut down the system */
+void system_shutdown()
+{
+    ENTER_CRITICAL();
+    outportw(0x604, 0x2000);
+
+    /* Halt the CPU as a fail-safe in case shutdown does not initiate */
+    HLT();
+}
+
 /* Function to align a given size to the size of a void* */
 int align_to_pointer_size(int size)
 {
@@ -46,16 +56,6 @@ int align_to_pointer_size(int size)
 
     return aligned_size;
 }
-
-static int sys_system(const char *command)
-{
-    int ret = 0;
-
-    ret = exec_cmd(command);
-
-    return ret;
-}
-EXPORT_SYSCALL(SYSCALL_SYSTEM, sys_system);
 
 int exec_cmd(char* str)
 {

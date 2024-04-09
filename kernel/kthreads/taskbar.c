@@ -58,6 +58,7 @@ static void __callback taskbar_sysinf();
 static void __callback taskbar_about();
 static void __callback taskbar_readme();
 static void __callback taskbar_reboot();
+static void __callback taskbar_shutdown();
 
 /* prototype to taskbar thread */
 static void __kthread_entry taskbar(void);
@@ -201,7 +202,12 @@ struct taskbar_options {
                     .icon = desktop_16,
                     .name = "Reboot",
                     .callback = &taskbar_reboot
-                }
+                },
+                {
+                    .icon = desktop_16,
+                    .name = "Shutdown",
+                    .callback = &taskbar_shutdown
+                }, 
             }
         },
     }
@@ -494,6 +500,11 @@ static void __callback __reboot(int opt)
     if(opt == MSGBOX_OK) system_reboot();
 }
 
+static void __callback __shutdown(int opt)
+{
+    if(opt == MSGBOX_OK) system_shutdown();
+}
+
 static void __callback taskbar_reboot(){
     struct msgbox* box = msgbox_create(
         MSGBOX_TYPE_INFO,
@@ -504,4 +515,15 @@ static void __callback taskbar_reboot(){
     msgbox_show(box);
 
     //reboot();
+}
+
+static void __callback taskbar_shutdown()
+{
+     struct msgbox* box = msgbox_create(
+        MSGBOX_TYPE_INFO,
+        MSGBOX_BUTTON_OK | MSGBOX_BUTTON_CANCEL,
+        "Shutdown", "Do you want to shutdown?",
+        &__shutdown
+    );
+    msgbox_show(box);
 }

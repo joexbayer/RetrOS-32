@@ -163,6 +163,7 @@ unsigned char* decode_run_length(const unsigned char* encodedData, int encodedLe
 int exec_cmd(char* str);
 void kernel_panic(const char* reason);
 void system_reboot();
+void system_shutdown();
 
 unsigned int advanced_hash(char *input);
 
