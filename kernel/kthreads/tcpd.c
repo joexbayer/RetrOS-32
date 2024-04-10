@@ -85,7 +85,6 @@ void __kthread_entry tcp_server()
 
         while(1){
             char buffer[100];
-
             int ret = kernel_recv(client, buffer, 2000, 0);
             if(ret <= 0){
                 dbgprintf("Client disconnected\n");

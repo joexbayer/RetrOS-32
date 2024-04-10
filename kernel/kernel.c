@@ -237,12 +237,13 @@ void kernel(uint32_t magic)
 	$services->kevents->ops->init($services->kevents);
 
 	start("idled", 0, NULL);
+	start("workd", 0, NULL);
+
 	if(__kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
 		start("wind", 0, NULL);
 	} else {
 		start("textshell", 0, NULL);	
-	}
-	start("workd", 0, NULL);
+	}	
 
 	if(kernel_config_check("network", "netd", "enable")){
 		start("netd", 0, NULL);
