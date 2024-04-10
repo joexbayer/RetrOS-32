@@ -211,6 +211,7 @@ int parse_arguments(const char *input_string, char tokens[10][100]) {
     int token_start = -1;  /* Index of start of current token */
     int token_end = -1;  /* Index of end of current token */
     int i;
+
     /* Tokenize input string using space as delimiter */
     for (i = 0; input_string[i] != '\0'; i++) {
         char c = input_string[i];
@@ -403,13 +404,11 @@ void* memcpy(void *dest, const void *src, int n)
 	uint8_t* src8 		= ((uint8_t*) src) + num_dwords * 4;
 	uint32_t i;
 
-	for (i=0; i < num_dwords; i++)
-	{
+	for (i=0; i < num_dwords; i++){
 		dest32[i] = src32[i];
 	}
 
-	for (i=0; i < num_bytes; i++)
-	{
+	for (i=0; i < num_bytes; i++){
 		dest8[i] = src8[i];
 	}
 
@@ -459,12 +458,11 @@ inline void* memset(void *dest, int val, int n)
 	uint32_t val32      = val|(val << 8) | (val << 16) | (val << 24);
 	uint32_t i;
 
-	for (i=0; i < num_dwords; i++)
-	{
+	for (i=0; i < num_dwords; i++){
 		dest32[i] = val32;
 	}
-	for (i=0; i < num_bytes; i++)
-	{
+
+	for (i=0; i < num_bytes; i++){
 		dest8[i] = val8;
 	}
 
@@ -491,8 +489,7 @@ inline void reverse(char s[])
 {
 	int c, i, j;
 
-	for (i = 0, j = strlen(s)-1; i < j; i++, j--)
-	{
+	for (i = 0, j = strlen(s)-1; i < j; i++, j--){
 		c = s[i];
 		s[i] = s[j];
 		s[j] = c;

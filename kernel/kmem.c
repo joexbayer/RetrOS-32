@@ -32,9 +32,9 @@
 static uint32_t KERNEL_MEMORY_START = 0;
 static uint32_t KERNEL_MEMORY_END = 0;
 
-static uint8_t* __kmemory_bitmap;
+static uint8_t*   __kmemory_bitmap;
 static spinlock_t __kmemory_lock = 0;
-static uint32_t __kmemory_used = 0;
+static uint32_t   __kmemory_used = 0;
 
 static inline int __kmemory_find_blocks(int num_blocks, int total_blocks)
 {
@@ -97,8 +97,6 @@ void* kalloc(int size)
         /* No contiguous free region of memory was found */
         warningf("Out of memory: %d\n", __kmemory_used);
         kernel_panic("Out of memory!");
-        spin_unlock(&__kmemory_lock);
-        return NULL;
     }
 
     __kmemory_mark_blocks(start_block, num_blocks);

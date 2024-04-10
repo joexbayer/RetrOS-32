@@ -26,15 +26,22 @@ void add_system_call(int index, syscall_t fn)
 	syscall[index] = fn;
 }
 
+/**
+ * @brief Function to create a userspace thread 
+ * 
+ * @param entry entry point of the thread
+ * @param arg argument to pass to the thread
+ * @param flags flags for the thread
+ * @return int 
+ */
 int sys_create_thread(void (*entry)(), void* arg, byte_t flags)
 {
 	return pcb_create_thread($process->current, entry, arg, flags);
 }
 EXPORT_SYSCALL(SYSCALL_CREATE_THREAD, sys_create_thread);
 
-/* Macro to deserialize a short back into a character */
+/* Helper macros */
 #define DESERIALIZE_CHAR(serialized) ((char)((serialized) >> 8))
-/* Macro to deserialize a short back into a color */
 #define DESERIALIZE_COLOR(serialized) ((char)(serialized))
 int sys_screen_put(int x, int y, short packet)
 {
@@ -67,11 +74,7 @@ EXPORT_SYSCALL(SYSCALL_SET_CURSOR, sys_scr_set_cursor);
 
 static int sys_system(const char *command)
 {
-    int ret = 0;
-
-    ret = exec_cmd(command);
-
-    return ret;
+    return exec_cmd(command);
 }
 EXPORT_SYSCALL(SYSCALL_SYSTEM, sys_system);
 
