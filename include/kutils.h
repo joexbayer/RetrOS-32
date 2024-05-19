@@ -15,6 +15,24 @@
 #define ECX ({ unsigned int ecx; __asm__ __volatile__ ("mov %%ecx, %0" : "=r" (ecx)); ecx; })
 #define EDX ({ unsigned int edx; __asm__ __volatile__ ("mov %%edx, %0" : "=r" (edx)); edx; })
 
+struct registers_dump {
+    unsigned int eax;
+    unsigned int ebx;
+    unsigned int ecx;
+    unsigned int edx;
+    unsigned int esi;
+    unsigned int edi;
+    unsigned int ebp;
+    unsigned int esp;
+    unsigned int eip;
+    unsigned int eflags;
+    unsigned int cr0;
+    unsigned int cr2;
+    unsigned int cr3;
+    unsigned int cr4;
+    unsigned int gs;
+};
+
 #define lcr0(val) __asm__ __volatile__ ("mov %0, %%cr0" : : "r" (val))
 #define lcr3(val) __asm__ __volatile__ ("mov %0, %%cr3" : : "r" (val))
 #define lcr4(val) __asm__ __volatile__ ("mov %0, %%cr4" : : "r" (val))
@@ -167,5 +185,9 @@ void system_shutdown();
 
 unsigned int advanced_hash(char *input);
 
+void disassemble(uint8_t *code_buffer, int size, uint32_t* base_address);
+int kregisters(struct registers_dump* regs);
+
+int kfunc_size(void (*func)());
 
 #endif /* __KERNEL_UTILS_H */

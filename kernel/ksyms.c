@@ -167,6 +167,14 @@ uintptr_t ksyms_resolve_symbol(const char* name)
         }
     }
 
+    for (int i = 0; i < __symbols->num_symbols; i++) {
+        int sym_namelen = strlen(__symbols->symtable[i].name);
+        int namelen = strlen(name);
+        if(memcmp(name, __symbols->symtable[i].name, namelen) == 0 && sym_namelen == namelen){
+            return __symbols->symtable[i].addr;
+        }
+    }
+
     return 0;
 }
 
