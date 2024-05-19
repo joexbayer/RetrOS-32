@@ -22,6 +22,18 @@ extern "C" {
 #include "vm.h"
 //#include "interpreter.h"
 
+struct struct_type {
+    char* name; // Name of the struct
+    int size;   // Size of the struct
+    struct member* members; // Pointer to members
+};
+
+struct member {
+    char* name;  // Name of the member
+    int type;    // Type of the member
+    int offset;  // Offset from the start of the struct
+};
+
 struct identifier {
     int token;
     int hash;

@@ -106,7 +106,7 @@ int kernel_config_load(char* filename)
 
     while (*line != '\0' && (line - buf) < len) {
         /* Skip leading newlines */
-        while (*line == '\n' && (line - buf) < len) line++;
+        while ((*line == '\n' || *line == '\r') && (line - buf) < len) line++;
 
         /* Parse section */
         if (*line == '[') {

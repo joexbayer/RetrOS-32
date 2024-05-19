@@ -11,6 +11,7 @@
  * @copyright Copyright (c) 2023
  */
 
+#include <kutils.h>
 #include <kernel.h>
 #include <ksyms.h>
 #include <terminal.h>
@@ -153,6 +154,126 @@ static int help(int argc, char* argv[])
     return 0;
 }
 EXPORT_KSYMBOL(help);
+
+int joe(int argc, char* argv[])
+{
+    int a;
+    int b;
+    int c;
+
+    a = argc;
+    b = 2;
+    c = a + b;
+
+    return c;
+}
+
+static int dump(int argc, char* argv[])
+{
+    if(argc < 2) {
+        twritef("Usage: dump <address>\n");
+        return 1;
+    }
+
+    void* addr = (void*) htoi(argv[1]);
+    hexdump(addr, 256);
+
+    return 0;
+}
+EXPORT_KSYMBOL(dump);
+
+static int dumpfn(int argc, char* argv[])
+{
+    if(argc < 2) {
+        twritef("Usage: dumpfn <function>\n");
+        return 1;
+    }
+
+    uintptr_t addr = ksyms_resolve_symbol(argv[1]);
+    if(addr == 0) {
+        twritef("Symbol not found\n");
+        return 1;
+    }
+
+    int sz = kfunc_size((void*) addr);
+    twritef("Dumping %s (addr: 0x%x, size: %d)\n", argv[1], addr, sz);
+    hexdump((void*) addr, sz);
+
+    return 0;
+}
+EXPORT_KSYMBOL(dumpfn);
+
+static int regs(int argc, char* argv[])
+{
+    struct registers_dump regs;
+    kregisters(&regs);
+
+    twritef("Registers:\n");
+    twritef("EAX: %x\n", regs.eax);
+    twritef("EBX: %x\n", regs.ebx);
+    twritef("ECX: %x\n", regs.ecx);
+    twritef("EDX: %x\n", regs.edx);
+    twritef("ESI: %x\n", regs.esi);
+    twritef("EDI: %x\n", regs.edi);
+    twritef("EBP: %x\n", regs.ebp);
+    twritef("ESP: %x\n", regs.esp);
+    twritef("EIP: %x\n", regs.eip);
+    twritef("EFLAGS: %x\n", regs.eflags);
+    twritef("CR0: %x\n", regs.cr0);
+    twritef("CR2: %x\n", regs.cr2);
+    twritef("CR3: %x\n", regs.cr3);
+    twritef("CR4: %x\n", regs.cr4);
+    twritef("GS: %x\n", regs.gs);
+    
+    return 0;
+}
+EXPORT_KSYMBOL(regs);
+
+int syms(int args, char* argv[])
+{
+    ksyms_list();
+    return 0;
+}
+EXPORT_KSYMBOL(syms);
+
+int disas(int argc, char* argv[])
+{
+    if(argc < 2) {
+        twritef("Usage: disassemble <function>\n");
+        return 1;
+    }
+
+    uintptr_t addr = ksyms_resolve_symbol(argv[1]);
+    if(addr == 0) {
+        twritef("Symbol not found\n");
+        return 1;
+    }
+
+    int sz = kfunc_size((void*) addr);
+    twritef("Disassembling %s (addr: 0x%x, size: %d)\n", argv[1], addr, sz);
+    disassemble((uint8_t*) addr, sz, addr);
+
+    return 0;
+}
+EXPORT_KSYMBOL(disas);
+
+int resolve(int argc, char* argv[])
+{
+    if(argc < 2) {
+        twritef("Usage: resolve <symbol>\n");
+        return 1;
+    }
+
+    uintptr_t addr = ksyms_resolve_symbol(argv[1]);
+    if(addr == 0) {
+        twritef("Symbol not found\n");
+        return 1;
+    }
+
+    twritef("Symbol %s resolved to 0x%x\n", argv[1], addr);
+    return 0;
+}
+EXPORT_KSYMBOL(resolve);
 
 static int kevents(int argc, char* argv[])
 {

@@ -159,7 +159,7 @@ create_fs:
 
 bare: compile create_fs
 
-img: grub_fix tools compile symbols create_fs sync
+img: tools compile symbols create_fs sync
 	@echo "Finished creating the image."
 	$(TIME-END)
 
