@@ -37,7 +37,11 @@ struct gfx_theme macos = {
         .text = COLOR_VGA_FG
     },
     .window = {
+        
         .border = COLOR_VGA_LIGHT_GRAY,
+        .border_accent_light = COLOR_VGA_LIGHTER_GRAY+2,
+        .border_accent_dark = COLOR_VGA_DARKEST_GRAY,
+
         .background = COLOR_VGA_LIGHTER_GRAY+1,
         .text = COLOR_VGA_MEDIUM_GRAY
     },
