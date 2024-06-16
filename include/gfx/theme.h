@@ -14,6 +14,8 @@ struct gfx_theme {
 
     struct {
         color_t border;
+        color_t border_accent_light;
+        color_t border_accent_dark;
         color_t background;
         color_t text;
     } window;
