@@ -78,6 +78,8 @@ struct gfx_theme temple_os_theme = {
     },
     .window = {
         .border = 0x1,
+        .border_accent_dark = 0x1,
+        .border_accent_light = 0x1,
         .background = 15,
         .text = 0x1
     },

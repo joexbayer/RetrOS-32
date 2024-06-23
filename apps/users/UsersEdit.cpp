@@ -49,6 +49,11 @@ public:
         bottom->addWidget(new Button(50, 14, "Create", Function([this]() {
             printf("Username: %s\n", ((Input*)widgets->getByTag("#username"))->getData()); 
             printf("Password: %s\n", ((Input*)widgets->getByTag("#password"))->getData());
+
+            char buffer[100];
+            sprintf(buffer, "admin create %s %s", ((Input*)widgets->getByTag("#username"))->getData(), ((Input*)widgets->getByTag("#password"))->getData());
+
+            system(buffer);
         })), RIGHT);
 
 
