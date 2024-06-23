@@ -135,6 +135,15 @@ inline inline uint32_t memcmp(const void* ptr, const void* ptr2, uint32_t len)
 
 #define MAX_FMT_STR_SIZE 256
 
+int32_t sprintf(char *buffer, const char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    int32_t ret = csprintf(buffer, fmt, args);
+    va_end(args);
+    return ret;
+}
+
 /* Custom sprintf function */
 int32_t csprintf(char *buffer, const char *fmt, va_list args)
 {

@@ -13,7 +13,7 @@ void print_write(const char* data, int size);
 void print(const char* data);
 void println(const char* data);
 int printf(const char* fmt, ...);
-int sprintf(char *buffer, const char *fmt, va_list args);
+int sprintf(char *buffer, const char *fmt, ...);
 
 #ifdef __cplusplus
 }
