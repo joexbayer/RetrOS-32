@@ -95,7 +95,7 @@ void page_fault_interrupt(unsigned long cr2, unsigned long err)
 	print_page_fault_info(cr2);
 
 	pcb_dbg_print($process->current);
-	if($process->current->is_process){
+	if($process->current->is_process && $process->current->in_kernel == false){
 		struct msgbox* box = msgbox_create(MSGBOX_TYPE_WARNING, MSGBOX_BUTTON_OK, "Crash Report", " A program has crashed!", NULL);
 		msgbox_show(box);
 		kernel_exit();

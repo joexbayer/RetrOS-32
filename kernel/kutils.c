@@ -22,6 +22,7 @@
 #include <kutils.h>
 #include <syscalls.h>
 #include <syscall_helper.h>
+#include <errors.h>
 
 static char *units[] = {"b ", "kb", "mb"};
 
@@ -59,6 +60,8 @@ int align_to_pointer_size(int size)
 
 int exec_cmd(char* str)
 {
+    ERR_ON_NULL_PTR(str);
+
     struct args args = {
         .argc = 0
     };

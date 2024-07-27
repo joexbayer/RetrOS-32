@@ -47,7 +47,6 @@ struct process* $process = &__process;
  * Current running PCB, used for context aware
  * functions such as windows drawing to the screen.
  */
-
 const char* pcb_status[] = {"stopped ", "running ", "new     ", "blocked ", "sleeping", "zombie"};
 static int pcb_count = 0;
 
@@ -138,6 +137,7 @@ static struct pcb* __pcb_get_free()
 			pcb->argv = NULL;
 			pcb->current_directory = 0;
 			pcb->yields = 0;
+			pcb->in_kernel = false;
 
 			return pcb;
 		}
@@ -503,8 +503,11 @@ error_t pcb_create_kthread(void (*entry)(), char* name, int argc, char** argv)
 	pcb->user = $process->current->user;
 
 	pcb->thread_eip = (uintptr_t) entry;
-	pcb->page_dir = kernel_page_dir;
+	pcb->page_dir = kernel_page_dir; /* This should probably be in some global $ config */
 	pcb->ctx.eip = (uint32_t)&kthread_entry;
+	
+	/* kthreads always run in kernel */
+	pcb->in_kernel = true;
 
 	pcb->cs = GDT_KERNEL_CS;
 	pcb->ds = GDT_KERNEL_DS;
@@ -531,6 +534,7 @@ error_t pcb_create_kthread(void (*entry)(), char* name, int argc, char** argv)
 	get_scheduler()->ops->add(get_scheduler(), pcb);
 
 	pcb_count++;
+	
 	dbgprintf("Added %s, PID: %d, Stack: 0x%x\n", name, pcb->pid, pcb->kesp);
 	LEAVE_CRITICAL();
 	return pcb->pid;
