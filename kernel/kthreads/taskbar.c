@@ -231,7 +231,6 @@ static void taskbar_hdr_event(struct window* w, struct taskbar_header* header, i
         w->draw->rect(w, header->x, header->y+20, TASKBAR_EXT_OPT_WIDTH, TASKBAR_EXT_OPT_HEIGHT, 30);
 
         w->draw->rect(w, header->x, header->y+20, TASKBAR_EXT_OPT_WIDTH, 1, COLOR_VGA_LIGHTER_GRAY+1);
-        /* draw border around previous rect in light gray */
         /* bottom */
         w->draw->rect(w, header->x, header->y+21+TASKBAR_EXT_OPT_HEIGHT-2, TASKBAR_EXT_OPT_WIDTH, 1, COLOR_VGA_DARK_GRAY);
         w->draw->rect(w, header->x, header->y+20+TASKBAR_EXT_OPT_HEIGHT-2, TASKBAR_EXT_OPT_WIDTH, 1, COLOR_VGA_DARK_GRAY+8);
@@ -254,11 +253,6 @@ static void taskbar_hdr_event(struct window* w, struct taskbar_header* header, i
                 gfx_put_icon16(header->options[j].icon, header->x+4, header->y+20 + (j*TASKBAR_OPTIONS_HEIGHT) + 4);
             }
             w->draw->text(w, header->x+24, header->y+20 + (j*TASKBAR_OPTIONS_HEIGHT) + 8, header->options[j].name, COLOR_BLACK);
-            
-
-            
-
-            //w->draw->rect(w, header->x, header->y+18 + (j*8) +4+9, TASKBAR_EXT_OPT_WIDTH, 1, COLOR_VGA_DARK_GRAY);
         }
     }
 }

@@ -173,19 +173,19 @@ static int ws_set_background(struct windowserver* ws, color_t color)
     WS_VALIDATE(ws);
 
     memset(ws->background, color, VBE_SIZE());
-    // int j, i;
-    // for (i = 0; i < 640; i++) {
-    //     for (j = 0; j < 480; j++) {
-    //         /* Checkered pattern */
-    //         int size = 30;
-    //         int spacing = 10;
-    //         int dot_size = 2;
+    int j, i;
+    for (i = 0; i < 640; i++) {
+        for (j = 0; j < 480; j++) {
+            /* Checkered pattern */
+            int size = 30;
+            int spacing = 10;
+            int dot_size = 2;
 
-    //         DIAMONDS();
+            DIAMONDS();
             
-    //         vesa_put_pixel(ws->background, i, j, color);
-    //     }
-    // }
+            vesa_put_pixel(ws->background, i, j, color);
+        }
+    }
 
 
 
@@ -325,6 +325,9 @@ static int ws_draw(struct windowserver* ws)
     
     if((ws->window_changes || mouse_changed ) && !ws->_is_fullscreen){
         memcpy(ws->_wm->composition_buffer, ws->background, ws->_wm->composition_buffer_size);
+
+        /* write current workspace at the right bottom of screen */
+        vesa_printf(ws->_wm->composition_buffer, 8, vbe_info->height -8, 0x1F, "Workspace %d", ws->workspace);
 
         ws->_wm->ops->draw(ws->_wm, ws->_wm->windows);
         vesa_put_icon16(ws->_wm->composition_buffer, ws->m.x, ws->m.y);

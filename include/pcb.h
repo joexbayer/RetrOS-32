@@ -83,6 +83,9 @@ struct pcb {
     uint32_t* page_dir;
     uint32_t data_size;
 
+    /* PCBs that fault in kernel panic. */
+    bool_t in_kernel;
+
     /* stats */
     int kallocs;
     int preempts;
@@ -104,6 +107,7 @@ struct pcb {
     struct pcb *prev;
 }__attribute__((__packed__));
 
+/* This is the information we expose to userspace */
 struct pcb_info {
     uint8_t pid;
     uint8_t state;
