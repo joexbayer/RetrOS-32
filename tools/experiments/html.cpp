@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstring>
 
 #define MAX_TAG_NAME_LENGTH 10
 #define MAX_ATTR_NAME_LENGTH 15
@@ -30,6 +31,31 @@ HTMLTag stringToHTMLTag(const char* str) {
     if (strncmp(str, "layout", 6) == 0) return Layout;
     if (strncmp(str, "spacing", 7) == 0) return Spacing;
     return Unknown;
+}
+
+const char* htmlTagToString(HTMLTag tag) {
+    switch (tag) {
+    case Html:
+        return "html";
+    case Body:
+        return "body";
+    case P:
+        return "p";
+    case Input:
+        return "input";
+    case Checkbox:
+        return "checkbox";
+    case Button:
+        return "button";
+    case Label:
+        return "label";
+    case Layout:
+        return "layout";
+    case Spacing:
+        return "spacing";
+    default:
+        return "unknown";
+    }
 }
 
 /* Structure for HTML attributes */
@@ -191,7 +217,7 @@ private:
             std::cout << "  ";
         }
         if (node->isTag) {
-            std::cout << "Tag: " << static_cast<int>(node->tag);
+            std::cout << "Tag: " << htmlTagToString(node->tag);
             /* Print attributes if any */
             for (int i = 0; i < node->attr_count; ++i) {
                 std::cout << " [" << node->attributes[i].name << "=\"" << node->attributes[i].value << "\"]";
