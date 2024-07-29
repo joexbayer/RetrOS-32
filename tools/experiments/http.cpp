@@ -28,10 +28,20 @@ private:
     String body;
 };
 
+// Controllers should get engine from constructor.
+// I want to be able to add syntax like this: app.addService<MyController>(Singleton);
+
+
 class MyEngine : public HTTPEngine {
 public:
     MyEngine() {}
     void init();
+
+    template <typename T>
+    void addService(int lifetime) {
+        size_t type_id = getTypeID<T>();
+    }
+
 private:
     String body;
 };
@@ -40,7 +50,6 @@ void MyEngine::init() {
     MyController controller;
 
 }
-
 
 int main() {
     String str(exmaple);
