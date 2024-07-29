@@ -142,6 +142,8 @@ static int wm_default_workspace(struct windowmanager* wm, int workspace)
 {
     ERR_ON_NULL(wm);
 
+    dbgprintf("Switching to workspace %d\n", workspace);
+
     if(workspace < 0 || workspace >= WM_MAX_WORKSPACES){
         return -ERROR_INVALID_ARGUMENTS;
     }

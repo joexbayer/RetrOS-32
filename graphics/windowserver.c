@@ -280,7 +280,6 @@ static int __ws_key_event(struct windowserver* ws, unsigned char key)
     case F10:{
             /* Fullscreen of window current in focus*/
             struct window* w = ws->_wm->windows;
-
             ws->ops->fullscreen(ws, w);
 
             struct gfx_event e = {
@@ -293,7 +292,8 @@ static int __ws_key_event(struct windowserver* ws, unsigned char key)
         break;
     case TAB: {
             dbgprintf("[WSERVER] Switching focus.\n");
-            ws->_wm->ops->push_back(ws->_wm, ws->_wm->windows);
+            struct windowmanager* wm = ws->_wm;
+            wm->ops->push_back(wm, wm->windows);
         }
         break;
     default: {
