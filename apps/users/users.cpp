@@ -5,6 +5,7 @@
 #include <utils/Function.hpp>
 #include <libc.h>
 #include <colors.h>
+#include <lib/printf.h>
 
 #include "Users.hpp"
 

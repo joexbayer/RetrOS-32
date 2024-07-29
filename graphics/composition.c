@@ -92,8 +92,6 @@ int gfx_set_taskbar(pid_t pid)
 
 void __kthread_entry gfx_compositor_main()
 {
-    /* memory test */
-
     ws = ws_new();
     if(ws == NULL){
         dbgprintf("[WSERVER] Could not allocate memory for window server.\n");

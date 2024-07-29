@@ -16,7 +16,7 @@
 #include <utils/Graphics.hpp>
 #include <utils/Function.hpp>
 #include <utils/StdLib.hpp>
-
+#include <lib/printf.h>
 
 #define MAX_WIDGETS 32
 #define MAX_LAYOUTS 32
