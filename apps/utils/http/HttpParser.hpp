@@ -185,15 +185,15 @@ public:
     class Route {
     public:
         Route(const char* path, HTTPMethod method, Function handler) : m_path(path), m_method(method), m_handler(handler) {}
-
+    
         const String& getPath() const {
             return m_path;
         }
-
+    
         HTTPMethod getMethod() const {
             return m_method;
         }
-
+    
     private:
         String m_path;
         HTTPMethod m_method;
@@ -205,15 +205,12 @@ public:
         Controller() {}
 
         void addRoute(const Route& route) {
-            m_routes.push(route);
+            //m_routes.push(route);
         }
 
-        const List<Route>& getRoutes() const {
-            return m_routes;
-        }
     private:
         HTTPResponse m_response;
-        List<Route> m_routes;
+        //List<Route> m_routes;
     };
 
     HTTPEngine() {}
