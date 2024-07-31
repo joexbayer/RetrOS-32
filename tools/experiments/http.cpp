@@ -39,7 +39,6 @@ public:
 
     template <typename T>
     void addService(int lifetime) {
-        size_t type_id = getTypeID<T>();
     }
 
 private:
