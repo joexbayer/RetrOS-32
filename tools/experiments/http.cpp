@@ -15,45 +15,64 @@ const char* exmaple = "GET /index.html HTTP/1.1\r\n"
                       "Set-Cookie: session-id=1234567890\r\n"
                       "\r\n";
 
-class MyController : public HTTPEngine::Controller {
+class MyService : public HTTPEngine::Service {
 public:
-    MyController() {}
+    MyService(HTTPEngine::ServiceContainer container) {}
     void init() {
-        HTTPEngine::Route route("/index.html", GET, Function([this]() {
-            printf("GET /index.html\n");
-        }));
+        printf("MyService init\n");
     }
-private:
 
-    String body;
+    void speak() {
+        printf("MyService speak\n");
+    }
 };
 
-// Controllers should get engine from constructor.
-// I want to be able to add syntax like this: app.addService<MyController>(Singleton);
+class MyController : public HTTPEngine::Controller {
+public:
+    MyController(HTTPEngine::ServiceContainer container) : HTTPEngine::Controller(container) {
+        service = container.getService<MyService>();
+        if(service == nullptr) {
+            printf("Service is null\n");
+        }
+    }
+    void init() {
+        HTTPEngine::Route route("/index.html", GET, Function([this]() {
+            response.setBody("Hello, World!");
+            response.addHeader(HTTPHeader(CONTENT_TYPE, "text/html"));
+            printf("Route called\n");
+        }));
+        addRoute(route);
 
+        printf("MyController init\n");
+
+        service->speak();
+
+        route.call();
+    }
+private:
+    MyService* service;
+};
 
 class MyEngine : public HTTPEngine {
 public:
     MyEngine() {}
     void init();
 
-    template <typename T>
-    void addService(int lifetime) {
-    }
-
 private:
     String body;
 };
 
 void MyEngine::init() {
-    MyController controller;
-
+    addService<MyController>(Singleton);
+    addService<MyService>(Singleton);
 }
 
 int main() {
     String str(exmaple);
-    HTTPEngine parser;
+    MyEngine parser;
+    parser.init();
 
     parser.parseRequest(str);
+    printf("Request parsed\n");
     return 0;
 }   
