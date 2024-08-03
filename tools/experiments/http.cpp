@@ -17,7 +17,7 @@ const char* exmaple = "GET /index.html HTTP/1.1\r\n"
 
 class MyService : public HTTPEngine::Service {
 public:
-    MyService(HTTPEngine::ServiceContainer container) {}
+    MyService(HTTPEngine::ServiceContainer* container) {}
     void init() {
         printf("MyService init\n");
     }
@@ -29,13 +29,21 @@ public:
 
 class MyController : public HTTPEngine::Controller {
 public:
-    MyController(HTTPEngine::ServiceContainer container) : HTTPEngine::Controller(container) {
-        service = container.getService<MyService>();
+    MyController(HTTPEngine::ServiceContainer* container) : HTTPEngine::Controller(container) {
+        printf("MyController constructor\n");
+    }
+
+    ~MyController() {
+        printf("MyController destructor\n");
+        delete service;
+    }
+
+    void init() {
+        service = container->getService<MyService>();
         if(service == nullptr) {
             printf("Service is null\n");
         }
-    }
-    void init() {
+
         HTTPEngine::Route route("/index.html", GET, Function([this]() {
             response.setBody("Hello, World!");
             response.addHeader(HTTPHeader(CONTENT_TYPE, "text/html"));
@@ -45,12 +53,14 @@ public:
 
         printf("MyController init\n");
 
-        service->speak();
+        if(service != nullptr) {
+            service->speak();
+        }
 
         route.call();
     }
 private:
-    MyService* service;
+    MyService* service = nullptr;
 };
 
 class MyEngine : public HTTPEngine {
