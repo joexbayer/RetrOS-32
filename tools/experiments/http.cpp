@@ -29,17 +29,9 @@ public:
 
 class MyController : public HTTPEngine::Controller {
 public:
-    MyController(HTTPEngine::ServiceContainer* container) : HTTPEngine::Controller(container) {
-        printf("MyController constructor\n");
-    }
-
-    ~MyController() {
-        printf("MyController destructor\n");
-    }
-    
+    MyController(HTTPEngine::ServiceContainer* container) : HTTPEngine::Controller(container) {}
 
     void init() {
-
         MyService* service = container->getService<MyService>();
         if(service == nullptr) {
             printf("Service is null\n");
@@ -70,16 +62,14 @@ private:
 class MyEngine : public HTTPEngine {
 public:
     MyEngine() {}
-    void init();
+    void init() {
+        addService<MyController>(Singleton);
+        addService<MyService>(Singleton);
+    }
 
 private:
     String body;
 };
-
-void MyEngine::init() {
-    addService<MyController>(Singleton);
-    addService<MyService>(Singleton);
-}
 
 int main() {
     String str(exmaple);
