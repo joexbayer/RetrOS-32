@@ -35,11 +35,12 @@ public:
 
     ~MyController() {
         printf("MyController destructor\n");
-        delete service;
     }
+    
 
     void init() {
-        service = container->getService<MyService>();
+
+        MyService* service = container->getService<MyService>();
         if(service == nullptr) {
             printf("Service is null\n");
         }
@@ -58,9 +59,12 @@ public:
         }
 
         route.call();
+
+        printf("Response %s\n", response.getBody().getData());
+
+        delete service;
     }
 private:
-    MyService* service = nullptr;
 };
 
 class MyEngine : public HTTPEngine {
