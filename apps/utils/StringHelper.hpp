@@ -40,7 +40,8 @@ public:
 
     String() {
         m_length = 0;
-        m_data = new char[1]{'\0'};
+        m_data = new char[1];
+        m_data[0] = '\0';
     }
 
     String(const String& other) {

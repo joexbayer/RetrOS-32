@@ -14,11 +14,23 @@ typedef long long           int64_t;
 #ifdef __CROSS_COMPILING__
 typedef long unsigned int        size_t;
 #else
-typedef unsigned int   size_t;
+
+    #ifndef _SIZE_T
+    #define _SIZE_T
+    typedef unsigned int   size_t;
+    #endif
+
 #endif
 
 
-typedef unsigned int        uintptr_t;
-typedef int                 intptr_t;
+#ifndef _UINTPTR_T
+#define _UINTPTR_T
+typedef unsigned int uintptr_t;
+#endif
+
+#ifndef _INTPTR_T
+#define _INTPTR_T
+typedef int intptr_t;
+#endif
 
 #endif // !STDINT_H

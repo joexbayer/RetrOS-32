@@ -158,10 +158,6 @@ private:
     String m_body;
 };
 
-class HTTPResponse {
-    
-};
-
 class HTTPCookie {
 
 };
@@ -179,9 +175,64 @@ private:
     HTTPCookie m_cookie;
 };
 
+/* Global counter for unique IDs */
+int global_counter = 0;
+
+/* TypeID generation mechanism */
+template <typename T>
+class TypeID {
+public:
+    static int get() {
+        static int id = new_id();
+        return id;
+    }
+
+private:
+    static int new_id() {
+        return global_counter++;
+    }
+};
+
 class HTTPEngine {
 
 public:
+
+    class HTTPResponse {
+    public:
+        HTTPResponse() {}
+        ~HTTPResponse() {
+            for (int i = 0; i < m_headers.get_size(); ++i) {
+                delete m_headers[i];
+            }
+        }
+    
+        void setStatusCode(HTTPStatusCode code) {
+            m_statusCode = code;
+        }
+    
+        HTTPStatusCode getStatusCode() const {
+            return m_statusCode;
+        }
+    
+        void addHeader(const HTTPHeader& header) {
+            m_headers.push(new HTTPHeader(header));
+        }
+    
+        void setBody(const String& body) {
+            m_body = body;
+        }
+
+        const String& getBody() const {
+            return m_body;
+        }
+    
+    private:
+        HTTPStatusCode m_statusCode;
+        List<HTTPHeader*> m_headers;
+        String m_body;
+    
+    };
+
     class Route {
     public:
         Route(const char* path, HTTPMethod method, Function handler) : m_path(path), m_method(method), m_handler(handler) {}
@@ -193,6 +244,10 @@ public:
         HTTPMethod getMethod() const {
             return m_method;
         }
+
+        void call() {
+            m_handler();
+        }
     
     private:
         String m_path;
@@ -200,20 +255,117 @@ public:
         Function m_handler;
     };
 
-    class Controller {
+    class Service {
     public:
-        Controller() {}
+        Service() = default;
+        virtual ~Service() = default;
+        virtual void init() = 0;
+    private:
+    };
+    
+    enum ServiceLifetime {
+        Singleton,
+        Transient
+    };
+    
+    /* ServiceContainer class to manage services */
+    class ServiceContainer {
+    public:
 
-        void addRoute(const Route& route) {
-            //m_routes.push(route);
+        ServiceContainer() {}
+
+        struct ServiceFactory {
+            Service* (*factory)(ServiceContainer* container);
+            int type_id;
+        };
+
+        /* Method to add a service with specified lifetime */
+        template <typename T>
+        void addService(ServiceLifetime lifetime) {
+            if (m_factory_count < MAX_SERVICES) {
+                m_factories[m_factory_count] = (struct ServiceFactory) {
+                    [](ServiceContainer* container) -> Service* {
+                        return new T(container);
+                    },
+                    TypeID<T>::get()
+                };
+            }
+            ++m_factory_count;
+        }
+
+        /* Method to get a service of type T */
+        template <typename T>
+        T* getService() {
+            for (int i = 0; i < m_factory_count; ++i) {
+                if (m_factories[i].type_id == TypeID<T>::get()) {
+                    Service* service = m_factories[i].factory(this);
+                    return dynamic_cast<T*>(service);
+                }
+            }
+            return nullptr;
+        }
+
+        /**
+         * Method to get a service of derived type T
+         * @note This is an expensive operation as it creates and deletes services
+         * @return T* or nullptr if not found
+         */
+        template <typename T>
+        T* getDerivedService() {
+            for (int i = 0; i < m_factory_count; ++i) {
+                Service* service = m_factories[i].factory(this);
+                if (instanceof<T>(service)) {
+                    return dynamic_cast<T*>(service);
+                }
+                delete service;
+            }
+            return nullptr;
         }
 
     private:
-        HTTPResponse m_response;
-        //List<Route> m_routes;
+        static const int MAX_SERVICES = 100; /* Maximum number of services */
+        ServiceFactory m_factories[MAX_SERVICES];
+        int m_factory_count;
+    };
+
+    class Controller : public Service {
+    public:
+        Controller(ServiceContainer* container) {
+            this->container = container;
+        }
+
+        /* Destructor */
+        virtual ~Controller() {
+            for (int i = 0; i < m_routes.get_size(); ++i) {
+                delete m_routes[i];
+            }
+        }
+        
+        void addRoute(const Route& route) {
+            m_routes.push(new Route(route));
+        }
+
+        HTTPResponse response;
+    protected:
+        ServiceContainer* container;
+    private:
+        List<Route*> m_routes;
     };
 
     HTTPEngine() {}
+
+    virtual void init() = 0;
+
+    template <typename T>
+    void addService(ServiceLifetime lifetime) {
+        getServiceContainer()->addService<T>(lifetime);
+    }
+
+    template<typename Base, typename T>
+    static bool instanceof(const T *ptr) {
+        return dynamic_cast<const Base*>(ptr) != nullptr;
+    }
+
 
     void parseRequest(const String& request) {
         StringList* lines = request.split('\n');
@@ -225,6 +377,13 @@ public:
         StringList* parts = firstLine.split(' ');
         if(parts->getSize() != 3) {
             return;
+        }
+
+        Controller* serv = getServiceContainer()->getDerivedService<Controller>();
+        if(serv != nullptr) {
+            printf("Service found\n");
+            serv->init();
+            delete serv;
         }
 
         String method = parts->get(0);
@@ -240,9 +399,13 @@ public:
         delete lines;
     }
 
+    static ServiceContainer* getServiceContainer() {
+        static ServiceContainer m_serviceContainer;
+        return &m_serviceContainer;
+    }
+
 private:
-    class ControllerFactory {
-    };
+
 
     HTTPContext m_context;
     List<Controller> m_controllers;
