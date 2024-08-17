@@ -218,7 +218,7 @@ private:
  * @note Will create a new StringList object
  * @param delimiter The delimiter to split by
  * @return A new StringList object
- */
+
 StringList* String::split(char delimiter) const {
     int count = 0;
     for (int i = 0; i < m_length; ++i) {
@@ -240,6 +240,6 @@ StringList* String::split(char delimiter) const {
     result->operator[](result->getSize() - 1) = substring(start, m_length);
     return result;
 }
-
+ */
 
 #endif  // STRING_HELPER_H
