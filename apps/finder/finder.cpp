@@ -246,9 +246,9 @@ public:
                         int index = path->getLength()-1;
                         while(index > 0 && path->getData()[index] != '/') index--;
 
-                        String* path2 = path->substring(0, index);
+                        String path2 = path->substring(0, index);
                         delete path;
-                        path = path2;
+                        path = new String(path2);
                         
                         setHeader(path->getData());
                         loadFiles();

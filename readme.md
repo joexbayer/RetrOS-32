@@ -127,7 +127,7 @@ IBM Thinkpad a21p
 
 ### Prerequisites
 
-Crossplatform: Docker to compile the .iso file and QEMU for emulation.<br>
+Crossplatform: Docker to compile the image file and QEMU for emulation.<br>
 For native compilation you will need:
  * i386-elf-gcc, i386-elf-ld and i386-elf-g++ for MacOS.
  * build-essential and gcc-multilib for Linux / WSL (ubuntu)
@@ -143,19 +143,23 @@ _To compile the kernel and its needed programs you simply need to run *make img*
    ```sh
    git clone https://github.com/joexbayer/RetrOS-32.git
    ```
-2. Compile the kernel and create .img file
+2. Check that all dependencies are installed (Only for debian based distros)
    ```sh
-   make img
+   ./debian.sh
    ```
 
-   _Note: needs sudo to mount the .img file and copy over files!_
+3. Compile and create image
+  ```sh
+  make compile
+  make img
+  ```
    
-3. Launch QEMU
+4. Launch QEMU
    ```sh
    make qemu
    ```
 
-4. Use GRUB (Optional)
+5. Use GRUB (Optional)
    ```sh
    make grub
    ```
@@ -194,8 +198,6 @@ _To compile the kernel and its needed programs you simply need to run *make img*
    ./make.cmd run
    ```
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 <!-- USAGE EXAMPLES -->
 ## Usage
