@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
 
     FILE *tar_file = fopen(argv[1], "rb");
     if (!tar_file) {
-        perror("Error opening file");
+        printf("Error opening file");
         return 1;
     }
 

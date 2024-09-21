@@ -12,7 +12,7 @@ void traverseDirectories(const char *basePath) {
     // Open the directory
     dir = opendir(basePath);
     if (dir == NULL) {
-        perror("opendir");
+        printf("opendir");
         return;
     }
 

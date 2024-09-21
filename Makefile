@@ -69,9 +69,12 @@ LIBOBJ = bin/printf.o bin/syscall.o bin/graphics.o bin/netlib.o
 
 # ---------------- Makefile rules ----------------
 
-.PHONY: all new image clean boot net kernel grub time tests build apps bin/build symbols
+.PHONY: all new image clean boot net kernel grub time tests build apps bin/build symbols git
 all: iso
 	$(TIME-END)
+
+git:
+	git submodule update --init --recursive
 
 ls:
 	find -name '*.[c|h]' | xargs wc -l

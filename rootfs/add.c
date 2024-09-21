@@ -1,4 +1,5 @@
 // Test C program
+#include "lib/std.c"
 
 int add(int a, int b)
 {
@@ -19,6 +20,7 @@ int main()
 
   d = fac(c);
 
-  printf("Hello %d\n", d);
+  print("Hello world!\n");
+
   return 0;
 }

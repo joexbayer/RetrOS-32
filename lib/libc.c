@@ -110,6 +110,18 @@ inline void* memmove(void *dest, const void *src, size_t n)
 }
 
 
+uint32_t strncpy(char* dest, const char* src, uint32_t len)
+{
+    uint32_t i = 0;
+    while (src[i] != '\0' && i < len)
+    {
+        dest[i] = src[i];
+        i++;
+    }
+    dest[i] = '\0';
+    return i;
+}
+
 inline uint32_t strncmp(const char* str, const char* str2, uint32_t len)
 {
 	return memcmp((uint8_t*)str, (uint8_t*)str2, len);

@@ -72,7 +72,6 @@ static int textbuffer_command(struct textbuffer* buffer, char* command) {
 
     if (strcmp(command, "exit") == 0) {
         return -117;
-    
     }
     
     // replace word with word without strtok

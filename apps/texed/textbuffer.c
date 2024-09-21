@@ -662,6 +662,8 @@ int main(int argc, char *argv[]) {
 				screen_write(0, 24, "Search failed", COLOR(VGA_COLOR_WHITE, VGA_COLOR_LIGHT_GREY));
 			continue;
 		}
+
+		if(c == CTRLE) break;
 			
 		textbuffer_handle_char(buffer, c);
 		textbuffer_display(buffer, VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
