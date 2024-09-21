@@ -210,6 +210,8 @@ int fs_open(const char* path, int flags)
         return -1;
     }
 
+    dbgprintf("fs_open: %s\n", path);
+
     int fd = fs_file2fd(file);
 
     return fd;

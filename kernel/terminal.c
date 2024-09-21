@@ -103,9 +103,9 @@ void terminal_commit()
 
 void terminal_putchar(char c)
 {
-	serial_put(c);
 	if($process->current == NULL || $process->current->term == NULL) return;
 	
+	serial_put(c);
 	$process->current->term->ops->putchar($process->current->term, c);
 }
 
@@ -391,8 +391,6 @@ static int __terminal_putchar_graphics(struct terminal* term, char c)
 	}
 	term->textbuffer[term->head] = c;
 	term->head++;
-
-	serial_put(c);
 
 	if(term->screen != NULL && term->screen != $process->current->gfx_window){
 		term->screen->changed = 1;

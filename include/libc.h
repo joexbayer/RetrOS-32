@@ -28,6 +28,7 @@ extern "C"
 {
 #endif
 
+#define EXIT_FAILURE 1
 int getopt(int argc, char* argv[], const char* optstring, char** optarg);
 
 char* strtok(char* str, const char* delim);
@@ -38,6 +39,7 @@ int strlen(const char* str);
 uint32_t strcpy(char* dest, const char* src);
 uint32_t strcmp(const char* str, const char* str2);
 uint32_t strncmp(const char* str, const char* str2, uint32_t len);
+uint32_t strncpy(char* dest, const char* src, uint32_t len);
 
 uint32_t memcmp(const void* ptr, const void* ptr2, uint32_t len);
 void* memset (void *dest, int val, int len);

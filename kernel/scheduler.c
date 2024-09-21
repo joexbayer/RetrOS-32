@@ -322,6 +322,7 @@ static error_t sched_exit(struct scheduler* sched)
     /* Add cleanup routine to work queue */
     //work_queue_add(&pcb_cleanup_routine, (void*)((int)sched->ctx.running->pid), NULL);
     sched->ctx.running->state = ZOMBIE;
+    dbgprintf("Process %s exited\n", sched->ctx.running->name);
     
     CRITICAL_SECTION({
 

@@ -316,7 +316,7 @@ void traverseDirectories(struct inode* root, struct superblock* superblock, cons
     // Open the directory
     dir = opendir(basePath);
     if (dir == NULL) {
-        perror("opendir");
+        printf("opendir");
         return;
     }
     // Traverse the directory

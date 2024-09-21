@@ -420,10 +420,10 @@ error_t pcb_create_process(char* program, int argc, char** argv, pcb_flag_t flag
 	struct pcb* pcb;
 
 	/* Load program into memory */
-	buf = kalloc(32*1024);
+	buf = kalloc(64*1024);
 	if(buf == NULL){return -ERROR_ALLOC;}
 	
-	ret = fs_load_from_file(program, buf, 32*1024);
+	ret = fs_load_from_file(program, buf, 64*1024);
 	if(ret < 0){
 		dbgprintf("Error loading %s\n", program);
 		

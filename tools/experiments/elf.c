@@ -56,13 +56,13 @@ int main(int argc, char **argv) {
 
     int fd = open(argv[1], O_RDONLY);
     if (fd < 0) {
-        perror("Error opening file");
+        printf("Error opening file");
         return EXIT_FAILURE;
     }
 
     Elf32_Ehdr ehdr;
     if (read(fd, &ehdr, sizeof(ehdr)) != sizeof(ehdr)) {
-        perror("Error reading ELF header");
+        printf("Error reading ELF header");
         close(fd);
         return EXIT_FAILURE;
     }
@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
     for (int i = 0; i < ehdr.e_phnum; i++) {
         lseek(fd, ehdr.e_phoff + i * ehdr.e_phentsize, SEEK_SET);
         if (read(fd, &phdr, sizeof(phdr)) != sizeof(phdr)) {
-            perror("Error reading program header");
+            printf("Error reading program header");
             close(fd);
             return EXIT_FAILURE;
         }
@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
     for (int i = 0; i < ehdr.e_shnum; i++) {
         lseek(fd, ehdr.e_shoff + i * ehdr.e_shentsize, SEEK_SET);
         if (read(fd, &shdr, sizeof(shdr)) != sizeof(shdr)) {
-            perror("Error reading section header");
+            printf("Error reading section header");
             close(fd);
             return EXIT_FAILURE;
         }
