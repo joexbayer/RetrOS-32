@@ -13,6 +13,12 @@
 #define COLOR_TEXT COLOR_VGA_MEDIUM_DARK_GRAY
 #define COLOR_MISC COLOR_VGA_MISC
 
+#include <utils/TreeView.hpp>
+
+#define TREE_VIEW_WIDTH 130  /* Width for the tree view panel */
+#define HEADER_HEIGHT 10     /* Height for the header */
+
+
 struct keyword {
 	char word[10];
 	color_t color;
@@ -20,11 +26,12 @@ struct keyword {
 
 class Editor : public Window {  
 public:  
-	Editor() : Window(288, 248+12, "Editor", 1) {
+	Editor() : Window(288+TREE_VIEW_WIDTH, 248+12, "Editor", 1) {
 		m_x = 0;
 		m_y = 0;
 		
 		m_textBuffer = (unsigned char*) malloc(10*1024);
+
 	
 		vm_data = (char*) malloc((c_width/4)*(c_height/4));
 		vm_text = (int*) malloc((c_width/4)*(c_height/4));
@@ -36,6 +43,11 @@ public:
 
 		gfx_draw_rectangle(0, 0, c_width+24, c_height, COLOR_BG);
 
+		/* Loading text middle of room */
+		m_textColor = COLOR_TEXT;
+		gfx_draw_format_text(20, 20, COLOR_VGA_MEDIUM_GRAY, "Loading...");
+
+		treeView = new TreeView(0, 0, TREE_VIEW_WIDTH, 248+12);
 
 		setColor(COLOR_TEXT);
 		reDraw(0, 0);
@@ -53,6 +65,7 @@ public:
 	void putChar(unsigned char c);
 	void Lex();
 	void Quit();
+	void SaveMsg();
 	void setFd(int fd);
 	
 	void drawChar(unsigned char c, color_t bg);
@@ -67,6 +80,8 @@ public:
 
 private:
 	void highlightSyntax(unsigned char* start);
+
+	TreeView* treeView;
 
 	int m_fd = -1;
 	unsigned char* m_textBuffer;
@@ -97,7 +112,6 @@ private:
 		{"malloc", KEYWORD_FUNC}, {"main", KEYWORD_FUNC},{"void", KEYWORD_TYPE}
 	};
 
-	/* Size is based on the fact that our filesystem can only handle 8kb files */
 	int c_width = (288)-24;
 	int c_height = (248)+12;
 

@@ -14,6 +14,9 @@
 #include <utils/Graphics.hpp>
 #include <utils/MsgBox.hpp>
 
+#define TEXT_WIDTH_OFFSET TREE_VIEW_WIDTH + 24
+#define TEXT_SIDE_NUMBERS TREE_VIEW_WIDTH
+
 #define HEADER_OFFSET 13
 /* Helper functions */
 static int isAlpha(unsigned char c) {
@@ -27,8 +30,7 @@ static int nextNewline(unsigned char* str)
 		begin++;
 	
 	begin++;
-	
-	return begin - str;
+	return begin - str;	
 }
 
 static int prevNewline(unsigned char* str, unsigned char* limit)
@@ -40,27 +42,27 @@ static int prevNewline(unsigned char* str, unsigned char* limit)
 	return str - begin;
 }
 
+
 void Editor::reDrawHeader()
 {
-	gfx_draw_rectangle(0, 0, this->c_width, this->c_height, COLOR_BG);
-	gfx_draw_line(17, 0, 17, this->c_height, 0);
-	for (int i = 0; i < this->c_height/8; i++)gfx_draw_format_text(0, HEADER_OFFSET+ i*8, COLOR_VGA_MEDIUM_GRAY, "%s%d ", i < 10 ? " " : "", i);
+	gfx_draw_rectangle(TEXT_WIDTH_OFFSET, 0, this->c_width, this->c_height, COLOR_BG);
+	gfx_draw_line(TEXT_SIDE_NUMBERS+17, 0, TEXT_SIDE_NUMBERS+17, this->c_height, 0);
+	for (int i = 0; i < this->c_height/8; i++)gfx_draw_format_text(TEXT_SIDE_NUMBERS, HEADER_OFFSET+ i*8, COLOR_VGA_MEDIUM_GRAY, "%s%d ", i < 10 ? " " : "", i);
 
-	drawHeaderTable(c_width+24);
-	gfx_draw_format_text(2, 2, COLOR_BLACK, "< >");
-	gfx_draw_format_text(c_width+24-strlen("Save (F1)")*8, 2, COLOR_BLACK, "%s", "Save (F1)");
+	drawHeaderTable(TREE_VIEW_WIDTH, c_width+24);
+	gfx_draw_format_text(TREE_VIEW_WIDTH+2, 2, COLOR_BLACK, "< >");
+	gfx_draw_format_text(TREE_VIEW_WIDTH+c_width+24-strlen("Save (F1)")*8, 2, COLOR_BLACK, "%s", "Save (F1)");
 }
 
 
 void Editor::scroll(int lines) {
 	scrollY += lines;
-
 	// Ensure that the scroll position stays within valid range
 	if (scrollY < 0) scrollY = 0;
 
-	gfx_draw_rectangle(0, 0, 17, this->c_height, COLOR_BG);
-	gfx_draw_line(17, 0, 17, this->c_height, COLOR_VGA_MEDIUM_GRAY);
-	for (int i = scrollY; i < (this->c_height/8) + scrollY; i++)gfx_draw_format_text(0, HEADER_OFFSET+ (i-scrollY)*8, COLOR_VGA_MEDIUM_GRAY, "%s%d ", i < 10 ? " " : "", i);
+	gfx_draw_rectangle(TREE_VIEW_WIDTH, 0, 17, this->c_height, COLOR_BG);
+	gfx_draw_line(TREE_VIEW_WIDTH+17, 0, TREE_VIEW_WIDTH+17, this->c_height, COLOR_VGA_MEDIUM_GRAY);
+	for (int i = scrollY; i < (this->c_height/8) + scrollY; i++)gfx_draw_format_text(TEXT_SIDE_NUMBERS, HEADER_OFFSET+ (i-scrollY)*8, COLOR_VGA_MEDIUM_GRAY, "%s%d ", i < 10 ? " " : "", i);
 }
 
 void Editor::Reset()
@@ -69,6 +71,7 @@ void Editor::Reset()
 	this->m_textBuffer[1] = '\n';
 	this->m_bufferHead = 2;
 	reDrawHeader();
+
 }
 
 void Editor::reDraw(int from, int to) {
@@ -78,19 +81,6 @@ void Editor::reDraw(int from, int to) {
 
 	m_x = 0;
 	m_y = 0;
-
-	/* Skip the unchanged chars 
-	for (int i = 0; i < from; i++){
-		m_x++;
-		if(m_x > (c_width/8)){
-			m_x = 0;
-			m_y++;
-		}
-		if(m_textBuffer[i] == '\n'){
-			m_x = 0;
-			m_y++;
-		}
-	}*/
 
     /* Calculate the number of characters scrolled */
     int linesScrolled = scrollY;
@@ -125,21 +115,26 @@ void Editor::reDraw(int from, int to) {
     }
 
     /* Draw status bar */
-    gfx_draw_rectangle(24, c_height - 8, c_width - 24, 8, COLOR_BG);
-    gfx_draw_format_text(24, c_height - 8, COLOR_VGA_MEDIUM_DARK_GRAY, "W:%p/%p Line:%p Col:%p\n", m_bufferHead, m_bufferEdit, line, col);
+    gfx_draw_rectangle(TREE_VIEW_WIDTH, c_height - 8, c_width - TEXT_WIDTH_OFFSET, 8, COLOR_BG);
+    gfx_draw_format_text(TEXT_WIDTH_OFFSET, c_height - 8, COLOR_VGA_MEDIUM_DARK_GRAY, "W:%p/%p Line:%p Col:%p\n", m_bufferHead, m_bufferEdit, line, col);
 }
 
 void Editor::Lex()
 {
 }
 
-void Editor::Quit()
+void Editor::SaveMsg()
 {
 	MsgBox* msg = new MsgBox("Save changes?", "Save changes to file?", MSGBOX_YES_NO_CANCEL);
 	MsgBoxResult ret = msg->show();
 	if(ret == MSGBOX_RESULT_OK){
 		Save();
 	}
+}
+
+void Editor::Quit()
+{
+	SaveMsg();
 	fclose(m_fd);
 
 	free(m_textBuffer);
@@ -150,6 +145,12 @@ void Editor::Quit()
 
 void Editor::Open(char* path)
 {
+	if(m_fd > 0){
+		SaveMsg();
+		fclose(m_fd);
+	}
+
+
 	printf("Opening file: %s\n", path);
 	m_fd = open(path, FS_FILE_FLAG_CREATE | FS_FILE_FLAG_READ | FS_FILE_FLAG_WRITE);
 	if(m_fd < 0)
@@ -165,8 +166,7 @@ void Editor::Open(char* path)
 	reDraw(0, m_bufferHead);
 }
 
-void Editor::setFd(int fd)
-{
+void Editor::setFd(int fd){
 	m_fd = fd;
 }
 
@@ -177,8 +177,8 @@ void Editor::Save()
 	}
 	
 	write(m_fd, m_textBuffer, m_bufferHead);
-	gfx_draw_rectangle(24, c_height-8, c_width-24, 8, COLOR_BG);
-	gfx_draw_format_text(24, c_height-8, COLOR_VGA_MEDIUM_DARK_GRAY, "Saved.");
+	gfx_draw_rectangle(TEXT_WIDTH_OFFSET, c_height-8, c_width-TEXT_WIDTH_OFFSET, 8, COLOR_BG);
+	gfx_draw_format_text(TEXT_WIDTH_OFFSET, c_height-8, COLOR_VGA_MEDIUM_DARK_GRAY, "Saved.");
 }
 
 void Editor::FileChooser()
@@ -191,9 +191,11 @@ void Editor::FileChooser()
 		fclose(m_fd);
 	}
 
-	gfx_draw_rectangle(24, c_height/2-4, c_width-24, 8, COLOR_BG);
-	gfx_draw_format_text(24, c_height/2-4, COLOR_BLACK, "Open file: ");
 
+	gfx_draw_rectangle(TEXT_WIDTH_OFFSET, c_height/2-4, c_width-TEXT_WIDTH_OFFSET, 8, COLOR_BG);
+	gfx_draw_format_text(TEXT_WIDTH_OFFSET, c_height/2-4, COLOR_BLACK, "Open file: ");
+
+	treeView->drawTree(this);
 	while (1){
 		struct gfx_event event;
 		gfx_get_event(&event, GFX_EVENT_BLOCKING);
@@ -202,19 +204,18 @@ void Editor::FileChooser()
 				switch (event.data){
 				case '\n':{
 						filename[i] = 0;
-						Reset();
 						Open(filename);
 						return;
 					}
 					break;
 				case '\b':
-					gfx_draw_rectangle(24 + (11*8) + (i*8), c_height/2-4, 8, 8, COLOR_BG);
+					gfx_draw_rectangle(TEXT_WIDTH_OFFSET + (11*8) + (i*8), c_height/2-4, 8, 8, COLOR_BG);
 					filename[i--] = 0;
 					break;
 				default:
 					if(i == 127) return;
 					filename[i++] = event.data;
-					gfx_draw_char(24 + (11*8) + (i*8), c_height/2-4, event.data, COLOR_TEXT);
+					gfx_draw_char(TEXT_WIDTH_OFFSET + (11*8) + (i*8), c_height/2-4, event.data, COLOR_TEXT);
 					break;
 				}
 			}
@@ -223,6 +224,19 @@ void Editor::FileChooser()
 			c_width = event.data;
 			c_height = event.data2;
 			reDrawHeader();
+			break;
+		case GFX_EVENT_MOUSE:
+			printf("Mouse event\n");
+			/* Check if tree view is clicked */
+			if(event.data < TREE_VIEW_WIDTH){
+				const char* file = treeView->click(event.data, event.data2);
+				if(file != NULL){
+					printf("Opening file: %s\n", file);
+					Reset();
+					Open((char*)file);
+					return;
+				}
+			}
 			break;
 		case GFX_EVENT_EXIT:
 			Quit();
@@ -234,7 +248,7 @@ void Editor::FileChooser()
 
 void Editor::EditorLoop()
 {
-
+	treeView->drawTree(this);
 	while (1){
 		struct gfx_event event;
 		gfx_get_event(&event, GFX_EVENT_BLOCKING);
@@ -245,9 +259,27 @@ void Editor::EditorLoop()
 				putChar('}');
 			}
 			break;
+		case GFX_EVENT_MOUSE:
+			printf("Mouse event\n");
+			/* Check if tree view is clicked */
+			if(event.data < TREE_VIEW_WIDTH){
+				printf("Mouse event on treeview\n");
+				const char* file = treeView->click(event.data, event.data2);
+				if(file != nullptr){
+					printf("Opening file: %s\n", file);
+					Reset();
+					Open((char*)file);
+				}
+			}
+			break;
 		case GFX_EVENT_RESOLUTION:
 			c_width = event.data;
 			c_height = event.data2;
+
+			delete treeView;
+			treeView = new TreeView(0, 0, TREE_VIEW_WIDTH, c_height);
+			treeView->drawTree(this);
+
 			reDrawHeader();
 
 			reDraw(0, m_bufferSize);
@@ -271,20 +303,19 @@ void Editor::drawChar(unsigned char c, color_t bg)
 	if(m_x*8 > c_width || m_y*8 > c_height) return;
 
 	if(c == '\n'){
-		gfx_draw_rectangle(24 + m_x*8, HEADER_OFFSET+ m_y*8, c_width-(24 + m_x*8), 8, COLOR_BG);
-		gfx_draw_rectangle(24 + m_x*8, HEADER_OFFSET+ m_y*8, 8, 8, bg);
+		gfx_draw_rectangle(TEXT_WIDTH_OFFSET + m_x*8, HEADER_OFFSET+ m_y*8, c_width-(TEXT_WIDTH_OFFSET + m_x*8), 8, COLOR_BG);
+		gfx_draw_rectangle(TEXT_WIDTH_OFFSET + m_x*8, HEADER_OFFSET+ m_y*8, 8, 8, bg);
 		m_x = 0;
 		m_y++;
 	} else {
-		gfx_draw_rectangle(24 + m_x*8,HEADER_OFFSET+ m_y*8, 8, 8, bg);
-		gfx_draw_char(24 + m_x*8, HEADER_OFFSET+m_y*8, c, m_textColor);
+		gfx_draw_rectangle(TEXT_WIDTH_OFFSET + m_x*8,HEADER_OFFSET+ m_y*8, 8, 8, bg);
+		gfx_draw_char(TEXT_WIDTH_OFFSET + m_x*8, HEADER_OFFSET+m_y*8, c, m_textColor);
 		m_x++;
 		if(m_x >= ((c_width-24)/8)){
 			m_x = 0;
 			m_y++;
 		}
 	}
-
 }
 
 void Editor::highlightSyntax(unsigned char* start)
@@ -293,7 +324,7 @@ void Editor::highlightSyntax(unsigned char* start)
 	/* look ahead */
 	while(isAlpha(*begin) && *begin != ' ')
 		begin++;
-	
+
 	struct keyword* key;
 	for (int i = 0; i < 20; i++){
 		key = &keyWords[i];
@@ -310,7 +341,8 @@ void Editor::highlightSyntax(unsigned char* start)
 
 void Editor::putChar(unsigned char c)
 {
-	//gfx_draw_rectangle(24 + m_x*8, m_y*8, 8, 8, COLOR_BG);
+	
+	//gfx_draw_rectangle(TEXT_WIDTH_OFFSET + m_x*8, m_y*8, 8, 8, COLOR_BG);
 	int line_start;
 	int line_end;
 	switch (c){
@@ -388,7 +420,6 @@ void Editor::putChar(unsigned char c)
 			}
 
 			int prev = prevNewline(&m_textBuffer[m_bufferEdit], m_textBuffer);
-
 			int moveto = nextNewline(&m_textBuffer[m_bufferEdit-1]);
 			m_bufferEdit += moveto;
 

@@ -16,6 +16,7 @@
 #include <utils/Graphics.hpp>
 #include <utils/cppUtils.hpp>
 #include <lib/syscall.h>
+#include <utils/Function.hpp>
 
 #include <fs/fat16.h>
 #include <fs/fs.h>
@@ -72,6 +73,10 @@ public:
         : x(x), y(y), width(width), height(height) {
         /* Initialize any other required attributes */
         path = new String("/");
+        root = {path, 0, 0, 0, 0, 1, 1, 0, nullptr};
+        root.children = new TreeNode[16];
+
+        loadTree(&root, 0, path, 0);
     }
 
     ~TreeView() {
@@ -86,20 +91,75 @@ public:
 
         window->drawFormatText(2, 2, COLOR_BLACK, "Tree View");
 
-        int entries = drawTreeRecursive(1, path, 0);
+        int entries = drawTreeRecursive(&root, 1, 1);
+    }
+
+    const char* click(int x, int y) {
+        /* Check if a node was clicked */
+        for (int i = 0; i < root.childrenCount; i++) {
+            int y2 = (1+i) * 16;
+
+            if (y >= y2 && y < y2 + 16) {
+                if (root.children[i].isDirectory) {
+                    root.children[i].isExpanded = !root.children[i].isExpanded;
+                    gfx_draw_rectangle(9, 13, width - 15, height-19, COLOR_WHITE);
+                    drawTreeRecursive(&root, 1, 1);
+                    return nullptr;
+                } else {
+                    return root.children[i].name->getData();
+                }
+            }
+            
+            if(root.children[i].isDirectory) {
+                if (root.children[i].isExpanded) {
+                    const char* ret = __click(&root.children[i], x, y, 1+i);
+                    if (ret != nullptr) return ret;
+                    y2 += root.children[i].childrenCount * 16;
+                }
+            }
+
+        }
+
+        return nullptr;
     }
 
     void update(const char* newPath) {
         /* Update the tree view with the new path */
         path->concat(newPath);
-        /* Load files or directories as required */
     }
 
-    /* ... Other methods ... */
-
 private:
+    /* Logic of caching and interaction */
+    struct TreeNode {
+        String* name;
+        int x, y, depth, entries;
+        int isDirectory;
+        int isExpanded;
+        int childrenCount;
+        struct TreeNode* children;
+    } root;
+    int nodeCount = 0;
+
     int x, y, width, height;
     String* path;
+
+    const char* __click(struct TreeNode* root, int x, int y, int entries){
+        for (int i = 0; i < root->childrenCount; i++) {
+            int y2 = (1+i+entries) * 16;
+
+            if (y >= y2 && y < y2 + 16) {
+                if (root->children[i].isDirectory) {
+                    root->children[i].isExpanded = !root->children[i].isExpanded;
+
+                    return nullptr;
+                } else {
+                    return root->children[i].name->getData();
+                }
+            }
+        }
+
+        return nullptr;
+    }
 
     void drawIcon(int x, int y, const unsigned char* icon) {
         for (int i = 0; i < 16*16; i++) {
@@ -108,29 +168,32 @@ private:
         }
     }
 
-    /* Logic of caching and interaction */
-    struct TreeNode {
-        String* name;
-        int x, y, depth, entries;
-        int isDirectory;
-    } nodes[100];
-    int nodeCount = 0;
-
-    int insertNode(const char* name, int x, int y, int isDirectory) {
-        nodes[nodeCount].name = new String(name);
-        nodes[nodeCount].x = x;
-        nodes[nodeCount].y = y;
-        nodes[nodeCount].isDirectory = isDirectory;
-        nodeCount++;
+    int pathlen(char* path) {
+        int len = 0;
+        while (path[len] != 0 && path[len] != ' ' && len < 8) len++;
+        return len;
     }
 
-    int drawTreeRecursive(int depth, String* path, int entries) {
+    struct TreeNode* insertNode(struct TreeNode* parent, const char* name, int x, int y, int isDirectory) {
+        parent->children[parent->childrenCount].name = new String(name);
+        parent->children[parent->childrenCount].x = x;
+        parent->children[parent->childrenCount].y = y;
+        parent->children[parent->childrenCount].isDirectory = isDirectory;
+        if(isDirectory) {
+            parent->children[parent->childrenCount].childrenCount = 0;
+            parent->children[parent->childrenCount].children = new TreeNode[16];
+
+        }
+        return &parent->children[ parent->childrenCount++];
+    }
+
+
+    int loadTree(struct TreeNode* root, int depth, String* path, int entries){
         int fd = open(path->getData(), FS_FILE_FLAG_READ);
         if (fd <= -1) return -1;
 
         int origEntries = entries;
         struct fat16_directory_entry entry;
-        int lastY = entries * 12;
 
         while (1) {
             int ret = read(fd, &entry, sizeof(struct fat16_directory_entry));
@@ -139,10 +202,17 @@ private:
             }
 
             /* parse name */
-            char name[13];
-            memset(name, 0, 13);
-            memcpy(name, entry.filename, 8);
-            //memcpy(name + 8, entry.extension, 3);
+            char name[14] = {0};
+            int len = pathlen((char*)entry.filename);
+            memset(name, 0, 14);
+            memcpy(name, entry.filename, len);
+            if(!(entry.attributes & FAT16_FLAG_SUBDIRECTORY)) {
+                name[len++] = '.';
+                memcpy(name + len, entry.extension, 3);
+
+            } else {
+                name[len++] = '/';
+            }
 
             if (
                 entry.attributes & FAT16_FLAG_VOLUME_LABEL ||
@@ -152,37 +222,61 @@ private:
             ) continue;
 
             entries++;
-            int textY = entries * 14;
 
-            /* Draw a line from the parent to this directory */
-            if (depth > 1 && !(entry.attributes & FAT16_FLAG_SUBDIRECTORY)) {
-                gfx_draw_line( depth * 12 - 9, lastY+8,   depth * 12 - 9,  textY+8, COLOR_BLACK);
-                gfx_draw_line( depth * 12 - 9, textY+4 ,   depth * 12-2,  textY+4, COLOR_BLACK);
-            }
+            String fullPath = path->getData();
+            fullPath.concat(name);
+            struct TreeNode* newRoot = insertNode(root, fullPath.getData(), (depth * 12), 0, entry.attributes & FAT16_FLAG_SUBDIRECTORY);
 
-            if (entry.attributes & FAT16_FLAG_SUBDIRECTORY) {
-                drawIcon(depth * 12, textY-4, __folder_icon);
-            } else {
-                drawIcon(depth * 12, textY-4, __file_icon);
-            }
-
-            gfx_draw_format_text((depth * 12)+18, textY, COLOR_BLACK, "%s", name);
             if (entry.attributes & FAT16_FLAG_SUBDIRECTORY) {
                 String* path2 = new String(path->getData());
                 path2->concat(name);
 
                 //insertNode(path2->getData(), depth * 12, textY, 1);
-                int ret = drawTreeRecursive(depth + 1, path2, entries);
+                int ret = loadTree(newRoot, depth + 1, path2, entries);
                 if (ret > 0) entries += ret;
 
                 delete path2;
             }
-
-            lastY = textY; 
         }
 
         fclose(fd);
         return entries - origEntries;
+    }
+
+
+    int drawTreeRecursive(struct TreeNode* root, int depth, int entries) {
+        for (int i = 0; i < root->childrenCount; i++) {
+
+            if (root->children[i].isDirectory) {
+                drawIcon(depth * 16, (entries + i) * 16, __folder_icon);
+            } else {
+                drawIcon(depth * 16, (entries + i) * 16, __file_icon);
+            }
+
+            const char* name = root->children[i].name->getData();
+            /* Only use name from last / */
+            for (int j = 0; j < strlen(name)-1; j++) {
+                if (name[j] == '/') {
+                    name = name + j + 1;
+                }
+            }
+
+            /* draw line from parent to current */
+            if (depth > 1) {
+                int current_x = depth * 16;
+                int current_y = (entries + i) * 16;
+                int parent_y = (entries - 1) * 16 + 16;
+                gfx_draw_line((depth - 1) * 16 + 8, parent_y, (depth - 1) * 16 + 8, current_y, COLOR_BLACK);
+                gfx_draw_line((depth - 1) * 16 + 8, current_y + 8, current_x, current_y + 8, COLOR_BLACK);
+            }
+
+            gfx_draw_format_text(depth * 16 + 18, (entries + i) * 16 + 5, COLOR_BLACK, name);
+            if(root->children[i].isExpanded && root->children[i].isDirectory) {
+                entries += drawTreeRecursive(&root->children[i], depth + 1, entries + i + 1);
+            }
+        }
+
+        return root->childrenCount;
     }
 };
 

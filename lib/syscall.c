@@ -103,6 +103,16 @@ int thread_create(void* entry, void* arg, int flags)
     return invoke_syscall(SYSCALL_CREATE_THREAD, (int)entry, (int)arg, flags);
 }
 
+void* zmalloc(int size)
+{
+    void* ptr = malloc(size);
+    if (ptr == NULL) {
+        return NULL;
+    }
+    memset(ptr, 0, size);
+    return ptr;
+}
+
 void* malloc(int size)
 {
     return (void*)invoke_syscall(SYSCALL_MALLOC, size, 0, 0);
