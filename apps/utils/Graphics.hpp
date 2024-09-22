@@ -50,17 +50,17 @@ public:
         gfx_draw_char(x, y, data, color);
     }
 
-    void drawHeaderTable(int width)
+    void drawHeaderTable(int start, int width)
     {
-        drawRect(0, 0, width, 10, 30);
+        drawRect(start, 0, width, 10, 30);
 
-        drawRect(1, 1, width-1, 1, 30+1);
-        drawRect(1, 1, 1, 10, 30+1);
+        drawRect(start+1, 1, width-1, 1, 30+1);
+        drawRect(start+1, 1, 1, 10, 30+1);
 
-        drawRect(1+width-2, 1, 1, 10, COLOR_VGA_MEDIUM_DARK_GRAY+5);
-        drawRect(1, 10, width-1, 1, COLOR_VGA_MEDIUM_DARK_GRAY+5); 
-        drawRect(1, 11, width-1, 1, COLOR_BLACK);
-        drawRect(1, 12, width-1, 1, 30+1); 
+        drawRect(start+1+width-2, 1, 1, 10, COLOR_VGA_MEDIUM_DARK_GRAY+5);
+        drawRect(start+1, 10, width-1, 1, COLOR_VGA_MEDIUM_DARK_GRAY+5); 
+        drawRect(start+1, 11, width-1, 1, COLOR_BLACK);
+        drawRect(start+1, 12, width-1, 1, 30+1); 
     }
 
     void drawContouredRect(int x, int y, int width, int height) {
