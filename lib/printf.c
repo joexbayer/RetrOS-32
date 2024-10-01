@@ -65,6 +65,15 @@ int printf(const char* fmt, ...)
 				memset(str, 0, MAX_FMT_STR_SIZE);
 				switch (*(fmt+1))
 				{
+					case '.':
+						if (*(fmt+2) == '*') {
+							int precision = va_arg(args, int);
+							char* str_arg = va_arg(args, char *);
+							print_write(str_arg, precision);
+							x_offset += precision;
+							fmt += 2;
+						}
+						break;
 					case 'd': ;
 						num = va_arg(args, int);
 						itoa(num, str);
