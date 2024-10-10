@@ -152,7 +152,7 @@ iso: compile tests apps tools build img
 filesystem:
 	@dd if=/dev/zero of=filesystem.image bs=512 count=390
 
-compile: bindir $(LIBOBJ) bootblock kernel apps
+compile: git bindir $(LIBOBJ) bootblock kernel apps
 	@echo "[Compile] Finished."
 	$(TIME-END)
 
@@ -218,6 +218,14 @@ sync:
 	@echo "Finished syncing."
 # sh scripts/sync.sh RetrOS-32-debug.img
 # sudo cp -r mnt/* ./mnt/apps/
+
+rsync:
+	mkdir -p mnt
+	sudo mount -o shortname=winnt RetrOS-32-debug.img ./mnt
+	sudo rsync -av --update ./rootfs/ ./mnt/
+	sudo umount ./mnt
+	@echo "Finisheds rsyncing."
+
 
 mount:
 	sudo mount -o shortname=winnt RetrOS-32-debug.img ./mnt
