@@ -21,13 +21,60 @@
 #include <conf.h>
 #include <gfx/theme.h>
 #include <kevents.h>
+#include <lib/lz.h>
 
 #define COMMAND(name, func) \
 	int name\
 		func\
 	EXPORT_KSYMBOL(name);
 
-/* Filesystem management */
+static int __read_file(char* filename, char** buffer){
+    struct filesystem* fs = fs_get();
+    if(fs == NULL){
+        twritef("No filesystem mounted.\n");
+        return -1;
+    }
+
+    struct file* f = fs->ops->open(fs, filename, FS_FILE_FLAG_READ);
+    if(f == NULL){
+        twritef("Failed to open file %s\n", filename);
+        return -1;
+    }
+
+    *buffer = kalloc(f->size);
+    int len = fs->ops->read(fs, f, *buffer, f->size);
+    if(len < 0){
+        twritef("Failed to read file %s\n", filename);
+        return -1;
+    }
+
+    fs->ops->close(fs, f);
+    return len;
+}
+
+static int __write_file(char* filename, char* buffer, int size){
+    struct filesystem* fs = fs_get();
+    if(fs == NULL){
+        twritef("No filesystem mounted.\n");
+        return -1;
+    }
+
+    struct file* f = fs->ops->open(fs, filename, FS_FILE_FLAG_CREATE | FS_FILE_FLAG_WRITE);
+    if(f == NULL){
+        twritef("Failed to open file %s\n", filename);
+        return -1;
+    }
+
+    int len = fs->ops->write(fs, f, buffer, size);
+    if(len < 0){
+        twritef("Failed to write file %s\n", filename);
+        return -1;
+    }
+
+    fs->ops->close(fs, f);
+    return len;
+}
+
 
 /**
  * @brief Create a file or directory
@@ -89,6 +136,59 @@ static int list(int argc, char* argv[])
     return 0;
 }
 EXPORT_KSYMBOL(list);
+
+/* prints content of compressed file */
+static int lzcat(int argc, char* argv[]){
+    if(argc < 2) {
+        twritef("Usage: lz <file>\n");
+        return 1;
+    }
+    uint8_t* buf;
+    int len = __read_file(argv[1], &buf);
+
+    uint8_t* output;
+    uint32_t output_size = lz_decompress(buf, len, &output);
+    if(output_size == 0) {
+        twritef("Failed to decompress file\n");
+        return -1;
+    }
+
+    twritef("%s\n", output);
+
+    free(output);
+    kfree(buf);
+    
+    return 0;
+}
+EXPORT_KSYMBOL(lzcat);
+
+static int lz(int argc, char* argv[]){
+    if(argc < 3) {
+        twritef("Usage: lz <file> <outfile>\n");
+        return 1;
+    }
+    uint8_t* buf;
+    int len = __read_file(argv[1], &buf);
+
+    uint8_t* output;
+    uint32_t output_size = lz_compress(buf, len, &output, 0);
+    if(output_size == 0) {
+        twritef("Failed to compress file\n");
+        return -1;
+    }
+
+    int ret = __write_file(argv[2], output, output_size);
+    if(ret < 0) {
+        twritef("Failed to write compressed file\n");
+        return -1;
+    }
+
+    free(output);
+    kfree(buf);
+    
+    return 0;
+}
+EXPORT_KSYMBOL(lz);
 
 static int color(int argc, char* argv[]){
     if(argc < 2) {
