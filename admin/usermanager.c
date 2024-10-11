@@ -242,9 +242,11 @@ static int __change_user(struct usermanager* usrman, struct user* user, permissi
 		return -1;
 	}
 
-	twritef("Not implemented.\n");
-	
-	return -1;
+	user->permissions = permission;
+
+	usrman->ops->save(usrman);
+
+	return 0;
 }
 
 static int admin(int argc, char** argv)

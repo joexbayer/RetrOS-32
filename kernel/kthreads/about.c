@@ -171,7 +171,7 @@ void __kthread_entry about(int argc, char* argv[])
 }
 EXPORT_KTHREAD(about);
 
-const char* readme_text[] = {
+static const char* readme_text[] = {
     "Welcome to the RetrOS-32",
     "kernel readme.\n",
     " ", 
@@ -203,12 +203,10 @@ const char* readme_text[] = {
     "kernel threads or shell",
     "commands as threads.",
     " ",
-    "To use the C interpreter,",
-    "enter 'cc <path>' in the",
-    "terminal. Note: The C",
-    "interpreter is currently",
-    "under development and may",
-    "not be fully functional.",
+    "The C-Compiler is located",
+    "in /bin/cc. The compiler",
+    "can be used to compile",
+    "C programs.",
     " ",
     "Networking: The kernel",
     "supports Ethernet, IPv4,",
@@ -222,9 +220,9 @@ const char* readme_text[] = {
     "A looback interface is",
     "also supported.",
 };
-const int num_strings = sizeof(readme_text) / sizeof(readme_text[0]);
 
-void __kthread_entry readme()
+// Function to display a window with scrollable text from a string array
+void __kthread_entry display_note(const char* title, const char** text_array, int num_strings)
 {
     const int width = 250;
     const int height = 300;
@@ -233,52 +231,88 @@ void __kthread_entry readme()
     int to = 28;
 
     struct window* w = gfx_new_window(width, height, 0);
-    if(w == NULL){
-        warningf("Failed to create window for about");
+    if (w == NULL) {
+        warningf("Failed to create window for text display");
         return;
     }
 
-    kernel_gfx_set_title("Readme");
+    kernel_gfx_set_title(title);
 
     w->ops->move(w, 50, 50);
-    while (1){
+    while (1) {
         w->draw->rect(w, 0, 0, width, height, 30);
-        w->draw->box(w, 10, 10, width-20, height-20,31);
+        w->draw->box(w, 10, 10, width - 20, height - 20, 31);
 
-        for(int i = from; i < to; i++){
-            w->draw->text(w, 12, 12+ (i-from)*10, readme_text[i], 0);
+        // Draw the text from the provided array
+        for (int i = from; i < to && i < num_strings; i++) {
+            w->draw->text(w, 12, 12 + (i - from) * 10, text_array[i], 0);
         }
 
         gfx_commit();
 
         struct gfx_event event;
         int ret = gfx_event_loop(&event, GFX_EVENT_BLOCKING);
-        if(ret == -1) continue;
+        if (ret == -1) continue;
 
-        switch (event.event){
-        case GFX_EVENT_EXIT:
-            return;
-        case GFX_EVENT_KEYBOARD:{
-                switch (event.data){
-                case KEY_DOWN:
-                    if(to < num_strings){
-                        from++;
-                        to++;
-                    }
-                    break;
-                case KEY_UP:
-                    if(from > 0){
-                        from--;
-                        to--;
-                    }
-                    break;
+        switch (event.event) {
+            case GFX_EVENT_EXIT:
+                return;
+            case GFX_EVENT_KEYBOARD: {
+                switch (event.data) {
+                    case KEY_DOWN:
+                        if (to < num_strings) {
+                            from++;
+                            to++;
+                        }
+                        break;
+                    case KEY_UP:
+                        if (from > 0) {
+                            from--;
+                            to--;
+                        }
+                        break;
                 }
             }
             break;
-        default:
-            break;
+            default:
+                break;
         }
-
     }
 }
+
+static const char* workspaces_text[] = {
+    "Workspace readme.\n",
+    " ",
+    "Workspaces represent virtual",
+    "desktops that you can switch",
+    "between. Each workspace has",
+    "its own set of windows and",
+    "applications. You can switch",
+    "between workspaces using the",
+    "F4 key",
+    " ",
+    "You can see the current",
+    "workspace number in the",
+    "bottom left corner of the",
+    "screen.",
+    " ",
+    "Processes in the background",
+    "will continue to run even",
+    "when you switch workspaces.",
+    "There are 4 workspaces",
+    "available.",
+};
+
+void __kthread_entry workspaces(int argc, char* argv[])
+{
+    display_note("Workspaces", workspaces_text, sizeof(workspaces_text) / sizeof(workspaces_text[0]));
+}
+EXPORT_KTHREAD(workspaces);
+
+void __kthread_entry readme(int argc, char* argv[])
+{
+    display_note("Readme", readme_text, sizeof(readme_text) / sizeof(readme_text[0]));
+}
 EXPORT_KTHREAD(readme);
+
+

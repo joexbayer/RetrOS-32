@@ -59,6 +59,7 @@ static void __callback taskbar_about();
 static void __callback taskbar_readme();
 static void __callback taskbar_reboot();
 static void __callback taskbar_shutdown();
+static void __callback taskbar_workspaces();
 
 /* prototype to taskbar thread */
 static void __kthread_entry taskbar(void);
@@ -198,6 +199,12 @@ struct taskbar_options {
                     .name = "Readme",
                     .callback = &taskbar_readme
                 },
+                {
+                    .icon = desktop_16,
+                    .name = "Workspace",
+                    .callback = &taskbar_workspaces
+                },
+
                 {
                     .icon = desktop_16,
                     .name = "Reboot",
@@ -487,6 +494,11 @@ static void __callback taskbar_about()
 static void __callback taskbar_readme()
 {
     start("readme", 0, NULL);
+}
+
+static void __callback taskbar_workspaces()
+{
+    start("workspaces", 0, NULL);
 }
 
 static void __callback __reboot(int opt)
