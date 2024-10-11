@@ -45,13 +45,14 @@ static int prevNewline(unsigned char* str, unsigned char* limit)
 
 void Editor::reDrawHeader()
 {
-	gfx_draw_rectangle(TEXT_WIDTH_OFFSET, 0, this->c_width, this->c_height, COLOR_BG);
+	gfx_draw_rectangle(TEXT_WIDTH_OFFSET-24, 0, this->c_width+24, this->c_height, COLOR_BG);
+
 	gfx_draw_line(TEXT_SIDE_NUMBERS+17, 0, TEXT_SIDE_NUMBERS+17, this->c_height, 0);
 	for (int i = 0; i < this->c_height/8; i++)gfx_draw_format_text(TEXT_SIDE_NUMBERS, HEADER_OFFSET+ i*8, COLOR_VGA_MEDIUM_GRAY, "%s%d ", i < 10 ? " " : "", i);
 
 	drawHeaderTable(TREE_VIEW_WIDTH, c_width+24);
 	gfx_draw_format_text(TREE_VIEW_WIDTH+2, 2, COLOR_BLACK, "< >");
-	gfx_draw_format_text(TREE_VIEW_WIDTH+c_width+24-strlen("Save (F1)")*8, 2, COLOR_BLACK, "%s", "Save (F1)");
+	gfx_draw_format_text(TREE_VIEW_WIDTH+c_width+24-strlen("Help (F9)")*8, 2, COLOR_BLACK, "%s", "Help (F9)");
 }
 
 
@@ -221,8 +222,8 @@ void Editor::FileChooser()
 			}
 			break;
 		case GFX_EVENT_RESOLUTION:
-			c_width = event.data;
-			c_height = event.data2;
+			c_width = event.data-TEXT_WIDTH_OFFSET-48;
+			c_height = event.data2 % 8 == 0 ? event.data2 : event.data2 - (event.data2 % 8);
 			reDrawHeader();
 			break;
 		case GFX_EVENT_MOUSE:
@@ -240,6 +241,54 @@ void Editor::FileChooser()
 			break;
 		case GFX_EVENT_EXIT:
 			Quit();
+		default:
+			break;
+		}
+	}
+}
+
+void Editor::Help()
+{
+	reDrawHeader();
+	gfx_draw_format_text(TEXT_WIDTH_OFFSET, HEADER_OFFSET, COLOR_TEXT, "Help");
+	gfx_draw_format_text(TEXT_WIDTH_OFFSET, HEADER_OFFSET+8, COLOR_TEXT, "F1: Save");
+	gfx_draw_format_text(TEXT_WIDTH_OFFSET, HEADER_OFFSET+16, COLOR_TEXT, "F2: Scroll up");
+	gfx_draw_format_text(TEXT_WIDTH_OFFSET, HEADER_OFFSET+24, COLOR_TEXT, "F3: Scroll down");
+
+	gfx_draw_format_text(TEXT_WIDTH_OFFSET, HEADER_OFFSET+40, COLOR_TEXT, "Arrow keys: Move cursor");
+	gfx_draw_format_text(TEXT_WIDTH_OFFSET, HEADER_OFFSET+48, COLOR_TEXT, "Backspace: Delete character");
+	gfx_draw_format_text(TEXT_WIDTH_OFFSET, HEADER_OFFSET+56, COLOR_TEXT, "Enter: New line");
+	gfx_draw_format_text(TEXT_WIDTH_OFFSET, HEADER_OFFSET+64, COLOR_TEXT, "Mouse: Click on file to open");
+
+	gfx_draw_format_text(TEXT_WIDTH_OFFSET, HEADER_OFFSET+80, COLOR_TEXT, "Press any 'q' to exit help");
+
+	while (1){
+		struct gfx_event event;
+		gfx_get_event(&event, GFX_EVENT_BLOCKING);
+		switch (event.event){
+		case GFX_EVENT_KEYBOARD:
+			if(event.data == 'q'){
+				return;
+			}
+			break;
+		case GFX_EVENT_MOUSE:
+			if(event.data < TREE_VIEW_WIDTH){
+				treeView->click(event.data, event.data2);
+			}
+			break;
+		case GFX_EVENT_RESOLUTION:
+			c_width = event.data-TEXT_WIDTH_OFFSET-48;
+			c_height = event.data2 % 8 == 0 ? event.data2 : event.data2 - (event.data2 % 8);
+		
+			delete treeView;
+			treeView = new TreeView(0, 0, TREE_VIEW_WIDTH, c_height);
+			treeView->drawTree(this);
+
+			reDrawHeader();
+			break;;
+		case GFX_EVENT_EXIT:
+			Quit();
+			return;
 		default:
 			break;
 		}
@@ -273,8 +322,8 @@ void Editor::EditorLoop()
 			}
 			break;
 		case GFX_EVENT_RESOLUTION:
-			c_width = event.data;
-			c_height = event.data2;
+			c_width = event.data-TEXT_WIDTH_OFFSET-48;
+			c_height = event.data2 % 8 == 0 ? event.data2 : event.data2 - (event.data2 % 8);
 
 			delete treeView;
 			treeView = new TreeView(0, 0, TREE_VIEW_WIDTH, c_height);
@@ -445,6 +494,10 @@ void Editor::putChar(unsigned char c)
 		return;
 	case KEY_F2:
 		scroll(-1);
+		reDraw(0, m_bufferSize);	
+		return;
+	case KEY_F9:
+		Help();
 		reDraw(0, m_bufferSize);
 		return;
 	case KEY_F1:{

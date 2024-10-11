@@ -41,7 +41,7 @@ public:
 		m_textBuffer[1] = '\n';
 		m_bufferHead = 1;
 
-		gfx_draw_rectangle(0, 0, c_width+24, c_height, COLOR_BG);
+		gfx_draw_rectangle(0, 0, 288+TREE_VIEW_WIDTH, c_height, COLOR_BG);
 
 		/* Loading text middle of room */
 		m_textColor = COLOR_TEXT;
@@ -61,6 +61,7 @@ public:
 	}
 
 	void Save();
+	void Help();
 	void Open(char* path);
 	void putChar(unsigned char c);
 	void Lex();

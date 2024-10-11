@@ -15,6 +15,7 @@
 #include <lib/syscall.h>
 
 typedef void (*ThreadFunc)(void*);
+typedef volatile int signal_t;
 
 class Thread {
 public:

@@ -114,7 +114,7 @@ public:
                 if (root.children[i].isExpanded) {
                     const char* ret = __click(&root.children[i], x, y, 1+i);
                     if (ret != nullptr) return ret;
-                    y2 += root.children[i].childrenCount * 16;
+                    y2 += (root.children[i].childrenCount) * 16;
                 }
             }
 
