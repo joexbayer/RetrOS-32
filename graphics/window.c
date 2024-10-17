@@ -112,7 +112,7 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
         color_t header_text_color = window->in_focus ? 0x00 : COLOR_VGA_LIGHT_GRAY;
 #endif // __WINDOWS_95
 
-        vesa_fillrect(buffer, window->x+6, window->y-4, window->width-8, 12, header_color);
+        vesa_fillrect(buffer, window->x+6, window->y-4, window->width-10, 12, header_color);
 
         /* top */
         vesa_line_horizontal(buffer, window->x+4, window->y-4, window->width-8, border_dark);

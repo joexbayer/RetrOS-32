@@ -1,26 +1,17 @@
 // Test C program
 #include "lib/std.c"
 
-int add(int a, int b)
-{
-  return a + b;
-}
+struct hello {
+  char* hello;
+  int b;
+};
 
-int fac(int n)
-{
-  if (n == 0)
-    return 1;
-  return fac(n - 1) * n;
-}
+int main() {
+  struct hello h;
+  h.hello = "Hello world!\n";
+  h.b = 14;
 
-int main()
-{
-  int c, d;
-  c = add(3, 2);
-
-  d = fac(c);
-
-  print("Hello world!\n");
+  print(h.hello);
 
   return 0;
 }

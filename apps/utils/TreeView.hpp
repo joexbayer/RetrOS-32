@@ -264,10 +264,27 @@ private:
             /* draw line from parent to current */
             if (depth > 1) {
                 int current_x = depth * 16;
+
                 int current_y = (entries + i) * 16;
-                int parent_y = (entries - 1) * 16 + 16;
-                gfx_draw_line((depth - 1) * 16 + 8, parent_y, (depth - 1) * 16 + 8, current_y, COLOR_BLACK);
-                gfx_draw_line((depth - 1) * 16 + 8, current_y + 8, current_x, current_y + 8, COLOR_BLACK);
+                int parent_y = (entries-1) * 16 + 8;
+
+                /* Draw vertical line */
+                gfx_draw_line(
+                    (depth - 1) * 16 + 8, // parent x + 8
+                    parent_y + 8, // parent y + 8
+                    (depth - 1) * 16 + 8,
+                    current_y + 8,
+                    COLOR_BLACK
+                );
+
+                /* Draw horizontal line */
+                gfx_draw_line(
+                    (depth - 1) * 16 + 8,
+                    current_y + 8,
+                    current_x,
+                    current_y + 8,
+                    COLOR_BLACK
+                );
             }
 
             gfx_draw_format_text(depth * 16 + 18, (entries + i) * 16 + 5, COLOR_BLACK, name);
