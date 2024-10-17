@@ -73,16 +73,18 @@ static char* about_text = "\nRetrOS-32 - 32bit Operating System\n    " KERNEL_RE
 void shell_clear()
 {
 	struct gfx_theme* theme = kernel_gfx_current_theme();
-	kernel_gfx_draw_rectangle($process->current->gfx_window, 0, SHELL_POSITION, gfx_get_window_height(), 8, theme->terminal.background);
+	kernel_gfx_draw_rectangle($process->current->gfx_window, 0, SHELL_POSITION, gfx_get_window_height(), 8, $process->current->term->bg_color);
 }
 
 void reset_shell()
 {
+	struct terminal* term = $process->current->term;
+
 	shell_clear();
 	memset(&shell_buffer, 0, SHELL_MAX_SIZE);
 	shell_column = strlen(shell_name)+1;
 	shell_buffer_length = 0;
-	kernel_gfx_draw_text($process->current->gfx_window, 0, SHELL_POSITION, shell_name, COLOR_VGA_MISC);
+	kernel_gfx_draw_text($process->current->gfx_window, 0, SHELL_POSITION, shell_name, term->text_color);
 	shell_column += 1;
 }
 
@@ -433,8 +435,7 @@ void res(int argc, char* argv[])
 }
 EXPORT_KSYMBOL(res);
 
-void bg(int argc, char* argv[])
-{
+void bg(int argc, char* argv[]){
 	if(argc == 1){
 		twritef("usage: bg [<hex>, reset]\n");
 		return;
@@ -483,7 +484,7 @@ EXPORT_KSYMBOL(socks);
 
 void reset(int argc, char* argv[])
 {
-	kernel_gfx_draw_rectangle($process->current->gfx_window, 0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_VGA_BG);
+	kernel_gfx_draw_rectangle($process->current->gfx_window, 0,0, gfx_get_window_width(), gfx_get_window_height(), $process->current->term->bg_color);
 	$process->current->term->ops->reset($process->current->term);
 	reset_shell();
 }
@@ -499,6 +500,7 @@ EXPORT_KSYMBOL(reset);
 void shell_put(unsigned char c)
 {
 	unsigned char uc = c;
+	struct terminal* term = $process->current->term;
 
 	if(uc == ARROW_UP){
 		int len = strlen(previous_shell_buffer)+1;
@@ -528,7 +530,7 @@ void shell_put(unsigned char c)
 		if(shell_buffer_length < 1)
 			return;
 		shell_column -= 1;
-		kernel_gfx_draw_rectangle($process->current->gfx_window, shell_column*8, SHELL_POSITION, 8, 8, COLOR_VGA_BG);
+		kernel_gfx_draw_rectangle($process->current->gfx_window, shell_column*8, SHELL_POSITION, 8, 8, term->bg_color);
 		gfx_commit();
 		shell_buffer[shell_buffer_length] = 0;
 		shell_buffer_length--;
@@ -538,7 +540,7 @@ void shell_put(unsigned char c)
 	if(shell_column == SHELL_MAX_SIZE)
 		return;
 
-	kernel_gfx_draw_char($process->current->gfx_window, shell_column*8, SHELL_POSITION, uc, COLOR_VGA_FG);
+	kernel_gfx_draw_char($process->current->gfx_window, shell_column*8, SHELL_POSITION, uc, term->text_color);
 	gfx_commit();
 	shell_buffer[shell_buffer_length] = uc;
 	shell_buffer_length++;
@@ -564,7 +566,6 @@ int c_test = 0;
 void __kthread_entry shell(int argc, char* argv[])
 {
 	dbgprintf("shell is running %d!\n", __cli_cnt);
-
 	//testfn();
 	struct window* window = gfx_new_window(SHELL_WIDTH, SHELL_HEIGHT, GFX_IS_RESIZABLE);
 	if(window == NULL){
@@ -572,11 +573,12 @@ void __kthread_entry shell(int argc, char* argv[])
 		return;
 	}
 	dbgprintf("shell: window 0x%x\n", window);
-	kernel_gfx_draw_rectangle($process->current->gfx_window, 0,0, gfx_get_window_width(), gfx_get_window_height(), COLOR_VGA_BG);
+
 	
 	struct terminal* term = terminal_create(TERMINAL_GRAPHICS_MODE);
 	term->ops->attach(term);
 
+	kernel_gfx_draw_rectangle($process->current->gfx_window, 0,0, gfx_get_window_width(), gfx_get_window_height(), term->bg_color);
 	struct mem_info minfo;
     get_mem_info(&minfo);
 

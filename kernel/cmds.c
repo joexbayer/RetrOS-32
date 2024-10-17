@@ -205,6 +205,7 @@ static int color(int argc, char* argv[]){
 
     TERM_CONTEXT({
         term->text_color = text;
+        term->org_text_color = text;
         if(bg != 255) {
             term->bg_color = bg;
         }

@@ -151,11 +151,11 @@ void Editor::Open(char* path)
 		fclose(m_fd);
 	}
 
-
 	printf("Opening file: %s\n", path);
 	m_fd = open(path, FS_FILE_FLAG_CREATE | FS_FILE_FLAG_READ | FS_FILE_FLAG_WRITE);
 	if(m_fd < 0)
 		return;
+	
 	
 	setTitle(path);
 
@@ -176,7 +176,7 @@ void Editor::Save()
 	if(m_fd < 0){
 		return;
 	}
-	
+
 	write(m_fd, m_textBuffer, m_bufferHead);
 	gfx_draw_rectangle(TEXT_WIDTH_OFFSET, c_height-8, c_width-TEXT_WIDTH_OFFSET, 8, COLOR_BG);
 	gfx_draw_format_text(TEXT_WIDTH_OFFSET, c_height-8, COLOR_VGA_MEDIUM_DARK_GRAY, "Saved.");
@@ -190,8 +190,8 @@ void Editor::FileChooser()
 	if(m_fd > 0){
 		/* TODO: Check for unsaved changes */
 		fclose(m_fd);
-	}
 
+	}
 
 	gfx_draw_rectangle(TEXT_WIDTH_OFFSET, c_height/2-4, c_width-TEXT_WIDTH_OFFSET, 8, COLOR_BG);
 	gfx_draw_format_text(TEXT_WIDTH_OFFSET, c_height/2-4, COLOR_BLACK, "Open file: ");
@@ -203,6 +203,7 @@ void Editor::FileChooser()
 		switch (event.event){
 			case GFX_EVENT_KEYBOARD: {
 				switch (event.data){
+
 				case '\n':{
 						filename[i] = 0;
 						Open(filename);

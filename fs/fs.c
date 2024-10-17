@@ -171,6 +171,14 @@ int fs_save_to_file(const char* file, void* buf, int size)
     return written;
 }
 
+int fs_size(int fd){
+    if(fd < 0 || fd >= FS_MAX_FILES || fs_file_table[fd].flags == 0){
+        return -1;
+    }
+
+    return fs_file_table[fd].size;
+}
+
 int fs_close(int fd)
 {
     /* check if a filesystem is available */

@@ -3,6 +3,8 @@
 #include <utils/Widgets.hpp>
 #include <utils/Thread.hpp>
 #include <utils/Function.hpp>
+#include <utils/ColorPicker.hpp>
+
 #include <libc.h>
 #include <colors.h>
 #include <lib/printf.h>
@@ -22,17 +24,21 @@ public:
             180, 180,
             VERTICAL,
             0
-
         ));
 
-        widgets->addWidget(main, LEFT, new Button(100, 14, "Button", Function([this]() {
-            printf("Button pressed!\n");
+        widgets->addWidget(main, LEFT, new Button(100, 14, "Color", Function([this]() {
+            int color = color_picker_entry();
+            
+            char buffer[100] = {0};
+            sprintf(buffer, "bg 0x%x", color);
+            printf("Executing: %s\n", buffer);
+            system(buffer);
         })));
-        widgets->addWidget(main, RIGHT, new Button(100, 14, "Start Edit", Function([this]() {
+        widgets->addWidget(main, RIGHT, new Button(100, 14, "Create", Function([this]() {
 
             Thread* editor = new Thread(editorEntry, 0);
             editor->start(0);
-
+        
         })));
 
         Input* input = new Input(100, 12, "Input");
@@ -42,6 +48,7 @@ public:
         widgets->addWidget(main, LEFT, new Label("Checkbox"));
         widgets->addWidget(main, LEFT, new Checkbox(false));
     }
+
 
     int eventHandler(struct gfx_event* event) {
         switch (event->event){
@@ -83,6 +90,7 @@ public:
         Function f = [this]() { this->anotherFunction(); };
         f(); // Invoke the lambda
     }
+
 
     void anotherFunction() {
         printf("Hello from another function!\n");

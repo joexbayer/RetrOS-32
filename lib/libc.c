@@ -178,7 +178,7 @@ int32_t csprintf(char *buffer, const char *fmt, va_list args)
                     case 'x':
                     case 'X':
                         num = va_arg(args, unsigned int);
-                        written += itohex(num, str);
+                        itohex(num, str);
                         break;
                     case 'p': /* p for padded int */
                         num = va_arg(args, int);

@@ -415,15 +415,17 @@ error_t pcb_create_process(char* program, int argc, char** argv, pcb_flag_t flag
 {
 	AUTHORIZED_GUARD(CTRL_PROC_CREATE | SYSTEM_FULL_ACCESS | ADMIN_FULL_ACCESS);
 
+	#define MAX_PROGRAM_SIZE 128*1024
+
 	char* buf;
 	int ret, size;
 	struct pcb* pcb;
 
 	/* Load program into memory */
-	buf = kalloc(64*1024);
+	buf = kalloc(MAX_PROGRAM_SIZE);
 	if(buf == NULL){return -ERROR_ALLOC;}
 	
-	ret = fs_load_from_file(program, buf, 64*1024);
+	ret = fs_load_from_file(program, buf, MAX_PROGRAM_SIZE);
 	if(ret < 0){
 		dbgprintf("Error loading %s\n", program);
 		

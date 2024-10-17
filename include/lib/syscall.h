@@ -24,6 +24,7 @@ int write(int fd, void* buffer, int size);
 int read(int fd, void* buffer, int size);
 int fclose(int fd);
 
+void* zmalloc(int size);
 void* malloc(int size);
 void free(void* ptr);
 

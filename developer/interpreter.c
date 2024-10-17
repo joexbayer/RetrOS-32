@@ -84,7 +84,6 @@ int rc(int argc, char **argv)
 
     return 0;
 }
-EXPORT_KSYMBOL(rc);
 
 int as(int argc, char **argv)
 {
@@ -172,7 +171,7 @@ int as(int argc, char **argv)
 
     return 0;
 }
-EXPORT_KSYMBOL(as);
+
 
 static int __cc(int argc, char **argv)
 {
@@ -255,16 +254,3 @@ static int __cc(int argc, char **argv)
 
     return 0;
 }
-
-static int cc(int argc, char **argv)
-{
-    /* We create a kthread as _cc exits on error, else terminal process would exit. */
-    int pid = pcb_create_kthread(__cc, "cc", argc, argv);
-    if(pid < 0){
-        twritef("Could not create thread\n");
-        return -1;
-    }
-    return 0;
-}
-
-EXPORT_KSYMBOL(cc);

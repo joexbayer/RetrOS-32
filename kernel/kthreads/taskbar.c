@@ -51,7 +51,7 @@ static void __callback taskbar_bg_lotr2();
 static void __callback taskbar_bg_default();
 static void __callback taskbar_bg_retro();
 static void __callback taskbar_bg_calc();
-static void __callback taskbar_bg_graph();
+static void __callback taskbar_users();
 static void __callback taskbar_bg_default_color();
 static void __callback taskbar_bg_default_color_gray();
 static void __callback taskbar_sysinf();
@@ -88,7 +88,7 @@ struct taskbar_options {
         {
             .x = 4,
             .y = 2,
-            .w = 100,
+            .w = 50,
             .h = 16,
             .name = "Start",
             .icon = menu_16,
@@ -135,8 +135,8 @@ struct taskbar_options {
                 },
                 {
                     .icon = bin_16,
-                    .name = "Graph",
-                    .callback = &taskbar_bg_graph
+                    .name = "Users",
+                    .callback = &taskbar_users
                 },
                 {
                     .icon = bin_16,
@@ -147,46 +147,66 @@ struct taskbar_options {
             }
         },
         {
-            .x = 120,
+            .x = 60,
             .y = 2,
-            .w = 100,
-            .h = 14,
-            .icon = bin_16,
-            .name = "Wallpaper",
+            .w = 60,
+            .h = 16,
+            .icon = NULL,
+            .name = "RetrOS",
             .options = {
                 {
-                    .icon = bin_16,
-                    .name = "Turquoise",
-                    .callback = &taskbar_bg_default_color
+                    .icon = desktop_16,
+                    .name = "Reboot",
+                    .callback = &taskbar_reboot
                 },
                 {
-                    .icon = bin_16,
-                    .name = "Gray",
-                    .callback = &taskbar_bg_default_color_gray
-                },
-                {
-                    .icon = bin_16,
-                    .name = "LOTR 1",
-                    .callback = &taskbar_bg_lotr
-                },
-                {
-                    .icon = bin_16,
-                    .name = "LOTR 2",
-                    .callback = &taskbar_bg_lotr2
-                },
-                {
-                    .icon = bin_16,
-                    .name = "Retro",
-                   .callback = taskbar_bg_retro
+                    .icon = desktop_16,
+                    .name = "Shutdown",
+                    .callback = &taskbar_shutdown
                 },
             }
         },
+        // {
+        //     .x = 120,
+        //     .y = 2,
+        //     .w = 100,
+        //     .h = 16,
+        //     .icon = bin_16,
+        //     .name = "Wallpaper",
+        //     .options = {
+        //         {
+        //             .icon = bin_16,
+        //             .name = "Turquoise",
+        //             .callback = &taskbar_bg_default_color
+        //         },
+        //         {
+        //             .icon = bin_16,
+        //             .name = "Gray",
+        //             .callback = &taskbar_bg_default_color_gray
+        //         },
+        //         {
+        //             .icon = bin_16,
+        //             .name = "LOTR 1",
+        //             .callback = &taskbar_bg_lotr
+        //         },
+        //         {
+        //             .icon = bin_16,
+        //             .name = "LOTR 2",
+        //             .callback = &taskbar_bg_lotr2
+        //         },
+        //         {
+        //             .icon = bin_16,
+        //             .name = "Retro",
+        //            .callback = taskbar_bg_retro
+        //         },
+        //     }
+        // },
         {
-            .x = 240,
+            .x = 120,
             .y = 2,
-            .w = 100,
-            .h = 14,
-            .icon = bin_16,
+            .w = 60,
+            .h = 16,
+            .icon = NULL,
             .name = "Help",
             .options = {
                 {
@@ -321,10 +341,10 @@ static void __kthread_entry taskbar(void)
     /* print text for all headers */
     for (int i = 0; i < TASKBAR_MAX_HEADERS; i++){
         if(default_taskbar.headers[i].name[0] == 0) continue;
+        gfx_button(default_taskbar.headers[i].x + 20, default_taskbar.headers[i].y, default_taskbar.headers[i].w + 16, default_taskbar.headers[i].h, default_taskbar.headers[i].name);
         if(default_taskbar.headers[i].icon != NULL){
-            gfx_put_icon16(default_taskbar.headers[i].icon, default_taskbar.headers[i].x, default_taskbar.headers[i].y);
+            gfx_put_icon16(default_taskbar.headers[i].icon, default_taskbar.headers[i].x+4, default_taskbar.headers[i].y);
         }
-        gfx_button(default_taskbar.headers[i].x+16, default_taskbar.headers[i].y, default_taskbar.headers[i].w, default_taskbar.headers[i].h, default_taskbar.headers[i].name);
     }
     
     while (1){
@@ -457,11 +477,11 @@ static void __callback taskbar_bg_retro()
         gfx_decode_background_image("/imgs/retro.img");
 }
 
-static void __callback taskbar_bg_graph()
+static void __callback taskbar_users()
 {
-    int pid = pcb_create_process("/bin/graphs.o", 0, NULL, 0);
+    int pid = pcb_create_process("/bin/users.o", 0, NULL, 0);
     if(pid < 0)
-        dbgprintf("%s does not exist\n", "graphs.o");
+        dbgprintf("%s does not exist\n", "users.o");
 }
 
 static void __callback taskbar_bg_default_color()
