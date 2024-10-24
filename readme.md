@@ -165,26 +165,18 @@ _To compile the kernel and its needed programs you simply need to run *make img*
    ```
 #### MacOS
 
-##### MacOS can compile the kernel but not the needed tools.
-1. Clone the repo
-   ```sh
-   git clone https://github.com/joexbayer/RetrOS-32.git
-   ```
-2. Compile the kernel / OS
-  
-   Docker:
-   ```sh
-   sudo docker-compose up
-   ```
-3. Launch QEMU
-   ```sh
-   make qemu
-   ```
+Currently MacOS cannot natively compile the build tools as they depend on 32bit x86 code.
+Docker is the simplest way if you still wish to compile the operating system.
+  1. Clone the repo
+    ```sh
+    git clone https://github.com/joexbayer/RetrOS-32.git
+    ```
 
-4. Use GRUB (Optional)
-   ```sh
-   make grub
-   ```
+  2. Clone the repo
+    ```sh
+    docker-compose up
+    ```
+ 
 #### Windows
   Using Docker (can also compile in WSL)
 
@@ -193,10 +185,11 @@ _To compile the kernel and its needed programs you simply need to run *make img*
    git clone https://github.com/joexbayer/RetrOS-32.git
    ```
 
-2. Compile and Launch QEMU
+2. Compile
    ```sh
-   ./make.cmd run
+   docker-compose up
    ```
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- USAGE EXAMPLES -->

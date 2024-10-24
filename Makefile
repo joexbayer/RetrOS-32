@@ -42,11 +42,14 @@ ifeq ($(UNAME),Linux)
 	ASFLAGS += --32
 	LDFLAGS += -m elf_i386
 	GRUB=grub-mkrescue /usr/lib/grub/i386-pc/ -o myos.iso legacy/multiboot
+# ! Disable MacOS support for now, as it is not able to compile the build tools. !
+#else ifeq ($(UNAME),Darwin)
+#	GRUB=grub-mkrescue /usr/local/lib/grub/i386-pc/ -o myos.iso legacy/multiboot
+#	CC=i386-elf-gcc
+#	AS=i386-elf-as
+#	LD=i386-elf-ld
 else
-	GRUB=grub-mkrescue /usr/local/lib/grub/i386-pc/ -o myos.iso legacy/multiboot
-	CC=i386-elf-gcc
-	AS=i386-elf-as
-	LD=i386-elf-ld
+	$(error This Makefile does not support building on this platform. Please use Linux, WSL or Docker)
 endif
 
 # ---------------- Objects to compile ----------------
@@ -93,7 +96,6 @@ symbols: bin/multiboot.o $(KERNELOBJ)
 	@$(LD) -o bin/symbols $^ $(LDFLAGS) -T ./kernel/linkersym.ld
 	@nm -C -n bin/symbols | grep ' [Tt] ' | sed 's/ [Tt] / /' > rootfs/sysutil/symbols.map
 
-
 kernel: bin/kcrt0.o $(KERNELOBJ)
 	@echo "[KERNEL]     Linking kernel..."
 	@$(LD) -o bin/kernelout $^ $(LDFLAGS) -T ./kernel/linker.ld
@@ -117,11 +119,6 @@ bin/%.o: */%.s
 	@$(ECHO) [KERNEL]     Compiling $<
 	@$(AS) -o $@ -c $< $(ASFLAGS)
 
-
-bin/mkfs: bin/ext.o bin/bitmap.o ./tools/mkfs.c
-	@gcc tools/mkfs.c bin/bitmap.o fs/bin/inode.o -I include/  -O2 -m32 -Wall -D_XOPEN_SOURCE -D_FILE_OFFSET_BITS=64 -D__KERNEL -o  ./bin/mkfs
-	@echo [BUILD]      Compiling $<
-
 bin/build: tools/build.c bin/fat16.o bin/bitmap.o ./tests/utils/mocks.c
 	@gcc tools/build.c bin/bitmap.o ./tests/utils/mocks.c bin/fat16.o -I ./include/  -O2 -m32 -Wall -D__FS_TEST -D__KERNEL -o 	./bin/build
 	@echo [BUILD]      Compiling $<
@@ -139,9 +136,6 @@ bin/ext.o: ./fs/*.c
 
 bin/fat16.o: ./fs/*.c
 	@make -C ./fs/
-
-build: bin/build
-	./bin/build
 
 apps:
 	@make -C ./apps/
@@ -208,7 +202,11 @@ vdi: cleanvid docker
 	qemu-img convert -f raw -O vdi boot.img boot.vdi
 
 qemu:
-	qemu-system-i386 $(QEMU_OPS) -drive file=RetrOS-32-debug.img,format=raw,index=0,media=disk
+	ifeq ($(OS),Windows_NT)
+		qemu-system-i386.exe $(QEMU_OPS) -drive file=RetrOS-32-debug.img,format=raw,index=0,media=disk
+	else
+		qemu-system-i386 $(QEMU_OPS) -drive file=RetrOS-32-debug.img,format=raw,index=0,media=disk
+	endif
 
 sync:
 	mkdir -p mnt
@@ -216,8 +214,6 @@ sync:
 	sudo cp -r ./rootfs/* ./mnt/
 	sudo umount ./mnt
 	@echo "Finished syncing."
-# sh scripts/sync.sh RetrOS-32-debug.img
-# sudo cp -r mnt/* ./mnt/apps/
 
 rsync:
 	mkdir -p mnt
@@ -226,12 +222,8 @@ rsync:
 	sudo umount ./mnt
 	@echo "Finisheds rsyncing."
 
-
 mount:
 	sudo mount -o shortname=winnt RetrOS-32-debug.img ./mnt
 
 run: img qemu
 endif
-
-# qemu-system-i386 -cdrom myos.iso -serial stdio -drive file=boot.iso,if=ide,index=0,media=disk
-#qemu-system-i386.exe -cdrom .\myos.iso -drive if=none,id=usbstick,format=raw,file=filesystem.image -usb -device usb-ehci,id=ehci -device usb-storage,bus=ehci.0,drive=usbstick
