@@ -60,7 +60,7 @@ programs: staticlibs bin/crt0.o ${USROBJS}
 	@make -C cube/
 	@make -C users/
 	@make -C texed/
-	@make -C C-Compiler/
+	@make -f Makefile.retros -C C-Compiler/
 	@echo [USR] All user programs created and linked!
 
 bin/%.o: utils/%.cpp
