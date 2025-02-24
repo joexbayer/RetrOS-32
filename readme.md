@@ -148,47 +148,49 @@ _To compile the kernel and its needed programs you simply need to run *make img*
    ./debian.sh
    ```
 
-3. Compile and create image
-  ```sh
-  make compile
-  make img
-  ```
+3. Initialize Git submodules (C-Compiler)
+   ```sh
+   git submodule update --init --recursive
+   ```
+
+4. Compile and create image
+   ```sh
+   make compile
+   make img
+   ```
    
-4. Launch QEMU
+5. Launch QEMU
    ```sh
    make qemu
    ```
 
-5. Use GRUB (Optional)
+6. Use GRUB (Optional)
    ```sh
    make grub
    ```
+
 #### MacOS
 
 Currently MacOS cannot natively compile the build tools as they depend on 32bit x86 code.
 Docker is the simplest way if you still wish to compile the operating system.
-  1. Clone the repo
-    ```sh
-    git clone https://github.com/joexbayer/RetrOS-32.git
-    ```
 
-  2. Clone the repo
-    ```sh
-    docker-compose up
-    ```
- 
-#### Windows
-  Using Docker (can also compile in WSL)
-
-1. Clone the repo
+1. Clone the repository
    ```sh
    git clone https://github.com/joexbayer/RetrOS-32.git
    ```
 
-2. Compile
+2. Initialize Git submodules (C-Compiler)
    ```sh
-   docker-compose up
+   git submodule update --init --recursive
    ```
+
+3. Build using Docker
+   ```sh
+   docker-compose up --build
+   ```
+ 
+#### Windows
+Use Docker (see MacOS section) or WSL (see Linux section).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

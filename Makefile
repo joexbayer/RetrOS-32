@@ -146,7 +146,7 @@ iso: compile tests apps tools build img
 filesystem:
 	@dd if=/dev/zero of=filesystem.image bs=512 count=390
 
-compile: git bindir $(LIBOBJ) bootblock kernel apps
+compile: bindir $(LIBOBJ) bootblock kernel apps
 	@echo "[Compile] Finished."
 	$(TIME-END)
 
