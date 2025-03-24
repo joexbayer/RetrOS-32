@@ -351,7 +351,7 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 <!-- CONTACT -->
 ## Contact
 
-Joe Bayer - joeba@uio.no
+Joe Bayer
 
 Project Link: [https://github.com/joexbayer/RetrOS-32](https://github.com/joexbayer/RetrOS-32)
 
