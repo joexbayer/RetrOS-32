@@ -24,6 +24,7 @@
 #define ATAPI_IDENTIFY       0xA1
 #define ATAPI_CMD_READ       0xA8
 #define ATAPI_CMD_READ_CAPACITY 0x25
+#define ATAPI_CMD_PACKET 0xA0
 
 #define ATA_REG_DEVCTRL 0x206
 
