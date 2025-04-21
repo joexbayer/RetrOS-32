@@ -201,12 +201,14 @@ docker:
 vdi: cleanvid docker
 	qemu-img convert -f raw -O vdi boot.img boot.vdi
 
+ifeq ($(OS),Windows_NT)
+QEMU_CMD = qemu-system-i386.exe $(QEMU_OPS) -drive file=RetrOS-32-debug.img,format=raw,index=0,media=disk
+else
+QEMU_CMD = qemu-system-i386 $(QEMU_OPS) -drive file=RetrOS-32-debug.img,format=raw,index=0,media=disk
+endif
+
 qemu:
-	ifeq ($(OS),Windows_NT)
-		qemu-system-i386.exe $(QEMU_OPS) -drive file=RetrOS-32-debug.img,format=raw,index=0,media=disk
-	else
-		qemu-system-i386 $(QEMU_OPS) -drive file=RetrOS-32-debug.img,format=raw,index=0,media=disk
-	endif
+	$(QEMU_CMD)
 
 sync:
 	mkdir -p mnt

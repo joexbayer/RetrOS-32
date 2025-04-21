@@ -34,7 +34,7 @@ struct sock {
     struct skb_queue* skb_queue;
     volatile struct _backlog {
         struct skb_queue* queue;
-        int count;
+        volatile int count;
         int size;
     } backlog;
 

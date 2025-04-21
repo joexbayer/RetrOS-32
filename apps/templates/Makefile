@@ -41,7 +41,7 @@ install: $(OUTPUT)
 	@cp $(OUTPUT) $(INSTALL_PATH)
 
 $(OUTPUT): $(OBJ_FILES)
-	$(LD) -o $@ $(LDFLAGS) $^ -L$(LIBS_PATH) $(LIBS) $(EXTENDED) -T $(ROOT)apps/utils/linker.ld
+	$(LD) -o $@ $(LDFLAGS) $^ -T $(ROOT)apps/utils/linker.ld -L$(LIBS_PATH) $(LIBS) $(EXTENDED)
 
 $(OUTPUTDIR)%.o: %.cpp
 	@mkdir -p $(OUTPUTDIR)

@@ -37,6 +37,7 @@ all: $(OUTPUT) install
 
 install: $(OUTPUT)
 	@cp $(OUTPUT) $(ROOT)rootfs/bin
+	@echo "Installed $(OUTPUT) to $(ROOT)rootfs/bin"
 
 $(OUTPUT): $(OBJ_FILES)
 	$(LD) -o $@ $(LDFLAGS) $^ -L../ -lcore -lgraphic $(COMMON) -T $(ROOT)apps/utils/linker.ld

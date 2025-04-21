@@ -94,6 +94,7 @@ tcb_new_error:
 #define TCP_BLOCK(sock)\
 	sock->waiting = $process->current;\
 	$process->current->state = BLOCKED;\
+	dbgprintf("[TCP] Blocking process %d on socket %d: CLI: %d\n", $process->current->pid, sock->socket, __cli_cnt);\
 	kernel_yield();
 
 #define TCP_UNBLOCK(sock)\
@@ -226,6 +227,9 @@ uint16_t tcp_calculate_checksum(uint32_t src_ip, uint32_t dest_ip, unsigned shor
 static int __tcp_send(struct sock* sock, struct tcp_header* hdr, struct sk_buff* skb, uint8_t* data, uint32_t len)
 {
 	int ret;
+
+	dbgprintf("[TCP - %d] <- TCP packet: %d syn, %d ack, %d fin %d push (src port: %d, dest port: %d)\n", 
+		timer_get_tick(), hdr->syn, hdr->ack, hdr->fin, hdr->psh, htons(hdr->source), htons(hdr->dest));
 
 	if(net_ipv4_add_header(skb, sock->recv_addr.sin_addr.s_addr, TCP, sizeof(struct tcp_header)+len) < 0){
 		skb_free(skb);
@@ -379,7 +383,7 @@ int tcp_send_ack(struct sock* sock, struct tcp_header* tcp, int len)
 	sock->tcp->sequence = htonl(tcp->ack_seq);
 	sock->tcp->acknowledgement = htonl(tcp->seq)+len;
 
-	dbgprintf("[TCP] Sending ack for %d (seq: %d, ack: %d)\n", htonl(tcp->seq)+len, htonl(tcp->ack_seq), htonl(tcp->seq)+1);
+	//dbgprintf("[TCP] Sending ack for %d (seq: %d, ack: %d)\n", htonl(tcp->seq)+len, htonl(tcp->ack_seq), htonl(tcp->seq)+1);
 
 	__tcp_send(sock, &hdr, skb, NULL, 0);
 	return ERROR_OK;
@@ -505,6 +509,8 @@ int tcp_recv_syn(struct sock* sock, struct tcp_header* tcp)
 		return -1;
 	}
 
+	//dbgprintf("[TCP] Sending syn ack for %d\n", sock->socket);
+
 	/* update states */
 	sock->tcp->sequence += 1;  /* Increment by 1 as the SYN flag consumes a sequence number */
     sock->tcp->acknowledgement = htonl(tcp->seq) + 1;
@@ -565,7 +571,8 @@ int tcp_parse(struct sk_buff* skb)
 		return -1;
 	}
 
-	dbgprintf("[TCP] Incoming TCP packet: %d syn, %d ack, %d fin %d push\n", hdr->syn, hdr->ack, hdr->fin, hdr->psh);
+	dbgprintf("[TCP - %d] -> TCP packet: %d syn, %d ack, %d fin %d push (src port: %d, dest port: %d) %d bytes\n", 
+		timer_get_tick(), hdr->syn, hdr->ack, hdr->fin, hdr->psh, htons(hdr->source), htons(hdr->dest), skb->data_len);
 
 	switch (sk->tcp->state){
 	case TCP_LISTEN:
@@ -585,7 +592,7 @@ int tcp_parse(struct sk_buff* skb)
 			sk->recv_addr.sin_port = hdr->source;
 			sk->recv_addr.sin_addr.s_addr = skb->hdr.ip->saddr;
 
-			dbgprintf("Socket %d received syn for %d\n", sk, hdr->seq);
+			//dbgprintf("Socket %d received syn for %d\n", sk, hdr->seq);
 
 			return tcp_recv_syn(sk, hdr);
 		}
@@ -601,7 +608,7 @@ int tcp_parse(struct sk_buff* skb)
 				sk->backlog.count++;
 			}
 
-			dbgprintf("Received ACK for SYN (%d)\n", sk->socket);
+			//dbgprintf("Received ACK for SYN (%d)\n", sk->socket);
 			sk->tcp->state = TCP_LISTEN;
 
 			TCP_UNBLOCK(sk);
@@ -629,7 +636,7 @@ int tcp_parse(struct sk_buff* skb)
 				return ERROR_OK;
 			}
 
-			dbgprintf("Socket %d received ack for %d\n", sk, htonl(hdr->ack_seq));
+			//dbgprintf("Socket %d received ack for %d\n", sk, htonl(hdr->ack_seq));
 			tcp_recv_ack(sk, hdr);
 			skb_free(skb);
 			return ERROR_OK;
@@ -637,7 +644,7 @@ int tcp_parse(struct sk_buff* skb)
 		break;
 	case TCP_ESTABLISHED:
 		if(hdr->syn == 0 && hdr->ack == 1 && hdr->fin == 0){
-			dbgprintf("Socket %d received data for %d\n", sk, htonl(hdr->ack_seq));
+			//dbgprintf("Socket %d received data for %d\n", sk, htonl(hdr->ack_seq));
 			/**
 			 * @brief This is where we should check if the packet is in order.
 			 * @see https://github.com/joexbayer/RetrOS-32/issues/34
@@ -663,7 +670,7 @@ int tcp_parse(struct sk_buff* skb)
 		}
 
 		if(hdr->fin == 1 && hdr->ack == 1){
-			dbgprintf("Socket %d received fin for %d\n", sk, htonl(hdr->ack_seq));
+			//dbgprintf("Socket %d received fin for %d\n", sk, htonl(hdr->ack_seq));
 			tcp_send_ack(sk, hdr, 1);
 
 			/**
@@ -682,6 +689,7 @@ int tcp_parse(struct sk_buff* skb)
 			/* Connection succesfully closed */
 			tcp_send_ack(sk, hdr, 1);
 			sk->tcp->state = TCP_CLOSED;
+			dbgprintf("Socket %d closed\n", sk->socket);
 		}
 		break;
 	case TCP_CLOSE_WAIT:

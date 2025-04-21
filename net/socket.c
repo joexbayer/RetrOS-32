@@ -255,18 +255,18 @@ struct sock* sock_find_listen_tcp(uint16_t d_port)
 
 struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip)
 {
-    dbgprintf("[TCP] Looking for socket destintation %d: source %d\n", htons(d_port), htons(s_port));
+    //dbgprintf("[TCP] Looking for socket destintation %d: source %d\n", htons(d_port), htons(s_port));
     struct sock* _sk = NULL; /* save listen socket incase no established connection is found. */
 
     for (int i = 0; i < NET_NUMBER_OF_SOCKETS; i++){
         if(socket_table[i] == NULL || socket_table[i]->tcp == NULL)
             continue;
 
-       dbgprintf("[TCP] %s (%i:%d %i:%d) %s\n",
-            socket_table[i]->owner->name,
-            ntohl(socket_table[i]->recv_addr.sin_addr.s_addr), htons(socket_table[i]->recv_addr.sin_port),
-            htons(socket_table[i]->bound_ip), htons(socket_table[i]->bound_port),
-            tcp_state_to_str(socket_table[i]->tcp->state)); 
+    //    dbgprintf("[TCP] %s (%i:%d %i:%d) %s\n",
+    //         socket_table[i]->owner->name,
+    //         ntohl(socket_table[i]->recv_addr.sin_addr.s_addr), htons(socket_table[i]->recv_addr.sin_port),
+    //         htons(socket_table[i]->bound_ip), htons(socket_table[i]->bound_port),
+    //         tcp_state_to_str(socket_table[i]->tcp->state)); 
     }
     
     for (int i = 0; i < NET_NUMBER_OF_SOCKETS; i++){
@@ -285,13 +285,13 @@ struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip)
             && ntohl(socket_table[i]->recv_addr.sin_addr.s_addr) == ip
             //&& (socket_table[i]->tcp->state == TCP_ESTABLISHED || socket_table[i]->tcp->state == TCP_SYN_SENT)
             ){
-                dbgprintf("[TCP] Found socket %d\n", i);
+                //dbgprintf("[TCP] Found socket %d\n", i);
                 return socket_table[i];
             }
     }
 
     if(_sk != NULL){
-        dbgprintf("[TCP] Found socket %d\n", _sk->socket);
+        //dbgprintf("[TCP] Found socket %d\n", _sk->socket);
     }
     return _sk;
 }
@@ -310,9 +310,6 @@ int net_prepare_tcp_sock(struct sock* sock, uint16_t port, struct sockaddr_in* a
         return -1;
     }
     sock->tcp->state = TCP_PREPARE;
-
-    dbgprintf("[TCP] Preparing socket %d\n", sock->socket);
-
     return 0;
 }
 
@@ -383,7 +380,7 @@ struct sock* kernel_socket_create(int domain, int type, int protocol)
 {
 
     /* Should be a lock? */
-    ENTER_CRITICAL();
+    //ENTER_CRITICAL();
 
     //int current = get_free_bitmap(socket_map, NET_NUMBER_OF_SOCKETS);
     int current = get_free_bitmap(socket_map, NET_NUMBER_OF_SOCKETS);
@@ -424,7 +421,7 @@ struct sock* kernel_socket_create(int domain, int type, int protocol)
 
     dbgprintf("Created new sock %d\n", current);
 
-    LEAVE_CRITICAL();
+    //LEAVE_CRITICAL();
 
     return socket_table[current];
 }

@@ -1,10 +1,18 @@
-
+#### ONLY EDIT THIS ####
+OUTPUT = webserv.o
+LIBS = -lcore -lgraphic -lnet
+EXTENDED = 
+########################
 ROOT = ../../
+INSTALL_PATH = $(ROOT)rootfs/bin
+LIBS_PATH = $(ROOT)apps/
+INCLUDE_PATH = $(ROOT)include/
+########################
 
 CCFLAGS=-m32 -O2 -Wall -Wextra -Wpedantic -Wstrict-aliasing \
 		-Wno-pointer-arith -Wno-unused-parameter -nostdlib \
 		-nostdinc -ffreestanding -fno-pie -fno-stack-protector \
-		-fno-builtin-function -fno-builtin -I $(ROOT)include/ -I $(ROOT)apps/ -fno-exceptions -fno-rtti
+		-fno-builtin-function -fno-builtin -I $(INCLUDE_PATH) -I $(ROOT)apps/ -fno-exceptions -fno-rtti
 MAKEFLAGS += --no-print-directory
 UNAME := $(shell uname)
 ifeq ($(UNAME),Linux)
@@ -23,24 +31,18 @@ else
 	LD=i386-elf-ld
 endif
 
-#### ONLY EDIT THIS ####
-OUTPUT = wolf3d.o
-########################
-
 SRC_FILES = $(wildcard *.cpp)
 OBJ_FILES = $(SRC_FILES:%.cpp=$(OUTPUTDIR)%.o)
-
 OUTPUTDIR = ./bin/
-COMMON = 
 
 all: $(OUTPUT) install
 
 install: $(OUTPUT)
-	@cp $(OUTPUT) $(ROOT)rootfs/bin
-	@echo "Installed $(OUTPUT) to $(ROOT)rootfs/bin"
+	@cp $(OUTPUT) $(INSTALL_PATH)
+	@echo "Installed $(OUTPUT) to $(INSTALL_PATH)"
 
 $(OUTPUT): $(OBJ_FILES)
-	$(LD) -o $@ $(LDFLAGS) $^ -L../ -lcore -lgraphic $(COMMON) -T $(ROOT)apps/utils/linker.ld
+	$(LD) -o $@ $(LDFLAGS) $^ $(EXTENDED) -T $(ROOT)apps/utils/linker.ld -L$(LIBS_PATH) $(LIBS)
 
 $(OUTPUTDIR)%.o: %.cpp
 	@mkdir -p $(OUTPUTDIR)

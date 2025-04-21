@@ -271,7 +271,8 @@ void Genesis()
 void idletask(){
 	dbgprintf("Hello world!\n");
 	while(1){
-		HLT();
+		if(__cli_cnt>0) dbgprintf("Critical: %d\n", __cli_cnt);
+		kernel_yield();
 	};
 }
 
@@ -466,7 +467,7 @@ error_t pcb_create_process(char* program, int argc, char** argv, pcb_flag_t flag
 	pcb_count++;
 	kfree(buf);
 
-	dbgprintf("Created new process!\n");
+	dbgprintf("Created new process! %d\n", __cli_cnt);
 	/* Run */
 	return pcb->pid;
 }

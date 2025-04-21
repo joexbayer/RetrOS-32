@@ -87,15 +87,14 @@ int system_call(int index, int arg1, int arg2, int arg3)
 	}
 	
 	/* the system call interrupt entered a critcal section */
+	EOI(48);
 	LEAVE_CRITICAL();
 	syscall_t fn = syscall[index];
-
 	$process->current->in_kernel = true;
 	int ret = fn(arg1, arg2, arg3);
 	$process->current->in_kernel = false;
 	
 	/* Enter critical section again */
-	EOI(48);
 	ENTER_CRITICAL();
 
 	return ret;

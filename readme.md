@@ -294,6 +294,7 @@ To run RetrOS-32:
   - [x] DNS
   - [x] TCP
   - [x] Netcat style commands
+  - [ ] Webserver
   - [ ] FTP
   - [ ] IRC
   - [ ] SSH
@@ -330,6 +331,7 @@ To run RetrOS-32:
 - [x] Snake game (Textmode only)
 - [x] Userspace threads (shared virtual memory)
 - [x] Remote virtual terminal over TCP
+- [x] LZ compression library
 - [x] Tools
   - [x] Build
   - [x] Sync / Migration Took

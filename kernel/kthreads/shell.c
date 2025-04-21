@@ -514,11 +514,11 @@ void shell_put(unsigned char c)
 		memcpy(previous_shell_buffer, shell_buffer, strlen(shell_buffer)+1);
 		twritef("kernel> %s\n", shell_buffer);
 		
-		ENTER_CRITICAL();
+		//ENTER_CRITICAL();
 		if(exec_cmd(shell_buffer) < 0){
 			twritef("Unknown command\n");
 		}
-		LEAVE_CRITICAL();
+		//LEAVE_CRITICAL();
 		
 		terminal_commit();
 		reset_shell();

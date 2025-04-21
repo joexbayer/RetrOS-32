@@ -16,6 +16,9 @@
 #include <memory.h>
 #include <serial.h>
 #include <kutils.h>
+#include <timer.h>
+
+#undef dbgprintf
 
 #define PACKET_SIZE   2048
 #define TX_SIZE 16
@@ -129,7 +132,7 @@ void _e1000_rx_init()
 	E1000_DEVICE_SET(E1000_RDBAH) = 0;
 
 	E1000_DEVICE_SET(E1000_RDLEN) = RX_BUFF_SIZE;
-	E1000_DEVICE_SET(E1000_RDT) = 128-1;
+	E1000_DEVICE_SET(E1000_RDT) = RX_SIZE - 1;
 	E1000_DEVICE_SET(E1000_RDH) = 0;
 	
 	/* Enable RX, for more options check e1000.h */
@@ -140,25 +143,29 @@ void _e1000_rx_init()
 static int next = 0;
 int e1000_receive(char* buffer, uint32_t size)
 {
-	int tail = E1000_DEVICE_SET(E1000_RDT);
+	int tail = E1000_DEVICE_GET(E1000_RDT);
 	if(!(rx_desc_list[next].status & E1000_RXD_STAT_DD)) /* Descriptor Done */
 	{
+		warningf("[e1000 RX] RXD_STAT_DD not set!\n");
 		return -1;
 	}
 
 	uint32_t length = rx_desc_list[next].length;
 	if(length >= PACKET_SIZE || length > size)
 	{
-		dbgprintf("[e1000] Dropping packet with length %d\n", length);
+		warningf("[e1000 RX] Dropping packet with length %d\n", length);
 		length = -1;
 		goto drop;
 	}
+
+	dbgprintf("[e1000 - %d] Received %d bytes %d!\n",timer_get_tick(), length, __cli_cnt);
 
 	memcpy(buffer, rx_buf[next], length);
 
 drop:
 	rx_desc_list[next].status = 0;
 	next = (next + 1) % RX_SIZE;
+	dbgprintf("[e1000] RXD_STAT_DD set %d (old: %d)!\n", next, (tail + 1 ) % RX_SIZE);
 	E1000_DEVICE_SET(E1000_RDT) = (tail + 1 ) % RX_SIZE;
 	//dbgprintf("[e1000] received %d bytes! (tail: %d) (\n", length, next);
 	return length;
@@ -175,7 +182,7 @@ drop:
 int e1000_transmit(char* buffer, uint32_t size)
 {
 	if(size >= PACKET_SIZE){
-		dbgprintf("[e1000] Size %d is too large!\n", size);
+		warningf("[e1000] Size %d is too large!\n", size);
 		return -1;
 	}
 
@@ -184,7 +191,7 @@ int e1000_transmit(char* buffer, uint32_t size)
 
 	struct e1000_tx_desc* txdesc = &tx_desc_list[tail];
 	if(!(txdesc->status & E1000_TXD_STAT_DD)){
-		dbgprintf("[e1000] DD status is not done!\n");
+		warningf("[e1000] DD status is not done!\n");
 		return -1;
 	} /* Check if status is DD (Descriptor Done) */
 
@@ -195,16 +202,15 @@ int e1000_transmit(char* buffer, uint32_t size)
 
 	E1000_DEVICE_SET(E1000_TDT) = (tail+1) % TX_SIZE;
 
-	dbgprintf("[e1000] Sending %d bytes! (tail: %d)\n", size, (tail+1) % TX_SIZE);
+	//dbgprintf("[e1000 - %d] Sending %d bytes! (tail: %d) %d\n", timer_get_tick(), size, (tail + 1) % TX_SIZE, __cli_cnt);
 	return size;
 }
 
 void __int_handler e1000_callback()
 {
 	interrupts++;
-	net_incoming_packet(&e1000_netdev);
-
 	E1000_DEVICE_GET(E1000_ICR);
+	net_incoming_packet(&e1000_netdev);
 }
 
 void e1000_attach(struct pci_device* dev)

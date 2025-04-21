@@ -95,6 +95,52 @@ inline unsigned int htonl(unsigned int data)
           ((data & 0xff000000) >> 24) );
 }
 
+class TcpServer {
+public:
+    TcpServer(unsigned short port = 80) {
+        sd = socket(AF_INET, SOCK_STREAM, 0);
+        if (sd != 0) {
+            // error
+        }
+
+        dest_addr.sin_addr.s_addr = INADDR_ANY;
+        dest_addr.sin_port = htons(port);
+        dest_addr.sin_family = AF_INET;
+
+        int ret = bind(sd, (struct sockaddr *)&dest_addr, sizeof(struct sockaddr_in));
+        if (ret != 0) {
+            // error
+        }
+
+        ret = listen(sd, 5);
+        if (ret != 0) {
+            // error
+        }
+    }
+
+    ~TcpServer(){
+        close(sd);
+    }
+
+    int accept(struct sockaddr* addr, socklen_t* addr_len){
+        return ::accept(sd, addr, addr_len);
+    }
+
+    int sendMsg(int socket, char* msg){
+        return send(socket, msg, strlen(msg), 0);
+    }
+
+    int recvMsg(int socket, char* buf, int len){
+        return recv(socket, buf, len, 0);
+    }
+
+private:
+    socket_t sd;
+    struct sockaddr_in dest_addr;
+    struct sockaddr_in client_addr;
+};
+
+
 /* TCP Client */
 class TcpClient {
 
@@ -124,7 +170,7 @@ public:
         close(sd);
     }
 
-    int sendMsg(const char* msg){
+    int sendMsg(char* msg){
         return send(sd, msg, strlen(msg), 0);
     }
 
