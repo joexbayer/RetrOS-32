@@ -23,6 +23,7 @@ struct netdev {
 
     int32_t (*read)(char* buffer, uint32_t size);
     int32_t (*write)(char* buffer, uint32_t size);
+    int32_t (*poll)();
 };
 extern struct netdev current_netdev;  
 

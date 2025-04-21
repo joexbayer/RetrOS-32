@@ -18,8 +18,6 @@
 #include <kutils.h>
 #include <timer.h>
 
-#undef dbgprintf
-
 #define PACKET_SIZE   2048
 #define TX_SIZE 16
 #define RX_SIZE 16
@@ -124,7 +122,7 @@ void _e1000_rx_init()
 {
 	_e1000_reset_rx_desc();
 
-	E1000_DEVICE_SET(E1000_IMS) = 0;
+	//E1000_DEVICE_SET(E1000_IMS) = 0;
 	E1000_DEVICE_SET(E1000_ICS) = 0;
 
 	/* Set RX buffers for E1000 */
@@ -166,7 +164,8 @@ drop:
 	rx_desc_list[next].status = 0;
 	next = (next + 1) % RX_SIZE;
 	dbgprintf("[e1000] RXD_STAT_DD set %d (old: %d)!\n", next, (tail + 1 ) % RX_SIZE);
-	E1000_DEVICE_SET(E1000_RDT) = (tail + 1 ) % RX_SIZE;
+	E1000_DEVICE_SET(E1000_RDT) = (next + RX_SIZE - 1) % RX_SIZE;
+
 	//dbgprintf("[e1000] received %d bytes! (tail: %d) (\n", length, next);
 	return length;
 }
@@ -208,9 +207,25 @@ int e1000_transmit(char* buffer, uint32_t size)
 
 void __int_handler e1000_callback()
 {
+	dbgprintf("[e1000 - %d] Packet!\n", timer_get_tick(), interrupts);
+	uint32_t icr = E1000_DEVICE_GET(E1000_ICR);
+	if (icr & E1000_IMS_RXDW) {
+		net_incoming_packet(&e1000_netdev);
+	}
+
 	interrupts++;
-	E1000_DEVICE_GET(E1000_ICR);
-	net_incoming_packet(&e1000_netdev);
+}
+
+static uint32_t e1000_poll()
+{
+	dbgprintf("[e1000 - %d] Polling!\n", timer_get_tick());
+	/* Polling for RX interrupts */
+	if(E1000_DEVICE_GET(E1000_ICR) & E1000_IMS_RXDW)
+	{
+		E1000_DEVICE_GET(E1000_ICR);
+	}
+
+	return 0;
 }
 
 void e1000_attach(struct pci_device* dev)
@@ -238,13 +253,14 @@ void e1000_attach(struct pci_device* dev)
 
 	E1000_DEVICE_SET(E1000_RDTR) = 0;
 	E1000_DEVICE_SET(E1000_RADV) = 0;
-	E1000_DEVICE_SET(E1000_IMS) = (1 << 7);
+	E1000_DEVICE_SET(E1000_IMS) = E1000_IMS_RXDW | E1000_IMS_RXDMT0 | E1000_IMS_RXO | E1000_IMS_RXT0;
 
 	e1000_netdev = (struct netdev) {
 		.name = "E1000",
 		.driver = *dev,
 		.read = &e1000_receive,
 		.write = &e1000_transmit,
+		.poll = &e1000_poll,
 		.sent = 0,
 		.received = 0,
 		.dropped = 0
@@ -259,5 +275,5 @@ void e1000_attach(struct pci_device* dev)
 	/* Attach as current Netdevice. */
 	//netdev_attach_driver(dev, &e1000_receive, &e1000_transmit, "Intel E1000", (uint8_t*)&mac);
 
-	dbgprintf("[E1000] Network card Intel E1000 found and attached!.\n");
+	dbgprintf("[E1000] Network card Intel E1000 found and attached IRQ = %d!.\n", dev->irq);
 }

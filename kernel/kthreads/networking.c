@@ -305,7 +305,7 @@ void __kthread_entry networking_main()
     }
     
     //start("udp_server", 0, NULL);
-    start("tcp_server", 0, NULL); 
+    //start("tcp_server", 0, NULL); 
     int todos =0;
     while(1){
         

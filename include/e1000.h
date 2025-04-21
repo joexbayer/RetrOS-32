@@ -72,6 +72,12 @@
 #define E1000_RXD_STAT_DD       0x01    /* Descriptor Done */
 #define E1000_ICR      0x000C0	/* Interrupt Cause Read - R/clr */
 
+#define E1000_IMS_RXT0    (1 << 7)  // Receive timer interrupt (Receive timer timeout)
+#define E1000_IMS_TXDW    (1 << 0)  // Transmit descriptor written back
+#define E1000_IMS_RXDMT0  (1 << 4)  // Receive descriptor minimum threshold
+#define E1000_IMS_RXO     (1 << 6)  // Receive overrun
+#define E1000_IMS_RXDW    (1 << 7)  // Receive descriptor write-back
+
 
 /* transmit descriptor */
 struct e1000_tx_desc
