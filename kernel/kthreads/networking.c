@@ -303,6 +303,8 @@ void __kthread_entry networking_main()
     if(netd.if_count > 1){
         start("dhcpd", 0, NULL);
     }
+
+    tcp_init();
     
     //start("udp_server", 0, NULL);
     //start("tcp_server", 0, NULL); 

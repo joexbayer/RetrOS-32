@@ -25,11 +25,26 @@
 #define TCB_MAX 32
 
 /** new implementation **/
-
+static struct skb_queue* retry_queue = NULL;
 static struct tcp_manager {
 	struct tcb* tcbs[TCB_MAX];
 	int tcb_count;
 } tcp_manager = {0};
+
+int tcp_init()
+{
+	/* initialize the TCP manager */
+	tcp_manager.tcb_count = 0;
+
+	/* create the retry queue */
+	retry_queue = skb_new_queue();
+	if(retry_queue == NULL){
+		dbgprintf("[TCP] Failed to create retry queue!\n");
+		return -1;
+	}
+
+	return ERROR_OK;
+}
 
 int tcb_init()
 {
@@ -483,25 +498,25 @@ int tcp_recv_syn(struct sock* sock, struct tcp_header* tcp)
 		.syn = 1,
 		.ack = 1
 	};
-
+	
 	if (sock->tcp->state != TCP_LISTEN){
 		dbgprintf("[TCP] Socket %d is not listening\n", sock);
 		return -1;
 	}
-
- 	skb = skb_new();
+	sock->tcp->state = TCP_SYN_RCVD;
+	
+	skb = skb_new();
 	ERR_ON_NULL(skb);
-
+	
 	ret = __tcp_send(sock, &hdr, skb, NULL, 0);
 	if(ret < 0){
 		dbgprintf("[TCP] Failed to send syn ack\n");
 		return -1;
 	}
-
+	
 	/* update states */
 	sock->tcp->sequence += 1;  /* Increment by 1 as the SYN flag consumes a sequence number */
     sock->tcp->acknowledgement = htonl(tcp->seq) + 1;
-	sock->tcp->state = TCP_SYN_RCVD;
 
 	/* store information from remote in recv_addr */
 	sock->recv_addr.sin_port = tcp->source;
@@ -559,13 +574,12 @@ int tcp_parse(struct sk_buff* skb)
 		return -1;
 	}
 
-	dbgprintf("[TCP - %d] -> TCP packet: %d syn, %d ack, %d fin %d push (src port: %d, dest port: %d) %d bytes\n", 
-		timer_get_tick(), hdr->syn, hdr->ack, hdr->fin, hdr->psh, htons(hdr->source), htons(hdr->dest), skb->data_len);
+	dbgprintf("[TCP - %d] %s -> TCP packet: %d syn, %d ack, %d fin %d push (src port: %d, dest port: %d) %d bytes\n", 
+		timer_get_tick(), tcp_state_to_str(sk->tcp->state), hdr->syn, hdr->ack, hdr->fin, hdr->psh, htons(hdr->source), htons(hdr->dest), skb->data_len);
 
 	switch (sk->tcp->state){
 	case TCP_LISTEN:
 		if(hdr->syn == 1 && hdr->ack == 0){
-
 			if(sk->backlog.count == sk->backlog.size){
 				dbgprintf("[TCP] Backlog is full, dropping packet\n");
 				return -1;
@@ -587,6 +601,22 @@ int tcp_parse(struct sk_buff* skb)
 			skb_free(skb);
 			return ERROR_OK;
 		}
+
+		/**
+		 * @brief If a new connection just was acked, the receiving socket
+		 * might not be ready yet. Which would lead the packet here.
+		 * Istead of dropping the packet, we add it to the retry queue.
+		 * Especially if it has the PSH flag set.
+		 */
+		if(hdr->ack == 1 && hdr->psh == 1){
+			dbgprintf("[TCP] Adding to retry queue\n");
+			if(retry_queue->ops->add(retry_queue, skb) < 0){
+				dbgprintf("[TCP] Failed to add to retry queue\n");
+				return -1;
+			}
+			return ERROR_OK;
+		}
+
 		break;
 	case TCP_SYN_RCVD:
 		if(hdr->syn == 0 && hdr->ack == 1){
@@ -596,6 +626,7 @@ int tcp_parse(struct sk_buff* skb)
 			if(sk->backlog.count < sk->backlog.size){
 				sk->backlog.queue->ops->add(sk->backlog.queue, skb);
 				sk->backlog.count++;
+				dbgprintf("[TCP] Added to backlog %d\n", sk->backlog.count);
 			} else{
 				dbgprintf("[TCP] Backlog is full, dropping packet\n");
 				return -1; /* Packet dropped by networking handler */
