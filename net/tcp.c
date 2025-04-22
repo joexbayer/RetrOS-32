@@ -20,6 +20,7 @@
 #include <serial.h>
 #include <scheduler.h>
 #include <errors.h>
+#include <timer.h>
 
 #define TCB_MAX 32
 
@@ -43,12 +44,13 @@ int tcb_init()
  */
 struct tcb* tcb_new()
 {
+	struct tcb* tcb = NULL;
 	if(tcp_manager.tcb_count >= TCB_MAX){
 		dbgprintf("[TCP] Max number of TCBs reached!\n");
 		goto tcb_new_error;
 	}
 
-	struct tcb* tcb = create(struct tcb); 
+	tcb = create(struct tcb); 
 	if(tcb == NULL){
 		dbgprintf("[TCP] Failed to allocate TCB!\n");
 		goto tcb_new_error;
@@ -454,12 +456,6 @@ int tcp_connect(struct sock* sock)
 	return ERROR_OK;
 }
 
-int tcp_send_syn(struct sock* sock, uint16_t dst_port, uint16_t src_port)
-{
-	
-	return ERROR_OK;
-}
-
 int tcp_recv_ack(struct sock* sock, struct tcp_header* tcp)
 {
 	dbgprintf("[TCP] Incoming TCP ack expected %d got %d\n", sock->tcp->sequence, htonl(tcp->ack_seq));
@@ -471,13 +467,6 @@ int tcp_recv_ack(struct sock* sock, struct tcp_header* tcp)
 	
 	return ERROR_OK;
 }
-
-int tcp_recv_fin(struct sock* sock, struct tcp_header* tcp)
-{
-	/* send fin/ack -> close socket*/
-	return -1;
-}
-
 
 int tcp_recv_syn(struct sock* sock, struct tcp_header* tcp)
 {
@@ -508,8 +497,6 @@ int tcp_recv_syn(struct sock* sock, struct tcp_header* tcp)
 		dbgprintf("[TCP] Failed to send syn ack\n");
 		return -1;
 	}
-
-	//dbgprintf("[TCP] Sending syn ack for %d\n", sock->socket);
 
 	/* update states */
 	sock->tcp->sequence += 1;  /* Increment by 1 as the SYN flag consumes a sequence number */
@@ -556,6 +543,7 @@ int tcp_close_connection(struct sock* sock)
 	return ERROR_OK;
 }
 
+/* IMPORTANT: Returning a negative value results in the network handler freeing the skb! Else we need to do it. */
 int tcp_parse(struct sk_buff* skb)
 {
 	/* Look if there is an active TCP connection, if not look for accept. */
@@ -592,26 +580,31 @@ int tcp_parse(struct sk_buff* skb)
 			sk->recv_addr.sin_port = hdr->source;
 			sk->recv_addr.sin_addr.s_addr = skb->hdr.ip->saddr;
 
-			//dbgprintf("Socket %d received syn for %d\n", sk, hdr->seq);
+			if(tcp_recv_syn(sk, hdr) < 0){
+				// NOOP
+			}
 
-			return tcp_recv_syn(sk, hdr);
+			skb_free(skb);
+			return ERROR_OK;
 		}
 		break;
 	case TCP_SYN_RCVD:
 		if(hdr->syn == 0 && hdr->ack == 1){
 			/**
 			 * @brief Add to backlog 
-			 * 
 			 */
 			if(sk->backlog.count < sk->backlog.size){
 				sk->backlog.queue->ops->add(sk->backlog.queue, skb);
 				sk->backlog.count++;
+			} else{
+				dbgprintf("[TCP] Backlog is full, dropping packet\n");
+				return -1; /* Packet dropped by networking handler */
 			}
 
-			//dbgprintf("Received ACK for SYN (%d)\n", sk->socket);
 			sk->tcp->state = TCP_LISTEN;
-
 			TCP_UNBLOCK(sk);
+
+			/* Note: We dont free SKB because its added to the backlog */
 			return ERROR_OK;
 		}
 		break;
@@ -636,7 +629,6 @@ int tcp_parse(struct sk_buff* skb)
 				return ERROR_OK;
 			}
 
-			//dbgprintf("Socket %d received ack for %d\n", sk, htonl(hdr->ack_seq));
 			tcp_recv_ack(sk, hdr);
 			skb_free(skb);
 			return ERROR_OK;
@@ -644,7 +636,6 @@ int tcp_parse(struct sk_buff* skb)
 		break;
 	case TCP_ESTABLISHED:
 		if(hdr->syn == 0 && hdr->ack == 1 && hdr->fin == 0){
-			//dbgprintf("Socket %d received data for %d\n", sk, htonl(hdr->ack_seq));
 			/**
 			 * @brief This is where we should check if the packet is in order.
 			 * @see https://github.com/joexbayer/RetrOS-32/issues/34
@@ -663,9 +654,12 @@ int tcp_parse(struct sk_buff* skb)
 
 			tcp_send_ack(sk, hdr, skb->data_len);
 
+			/* If ret is < 0, then it has been added to the socket skb_queue, therefor we do not want to free it. */
 			int ret = net_sock_add_data(sk, skb);
-			if(ret == 0)
+			if(ret == 0){
 				skb_free(skb);
+			}
+
 			return ERROR_OK;
 		}
 
@@ -689,7 +683,7 @@ int tcp_parse(struct sk_buff* skb)
 			/* Connection succesfully closed */
 			tcp_send_ack(sk, hdr, 1);
 			sk->tcp->state = TCP_CLOSED;
-			dbgprintf("Socket %d closed\n", sk->socket);
+			dbgprintf("[TCP] Socket %d closed\n", sk);
 		}
 		break;
 	case TCP_CLOSE_WAIT:

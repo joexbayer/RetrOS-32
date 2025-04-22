@@ -15,6 +15,8 @@ RUN apt-get update                      && \
     apt-get install -y sudo             && \
     apt-get install -y kmod             && \
     apt-get install -y mtools           && \
-    apt-get install -y dosfstools
+    apt-get install -y dosfstools       && \
+    apt-get install -y qemu-system-i386 && \
+    apt-get install -y qemu-utils
 
 WORKDIR /RetrOS-32

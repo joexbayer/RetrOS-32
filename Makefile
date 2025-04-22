@@ -7,7 +7,7 @@ ASFLAGS=
 LDFLAGS= 
 MAKEFLAGS += --no-print-directory
 
-QEMU_OPS = -display sdl -device e1000,netdev=net0 -serial stdio -netdev user,id=net0,hostfwd=tcp::8080-:8080 -object filter-dump,id=net0,netdev=net0,file=dump.dat -m 32m
+QEMU_OPS = -device e1000,netdev=net0 -serial stdio -netdev user,id=net0,hostfwd=tcp::80-:80 -object filter-dump,id=net0,netdev=net0,file=dump.dat -m 32m
 
 # ---------------- For counting how many files to compile ----------------
 ifneq ($(words $(MAKECMDGOALS)),1)
@@ -49,7 +49,7 @@ ifeq ($(UNAME),Linux)
 #	AS=i386-elf-as
 #	LD=i386-elf-ld
 else
-	$(error This Makefile does not support building on this platform. Please use Linux, WSL or Docker)
+#	$(error This Makefile does not support building on this platform. Please use Linux, WSL or Docker)
 endif
 
 # ---------------- Objects to compile ----------------

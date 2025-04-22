@@ -163,7 +163,6 @@ int e1000_receive(char* buffer, uint32_t size)
 drop:
 	rx_desc_list[next].status = 0;
 	next = (next + 1) % RX_SIZE;
-	dbgprintf("[e1000] RXD_STAT_DD set %d (old: %d)!\n", next, (tail + 1 ) % RX_SIZE);
 	E1000_DEVICE_SET(E1000_RDT) = (next + RX_SIZE - 1) % RX_SIZE;
 
 	//dbgprintf("[e1000] received %d bytes! (tail: %d) (\n", length, next);
@@ -207,7 +206,6 @@ int e1000_transmit(char* buffer, uint32_t size)
 
 void __int_handler e1000_callback()
 {
-	dbgprintf("[e1000 - %d] Packet!\n", timer_get_tick(), interrupts);
 	uint32_t icr = E1000_DEVICE_GET(E1000_ICR);
 	if (icr & E1000_IMS_RXDW) {
 		net_incoming_packet(&e1000_netdev);

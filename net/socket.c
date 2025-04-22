@@ -157,7 +157,7 @@ static inline error_t net_sock_add_data_segment(struct sock* sock, struct sk_buf
     int ret = sock->recv_buffer->ops->add(sock->recv_buffer, skb->data, skb->data_len);
     if(ret < 0){
         dbgprintf("[TCP] recv ring buffer is full!\n");
-        return -ret;
+        return ret;
     }
     sock->recvd += skb->data_len;
     sock->data_ready = sock->tcp == NULL ? 1 : skb->hdr.tcp->psh;
@@ -195,7 +195,7 @@ error_t net_sock_add_data(struct sock* sock, struct sk_buff* skb)
             break;
         }
 
-        /* Add segment to socket */
+        /* Add segment to socket, the ret is then based on the SKB passed into this function. */
         ret = net_sock_add_data_segment(sock, skb);
 
         /* While there is still data waiting to be added and data ready is 0 */
@@ -204,12 +204,15 @@ error_t net_sock_add_data(struct sock* sock, struct sk_buff* skb)
             if(queued_skb == NULL) break;
 
             net_sock_add_data_segment(sock, queued_skb);
+            
+            /* The SKB was added in the step above, which means it was not freed */
             skb_free(queued_skb);
         }
 
         dbgprintf("[TCP] Added segment to socket %d (ready: %d)\n", sock, sock->data_ready);
     });
     
+    /* This ret will be a indication as to if we managed to add the SKB, -1 meaning it was added to a queue. */
 	return ret;
 }
 
@@ -362,9 +365,7 @@ void kernel_sock_cleanup(struct sock* socket)
 void kernel_sock_close(struct sock* socket)
 {
     dbgprintf("Closing socket...\n");
-
     kernel_sock_shutdown(socket, 0);
-
     kernel_sock_cleanup(socket);
 }
 
@@ -380,7 +381,7 @@ struct sock* kernel_socket_create(int domain, int type, int protocol)
 {
 
     /* Should be a lock? */
-    //ENTER_CRITICAL();
+    ENTER_CRITICAL();
 
     //int current = get_free_bitmap(socket_map, NET_NUMBER_OF_SOCKETS);
     int current = get_free_bitmap(socket_map, NET_NUMBER_OF_SOCKETS);
@@ -405,10 +406,30 @@ struct sock* kernel_socket_create(int domain, int type, int protocol)
     socket_table[current]->tx = 0;
 
     socket_table[current]->recv_buffer = rbuffer_new(NET_MAX_BUFFER_SIZE);
+    if(socket_table[current]->recv_buffer == NULL){
+        warningf("Unable to create socket buffer!\n");
+        kfree(socket_table[current]);
+        socket_table[current] = NULL;
+        unset_bitmap(socket_map, current);
+
+        LEAVE_CRITICAL();
+        return NULL;
+    }
+
 	socket_table[current]->data_ready = 0;
 	socket_table[current]->recvd = 0;
 
     socket_table[current]->skb_queue = skb_new_queue();
+    if(socket_table[current]->skb_queue == NULL){
+        warningf("Unable to create socket queue!\n");
+        rbuffer_free(socket_table[current]->recv_buffer);
+        kfree(socket_table[current]);
+        socket_table[current] = NULL;
+        unset_bitmap(socket_map, current);
+
+        LEAVE_CRITICAL();
+        return NULL;
+    }
 
     socket_table[current]->waiting = NULL;
     socket_table[current]->accept_sock = NULL;
@@ -421,7 +442,7 @@ struct sock* kernel_socket_create(int domain, int type, int protocol)
 
     dbgprintf("Created new sock %d\n", current);
 
-    //LEAVE_CRITICAL();
+    LEAVE_CRITICAL();
 
     return socket_table[current];
 }
