@@ -174,4 +174,8 @@ int tcp_read(struct sock* sock, uint8_t* buffer, unsigned int length);
 int tcp_accept_connection(struct sock* sock, struct sock* new);
 int tcp_close_connection(struct sock* sock);
 
+int tcp_retry_all();
+int tcp_retry_queue_size();
+
 #endif
+

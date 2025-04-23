@@ -31,6 +31,9 @@ static struct tcp_manager {
 	int tcb_count;
 } tcp_manager = {0};
 
+/* Prototypes */
+static int tcp_state_machine(struct sk_buff* skb);
+
 int tcp_init()
 {
 	/* initialize the TCP manager */
@@ -44,6 +47,36 @@ int tcp_init()
 	}
 
 	return ERROR_OK;
+}
+
+int tcp_retry_queue_size(){
+	if(retry_queue == NULL){
+		warningf("[TCP] Retry queue is not initialized!\n");
+		return -1;
+	}
+	return retry_queue->size;
+}
+
+int tcp_retry_all(){
+
+	if(retry_queue == NULL){
+		warningf("[TCP] Retry queue is not initialized!\n");
+		return -1;
+	}
+
+	while(retry_queue->size > 0){
+		struct sk_buff* skb = retry_queue->ops->remove(retry_queue);
+		if(skb == NULL){
+			dbgprintf("[TCP] Failed to remove from retry queue!\n");
+			return -1;
+		}
+
+		int ret = tcp_state_machine(skb);
+		if(ret < 0){
+			skb_free(skb);
+		}
+	}
+
 }
 
 int tcb_init()
@@ -567,6 +600,12 @@ int tcp_parse(struct sk_buff* skb)
 	skb->hdr.tcp = hdr;
 	skb->data += hdr->doff*4;
 	skb->data_len = skb->hdr.ip->len - skb->hdr.ip->ihl*4 - hdr->doff*4;
+
+	return tcp_state_machine(skb);
+}
+
+static int tcp_state_machine(struct sk_buff* skb){
+	struct tcp_header* hdr = (struct tcp_header* ) skb->hdr.tcp;
 
 	struct sock* sk = net_sock_find_tcp(hdr->source, hdr->dest, htonl(skb->hdr.ip->saddr));
 	if(sk == NULL){

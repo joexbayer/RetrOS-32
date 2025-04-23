@@ -311,7 +311,7 @@ void __kthread_entry networking_main()
     int todos =0;
     while(1){
         
-        todos = netd.skb_tx_queue->size + netd.skb_rx_queue->size;
+        todos = netd.skb_tx_queue->size + netd.skb_rx_queue->size + tcp_retry_queue_size();
         /**
          * @brief Query RX an    TX queue for netd.packets.
          */
@@ -333,6 +333,8 @@ void __kthread_entry networking_main()
             work_queue_add(&net_handle_recieve, (void*)skb, NULL);
             //net_handle_recieve(skb);
         }
+
+        tcp_retry_all();
 
         if(todos == 0){
             $process->current->state = BLOCKED;
