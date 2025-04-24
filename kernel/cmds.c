@@ -143,10 +143,10 @@ static int lzcat(int argc, char* argv[]){
         twritef("Usage: lz <file>\n");
         return 1;
     }
-    uint8_t* buf;
+    int8_t* buf;
     int len = __read_file(argv[1], &buf);
 
-    uint8_t* output;
+    int8_t* output;
     uint32_t output_size = lz_decompress(buf, len, &output);
     if(output_size == 0) {
         twritef("Failed to decompress file\n");
@@ -167,10 +167,10 @@ static int lz(int argc, char* argv[]){
         twritef("Usage: lz <file> <outfile>\n");
         return 1;
     }
-    uint8_t* buf;
+    int8_t* buf;
     int len = __read_file(argv[1], &buf);
 
-    uint8_t* output;
+    int8_t* output;
     uint32_t output_size = lz_compress(buf, len, &output, 0);
     if(output_size == 0) {
         twritef("Failed to compress file\n");
@@ -296,7 +296,7 @@ static int dumpfn(int argc, char* argv[])
         return 1;
     }
 
-    int sz = kfunc_size((void*) addr);
+    int sz = kfunc_size((void (*)()) addr);
     twritef("Dumping %s (addr: 0x%x, size: %d)\n", argv[1], addr, sz);
     hexdump((void*) addr, sz);
 
@@ -552,7 +552,7 @@ static int tcp(int argc, char *argv[])
         return 1;
     }
 
-    int ip = net_is_ipv4(argv[1]) ? ip_to_int(argv[1]) : htonl(gethostname(argv[1]));
+    uint32_t ip = net_is_ipv4(argv[1]) ? ip_to_int(argv[1]) : htonl(gethostname(argv[1]));
     if(ip == -1){
         twritef("Unable to resolve %s\n", argv[1]);
         return 1;
@@ -575,7 +575,7 @@ static int tcp(int argc, char *argv[])
     char socket_str[10] = {0};
     itoa(socket->socket, socket_str);
 
-    pid_t reader = pcb_create_kthread(__tcp_reader, "tcp_reader", 1, socket_str);
+    pid_t reader = pcb_create_kthread(__tcp_reader, "tcp_reader", 1, &socket_str);
     
     int ret;
     char* buffer = kalloc(1024);

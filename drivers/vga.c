@@ -95,7 +95,7 @@ uint16_t scrget(int x, int y)
 
 uint16_t* scr_buffer()
 {
-	return VGA_BUFFER;
+	return (uint16_t*)VGA_BUFFER;
 }
 
 /**

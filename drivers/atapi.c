@@ -128,7 +128,7 @@ static void read_virtual_sector(uint8_t *buffer, uint32_t lba)
             cache_index = 0; /* Simple cache replacement strategy: overwrite the first entry */
         }
 
-        read_atapi_sector(atapi_lba, cache[cache_index].data);
+        read_atapi_sector((uint8_t*)atapi_lba, (uint32_t)cache[cache_index].data);
         cache[cache_index].lba = atapi_lba;
         cache[cache_index].valid = true;
     }
@@ -151,6 +151,7 @@ static uint32_t atapi_read_capacity(uint16_t base) {
     /* Read the response */
     uint32_t total_sectors = inportl(base + ATA_REG_DATA);
     uint32_t sector_size = inportl(base + ATA_REG_DATA);
+    (void)sector_size;  /* Ignore sector size for now */
 
     /* For CD-ROMs, the sector size is typically 2048 bytes. */
     /* The total capacity is total_sectors * sector_size. */
@@ -226,15 +227,8 @@ int atapi_init(struct pci_device* dev)
 
     dbgprintf("[ATAPI] Device model: %s\n", atapi_ide_device.model);
 
-    attach_disk_dev(&read_virtual_sector, NULL, &atapi_ide_device);
 
-}
+    (void)atapi_read_capacity(base);  /* Read capacity to check if the device is ready */
+    //attach_disk_dev(&read_virtual_sector, NULL, &atapi_ide_device);
 
-int example()
-{
-
-    uint8_t buffer[VIRTUAL_SECTOR_SIZE];
-    read_virtual_sector(10, buffer);  /* Read virtual LBA 10 */
-
-    return 0;
 }

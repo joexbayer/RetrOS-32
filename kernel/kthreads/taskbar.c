@@ -384,9 +384,6 @@ static void __kthread_entry taskbar(void)
                 for (int i = 0; i < TASKBAR_MAX_HEADERS; i++){
                     /* continue for empty headers */
                     if(default_taskbar.headers[i].name[0] == '\0') continue;
-
-                    dbgprintf("Checking header %x\n", default_taskbar.headers[i].name);
-
                     /* I have no idea why this needs to be here... :/ */
                     if(default_taskbar.headers[i].extended){
                         taskbar_hdr_opt_event(w, &default_taskbar.headers[i], event.data, event.data2);

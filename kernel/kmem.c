@@ -14,6 +14,7 @@
 #include <sync.h>
 #include <bitmap.h>
 #include <assert.h>
+#include <ksyms.h>
 
 
 #ifndef KDEBUG_MEMORY
@@ -95,6 +96,9 @@ void* kalloc(int size)
     int start_block = __kmemory_find_blocks(num_blocks, total_blocks);
     if (start_block == -1) {
         /* No contiguous free region of memory was found */
+        uint32_t *ebp = (uint32_t*) __builtin_frame_address(0);
+   	    __backtrace_from((uintptr_t*)ebp);
+
         warningf("Out of memory: %d\n", __kmemory_used);
         kernel_panic("Out of memory!");
     }

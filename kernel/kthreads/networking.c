@@ -337,7 +337,7 @@ void __kthread_entry networking_main()
         tcp_retry_all();
 
         if(todos == 0){
-            $process->current->state = BLOCKED;
+            //$process->current->state = BLOCKED;
         }
 
         kernel_yield();

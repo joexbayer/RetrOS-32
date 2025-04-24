@@ -15,8 +15,7 @@
 #define FLUSH_GDT() asm volatile ("lgdt %0" : : "m" (gdt_addr))
 
 static struct gdt_segment gdt[7];
-
-static struct gdt_address
+struct gdt_address
 {
 	uint16_t limit;
 	uint32_t base;

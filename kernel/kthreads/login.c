@@ -59,7 +59,7 @@ static int login_startup(struct user* usr){
 
     gfx_set_taskbar(0);
     kernel_exit();
-    return;
+    return 0;
 }
 
 void __kthread_entry login()

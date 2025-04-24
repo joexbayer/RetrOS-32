@@ -789,8 +789,6 @@ void vmem_cleanup_process(struct pcb* pcb)
  */
 void vmem_init_kernel()
 {	
-	int total_mem = memory_map_get()->total;
-
 	kernel_page_dir = vmem_manager->ops->alloc(vmem_manager);
 
 	/* identity map first 4 mb of data. */
@@ -804,7 +802,7 @@ void vmem_init_kernel()
 	vmem_add_table(kernel_page_dir, start, kernel_heap_memory_table, SUPERVISOR);
 
 	/* identity map rest of memory above 4MB */
-	dbgprintf("Initiating memory from 0x%x - %d\n", 0x400000, ((total_mem)/(1024*1024)) - 4);
+	dbgprintf("Initiating memory from 0x%x - %d\n", 0x400000, ((memory_map_get()->total)/(1024*1024)) - 4);
 	for (int i = 1; i < 16/4; i++){
 		uint32_t* kernel_page_table_memory = vmem_manager->ops->alloc(vmem_manager);
 		if (kernel_page_table_memory == NULL){
@@ -818,7 +816,7 @@ void vmem_init_kernel()
 		vmem_add_table(kernel_page_dir, 0x400000*i, kernel_page_table_memory, SUPERVISOR);
 		dbgprintf("Initiated memory between 0x%x and 0x%x\n", 0x400000*i, 0x400000*(i+1));
 	}
-	dbgprintf("Initiated memory between 0x%x and 0x%x\n", 0x400000, 0x400000 + total_mem - 4*1024*1024);
+	dbgprintf("Initiated memory between 0x%x and 0x%x\n", 0x400000, 0x400000 + memory_map_get()->total - 4*1024*1024);
 	
 	/* test if 0x80d000 is identity mapped */
 

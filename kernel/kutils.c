@@ -60,7 +60,7 @@ int align_to_pointer_size(int size)
 
 int exec_cmd(char* str)
 {
-    ERR_ON_NULL_PTR(str);
+    if(str == NULL || *str == 0) return -1;
 
     struct args args = {
         .argc = 0
@@ -73,10 +73,6 @@ int exec_cmd(char* str)
 	args.argc = parse_arguments(str, args.data);
 	if(args.argc == 0) return -1;
 
-    for (int i = 0; i < args.argc; i++){
-        dbgprintf("%d: %s\n", args.argc, args.argv[i]);
-    }
-
 	void (*ptr)(int argc, char* argv[]) = (void (*)(int argc, char* argv[])) ksyms_resolve_symbol(args.argv[0]);
 	if(ptr == NULL){
 		return -1;
@@ -85,7 +81,6 @@ int exec_cmd(char* str)
     dbgprintf("Executing %s\n", args.argv[0]);
     /* execute command */
 	ptr(args.argc, args.argv);
-    dbgprintf("Done executing %s\n", args.argv[0]);
 
 	gfx_commit();
 
@@ -223,7 +218,8 @@ int script_parse(char* str)
 
 /* Get the size of the sample function */
 int kfunc_size(void (*func)()) {
-    uint8_t *ptr = (uint8_t *)func;
+    unsigned long func_addr = (unsigned long)func;
+    uint8_t *ptr = (uint8_t *)func_addr;
     int size = 0;
     while (ptr[size] == 0xC3 && ptr[size-1] != 0xC9 ) { // Look for the 'ret' instruction (0xC3)
         size++;
@@ -254,4 +250,6 @@ int kregisters(struct registers_dump* regs){
     asm volatile("movl %%cr3, %0" : "=r"(regs->cr3));
     asm volatile("movl %%cr4, %0" : "=r"(regs->cr4));
     asm volatile("movl %%gs, %0" : "=r"(regs->gs));
+
+    return 0;
 }

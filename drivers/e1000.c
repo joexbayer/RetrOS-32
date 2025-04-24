@@ -141,7 +141,7 @@ void _e1000_rx_init()
 static int next = 0;
 int e1000_receive(char* buffer, uint32_t size)
 {
-	int tail = E1000_DEVICE_GET(E1000_RDT);
+	//int tail = E1000_DEVICE_GET(E1000_RDT);
 	if(!(rx_desc_list[next].status & E1000_RXD_STAT_DD)) /* Descriptor Done */
 	{
 		warningf("[e1000 RX] RXD_STAT_DD not set!\n");
@@ -156,7 +156,7 @@ int e1000_receive(char* buffer, uint32_t size)
 		goto drop;
 	}
 
-	dbgprintf("[e1000 - %d] Received %d bytes %d!\n",timer_get_tick(), length, __cli_cnt);
+	//dbgprintf("[e1000 - %d] Received %d bytes %d!\n",timer_get_tick(), length, __cli_cnt);
 
 	memcpy(buffer, rx_buf[next], length);
 
@@ -214,7 +214,7 @@ void __int_handler e1000_callback()
 	interrupts++;
 }
 
-static uint32_t e1000_poll()
+static int32_t e1000_poll()
 {
 	dbgprintf("[e1000 - %d] Polling!\n", timer_get_tick());
 	/* Polling for RX interrupts */

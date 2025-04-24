@@ -37,7 +37,6 @@ void terminal_set_color(color_t color)
 
 static void __terminal_syntax(unsigned char c)
 {
-	struct gfx_theme* theme = kernel_gfx_current_theme();
 	/* Set different colors for different syntax elements */
 	switch (c) {
 		case '>':
@@ -123,8 +122,8 @@ static int __terminal_set_ops(struct terminal* term, struct terminal_ops* ops);
 static int __terminal_scan_graphics(struct terminal* term, ubyte_t* data, int size);	
 static int __terminal_scan_textmode(struct terminal* term, ubyte_t* data, int size);
 static int __terminal_scanf(struct terminal* term, char* fmt, ...);
-static int __terminal_getchar_graphics(struct terminal* term);
-static int __terminal_getchar_textmode(struct terminal* term);
+static char __terminal_getchar_graphics(struct terminal* term);
+static char __terminal_getchar_textmode(struct terminal* term);
 
 /* default terminal ops (graphics) */
 struct terminal_ops terminal_ops = {
@@ -234,7 +233,7 @@ static int __terminal_set_ops(struct terminal* term, struct terminal_ops* ops)
 	return 0;
 }
 
-static int __terminal_getchar_graphics(struct terminal* term)
+static char __terminal_getchar_graphics(struct terminal* term)
 {
 	if(term == NULL) return -1;
 
@@ -254,7 +253,7 @@ static int __terminal_getchar_graphics(struct terminal* term)
 	return -1;
 }
 
-static int __terminal_getchar_textmode(struct terminal* term)
+static char __terminal_getchar_textmode(struct terminal* term)
 {
 	if(term == NULL) return -1;
 
@@ -488,7 +487,9 @@ static int __terminal_commit_graphics(struct terminal* term)
 {
 	if(term == NULL || term->screen == NULL) return -1;
 
-	struct gfx_theme* theme = kernel_gfx_current_theme();
+	/* Currently unsed */
+	//struct gfx_theme* theme = kernel_gfx_current_theme();
+	
 	int x = 0, y = 0;
 	kernel_gfx_draw_rectangle(term->screen, 0, 0, term->screen->inner_width, term->screen->inner_height, term->bg_color);
 	for (int i = term->tail; i < term->head; i++){

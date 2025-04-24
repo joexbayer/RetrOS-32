@@ -168,7 +168,6 @@ void isr_handler(struct registers regs)
 	
 	if (handlers[regs.int_no] != 0){
 
-		#define KDEBUG_INTERRUPTS 
 		#ifdef KDEBUG_INTERRUPTS
 		if(regs.int_no != 32 && regs.int_no != 44 && regs.int_no != 33){
 			dbgprintf("[interrupt] %d\n", regs.int_no);

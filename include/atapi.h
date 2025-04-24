@@ -3,20 +3,18 @@
 
 #include <stdint.h>
 #include <pci.h>
+#include <ata.h>
 
 // ATA/ATAPI Registers
 #define ATA_PRIMARY_IO       0x1F0
 #define ATA_SECONDARY_IO     0x170
 
-#define ATA_REG_DATA         0x0
 #define ATA_REG_ERROR        0x1
-#define ATA_REG_FEATURES     0x1  // Write-only, same as ERROR
 #define ATA_REG_SECCOUNT     0x2
 #define ATA_REG_LBA_LOW      0x3
 #define ATA_REG_LBA_MID      0x4
 #define ATA_REG_LBA_HIGH     0x5
 #define ATA_REG_DRIVESEL     0x6
-#define ATA_REG_STATUS       0x7
 #define ATA_REG_COMMAND      0x7  // Write-only, same as STATUS
 
 // ATA/ATAPI Commands

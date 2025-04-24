@@ -71,6 +71,7 @@ int tcp_retry_all(){
 			return -1;
 		}
 
+		dbgprintf("[TCP] Retrying packet %d\n", skb->len);
 		int ret = tcp_state_machine(skb);
 		if(ret < 0){
 			skb_free(skb);
@@ -613,8 +614,8 @@ static int tcp_state_machine(struct sk_buff* skb){
 		return -1;
 	}
 
-	dbgprintf("[TCP - %d] %s -> TCP packet: %d syn, %d ack, %d fin %d push (src port: %d, dest port: %d) %d bytes\n", 
-		timer_get_tick(), tcp_state_to_str(sk->tcp->state), hdr->syn, hdr->ack, hdr->fin, hdr->psh, htons(hdr->source), htons(hdr->dest), skb->data_len);
+	dbgprintf("[TCP - %d] %s -> TCP packet: %d syn, %d ack, %d fin %d push %d rst (src port: %d, dest port: %d) %d bytes\n", 
+		timer_get_tick(), tcp_state_to_str(sk->tcp->state), hdr->syn, hdr->ack, hdr->fin, hdr->psh, hdr->rst, htons(hdr->source), htons(hdr->dest), skb->data_len);
 
 	switch (sk->tcp->state){
 	case TCP_LISTEN:
@@ -647,7 +648,8 @@ static int tcp_state_machine(struct sk_buff* skb){
 		 * Istead of dropping the packet, we add it to the retry queue.
 		 * Especially if it has the PSH flag set.
 		 */
-		if(hdr->ack == 1 && hdr->psh == 1){
+		if(hdr->ack == 1 && hdr->psh == 1 && skb->retries < 3){
+			skb->retries++;
 			dbgprintf("[TCP] Adding to retry queue\n");
 			if(retry_queue->ops->add(retry_queue, skb) < 0){
 				dbgprintf("[TCP] Failed to add to retry queue\n");
@@ -658,6 +660,19 @@ static int tcp_state_machine(struct sk_buff* skb){
 
 		break;
 	case TCP_SYN_RCVD:
+		if(hdr->rst == 1){
+			dbgprintf("[TCP] Received RST packet, closing connection\n");
+			sk->tcp->state = TCP_CLOSED;
+			sk->data_ready = -1;
+
+			if(sk->waiting != NULL){
+				sk->waiting->state = RUNNING;
+				sk->waiting = NULL;
+			}
+			skb_free(skb);
+			return ERROR_OK;
+		}
+
 		if(hdr->syn == 0 && hdr->ack == 1){
 			/**
 			 * @brief Add to backlog 
@@ -690,6 +705,19 @@ static int tcp_state_machine(struct sk_buff* skb){
 		}
 		break;
 	case TCP_WAIT_ACK:
+		if(hdr->rst == 1){
+			dbgprintf("[TCP] Received RST packet, closing connection\n");
+			sk->tcp->state = TCP_CLOSED;
+			sk->data_ready = -1;
+
+			if(sk->waiting != NULL){
+				sk->waiting->state = RUNNING;
+				sk->waiting = NULL;
+			}
+			skb_free(skb);
+			return ERROR_OK;
+		}
+
 		if(hdr->syn == 0 && hdr->ack == 1){
 			
 			/* check if i get a already acked retransmit */
@@ -705,6 +733,18 @@ static int tcp_state_machine(struct sk_buff* skb){
 		}
 		break;
 	case TCP_ESTABLISHED:
+		if(hdr->rst == 1){
+			dbgprintf("[TCP] Received RST packet, closing connection\n");
+			sk->tcp->state = TCP_CLOSED;
+			sk->data_ready = -1;
+			if(sk->waiting != NULL){
+				sk->waiting->state = RUNNING;
+				sk->waiting = NULL;
+			}
+			skb_free(skb);
+			return ERROR_OK;
+		}
+
 		if(hdr->syn == 0 && hdr->ack == 1 && hdr->fin == 0){
 			/**
 			 * @brief This is where we should check if the packet is in order.
