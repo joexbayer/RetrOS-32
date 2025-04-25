@@ -104,6 +104,7 @@ void kb_add_char(unsigned char c) {
 static void __int_handler kb_callback() {
   uint8_t scancode =
       inportb(0x60); /* Recieve scancode, also ACK's interrupt? */
+
   switch (scancode) {
   case 0x2a: /* shift down */
     __shift_pressed = 1;
@@ -168,7 +169,6 @@ static void __int_handler kb_callback() {
   } else {
     kb_add_char(__shift_pressed ? c + ('A' - 'a') : c);
   }
-
   __keyboard_presses++;
 }
 
@@ -181,12 +181,31 @@ static void keyboard_buffer_clear() {
 void init_keyboard() {
   mutex_init(&kb_lock);
 
-  outportb(0x64, 0xAE); /* Send the keyboard enable command */
-  outportb(0x60, 0xFF); /* Send the keyboard reset command */
+  outportb(0x64, 0xAD); /* Disable first PS/2 port */
+  keyboard_buffer_clear(); 
+  outportb(0x64, 0xAE); /* Enable port */
+
+  while (inportb(0x64) & 2); 
+  outportb(0x60, 0xFF);
+
+  int timeout = 100000;
+  while ((inportb(0x64) & 1) == 0 && --timeout);
+
+  if (timeout) {
+    uint8_t ack = inportb(0x60);
+    dbgprintf("[PS/2] Keyboard reset response: 0x%x\n", ack);
+  } else {
+    uint8_t status = inportb(0x64);
+    if (status & 1) {
+      uint8_t leftover = inportb(0x60);
+      dbgprintf("[PS/2] Late data after timeout: 0x%x\n", leftover);
+    } else {
+      dbgprintf("[PS/2] No keyboard reset response (status: 0x%x).\n", status);
+    }
+  }
 
   keyboard_buffer_clear();
 
-  /* Firstly, register our timer callback. */
   interrupt_install_handler(KB_IRQ, &kb_callback);
-  dbgprintf("[PS/2] Keyboard initialized.\n");
+  dbgprintf("[PS/2] Keyboard handler installed.\n");
 }

@@ -43,11 +43,11 @@ ifeq ($(UNAME),Linux)
 	LDFLAGS += -m elf_i386
 	GRUB=grub-mkrescue /usr/lib/grub/i386-pc/ -o myos.iso legacy/multiboot
 # ! Disable MacOS support for now, as it is not able to compile the build tools. !
-#else ifeq ($(UNAME),Darwin)
-#	GRUB=grub-mkrescue /usr/local/lib/grub/i386-pc/ -o myos.iso legacy/multiboot
-#	CC=i386-elf-gcc
-#	AS=i386-elf-as
-#	LD=i386-elf-ld
+else ifeq ($(UNAME),Darwin)
+	GRUB=grub-mkrescue /usr/local/lib/grub/i386-pc/ -o myos.iso legacy/multiboot
+	CC=i386-elf-gcc
+	AS=i386-elf-as
+	LD=i386-elf-ld
 else
 #	$(error This Makefile does not support building on this platform. Please use Linux, WSL or Docker)
 endif

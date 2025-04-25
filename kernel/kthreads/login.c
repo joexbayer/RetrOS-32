@@ -149,7 +149,21 @@ void __kthread_entry login()
         switch (event.event){   
         case GFX_EVENT_MOUSE:{
                 /* check if OK is clicked x = event.data, y = event.data2 */
-                if(event.data > 10+10+120 && event.data < 10+10+120+50 && event.data2 > 10+10+10+10 && event.data2 < 10+10+10+10+20 && input_manager.inputs[0].buffer_size > 0){
+                if(event.data > 10+10+120 && event.data < 10+10+120+50 && event.data2 > 10+10+10+10 && event.data2 < 10+10+10+10+20){
+
+                    if(input_manager.inputs[0].buffer_size <= 0){
+                        /* For now simple login as guest */
+                        struct user* guest = usermanager->ops->get(usermanager, "guest");
+                        if(guest == NULL){
+                            warningf("Failed to get guest user");
+                            return;
+                        }
+
+                        login_startup(guest);
+                        return;
+                    }
+
+
                     /* check if username and password is correct */
                     struct user* usr = usermanager->ops->authenticate(usermanager,
                         input_manager.inputs[0].buffer,
