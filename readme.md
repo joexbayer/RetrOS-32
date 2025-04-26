@@ -358,14 +358,3 @@ Joe Bayer
 Project Link: [https://github.com/joexbayer/RetrOS-32](https://github.com/joexbayer/RetrOS-32)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-<!-- ACKNOWLEDGMENTS -->
-## Acknowledgments
-
-Use this space to list resources you find helpful and would like to give credit to. I've included a few of my favorites to kick things off!
-
-* README Template(https://github.com/othneildrew/Best-README-Template/blob/master/README.md)
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
