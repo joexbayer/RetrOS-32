@@ -37,7 +37,7 @@ void net_init_dns()
     mutex_init(&__dns_mutex);
 }
 
-static void __dns_name_compresion(uint8_t* request, char* host) 
+static void __dns_name_compression(uint8_t* request, char* host) 
 {
     int lock = 0;
     host[strlen(host)] = '.';
@@ -98,7 +98,7 @@ int gethostname(char* hostname)
 
     /* Move pointer past header */
     uint8_t* question =(uint8_t*)&buf[sizeof(struct dns_header)];
-    __dns_name_compresion(question, hostname);
+    __dns_name_compression(question, hostname);
     request_question =(struct dns_question*) &buf[sizeof(struct dns_header) + (strlen((const char*)question) + 1)];
  
     request_question->qtype = htons(DNS_T_A); //type of the query , A , MX , CNAME , NS etc

@@ -103,7 +103,7 @@ void kb_add_char(unsigned char c) {
 
 static void __int_handler kb_callback() {
   uint8_t scancode =
-      inportb(0x60); /* Recieve scancode, also ACK's interrupt? */
+      inportb(0x60); /* Receive scancode, also ACK's interrupt? */
 
   switch (scancode) {
   case 0x2a: /* shift down */

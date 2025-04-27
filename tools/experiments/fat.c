@@ -187,7 +187,7 @@ int createFile(FILE* file, BootSector bootSector, const char* filename, char* co
     // Assuming filenames are in 8.3 format (8 for the name, 3 for the extension)
 
 
-      printf("Contetn: %s, %d\n", content, strlen(content));
+      printf("Content: %s, %d\n", content, strlen(content));
     if (strlen(filename) > 12) {
         printf("Filename too long.\n");
         return 1;

@@ -205,7 +205,7 @@ int script_parse(char* str)
         str++;
     } while (*str != 0);
     
-    /* Try to execute the last line incase it ended with a \0 */
+    /* Try to execute the last line in case it ended with a \0 */
     ret = exec_cmd(start);
     if(ret < 0){
         twritef("script: error on '%s' line %d\n", start, line);

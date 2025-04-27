@@ -48,7 +48,7 @@ struct filesystem_ops {
 
 /* filesystem flags as enum */
 typedef enum __fs_flags {
-    FS_FLAG_INITILIZED = 1 << 0,
+    FS_FLAG_INITIALIZED = 1 << 0,
     FS_FLAG_UNUSED = 1 << 1,
 } fs_flag_t;
 

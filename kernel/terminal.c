@@ -487,7 +487,7 @@ static int __terminal_commit_graphics(struct terminal* term)
 {
 	if(term == NULL || term->screen == NULL) return -1;
 
-	/* Currently unsed */
+	/* Currently unused */
 	//struct gfx_theme* theme = kernel_gfx_current_theme();
 	
 	int x = 0, y = 0;

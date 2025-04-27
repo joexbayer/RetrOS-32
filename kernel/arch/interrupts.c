@@ -155,7 +155,7 @@ void load_data_segments(int seg)
     asm volatile ("movw %%ax, %%ds \n\t" "movw %% ax, %%es " : : "a" (seg));
 }
 
-/* Main interrupt handler, calls interrupt specific hanlder if installed. */
+/* Main interrupt handler, calls interrupt specific handler if installed. */
 void isr_handler(struct registers regs)
 {	
 	interrupt_counter[regs.int_no]++;

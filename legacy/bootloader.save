@@ -140,7 +140,7 @@ inf:
 error:
     /*
         If an error occurs, then mostly likely the hardware does not support int 13h 0x42.
-        Therefor try to read 63 sectors (a little more than 32bytes) as a last resort with 0x02.
+        Therefore try to read 63 sectors (a little more than 32bytes) as a last resort with 0x02.
     */
     movw $error_str, %si
     call print

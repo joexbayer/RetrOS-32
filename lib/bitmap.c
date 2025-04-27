@@ -45,7 +45,7 @@ void destroy_bitmap(bitmap_t b)
     kfree((void*) b);
 }
 
-inline int __continous_helper(bitmap_t b, int start, int size)
+inline int __continuous_helper(bitmap_t b, int start, int size)
 {
     for (int j = 0; j < size; j++)
     {
@@ -56,7 +56,7 @@ inline int __continous_helper(bitmap_t b, int start, int size)
     return 0;
 }
 
-int bitmap_unset_continous(bitmap_t b, int start, int size)
+int bitmap_unset_continuous(bitmap_t b, int start, int size)
 {
     for (int i = start; i < (start+size); i++)
     {
@@ -65,14 +65,14 @@ int bitmap_unset_continous(bitmap_t b, int start, int size)
     return 0;
 }
 
-int bitmap_get_continous(bitmap_t b, int n, int size)
+int bitmap_get_continuous(bitmap_t b, int n, int size)
 {
     for (int i = 0; i < n; i++)
     {
         if(get_bitmap(b, i) == 0)
         {
             
-            int ret = __continous_helper(b, i, size);
+            int ret = __continuous_helper(b, i, size);
 
             if(ret < 0)
                 break;

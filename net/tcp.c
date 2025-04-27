@@ -629,7 +629,7 @@ static int tcp_state_machine(struct sk_buff* skb){
 			 * @brief Store the remote address in recv_addr of
 			 * listening socket. This will be overwritten for each
 			 * new accepted socket.
-			 * This is techinically bad as we access IP in TCP.
+			 * This is technically bad as we access IP in TCP.
 			 */
 			sk->recv_addr.sin_port = hdr->source;
 			sk->recv_addr.sin_addr.s_addr = skb->hdr.ip->saddr;
@@ -645,7 +645,7 @@ static int tcp_state_machine(struct sk_buff* skb){
 		/**
 		 * @brief If a new connection just was acked, the receiving socket
 		 * might not be ready yet. Which would lead the packet here.
-		 * Istead of dropping the packet, we add it to the retry queue.
+		 * Instead of dropping the packet, we add it to the retry queue.
 		 * Especially if it has the PSH flag set.
 		 */
 		if(hdr->ack == 1 && hdr->psh == 1 && skb->retries < 3){
@@ -764,7 +764,7 @@ static int tcp_state_machine(struct sk_buff* skb){
 
 			tcp_send_ack(sk, hdr, skb->data_len);
 
-			/* If ret is < 0, then it has been added to the socket skb_queue, therefor we do not want to free it. */
+			/* If ret is < 0, then it has been added to the socket skb_queue, therefore we do not want to free it. */
 			int ret = net_sock_add_data(sk, skb);
 			if(ret == 0){
 				skb_free(skb);
@@ -790,7 +790,7 @@ static int tcp_state_machine(struct sk_buff* skb){
 		break;
 	case TCP_FIN_WAIT:
 		if(hdr->fin == 1 && hdr->ack == 1){
-			/* Connection succesfully closed */
+			/* Connection successfully closed */
 			tcp_send_ack(sk, hdr, 1);
 			sk->tcp->state = TCP_CLOSED;
 			dbgprintf("[TCP] Socket %d closed\n", sk);

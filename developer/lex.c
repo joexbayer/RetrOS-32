@@ -142,7 +142,7 @@ void expression(int level) {
             lexer_context.expr_type = INT;
         }
         else if (lexer_context.token == '"') {
-            // continous string "abc" "abc"
+            // continuous string "abc" "abc"
             // emit code
             *++text = IMM;
             *++text = lexer_context.token_val;
@@ -1218,7 +1218,7 @@ void global_declaration() {
         
     }
 
-    // parse the comma seperated variable declaration.
+    // parse the comma separated variable declaration.
     while (lexer_context.token != ';' && lexer_context.token != '}') {
         type = lexer_context.basetype;
         // parse pointer type, note that there may exist `int ****x;`

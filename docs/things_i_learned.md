@@ -7,7 +7,7 @@ function with the following signature:
 void __attribute__((constructor)) my_constructor(void);
 ```
 
-# C cleaup functions
+# C cleanup functions
 
 # Backtracing from interrupts
 

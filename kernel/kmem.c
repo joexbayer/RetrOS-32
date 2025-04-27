@@ -170,7 +170,7 @@ void kfree(void* ptr)
 }
 
 /**
- * @brief Arena style permanent memory allocation scheme for memory that wont be freed.
+ * @brief Arena style permanent memory allocation scheme for memory that won't be freed.
  * Mainly by the windowservers framebuffer, and E1000's buffers.
  */
 static uintptr_t memory_permanent_start = 0;

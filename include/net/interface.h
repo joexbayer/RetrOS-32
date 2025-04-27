@@ -15,7 +15,7 @@ struct net_interface;
 
 struct net_interface_ops {
     int (*send)(struct net_interface* interface, void* buffer, uint32_t size);
-    int (*recieve)(struct net_interface* interface, void* buffer, uint32_t size);
+    int (*receive)(struct net_interface* interface, void* buffer, uint32_t size);
     int (*assign)(struct net_interface* interface, uint32_t ip);
     int (*attach)(struct net_interface* interface, struct netdev* device);
     int (*detach)(struct net_interface* interface);

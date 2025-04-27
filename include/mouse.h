@@ -37,7 +37,7 @@ struct ps2_mouse {
     struct ps2_mouse_packet packet;
     short x, y;
     uint8_t received;
-    uint8_t initilized;
+    uint8_t initialized;
 };
 
 struct mouse {

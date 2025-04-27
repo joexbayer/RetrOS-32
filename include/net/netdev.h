@@ -46,7 +46,7 @@ void netdev_attach_driver(
 
 int is_netdev_attached();
 
-int netdev_recieve(void* buffer, uint32_t size);
+int netdev_receive(void* buffer, uint32_t size);
 int netdev_transmit(void* buffer, uint32_t size);
 
 

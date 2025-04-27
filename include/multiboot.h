@@ -50,7 +50,7 @@
 #define MULTIBOOT_VIDEO_MODE                    0x00000004
 
 /* This flag indicates the use of the address fields in the header. */
-#define MULTIBOOT_AOUT_KLUDGE                   0x00010000
+#define MULTIBOOT_ABOUT_KLUDGE                   0x00010000
 
 /* Flags to be set in the ’flags’ member of the multiboot info structure. */
 
@@ -66,7 +66,7 @@
 /* These next two are mutually exclusive */
 
 /* is there a symbol table loaded? */
-#define MULTIBOOT_INFO_AOUT_SYMS                0x00000010
+#define MULTIBOOT_INFO_ABOUT_SYMS                0x00000010
 /* is there an ELF section header table? */
 #define MULTIBOOT_INFO_ELF_SHDR                 0X00000020
 
@@ -107,7 +107,7 @@ struct multiboot_header
   /* The above fields plus this one must equal 0 mod 2^32. */
   multiboot_uint32_t checksum;
 
-  /* These are only valid if MULTIBOOT_AOUT_KLUDGE is set. */
+  /* These are only valid if MULTIBOOT_ABOUT_KLUDGE is set. */
   multiboot_uint32_t header_addr;
   multiboot_uint32_t load_addr;
   multiboot_uint32_t load_end_addr;
@@ -122,14 +122,14 @@ struct multiboot_header
 };
 
 /* The symbol table for a.out. */
-struct multiboot_aout_symbol_table
+struct multiboot_about_symbol_table
 {
   multiboot_uint32_t tabsize;
   multiboot_uint32_t strsize;
   multiboot_uint32_t addr;
   multiboot_uint32_t reserved;
 };
-typedef struct multiboot_aout_symbol_table multiboot_aout_symbol_table_t;
+typedef struct multiboot_about_symbol_table multiboot_about_symbol_table_t;
 
 /* The section header table for ELF. */
 struct multiboot_elf_section_header_table
@@ -162,7 +162,7 @@ struct multiboot_info
 
   union
   {
-    multiboot_aout_symbol_table_t aout_sym;
+    multiboot_about_symbol_table_t about_sym;
     multiboot_elf_section_header_table_t elf_sec;
   } u;
 

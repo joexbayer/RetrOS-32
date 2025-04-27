@@ -217,7 +217,7 @@ static const char* readme_text[] = {
     "DNS server from the",
     "DHCP server.",
     " ",
-    "A looback interface is",
+    "A loopback interface is",
     "also supported.",
 };
 

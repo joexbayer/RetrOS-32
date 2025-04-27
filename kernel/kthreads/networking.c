@@ -238,7 +238,7 @@ error_t net_get_info(struct net_info* info)
 }
 
 
-static int net_handle_recieve(struct sk_buff* skb)
+static int net_handle_receive(struct sk_buff* skb)
 {
     dbgprintf("Parsing new packet\n");
     if(net_ethernet_parse(skb) < 0) return net_drop_packet(skb);
@@ -268,7 +268,7 @@ static int net_handle_recieve(struct sk_buff* skb)
         case ARP:
             if(arp_parse(skb) < 0) return net_drop_packet(skb);
             // send arp response.
-            dbgprintf("Recieved ARP packet.\n");
+            dbgprintf("Received ARP packet.\n");
             skb_free(skb);
             break;
 
@@ -330,8 +330,8 @@ void __kthread_entry networking_main()
             assert(skb != NULL);
 
             /* Offload skb parsing to worker thread. */
-            work_queue_add(&net_handle_recieve, (void*)skb, NULL);
-            //net_handle_recieve(skb);
+            work_queue_add(&net_handle_receive, (void*)skb, NULL);
+            //net_handle_receive(skb);
         }
 
         tcp_retry_all();

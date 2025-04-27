@@ -136,7 +136,7 @@ partition_table:
     .byte 0x01       # Ending head
     .byte 0x20       # Ending sector 6 bit
     .byte 0x00       # Ending sector 10bit
-    .byte 0x00       # Relativ sector 32bit (4 bytes)
+    .byte 0x00       # Relative sector 32bit (4 bytes)
     .byte 0x00
     .byte 0x00
     .byte 0x00

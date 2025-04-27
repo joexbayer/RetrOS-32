@@ -319,7 +319,7 @@ To run RetrOS-32:
   - [x] Fullscreen
   - [x] Widgets Library
   - [ ] Custom HTML to Widgets
-- [x] Terminal, Window Server, Process Informtaion, Finder.
+- [x] Terminal, Window Server, Process Information, Finder.
 - [x] Library (printf, memcpy, etc)
 - [x] IPC
 - [x] System calls

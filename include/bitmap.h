@@ -13,7 +13,7 @@ int get_free_bitmap(bitmap_t b, int n);
 void destroy_bitmap(bitmap_t b);
 int get_bitmap_size(int n);
 
-int bitmap_get_continous(bitmap_t b, int n, int size);
-int bitmap_unset_continous(bitmap_t b, int start, int size);
+int bitmap_get_continuous(bitmap_t b, int n, int size);
+int bitmap_unset_continuous(bitmap_t b, int start, int size);
 
 #endif /* BITMAP_H */
