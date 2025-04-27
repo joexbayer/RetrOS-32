@@ -81,7 +81,7 @@ static int ws_raw_wallpaper(struct windowserver* ws, char* path)
         return -ERROR_FILE_NOT_FOUND;
     }
 
-    /* covert background to rgb */
+    /* convert background to rgb */
     for(int i = 0; i < 640*480; i++){
         ws->background[i] = rgb_to_vga(ws->background[i]);
     }

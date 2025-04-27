@@ -196,7 +196,7 @@ int8_t arp_parse(struct sk_buff* skb)
 		net_arp_respond(arp_content);
 		break;
 	case ARP_REPLY:
-		/* Signal ARP reply was recieved, check for waiting SKBs*/
+		/* Signal ARP reply was received, check for waiting SKBs*/
 		break;
 	
 	default:

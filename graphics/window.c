@@ -40,7 +40,7 @@ static struct window_ops default_window_ops = {
     .hover = &gfx_default_hover,
     .resize = &gfx_window_resize,
     .move = &kernel_gfx_set_position,
-    .destroy = &gfx_destory_window,
+    .destroy = &gfx_destroy_window,
     .maximize = &gfx_window_maximize
 };
 
@@ -57,7 +57,7 @@ static struct window_draw_ops default_window_draw_ops = {
 };
 
 /**
- * @brief Draw given window to a frambuffer.
+ * @brief Draw given window to a framebuffer.
  * 
  * @param buffer 
  * @param window 
@@ -89,7 +89,7 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
         return;
     }
 
-    /* Copy inner window framebuffer to given buffer with relativ pitch.  If it is NOT hidden.*/
+    /* Copy inner window framebuffer to given buffer with relative pitch.  If it is NOT hidden.*/
     if(window->inner != NULL && !HAS_FLAG(window->flags, GFX_IS_HIDDEN)){
         int i, j, c = 0;
         for (j = window->y+padding; j < (window->y+padding+window->inner_height); j++)
@@ -367,7 +367,7 @@ int kernel_gfx_window_border_color(uint8_t color)
     return ERROR_OK;
 }
 
-int gfx_destory_window(struct window* w)
+int gfx_destroy_window(struct window* w)
 {
     ERR_ON_NULL(w);
 

@@ -124,7 +124,7 @@ void __kthread_entry udp_server()
         int ret = kernel_recv(socket, buffer, 255, 0);
         buffer[ret] = 0;
 
-        dbgprintf(" Recieved '%s' (%d bytes)\n", buffer, ret);
+        dbgprintf(" Received '%s' (%d bytes)\n", buffer, ret);
     }
 
     kernel_sock_close(socket);

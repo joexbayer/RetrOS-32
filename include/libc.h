@@ -18,7 +18,7 @@ extern float cos_12[12];
 extern float cos_60[60];
 extern float sin_60[60];
 
-struct coordiante {
+struct coordinate {
     int x;
     int y;
 };

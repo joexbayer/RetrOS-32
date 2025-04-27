@@ -124,7 +124,7 @@ void kernel(uint32_t magic)
 	__deprecated kernel_size = _end-_code;
 
 #ifdef KDEBUG_SERIAL
-	/* Serial is used for debuging purposes. */
+	/* Serial is used for debugging purposes. */
     init_serial();
 #endif
 	dbgprintf("INF: %s - %s\n", KERNEL_NAME, KERNEL_VERSION);
@@ -133,12 +133,12 @@ void kernel(uint32_t magic)
 	
 	smp_parse();
 
-	/* Initilize memory map and then kernel and virtual memory */
+	/* Initialize memory map and then kernel and virtual memory */
 	memory_map_init(__kernel_context.boot_info->extended_memory_low * 1024, __kernel_context.boot_info->extended_memory_high * 64 * 1024);
 	init_memory();
 	kernel_boot_printf("Memory initialized.");
 	
-	/* Initilize the kernel constructors */
+	/* Initialize the kernel constructors */
 	init_kctors();
 	init_interrupts();
 	init_pcbs();
@@ -158,25 +158,25 @@ void kernel(uint32_t magic)
 		scrwrite(0, 0, "Welcome to RetrOS32-32 textmode.", VGA_COLOR_WHITE);
 	}
 	
-	/* Initilize the keyboard and mouse */
+	/* Initialize the keyboard and mouse */
 	init_keyboard();
 	if(__kernel_context.graphic_mode != KERNEL_FLAG_TEXTMODE){
 		mouse_init();
 	}
 	kernel_boot_printf("Peripherals initialized.");
 
-	/* initilize the default scheduler */
+	/* initialize the default scheduler */
 	PANIC_ON_ERR(sched_init_default(get_scheduler(), 0));
 	kernel_boot_printf("Scheduler initialized.");
 
-	/* initilize net structs */
+	/* initialize net structs */
 	net_init_arp();
 	net_init_sockets();
 	net_init_dns();
 	net_init_loopback();
 	kernel_boot_printf("Networking initialized.");
 
-	/* initilize file systems and disk */
+	/* initialize file systems and disk */
 	if(!disk_attached()){
 		
 	} else {
@@ -225,7 +225,7 @@ void kernel(uint32_t magic)
 
 	dbgprintf("[KERNEL] Enabled paging!\n");
 	
-	/* Initilize the kernel symbols from symbols.map */
+	/* Initialize the kernel symbols from symbols.map */
 	ksyms_init();
 
 	kernel_config_load("sysutil/default.cfg");
@@ -248,7 +248,7 @@ void kernel(uint32_t magic)
 	if(kernel_config_check("network", "netd", "enable")){
 		start("netd", 0, NULL);
 	}
-	kernel_boot_printf("Deamons initialized.");
+	kernel_boot_printf("Daemons initialized.");
 
 	init_pit(1000);
 	kernel_boot_printf("Timer initialized.");

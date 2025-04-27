@@ -30,7 +30,7 @@ static volatile uint32_t *e1000;
 
 uint8_t mac[6] = {0x52, 0x54, 0x00, 0x12, 0x34, 0x56};
 
-/* Allocate space for transmit and recieve buffers. */
+/* Allocate space for transmit and receive buffers. */
 static struct e1000_tx_desc tx_desc_list[TX_SIZE];
 static char* tx_buf[TX_SIZE];
 
@@ -56,7 +56,7 @@ static void _e1000_reset_tx_desc()
     }
 }
 /**
- * @brief Clears the recieve buffers for the e1000
+ * @brief Clears the receive buffers for the e1000
  */
 static void _e1000_reset_rx_desc()
 {

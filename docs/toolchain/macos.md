@@ -14,7 +14,7 @@ brew install nativeos/i386-elf-toolchain/i386-elf-binutils -v
 brew install nativeos/i386-elf-toolchain/i386-elf-gcc -v
 ```
 
-## Depedencies
+## Dependencies
 ```sh
 brew install autoconf-archive objconv pkg-config xorriso gawk
 ```

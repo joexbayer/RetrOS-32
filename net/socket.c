@@ -72,7 +72,7 @@ const char* socket_protocol_to_str(int protocol){
 
 inline static unsigned short __get_free_port()
 {
-    return ntohs(get_free_bitmap(port_map, NET_NUMBER_OF_DYMANIC_PORTS) + NET_DYNAMIC_PORT_START);
+    return ntohs(get_free_bitmap(port_map, NET_NUMBER_OF_DYNAMIC_PORTS) + NET_DYNAMIC_PORT_START);
 }
 
 void net_sock_bind(struct sock* socket, unsigned short port, unsigned int ip)
@@ -188,7 +188,7 @@ error_t net_sock_add_data(struct sock* sock, struct sk_buff* skb)
 {
     int ret = -1;
     LOCK(sock, {
-        /* if data is ready to be read, we cant add new data, so instead add the skb to the sockets queue.*/
+        /* if data is ready to be read, we can't add new data, so instead add the skb to the sockets queue.*/
         if(net_sock_data_ready(sock, NET_MAX_BUFFER_SIZE)){
             sock->skb_queue->ops->add(sock->skb_queue, skb);
             dbgprintf("[%d] Adding SKB to socket queue\n", sock->socket);
@@ -258,8 +258,8 @@ struct sock* sock_find_listen_tcp(uint16_t d_port)
 
 struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip)
 {
-    //dbgprintf("[TCP] Looking for socket destintation %d: source %d\n", htons(d_port), htons(s_port));
-    struct sock* _sk = NULL; /* save listen socket incase no established connection is found. */
+    //dbgprintf("[TCP] Looking for socket destination %d: source %d\n", htons(d_port), htons(s_port));
+    struct sock* _sk = NULL; /* save listen socket in case no established connection is found. */
 
     for (int i = 0; i < NET_NUMBER_OF_SOCKETS; i++){
         if(socket_table[i] == NULL || socket_table[i]->tcp == NULL)
@@ -323,7 +323,7 @@ int net_sock_accept(struct sock* sock, struct sock* new)
 
 struct sock* net_socket_find_udp(uint32_t ip, uint16_t port) 
 {   
-    /* Interate over sockets and add packet if socket exists with matching port and IP */
+    /* Iterate over sockets and add packet if socket exists with matching port and IP */
     for (int i = 0; i < NET_NUMBER_OF_SOCKETS; i++){
         if(socket_table[i] == NULL)
             continue;
@@ -450,7 +450,7 @@ struct sock* kernel_socket_create(int domain, int type, int protocol)
 void net_init_sockets()
 {
     socket_table = (struct sock**) kalloc(NET_NUMBER_OF_SOCKETS * sizeof(void*));
-    port_map = create_bitmap(NET_NUMBER_OF_DYMANIC_PORTS);
+    port_map = create_bitmap(NET_NUMBER_OF_DYNAMIC_PORTS);
     socket_map = create_bitmap(NET_NUMBER_OF_SOCKETS);
     total_sockets = 0;
 }

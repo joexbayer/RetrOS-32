@@ -21,7 +21,7 @@
 
 /* This determines the maximum of simultaneously open files */
 #define FS_MAX_FILES 256
-#define FS_MAX_FILESYSTEMS 4 /* maximum number of partitons entries in MBR */
+#define FS_MAX_FILESYSTEMS 4 /* maximum number of partitions entries in MBR */
 
 /* default filesystem struct */
 static struct file fs_file_table[FS_MAX_FILES];
@@ -202,7 +202,7 @@ int fs_close(int fd)
     return 0;
 }
 
-/* function that use the default filesystem and a "file descriptor" system, if avaiable */
+/* function that use the default filesystem and a "file descriptor" system, if available */
 int fs_open(const char* path, int flags)
 {
     ERR_ON_NULL(path);

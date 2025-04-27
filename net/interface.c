@@ -17,7 +17,7 @@
 #include <memory.h>
 
 static int __iface_send(struct net_interface* interface, void* buffer, uint32_t size);
-static int __iface_recieve(struct net_interface* interface, void* buffer, uint32_t size);
+static int __iface_receive(struct net_interface* interface, void* buffer, uint32_t size);
 static int __iface_assign(struct net_interface* interface, uint32_t ip);
 static int __iface_attach(struct net_interface* interface, struct netdev* device);
 static int __iface_detach(struct net_interface* interface);
@@ -27,7 +27,7 @@ static int __iface_configure(struct net_interface* interface, char* name);
 
 static struct net_interface_ops default_iface_ops = {
     .send = __iface_send,
-    .recieve = __iface_recieve,
+    .receive = __iface_receive,
     .assign = __iface_assign,
     .attach = __iface_attach,
     .detach = __iface_detach,
@@ -86,7 +86,7 @@ static int __iface_send(struct net_interface* interface, void* buffer, uint32_t 
     return interface->device->write(buffer, size);
 }
 
-static int __iface_recieve(struct net_interface* interface, void* buffer, uint32_t size)
+static int __iface_receive(struct net_interface* interface, void* buffer, uint32_t size)
 {
     if(interface->device == NULL) {
         return -1;

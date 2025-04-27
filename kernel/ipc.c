@@ -19,7 +19,7 @@
 
 #define IPC_VALID_CHANNEL(channel) if(channel < 0 || channel >= IPC_MAX_CHANNELS || channels[channel].rbuf == NULL) {return -1;}
 
-/* handel to channel implementation */
+/* handle to channel implementation */
 static struct ipc_channel channels[IPC_MAX_CHANNELS] = {0};
 
 static int __ipc_alloc_channel() {

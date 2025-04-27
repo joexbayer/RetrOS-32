@@ -19,7 +19,7 @@ struct dns_header
  
     uint8_t rd :1;          // recursion desired
     uint8_t tc :1;          // truncated message
-    uint8_t aa :1;          // authoritive answer
+    uint8_t aa :1;          // authoritative answer
     uint8_t opcode :4;      // option code
     uint8_t qr :1;          // query/response flag
  

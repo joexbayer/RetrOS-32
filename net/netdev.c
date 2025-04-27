@@ -48,7 +48,7 @@ int netdev_transmit(void* buffer, uint32_t size)
     return sent;
 }
 
-int netdev_recieve(void* buffer, uint32_t size)
+int netdev_receive(void* buffer, uint32_t size)
 {
     int read = current_netdev.read((char*) buffer, size);
     if(read <= 0)

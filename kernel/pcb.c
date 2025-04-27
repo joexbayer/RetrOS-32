@@ -326,12 +326,12 @@ int pcb_cleanup_routine(void* arg)
 	struct pcb* pcb = &pcb_table[pid];
 
 	if(pcb->gfx_window != NULL){
-		gfx_destory_window(pcb_table[pid].gfx_window);
+		gfx_destroy_window(pcb_table[pid].gfx_window);
 	}
 
 	/**
 	 * @brief A process cannot exit before all its children have exited.
-	 * Therefor loop over all pcbs and kill them if current is their parent.
+	 * Therefore loop over all pcbs and kill them if current is their parent.
 	 */
 	for (int i = 0; i < MAX_NUM_OF_PCBS; i++){
 		if(pcb_table[i].parent == pcb && pcb_table[i].is_process == PCB_THREAD){
@@ -369,7 +369,7 @@ int pcb_cleanup_routine(void* arg)
 
 /**
  * @brief Creates a new kernel thread.
- * Creates a process thread which inherets the parents virtual memory.
+ * Creates a process thread which inherits the parents virtual memory.
  * In the context of a kernel thread the thread_eip is set to the entry function.
  * @param entry entry function
  * @param name name of thread
@@ -403,7 +403,7 @@ error_t pcb_create_thread(struct pcb* parent, void (*entry)(), void* arg, byte_t
 	/* name */
 	memcpy(pcb->name, parent->name, strlen(parent->name)+1);
 
-	/* inheret parents virtual memory */
+	/* inherit parents virtual memory */
 	vmem_init_process_thread(parent, pcb);
 
 	get_scheduler()->ops->add(get_scheduler(), pcb);
@@ -472,7 +472,7 @@ error_t pcb_create_process(char* program, int argc, char** argv, pcb_flag_t flag
 	return pcb->pid;
 }
 /**
- * @brief Add a pcb to the list of running proceses.
+ * @brief Add a pcb to the list of running processes.
  * Also instantiates the PCB itself.
  * 
  * @param entry pointer to entry function.

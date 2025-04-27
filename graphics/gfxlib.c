@@ -150,7 +150,7 @@ int gfx_event_loop(struct gfx_event* event, gfx_event_flag_t flags)
  * 
  * @param w window to draw to
  * @param x coordinate
- * @param y coordiante
+ * @param y coordinate
  * @param width of rectangle
  * @param height of rectangle
  * @param color
@@ -205,7 +205,7 @@ int kernel_gfx_draw_bitmap(struct window* w, int x, int y, int width, int height
  * @brief Draws a character to the framebuffer of currently running process.
  * 
  * @param x coordinate
- * @param y coordiante
+ * @param y coordinate
  * @param c character
  * @param color 
  * @return int 0 on success, less than 0 on error.

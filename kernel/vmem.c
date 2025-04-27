@@ -182,7 +182,7 @@ static struct vmem_page_region* vmem_create_page_region(struct pcb* pcb, void* b
 		}
 		int bit = (paddr - VMEM_START_ADDRESS)/PAGE_SIZE;
 		allocation->bits[i] = bit;
-		//dbgprintf("Allocating %d continious blocks on heap 0x%x.\n", num, heap_table);
+		//dbgprintf("Allocating %d continuous blocks on heap 0x%x.\n", num, heap_table);
 		vmem_map(heap_table, (uint32_t)allocation->basevaddr+(i*PAGE_SIZE), paddr, access);
 	}
 
@@ -274,7 +274,7 @@ int vmem_free_allocations(struct pcb* pcb)
 
 /**
  * @brief Allocates a chunk of virtual memory for the specified process control block (PCB).
- * The vmem_continious_allocation_map() function is responsible for allocating a contiguous block of virtual memory for the given PCB.
+ * The vmem_continuous_allocation_map() function is responsible for allocating a contiguous block of virtual memory for the given PCB.
  * @param pcb A pointer to the process control block (PCB) for which memory needs to be allocated.
  * @param allocation A pointer to the allocation structure that contains the allocation information.
  * @param address A pointer to the start of the allocated memory block.
@@ -282,7 +282,7 @@ int vmem_free_allocations(struct pcb* pcb)
  * @param access The access permissions for the allocated pages.
  * @return int 0 if the allocation succeeds, or -1 if the allocation fails.
  */
-int __deprecated vmem_continious_allocation_map(struct pcb* pcb, struct allocation* allocation, uint32_t* address, int num, int access)
+int __deprecated vmem_continuous_allocation_map(struct pcb* pcb, struct allocation* allocation, uint32_t* address, int num, int access)
 {
 
 	return -1;
@@ -357,7 +357,7 @@ void vmem_stack_free(struct pcb* pcb, void* ptr)
  * @param _size The size of memory to be allocated in bytes.
  * @return A pointer to the start of the allocated memory block, or NULL if the allocation fails.
  * @note The function uses page-aligned sizes and ensures efficient memory utilization.
- * @note The function assumes that the vmem_continious_allocation_map() function is defined and handles memory mapping.
+ * @note The function assumes that the vmem_continuous_allocation_map() function is defined and handles memory mapping.
  * @note The function uses kalloc() to allocate memory for internal data structures (e.g., struct allocation and bits array).
  * TODO: Needs to be synchronized among threads.
  */
@@ -378,7 +378,7 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 	/**
 	 * @brief Part1: Default case
 	 * Create a physical page allocation and attach it to the virtual allocation.
-	 * Setup the allocation size and adress and add it to the pcb.
+	 * Setup the allocation size and address and add it to the pcb.
 	 */
 	if(pcb->allocations->head == NULL){
 
@@ -408,7 +408,7 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 	 */
 	if(pcb->allocations->head->address > (uint32_t*) VMEM_HEAP && pcb->allocations->head->address <= (uint32_t*) VMEM_HEAP+size){
 
-		/* TODO: Clean this up, redudent code */
+		/* TODO: Clean this up, redundant code */
 		struct vmem_page_region* physical = vmem_create_page_region(pcb, (void*)VMEM_HEAP, num_pages, USER);
 		if(physical == NULL){
 			kfree(allocation);
@@ -430,8 +430,8 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 	/**
 	 * @brief Part 2: Find spot for allocation.
 	 * Iterate over all allocations and find a spot where the next allocation is far enough away.
-	 * Two options, first option is finding a free allocation inside a already allocated phsyical page region.
-	 * Then we can simply add new allocation to the exisitng one physical one.
+	 * Two options, first option is finding a free allocation inside a already allocated physical page region.
+	 * Then we can simply add new allocation to the existing one physical one.
 	 * Second option is we need to allocate a new physical page allocation, between two existing ones.
 	 */
 	struct allocation* iter = pcb->allocations->head;
@@ -457,7 +457,7 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 		}
 	
 		/**
-		 * @brief This case checks if there is space at the end of a phsyical region.
+		 * @brief This case checks if there is space at the end of a physical region.
 		 * Only is possible if the next allocation is in a different physical region.
 		 * @note This is mostly for reusing the virtual heap address space.
 		 */
@@ -505,7 +505,7 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 
 	/**
 	 * @brief Part 3: No spot found, allocate at end of heap.
-	 * At this point we have not found a spot inbetween existing allocations, so append at the end.
+	 * At this point we have not found a spot in between existing allocations, so append at the end.
 	 * This means we need to allocate a new physical page allocation.
 	 * @note "iter" will point to the last element in the allocation list.
 	 */
@@ -559,7 +559,7 @@ void vmem_init_process_thread(struct pcb* parent, struct pcb* thread)
 	 * TODO: How to handle heap? Share? need synchronization?
 	 */
 	
-	/* inheret directory */
+	/* inherit directory */
 	uint32_t* thread_directory = vmem_default->ops->alloc(vmem_default);
 	for (int i = 0; i < 1024; i++){
 		/* copy over pages, this will include heap and data */
@@ -712,7 +712,7 @@ void vmem_cleanup_process(struct pcb* pcb)
 	 * @brief A process can not be "cleaned" unless all of its threads are dead.
 	 * @see https://github.com/joexbayer/RetrOS-32/issues/84
 	 * 
-	 * Should proably be done before this function is entered.
+	 * Should probably be done before this function is entered.
 	 * Theoretically a process's threads, could have threads, like a tree.
 	 * TODO: Find a solution...
 	 */
@@ -870,7 +870,7 @@ int vmem_total_usage()
  */
 void vmem_init()
 {
-	/* first 1Mb is for virtual memory managment, this gives us 256 management pages */
+	/* first 1Mb is for virtual memory management, this gives us 256 management pages */
 	VMEM_MANAGER_START 	= memory_map_get()->virtual_memory.from;
 	VMEM_MANAGER_END 	= memory_map_get()->virtual_memory.from + MB(1);
 

@@ -30,7 +30,7 @@ static struct ps2_mouse mouse_device = {
 	.x = 0,
 	.y = 0,
 	.received = 0,
-	.initilized = 0,
+	.initialized = 0,
 	.cycle = 0
 };
 

@@ -119,7 +119,7 @@ struct window {
 struct window* gfx_new_window(int width, int height, window_flag_t flags);
 
 void gfx_draw_window(uint8_t* buffer, struct window* window);
-int gfx_destory_window(struct window* w);
+int gfx_destroy_window(struct window* w);
 void gfx_window_set_resizable();
 
 

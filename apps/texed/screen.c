@@ -2,7 +2,7 @@
 
 #define MAX_FMT_STR_SIZE 256
 
-/* Only platform depedent syscall needed */
+/* Only platform dependent syscall needed */
 #ifndef NCURSES
 
 #include <libc.h>

@@ -34,7 +34,7 @@ These can be overwritten by a kernel thread, but doing so may reduce the usabili
 
 - `int (*writef)(struct terminal* term, char* fmt, ...);`: Writes formatted text to the terminal.
 
-#### Other usefull operations
+#### Other useful operations
 - `void (*write)(struct terminal*, char* text)`: Writes text to the terminal.
 - `void (*clear)(struct terminal*)`: Clears the terminal.
 - `void (*destroy)(struct terminal*)`: Destroys the terminal.

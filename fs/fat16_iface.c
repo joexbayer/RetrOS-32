@@ -62,7 +62,7 @@ int fat16_init()
     ERR_ON_NULL(fs);
 
     fs->ops = &fat16_ops;
-    fs->flags = FS_FLAG_INITILIZED;
+    fs->flags = FS_FLAG_INITIALIZED;
     fs->version = FS_VERSION;
     fs->type = MBR_TYPE_FAT16_LBA;
 

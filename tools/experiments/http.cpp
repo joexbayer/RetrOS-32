@@ -4,7 +4,7 @@
 
 #include <cstdlib>
 
-const char* exmaple = "GET /index.html HTTP/1.1\r\n"
+const char* example = "GET /index.html HTTP/1.1\r\n"
                       "Host: www.example.com\r\n"
                       "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3\r\n"
                       "Content-Type: text/html\r\n"
@@ -72,7 +72,7 @@ private:
 };
 
 int main() {
-    String str(exmaple);
+    String str(example);
     MyEngine parser;
     parser.init();
 

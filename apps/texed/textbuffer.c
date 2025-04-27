@@ -41,7 +41,7 @@ inline int isspace(char c)
 
 #define MAX_LINES 512
 #define LINE_CAPACITY 78
-#define MAX_VISABLE_LINES 21
+#define MAX_VISIBLE_LINES 21
 
 /* Function prototypes */
 static int textbuffer_new_line(struct textbuffer *buffer);
@@ -108,7 +108,7 @@ static struct textbuffer *textbuffer_create(void) {
 	buffer->cursor.x = 0;
 	buffer->cursor.y = 0;
 	buffer->scroll.start = 0;
-	buffer->scroll.end = MAX_VISABLE_LINES;
+	buffer->scroll.end = MAX_VISIBLE_LINES;
 
 	return buffer;
 }
@@ -386,7 +386,7 @@ static int textbuffer_display(const struct textbuffer *buffer, enum vga_color fg
 	}
 
 	 /* Clear the line after the last actual line */
-    if (last_line_y < MAX_VISABLE_LINES) {
+    if (last_line_y < MAX_VISIBLE_LINES) {
         screen_clear_line(last_line_y + 1, COLOR(VGA_COLOR_WHITE, VGA_COLOR_BLUE));
     }
 

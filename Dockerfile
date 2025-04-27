@@ -1,5 +1,5 @@
 #
-# Because GCC / LD compilation isnt consistent, even across different linux distributions.
+# Because GCC / LD compilation isn't consistent, even across different linux distributions.
 # I was forced to compile in a consistent docker environment.
 # Ubuntu with build-essentials works.
 #

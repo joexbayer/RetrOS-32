@@ -86,7 +86,7 @@ int system_call(int index, int arg1, int arg2, int arg3)
 		return -1;
 	}
 	
-	/* the system call interrupt entered a critcal section */
+	/* the system call interrupt entered a critical section */
 	EOI(48);
 	LEAVE_CRITICAL();
 	syscall_t fn = syscall[index];

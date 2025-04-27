@@ -274,7 +274,7 @@ void exec(int argc, char* argv[])
 {
 	pid_t pid;
 	ubyte_t idx = 1;
-	bool_t kthread_as_deamon = false;
+	bool_t kthread_as_daemon = false;
 
 	if(argc == 1){
 		twritef("usage: exec [options] <file | kfunc> [args ...]\n Note: Any command can be executed by as a thread\n Example: exec echo hi\n");
@@ -285,7 +285,7 @@ void exec(int argc, char* argv[])
 	if(argv[1][0] == '-'){
 		switch (argv[1][1]){ 	
 		case 'd':{
-				kthread_as_deamon = true;	
+				kthread_as_daemon = true;	
 			}
 			break;
 		default:
@@ -302,7 +302,7 @@ void exec(int argc, char* argv[])
 
 	pid = pcb_create_process(argv[idx], argc-idx, &argv[idx], 0 /* PCB_FLAG_KERNEL */);
 	if(pid > 0){
-		if(!kthread_as_deamon) pcb_await(pid);
+		if(!kthread_as_daemon) pcb_await(pid);
 		return;
 	}
 
@@ -314,7 +314,7 @@ void exec(int argc, char* argv[])
 
 	pid = pcb_create_kthread(ptr, argv[idx], argc-idx, &argv[idx]);
 	if(pid > 0){
-		if(kthread_as_deamon) pcb_await(pid);
+		if(kthread_as_daemon) pcb_await(pid);
 		return;
 	}
 	

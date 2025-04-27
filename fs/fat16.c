@@ -722,7 +722,7 @@ int fat16_format(char* label, int reserved)
     int total_blocks = (disk_size()/512)-1;
     dbgprintf("Total blocks: %d (%d/512)\n", total_blocks, disk_size());
 
-    /* read bootblock for potential boot code, then cast fat_boot_table to it and update the talbe */
+    /* read bootblock for potential boot code, then cast fat_boot_table to it and update the table */
     byte_t bootblock[512];
     if(read_block(bootblock, BOOT_BLOCK) < 0){
         dbgprintf("Error reading boot block\n");

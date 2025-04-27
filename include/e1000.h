@@ -48,7 +48,7 @@
 
 #define E1000_TIPG     0x00410  /* TX Inter-packet gap -RW */
 
-/* Recieve */
+/* Receive */
 #define E1000_ICS      0x000C8  /* Interrupt Cause Set - WO */
 #define E1000_IMS      0x000D0  /* Interrupt Mask Set - RW */
 #define E1000_RDBAL    0x02800  /* RX Descriptor Base Address Low - RW */
@@ -109,7 +109,7 @@ struct e1000_rx_desc
 }__attribute__((packed));
 /**
  * @brief Used by the NIC to store important information
- * about the current state of the recieve buffers.
+ * about the current state of the receive buffers.
  */
 
 

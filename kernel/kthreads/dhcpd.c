@@ -148,7 +148,7 @@ static int __dhcp_send_request(struct sock* socket)
 
 /**
  * @brief DHCP function for handling a offer given by server.
- * Mostly parsing struct memebers.
+ * Mostly parsing struct members.
  * @param offer dhcp offer from server.
  */
 static void __dhcp_handle_offer(struct dhcp* offer)
@@ -165,7 +165,7 @@ static void __dhcp_handle_offer(struct dhcp* offer)
 
     net_configure_iface("eth0", my_ip, 0xFF0000, server_ip);
 
-    dbgprintf("[DHCP] Recieved IP.\n");
+    dbgprintf("[DHCP] Received IP.\n");
 }
 
 int dhcp_get_state()
@@ -235,7 +235,7 @@ void __kthread_entry dhcpd()
 
     dbgprintf("Received offer...\n");
 
-    /* Send request after offer was recieved.*/
+    /* Send request after offer was received.*/
     ret = __dhcp_send_request(dhcp_socket);
     if(ret < 0)
         goto dhcp_error;
@@ -254,7 +254,7 @@ void __kthread_entry dhcpd()
     kernel_exit();
 
 dhcp_error:
-    dbgprintf("DCHP ERROR\n");
+    dbgprintf("DHCP ERROR\n");
     dhcp_state.state = DHCP_FAILED;
     kernel_sock_close(dhcp_socket);
     kernel_exit();

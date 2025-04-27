@@ -53,7 +53,7 @@ typedef unsigned char ubyte_t;
 #define MAX_UINT16_T 0xFFFF
 #define MAX_UINT32_T 0xFFFFFFFF
 
-/* This is a interupt handler function */
+/* This is a interrupt handler function */
 #define __int_handler //__attribute__((interrupt))
 /* This is a async callback function */
 #define __async_callback
@@ -97,7 +97,7 @@ void init_kctors();
 
 typedef volatile int signal_value_t;
 
-/* exeception to the exernal naming as its never supposed to be accessed without macro. */
+/* exception to the external naming as its never supposed to be accessed without macro. */
 extern int __cli_cnt;
 
 #define ENTER_CRITICAL()\

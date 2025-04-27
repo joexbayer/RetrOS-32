@@ -9,7 +9,7 @@ Folder templates/ offers a simple Makefile and .cpp file which can be copied to 
 
 ### Libraries
 
-The avaiable libraries arre libcore, libgraphic libnet and libzlib.
+The available libraries are libcore, libgraphic libnet and libzlib.
 
 Core: Is needed for any interactions with the operating system / system calls and utils.
 Graphic: Is for any graphics, windows, titles, boxes etc.

@@ -22,7 +22,7 @@
  * 
  * @param socket socket to bind
  * @param address Address to bind
- * @param address_len lenght of bind.
+ * @param address_len length of bind.
  * @return int 
  */
 error_t kernel_bind(struct sock* socket, const struct sockaddr *address, socklen_t address_len)
@@ -54,7 +54,7 @@ error_t kernel_recvfrom(struct sock* socket, void *buffer, int length, int flags
 }
 
 /**
- * @brief Simple recieve on socket without sockaddr.
+ * @brief Simple receive on socket without sockaddr.
  * 
  * @param socket Socket to read from
  * @param buffer Buffer to copy data into
@@ -127,20 +127,20 @@ error_t kernel_connect(struct sock* socket, const struct sockaddr *address, sock
         kernel_yield();
     }
 
-    dbgprintf(" [%d] succesfully connected!\n", socket);
+    dbgprintf(" [%d] successfully connected!\n", socket);
 
     return 0;
 }
 
 /**
- * @brief Sends data to reciever defined by sockaddr.
+ * @brief Sends data to receiver defined by sockaddr.
  * 
  * @param socket Socket used to send.
  * @param message buffer to send.
  * @param length length of message
  * @param flags flags..
- * @param dest_addr sockaddr defining reciever.
- * @param dest_len lenght of dest_addr.
+ * @param dest_addr sockaddr defining receiver.
+ * @param dest_len length of dest_addr.
  * @return int 
  */
 error_t kernel_sendto(struct sock* socket, const void *message, int length, int flags, const struct sockaddr *dest_addr, socklen_t dest_len)

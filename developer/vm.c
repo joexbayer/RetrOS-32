@@ -7,7 +7,7 @@
  * @see https://github.com/rswier/c4
  * @see https://github.com/lotabout/write-a-C-interpreter
  * @copyright Copyright (c) 2023
- * 
+ *
  */
 #include "interpreter.h"
 #include "vm.h"
@@ -33,7 +33,7 @@ void vm_print(struct vm* vm)
     twritef("__.--@ / VM \\ @--.__\n");
     DEBUG_PRINT("  Stack:\n");
     //hexdump(vm->text, POOLSIZE);
-    
+
 }
 
 int eval(struct vm* vm, int assembly)
@@ -187,7 +187,7 @@ void vm_setup(struct vm* vm, int* text, char* data)
     //memset(vm->stack, 0, VM_STACK_SIZE);
 
     vm->old_text = vm->text;
-    
+
     vm->bp = vm->sp = (int *)((int)vm->stack + VM_STACK_SIZE-2);
     vm->ax = 0;
 }
