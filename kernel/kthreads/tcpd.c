@@ -77,7 +77,8 @@ void __kthread_entry tcp_server()
     while (1)
     {
         struct sockaddr_in client_addr;
-        client = kernel_accept(socket, (struct sockaddr *)&client_addr, sizeof(client_addr));
+        socklen_t client_addr_len = sizeof(client_addr);
+        client = kernel_accept(socket, (struct sockaddr *)&client_addr, &client_addr_len);
         if (client == NULL)
         {
             dbgprintf("Unable to accept connection: client is NULL\n");

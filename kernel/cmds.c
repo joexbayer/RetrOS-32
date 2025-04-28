@@ -144,10 +144,10 @@ static int lzcat(int argc, char* argv[]){
         return 1;
     }
     int8_t* buf;
-    int len = __read_file(argv[1], &buf);
+    int len = __read_file(argv[1], (char**)&buf);
 
     int8_t* output;
-    uint32_t output_size = lz_decompress(buf, len, &output);
+    uint32_t output_size = lz_decompress(buf, len, (uint8_t**)&output);
     if(output_size == 0) {
         twritef("Failed to decompress file\n");
         return -1;
@@ -168,10 +168,10 @@ static int lz(int argc, char* argv[]){
         return 1;
     }
     int8_t* buf;
-    int len = __read_file(argv[1], &buf);
+    int len = __read_file(argv[1], (char**)&buf);
 
     int8_t* output;
-    uint32_t output_size = lz_compress(buf, len, &output, 0);
+    uint32_t output_size = lz_compress(buf, len, (uint8_t**)&output, 0);
     if(output_size == 0) {
         twritef("Failed to compress file\n");
         return -1;
@@ -352,7 +352,7 @@ int disas(int argc, char* argv[])
 
     int sz = kfunc_size((void*) addr);
     twritef("Disassembling %s (addr: 0x%x, size: %d)\n", argv[1], addr, sz);
-    disassemble((uint8_t*) addr, sz, addr);
+    disassemble((uint8_t*) addr, sz, (void*) addr);
 
     return 0;
 }
@@ -506,7 +506,7 @@ EXPORT_KSYMBOL(file);
  * @param argv Contains socket as int
  * @return int 
  */
-static int __kthread_entry __tcp_reader(int argc, char *argv[])
+static int __kthread_entry __tcp_reader(int argc, char **argv)
 {
     if(argc != 1){
         dbgprintf("Invalid arguments\n");
@@ -575,7 +575,7 @@ static int tcp(int argc, char *argv[])
     char socket_str[10] = {0};
     itoa(socket->socket, socket_str);
 
-    pid_t reader = pcb_create_kthread(__tcp_reader, "tcp_reader", 1, &socket_str);
+    pid_t reader = pcb_create_kthread((void (*)())__tcp_reader, "tcp_reader", 1, (char**)&socket_str);
     
     int ret;
     char* buffer = kalloc(1024);
@@ -652,7 +652,7 @@ static int clear(){
 }
 EXPORT_KSYMBOL(clear);
 
-static panic(int argc, char *argv[])
+static int panic(int argc, char *argv[])
 {
     if(argc < 2) {
         twritef("Usage: panic <message>\n");

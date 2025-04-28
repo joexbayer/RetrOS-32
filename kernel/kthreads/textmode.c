@@ -80,20 +80,20 @@ static int screen_draw_char(struct window *w, int x, int y, unsigned char c, col
     return 0;
 }
 
-static int screeny(int argc, char *argv[]) {
+static void screeny() {
 	volatile uint16_t* buffer = scr_buffer();
 	struct screen_cursor cursor = scr_get_cursor();
 
 	/* Create a cache for the screen */
 	uint16_t* cache = (uint16_t*)kalloc(MAX_ROWS * MAX_COLS * sizeof(uint16_t));
 	if (cache == NULL) {
-		return -1;
+		return;
 	}
 	memset(cache, 0, MAX_ROWS * MAX_COLS * sizeof(uint16_t));
 
 	struct window *w = gfx_new_window(MAX_COLS * 8, MAX_ROWS * 12, 0);
 	if (w == NULL) {
-		return -1;
+		return;
 	}
 	kernel_gfx_set_title("VGA Textmode");
 
@@ -133,7 +133,7 @@ static int screeny(int argc, char *argv[]) {
 		switch (event.event) {
 		case GFX_EVENT_EXIT:{
 			kfree(cache);
-			return -1;
+			return;
 		}
 		case GFX_EVENT_KEYBOARD:
 			scr_keyboard_add(event.data);
@@ -145,6 +145,6 @@ static int screeny(int argc, char *argv[]) {
 		kernel_yield();
 	}
 
-	return 0;
+	return;
 }
 EXPORT_KTHREAD(screeny);

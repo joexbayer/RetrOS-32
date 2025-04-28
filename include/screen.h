@@ -47,5 +47,6 @@ void scr_keyboard_add(unsigned char c);
 unsigned char scr_keyboard_get(int wait);
 
 struct screen_cursor scr_get_cursor();
+void scr_set_cursor(int x, int y);
 
 #endif

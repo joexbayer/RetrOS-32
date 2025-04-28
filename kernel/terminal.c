@@ -122,8 +122,8 @@ static int __terminal_set_ops(struct terminal* term, struct terminal_ops* ops);
 static int __terminal_scan_graphics(struct terminal* term, ubyte_t* data, int size);	
 static int __terminal_scan_textmode(struct terminal* term, ubyte_t* data, int size);
 static int __terminal_scanf(struct terminal* term, char* fmt, ...);
-static char __terminal_getchar_graphics(struct terminal* term);
-static char __terminal_getchar_textmode(struct terminal* term);
+static unsigned char __terminal_getchar_graphics(struct terminal* term);
+static unsigned char __terminal_getchar_textmode(struct terminal* term);
 
 /* default terminal ops (graphics) */
 struct terminal_ops terminal_ops = {
@@ -233,7 +233,7 @@ static int __terminal_set_ops(struct terminal* term, struct terminal_ops* ops)
 	return 0;
 }
 
-static char __terminal_getchar_graphics(struct terminal* term)
+static unsigned char __terminal_getchar_graphics(struct terminal* term)
 {
 	if(term == NULL) return -1;
 
@@ -253,7 +253,7 @@ static char __terminal_getchar_graphics(struct terminal* term)
 	return -1;
 }
 
-static char __terminal_getchar_textmode(struct terminal* term)
+static unsigned char __terminal_getchar_textmode(struct terminal* term)
 {
 	if(term == NULL) return -1;
 

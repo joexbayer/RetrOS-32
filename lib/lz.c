@@ -1,4 +1,5 @@
 #include <lib/lz.h>
+#include <lib/syscall.h>
 
 /* Helper for simple buffer management */
 struct databuffer {

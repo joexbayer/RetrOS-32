@@ -48,7 +48,7 @@ static int textbuffer_new_line(struct textbuffer *buffer);
 static int textbuffer_free_line(struct textbuffer *buffer, size_t line);
 static int textbuffer_destroy(struct textbuffer *buffer);
 static int textbuffer_display(const struct textbuffer *buffer, enum vga_color fg, enum vga_color bg);
-static int textbuffer_handle_char(struct textbuffer *buffer, int c);
+static int textbuffer_handle_char(struct textbuffer *buffer, unsigned char c);
 static int textbuffer_jump(struct textbuffer *buffer, unsigned int x, unsigned int y);	
 
 static struct textbuffer_ops textbuffer_default_ops = {
@@ -404,7 +404,7 @@ static int textbuffer_display(const struct textbuffer *buffer, enum vga_color fg
 }
 
 /* Function to handle keyboard input of a char */
-static int textbuffer_handle_char(struct textbuffer *buffer, int c) {
+static int textbuffer_handle_char(struct textbuffer *buffer, unsigned char c) {
 	int ret;
 
 	/* Handle the backspace key */

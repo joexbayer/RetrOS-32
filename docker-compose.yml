@@ -1,6 +1,6 @@
 version: "3"
 services:
-  netos:
+  builder:
     build: .
     platform: linux/amd64
     volumes:

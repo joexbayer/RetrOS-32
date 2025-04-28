@@ -326,7 +326,7 @@ int pcb_cleanup_routine(void* arg)
 	struct pcb* pcb = &pcb_table[pid];
 
 	if(pcb->gfx_window != NULL){
-		gfx_destory_window(pcb_table[pid].gfx_window);
+		gfx_destroy_window(pcb_table[pid].gfx_window);
 	}
 
 	/**

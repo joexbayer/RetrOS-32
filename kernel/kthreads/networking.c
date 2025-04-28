@@ -278,6 +278,18 @@ static int net_handle_recieve(struct sk_buff* skb)
     return 1;
 }
 
+static int net_handle_recieve_wrapper(void* data)
+{
+    struct sk_buff* skb = (struct sk_buff*)data;
+    if(skb == NULL) return -1;
+
+    int ret = net_handle_recieve(skb);
+    if(ret < 0){
+        dbgprintf("Failed to handle packet\n");
+        return 0;
+    }
+}
+
 /**
  * @brief Main networking event loop.
  * 
@@ -330,7 +342,7 @@ void __kthread_entry networking_main()
             assert(skb != NULL);
 
             /* Offload skb parsing to worker thread. */
-            work_queue_add(&net_handle_recieve, (void*)skb, NULL);
+            work_queue_add(&net_handle_recieve_wrapper, (void*)skb, NULL);
             //net_handle_recieve(skb);
         }
 
