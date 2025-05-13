@@ -72,7 +72,7 @@ static char* about_text = "\nRetrOS-32 - 32bit Operating System\n    " KERNEL_RE
  */
 void shell_clear()
 {
-	struct gfx_theme* theme = kernel_gfx_current_theme();
+	//struct gfx_theme* theme = kernel_gfx_current_theme();
 	kernel_gfx_draw_rectangle($process->current->gfx_window, 0, SHELL_POSITION, gfx_get_window_height(), 8, $process->current->term->bg_color);
 }
 
@@ -138,8 +138,7 @@ void ps(int argc, char* argv[])
 		}
 	}
 
-	int ret;
-	int usage;
+	//int usage;
 	twritef("\nPID  USER    USAGE    TYPE     STATE     NAME    \n");
 	for (int i = 1; i < MAX_NUM_OF_PCBS; i++){
 		struct pcb_info info;
@@ -703,12 +702,12 @@ static int textshell_login(struct terminal* term)
 	while(1){
 		twritef("Username: ");
 		term->ops->commit(term);
-		term->ops->scan(term, username, 32);
+		term->ops->scan(term, (ubyte_t *)username, 32);
 		twritef("\n");
 		
 		twritef("Password: ");
 		term->ops->commit(term);
-		term->ops->scan(term, password, 32);
+		term->ops->scan(term, (ubyte_t *)password, 32);
 		twritef("\n");
 
 		struct user* user =  usrman->ops->authenticate(usrman, username, password);

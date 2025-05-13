@@ -102,6 +102,7 @@ static int workers = 0;
 void worker_thread()
 {  
     int my_id = workers++;
+    (void)my_id;
     dbgprintf("[%d] Starting worker thread...\n", my_id);
     while (1) {
 

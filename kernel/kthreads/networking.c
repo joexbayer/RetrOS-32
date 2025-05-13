@@ -288,6 +288,8 @@ static int net_handle_recieve_wrapper(void* data)
         dbgprintf("Failed to handle packet\n");
         return 0;
     }
+
+    return 0;
 }
 
 /**

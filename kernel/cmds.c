@@ -147,7 +147,7 @@ static int lzcat(int argc, char* argv[]){
     int len = __read_file(argv[1], (char**)&buf);
 
     int8_t* output;
-    uint32_t output_size = lz_decompress(buf, len, (uint8_t**)&output);
+    uint32_t output_size = lz_decompress((uint8_t*)buf, len, (uint8_t**)&output);
     if(output_size == 0) {
         twritef("Failed to decompress file\n");
         return -1;
@@ -171,13 +171,13 @@ static int lz(int argc, char* argv[]){
     int len = __read_file(argv[1], (char**)&buf);
 
     int8_t* output;
-    uint32_t output_size = lz_compress(buf, len, (uint8_t**)&output, 0);
+    uint32_t output_size = lz_compress((uint8_t*)buf, len, (uint8_t**)&output, 0);
     if(output_size == 0) {
         twritef("Failed to compress file\n");
         return -1;
     }
 
-    int ret = __write_file(argv[2], output, output_size);
+    int ret = __write_file(argv[2], (char *)output, output_size);
     if(ret < 0) {
         twritef("Failed to write compressed file\n");
         return -1;
@@ -350,7 +350,7 @@ int disas(int argc, char* argv[])
         return 1;
     }
 
-    int sz = kfunc_size((void*) addr);
+    int sz = kfunc_size((void (*)()) addr);
     twritef("Disassembling %s (addr: 0x%x, size: %d)\n", argv[1], addr, sz);
     disassemble((uint8_t*) addr, sz, (void*) addr);
 
@@ -553,7 +553,7 @@ static int tcp(int argc, char *argv[])
     }
 
     uint32_t ip = net_is_ipv4(argv[1]) ? ip_to_int(argv[1]) : htonl(gethostname(argv[1]));
-    if(ip == -1){
+    if(ip == (uint32_t)(-1)){
         twritef("Unable to resolve %s\n", argv[1]);
         return 1;
     }
@@ -580,7 +580,7 @@ static int tcp(int argc, char *argv[])
     int ret;
     char* buffer = kalloc(1024);
     while(1){
-        ret = $process->current->term->ops->scan($process->current->term, buffer, 255);
+        ret = $process->current->term->ops->scan($process->current->term, (ubyte_t *)buffer, 255);
         if(ret < 0){
             break;
         }

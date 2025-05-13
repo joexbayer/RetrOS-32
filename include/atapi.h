@@ -15,7 +15,6 @@
 #define ATA_REG_LBA_MID      0x4
 #define ATA_REG_LBA_HIGH     0x5
 #define ATA_REG_DRIVESEL     0x6
-#define ATA_REG_COMMAND      0x7  // Write-only, same as STATUS
 
 // ATA/ATAPI Commands
 #define ATA_CMD_DEVICE_RESET 0x08

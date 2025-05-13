@@ -74,7 +74,7 @@ EXPORT_SYSCALL(SYSCALL_SET_CURSOR, sys_scr_set_cursor);
 
 static int sys_system(const char *command)
 {
-    return exec_cmd(command);
+	return exec_cmd((char*)command);
 }
 EXPORT_SYSCALL(SYSCALL_SYSTEM, sys_system);
 

@@ -231,4 +231,8 @@ int atapi_init(struct pci_device* dev)
     (void)atapi_read_capacity(base);  /* Read capacity to check if the device is ready */
     //attach_disk_dev(&read_virtual_sector, NULL, &atapi_ide_device);
 
+    (void)__ide_set_drive(ATA_PRIMARY, ATA_MASTER);
+    (void)read_virtual_sector(NULL, 0);  /* Test read_virtual_sector function */
+
+    return 0;
 }
