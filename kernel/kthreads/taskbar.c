@@ -88,7 +88,7 @@ struct taskbar_options {
         {
             .x = 4,
             .y = 2,
-            .w = 50,
+            .w = 86,
             .h = 16,
             .name = "Start",
             .icon = menu_16,
@@ -147,11 +147,11 @@ struct taskbar_options {
             }
         },
         {
-            .x = 60,
+            .x = 90,
             .y = 2,
-            .w = 60,
+            .w = 95,
             .h = 16,
-            .icon = NULL,
+            .icon = desktop_16,
             .name = "RetrOS",
             .options = {
                 {
@@ -202,11 +202,11 @@ struct taskbar_options {
         //     }
         // },
         {
-            .x = 120,
+            .x = 185,
             .y = 2,
             .w = 60,
             .h = 16,
-            .icon = NULL,
+            .icon = bin_16,
             .name = "Help",
             .options = {
                 {

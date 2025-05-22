@@ -63,12 +63,12 @@ int gfx_button(int x, int y, int width, int height, char* name)
 
 int gfx_button_ext(int x, int y, int width, int height, char* name, color_t color)
 {
-	// kernel_gfx_draw_rectangle($process->current->gfx_window, x, y, width, height, color);
-	// kernel_gfx_draw_rectangle($process->current->gfx_window, x, y, width-1, 1, 31);
-	// kernel_gfx_draw_rectangle($process->current->gfx_window, x, y, 1, height, 31);
-	// kernel_gfx_draw_rectangle($process->current->gfx_window, x+width-1, y, 1, height, COLOR_VGA_MEDIUM_DARK_GRAY+5);
-	// kernel_gfx_draw_rectangle($process->current->gfx_window, x, y+height-1, width-1, 1, COLOR_VGA_MEDIUM_DARK_GRAY+5);
-	// kernel_gfx_draw_rectangle($process->current->gfx_window, x, y+height, width-1, 1, 31);
+	kernel_gfx_draw_rectangle($process->current->gfx_window, x, y, width, height, color);
+	kernel_gfx_draw_rectangle($process->current->gfx_window, x, y, width-1, 1, 31);
+	kernel_gfx_draw_rectangle($process->current->gfx_window, x, y, 1, height, 31);
+	kernel_gfx_draw_rectangle($process->current->gfx_window, x+width-1, y, 1, height, COLOR_VGA_MEDIUM_DARK_GRAY+5);
+	kernel_gfx_draw_rectangle($process->current->gfx_window, x, y+height-1, width-1, 1, COLOR_VGA_MEDIUM_DARK_GRAY+5);
+	kernel_gfx_draw_rectangle($process->current->gfx_window, x, y+height, width-1, 1, 31);
 
 	// /* center the text */
 	// int text_width = strlen(name)*PIXELS_PER_CHAR;
