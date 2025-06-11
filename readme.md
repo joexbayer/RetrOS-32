@@ -72,7 +72,7 @@
 
 <!-- ABOUT THE PROJECT -->
 <p align="center">
-  <img src="https://github.com/joexbayer/RetrOS-32/blob/development/docs/pictures/hardwaredemo.gif?raw=true">
+  <img src="https://github.com/joexbayer/RetrOS-32/blob/development/docs/pictures/retros.gif?raw=true">
 </p>
 
 | | | |
