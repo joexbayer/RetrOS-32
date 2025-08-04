@@ -29,7 +29,7 @@
   <p align="center">
     Hobby 32bit operatingsystem project focusing on networking on i386 architecture.
     <br />
-    <a href="https://github.com/joexbayer/RetrOS-32/tree/main/docs"><strong>Explore the docs »</strong></a>
+    <a href="https://oshub.org/projects/retros-32"><strong>Project OSHub page »</strong></a>
     <br />
     <br />
     <a href="https://github.com/joexbayer/RetrOS-32">View Demo</a>
