@@ -558,6 +558,29 @@ int tcp_recv_syn(struct sock* sock, struct tcp_header* tcp)
 	return ERROR_OK;
 }
 
+int tcp_send_rst(struct sock* sock, struct tcp_header* tcp)
+{
+	struct sk_buff* skb = skb_new();
+	assert(skb != NULL);
+
+	struct tcp_header hdr = {
+		.source = sock->bound_port,
+		.dest = sock->recv_addr.sin_port,
+		.window = 1500,
+		.seq = sock->tcp->sequence,
+		.ack_seq = htonl(tcp->seq)+1,
+		.doff = 0x05,
+		.rst = 1
+	};
+
+	sock->tcp->state = TCP_CLOSED;
+
+	dbgprintf("[TCP] Sending RST for %d\n", sock->socket);
+
+	__tcp_send(sock, &hdr, skb, NULL, 0);
+	return ERROR_OK;
+}
+
 int tcp_send_fin(struct sock* sock)
 {
 	struct sk_buff* skb = skb_new();
@@ -605,6 +628,19 @@ int tcp_parse(struct sk_buff* skb)
 	return tcp_state_machine(skb);
 }
 
+int print_socks(){
+	struct sockets socks;
+	net_get_sockets(&socks);
+
+	dbgprintf("%s)\n", socket_type_to_str(SOCK_STREAM));
+	for (int i = 0; i < socks.total_sockets; i++){
+		struct sock* sock = socks.sockets[i];
+		if(sock == NULL || sock->bound_port == 0 || sock->type == SOCK_DGRAM) continue;
+
+		dbgprintf(" %i:%d %i:%d %s  tx: %d  rx: %d\n\n", sock->bound_ip == 1 ? 0 : sock->bound_ip, ntohs(sock->bound_port), ntohl(sock->recv_addr.sin_addr.s_addr), ntohs(sock->recv_addr.sin_port), sock->tcp ? tcp_state_to_str(sock->tcp->state) : "", sock->tx, sock->rx);
+	}
+}
+
 static int tcp_state_machine(struct sk_buff* skb){
 	struct tcp_header* hdr = (struct tcp_header* ) skb->hdr.tcp;
 
@@ -616,6 +652,8 @@ static int tcp_state_machine(struct sk_buff* skb){
 
 	dbgprintf("[TCP - %d] %s -> TCP packet: %d syn, %d ack, %d fin %d push %d rst (src port: %d, dest port: %d) %d bytes\n", 
 		timer_get_tick(), tcp_state_to_str(sk->tcp->state), hdr->syn, hdr->ack, hdr->fin, hdr->psh, hdr->rst, htons(hdr->source), htons(hdr->dest), skb->data_len);
+
+	//print_socks();
 
 	switch (sk->tcp->state){
 	case TCP_LISTEN:
@@ -657,6 +695,10 @@ static int tcp_state_machine(struct sk_buff* skb){
 			}
 			return ERROR_OK;
 		}
+
+		
+
+		
 
 		break;
 	case TCP_SYN_RCVD:
@@ -793,7 +835,7 @@ static int tcp_state_machine(struct sk_buff* skb){
 			/* Connection succesfully closed */
 			tcp_send_ack(sk, hdr, 1);
 			sk->tcp->state = TCP_CLOSED;
-			dbgprintf("[TCP] Socket %d closed\n", sk);
+			dbgprintf("[TCP] Socket %d closed\n", sk->socket);
 		}
 		break;
 	case TCP_CLOSE_WAIT:
