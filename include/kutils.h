@@ -153,6 +153,7 @@ extern int __cli_cnt;
     } while (0)
     
 #define ASSERT_CRITICAL() assert(__cli_cnt > 0)
+#define IN_CRITICAL() (__cli_cnt > 0)
 
 typedef enum {
     false = 0,

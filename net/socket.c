@@ -27,6 +27,8 @@ static int total_sockets;
 static bitmap_t port_map;
 static bitmap_t socket_map;
 
+static spinlock_t __sock_lock = 0;
+
 static const char* socket_type_str[] = {
     "SOCK",
     "SOCK_UDP",
@@ -344,22 +346,32 @@ void kernel_sock_shutdown(struct sock* socket, int how)
 
 void kernel_sock_cleanup(struct sock* socket)
 {
+    if(socket == NULL) return;
+
+    spin_lock(&__sock_lock);
+
+    dbgprintf("[SOCK] Cleaning up socket %d\n", socket->socket);
     tcp_free_connection(socket);
 
     while(SKB_QUEUE_READY(socket->skb_queue)){
         struct sk_buff* skb = socket->skb_queue->ops->remove(socket->skb_queue);
         skb_free(skb);
     }
-
     skb_free_queue(socket->skb_queue);
+
+    dbgprintf("[SOCK] Freeing recv buffer for socket %d\n", socket->socket);
     rbuffer_free(socket->recv_buffer);
 
-    kfree((void*) socket);
     unset_bitmap(socket_map, (int)socket->socket);
-
+    
     socket_table[socket->socket] = NULL;
-
     total_sockets--;
+    
+    dbgprintf("[SOCK] Freeing socket %d\n", socket->socket);
+    kfree((void*) socket);
+    dbgprintf("[SOCK] Socket %d cleaned up, total sockets: %d\n", socket->socket, total_sockets);
+
+    spin_unlock(&__sock_lock);
 }
 
 void kernel_sock_close(struct sock* socket)
@@ -379,15 +391,14 @@ void kernel_sock_close(struct sock* socket)
  */
 struct sock* kernel_socket_create(int domain, int type, int protocol)
 {
-
     /* Should be a lock? */
-    ENTER_CRITICAL();
+    spin_lock(&__sock_lock);
 
     //int current = get_free_bitmap(socket_map, NET_NUMBER_OF_SOCKETS);
     int current = get_free_bitmap(socket_map, NET_NUMBER_OF_SOCKETS);
     if(current == -1){
         warningf("Unable to create socket, no free sockets!\n");
-        LEAVE_CRITICAL();
+        spin_unlock(&__sock_lock);
         return NULL;
     }
 
@@ -412,7 +423,7 @@ struct sock* kernel_socket_create(int domain, int type, int protocol)
         socket_table[current] = NULL;
         unset_bitmap(socket_map, current);
 
-        LEAVE_CRITICAL();
+        spin_unlock(&__sock_lock);
         return NULL;
     }
 
@@ -427,7 +438,7 @@ struct sock* kernel_socket_create(int domain, int type, int protocol)
         socket_table[current] = NULL;
         unset_bitmap(socket_map, current);
 
-        LEAVE_CRITICAL();
+        spin_unlock(&__sock_lock);
         return NULL;
     }
 
@@ -442,7 +453,7 @@ struct sock* kernel_socket_create(int domain, int type, int protocol)
 
     dbgprintf("Created new sock %d\n", current);
 
-    LEAVE_CRITICAL();
+    spin_unlock(&__sock_lock);
 
     return socket_table[current];
 }
