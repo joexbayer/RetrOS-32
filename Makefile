@@ -149,7 +149,7 @@ filesystem:
 compile_kernel: kernel
 	@echo "[KERNEL]     Finished compiling kernel."
 
-compile: bindir $(LIBOBJ) bootblock kernel apps
+compile: bindir $(LIBOBJ) bootblock kernel
 	@echo "[Compile] Finished."
 	$(TIME-END)
 
@@ -159,7 +159,7 @@ create_fs:
 
 bare: compile create_fs
 
-img: tools compile symbols create_fs sync
+img: tools compile apps symbols create_fs sync
 	@echo "Finished creating the image."
 	$(TIME-END)
 

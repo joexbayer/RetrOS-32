@@ -26,6 +26,12 @@ int disk_attached()
     return 1;
 }
 
+void __backtrace_from(uintptr_t *ebp)
+{
+    // Mock implementation does nothing
+}
+
+
 struct pcb __mock_pcb = {
 
 };

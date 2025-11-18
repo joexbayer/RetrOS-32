@@ -1,0 +1,31 @@
+# Build artifacts
+bin/
+*.o
+*.a
+*.iso
+*.img
+filesystem.image
+
+# Version control
+.git/
+.github/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Documentation
+docs/
+
+# Legacy and test files
+legacy/
+tests/bin/
+
+# macOS
+.DS_Store
+
+# Dev container (don't need this in build context)
+.devcontainer/

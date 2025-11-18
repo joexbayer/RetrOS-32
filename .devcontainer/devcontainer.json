@@ -1,0 +1,62 @@
+{
+	"name": "RetrOS-32 Development",
+	"build": {
+		"dockerfile": "Dockerfile",
+		"context": ".."
+	},
+	// Set the working directory
+	"workspaceFolder": "/RetrOS-32",
+	"workspaceMount": "source=${localWorkspaceFolder},target=/RetrOS-32,type=bind",
+	// Run as root to allow privileged operations needed for building
+	"remoteUser": "root",
+	"containerEnv": {
+		"TERM": "xterm-256color"
+	},
+	// Features to add additional capabilities
+	"features": {
+		"ghcr.io/devcontainers/features/git:1": {
+			"version": "latest"
+		}
+	},
+	// Configure VS Code settings
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"terminal.integrated.defaultProfile.linux": "bash",
+				"files.associations": {
+					"*.s": "asm",
+					"*.ld": "ld"
+				},
+				"C_Cpp.default.includePath": [
+					"${workspaceFolder}/include",
+					"${workspaceFolder}/include/arch",
+					"${workspaceFolder}/include/fs",
+					"${workspaceFolder}/include/gfx",
+					"${workspaceFolder}/include/lib",
+					"${workspaceFolder}/include/net"
+				],
+				"C_Cpp.default.compilerPath": "/usr/bin/gcc",
+				"C_Cpp.default.cStandard": "c11",
+				"C_Cpp.default.cppStandard": "c++17",
+				"C_Cpp.default.intelliSenseMode": "linux-gcc-x86"
+			},
+			"extensions": [
+				"ms-vscode.makefile-tools",
+				"13xforever.language-x86-64-assembly"
+			]
+		}
+	},
+	// Ensure privileged mode for filesystem operations
+	"runArgs": [
+		"--privileged",
+		"--platform=linux/amd64"
+	],
+	// Mount docker socket if needed for nested docker operations
+	"mounts": [
+		"source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+	],
+	// Post-create command to set up the environment
+	"postCreateCommand": "echo 'RetrOS-32 dev container ready! Run make compile && make img to build.'",
+	// Keep container running
+	"overrideCommand": true
+}
