@@ -16,8 +16,24 @@
 #include <syscall_helper.h>
 #include <serial.h>
 #include <lib/net.h>
+#include <memory.h>
 
 #pragma GCC diagnostic ignored "-Wcast-function-type"
+
+static error_t validate_net_buffer(struct net_buffer* buffer, int write)
+{
+    if(buffer == NULL){
+        return -ERROR_NULL_POINTER;
+    }
+
+    RETURN_ON_ERR(user_memory_validate(buffer, sizeof(struct net_buffer), 0));
+
+    if(buffer->buffer != NULL && buffer->length > 0){
+        RETURN_ON_ERR(user_memory_validate(buffer->buffer, buffer->length, write));
+    }
+
+    return ERROR_OK;
+}
 
 /* systemcall layer */
 error_t sys_kernel_bind(socket_t socket, const struct sockaddr *address, socklen_t address_len)
@@ -25,6 +41,11 @@ error_t sys_kernel_bind(socket_t socket, const struct sockaddr *address, socklen
     struct sock* sock = sock_get(socket);
     if(sock == NULL)
         return -ERROR_INVALID_SOCKET;
+
+    if(address == NULL)
+        return -ERROR_NULL_POINTER;
+
+    RETURN_ON_ERR(user_memory_validate(address, sizeof(struct sockaddr_in), 0));
 
     return kernel_bind(sock, address, address_len);
 }
@@ -35,6 +56,14 @@ error_t sys_kernel_accept(socket_t socket, struct sockaddr *address, socklen_t *
     struct sock* sock = sock_get(socket);
     if(sock == NULL)
         return -ERROR_INVALID_SOCKET;
+
+    if(address != NULL){
+        RETURN_ON_ERR(user_memory_validate(address, sizeof(struct sockaddr_in), 1));
+    }
+
+    if(address_len != NULL){
+        RETURN_ON_ERR(user_memory_validate(address_len, sizeof(socklen_t), 1));
+    }
 
     struct sock* new = kernel_accept(sock, address, address_len);
     if(new == NULL)
@@ -49,6 +78,11 @@ error_t sys_kernel_connect(socket_t socket, const struct sockaddr *address, sock
     struct sock* sock = sock_get(socket);
     if(sock == NULL)
         return -ERROR_INVALID_SOCKET;
+
+    if(address == NULL)
+        return -ERROR_NULL_POINTER;
+
+    RETURN_ON_ERR(user_memory_validate(address, sizeof(struct sockaddr_in), 0));
 
     return kernel_connect(sock, address, address_len);
 }
@@ -70,6 +104,8 @@ error_t sys_kernel_recv(socket_t socket, struct net_buffer *net_buffer)
     if(sock == NULL)
         return -ERROR_INVALID_SOCKET;
 
+    RETURN_ON_ERR(validate_net_buffer(net_buffer, 1));
+
     return kernel_recv(sock, net_buffer->buffer, net_buffer->length, net_buffer->flags);
 }
 EXPORT_SYSCALL(SYSCALL_NET_SOCK_RECV, sys_kernel_recv);
@@ -79,6 +115,16 @@ error_t sys_kernel_recvfrom(socket_t socket, struct net_buffer *net_buffer, stru
     struct sock* sock = sock_get(socket);
     if(sock == NULL)
         return -ERROR_INVALID_SOCKET;
+
+    RETURN_ON_ERR(validate_net_buffer(net_buffer, 1));
+
+    if(address != NULL){
+        RETURN_ON_ERR(user_memory_validate(address, sizeof(struct sockaddr_in), 1));
+    }
+
+    if(address_len != NULL){
+        RETURN_ON_ERR(user_memory_validate(address_len, sizeof(socklen_t), 1));
+    }
 
     return kernel_recvfrom(sock, net_buffer->buffer, net_buffer->length, net_buffer->flags, address, 0);
 }
@@ -90,6 +136,8 @@ error_t sys_kernel_recv_timeout(socket_t socket, struct net_buffer *net_buffer, 
     if(sock == NULL)
         return -ERROR_INVALID_SOCKET;
 
+    RETURN_ON_ERR(validate_net_buffer(net_buffer, 1));
+
     return kernel_recv_timeout(sock, net_buffer->buffer, net_buffer->length, net_buffer->flags, timeout);
 }
 EXPORT_SYSCALL(SYSCALL_NET_SOCK_RECV_TIMEOUT, sys_kernel_recv_timeout);
@@ -100,6 +148,8 @@ error_t sys_kernel_send(socket_t socket, struct net_buffer *net_buffer)
     if(sock == NULL)
         return -ERROR_INVALID_SOCKET;
 
+    RETURN_ON_ERR(validate_net_buffer(net_buffer, 0));
+
     return kernel_send(sock, net_buffer->buffer, net_buffer->length, net_buffer->flags);
 }
 EXPORT_SYSCALL(SYSCALL_NET_SOCK_SEND, sys_kernel_send);
@@ -109,6 +159,13 @@ error_t sys_kernel_sendto(socket_t socket, struct net_buffer *net_buffer, const 
     struct sock* sock = sock_get(socket);
     if(sock == NULL)
         return -ERROR_INVALID_SOCKET;
+
+    RETURN_ON_ERR(validate_net_buffer(net_buffer, 0));
+
+    if(dest_addr == NULL)
+        return -ERROR_NULL_POINTER;
+
+    RETURN_ON_ERR(user_memory_validate(dest_addr, sizeof(struct sockaddr_in), 0));
 
     return kernel_sendto(sock, net_buffer->buffer, net_buffer->length, net_buffer->flags, dest_addr, 0);
 }
