@@ -87,11 +87,14 @@ static void __net_transmit_skb(struct sk_buff* skb)
 {
     if(skb == NULL || skb->interface == NULL) return;
 
+    const char* name = skb->interface->name ? skb->interface->name : "unknown";
+    dbgprintf("[net] TX skb (%d bytes) via %s\n", skb->len, name);
     int ret = skb->interface->ops->send(skb->interface, skb->head, skb->len);
     if(ret < 0){
-        warningf("Failed to send packet %d\n", ret);
+        warningf("Failed to send packet %d via %s\n", ret, name);
         return;
     }    
+    dbgprintf("[net] TX complete via %s (%d bytes)\n", name, ret);
    
     netd.packets++;
     netd.stats.sent++;
@@ -123,6 +126,7 @@ int net_configure_iface(char* dev, uint32_t ip, uint32_t netmask, uint32_t gatew
 void __callback net_incoming_packet(struct netdev* dev)
 {
     if(dev == NULL) return;
+    dbgprintf("[net] Incoming packet notification from %s\n", dev->name);
 
     struct net_interface* interface = __net_interface(dev);
     if(interface == NULL) return;
@@ -130,17 +134,18 @@ void __callback net_incoming_packet(struct netdev* dev)
     struct sk_buff* skb = skb_new();
     skb->len = dev->read((byte_t*)skb->data, MAX_PACKET_SIZE);
     if(skb->len <= 0) {
-        dbgprintf("Received an empty packet.\n");
+        dbgprintf("[net] Device %s returned empty packet (%d)\n", dev->name, skb->len);
         skb_free(skb);
         return;
     }
     skb->interface = interface;
 
-    dbgprintf("Adding SKB to RX queue from %s\n", interface->name);
+    dbgprintf("[net] Queuing RX skb (%d bytes) from %s\n", skb->len, interface->name);
 
     netd.skb_rx_queue->ops->add(netd.skb_rx_queue, skb);
     netd.packets++;
     netd.stats.recvd++;
+    dbgprintf("[net] RX queue depth is now %d\n", netd.skb_rx_queue->size);
 
     if(netd.instance != NULL && netd.instance->state == BLOCKED){ 
         netd.instance->state = RUNNING;
@@ -240,12 +245,14 @@ error_t net_get_info(struct net_info* info)
 
 static int net_handle_recieve(struct sk_buff* skb)
 {
-    dbgprintf("Parsing new packet\n");
+    dbgprintf("[net] Parsing packet len=%d from %s\n", skb->len, skb->interface ? skb->interface->name : "unknown");
     if(net_ethernet_parse(skb) < 0) return net_drop_packet(skb);
+    dbgprintf("[net] Ethernet type 0x%x\n", skb->hdr.eth->ethertype);
     switch(skb->hdr.eth->ethertype){
         /* Ethernet type is IP */
         case IP:
             if(net_ipv4_parse(skb) < 0) return net_drop_packet(skb);
+            dbgprintf("[net] IPv4 packet proto=%d src=%i dst=%i\n", skb->hdr.ip->proto, ntohl(skb->hdr.ip->saddr), ntohl(skb->hdr.ip->daddr));
             switch (skb->hdr.ip->proto){
             case UDP:
                 if(net_udp_parse(skb) < 0) return net_drop_packet(skb);
@@ -268,7 +275,7 @@ static int net_handle_recieve(struct sk_buff* skb)
         case ARP:
             if(arp_parse(skb) < 0) return net_drop_packet(skb);
             // send arp response.
-            dbgprintf("Recieved ARP packet.\n");
+            dbgprintf("[net] Received ARP packet\n");
             skb_free(skb);
             break;
 
@@ -283,12 +290,14 @@ static int net_handle_recieve_wrapper(void* data)
     struct sk_buff* skb = (struct sk_buff*)data;
     if(skb == NULL) return -1;
 
+    dbgprintf("[net] Worker handling skb len=%d\n", skb->len);
     int ret = net_handle_recieve(skb);
     if(ret < 0){
-        dbgprintf("Failed to handle packet\n");
+        dbgprintf("[net] Failed to handle packet\n");
         return 0;
     }
 
+    dbgprintf("[net] Packet processed successfully\n");
     return 0;
 }
 
@@ -325,11 +334,16 @@ void __kthread_entry networking_main()
     int todos =0;
     while(1){
         
-        todos = netd.skb_tx_queue->size + netd.skb_rx_queue->size + tcp_retry_queue_size();
+        int retry = tcp_retry_queue_size();
+        if(retry < 0) retry = 0;
+        todos = netd.skb_tx_queue->size + netd.skb_rx_queue->size + retry;
+        if(todos > 0){
+            dbgprintf("[netd] loop rx=%d tx=%d retry=%d\n", netd.skb_rx_queue->size, netd.skb_tx_queue->size, retry);
+        }
         /**
          * @brief Query RX an    TX queue for netd.packets.
          */
-        if(SKB_QUEUE_READY(netd.skb_tx_queue)){
+        while(SKB_QUEUE_READY(netd.skb_tx_queue)){
             dbgprintf("Sending new SKB from TX queue\n");
             struct sk_buff* skb = netd.skb_tx_queue->ops->remove(netd.skb_tx_queue);
             assert(skb != NULL);
@@ -338,14 +352,16 @@ void __kthread_entry networking_main()
             skb_free(skb);
         }
 
-        if(SKB_QUEUE_READY(netd.skb_rx_queue)){
+        while(SKB_QUEUE_READY(netd.skb_rx_queue)){
             dbgprintf("Receiving new SKB from RX queue\n");
             struct sk_buff* skb = netd.skb_rx_queue->ops->remove(netd.skb_rx_queue);
             assert(skb != NULL);
 
             /* Offload skb parsing to worker thread. */
-            work_queue_add(&net_handle_recieve_wrapper, (void*)skb, NULL);
-            //net_handle_recieve(skb);
+            if(work_queue_add(&net_handle_recieve_wrapper, (void*)skb, NULL) < 0){
+                /* Worker queue is full, process synchronously to avoid drops. */
+                net_handle_recieve_wrapper((void*)skb);
+            }
         }
 
         tcp_retry_all();

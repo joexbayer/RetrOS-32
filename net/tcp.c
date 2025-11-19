@@ -329,8 +329,8 @@ int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t pus
 {
 	uint8_t retries;
 	uint32_t timeout;
-	int seq = sock->tcp->sequence;
-	int ack = sock->tcp->acknowledgement;
+	uint32_t seq = sock->tcp->sequence;
+	uint32_t ack = sock->tcp->acknowledgement;
 	struct sk_buff* skb;
 
 	dbgprintf("[TCP] Sending segment with size %d, seq: %d (%d after)\n", len, sock->tcp->sequence, sock->tcp->sequence+len);
@@ -367,10 +367,10 @@ int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t pus
 		__tcp_send(sock, &hdr, skb, data, len);
 
 		/* Wait for ACK */
-		timeout = get_time() + 1;
+		timeout = timer_get_tick() + 1000;
 
 		/* check if ack was receiver for timeout seconds. */
-		while((uint32_t)get_time() < timeout){
+		while((uint32_t)timer_get_tick() < timeout){
 			kernel_yield();
 			if(!net_sock_awaiting_ack(sock)) return ERROR_OK;
 		}
@@ -378,6 +378,7 @@ int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t pus
 	} while (retries++ < 3);
 
 	dbgprintf("[TCP] Failed to send segment\n");
+	sock->tcp->sequence = seq;
 	return -1;
 }
 

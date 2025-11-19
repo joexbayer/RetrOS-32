@@ -16,6 +16,7 @@
 #include <assert.h>
 #include <scheduler.h>
 #include <errors.h>
+#include <timer.h>
 
 /**
  * @brief Binds a IP and Port to a socket, mainly used for the server side.
@@ -85,16 +86,14 @@ error_t kernel_recv(struct sock* socket, void *buffer, int length, int flags)
 
 error_t kernel_recv_timeout(struct sock* socket, void *buffer, int length, int flags, int timeout)
 {
-    int time_start = get_time();
-
+    uint32_t timeout_ticks = timer_get_tick() + (timeout + 3) * 1000;
     int read = -1;
     while(read == -1){
-        if(get_time() - time_start > timeout+3)return 0;
-
+        if((uint32_t)timer_get_tick() > timeout_ticks) return 0;
+        kernel_yield();
     }
 
     return read;
-
 }
 
 error_t kernel_connect(struct sock* socket, const struct sockaddr *address, socklen_t address_len)
@@ -118,9 +117,9 @@ error_t kernel_connect(struct sock* socket, const struct sockaddr *address, sock
     dbgprintf(" [%d] Connecting...\n", socket);
     /* block or spin */
 
-    int time_start = get_time();
+    uint32_t start_ticks = timer_get_tick();
     while(socket->tcp->state != TCP_ESTABLISHED){
-        if(get_time() - time_start > 2){
+        if((uint32_t)(timer_get_tick() - start_ticks) > 2000){
             dbgprintf(" [%d] Connection timed out\n", socket);
             return -1;
         }

@@ -141,32 +141,32 @@ void _e1000_rx_init()
 static int next = 0;
 int e1000_receive(char* buffer, uint32_t size)
 {
-	//int tail = E1000_DEVICE_GET(E1000_RDT);
-	if(!(rx_desc_list[next].status & E1000_RXD_STAT_DD)) /* Descriptor Done */
-	{
-		warningf("[e1000 RX] RXD_STAT_DD not set!\n");
-		return -1;
+	uint8_t status = rx_desc_list[next].status;
+	if(!(status & E1000_RXD_STAT_DD)){
+		dbgprintf("[e1000 RX] Descriptor %d not ready (status=0x%x)\n", next, status);
+		return 0;
 	}
 
 	uint32_t length = rx_desc_list[next].length;
-	if(length >= PACKET_SIZE || length > size)
-	{
+	int ret = (int)length;
+	dbgprintf("[e1000 RX] Descriptor %d ready with %d bytes (requested buffer %d)\n", next, length, size);
+	if(length >= PACKET_SIZE || length > size){
 		warningf("[e1000 RX] Dropping packet with length %d\n", length);
-		length = -1;
+		ret = -1;
 		goto drop;
 	}
-
-	//dbgprintf("[e1000 - %d] Received %d bytes %d!\n",timer_get_tick(), length, __cli_cnt);
 
 	memcpy(buffer, rx_buf[next], length);
 
 drop:
 	rx_desc_list[next].status = 0;
 	next = (next + 1) % RX_SIZE;
+	if(ret >= 0){
+		dbgprintf("[e1000 RX] Consumed packet, advancing to descriptor %d\n", next);
+	}
 	E1000_DEVICE_SET(E1000_RDT) = (next + RX_SIZE - 1) % RX_SIZE;
 
-	//dbgprintf("[e1000] received %d bytes! (tail: %d) (\n", length, next);
-	return length;
+	return ret;
 }
 
 /**
@@ -188,6 +188,7 @@ int e1000_transmit(char* buffer, uint32_t size)
 	uint16_t tail = E1000_DEVICE_GET(E1000_TDT);
 
 	struct e1000_tx_desc* txdesc = &tx_desc_list[tail];
+	dbgprintf("[e1000 TX] Attempting to send %d bytes using descriptor %d (status=0x%x)\n", size, tail, txdesc->status);
 	if(!(txdesc->status & E1000_TXD_STAT_DD)){
 		warningf("[e1000] DD status is not done!\n");
 		return -1;
@@ -199,6 +200,7 @@ int e1000_transmit(char* buffer, uint32_t size)
 	txdesc->cmd |= E1000_TXD_CMD_EOP;
 
 	E1000_DEVICE_SET(E1000_TDT) = (tail+1) % TX_SIZE;
+	dbgprintf("[e1000 TX] Queued %d bytes, new tail %d\n", size, E1000_DEVICE_GET(E1000_TDT));
 
 	//dbgprintf("[e1000 - %d] Sending %d bytes! (tail: %d) %d\n", timer_get_tick(), size, (tail + 1) % TX_SIZE, __cli_cnt);
 	return size;
@@ -207,8 +209,14 @@ int e1000_transmit(char* buffer, uint32_t size)
 void __int_handler e1000_callback()
 {
 	uint32_t icr = E1000_DEVICE_GET(E1000_ICR);
+	dbgprintf("[e1000 IRQ] Interrupt cause 0x%x\n", icr);
 	if (icr & E1000_IMS_RXDW) {
-		net_incoming_packet(&e1000_netdev);
+		int handled = 0;
+		while(rx_desc_list[next].status & E1000_RXD_STAT_DD){
+			net_incoming_packet(&e1000_netdev);
+			handled++;
+		}
+		dbgprintf("[e1000 IRQ] Handled %d RX descriptors in interrupt\n", handled);
 	}
 
 	interrupts++;
@@ -273,5 +281,5 @@ void e1000_attach(struct pci_device* dev)
 	/* Attach as current Netdevice. */
 	//netdev_attach_driver(dev, &e1000_receive, &e1000_transmit, "Intel E1000", (uint8_t*)&mac);
 
-	dbgprintf("[E1000] Network card Intel E1000 found and attached IRQ = %d!.\n", dev->irq);
+	dbgprintf("[E1000] Network card Intel E1000 found and attached IRQ = %d! TX size=%d RX size=%d\n", dev->irq, TX_SIZE, RX_SIZE);
 }
