@@ -48,6 +48,9 @@ struct sock {
 
     /* if tcp socket */
     struct tcp_connection* tcp;
+    
+    /* Track pending connections for listening sockets (TCP_LISTEN state) */
+    struct tcp_pending_list* pending_connections;
 
     /* Should be a queue? Can multiple pcbs read from same socket? */
     volatile struct pcb* waiting;

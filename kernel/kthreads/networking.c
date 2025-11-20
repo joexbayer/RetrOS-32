@@ -365,6 +365,13 @@ void __kthread_entry networking_main()
         }
 
         tcp_retry_all();
+        
+        /* Clean up stale pending connections every iteration (timeout after 3000 ticks ~3 seconds) */
+        static int cleanup_counter = 0;
+        if(++cleanup_counter >= 100){  /* Run cleanup every ~100 iterations */
+            tcp_cleanup_all_pending_connections(3000);
+            cleanup_counter = 0;
+        }
 
         if(todos == 0){
             //$process->current->state = BLOCKED;

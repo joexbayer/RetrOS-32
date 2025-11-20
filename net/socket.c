@@ -170,6 +170,12 @@ static void sock_destroy(struct sock* socket)
     dbgprintf("[SOCK] Destroying socket %d\n", sock_id);
 
     tcp_free_connection(socket);
+    
+    /* Free pending connections list if it exists */
+    if(socket->pending_connections != NULL){
+        tcp_pending_list_destroy(socket->pending_connections);
+        socket->pending_connections = NULL;
+    }
 
     while(SKB_QUEUE_READY(socket->skb_queue)){
         struct sk_buff* skb = socket->skb_queue->ops->remove(socket->skb_queue);
@@ -316,6 +322,7 @@ struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip)
             socket_table[i]->tcp->state == TCP_SYN_SENT ||
             socket_table[i]->tcp->state == TCP_WAIT_ACK ||
             socket_table[i]->tcp->state == TCP_CLOSE_WAIT ||
+            socket_table[i]->tcp->state == TCP_LAST_ACK ||
             socket_table[i]->tcp->state == TCP_FIN_WAIT)) {
                 //dbgprintf("[TCP] Found established socket %d\n", i);
                 return socket_table[i];

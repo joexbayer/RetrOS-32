@@ -27,6 +27,28 @@ typedef enum {
 	
 } tcp_state_t;
 
+/**
+ * @brief Pending TCP connection structure
+ * Represents a half-open connection that has received SYN but not yet the final ACK.
+ * This allows the listening socket to handle multiple simultaneous connection requests.
+ */
+#define TCP_MAX_PENDING_CONNECTIONS 32
+
+struct tcp_pending_connection {
+	uint32_t remote_ip;          /* Client IP address (network byte order) */
+	uint16_t remote_port;        /* Client port (network byte order) */
+	uint32_t initial_seq;        /* Client's initial sequence number */
+	uint32_t our_seq;            /* Our sequence number sent in SYN-ACK */
+	uint32_t timestamp;          /* When this entry was created (for timeout) */
+	int valid;                   /* 1 if this slot is in use, 0 if free */
+};
+
+struct tcp_pending_list {
+	struct tcp_pending_connection connections[TCP_MAX_PENDING_CONNECTIONS];
+	mutex_t lock;
+	int count;                   /* Number of active pending connections */
+};
+
 struct tcp_connection {
 	volatile tcp_state_t state;
 
@@ -176,6 +198,17 @@ int tcp_close_connection(struct sock* sock);
 
 int tcp_retry_all();
 int tcp_retry_queue_size();
+
+/* Pending connection management */
+struct tcp_pending_list* tcp_pending_list_create();
+void tcp_pending_list_destroy(struct tcp_pending_list* list);
+int tcp_pending_add(struct tcp_pending_list* list, uint32_t remote_ip, uint16_t remote_port, 
+                    uint32_t initial_seq, uint32_t our_seq);
+struct tcp_pending_connection* tcp_pending_find(struct tcp_pending_list* list, 
+                                                 uint32_t remote_ip, uint16_t remote_port);
+int tcp_pending_remove(struct tcp_pending_list* list, uint32_t remote_ip, uint16_t remote_port);
+void tcp_pending_cleanup_stale(struct tcp_pending_list* list, uint32_t current_time, uint32_t timeout);
+void tcp_cleanup_all_pending_connections(uint32_t timeout_ticks);
 
 #endif
 
