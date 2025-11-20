@@ -64,11 +64,11 @@ struct sk_buff* skb_new();
 void skb_free(struct sk_buff* skb);
 
 #define ALLOCATE_SKB(skb)               \
-    (skb)->data = kalloc(0x600);         \
-    memset((skb)->data, 0, 0x600);       \
+    (skb)->data = kalloc(0x800);         \
+    memset((skb)->data, 0, 0x800);       \
     (skb)->head = skb->data;            \
     (skb)->tail = skb->head;            \
-    (skb)->end = skb->head+0x600;       \
+    (skb)->end = skb->head+0x800;       \
     (skb)->len = 0;
 
 #define FREE_SKB(skb)           \

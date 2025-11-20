@@ -64,20 +64,27 @@ int tcp_retry_all(){
 		return -1;
 	}
 
-	while(retry_queue->size > 0){
+	/* Process at most the current queue size to avoid infinite loops
+	 * if packets are re-added to the queue during processing */
+	int initial_size = retry_queue->size;
+	int processed = 0;
+	
+	while(processed < initial_size && retry_queue->size > 0){
 		struct sk_buff* skb = retry_queue->ops->remove(retry_queue);
 		if(skb == NULL){
 			dbgprintf("[TCP] Failed to remove from retry queue!\n");
 			return -1;
 		}
 
-		dbgprintf("[TCP] Retrying packet %d\n", skb->len);
+		dbgprintf("[TCP] Retrying packet %d (attempt %d/3)\n", skb->len, skb->retries);
 		int ret = tcp_state_machine(skb);
 		if(ret < 0){
 			skb_free(skb);
 		}
+		processed++;
 	}
 
+	return ERROR_OK;
 }
 
 int tcb_init()
@@ -384,10 +391,16 @@ int tcp_send_segment(struct sock* sock, uint8_t* data, uint32_t len, uint8_t pus
 
 int tcp_accept_connection(struct sock* sock, struct sock* new)
 {
-    if(sock->tcp == NULL || sock->tcp->state != TCP_LISTEN){
-		dbgprintf("[TCP] Socket %d is not listening\n", sock);
+    if(sock->tcp == NULL){
+		dbgprintf("[TCP] Socket %d has no TCP state\n", sock);
         return -1;
      }
+
+	/* Allow accept even if socket is in SYN_RCVD (processing new connection) */
+	if(sock->tcp->state != TCP_LISTEN && sock->tcp->state != TCP_SYN_RCVD){
+		dbgprintf("[TCP] Socket %d is not listening (state: %s)\n", sock, tcp_state_to_str(sock->tcp->state));
+		return -1;
+	}
 
     while(sock->backlog.count == 0){
 		dbgprintf("[TCP] Socket %d is listening but backlog is empty\n", sock);
@@ -406,11 +419,14 @@ int tcp_accept_connection(struct sock* sock, struct sock* new)
 	net_prepare_tcp_sock(new, sock->bound_port, &sock->recv_addr);
 
 	new->tcp->state = TCP_ESTABLISHED;
-	new->tcp->acknowledgement = htonl(hdr->seq);
+	new->tcp->acknowledgement = htonl(hdr->seq); /* Client's next seq (already accounts for SYN) */
 	new->tcp->sequence = hdr->ack_seq;
 	sock->accept_sock = NULL;
 
 	memset(&sock->recv_addr, 0, sizeof(struct sockaddr_in));
+	
+	/* Listening socket should always remain in LISTEN state */
+	sock->tcp->state = TCP_LISTEN;
 	
 	skb_free(skb);
 
@@ -534,11 +550,15 @@ int tcp_recv_syn(struct sock* sock, struct tcp_header* tcp)
 		.ack = 1
 	};
 	
-	if (sock->tcp->state != TCP_LISTEN){
-		dbgprintf("[TCP] Socket %d is not listening\n", sock);
+	if (sock->tcp->state != TCP_LISTEN && sock->tcp->state != TCP_SYN_RCVD){
+		dbgprintf("[TCP] Socket %d is not listening (state: %s)\n", sock, tcp_state_to_str(sock->tcp->state));
 		return -1;
 	}
-	sock->tcp->state = TCP_SYN_RCVD;
+	
+	/* Don't change listening socket state - it should always remain in LISTEN
+	 * to accept multiple simultaneous connections. The connection state is
+	 * tracked via the backlog queue instead. */
+	//sock->tcp->state = TCP_SYN_RCVD;
 	
 	skb = skb_new();
 	ERR_ON_NULL(skb);
@@ -686,14 +706,21 @@ static int tcp_state_machine(struct sk_buff* skb){
 		}
 
 		/**
-		 * @brief If a new connection just was acked, the receiving socket
-		 * might not be ready yet. Which would lead the packet here.
-		 * Istead of dropping the packet, we add it to the retry queue.
-		 * Especially if it has the PSH flag set.
+		 * @brief Data packets can arrive before the application accepts the
+		 * connection. Since the new socket does not yet exist, stash the SKB
+		 * in the retry queue so it can be replayed once the accept completes.
+		 * Send an ACK immediately to prevent peer from retransmitting.
+		 * 
+		 * Limit retries to prevent stack overflow from retry queue recursion.
 		 */
-		if(hdr->ack == 1 && hdr->psh == 1 && skb->retries < 3){
+		if(hdr->ack == 1 && skb->data_len > 0 && skb->retries < 3){
+			/* Send ACK on first retry to stop peer retransmission */
+			if(skb->retries == 0){
+				tcp_send_ack(sk, hdr, skb->data_len);
+			}
+			
 			skb->retries++;
-			dbgprintf("[TCP] Adding to retry queue\n");
+			dbgprintf("[TCP] Adding to retry queue (retry %d/3)\n", skb->retries);
 			if(retry_queue->ops->add(retry_queue, skb) < 0){
 				dbgprintf("[TCP] Failed to add to retry queue\n");
 				result = -1;
@@ -701,6 +728,33 @@ static int tcp_state_machine(struct sk_buff* skb){
 			}
 			result = ERROR_OK;
 			goto out;
+		}
+		
+		/* Drop packet if retry limit exceeded */
+		if(hdr->ack == 1 && skb->data_len > 0 && skb->retries >= 3){
+			dbgprintf("[TCP] Dropping packet after %d retries\n", skb->retries);
+			result = -1;
+			goto out;
+		}
+
+		/**
+		 * @brief Handle final ACK of 3-way handshake.
+		 * This is the ACK that completes the handshake after we sent SYN-ACK.
+		 * Add it to the backlog so accept() can process it.
+		 */
+		if(hdr->syn == 0 && hdr->ack == 1 && skb->data_len == 0){
+			if(sk->backlog.count < sk->backlog.size){
+				sk->backlog.queue->ops->add(sk->backlog.queue, skb);
+				sk->backlog.count++;
+				dbgprintf("[TCP] Added ACK to backlog %d\n", sk->backlog.count);
+				TCP_UNBLOCK(sk);
+				result = ERROR_OK;
+				goto out; /* Don't free SKB, it's in backlog */
+			} else{
+				dbgprintf("[TCP] Backlog is full, dropping ACK\n");
+				result = -1;
+				goto out;
+			}
 		}
 
 		

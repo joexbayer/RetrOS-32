@@ -227,7 +227,11 @@ error_t kernel_send(struct sock* socket, void *message, int length, int flags)
         return -ERROR_MSS_SIZE;
     }
 
-    if(socket == NULL || (socket->tcp == NULL && socket->tcp->state == TCP_CLOSED)){
+    if(socket == NULL){
+        return -ERROR_INVALID_SOCKET;
+    }
+
+    if(socket->tcp == NULL || socket->tcp->state == TCP_CLOSED){
         return -ERROR_INVALID_SOCKET;
     }
 

@@ -37,7 +37,7 @@
 #define dbgprintf(...)
 #endif // !#define KDEBUG_NET_DAEMON
 
-#define MAX_PACKET_SIZE 0x600
+#define MAX_PACKET_SIZE 0x800  /* 2048 bytes - increased to handle larger packets */
 
 struct networkmanager netd = {
     .state = NETD_UNINITIALIZED,

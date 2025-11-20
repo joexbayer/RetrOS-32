@@ -303,40 +303,39 @@ struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip)
     //dbgprintf("[TCP] Looking for socket destintation %d: source %d\n", htons(d_port), htons(s_port));
     struct sock* _sk = NULL; /* save listen socket incase no established connection is found. */
 
+    /* First pass: Look for exact match (established connection with matching 4-tuple) */
     for (int i = 0; i < NET_NUMBER_OF_SOCKETS; i++){
         if(socket_table[i] == NULL || socket_table[i]->tcp == NULL)
             continue;
 
-    //    dbgprintf("[TCP] %s (%i:%d %i:%d) %s\n",
-    //         socket_table[i]->owner->name,
-    //         ntohl(socket_table[i]->recv_addr.sin_addr.s_addr), htons(socket_table[i]->recv_addr.sin_port),
-    //         htons(socket_table[i]->bound_ip), htons(socket_table[i]->bound_port),
-    //         tcp_state_to_str(socket_table[i]->tcp->state)); 
+        /* Match on destination port, source port, and source IP for established connections */
+        if(socket_table[i]->bound_port == d_port && 
+           socket_table[i]->recv_addr.sin_port == s_port &&
+           ntohl(socket_table[i]->recv_addr.sin_addr.s_addr) == ip &&
+           (socket_table[i]->tcp->state == TCP_ESTABLISHED || 
+            socket_table[i]->tcp->state == TCP_SYN_SENT ||
+            socket_table[i]->tcp->state == TCP_WAIT_ACK ||
+            socket_table[i]->tcp->state == TCP_CLOSE_WAIT ||
+            socket_table[i]->tcp->state == TCP_FIN_WAIT)) {
+                //dbgprintf("[TCP] Found established socket %d\n", i);
+                return socket_table[i];
+        }
     }
     
+    /* Second pass: Look for listening socket if no established connection found */
     for (int i = 0; i < NET_NUMBER_OF_SOCKETS; i++){
         if(socket_table[i] == NULL || socket_table[i]->tcp == NULL)
             continue;
-
         
-        if(socket_table[i]->bound_port == d_port && (socket_table[i]->tcp->state == TCP_LISTEN || socket_table[i]->tcp->state == TCP_SYN_RCVD)){
+        if(socket_table[i]->bound_port == d_port && 
+           (socket_table[i]->tcp->state == TCP_LISTEN || socket_table[i]->tcp->state == TCP_SYN_RCVD)){
             _sk = socket_table[i];
+            break; /* Found listening socket, use it */
         }
-
-        if(socket_table[i]->bound_port == d_port && socket_table[i]->recv_addr.sin_port == s_port
-            && socket_table[i]->tcp->state != TCP_LISTEN
-            && socket_table[i]->tcp->state != TCP_SYN_RCVD
-            && socket_table[i]->tcp->state != TCP_PREPARE
-            && ntohl(socket_table[i]->recv_addr.sin_addr.s_addr) == ip
-            //&& (socket_table[i]->tcp->state == TCP_ESTABLISHED || socket_table[i]->tcp->state == TCP_SYN_SENT)
-            ){
-                //dbgprintf("[TCP] Found socket %d\n", i);
-                return socket_table[i];
-            }
     }
 
     if(_sk != NULL){
-        //dbgprintf("[TCP] Found socket %d\n", _sk->socket);
+        //dbgprintf("[TCP] Found listening socket %d\n", _sk->socket);
     }
     return _sk;
 }

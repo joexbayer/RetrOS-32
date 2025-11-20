@@ -17,6 +17,7 @@
 #include <serial.h>
 #include <kutils.h>
 #include <timer.h>
+#include <sync.h>
 
 #define PACKET_SIZE   2048
 #define TX_SIZE 16
@@ -38,6 +39,7 @@ static struct e1000_rx_desc rx_desc_list[RX_SIZE];
 static char* rx_buf[RX_SIZE];
 
 static int interrupts = 0;
+static spinlock_t rx_lock = SPINLOCK_UNLOCKED;
 
 struct netdev e1000_netdev;
 
@@ -211,12 +213,32 @@ void __int_handler e1000_callback()
 	uint32_t icr = E1000_DEVICE_GET(E1000_ICR);
 	dbgprintf("[e1000 IRQ] Interrupt cause 0x%x\n", icr);
 	if (icr & E1000_IMS_RXDW) {
+		/* Try to acquire lock, if already locked, another IRQ is processing packets */
+		if(rx_lock == SPINLOCK_LOCKED){
+			dbgprintf("[e1000 IRQ] RX already being processed, skipping\n");
+			return;
+		}
+		spin_lock(&rx_lock);
+		
 		int handled = 0;
-		while(rx_desc_list[next].status & E1000_RXD_STAT_DD){
+		/* Process all ready RX descriptors - limit iterations to prevent runaway */
+		int max_process = RX_SIZE;
+		while(max_process-- > 0 && (rx_desc_list[next].status & E1000_RXD_STAT_DD)){
+			/* Save the current descriptor index before calling net_incoming_packet,
+			 * since e1000_receive() will modify 'next' */
+			int current_next = next;
 			net_incoming_packet(&e1000_netdev);
 			handled++;
+			
+			/* Safety check: if next wasn't advanced, break to prevent infinite loop */
+			if(next == current_next) {
+				dbgprintf("[e1000 IRQ] WARNING: RX descriptor not consumed, breaking loop\n");
+				break;
+			}
 		}
 		dbgprintf("[e1000 IRQ] Handled %d RX descriptors in interrupt\n", handled);
+		
+		spin_unlock(&rx_lock);
 	}
 
 	interrupts++;

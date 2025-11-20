@@ -14,14 +14,15 @@ int main()
     socklen_t addr_len = sizeof(client_addr);
 
     while(1){
+        addr_len = sizeof(client_addr);
         int client = server.accept((struct sockaddr*)&client_addr, &addr_len);
         if (client < 0) {
             continue;
         }
 
         char buffer[2048] = {0};
-        int ret = recv(client, buffer, 2048, 0);
-        if (ret < 0) {
+        int ret = recv(client, buffer, sizeof(buffer) - 1, 0);
+        if (ret <= 0) {
             close(client);
             continue;
         }
