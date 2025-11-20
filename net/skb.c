@@ -39,7 +39,7 @@ struct skb_queue* skb_new_queue()
 	queue->_head = NULL;
 	queue->_tail = NULL;
 	queue->size = 0;
-	mutex_init(&queue->lock);
+	queue->lock = SPINLOCK_UNLOCKED;
 	return queue;
 }
 
@@ -54,19 +54,19 @@ struct skb_queue* skb_new_queue()
  */
 static int __skb_queue_add(struct skb_queue* skb_queue, struct sk_buff* skb)
 {
-	LOCK(skb_queue, {
-		if(skb_queue->_head == NULL || skb_queue->_tail == NULL){
-			skb_queue->_head = skb;
-			skb_queue->_tail = skb;
-			break;
-		}	
-		
+	spin_lock(&skb_queue->lock);
+
+	if(skb_queue->_head == NULL){
+		skb_queue->_head = skb;
+		skb_queue->_tail = skb;
+	} else {
 		skb_queue->_tail->next = skb;
 		skb_queue->_tail = skb;
-		skb->next = NULL;
-	});
-
+	}
+	skb->next = NULL;
 	skb_queue->size++;
+
+	spin_unlock(&skb_queue->lock);
 	return 0;
 }
 
@@ -83,13 +83,15 @@ static struct sk_buff* __skb_queue_remove(struct skb_queue* skb_queue)
 	if(skb_queue->_head == NULL) return NULL;
 	struct sk_buff* next = NULL;
 
-	LOCK(skb_queue, {
-		next = skb_queue->_head;
-		skb_queue->_head = next->next;
-		next->next = NULL;
-
-		skb_queue->size--;
-	});
+	spin_lock(&skb_queue->lock);
+	next = skb_queue->_head;
+	skb_queue->_head = next->next;
+	if(skb_queue->_head == NULL){
+		skb_queue->_tail = NULL;
+	}
+	next->next = NULL;
+	skb_queue->size--;
+	spin_unlock(&skb_queue->lock);
 	
 	return next;
 }

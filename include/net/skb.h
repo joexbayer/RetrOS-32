@@ -46,7 +46,7 @@ struct skb_queue_operations {
 	struct sk_buff* (*remove)(struct skb_queue* skb_queue);
 };
 struct skb_queue {
-	mutex_t lock;
+	spinlock_t lock;
 	struct sk_buff* _head;
 	struct sk_buff* _tail;
 
@@ -84,4 +84,3 @@ void skb_free(struct sk_buff* skb);
 #include <net/tcp.h>
 
 #endif // !SKB_H
-

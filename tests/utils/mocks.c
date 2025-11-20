@@ -102,17 +102,18 @@ void spin_unlock(spinlock_t* lock) {
 
 void mutex_init(mutex_t* l)
 {
-
+    l->state = UNLOCKED;
+    l->magic = MUTEX_MAGIC;
 }
 
 void acquire(mutex_t* l)
 {
-
+    l->state = LOCKED;
 }
 
 void release(mutex_t* l)
 {
-
+    l->state = UNLOCKED;
 }
 
 int disk_size()

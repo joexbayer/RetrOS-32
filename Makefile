@@ -198,6 +198,8 @@ qemu_kernel: grub_fix grub_fix multiboot_kernel
 docker-rebuild:
 	docker-compose build --no-cache
 
+reset: clean img
+
 docker:
 	docker-compose up
 

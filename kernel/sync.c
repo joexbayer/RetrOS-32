@@ -38,9 +38,19 @@ void mutex_init(mutex_t* l)
 {
     l->blocked = pcb_new_queue();
     l->state = UNLOCKED;
+    l->magic = MUTEX_MAGIC;
     dbgprintf("Lock 0x%x initiated by %s\n", l, $process->current->name);
 }
 
+static inline void mutex_validate(mutex_t* l)
+{
+    if(l->magic != MUTEX_MAGIC || (l->state != LOCKED && l->state != UNLOCKED)){
+        warningf("Mutex 0x%x corrupted (magic=0x%x state=%d). Panicking.\n", l, l->magic, l->state);
+        uint32_t *ebp = (uint32_t*)__builtin_frame_address(0);
+        __backtrace_from((uintptr_t*)ebp);
+        kernel_panic("Mutex corruption detected");
+    }
+}
 
 /**
  * @brief Locks the given l and blocks in case its already locked.
@@ -52,6 +62,8 @@ void acquire(mutex_t* l)
     dbgprintf("Locking 0x%x\n", l);
 
     struct pcb* current;
+
+    mutex_validate(l);
 
     ENTER_CRITICAL();
     switch (l->state){
@@ -89,6 +101,8 @@ void release(mutex_t* l)
     if(l->state == UNLOCKED){
         warningf("Lock 0x%x is already unlocked\n", l);
     }
+
+    mutex_validate(l);
 
     ENTER_CRITICAL();
     struct pcb* blocked = l->blocked->ops->pop(l->blocked);
