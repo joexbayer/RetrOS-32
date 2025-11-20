@@ -20,6 +20,28 @@
 
 #pragma GCC diagnostic ignored "-Wcast-function-type"
 
+static error_t copy_in_sockaddr(struct sockaddr_in* dst, const struct sockaddr *user_addr)
+{
+    if(user_addr == NULL){
+        return -ERROR_NULL_POINTER;
+    }
+
+    RETURN_ON_ERR(user_memory_validate(user_addr, sizeof(struct sockaddr_in), 0));
+    memcpy(dst, user_addr, sizeof(struct sockaddr_in));
+    return ERROR_OK;
+}
+
+static error_t copy_out_sockaddr(struct sockaddr *user_addr, const struct sockaddr_in* src)
+{
+    if(user_addr == NULL){
+        return -ERROR_NULL_POINTER;
+    }
+
+    RETURN_ON_ERR(user_memory_validate(user_addr, sizeof(struct sockaddr_in), 1));
+    memcpy(user_addr, src, sizeof(struct sockaddr_in));
+    return ERROR_OK;
+}
+
 static error_t validate_net_buffer(struct net_buffer* buffer, int write)
 {
     if(buffer == NULL){
@@ -42,12 +64,10 @@ error_t sys_kernel_bind(socket_t socket, const struct sockaddr *address, socklen
     if(sock == NULL)
         return -ERROR_INVALID_SOCKET;
 
-    if(address == NULL)
-        return -ERROR_NULL_POINTER;
+    struct sockaddr_in kaddr;
+    RETURN_ON_ERR(copy_in_sockaddr(&kaddr, address));
 
-    RETURN_ON_ERR(user_memory_validate(address, sizeof(struct sockaddr_in), 0));
-
-    return kernel_bind(sock, address, address_len);
+    return kernel_bind(sock, (const struct sockaddr*)&kaddr, address_len);
 }
 EXPORT_SYSCALL(SYSCALL_NET_SOCK_BIND, sys_kernel_bind);
 
@@ -57,17 +77,32 @@ error_t sys_kernel_accept(socket_t socket, struct sockaddr *address, socklen_t *
     if(sock == NULL)
         return -ERROR_INVALID_SOCKET;
 
+    struct sockaddr_in kaddr;
+    struct sockaddr* kaddr_ptr = NULL;
+    socklen_t klen = sizeof(struct sockaddr_in);
+    socklen_t* klen_ptr = NULL;
+
     if(address != NULL){
-        RETURN_ON_ERR(user_memory_validate(address, sizeof(struct sockaddr_in), 1));
+        kaddr_ptr = (struct sockaddr*)&kaddr;
     }
 
     if(address_len != NULL){
         RETURN_ON_ERR(user_memory_validate(address_len, sizeof(socklen_t), 1));
+        klen = *address_len;
+        klen_ptr = &klen;
     }
 
-    struct sock* new = kernel_accept(sock, address, address_len);
+    struct sock* new = kernel_accept(sock, kaddr_ptr, klen_ptr);
     if(new == NULL)
         return -ERROR_INVALID_SOCKET;
+
+    if(address != NULL){
+        RETURN_ON_ERR(copy_out_sockaddr(address, &kaddr));
+    }
+
+    if(address_len != NULL){
+        *address_len = klen;
+    }
 
     return new->socket;
 }
@@ -79,12 +114,10 @@ error_t sys_kernel_connect(socket_t socket, const struct sockaddr *address, sock
     if(sock == NULL)
         return -ERROR_INVALID_SOCKET;
 
-    if(address == NULL)
-        return -ERROR_NULL_POINTER;
+    struct sockaddr_in kaddr;
+    RETURN_ON_ERR(copy_in_sockaddr(&kaddr, address));
 
-    RETURN_ON_ERR(user_memory_validate(address, sizeof(struct sockaddr_in), 0));
-
-    return kernel_connect(sock, address, address_len);
+    return kernel_connect(sock, (const struct sockaddr*)&kaddr, address_len);
 }
 EXPORT_SYSCALL(SYSCALL_NET_SOCK_CONNECT, sys_kernel_connect);
 
@@ -162,12 +195,10 @@ error_t sys_kernel_sendto(socket_t socket, struct net_buffer *net_buffer, const 
 
     RETURN_ON_ERR(validate_net_buffer(net_buffer, 0));
 
-    if(dest_addr == NULL)
-        return -ERROR_NULL_POINTER;
+    struct sockaddr_in kaddr;
+    RETURN_ON_ERR(copy_in_sockaddr(&kaddr, dest_addr));
 
-    RETURN_ON_ERR(user_memory_validate(dest_addr, sizeof(struct sockaddr_in), 0));
-
-    return kernel_sendto(sock, net_buffer->buffer, net_buffer->length, net_buffer->flags, dest_addr, 0);
+    return kernel_sendto(sock, net_buffer->buffer, net_buffer->length, net_buffer->flags, (const struct sockaddr*)&kaddr, dest_len);
 }
 EXPORT_SYSCALL(SYSCALL_NET_SOCK_SENDTO, sys_kernel_sendto);
 

@@ -40,6 +40,9 @@ mem_test: bin mem_test.c
 pcb_test: bin pcb_test.c
 	@$(CC) pcb_test.c ../bin/bitmap.o ../bin/pcb_queue.o  -D__RetrOS32MOCK $(MOCK) -I ../include/ -I ./include/  -O2 -m32 -Wall --no-builtin -o ./bin/pcb_test.o
 
+net_test: bin net_test.c
+	@$(CC) net_test.c ../bin/rbuffer.o  -D__RetrOS32MOCK $(MOCK) -I ../include/ -I ./include/  -O2 -m32 -Wall --no-builtin -D__KERNEL -o ./bin/net_test.o
+
 fat16:
 	make -C ../ compile && make fat16_test && ./bin/fat16_test.o
 
@@ -51,6 +54,7 @@ run:
 	./bin/mem_test.o
 	./bin/fat16_test.o
 	./bin/pcb_test.o
+	./bin/net_test.o
 
 clean:
 	rm -f ./bin/*
