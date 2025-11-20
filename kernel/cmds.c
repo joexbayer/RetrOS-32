@@ -536,6 +536,7 @@ static int __kthread_entry __tcp_reader(int argc, char **argv)
         $process->current->term->ops->commit($process->current->term);
     }
 
+    sock_deref(socket);
     return 0;
 }
 

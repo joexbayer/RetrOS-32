@@ -24,6 +24,7 @@ struct sock {
     int domain;
 
     mutex_t lock;
+    volatile int refcount;
 
     int rx;
     int tx;
@@ -77,6 +78,8 @@ error_t net_sock_data_ready(struct sock* sk, unsigned int length);
 error_t net_sock_add_data(struct sock* sock, struct sk_buff* skb);
 
 struct sock* sock_get(socket_t id);
+void sock_ref(struct sock* sock);
+void sock_deref(struct sock* sock);
 
 error_t net_sock_read(struct sock* sock, uint8_t* buffer, unsigned int length);
 

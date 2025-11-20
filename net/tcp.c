@@ -651,6 +651,9 @@ static int tcp_state_machine(struct sk_buff* skb){
 		return -1;
 	}
 
+	sock_ref(sk);
+	int result = -1;
+
 	dbgprintf("[TCP - %d] %s -> TCP packet: %d syn, %d ack, %d fin %d push %d rst (src port: %d, dest port: %d) %d bytes\n", 
 		timer_get_tick(), tcp_state_to_str(sk->tcp->state), hdr->syn, hdr->ack, hdr->fin, hdr->psh, hdr->rst, htons(hdr->source), htons(hdr->dest), skb->data_len);
 
@@ -661,7 +664,8 @@ static int tcp_state_machine(struct sk_buff* skb){
 		if(hdr->syn == 1 && hdr->ack == 0){
 			if(sk->backlog.count == sk->backlog.size){
 				dbgprintf("[TCP] Backlog is full, dropping packet\n");
-				return -1;
+				result = -1;
+				goto out;
 			}
 
 			/**
@@ -692,9 +696,11 @@ static int tcp_state_machine(struct sk_buff* skb){
 			dbgprintf("[TCP] Adding to retry queue\n");
 			if(retry_queue->ops->add(retry_queue, skb) < 0){
 				dbgprintf("[TCP] Failed to add to retry queue\n");
-				return -1;
+				result = -1;
+				goto out;
 			}
-			return ERROR_OK;
+			result = ERROR_OK;
+			goto out;
 		}
 
 		
@@ -713,7 +719,8 @@ static int tcp_state_machine(struct sk_buff* skb){
 				sk->waiting = NULL;
 			}
 			skb_free(skb);
-			return ERROR_OK;
+			result = ERROR_OK;
+			goto out;
 		}
 
 		if(hdr->syn == 0 && hdr->ack == 1){
@@ -726,14 +733,16 @@ static int tcp_state_machine(struct sk_buff* skb){
 				dbgprintf("[TCP] Added to backlog %d\n", sk->backlog.count);
 			} else{
 				dbgprintf("[TCP] Backlog is full, dropping packet\n");
-				return -1; /* Packet dropped by networking handler */
+				result = -1;
+				goto out;
 			}
 
 			sk->tcp->state = TCP_LISTEN;
 			TCP_UNBLOCK(sk);
 
 			/* Note: We dont free SKB because its added to the backlog */
-			return ERROR_OK;
+			result = ERROR_OK;
+			goto out;
 		}
 		break;
 	
@@ -744,7 +753,8 @@ static int tcp_state_machine(struct sk_buff* skb){
 
 			dbgprintf("Socket %d set to established\n", sk);
 			skb_free(skb);
-			return ERROR_OK;
+			result = ERROR_OK;
+			goto out;
 		}
 		break;
 	case TCP_WAIT_ACK:
@@ -758,7 +768,8 @@ static int tcp_state_machine(struct sk_buff* skb){
 				sk->waiting = NULL;
 			}
 			skb_free(skb);
-			return ERROR_OK;
+			result = ERROR_OK;
+			goto out;
 		}
 
 		if(hdr->syn == 0 && hdr->ack == 1){
@@ -767,12 +778,14 @@ static int tcp_state_machine(struct sk_buff* skb){
 			if(sk->tcp->sequence > htonl(hdr->ack_seq)){
 				dbgprintf("[TCP] Received ack for already acked packet %d - %d\n", htonl(hdr->ack_seq), sk->tcp->acknowledgement);
 				skb_free(skb);
-				return ERROR_OK;
+				result = ERROR_OK;
+				goto out;
 			}
 
 			tcp_recv_ack(sk, hdr);
 			skb_free(skb);
-			return ERROR_OK;
+			result = ERROR_OK;
+			goto out;
 		}
 		break;
 	case TCP_ESTABLISHED:
@@ -785,7 +798,8 @@ static int tcp_state_machine(struct sk_buff* skb){
 				sk->waiting = NULL;
 			}
 			skb_free(skb);
-			return ERROR_OK;
+			result = ERROR_OK;
+			goto out;
 		}
 
 		if(hdr->syn == 0 && hdr->ack == 1 && hdr->fin == 0){
@@ -802,7 +816,8 @@ static int tcp_state_machine(struct sk_buff* skb){
 			 */
 			if (sk->tcp->acknowledgement != htonl(hdr->seq)) {
 				dbgprintf("[TCP] Out-of-order packet received. Expected seq: %d, received seq: %d\n",sk->tcp->acknowledgement, htonl(hdr->seq));
-				return -1;
+				result = -1;
+				goto out;
 			}
 
 			tcp_send_ack(sk, hdr, skb->data_len);
@@ -813,7 +828,8 @@ static int tcp_state_machine(struct sk_buff* skb){
 				skb_free(skb);
 			}
 
-			return ERROR_OK;
+			result = ERROR_OK;
+			goto out;
 		}
 
 		if(hdr->fin == 1 && hdr->ack == 1){
@@ -828,7 +844,8 @@ static int tcp_state_machine(struct sk_buff* skb){
 			tcp_send_fin(sk);
 			sk->tcp->state = TCP_CLOSE_WAIT2;
 			skb_free(skb);
-			return ERROR_OK;
+			result = ERROR_OK;
+			goto out;
 		}
 		break;
 	case TCP_FIN_WAIT:
@@ -860,5 +877,7 @@ static int tcp_state_machine(struct sk_buff* skb){
 		break;
 	}
 	
-	return -1;
+out:
+	sock_deref(sk);
+	return result;
 }

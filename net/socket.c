@@ -149,7 +149,47 @@ struct sock* sock_get(socket_t id)
     if(id > NET_NUMBER_OF_SOCKETS)
         return NULL;
 
-    return socket_table[id];
+    struct sock* sock = socket_table[id];
+    if(sock != NULL){
+        sock_ref(sock);
+    }
+    return sock;
+}
+
+void sock_ref(struct sock* sock)
+{
+    if(sock == NULL) return;
+    __sync_add_and_fetch(&sock->refcount, 1);
+}
+
+static void sock_destroy(struct sock* socket)
+{
+    if(socket == NULL) return;
+
+    int sock_id = socket->socket;
+    dbgprintf("[SOCK] Destroying socket %d\n", sock_id);
+
+    tcp_free_connection(socket);
+
+    while(SKB_QUEUE_READY(socket->skb_queue)){
+        struct sk_buff* skb = socket->skb_queue->ops->remove(socket->skb_queue);
+        skb_free(skb);
+    }
+    skb_free_queue(socket->skb_queue);
+
+    dbgprintf("[SOCK] Freeing recv buffer for socket %d\n", sock_id);
+    rbuffer_free(socket->recv_buffer);
+
+    dbgprintf("[SOCK] Socket %d destroyed\n", sock_id);
+    kfree((void*) socket);
+}
+
+void sock_deref(struct sock* sock)
+{
+    if(sock == NULL) return;
+    if(__sync_sub_and_fetch(&sock->refcount, 1) == 0){
+        sock_destroy(sock);
+    }
 }
 
 static inline error_t net_sock_add_data_segment(struct sock* sock, struct sk_buff* skb)
@@ -348,30 +388,19 @@ void kernel_sock_cleanup(struct sock* socket)
 {
     if(socket == NULL) return;
 
+    int sock_id = socket->socket;
+
     spin_lock(&__sock_lock);
 
-    dbgprintf("[SOCK] Cleaning up socket %d\n", socket->socket);
-    tcp_free_connection(socket);
-
-    while(SKB_QUEUE_READY(socket->skb_queue)){
-        struct sk_buff* skb = socket->skb_queue->ops->remove(socket->skb_queue);
-        skb_free(skb);
+    if(socket_table[sock_id] == socket){
+        unset_bitmap(socket_map, sock_id);
+        socket_table[sock_id] = NULL;
+        total_sockets--;
     }
-    skb_free_queue(socket->skb_queue);
-
-    dbgprintf("[SOCK] Freeing recv buffer for socket %d\n", socket->socket);
-    rbuffer_free(socket->recv_buffer);
-
-    unset_bitmap(socket_map, (int)socket->socket);
-    
-    socket_table[socket->socket] = NULL;
-    total_sockets--;
-    
-    dbgprintf("[SOCK] Freeing socket %d\n", socket->socket);
-    kfree((void*) socket);
-    dbgprintf("[SOCK] Socket %d cleaned up, total sockets: %d\n", socket->socket, total_sockets);
 
     spin_unlock(&__sock_lock);
+
+    sock_deref(socket);
 }
 
 void kernel_sock_close(struct sock* socket)
@@ -415,6 +444,7 @@ struct sock* kernel_socket_create(int domain, int type, int protocol)
     socket_table[current]->tcp = NULL;
     socket_table[current]->rx = 0;
     socket_table[current]->tx = 0;
+    socket_table[current]->refcount = 1;
 
     socket_table[current]->recv_buffer = rbuffer_new(NET_MAX_BUFFER_SIZE);
     if(socket_table[current]->recv_buffer == NULL){

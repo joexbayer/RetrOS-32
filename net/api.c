@@ -65,9 +65,13 @@ error_t sys_kernel_bind(socket_t socket, const struct sockaddr *address, socklen
         return -ERROR_INVALID_SOCKET;
 
     struct sockaddr_in kaddr;
-    RETURN_ON_ERR(copy_in_sockaddr(&kaddr, address));
+    error_t ret = copy_in_sockaddr(&kaddr, address);
+    if(ret == ERROR_OK){
+        ret = kernel_bind(sock, (const struct sockaddr*)&kaddr, address_len);
+    }
 
-    return kernel_bind(sock, (const struct sockaddr*)&kaddr, address_len);
+    sock_deref(sock);
+    return ret;
 }
 EXPORT_SYSCALL(SYSCALL_NET_SOCK_BIND, sys_kernel_bind);
 
@@ -93,6 +97,7 @@ error_t sys_kernel_accept(socket_t socket, struct sockaddr *address, socklen_t *
     }
 
     struct sock* new = kernel_accept(sock, kaddr_ptr, klen_ptr);
+    sock_deref(sock);
     if(new == NULL)
         return -ERROR_INVALID_SOCKET;
 
@@ -115,9 +120,13 @@ error_t sys_kernel_connect(socket_t socket, const struct sockaddr *address, sock
         return -ERROR_INVALID_SOCKET;
 
     struct sockaddr_in kaddr;
-    RETURN_ON_ERR(copy_in_sockaddr(&kaddr, address));
+    error_t ret = copy_in_sockaddr(&kaddr, address);
+    if(ret == ERROR_OK){
+        ret = kernel_connect(sock, (const struct sockaddr*)&kaddr, address_len);
+    }
 
-    return kernel_connect(sock, (const struct sockaddr*)&kaddr, address_len);
+    sock_deref(sock);
+    return ret;
 }
 EXPORT_SYSCALL(SYSCALL_NET_SOCK_CONNECT, sys_kernel_connect);
 
@@ -127,7 +136,9 @@ error_t sys_kernel_listen(socket_t socket, int backlog)
     if(sock == NULL)
         return -ERROR_INVALID_SOCKET;
 
-    return kernel_listen(sock, backlog);
+    error_t ret = kernel_listen(sock, backlog);
+    sock_deref(sock);
+    return ret;
 }
 EXPORT_SYSCALL(SYSCALL_NET_SOCK_LISTEN, sys_kernel_listen);
 
@@ -137,9 +148,13 @@ error_t sys_kernel_recv(socket_t socket, struct net_buffer *net_buffer)
     if(sock == NULL)
         return -ERROR_INVALID_SOCKET;
 
-    RETURN_ON_ERR(validate_net_buffer(net_buffer, 1));
+    error_t ret = validate_net_buffer(net_buffer, 1);
+    if(ret == ERROR_OK){
+        ret = kernel_recv(sock, net_buffer->buffer, net_buffer->length, net_buffer->flags);
+    }
 
-    return kernel_recv(sock, net_buffer->buffer, net_buffer->length, net_buffer->flags);
+    sock_deref(sock);
+    return ret;
 }
 EXPORT_SYSCALL(SYSCALL_NET_SOCK_RECV, sys_kernel_recv);
 
@@ -149,17 +164,22 @@ error_t sys_kernel_recvfrom(socket_t socket, struct net_buffer *net_buffer, stru
     if(sock == NULL)
         return -ERROR_INVALID_SOCKET;
 
-    RETURN_ON_ERR(validate_net_buffer(net_buffer, 1));
+    error_t ret = validate_net_buffer(net_buffer, 1);
 
-    if(address != NULL){
-        RETURN_ON_ERR(user_memory_validate(address, sizeof(struct sockaddr_in), 1));
+    if(ret == ERROR_OK && address != NULL){
+        ret = user_memory_validate(address, sizeof(struct sockaddr_in), 1);
     }
 
-    if(address_len != NULL){
-        RETURN_ON_ERR(user_memory_validate(address_len, sizeof(socklen_t), 1));
+    if(ret == ERROR_OK && address_len != NULL){
+        ret = user_memory_validate(address_len, sizeof(socklen_t), 1);
     }
 
-    return kernel_recvfrom(sock, net_buffer->buffer, net_buffer->length, net_buffer->flags, address, 0);
+    if(ret == ERROR_OK){
+        ret = kernel_recvfrom(sock, net_buffer->buffer, net_buffer->length, net_buffer->flags, address, 0);
+    }
+
+    sock_deref(sock);
+    return ret;
 }
 EXPORT_SYSCALL(SYSCALL_NET_SOCK_RECVFROM, sys_kernel_recvfrom);
 
@@ -169,9 +189,13 @@ error_t sys_kernel_recv_timeout(socket_t socket, struct net_buffer *net_buffer, 
     if(sock == NULL)
         return -ERROR_INVALID_SOCKET;
 
-    RETURN_ON_ERR(validate_net_buffer(net_buffer, 1));
+    error_t ret = validate_net_buffer(net_buffer, 1);
+    if(ret == ERROR_OK){
+        ret = kernel_recv_timeout(sock, net_buffer->buffer, net_buffer->length, net_buffer->flags, timeout);
+    }
 
-    return kernel_recv_timeout(sock, net_buffer->buffer, net_buffer->length, net_buffer->flags, timeout);
+    sock_deref(sock);
+    return ret;
 }
 EXPORT_SYSCALL(SYSCALL_NET_SOCK_RECV_TIMEOUT, sys_kernel_recv_timeout);
 
@@ -181,9 +205,13 @@ error_t sys_kernel_send(socket_t socket, struct net_buffer *net_buffer)
     if(sock == NULL)
         return -ERROR_INVALID_SOCKET;
 
-    RETURN_ON_ERR(validate_net_buffer(net_buffer, 0));
+    error_t ret = validate_net_buffer(net_buffer, 0);
+    if(ret == ERROR_OK){
+        ret = kernel_send(sock, net_buffer->buffer, net_buffer->length, net_buffer->flags);
+    }
 
-    return kernel_send(sock, net_buffer->buffer, net_buffer->length, net_buffer->flags);
+    sock_deref(sock);
+    return ret;
 }
 EXPORT_SYSCALL(SYSCALL_NET_SOCK_SEND, sys_kernel_send);
 
@@ -193,12 +221,19 @@ error_t sys_kernel_sendto(socket_t socket, struct net_buffer *net_buffer, const 
     if(sock == NULL)
         return -ERROR_INVALID_SOCKET;
 
-    RETURN_ON_ERR(validate_net_buffer(net_buffer, 0));
+    error_t ret = validate_net_buffer(net_buffer, 0);
 
     struct sockaddr_in kaddr;
-    RETURN_ON_ERR(copy_in_sockaddr(&kaddr, dest_addr));
+    if(ret == ERROR_OK){
+        ret = copy_in_sockaddr(&kaddr, dest_addr);
+    }
 
-    return kernel_sendto(sock, net_buffer->buffer, net_buffer->length, net_buffer->flags, (const struct sockaddr*)&kaddr, dest_len);
+    if(ret == ERROR_OK){
+        ret = kernel_sendto(sock, net_buffer->buffer, net_buffer->length, net_buffer->flags, (const struct sockaddr*)&kaddr, dest_len);
+    }
+
+    sock_deref(sock);
+    return ret;
 }
 EXPORT_SYSCALL(SYSCALL_NET_SOCK_SENDTO, sys_kernel_sendto);
 
@@ -220,6 +255,7 @@ void sys_kernel_sock_close(socket_t socket)
     }
 
     kernel_sock_close(sock);
+    sock_deref(sock);
 }
 EXPORT_SYSCALL(SYSCALL_NET_SOCK_CLOSE, sys_kernel_sock_close);
 
