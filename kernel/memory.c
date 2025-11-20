@@ -191,19 +191,19 @@ static int __user_range_valid(uint32_t addr, size_t len, int write)
 	uint32_t start = addr & ~PAGE_MASK;
 	uint64_t end_addr = (uint64_t)addr + (uint64_t)len - 1;
 
-	for(uint32_t page = start; (uint64_t)page <= end_addr; page += PAGE_SIZE){
-		uint32_t pde = current->page_dir[DIRECTORY_INDEX(page)];
-		if(!(pde & PRESENT)){
-			return 0;
-		}
-		uint32_t* table = (uint32_t*)(pde & ~PAGE_MASK);
-		uint32_t pte = table[TABLE_INDEX(page)];
-		if(!(pte & PRESENT)){
-			return 0;
-		}
-		if(write && !(pte & READ_WRITE)){
-			return 0;
-		}
+    for(uint32_t page = start; (uint64_t)page <= end_addr; page += PAGE_SIZE){
+        uint32_t pde = current->page_dir[DIRECTORY_INDEX(page)];
+        if(!(pde & PRESENT) || !(pde & USER)){
+            return 0;
+        }
+        uint32_t* table = (uint32_t*)(pde & ~PAGE_MASK);
+        uint32_t pte = table[TABLE_INDEX(page)];
+        if(!(pte & PRESENT) || !(pte & USER)){
+            return 0;
+        }
+        if(write && !(pte & READ_WRITE)){
+            return 0;
+        }
 	}
 
 	return 1;
