@@ -57,6 +57,7 @@ struct sock {
     struct pcb* owner;
 
     struct sock* accept_sock;
+    volatile int closing;
 };
 
 #include <net/tcp.h>
@@ -83,6 +84,7 @@ error_t net_sock_add_data(struct sock* sock, struct sk_buff* skb);
 struct sock* sock_get(socket_t id);
 void sock_ref(struct sock* sock);
 void sock_deref(struct sock* sock);
+void kernel_sock_cleanup(struct sock* socket);
 
 error_t net_sock_read(struct sock* sock, uint8_t* buffer, unsigned int length);
 

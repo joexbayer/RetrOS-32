@@ -414,6 +414,12 @@ void kernel_sock_cleanup(struct sock* socket)
 void kernel_sock_close(struct sock* socket)
 {
     dbgprintf("Closing socket...\n");
+    if(socket->type == SOCK_STREAM && socket->tcp != NULL){
+        socket->closing = 1;
+        kernel_sock_shutdown(socket, 0);
+        return;
+    }
+
     kernel_sock_shutdown(socket, 0);
     kernel_sock_cleanup(socket);
 }
@@ -453,6 +459,7 @@ struct sock* kernel_socket_create(int domain, int type, int protocol)
     socket_table[current]->rx = 0;
     socket_table[current]->tx = 0;
     socket_table[current]->refcount = 1;
+    socket_table[current]->closing = 0;
 
     socket_table[current]->recv_buffer = rbuffer_new(NET_MAX_BUFFER_SIZE);
     if(socket_table[current]->recv_buffer == NULL){

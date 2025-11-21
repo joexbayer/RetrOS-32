@@ -27,7 +27,7 @@
 #define TCP_ACCEPT_MAX_RETRIES 5
 #define TCP_BACKLOG_MAX_RETRIES 40
 #define TCP_RETRY_WAIT_FOREVER 0xFFFFFFFF
-#define TCP_TIME_WAIT_DURATION 500
+#define TCP_TIME_WAIT_DURATION 200
 
 /** new implementation **/
 static struct skb_queue* retry_queue = NULL;
@@ -906,29 +906,26 @@ int tcp_close_connection(struct sock* sock)
 	
 	tcp_send_fin(sock);
 
-	/* Wait for connection to close, with timeout to prevent hanging forever */
+	/* Wait for peer ACK/FIN but return once we enter TIME_WAIT */
 	uint32_t close_deadline = timer_get_tick() + TCP_TIME_WAIT_DURATION + 50;
-	while(sock->tcp->state != TCP_CLOSED && (uint32_t)timer_get_tick() < close_deadline){
-		if(sock->tcp->state == TCP_TIME_WAIT &&
-		   sock->tcp->time_wait_expire != 0 &&
-		   timer_get_tick() >= sock->tcp->time_wait_expire){
-			sock->tcp->state = TCP_CLOSED;
-			sock->tcp->time_wait_expire = 0;
-			break;
-		}
+	while(sock->tcp->state != TCP_CLOSED &&
+	      sock->tcp->state != TCP_TIME_WAIT &&
+	      (uint32_t)timer_get_tick() < close_deadline){
 		kernel_yield();
 	}
-	
-	/* Force close if timeout reached */
-	if(sock->tcp->state != TCP_CLOSED){
-		dbgprintf("[TCP] Close timeout for socket %d (state: %s), forcing to CLOSED\n", 
-			sock->socket, tcp_state_to_str(sock->tcp->state));
-		sock->tcp->state = TCP_CLOSED;
-		sock->tcp->time_wait_expire = 0;
-	} else {
-		dbgprintf("[TCP] Socket %d closed successfully\n", sock->socket);
+
+	if(sock->tcp->state == TCP_TIME_WAIT){
+		dbgprintf("[TCP] Socket %d entered TIME_WAIT, closing deferred\n", sock->socket);
+		return ERROR_OK;
 	}
 
+	if(sock->tcp->state != TCP_CLOSED){
+		dbgprintf("[TCP] Close returning for socket %d (state: %s)\n",
+		          sock->socket, tcp_state_to_str(sock->tcp->state));
+		return ERROR_OK;
+	}
+
+	dbgprintf("[TCP] Socket %d closed successfully\n", sock->socket);
 	return ERROR_OK;
 }
 
@@ -1132,7 +1129,13 @@ void tcp_cleanup_time_wait_sockets(void)
 				dbgprintf("[TCP] TIME_WAIT expired for socket %d\n", sk->socket);
 				sk->tcp->state = TCP_CLOSED;
 				sk->tcp->time_wait_expire = 0;
+				if(sk->closing){
+					kernel_sock_cleanup(sk);
+					continue;
+				}
 			}
+		} else if(sk->tcp->state == TCP_CLOSED && sk->closing){
+			kernel_sock_cleanup(sk);
 		}
 	}
 }
@@ -1472,19 +1475,23 @@ static int tcp_state_machine(struct sk_buff* skb){
 				goto out;
 			}
 
+			int free_skb = 1;
+
 			/* If FIN came with data, process it first */
 			if(skb->data_len > 0){
 				tcp_send_ack(sk, hdr, skb, skb->data_len);
 				int ret = net_sock_add_data(sk, skb);
-				if(ret == 0){
-					skb_free(skb);
+				if(ret != 0){
+					free_skb = 0; /* Ownership transferred to socket queue */
 				}
-			} else {
-				skb_free(skb);
 			}
 			
 			/* ACK the FIN */
 			tcp_send_ack(sk, hdr, skb, 1);
+
+			if(free_skb){
+				skb_free(skb);
+			}
 			
 			/**
 			 * @brief Transition to CLOSE_WAIT state, indicating we received
