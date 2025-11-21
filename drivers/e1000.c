@@ -19,6 +19,10 @@
 #include <timer.h>
 #include <sync.h>
 
+/* Disabling dbgprintf for this file */
+#undef dbgprintf
+#define dbgprintf(...)
+
 #define PACKET_SIZE   2048
 #define TX_SIZE 16
 #define RX_SIZE 16

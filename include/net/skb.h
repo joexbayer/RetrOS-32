@@ -34,6 +34,7 @@ struct sk_buff {
     uint8_t* end;
 
     int retries;
+    uint32_t retry_at;
 
     struct net_interface* interface;
 };

@@ -97,7 +97,7 @@ inline unsigned int htonl(unsigned int data)
 
 class TcpServer {
 public:
-    TcpServer(unsigned short port = 80) {
+    TcpServer(unsigned short port = 80, int backlog = 5) {
         sd = socket(AF_INET, SOCK_STREAM, 0);
         if (sd != 0) {
             // error
@@ -112,7 +112,7 @@ public:
             // error
         }
 
-        ret = listen(sd, 5);
+        ret = listen(sd, backlog);
         if (ret != 0) {
             // error
         }

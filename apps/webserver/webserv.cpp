@@ -8,7 +8,7 @@
 
 int main()
 {
-    TcpServer server(80);
+    TcpServer server(80, 16);
 
     struct sockaddr_in client_addr;
     socklen_t addr_len = sizeof(client_addr);

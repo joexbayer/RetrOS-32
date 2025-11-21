@@ -364,7 +364,8 @@ void __kthread_entry networking_main()
             }
         }
 
-        tcp_retry_all();
+        tcp_retry_all(0);
+        tcp_cleanup_time_wait_sockets();
         
         /* Clean up stale pending connections every iteration (timeout after 3000 ticks ~3 seconds) */
         static int cleanup_counter = 0;

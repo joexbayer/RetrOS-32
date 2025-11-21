@@ -41,6 +41,7 @@ struct tcp_pending_connection {
 	uint32_t our_seq;            /* Our sequence number sent in SYN-ACK */
 	uint32_t timestamp;          /* When this entry was created (for timeout) */
 	int valid;                   /* 1 if this slot is in use, 0 if free */
+	int handshake_complete;      /* 1 once final ACK queued, waiting for accept */
 };
 
 struct tcp_pending_list {
@@ -71,6 +72,7 @@ struct tcp_connection {
 	uint32_t sip;
 
 	uint16_t backlog;
+	uint32_t time_wait_expire;
 };
 
 #include <net/socket.h>
@@ -195,8 +197,10 @@ int tcp_read(struct sock* sock, uint8_t* buffer, unsigned int length);
 
 int tcp_accept_connection(struct sock* sock, struct sock* new);
 int tcp_close_connection(struct sock* sock);
+int tcp_send_ack(struct sock* sock, struct tcp_header* tcp, struct sk_buff* rx_skb, int len);
+void tcp_cleanup_time_wait_sockets(void);
 
-int tcp_retry_all();
+int tcp_retry_all(int force);
 int tcp_retry_queue_size();
 
 /* Pending connection management */
@@ -211,4 +215,3 @@ void tcp_pending_cleanup_stale(struct tcp_pending_list* list, uint32_t current_t
 void tcp_cleanup_all_pending_connections(uint32_t timeout_ticks);
 
 #endif
-
