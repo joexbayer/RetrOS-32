@@ -12,7 +12,9 @@ int main()
 
     struct sockaddr_in client_addr;
     socklen_t addr_len = sizeof(client_addr);
-
+    
+    char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHello, World!";
+    char buffer[4048] = {0};
     while(1){
         addr_len = sizeof(client_addr);
         int client = server.accept((struct sockaddr*)&client_addr, &addr_len);
@@ -20,8 +22,8 @@ int main()
             continue;
         }
 
-        char buffer[2048] = {0};
         int ret = recv(client, buffer, sizeof(buffer) - 1, 0);
+        printf("recv returned %d\n", ret);
         if (ret <= 0) {
             close(client);
             continue;
@@ -29,9 +31,7 @@ int main()
 
         buffer[ret] = 0;
         printf("Received: %s\n", buffer);
-
-        char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHello, World!";
-        send(client, response, strlen(response), 0);
+        send(client, response, strlen(response)-1, 0);
         close(client);
     }
     return 0;

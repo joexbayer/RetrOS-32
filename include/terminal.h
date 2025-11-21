@@ -52,6 +52,7 @@ struct terminal_ops {
 
 struct terminal {
     char* textbuffer;
+    int textbuffer_size;
 
     int tail;
     int head;
