@@ -23,7 +23,7 @@ MOCK = utils/mocks.c utils/test.c
 
 .PHONY: bin
 
-all: ext_test fat16_test pcb_test mem_test run
+all: ext_test fat16_test pcb_test mem_test net_test run
 
 bin:
 	@mkdir -p bin

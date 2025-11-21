@@ -853,14 +853,36 @@ int vmem_allocator_create(struct virtual_memory_allocator* allocator, int from, 
 
 void vmem_map_driver_region(uint32_t addr, int size)
 {
-	uint32_t* kernel_page_table_driver = vmem_default->ops->alloc(vmem_default);;
-	for (int i = 0; i < size; i++)
-		vmem_map(kernel_page_table_driver, (uint32_t) addr+(PAGE_SIZE*i), (uint32_t) addr+(PAGE_SIZE*i), SUPERVISOR);
-	
-	dbgprintf("[mmap] Page for 0x%x set\n", addr);
+	if(size <= 0){
+		return;
+	}
 
-	vmem_add_table(kernel_page_dir,  addr, kernel_page_table_driver, SUPERVISOR);
-	return;
+	uint32_t aligned_addr = addr & ~PAGE_MASK;
+	uint32_t offset = addr - aligned_addr;
+	uint32_t bytes_to_map = size * PAGE_SIZE + offset;
+	int total_pages = (bytes_to_map + PAGE_SIZE - 1) / PAGE_SIZE;
+
+	for(int page = 0; page < total_pages; page++){
+		uint32_t current = aligned_addr + page * PAGE_SIZE;
+		uint32_t dir_index = DIRECTORY_INDEX(current);
+
+		uint32_t* page_table = NULL;
+		if(!(kernel_page_dir[dir_index] & PRESENT)){
+			page_table = vmem_default->ops->alloc(vmem_default);
+			if(page_table == NULL){
+				warningf("[mmap] Unable to allocate page table for driver region\n");
+				return;
+			}
+			memset(page_table, 0, PAGE_SIZE);
+			vmem_add_table(kernel_page_dir, current, page_table, SUPERVISOR);
+		} else {
+			page_table = (uint32_t*)(kernel_page_dir[dir_index] & ~PAGE_MASK);
+		}
+
+		vmem_map(page_table, current, current, SUPERVISOR);
+	}
+
+	dbgprintf("[mmap] Driver region 0x%x mapped (%d pages)\n", aligned_addr, total_pages);
 }
 
 int vmem_total_usage()

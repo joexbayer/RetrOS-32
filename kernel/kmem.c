@@ -175,6 +175,7 @@ void kfree(void* ptr)
  */
 static uintptr_t memory_permanent_start = 0;
 static uintptr_t memory_permanent_end = 0;
+static spinlock_t memory_permanent_lock = 0;
 void* palloc(int size)
 {
 	if(size <= 0) return NULL;
@@ -182,13 +183,18 @@ void* palloc(int size)
 
     size = ALIGN(size, PTR_SIZE);
 
+	spin_lock(&memory_permanent_lock);
+
 	if(memory_permanent_start + size >= memory_permanent_end){
+		spin_unlock(&memory_permanent_lock);
 		dbgprintf("[WARNING] Not enough permanent memory!\n");
 		return NULL;
 	}
 
 	uint32_t new = memory_permanent_start + size;
 	memory_permanent_start += size;
+
+	spin_unlock(&memory_permanent_lock);
 
 	return (void*) new;
 }
