@@ -906,26 +906,8 @@ int tcp_close_connection(struct sock* sock)
 	
 	tcp_send_fin(sock);
 
-	/* Wait for peer ACK/FIN but return once we enter TIME_WAIT */
-	uint32_t close_deadline = timer_get_tick() + TCP_TIME_WAIT_DURATION + 50;
-	while(sock->tcp->state != TCP_CLOSED &&
-	      sock->tcp->state != TCP_TIME_WAIT &&
-	      (uint32_t)timer_get_tick() < close_deadline){
-		kernel_yield();
-	}
-
-	if(sock->tcp->state == TCP_TIME_WAIT){
-		dbgprintf("[TCP] Socket %d entered TIME_WAIT, closing deferred\n", sock->socket);
-		return ERROR_OK;
-	}
-
-	if(sock->tcp->state != TCP_CLOSED){
-		dbgprintf("[TCP] Close returning for socket %d (state: %s)\n",
-		          sock->socket, tcp_state_to_str(sock->tcp->state));
-		return ERROR_OK;
-	}
-
-	dbgprintf("[TCP] Socket %d closed successfully\n", sock->socket);
+	/* Closing now happens asynchronously via tcp_state_machine()/tcp_cleanup_time_wait_sockets().
+	 * Returning immediately keeps the caller from blocking while we wait for FIN/ACK or TIME_WAIT. */
 	return ERROR_OK;
 }
 
@@ -1025,6 +1007,8 @@ static int tcp_backlog_drop_entry(struct sock* sock, uint32_t ip, uint16_t port)
 			skb_free(skb);
 			sock->backlog.count--;
 			dropped = 1;
+			/* Wake an accept() waiter so it can observe the drop and keep listening. */
+			TCP_UNBLOCK(sock);
 			continue;
 		}
 
@@ -1055,6 +1039,10 @@ static void tcp_abort_backlog_connection(struct sock* sock, struct sk_buff* skb,
 	if(prev == TCP_LISTEN){
 		sock->tcp->state = TCP_LISTEN;
 	}
+
+	/* If an accept() is blocked waiting for a backlog entry, wake it so it can
+	 * observe that the connection was dropped and continue listening. */
+	TCP_UNBLOCK(sock);
 }
 
 static void tcp_retry_queue_flush(uint32_t ip, uint16_t port)
@@ -1274,6 +1262,8 @@ static int tcp_state_machine(struct sk_buff* skb){
 					tcp_backlog_drop_entry(sk, skb->hdr.ip->saddr, hdr->source);
 					tcp_pending_remove(sk->pending_connections, skb->hdr.ip->saddr, hdr->source);
 					skb_free(skb);
+					/* Wake a blocked accept so it can observe the drop and continue. */
+					TCP_UNBLOCK(sk);
 					result = ERROR_OK;
 					goto out;
 				}

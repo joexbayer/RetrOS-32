@@ -210,8 +210,8 @@ static inline error_t net_sock_add_data_segment(struct sock* sock, struct sk_buf
     sock->recvd += skb->data_len;
     sock->data_ready = sock->tcp == NULL ? 1 : skb->hdr.tcp->psh;
 
-    if(sock->waiting->state == BLOCKED){
-        /* need to clear waiting before setting it to run */
+    if(sock->waiting != NULL && sock->waiting->state == BLOCKED){
+        /* Wake the process that is blocked on this socket (accept/recv). */
         volatile struct pcb* pcb = sock->waiting;
         sock->waiting = NULL;
         pcb->state = RUNNING;
