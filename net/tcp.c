@@ -42,6 +42,7 @@ static void tcp_dump_sockets(const char* reason);
 static void tcp_retry_queue_purge(uint32_t ip, uint16_t port);
 static int tcp_backlog_drop_entry(struct sock* sock, uint32_t ip, uint16_t port);
 static void tcp_retry_queue_flush(uint32_t ip, uint16_t port);
+static int tcp_handle_listen_rst(struct sock* sk, struct sk_buff* skb);
 
 int tcp_init()
 {
@@ -666,7 +667,15 @@ int tcp_accept_connection(struct sock* sock, struct sock* new)
 	net_prepare_tcp_sock(new, sock->bound_port, &remote_addr);
 
 	new->tcp->state = TCP_ESTABLISHED;
-	new->tcp->acknowledgement = ntohl(hdr->seq); /* Client's next seq (already accounts for SYN) */
+	/* Track next expected client sequence. Include any payload we just pulled from backlog. */
+	uint32_t next_ack = ntohl(hdr->seq);
+	if(skb->data_len > 0){
+		next_ack += skb->data_len;
+	}
+	if(hdr->fin){
+		next_ack += 1;
+	}
+	new->tcp->acknowledgement = next_ack; /* Client's next seq (already accounts for SYN and backlog data) */
 	new->tcp->sequence = ntohl(hdr->ack_seq);    /* Our next seq to send (their ACK of our SYN-ACK) */
 	sock->accept_sock = NULL;
 	
@@ -1226,6 +1235,41 @@ static int tcp_queue_data_before_accept(struct sock* sk, struct tcp_header* hdr,
 	return -1;
 }
 
+static int tcp_handle_listen_rst(struct sock* sk, struct sk_buff* skb)
+{
+	if(sk == NULL || skb == NULL || skb->hdr.tcp == NULL || skb->hdr.ip == NULL){
+		return -1;
+	}
+
+	uint32_t ip = skb->hdr.ip->saddr;
+	uint16_t port = skb->hdr.tcp->source;
+	int cleaned = 0;
+
+	if(sk->pending_connections != NULL &&
+	   tcp_pending_remove(sk->pending_connections, ip, port) == 0){
+		cleaned = 1;
+	}
+
+	if(tcp_backlog_drop_entry(sk, ip, port) == 0){
+		cleaned = 1;
+	}
+
+	tcp_retry_queue_purge(ip, port);
+
+	if(cleaned){
+		dbgprintf("[TCP] Dropped pending/backlog for RST from %x:%d\n",
+		          ntohl(ip), ntohs(port));
+		/* Wake a blocked accept() so it can keep listening. */
+		TCP_UNBLOCK(sk);
+	} else {
+		dbgprintf("[TCP] Ignoring RST in LISTEN from %x:%d\n",
+		          ntohl(ip), ntohs(port));
+	}
+
+	skb_free(skb);
+	return ERROR_OK;
+}
+
 static int tcp_state_machine(struct sk_buff* skb){
 	struct tcp_header* hdr = (struct tcp_header* ) skb->hdr.tcp;
 
@@ -1265,12 +1309,8 @@ static int tcp_state_machine(struct sk_buff* skb){
 
 	switch (sk->tcp->state){
 	case TCP_LISTEN:
-		/* Ignore stray RSTs while listening to avoid endless reset loops. */
 		if(hdr->rst == 1){
-			dbgprintf("[TCP] Ignoring RST in LISTEN from %x:%d\n",
-			          ntohl(skb->hdr.ip->saddr), ntohs(hdr->source));
-			skb_free(skb);
-			result = ERROR_OK;
+			result = tcp_handle_listen_rst(sk, skb);
 			goto out;
 		}
 
