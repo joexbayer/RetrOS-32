@@ -262,7 +262,7 @@ int tcp_retry_all(int force){
 			if(skb->retry_at == TCP_RETRY_WAIT_FOREVER){
 				/* Retry once the socket for this 4-tuple exists (after accept()). */
 				struct tcp_header* hdr = skb->hdr.tcp;
-				struct sock* sk = net_sock_find_tcp(hdr->source, hdr->dest, htonl(skb->hdr.ip->saddr));
+				struct sock* sk = net_sock_find_tcp(hdr->source, hdr->dest, ntohl(skb->hdr.ip->saddr));
 				if(sk == NULL || sk->tcp == NULL ||
 				   sk->tcp->state == TCP_LISTEN || sk->tcp->state == TCP_SYN_RCVD){
 					retry_queue->ops->add(retry_queue, skb);
@@ -710,14 +710,14 @@ int tcp_send_ack(struct sock* sock, struct tcp_header* tcp, struct sk_buff* rx_s
 		.source = tcp->dest,
 		.dest = tcp->source,
 		.window = 1500,
-		.seq = htonl(tcp->ack_seq),
-		.ack_seq = htonl(tcp->seq)+len,
+		.seq = sock->tcp->sequence,
+		.ack_seq = ntohl(tcp->seq)+len,
 		.doff = 0x05,
 		.ack = 1
 	};
 
-	sock->tcp->sequence = htonl(tcp->ack_seq);
-	sock->tcp->acknowledgement = htonl(tcp->seq)+len;
+	/* Keep internal state in host order. Pure ACKs do not consume sequence space. */
+	sock->tcp->acknowledgement = ntohl(tcp->seq)+len;
 
 	//dbgprintf("[TCP] Sending ack for %d (seq: %d, ack: %d)\n", htonl(tcp->seq)+len, htonl(tcp->ack_seq), htonl(tcp->seq)+1);
 
@@ -833,7 +833,7 @@ int tcp_recv_syn(struct sock* sock, struct tcp_header* tcp)
 		.dest = tcp->source,
 		.window = 1500,
 		.seq = our_seq,
-		.ack_seq = htonl(tcp->seq) + 1,
+		.ack_seq = ntohl(tcp->seq) + 1,
 		.doff = 0x05,
 		.syn = 1,
 		.ack = 1
@@ -881,7 +881,7 @@ int tcp_send_rst(struct sock* sock, struct tcp_header* tcp, struct sk_buff* rx_s
 		.dest = tcp->source,
 		.window = 1500,
 		.seq = sock->tcp->sequence,
-		.ack_seq = htonl(tcp->seq)+1,
+		.ack_seq = ntohl(tcp->seq)+1,
 		.doff = 0x05,
 		.rst = 1
 	};
@@ -1347,7 +1347,7 @@ static int tcp_state_machine(struct sk_buff* skb){
 				goto out;
 			} else {
 					/* Verify ACK number matches our SYN-ACK sequence + 1 */
-					if(htonl(hdr->ack_seq) != pending->our_seq + 1){
+					if(ntohl(hdr->ack_seq) != pending->our_seq + 1){
 					dbgprintf("[TCP] ACK sequence mismatch: expected %u, got %u\n",
 					          pending->our_seq + 1, htonl(hdr->ack_seq));
 					result = -1;
@@ -1456,8 +1456,8 @@ static int tcp_state_machine(struct sk_buff* skb){
 		if(hdr->syn == 0 && hdr->ack == 1){
 			
 			/* check if i get a already acked retransmit */
-			if(sk->tcp->sequence > htonl(hdr->ack_seq)){
-				dbgprintf("[TCP] Received ack for already acked packet %d - %d\n", htonl(hdr->ack_seq), sk->tcp->acknowledgement);
+			if(sk->tcp->sequence > ntohl(hdr->ack_seq)){
+				dbgprintf("[TCP] Received ack for already acked packet %d - %d\n", ntohl(hdr->ack_seq), sk->tcp->acknowledgement);
 				skb_free(skb);
 				result = ERROR_OK;
 				goto out;
@@ -1497,7 +1497,7 @@ static int tcp_state_machine(struct sk_buff* skb){
 		 * sock->tcp->sequence == htonl(tcp->seq)
 		 */
 			if (sk->tcp->acknowledgement != ntohl(hdr->seq)) {
-				dbgprintf("[TCP] Out-of-order packet received. Expected seq: %d, received seq: %d\n",sk->tcp->acknowledgement, htonl(hdr->seq));
+				dbgprintf("[TCP] Out-of-order packet received. Expected seq: %d, received seq: %d\n",sk->tcp->acknowledgement, ntohl(hdr->seq));
 				result = -1;
 				goto out;
 			}
@@ -1523,7 +1523,7 @@ static int tcp_state_machine(struct sk_buff* skb){
 			 * FIN packets can arrive with or without data. If it has data,
 			 * we need to account for that in the sequence check.
 			 */
-			uint32_t fin_seq = htonl(hdr->seq);
+			uint32_t fin_seq = ntohl(hdr->seq);
 			uint32_t expected_fin_seq = sk->tcp->acknowledgement + skb->data_len;
 			if (fin_seq > expected_fin_seq) {
 				dbgprintf("[TCP] Ignoring FIN - data gap detected. Expected seq: %d, FIN seq: %d (data_len: %d)\n",
@@ -1642,7 +1642,7 @@ static int tcp_state_machine(struct sk_buff* skb){
 			goto out;
 		}
 		/* Peer already half-closed; still accept any straggling data. */
-		uint32_t pkt_seq = htonl(hdr->seq);
+		uint32_t pkt_seq = ntohl(hdr->seq);
 		uint32_t expect_seq = sk->tcp->acknowledgement;
 		if (pkt_seq < expect_seq){
 			/* Old/duplicate data: ACK current expected and drop. */
