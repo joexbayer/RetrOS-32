@@ -621,10 +621,29 @@ int tcp_accept_connection(struct sock* sock, struct sock* new)
 		return -1;
 	}
 
-    while(sock->backlog.count == 0){
+	/* Avoid missing wakeups if the backlog fills between the count check and blocking. */
+	while(1){
+		if(sock->backlog.count > 0){
+			break;
+		}
+
+		sock->waiting = $process->current;
 		dbgprintf("[TCP] Socket %d is listening but backlog is empty (waiting=%p)\n", sock, sock->waiting);
-		TCP_BLOCK(sock);
+
+		$process->current->state = BLOCKED;
+		/* If a connection arrived before we actually yielded, don't sleep. */
+		if(sock->backlog.count > 0){
+			$process->current->state = RUNNING;
+			sock->waiting = NULL;
+			break;
+		}
+
+		kernel_yield();
 	}
+
+	/* Ensure the waiter pointer is cleared once we're proceeding. */
+	sock->waiting = NULL;
+	$process->current->state = RUNNING;
 	
 	dbgprintf("[TCP] Accept proceeding with backlog count=%d\n", sock->backlog.count);
 
@@ -647,8 +666,8 @@ int tcp_accept_connection(struct sock* sock, struct sock* new)
 	net_prepare_tcp_sock(new, sock->bound_port, &remote_addr);
 
 	new->tcp->state = TCP_ESTABLISHED;
-	new->tcp->acknowledgement = htonl(hdr->seq); /* Client's next seq (already accounts for SYN) */
-	new->tcp->sequence = hdr->ack_seq;
+	new->tcp->acknowledgement = ntohl(hdr->seq); /* Client's next seq (already accounts for SYN) */
+	new->tcp->sequence = ntohl(hdr->ack_seq);    /* Our next seq to send (their ACK of our SYN-ACK) */
 	sock->accept_sock = NULL;
 	
 	/* Listening socket should always remain in LISTEN state */
@@ -773,10 +792,11 @@ int tcp_connect(struct sock* sock)
 
 int tcp_recv_ack(struct sock* sock, struct tcp_header* tcp)
 {
-	dbgprintf("[TCP] Incoming TCP ack expected %d got %d\n", sock->tcp->sequence, htonl(tcp->ack_seq));
-	if(sock->tcp->sequence == htonl(tcp->ack_seq)){
+	uint32_t incoming_ack = ntohl(tcp->ack_seq);
+	dbgprintf("[TCP] Incoming TCP ack expected %d got %d\n", sock->tcp->sequence, incoming_ack);
+	if(sock->tcp->sequence == incoming_ack){
 		dbgprintf("[TCP] Correct sequence acked\n");
-		sock->tcp->acknowledgement = htonl(tcp->seq);
+		sock->tcp->acknowledgement = ntohl(tcp->seq);
 		sock->tcp->state = TCP_ESTABLISHED;
 	}
 	
@@ -1474,9 +1494,9 @@ static int tcp_state_machine(struct sk_buff* skb){
 			 * (We should probably also send a NACK to the sender)
 			 * 
 			 * We will not buffer packets for now, but we should probably do that in the future.
-			 * sock->tcp->sequence == htonl(tcp->seq)
-			 */
-			if (sk->tcp->acknowledgement != htonl(hdr->seq)) {
+		 * sock->tcp->sequence == htonl(tcp->seq)
+		 */
+			if (sk->tcp->acknowledgement != ntohl(hdr->seq)) {
 				dbgprintf("[TCP] Out-of-order packet received. Expected seq: %d, received seq: %d\n",sk->tcp->acknowledgement, htonl(hdr->seq));
 				result = -1;
 				goto out;

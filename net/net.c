@@ -235,6 +235,11 @@ error_t kernel_send(struct sock* socket, void *message, int length, int flags)
         return -ERROR_INVALID_SOCKET;
     }
 
+    /* Don't allow send on sockets that are not in an open data state. */
+    if(socket->closing || socket->tcp->state != TCP_ESTABLISHED){
+        return -ERROR_INVALID_SOCKET;
+    }
+
     /**
      * This should not be done by the process calling this function. 
      * Instead by another process, perhaps the worker thread.
@@ -243,16 +248,11 @@ error_t kernel_send(struct sock* socket, void *message, int length, int flags)
      * 
      * Currently we only accept tiny messages so this is not needed yet...
      */
-    WAIT(!net_sock_is_established(socket));
-    
     /* TODO: if message was bigger than 1400, send 1400 at a time, simple stop and wait. */
     dbgprintf(" [%d] Sending %d bytes\n", socket->socket, length);
     socket->tcp->state = TCP_WAIT_ACK;
     tcp_send_segment(socket, message, length, 1);
 
-    /* Move this into tcp_send_segment */
-    //WAIT(net_sock_awaiting_ack(socket));
-
-    /* Split into smaller "messages" of needed. */
+    /* Split into smaller "messages" if needed. */
     return length;
 }
