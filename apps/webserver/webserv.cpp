@@ -16,23 +16,29 @@ int main()
     char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHello, World!";
     char buffer[4048] = {0};
     while(1){
+        printf("[WEBSERV] Waiting for client connection...\n");
         addr_len = sizeof(client_addr);
         int client = server.accept((struct sockaddr*)&client_addr, &addr_len);
         if (client < 0) {
+            printf("[WEBSERV] Failed to accept client connection\n");
             continue;
         }
 
         int ret = recv(client, buffer, sizeof(buffer) - 1, 0);
-        printf("recv returned %d\n", ret);
+        //printf("recv returned %d\n", ret);
         if (ret <= 0) {
+            printf("[WEBSERV] recv error or connection closed read %d\n", ret);
             close(client);
             continue;
         }
 
         buffer[ret] = 0;
-        printf("Received: %s\n", buffer);
+        //printf("Received: %s\n", buffer);
+        printf("[WEBSERV] Serving response to client %d\n", client);
         send(client, response, strlen(response)-1, 0);
+        printf("[WEBSERV] Response sent to client %d\n", client);
         close(client);
+        printf("[WEBSERV] Connection with client %d closed\n", client);
     }
     return 0;
 

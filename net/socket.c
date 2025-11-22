@@ -324,8 +324,7 @@ struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip)
             socket_table[i]->tcp->state == TCP_CLOSE_WAIT ||
             socket_table[i]->tcp->state == TCP_LAST_ACK ||
             socket_table[i]->tcp->state == TCP_FIN_WAIT ||
-            socket_table[i]->tcp->state == TCP_FIN_WAIT_2 ||
-            socket_table[i]->tcp->state == TCP_TIME_WAIT)) {
+            socket_table[i]->tcp->state == TCP_FIN_WAIT_2)) {
                 //dbgprintf("[TCP] Found established socket %d\n", i);
                 return socket_table[i];
         }

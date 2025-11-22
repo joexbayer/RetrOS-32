@@ -261,9 +261,18 @@ int tcp_retry_all(int force){
 
 		if(!force && skb->retry_at != 0){
 			if(skb->retry_at == TCP_RETRY_WAIT_FOREVER){
-				retry_queue->ops->add(retry_queue, skb);
-				processed++;
-				continue;
+				/* Retry once the socket for this 4-tuple exists (after accept()). */
+				struct tcp_header* hdr = skb->hdr.tcp;
+				struct sock* sk = net_sock_find_tcp(hdr->source, hdr->dest, htonl(skb->hdr.ip->saddr));
+				if(sk == NULL || sk->tcp == NULL ||
+				   sk->tcp->state == TCP_LISTEN || sk->tcp->state == TCP_SYN_RCVD){
+					retry_queue->ops->add(retry_queue, skb);
+					processed++;
+					continue;
+				}
+
+				/* Socket is ready; process immediately. */
+				skb->retry_at = 0;
 			}
 			uint32_t now = timer_get_tick();
 			if(now < skb->retry_at){
@@ -842,6 +851,7 @@ int tcp_send_rst(struct sock* sock, struct tcp_header* tcp, struct sk_buff* rx_s
 	struct sk_buff* skb = skb_new();
 	assert(skb != NULL);
 
+	tcp_state_t prev_state = sock->tcp->state;
 	uint32_t dest_ip = sock->recv_addr.sin_addr.s_addr;
 	if(rx_skb != NULL && rx_skb->hdr.ip != NULL){
 		dest_ip = rx_skb->hdr.ip->saddr;
@@ -857,12 +867,21 @@ int tcp_send_rst(struct sock* sock, struct tcp_header* tcp, struct sk_buff* rx_s
 		.rst = 1
 	};
 
-	sock->tcp->state = TCP_CLOSED;
-	sock->tcp->time_wait_expire = 0;
-
 	dbgprintf("[TCP] Sending RST for %d\n", sock->socket);
 
 	__tcp_send(sock, &hdr, skb, NULL, 0, dest_ip);
+
+	/* Do not tear down a listening socket when replying with RST. */
+	if(prev_state != TCP_LISTEN && prev_state != TCP_SYN_RCVD){
+		sock->tcp->state = TCP_CLOSED;
+		sock->tcp->time_wait_expire = 0;
+		sock->data_ready = -1;
+		if(sock->closing){
+			kernel_sock_cleanup(sock);
+		}
+	} else {
+		sock->tcp->state = prev_state;
+	}
 	return ERROR_OK;
 }
 
@@ -1094,6 +1113,8 @@ static void tcp_enter_time_wait(struct sock* sk)
 {
 	sk->tcp->state = TCP_TIME_WAIT;
 	sk->tcp->time_wait_expire = timer_get_tick() + TCP_TIME_WAIT_DURATION;
+	/* Drop any queued retries for this 4-tuple; the connection is done. */
+	tcp_retry_queue_purge(sk->recv_addr.sin_addr.s_addr, sk->recv_addr.sin_port);
 	dbgprintf("[TCP] Socket %d entering TIME_WAIT (expires at %u)\n",
 	          sk->socket, sk->tcp->time_wait_expire);
 }
@@ -1110,6 +1131,14 @@ void tcp_cleanup_time_wait_sockets(void)
 		struct sock* sk = sockets.sockets[i];
 		if(sk == NULL || sk->tcp == NULL){
 			continue;
+		}
+
+		if(sk->tcp->state == TCP_FIN_WAIT_2 &&
+		   sk->tcp->time_wait_expire != 0 &&
+		   now >= sk->tcp->time_wait_expire){
+			dbgprintf("[TCP] FIN_WAIT_2 timeout for socket %d\n", sk->socket);
+			tcp_enter_time_wait(sk);
+			/* Fall through to TIME_WAIT handling below */
 		}
 
 		if(sk->tcp->state == TCP_TIME_WAIT){
@@ -1181,7 +1210,8 @@ static int tcp_queue_data_before_accept(struct sock* sk, struct tcp_header* hdr,
 static int tcp_state_machine(struct sk_buff* skb){
 	struct tcp_header* hdr = (struct tcp_header* ) skb->hdr.tcp;
 
-	struct sock* sk = net_sock_find_tcp(hdr->source, hdr->dest, htonl(skb->hdr.ip->saddr));
+	/* ip->saddr is in network order; net_sock_find_tcp expects host order. */
+	struct sock* sk = net_sock_find_tcp(hdr->source, hdr->dest, ntohl(skb->hdr.ip->saddr));
 	if(sk == NULL){
 		dbgprintf("[TCP] No socket found for TCP packet while parsing.\n");
 		return -1;
@@ -1195,8 +1225,36 @@ static int tcp_state_machine(struct sk_buff* skb){
 
 	//print_socks();
 
+	/* Global RST handling (except LISTEN where we ignore RSTs). */
+	if(hdr->rst == 1 && sk->tcp->state != TCP_LISTEN){
+		dbgprintf("[TCP] RST received in state %s, closing socket %d\n",
+		          tcp_state_to_str(sk->tcp->state), sk->socket);
+		sk->tcp->state = TCP_CLOSED;
+		sk->tcp->time_wait_expire = 0;
+		sk->data_ready = -1;
+		if(sk->waiting != NULL){
+			sk->waiting->state = RUNNING;
+			sk->waiting = NULL;
+		}
+		if(sk->closing){
+			kernel_sock_cleanup(sk);
+		}
+		skb_free(skb);
+		result = ERROR_OK;
+		goto out;
+	}
+
 	switch (sk->tcp->state){
 	case TCP_LISTEN:
+		/* Ignore stray RSTs while listening to avoid endless reset loops. */
+		if(hdr->rst == 1){
+			dbgprintf("[TCP] Ignoring RST in LISTEN from %x:%d\n",
+			          ntohl(skb->hdr.ip->saddr), ntohs(hdr->source));
+			skb_free(skb);
+			result = ERROR_OK;
+			goto out;
+		}
+
 		if(hdr->syn == 1 && hdr->ack == 0){
 			if(sk->backlog.count == sk->backlog.size){
 				dbgprintf("[TCP] Backlog is full, dropping packet\n");
@@ -1236,19 +1294,24 @@ static int tcp_state_machine(struct sk_buff* skb){
 			
 			if(pending == NULL){
 				if(skb->data_len == 0){
-					dbgprintf("[TCP] Received ACK for unknown connection from %x:%d - sending RST\n",
+					dbgprintf("[TCP] Received ACK for unknown connection from %x:%d - dropping\n",
 					          ntohl(skb->hdr.ip->saddr), ntohs(hdr->source));
-					tcp_dump_sockets("unknown ACK");
-					tcp_send_rst(sk, hdr, skb);
+					/* Wake any blocked accept so it can continue waiting. */
+					TCP_UNBLOCK(sk);
 					skb_free(skb);
 					result = ERROR_OK;
 					goto out;
 				}
-				dbgprintf("[TCP] Late data for %x:%d without pending entry, queuing for retry\n",
+				dbgprintf("[TCP] Late data for %x:%d without pending entry, sending RST\n",
 				          ntohl(skb->hdr.ip->saddr), ntohs(hdr->source));
 				tcp_dump_sockets("late data no pending");
-
-				result = tcp_queue_data_before_accept(sk, hdr, skb, 0, "pending missing");
+				/* Purge any queued retries for this dead connection to avoid loops. */
+				tcp_retry_queue_purge(skb->hdr.ip->saddr, hdr->source);
+				tcp_send_rst(sk, hdr, skb);
+				skb_free(skb);
+				/* Ensure accept() wakes up to observe that the backlog is still empty. */
+				TCP_UNBLOCK(sk);
+				result = ERROR_OK;
 				goto out;
 			} else if(pending->handshake_complete){
 				if(hdr->fin){
@@ -1447,19 +1510,26 @@ static int tcp_state_machine(struct sk_buff* skb){
 			 * FIN packets can arrive with or without data. If it has data,
 			 * we need to account for that in the sequence check.
 			 */
+			uint32_t fin_seq = htonl(hdr->seq);
 			uint32_t expected_fin_seq = sk->tcp->acknowledgement + skb->data_len;
-			if (expected_fin_seq != htonl(hdr->seq)) {
+			if (fin_seq > expected_fin_seq) {
 				dbgprintf("[TCP] Ignoring FIN - data gap detected. Expected seq: %d, FIN seq: %d (data_len: %d)\n",
-					expected_fin_seq, htonl(hdr->seq), skb->data_len);
-				tcp_dump_sockets("fin gap");
-				/* queue FIN for retry once missing data arrives */
-				if(skb->retries++ < 10){
-					tcp_send_ack(sk, hdr, skb, 0);
-					if(tcp_retry_queue_add_delayed(skb, 0) < 0){
-						skb_free(skb);
-					}
-				} else {
-					skb_free(skb);
+					expected_fin_seq, fin_seq, skb->data_len);
+				/* Drop any queued retries for this 4-tuple to avoid looping. */
+				tcp_retry_queue_purge(skb->hdr.ip->saddr, hdr->source);
+				/* Gracefully close anyway to avoid retry loops; acknowledge up to FIN. */
+				uint32_t fin_ack_len = (fin_seq + 1) - sk->tcp->acknowledgement;
+				if(fin_ack_len == 0){
+					fin_ack_len = 1;
+				}
+				tcp_send_ack(sk, hdr, skb, fin_ack_len);
+				skb_free(skb);
+				sk->tcp->acknowledgement = fin_seq + 1;
+				sk->tcp->state = TCP_CLOSE_WAIT;
+				sk->data_ready = -1;
+				if(sk->waiting != NULL){
+					sk->waiting->state = RUNNING;
+					sk->waiting = NULL;
 				}
 				result = ERROR_OK;
 				goto out;
@@ -1467,8 +1537,8 @@ static int tcp_state_machine(struct sk_buff* skb){
 
 			int free_skb = 1;
 
-			/* If FIN came with data, process it first */
-			if(skb->data_len > 0){
+			/* If FIN came with new data in order, process it first */
+			if(skb->data_len > 0 && fin_seq == sk->tcp->acknowledgement){
 				tcp_send_ack(sk, hdr, skb, skb->data_len);
 				int ret = net_sock_add_data(sk, skb);
 				if(ret != 0){
@@ -1476,8 +1546,16 @@ static int tcp_state_machine(struct sk_buff* skb){
 				}
 			}
 			
-			/* ACK the FIN */
-			tcp_send_ack(sk, hdr, skb, 1);
+			/* ACK the FIN using the highest sequence we have validated (never roll back). */
+			uint32_t desired_ack = fin_seq + skb->data_len + 1; /* FIN consumes 1 */
+			if(sk->tcp->acknowledgement > desired_ack){
+				desired_ack = sk->tcp->acknowledgement;
+			}
+			uint32_t fin_ack_len = desired_ack - fin_seq;
+			if(fin_ack_len == 0){
+				fin_ack_len = 1;
+			}
+			tcp_send_ack(sk, hdr, skb, fin_ack_len);
 
 			if(free_skb){
 				skb_free(skb);
@@ -1491,6 +1569,12 @@ static int tcp_state_machine(struct sk_buff* skb){
 			 * Don't send FIN here - let the application's close() handle it.
 			 */
 			sk->tcp->state = TCP_CLOSE_WAIT;
+			/* Signal EOF to any blocked reader. */
+			sk->data_ready = -1;
+			if(sk->waiting != NULL){
+				sk->waiting->state = RUNNING;
+				sk->waiting = NULL;
+			}
 			
 			result = ERROR_OK;
 			goto out;
@@ -1500,6 +1584,8 @@ static int tcp_state_machine(struct sk_buff* skb){
 		if(hdr->ack == 1 && hdr->fin == 0){
 			dbgprintf("[TCP] FIN_WAIT -> FIN_WAIT_2 on socket %d\n", sk->socket);
 			sk->tcp->state = TCP_FIN_WAIT_2;
+			/* Avoid getting stuck forever if the peer never sends its FIN. */
+			sk->tcp->time_wait_expire = timer_get_tick() + TCP_TIME_WAIT_DURATION;
 			skb_free(skb);
 			result = ERROR_OK;
 			goto out;
@@ -1542,8 +1628,35 @@ static int tcp_state_machine(struct sk_buff* skb){
 			result = ERROR_OK;
 			goto out;
 		}
-		/* Stay in CLOSE_WAIT until application calls close() */
-		skb_free(skb);
+		/* Peer already half-closed; still accept any straggling data. */
+		uint32_t pkt_seq = htonl(hdr->seq);
+		uint32_t expect_seq = sk->tcp->acknowledgement;
+		if (pkt_seq < expect_seq){
+			/* Old/duplicate data: ACK current expected and drop. */
+			tcp_send_ack(sk, hdr, skb, expect_seq - pkt_seq);
+			skb_free(skb);
+			result = ERROR_OK;
+			goto out;
+		}
+
+		if(pkt_seq > expect_seq){
+			dbgprintf("[TCP] Out-of-order packet in CLOSE_WAIT. Expected seq: %d, received seq: %d\n",
+			          expect_seq, pkt_seq);
+			tcp_send_ack(sk, hdr, skb, 0);
+			skb_free(skb);
+			result = ERROR_OK;
+			goto out;
+		}
+
+		if(skb->data_len > 0){
+			tcp_send_ack(sk, hdr, skb, skb->data_len);
+			int ret = net_sock_add_data(sk, skb);
+			if(ret == 0){
+				skb_free(skb);
+			}
+		} else {
+			skb_free(skb);
+		}
 		result = ERROR_OK;
 		goto out;
 	case TCP_LAST_ACK:
