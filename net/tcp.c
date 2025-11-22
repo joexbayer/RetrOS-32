@@ -237,7 +237,6 @@ int tcp_retry_queue_size(){
 }
 
 int tcp_retry_all(int force){
-
 	if(retry_queue == NULL){
 		warningf("[TCP] Retry queue is not initialized!\n");
 		return -1;
@@ -1302,16 +1301,10 @@ static int tcp_state_machine(struct sk_buff* skb){
 					result = ERROR_OK;
 					goto out;
 				}
-				dbgprintf("[TCP] Late data for %x:%d without pending entry, sending RST\n",
+				dbgprintf("[TCP] Late data for %x:%d without pending entry, queuing for retry\n",
 				          ntohl(skb->hdr.ip->saddr), ntohs(hdr->source));
 				tcp_dump_sockets("late data no pending");
-				/* Purge any queued retries for this dead connection to avoid loops. */
-				tcp_retry_queue_purge(skb->hdr.ip->saddr, hdr->source);
-				tcp_send_rst(sk, hdr, skb);
-				skb_free(skb);
-				/* Ensure accept() wakes up to observe that the backlog is still empty. */
-				TCP_UNBLOCK(sk);
-				result = ERROR_OK;
+				result = tcp_queue_data_before_accept(sk, hdr, skb, 0, "pending missing");
 				goto out;
 			} else if(pending->handshake_complete){
 				if(hdr->fin){

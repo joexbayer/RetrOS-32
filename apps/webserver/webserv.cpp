@@ -13,7 +13,16 @@ int main()
     struct sockaddr_in client_addr;
     socklen_t addr_len = sizeof(client_addr);
     
-    char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHello, World!";
+    const char* body = "Hello, World!\r\n";
+    char response[128];
+    int response_len = sprintf(response,
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: text/plain\r\n"
+        "Content-Length: %d\r\n"
+        "Connection: close\r\n"
+        "\r\n"
+        "%s",
+        (int)strlen(body), body);
     char buffer[4048] = {0};
     while(1){
         printf("[WEBSERV] Waiting for client connection...\n");
@@ -35,7 +44,7 @@ int main()
         buffer[ret] = 0;
         //printf("Received: %s\n", buffer);
         printf("[WEBSERV] Serving response to client %d\n", client);
-        send(client, response, strlen(response)-1, 0);
+        send(client, response, response_len, 0);
         printf("[WEBSERV] Response sent to client %d\n", client);
         close(client);
         printf("[WEBSERV] Connection with client %d closed\n", client);
