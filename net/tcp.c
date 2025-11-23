@@ -636,33 +636,9 @@ int tcp_accept_connection(struct sock* sock, struct sock* new)
 		return -1;
 	}
 
-	/* Avoid missing wakeups if the backlog fills between the count check and blocking. */
-	uint32_t accept_start = timer_get_tick();
-	while(1){
-		if(sock->backlog.count > 0){
-			break;
-		}
-
-		sock->waiting = $process->current;
-		dbgprintf("[TCP] Socket %d is listening but backlog is empty (waiting=%p)\n", sock, sock->waiting);
-
-		$process->current->state = BLOCKED;
-		/* If a connection arrived before we actually yielded, don't sleep. */
-		if(sock->backlog.count > 0){
-			$process->current->state = RUNNING;
-			sock->waiting = NULL;
-			break;
-		}
-
-		/* Avoid hanging forever; return timeout so callers can retry. */
-		if(timer_get_tick() - accept_start > TCP_ACCEPT_WAIT_TIMEOUT){
-			$process->current->state = RUNNING;
-			sock->waiting = NULL;
-			dbgprintf("[TCP] Accept timed out waiting for backlog\n");
-			return -ERROR_TIMEOUT;
-		}
-
-		kernel_yield();
+	/* Non-blocking check: if backlog is empty, return timeout so caller can retry instead of hanging. */
+	if(sock->backlog.count == 0){
+		return -ERROR_TIMEOUT;
 	}
 
 	/* Ensure the waiter pointer is cleared once we're proceeding. */

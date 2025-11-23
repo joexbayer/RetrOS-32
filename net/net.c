@@ -193,6 +193,10 @@ struct sock* kernel_accept(struct sock* socket, struct sockaddr *address, sockle
     if(socket->tcp == NULL){
         return NULL;
     }
+    /* If no pending connection, return immediately to avoid spinning allocations. */
+    if(socket->backlog.count <= 0){
+        return NULL;
+    }
     
     /* Create new TCP socket? */
     struct sock* new_socket = kernel_socket_create(socket->domain, socket->type, socket->protocol);
@@ -203,7 +207,13 @@ struct sock* kernel_accept(struct sock* socket, struct sockaddr *address, sockle
    
 
     /* Wait for a new connection. */
-    net_sock_accept(socket, socket->accept_sock);
+    int ret = net_sock_accept(socket, socket->accept_sock);
+    if(ret < 0){
+        dbgprintf("[NET] accept failed with %d\n", ret);
+        socket->accept_sock = NULL;
+        kernel_sock_cleanup(new_socket);
+        return NULL;
+    }
 
     /* Copy address of sender to address. */
     if(address != NULL){
