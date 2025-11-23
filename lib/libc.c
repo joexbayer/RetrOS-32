@@ -145,7 +145,7 @@ inline inline uint32_t memcmp(const void* ptr, const void* ptr2, uint32_t len)
 	return 0;
 }
 
-#define MAX_FMT_STR_SIZE 256
+#define MAX_FMT_STR_SIZE 1024
 
 int32_t sprintf(char *buffer, const char *fmt, ...)
 {
@@ -218,6 +218,10 @@ int32_t csprintf(char *buffer, const char *fmt, va_list args)
             }
         }
         fmt++;
+    }
+
+    if (written >= MAX_FMT_STR_SIZE) {
+        return -1; /* Indicate buffer overflow */
     }
 
     /* Ensure the buffer is null-terminated */

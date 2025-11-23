@@ -13,17 +13,36 @@ int main()
     struct sockaddr_in client_addr;
     socklen_t addr_len = sizeof(client_addr);
     
-    const char* body = "Hello, World!\r\n";
-    char response[128];
+    const char* body = 
+        "<html>\n"
+        "<head><title>RetrOS-32</title></head>\n"
+        "<body>\n"
+        "<h1>Welcome to RetrOS-32</h1>\n"
+        "<hr>\n"
+        "<p>This is a simple web server running on RetrOS-32.</p>\n"
+        "<p><b>System Information:</b></p>\n"
+        "<ul>\n"
+        "<li>Operating System: RetrOS-32</li>\n"
+        "<li>Web Server: Port 8080</li>\n"
+        "<li>Status: Running</li>\n"
+        "</ul>\n"
+        "<hr>\n"
+        "<p><i>Powered by RetrOS-32</i></p>\n"
+        "</body>\n"
+        "</html>\n"
+        "\r\n";
+    char response[512];
+    
     int response_len = sprintf(response,
         "HTTP/1.1 200 OK\r\n"
-        "Content-Type: text/plain\r\n"
+        "Content-Type: text/html\r\n"
         "Content-Length: %d\r\n"
         "Connection: close\r\n"
         "\r\n"
         "%s",
         (int)strlen(body), body);
     char buffer[4048] = {0};
+    
     while(1){
         printf("[WEBSERV] Waiting for client connection...\n");
         addr_len = sizeof(client_addr);
@@ -43,7 +62,7 @@ int main()
 
         buffer[ret] = 0;
         //printf("Received: %s\n", buffer);
-        printf("[WEBSERV] Serving response to client %d\n", client);
+        printf("[WEBSERV] Serving response to client %d %d\n", client, response_len);
         send(client, response, response_len, 0);
         printf("[WEBSERV] Response sent to client %d\n", client);
         close(client);

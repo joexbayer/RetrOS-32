@@ -1545,6 +1545,13 @@ static int tcp_state_machine(struct sk_buff* skb){
 			goto out;
 		}
 
+		/* Pure ACKs with no payload/flags do not require an ACK response. */
+		if(hdr->syn == 0 && hdr->fin == 0 && hdr->ack == 1 && hdr->rst == 0 && skb->data_len == 0){
+			skb_free(skb);
+			result = ERROR_OK;
+			goto out;
+		}
+
 		if(hdr->syn == 0 && hdr->ack == 1 && hdr->fin == 0){
 			/**
 			 * @brief This is where we should check if the packet is in order.
@@ -1759,13 +1766,6 @@ static int tcp_state_machine(struct sk_buff* skb){
 		}
 		break;	
 	case TCP_TIME_WAIT:
-		if(hdr->syn == 1){
-			/* New connection attempt reusing tuple: fail fast so client retries elsewhere. */
-			tcp_send_rst(sk, hdr, skb);
-			skb_free(skb);
-			result = ERROR_OK;
-			goto out;
-		}
 		if(hdr->fin == 1){
 			int ack_len = skb->data_len + 1;
 			tcp_send_ack(sk, hdr, skb, ack_len);

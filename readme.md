@@ -27,7 +27,7 @@
   ![Build](https://github.com/joexbayer/RetrOS-32/actions/workflows/pipeline.yml/badge.svg)
   
   <p align="center">
-    Hobby 32bit operatingsystem project focusing on networking on i386 architecture.
+    Fully custom hobby 32bit operating system project focusing on i386 architecture.
     <br />
     <a href="https://oshub.org/projects/retros-32"><strong>Project OSHub page »</strong></a>
     <br />

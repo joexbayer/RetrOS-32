@@ -193,9 +193,12 @@ struct sock* kernel_accept(struct sock* socket, struct sockaddr *address, sockle
     if(socket->tcp == NULL){
         return NULL;
     }
-    /* If no pending connection, return immediately to allow caller to retry/drop. */
-    if(socket->backlog.count <= 0){
-        return NULL;
+    /* Block until a pending connection exists or the socket is torn down. */
+    while(socket->backlog.count <= 0){
+        if(socket->closing || socket->tcp->state == TCP_CLOSED){
+            return NULL;
+        }
+        kernel_yield();
     }
     
     /* Create new TCP socket? */
