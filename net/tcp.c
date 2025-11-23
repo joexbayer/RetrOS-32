@@ -23,9 +23,10 @@
 #include <timer.h>
 
 #define TCB_MAX 32
-#define TCP_ACCEPT_RETRY_DELAY 50
-#define TCP_ACCEPT_MAX_RETRIES 5
-#define TCP_BACKLOG_MAX_RETRIES 40
+#define TCP_ACCEPT_RETRY_DELAY 20
+/* Allow slow accept loops to keep data alive longer before giving up. */
+#define TCP_ACCEPT_MAX_RETRIES 100
+#define TCP_BACKLOG_MAX_RETRIES 200
 #define TCP_RETRY_WAIT_FOREVER 0xFFFFFFFF
 #define TCP_TIME_WAIT_DURATION 200
 
