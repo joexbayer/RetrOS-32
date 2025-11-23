@@ -76,7 +76,7 @@ error_t kernel_recv(struct sock* socket, void *buffer, int length, int flags)
         return -ERROR_INVALID_SOCKET_TYPE;
     }
 
-    dbgprintf(" %d reading from socket ...\n");
+    dbgprintf(" %d reading from socket ...\n", socket->socket);
     read = net_sock_read(socket, buffer, length);
 
     dbgprintf("Socket %d recv %d\n", socket->socket, read);
@@ -113,6 +113,8 @@ error_t kernel_connect(struct sock* socket, const struct sockaddr *address, sock
 
     socket->tcp->state = TCP_SYN_SENT;
     tcp_connect(socket);
+    /* SYN consumes one sequence number */
+    socket->tcp->sequence += 1;
 
     dbgprintf(" [%d] Connecting...\n", socket);
     /* block or spin */

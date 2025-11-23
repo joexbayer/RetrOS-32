@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Configure rootfs/sysutil/startup.sh to run testing applications on boot
+# Uncomment boot/bootloader.s:393 to skip resolution prompt
+
 # How to test:
 #   ./tools/run_qemu_stress.sh
 # Read logs at /tmp/qemu-headless.log
