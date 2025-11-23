@@ -286,8 +286,9 @@ error_t net_sock_awaiting_ack(struct sock* sk)
 
 error_t net_sock_data_ready(struct sock* sk, unsigned int length)
 {
-    assert(sk != NULL);
-	return sk->data_ready == 1 || sk->recvd >= length || sk->data_ready == -1;
+	assert(sk != NULL);
+	/* Unblock as soon as we have any bytes buffered (stream semantics), EOF, or the caller's threshold. */
+	return sk->data_ready == 1 || sk->recvd >= length || sk->recvd > 0 || sk->data_ready == -1;
 }
 
 struct sock* sock_find_listen_tcp(uint16_t d_port)
@@ -324,7 +325,8 @@ struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip)
             socket_table[i]->tcp->state == TCP_CLOSE_WAIT ||
             socket_table[i]->tcp->state == TCP_LAST_ACK ||
             socket_table[i]->tcp->state == TCP_FIN_WAIT ||
-            socket_table[i]->tcp->state == TCP_FIN_WAIT_2)) {
+            socket_table[i]->tcp->state == TCP_FIN_WAIT_2 ||
+            socket_table[i]->tcp->state == TCP_TIME_WAIT)) {
                 //dbgprintf("[TCP] Found established socket %d\n", i);
                 return socket_table[i];
         }

@@ -27,7 +27,7 @@
 /* Allow slow accept loops to keep data alive longer before giving up. */
 #define TCP_ACCEPT_MAX_RETRIES 100
 #define TCP_BACKLOG_MAX_RETRIES 200
-#define TCP_RETRY_WAIT_TIMEOUT 5000
+#define TCP_RETRY_WAIT_TIMEOUT 60000
 #define TCP_RETRY_WAIT_FOREVER 0xFFFFFFFF
 #define TCP_TIME_WAIT_DURATION 200
 #define TCP_ACCEPT_WAIT_TIMEOUT 3000 /* ticks */
@@ -1133,7 +1133,8 @@ static int tcp_retry_queue_add_delayed(struct sk_buff* skb, uint32_t delay_ticks
 static int tcp_retry_queue_add_waiting(struct sk_buff* skb)
 {
 	skb->retry_at = timer_get_tick();
-	skb->wait_forever_until = timer_get_tick() + TCP_RETRY_WAIT_TIMEOUT;
+	/* Keep backlog data alive while the application drains existing connections. */
+	skb->wait_forever_until = TCP_RETRY_WAIT_FOREVER;
 	return retry_queue->ops->add(retry_queue, skb);
 }
 
@@ -1556,6 +1557,12 @@ static int tcp_state_machine(struct sk_buff* skb){
 			 * We will not buffer packets for now, but we should probably do that in the future.
 		 * sock->tcp->sequence == htonl(tcp->seq)
 		 */
+			/* If we somehow missed initializing the expected seq (e.g., retry queue before accept),
+			 * adopt the first seen sequence to avoid wedging the connection. */
+			if(sk->tcp->acknowledgement == 0){
+				sk->tcp->acknowledgement = ntohl(hdr->seq);
+			}
+
 			if (sk->tcp->acknowledgement != ntohl(hdr->seq)) {
 				dbgprintf("[TCP] Out-of-order packet received. Expected seq: %d, received seq: %d\n",sk->tcp->acknowledgement, ntohl(hdr->seq));
 				result = -1;
@@ -1752,6 +1759,13 @@ static int tcp_state_machine(struct sk_buff* skb){
 		}
 		break;	
 	case TCP_TIME_WAIT:
+		if(hdr->syn == 1){
+			/* New connection attempt reusing tuple: fail fast so client retries elsewhere. */
+			tcp_send_rst(sk, hdr, skb);
+			skb_free(skb);
+			result = ERROR_OK;
+			goto out;
+		}
 		if(hdr->fin == 1){
 			int ack_len = skb->data_len + 1;
 			tcp_send_ack(sk, hdr, skb, ack_len);

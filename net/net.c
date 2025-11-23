@@ -193,7 +193,7 @@ struct sock* kernel_accept(struct sock* socket, struct sockaddr *address, sockle
     if(socket->tcp == NULL){
         return NULL;
     }
-    /* If no pending connection, return immediately to avoid spinning allocations. */
+    /* If no pending connection, return immediately to allow caller to retry/drop. */
     if(socket->backlog.count <= 0){
         return NULL;
     }

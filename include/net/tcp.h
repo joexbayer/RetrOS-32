@@ -78,6 +78,7 @@ struct tcp_connection {
 #include <net/socket.h>
 
 #define TCP_MSS        512
+#define TCP_ACCEPT_WAIT_TIMEOUT 3000 /* ticks */
 
 
 #define TCP_HTONS(hdr) \
