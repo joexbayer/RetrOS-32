@@ -35,6 +35,7 @@ struct sk_buff {
 
     int retries;
     uint32_t retry_at;
+    uint32_t wait_forever_until;
 
     struct net_interface* interface;
 };

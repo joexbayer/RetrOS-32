@@ -27,8 +27,10 @@
 /* Allow slow accept loops to keep data alive longer before giving up. */
 #define TCP_ACCEPT_MAX_RETRIES 100
 #define TCP_BACKLOG_MAX_RETRIES 200
+#define TCP_RETRY_WAIT_TIMEOUT 5000
 #define TCP_RETRY_WAIT_FOREVER 0xFFFFFFFF
 #define TCP_TIME_WAIT_DURATION 200
+#define TCP_ACCEPT_WAIT_TIMEOUT 3000 /* ticks */
 
 /** new implementation **/
 static struct skb_queue* retry_queue = NULL;
@@ -44,6 +46,7 @@ static void tcp_retry_queue_purge(uint32_t ip, uint16_t port);
 static int tcp_backlog_drop_entry(struct sock* sock, uint32_t ip, uint16_t port);
 static void tcp_retry_queue_flush(uint32_t ip, uint16_t port);
 static int tcp_handle_listen_rst(struct sock* sk, struct sk_buff* skb);
+static void tcp_abort_backlog_connection(struct sock* sock, struct sk_buff* skb, const char* reason);
 
 int tcp_init()
 {
@@ -252,6 +255,7 @@ int tcp_retry_all(int force){
 	 * if packets are re-added to the queue during processing */
 	int initial_size = retry_queue->size;
 	int processed = 0;
+	uint32_t now = timer_get_tick();
 	
 	while(processed < initial_size && retry_queue->size > 0){
 		struct sk_buff* skb = retry_queue->ops->remove(retry_queue);
@@ -261,22 +265,31 @@ int tcp_retry_all(int force){
 		}
 
 		if(!force && skb->retry_at != 0){
-			if(skb->retry_at == TCP_RETRY_WAIT_FOREVER){
+			if(skb->wait_forever_until != 0){
 				/* Retry once the socket for this 4-tuple exists (after accept()). */
 				struct tcp_header* hdr = skb->hdr.tcp;
 				struct sock* sk = net_sock_find_tcp(hdr->source, hdr->dest, ntohl(skb->hdr.ip->saddr));
 				if(sk == NULL || sk->tcp == NULL ||
 				   sk->tcp->state == TCP_LISTEN || sk->tcp->state == TCP_SYN_RCVD){
+					if(now >= skb->wait_forever_until){
+						dbgprintf("[TCP] Dropping backlog retry for %x:%d after wait timeout\n",
+						          ntohl(skb->hdr.ip->saddr), ntohs(hdr->source));
+						if(sk != NULL){
+							tcp_abort_backlog_connection(sk, skb, "retry wait timeout");
+						}
+						skb_free(skb);
+						processed++;
+						continue;
+					}
 					retry_queue->ops->add(retry_queue, skb);
 					processed++;
 					continue;
 				}
 
 				/* Socket is ready; process immediately. */
+				skb->wait_forever_until = 0;
 				skb->retry_at = 0;
-			}
-			uint32_t now = timer_get_tick();
-			if(now < skb->retry_at){
+			} else if(now < skb->retry_at){
 				retry_queue->ops->add(retry_queue, skb);
 				processed++;
 				continue;
@@ -624,6 +637,7 @@ int tcp_accept_connection(struct sock* sock, struct sock* new)
 	}
 
 	/* Avoid missing wakeups if the backlog fills between the count check and blocking. */
+	uint32_t accept_start = timer_get_tick();
 	while(1){
 		if(sock->backlog.count > 0){
 			break;
@@ -638,6 +652,14 @@ int tcp_accept_connection(struct sock* sock, struct sock* new)
 			$process->current->state = RUNNING;
 			sock->waiting = NULL;
 			break;
+		}
+
+		/* Avoid hanging forever; return timeout so callers can retry. */
+		if(timer_get_tick() - accept_start > TCP_ACCEPT_WAIT_TIMEOUT){
+			$process->current->state = RUNNING;
+			sock->waiting = NULL;
+			dbgprintf("[TCP] Accept timed out waiting for backlog\n");
+			return -ERROR_TIMEOUT;
 		}
 
 		kernel_yield();
@@ -1134,7 +1156,8 @@ static int tcp_retry_queue_add_delayed(struct sk_buff* skb, uint32_t delay_ticks
 
 static int tcp_retry_queue_add_waiting(struct sk_buff* skb)
 {
-	skb->retry_at = TCP_RETRY_WAIT_FOREVER;
+	skb->retry_at = timer_get_tick();
+	skb->wait_forever_until = timer_get_tick() + TCP_RETRY_WAIT_TIMEOUT;
 	return retry_queue->ops->add(retry_queue, skb);
 }
 
@@ -1316,6 +1339,26 @@ static int tcp_state_machine(struct sk_buff* skb){
 		}
 
 		if(hdr->syn == 1 && hdr->ack == 0){
+			/* If we cannot track this connection, fail fast with RST so client doesn't hang. */
+			if(sk->pending_connections != NULL &&
+			   sk->pending_connections->count >= TCP_MAX_PENDING_CONNECTIONS){
+				dbgprintf("[TCP] Pending list full at SYN from %x:%d, sending RST\n",
+				          ntohl(skb->hdr.ip->saddr), ntohs(hdr->source));
+				tcp_send_rst(sk, hdr, skb);
+				skb_free(skb);
+				result = ERROR_OK;
+				goto out;
+			}
+
+			if(sk->backlog.count >= sk->backlog.size){
+				dbgprintf("[TCP] Backlog full at SYN from %x:%d, sending RST\n",
+				          ntohl(skb->hdr.ip->saddr), ntohs(hdr->source));
+				tcp_send_rst(sk, hdr, skb);
+				skb_free(skb);
+				result = ERROR_OK;
+				goto out;
+			}
+
 			if(sk->backlog.count == sk->backlog.size){
 				dbgprintf("[TCP] Backlog is full, dropping packet\n");
 				result = -1;

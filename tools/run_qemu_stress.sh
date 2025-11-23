@@ -4,6 +4,7 @@
 #   ./tools/run_qemu_stress.sh
 # Read logs at /tmp/qemu-headless.log
 # Change code
+# sudo make clean if you changed a header file
 # sudo make img
 # Repeat test
 

@@ -34,6 +34,7 @@ enum errors {
     ERROR_OPS_CORRUPTED,
     ERROR_OUT_OF_MEMORY,
     ERROR_ACCESS_DENIED,
+    ERROR_TIMEOUT,
 };
 
 char* error_get_string(error_t err);
