@@ -416,6 +416,16 @@ void kernel_sock_close(struct sock* socket)
 {
     dbgprintf("Closing socket...\n");
     if(socket->type == SOCK_STREAM && socket->tcp != NULL){
+        /* For a listening socket, there is no peer to FIN. Just mark closed and tear down. */
+        if(socket->tcp->state == TCP_LISTEN){
+            socket->closing = 1;
+            socket->tcp->state = TCP_CLOSED;
+            socket->tcp->time_wait_expire = 0;
+            socket->data_ready = -1;
+            kernel_sock_cleanup(socket);
+            return;
+        }
+
         socket->closing = 1;
         kernel_sock_shutdown(socket, 0);
         return;
