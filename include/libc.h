@@ -60,6 +60,7 @@ int htoi(char s[]);
 
 int isdigit(char c);
 int isspace(char c);
+int tolower(int c);
 int rand(void);
 
 struct args {

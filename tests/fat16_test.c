@@ -13,6 +13,7 @@
 #include <fs/fat16.h>
 
 #include <mocks.h>
+#include <test.h>
 
 #define DEBUG 0
 

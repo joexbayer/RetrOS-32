@@ -37,6 +37,7 @@ LIB_COMMON_OBJS = ../bin/syscall.o ../bin/libc.o ../bin/printf.o bin/cppUtils.o
 LIB_GRAPHICS_OBJS = ../bin/graphics.o ../bin/libc.o
 LIB_NET_OBJS = ../bin/netlib.o
 LIB_ZLIB_OBJS = ../bin/lz.o ../bin/libc.o
+LIB_HTTP_OBJS = ../bin/http.o ../bin/libc.o ../bin/printf.o ../bin/syscall.o
 
 .PHONY: all new programs
 all: new
@@ -48,6 +49,7 @@ staticlibs:
 	$(AR) rcs libnet.a $(LIB_NET_OBJS)
 	$(AR) rcs libgraphic.a $(LIB_GRAPHICS_OBJS)
 	$(AR) rcs libzlib.a $(LIB_ZLIB_OBJS)
+	$(AR) rcs libhttp.a $(LIB_HTTP_OBJS)
 
 
 programs: staticlibs bin/crt0.o ${USROBJS}

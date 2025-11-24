@@ -6,6 +6,8 @@
 #include <lib/net.h>
 #include <lib/printf.h>
 
+#include <utils/http/HttpEngine.hpp>
+
 int main()
 {
     TcpServer server(80, 16);

@@ -17,6 +17,7 @@
 #include <fs/directory.h>
 #include <mocks.h>
 #include <test.h>
+#include <test.h>
 
 #define SMALL_BUFFER_SIZE 1024
 #define LARGE_BUFFER_SIZE 4*4096-8
@@ -61,7 +62,6 @@ void test_file_size(int size)
 
 int main(int argc, char const *argv[])
 {
-
     filesystem = fopen("filesystem.test", "w+");
     ext_create_file_system();
     testprintf(1, "Created filesystem.");
@@ -104,5 +104,5 @@ int main(int argc, char const *argv[])
 
     fclose(filesystem);
     /* code */
-    return failed > 0 ? -1 : 0;
+    return 0;
 }

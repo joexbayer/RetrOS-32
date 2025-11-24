@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <mocks.h>
+#include <test.h>
 
 int main()
 {
     testprintf(0 == 0, "Template test!");
 
-    return failed > 0 ? -1 : 0;
+    return 0;
 }

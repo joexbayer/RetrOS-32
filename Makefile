@@ -70,7 +70,7 @@ KERNELOBJ = bin/kernel.o bin/terminal.o bin/helpers.o bin/pci.o bin/virtualdisk.
 
 BOOTOBJ = bin/bootloader.o
 
-LIBOBJ = bin/printf.o bin/syscall.o bin/graphics.o bin/netlib.o
+LIBOBJ = bin/printf.o bin/syscall.o bin/graphics.o bin/netlib.o bin/http.o
 
 # ---------------- Makefile rules ----------------
 

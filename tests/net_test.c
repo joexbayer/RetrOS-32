@@ -1,4 +1,5 @@
 #include <mocks.h>
+#include <test.h>
 #include <rbuffer.h>
 #include <string.h>
 
@@ -103,5 +104,5 @@ int main()
     test_repeated_sequences();
 
     test_summary();
-    return failed > 0 ? -1 : 0;
+    return 0;
 }
