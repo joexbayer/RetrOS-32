@@ -425,6 +425,35 @@ void kernel_sock_close(struct sock* socket)
     kernel_sock_cleanup(socket);
 }
 
+void net_close_sockets_owned_by(struct pcb* owner)
+{
+    if(owner == NULL){
+        return;
+    }
+
+    struct sock* owned[NET_NUMBER_OF_SOCKETS] = {0};
+    int owned_count = 0;
+
+    /* Collect sockets under lock to avoid races with creation/destruction. */
+    spin_lock(&__sock_lock);
+    for(int i = 0; i < NET_NUMBER_OF_SOCKETS && owned_count < NET_NUMBER_OF_SOCKETS; i++){
+        struct sock* sock = socket_table[i];
+        if(sock == NULL || sock->owner != owner){
+            continue;
+        }
+
+        sock_ref(sock);
+        owned[owned_count++] = sock;
+    }
+    spin_unlock(&__sock_lock);
+
+    /* Close sockets outside the lock so shutdown can proceed normally. */
+    for(int i = 0; i < owned_count; i++){
+        kernel_sock_close(owned[i]);
+        sock_deref(owned[i]);
+    }
+}
+
 /**
  * @brief Creates a socket and allocates a struct sock representation.
  * Needed for the network stack to forward data to correct socket.
