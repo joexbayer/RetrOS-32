@@ -15,9 +15,20 @@ int main()
     WebEngine webEngine(80, 16);
     web::FileRepository fileRepo;
 
-    webEngine.get("/", [&fileRepo](const http::Request& req, http::Response& res) {
+    /* Simple static pages */
+    webEngine.get("/home", [&fileRepo](const http::Request& req, http::Response& res) {
         (void)req;
         res.sendFile(fileRepo, "/web/index.htm");
+    });
+
+    webEngine.get("/about", [&fileRepo](const http::Request& req, http::Response& res) {
+        (void)req;
+        res.sendFile(fileRepo, "/web/about.htm");
+    });
+
+    webEngine.get("/status", [&fileRepo](const http::Request& req, http::Response& res) {
+        (void)req;
+        res.sendFile(fileRepo, "/web/status.htm");
     });
 
     webEngine.run();

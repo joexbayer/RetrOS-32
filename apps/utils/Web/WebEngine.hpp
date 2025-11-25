@@ -93,7 +93,7 @@ public:
     }
 
     void run() {
-        Log(INFO, "[WEBENGINE] Starting web server...");
+        Log(INFO, "[WEB] Starting web server...");
 
         struct sockaddr_in client_addr;
         socklen_t addr_len = sizeof(client_addr);
@@ -104,13 +104,13 @@ public:
             addr_len = sizeof(client_addr);
             int client = server->accept((struct sockaddr*)&client_addr, &addr_len);
             if (client < 0) {
-                Log(INFO, "[WEBENGINE] Failed to accept client connection");
+                Log(INFO, "[WEB] Failed to accept client connection");
                 continue;
             }
 
             int ret = recv(client, recvBuffer,  HTTP_RESPONSE_SIZE - 1, 0);
             if (ret <= 0) {
-                Log(WARN, "[WEBENGINE] recv error or connection closed read %d", ret);
+                Log(WARN, "[WEB] recv error or connection closed read %d", ret);
                 close(client);
                 continue;
             }
@@ -123,21 +123,23 @@ public:
             if (!http::HttpEngine::Parse(recvBuffer, req)) {
                 res.setStatus(HTTP_400_BAD_REQUEST);
                 res.setBody("Bad Request");
-                printf("[WEBENGINE] Failed to parse HTTP request\n");
+                printf("[WEB] Failed to parse HTTP request\n");
             } else {
                 bool handled = router.handleRequest(req, res);
                 if (!handled) {
                     res.setStatus(HTTP_404_NOT_FOUND);
                     res.setBody("Not Found");
-                    printf("[WEBENGINE] Request not handled, returning 404\n");
+                    printf("[WEB] Request not handled, returning 404\n");
                 }
             }
 
             int response_len = http::HttpEngine::BuildResponse(res, sendBuffer, HTTP_RESPONSE_SIZE);
             if (response_len > 0) {
-                printf("[WEBENGINE] Sending response:\n%s\n", sendBuffer);
                 send(client, sendBuffer, response_len, 0);
             }
+
+            printf("[WEB] Served %s %s with status %d\n", req.method() == HTTP_GET ? "GET" : "POST", req.path(), res.raw().status);
+
             close(client);
 
             memset(recvBuffer, 0, HTTP_RESPONSE_SIZE);
@@ -145,7 +147,7 @@ public:
         }
         delete[] recvBuffer;
         delete[] sendBuffer;
-        Log(INFO, "[WEBENGINE] Web server stopped.");
+        Log(INFO, "[WEB] Web server stopped.");
     }
 
 private:
