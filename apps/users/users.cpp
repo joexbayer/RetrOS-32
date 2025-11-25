@@ -26,7 +26,7 @@ public:
             0
         ));
 
-        widgets->addWidget(main, LEFT, new Button(100, 14, "Color", Function([this]() {
+        widgets->addWidget(main, LEFT, new Button(100, 14, "Color", Function<void()>([this]() {
             int color = color_picker_entry();
             
             char buffer[100] = {0};
@@ -34,7 +34,7 @@ public:
             printf("Executing: %s\n", buffer);
             system(buffer);
         })));
-        widgets->addWidget(main, RIGHT, new Button(100, 14, "Create", Function([this]() {
+        widgets->addWidget(main, RIGHT, new Button(100, 14, "Create", Function<void()>([this]() {
 
             Thread* editor = new Thread(editorEntry, 0);
             editor->start(0);
@@ -87,7 +87,7 @@ private:
 class MyClass {
 public:
     void memberFunction() {
-        Function f = [this]() { this->anotherFunction(); };
+        Function<void()> f([this]() { this->anotherFunction(); });
         f(); // Invoke the lambda
     }
 

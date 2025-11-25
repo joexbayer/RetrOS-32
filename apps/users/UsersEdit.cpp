@@ -41,12 +41,12 @@ public:
         main->addWidget(new Checkbox(true, "User"), LEFT);
         main->addWidget(new Checkbox(false, "Guest"), LEFT);
 
-        bottom->addWidget(new Button(50, 14, "Cancel", Function([this]() {
+        bottom->addWidget(new Button(50, 14, "Cancel", Function<void()>([this]() {
             delete widgets;
             exit();
         })), RIGHT);
 
-        bottom->addWidget(new Button(50, 14, "Create", Function([this]() {
+        bottom->addWidget(new Button(50, 14, "Create", Function<void()>([this]() {
             printf("Username: %s\n", ((Input*)widgets->getByTag("#username"))->getData()); 
             printf("Password: %s\n", ((Input*)widgets->getByTag("#password"))->getData());
 

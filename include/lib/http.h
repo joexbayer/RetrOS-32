@@ -4,6 +4,11 @@
 #include <stdint.h>
 #include <libc.h>
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct http_kv_pair {
     char *key;
     char *value;
@@ -88,5 +93,9 @@ int http_parse(const char *request, struct http_request *req);
 int http_parse_data(struct http_request *req);  
 int http_is_websocket_upgrade(struct http_request *req);
 int http_build_response(const struct http_response *res, char *buffer, size_t buffer_size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // HTTP_H

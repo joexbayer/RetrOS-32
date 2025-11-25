@@ -93,5 +93,6 @@ clean:
 	@make -C cube/ clean
 	@make -C users/ clean
 	@make -C texed/ clean
+	@make -C webserver/ clean
 	@echo [USR] All user programs cleaned!
 	rm -f .depend
