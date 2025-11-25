@@ -9,6 +9,7 @@
 #include <utils/Function.hpp>
 #include <lib/http.h>
 #include <utils/http/HttpEngine.hpp>
+#include <utils/Web/FileRepository.hpp>
 
 namespace web {
 
@@ -62,6 +63,7 @@ namespace web {
         struct Route routes[64];
         size_t route_count = 0;
     };
+
 };
 
 class WebEngine {
