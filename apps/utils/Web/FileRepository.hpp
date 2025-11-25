@@ -59,6 +59,8 @@ namespace web {
             cache[slot].size = size;
             cache[slot].loaded = true;
 
+            fclose(fd);
+
             return {buffer, size};
         }
 

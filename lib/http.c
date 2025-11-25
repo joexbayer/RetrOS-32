@@ -226,7 +226,10 @@ static void http_parse_headers(const char *headers, struct http_request *req) {
                 return;
             }
 
-            http_kv_insert(req->headers, key, k_value);
+            if (http_kv_insert(req->headers, key, k_value) != 0) {
+                /* kv store keeps ownership only on success */
+                free(k_value);
+            }
         }
 
         free(line);
@@ -270,7 +273,9 @@ static void http_parse_params(const char *query, struct http_request *req) {
             strncpy(value, key_end + 1, value_length);
             value[value_length] = '\0';
 
-            http_kv_insert(req->params, key, value);
+            if (http_kv_insert(req->params, key, value) != 0) {
+                free(value);
+            }
             
             free(key);
             param_start = param_end ? param_end + 1 : "";
@@ -608,7 +613,9 @@ static int http_extract_multipart_form_data(const char *body, const char *bounda
 
         trim_trailing_whitespace(value);
 
-        http_kv_insert(form_data, field_name, value);
+        if (http_kv_insert(form_data, field_name, value) != 0) {
+            free(value);
+        }
 
         boundary_start = http_strstr(value_end, boundary);
     }
@@ -668,7 +675,9 @@ int http_parse_data(struct http_request *req) {
                 strncpy(value, key_end + 1, value_length);
                 value[value_length] = '\0';
 
-                http_kv_insert(req->data, key, value);
+                if (http_kv_insert(req->data, key, value) != 0) {
+                    free(value);
+                }
 
                 param_start = param_end ? param_end + 1 : "";
 

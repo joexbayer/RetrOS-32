@@ -214,7 +214,9 @@ public:
         if (!vdup) {
             return;
         }
-        http_kv_insert(res_.headers, key, vdup);
+        if (http_kv_insert(res_.headers, key, vdup) != 0) {
+            free(vdup);
+        }
     }
 
     int build(char* buffer, size_t buffer_size) const {
