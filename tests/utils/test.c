@@ -10,7 +10,7 @@ struct test_stats {
 
 #define RESET   "\033[0m"
 
-void testprintff(int test,  const char* test_str)
+void testprintf(int test,  const char* test_str)
 {
     if(test){
         fprintf(stderr, "[ " GREEN "PASS" RESET " ] %s\n", test_str);

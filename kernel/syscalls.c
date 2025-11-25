@@ -17,6 +17,8 @@
 #include <syscall_helper.h>
 #include <assert.h>
 #include <keyboard.h>
+#include <memory.h>
+#include <errors.h>
 
 syscall_t syscall[255];
 
@@ -74,6 +76,14 @@ EXPORT_SYSCALL(SYSCALL_SET_CURSOR, sys_scr_set_cursor);
 
 static int sys_system(const char *command)
 {
+	if(command == NULL){
+		return -ERROR_NULL_POINTER;
+	}
+
+	if(user_memory_validate(command, 1, 0) != ERROR_OK){
+		return -ERROR_INVALID_ARGUMENTS;
+	}
+
 	return exec_cmd((char*)command);
 }
 EXPORT_SYSCALL(SYSCALL_SYSTEM, sys_system);
@@ -82,14 +92,21 @@ EXPORT_SYSCALL(SYSCALL_SYSTEM, sys_system);
 int system_call(int index, int arg1, int arg2, int arg3)
 {	
 	/* Call system call function based on index. */
-	if(index < 0 || index > 255){
-		return -1;
+	if(index < 0 || index >= (int)(sizeof(syscall)/sizeof(syscall[0]))){
+		EOI(48);
+		return -ERROR_INVALID_ARGUMENTS;
 	}
 	
+	syscall_t fn = syscall[index];
+	if(fn == NULL){
+		EOI(48);
+		return -ERROR_INVALID_ARGUMENTS;
+	}
+
 	/* the system call interrupt entered a critcal section */
 	EOI(48);
 	LEAVE_CRITICAL();
-	syscall_t fn = syscall[index];
+
 	$process->current->in_kernel = true;
 	int ret = fn(arg1, arg2, arg3);
 	$process->current->in_kernel = false;

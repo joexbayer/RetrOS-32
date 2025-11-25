@@ -75,9 +75,13 @@ int net_udp_parse(struct sk_buff* skb){
 		return -1;
 	}
 
+	sock_ref(sk);
+
 	int ret = net_sock_add_data(sk, skb);
 	if(ret == 0)
 		skb_free(skb);
+	
+	sock_deref(sk);
 		
 	dbgprintf("PORT %d -> %d, len: %d.\n", hdr->srcport, hdr->destport, hdr->udp_length);
 

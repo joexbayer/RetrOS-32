@@ -7,7 +7,9 @@ ASFLAGS=
 LDFLAGS= 
 MAKEFLAGS += --no-print-directory
 
-QEMU_OPS = -device e1000,netdev=net0 -serial stdio -netdev user,id=net0,hostfwd=tcp::80-:80 -object filter-dump,id=net0,netdev=net0,file=dump.dat -m 32m
+HOSTFWD_PORT ?= 8080
+QEMU_NETDEV = -netdev user,id=net0,hostfwd=tcp::$(HOSTFWD_PORT)-:80
+QEMU_OPS = -device e1000,netdev=net0 -serial stdio $(QEMU_NETDEV) -object filter-dump,id=net0,netdev=net0,file=dump.dat -m 32m
 
 # ---------------- For counting how many files to compile ----------------
 ifneq ($(words $(MAKECMDGOALS)),1)
@@ -68,11 +70,11 @@ KERNELOBJ = bin/kernel.o bin/terminal.o bin/helpers.o bin/pci.o bin/virtualdisk.
 
 BOOTOBJ = bin/bootloader.o
 
-LIBOBJ = bin/printf.o bin/syscall.o bin/graphics.o bin/netlib.o
+LIBOBJ = bin/printf.o bin/syscall.o bin/graphics.o bin/netlib.o bin/http.o
 
 # ---------------- Makefile rules ----------------
 
-.PHONY: all new image clean boot net kernel grub time tests build apps bin/build symbols git
+.PHONY: all new image clean boot net kernel grub time tests build apps bin/build symbols git qemu qemu-headless
 all: iso
 	$(TIME-END)
 
@@ -198,6 +200,8 @@ qemu_kernel: grub_fix grub_fix multiboot_kernel
 docker-rebuild:
 	docker-compose build --no-cache
 
+reset: clean img
+
 docker:
 	docker-compose up
 
@@ -210,8 +214,13 @@ else
 QEMU_CMD = qemu-system-i386 $(QEMU_OPS) -drive file=RetrOS-32-debug.img,format=raw,index=0,media=disk
 endif
 
+QEMU_HEADLESS_CMD = $(QEMU_CMD) -display none
+
 qemu:
 	$(QEMU_CMD)
+
+qemu-headless:
+	$(QEMU_HEADLESS_CMD)
 
 sync:
 	mkdir -p mnt

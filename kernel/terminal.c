@@ -19,8 +19,11 @@
 #include <gfx/events.h>
 #include <conf.h>
 #include <screen.h>
+#include <memory.h>
+#include <serial.h>
 
 #define MAX_FMT_STR_SIZE 50
+#define TERMINAL_TEXTBUFFER_INITIAL_CAPACITY 1024
 /* OLD */
 
 int scan(ubyte_t* data, int size)
@@ -95,6 +98,44 @@ static void __terminal_scroll(struct terminal* term)
 	__terminal_remove_line(term);
 }
 
+static int __terminal_grow_textbuffer(struct terminal* term, int min_capacity)
+{
+	if(term->textbuffer == NULL){
+		return -1;
+	}
+
+	int new_size = term->textbuffer_size > 0 ? term->textbuffer_size : TERMINAL_TEXTBUFFER_INITIAL_CAPACITY;
+	while(new_size <= min_capacity){
+		new_size *= 2;
+	}
+
+	char* new_buffer = (char*) krealloc(term->textbuffer, new_size);
+	if(new_buffer == NULL){
+		warningf("[TERM] Failed to grow text buffer to %d bytes\n", new_size);
+		return -1;
+	}
+
+	term->textbuffer = new_buffer;
+	term->textbuffer_size = new_size;
+	return 0;
+}
+
+static int __terminal_store_char(struct terminal* term, char c)
+{
+	if(term == NULL){
+		return -1;
+	}
+
+	if(term->head >= term->textbuffer_size){
+		if(__terminal_grow_textbuffer(term, term->head + 1) < 0){
+			return -1;
+		}
+	}
+
+	term->textbuffer[term->head++] = c;
+	return 0;
+}
+
 void terminal_commit()
 {
 	$process->current->term->ops->commit($process->current->term);
@@ -150,11 +191,12 @@ struct terminal* terminal_create(terminal_flags_t flags)
 	struct terminal* term = create(struct terminal);
 	if(term == NULL) return NULL;
 
-	term->textbuffer = (char*) kalloc(1024);
+	term->textbuffer = (char*) kalloc(TERMINAL_TEXTBUFFER_INITIAL_CAPACITY);
 	if(term->textbuffer == NULL){
 		kfree(term);
 		return NULL;
 	}
+	term->textbuffer_size = TERMINAL_TEXTBUFFER_INITIAL_CAPACITY;
 
 	term->ops = &terminal_ops;
 
@@ -204,6 +246,12 @@ int terminal_destroy(struct terminal* term)
 
 	if(term->ref.refs > 0){
 		return 0;
+	}
+
+	if(term->textbuffer != NULL){
+		kfree(term->textbuffer);
+		term->textbuffer = NULL;
+		term->textbuffer_size = 0;
 	}
 
 	kfree(term);
@@ -367,7 +415,7 @@ static int __terminal_reset(struct terminal* term)
 	term->tail = 0;
 	term->lines = 0;
 
-	memset(term->textbuffer, 0, 1024);
+	memset(term->textbuffer, 0, term->textbuffer_size);
 
 	return 0;
 }
@@ -388,8 +436,9 @@ static int __terminal_putchar_graphics(struct terminal* term, char c)
 			term->ops->commit(term);
 		}
 	}
-	term->textbuffer[term->head] = c;
-	term->head++;
+	if(__terminal_store_char(term, c) < 0){
+		return -1;
+	}
 
 	if(term->screen != NULL && term->screen != $process->current->gfx_window){
 		term->screen->changed = 1;
@@ -412,8 +461,9 @@ static int __terminal_putchar_textmode(struct terminal* term, char c)
 		}
 	}
 
-	term->textbuffer[term->head] = c;
-	term->head++;
+	if(__terminal_store_char(term, c) < 0){
+		return -1;
+	}
 
 	return 1;
 }
@@ -609,5 +659,3 @@ static int __terminal_writef(struct terminal* term, char* fmt, ...)
 	written += x_offset;
 	return written;
 }
-
-

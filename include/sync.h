@@ -22,7 +22,10 @@ typedef int volatile spinlock_t;
 typedef struct _mutex {
     lock_state_t state;
     struct pcb_queue* blocked;
+    uint32_t magic;
 } mutex_t;
+
+#define MUTEX_MAGIC 0x4d54584c
 
 void mutex_init(mutex_t* l);
 void acquire(mutex_t* l);

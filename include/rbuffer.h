@@ -15,10 +15,11 @@ struct ring_buffer_operations {
 struct ring_buffer {
     struct ring_buffer_operations* ops;
     spinlock_t spinlock;
-	char *buffer;    /* Pointer to the buffer data */
+    unsigned char *buffer;    /* Pointer to the buffer data */
 	int size;        /* Size of the buffer */
 	int start;       /* Index of the first element in the buffer */
 	int end;         /* Index of the next available element in the buffer */
+	int count;       /* Number of bytes currently stored */
 };
 
 struct ring_buffer* rbuffer_new(int size);

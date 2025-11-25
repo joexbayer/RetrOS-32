@@ -21,15 +21,33 @@
 #define KB(kb) (kb*1024)
 
 static struct memory_map kernel_memory_map = {0};
-static int memory_test(){
-	for (int i = 0; i < (15 * 1024*1024)+(1*1024*1024); i++){
-		volatile char value = *(volatile char *)i;
-		*(volatile char *)i = value;
 
-		if (i % (1024*1024) == 0){
-			dbgprintf("[KERNEL] 0x%x MB tested\n", i);
+static void memory_test_range(uintptr_t start, uintptr_t end)
+{
+	if(start >= end){
+		return;
+	}
+
+	for (uintptr_t addr = start; addr < end; addr++){
+		volatile char* ptr = (volatile char*)addr;
+		char value = *ptr;
+		*ptr = value;
+
+		if(((addr - start) % (1024*1024)) == 0){
+			dbgprintf("[KERNEL] 0x%x MB tested\n", addr - start);
 		}
 	}
+}
+
+static int memory_test(){
+	struct memory_map* map = memory_map_get();
+	if(map == NULL || !map->initialized){
+		return 0;
+	}
+
+	memory_test_range(map->kernel.from, map->kernel.to);
+	memory_test_range(map->permanent.from, map->permanent.to);
+
 	return 0;
 }
 
@@ -175,4 +193,54 @@ void init_memory()
 	vmem_init_kernel();
 	dbgprintf("Virtual Kernel memory initiated\n");
 	memory_test();
+}
+
+static int __user_range_valid(uint32_t addr, size_t len, int write)
+{
+	if(len == 0){
+		return 1;
+	}
+
+	struct pcb* current = $process->current;
+	if(current == NULL || current->page_dir == NULL){
+		return 1;
+	}
+
+	uint32_t start = addr & ~PAGE_MASK;
+	uint64_t end_addr = (uint64_t)addr + (uint64_t)len - 1;
+
+    for(uint32_t page = start; (uint64_t)page <= end_addr; page += PAGE_SIZE){
+        uint32_t pde = current->page_dir[DIRECTORY_INDEX(page)];
+        if(!(pde & PRESENT) || !(pde & USER)){
+            return 0;
+        }
+        uint32_t* table = (uint32_t*)(pde & ~PAGE_MASK);
+        uint32_t pte = table[TABLE_INDEX(page)];
+        if(!(pte & PRESENT) || !(pte & USER)){
+            return 0;
+        }
+        if(write && !(pte & READ_WRITE)){
+            return 0;
+        }
+	}
+
+	return 1;
+}
+
+int user_memory_validate(const void* ptr, size_t len, int write)
+{
+	if(ptr == NULL && len > 0){
+		return -ERROR_NULL_POINTER;
+	}
+
+	struct pcb* current = $process->current;
+	if(current == NULL || !current->is_process){
+		return ERROR_OK;
+	}
+
+	if(!__user_range_valid((uint32_t)ptr, len, write)){
+		return -ERROR_INVALID_ARGUMENTS;
+	}
+
+	return ERROR_OK;
 }

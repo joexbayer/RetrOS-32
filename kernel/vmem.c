@@ -14,6 +14,7 @@
 #include <sync.h>
 #include <bitmap.h>
 #include <assert.h>
+#include <math.h>
 
 #undef dbgprintf
 #define dbgprintf(...)
@@ -791,9 +792,15 @@ void vmem_init_kernel()
 {	
 	kernel_page_dir = vmem_manager->ops->alloc(vmem_manager);
 
-	/* identity map first 4 mb of data. */
+	/* identity map physical memory so kernel heap allocations stay accessible */
+	struct memory_map* map = memory_map_get();
+	uint32_t phys_map_end = map->virtual_memory.to;
+	if(phys_map_end < 0x400000){
+		phys_map_end = 0x400000;
+	}
+
 	uint32_t* kernel_page_table = vmem_manager->ops->alloc(vmem_manager);
-	for (int addr = 0; addr < 0x400000; addr += PAGE_SIZE){
+	for (uint32_t addr = 0; addr < 0x400000 && addr < phys_map_end; addr += PAGE_SIZE){
 		vmem_map(kernel_page_table, addr, addr, SUPERVISOR);
 	}
 
@@ -801,22 +808,26 @@ void vmem_init_kernel()
 	uint32_t* kernel_heap_memory_table = vmem_manager->ops->alloc(vmem_manager);;
 	vmem_add_table(kernel_page_dir, start, kernel_heap_memory_table, SUPERVISOR);
 
-	/* identity map rest of memory above 4MB */
-	dbgprintf("Initiating memory from 0x%x - %d\n", 0x400000, ((memory_map_get()->total)/(1024*1024)) - 4);
-	for (int i = 1; i < 16/4; i++){
+	/* identity map the remainder of physical memory beyond the first 4MB */
+	uint32_t mapped = 0x400000;
+	while(mapped < phys_map_end){
 		uint32_t* kernel_page_table_memory = vmem_manager->ops->alloc(vmem_manager);
 		if (kernel_page_table_memory == NULL){
 			PANIC();
 		}
-		
-		for (int k = 0; k < 1024; k += 1){
-			int addr = 0x400000*i + k*PAGE_SIZE;
+
+		uint32_t chunk = MIN(phys_map_end - mapped, 0x400000);
+		for (uint32_t offset = 0; offset < chunk; offset += PAGE_SIZE){
+			uint32_t addr = mapped + offset;
 			vmem_map(kernel_page_table_memory, addr, addr, SUPERVISOR);
 		}
-		vmem_add_table(kernel_page_dir, 0x400000*i, kernel_page_table_memory, SUPERVISOR);
-		dbgprintf("Initiated memory between 0x%x and 0x%x\n", 0x400000*i, 0x400000*(i+1));
+
+		vmem_add_table(kernel_page_dir, mapped, kernel_page_table_memory, SUPERVISOR);
+		dbgprintf("Initiated memory between 0x%x and 0x%x\n", mapped, mapped + chunk);
+		mapped += chunk;
 	}
-	dbgprintf("Initiated memory between 0x%x and 0x%x\n", 0x400000, 0x400000 + memory_map_get()->total - 4*1024*1024);
+	uint32_t mapped_end = (phys_map_end > 0x400000) ? phys_map_end : 0x400000;
+	dbgprintf("Initiated memory between 0x%x and 0x%x\n", 0x400000, mapped_end);
 	
 	/* test if 0x80d000 is identity mapped */
 
@@ -842,14 +853,36 @@ int vmem_allocator_create(struct virtual_memory_allocator* allocator, int from, 
 
 void vmem_map_driver_region(uint32_t addr, int size)
 {
-	uint32_t* kernel_page_table_driver = vmem_default->ops->alloc(vmem_default);;
-	for (int i = 0; i < size; i++)
-		vmem_map(kernel_page_table_driver, (uint32_t) addr+(PAGE_SIZE*i), (uint32_t) addr+(PAGE_SIZE*i), SUPERVISOR);
-	
-	dbgprintf("[mmap] Page for 0x%x set\n", addr);
+	if(size <= 0){
+		return;
+	}
 
-	vmem_add_table(kernel_page_dir,  addr, kernel_page_table_driver, SUPERVISOR);
-	return;
+	uint32_t aligned_addr = addr & ~PAGE_MASK;
+	uint32_t offset = addr - aligned_addr;
+	uint32_t bytes_to_map = size * PAGE_SIZE + offset;
+	int total_pages = (bytes_to_map + PAGE_SIZE - 1) / PAGE_SIZE;
+
+	for(int page = 0; page < total_pages; page++){
+		uint32_t current = aligned_addr + page * PAGE_SIZE;
+		uint32_t dir_index = DIRECTORY_INDEX(current);
+
+		uint32_t* page_table = NULL;
+		if(!(kernel_page_dir[dir_index] & PRESENT)){
+			page_table = vmem_default->ops->alloc(vmem_default);
+			if(page_table == NULL){
+				warningf("[mmap] Unable to allocate page table for driver region\n");
+				return;
+			}
+			memset(page_table, 0, PAGE_SIZE);
+			vmem_add_table(kernel_page_dir, current, page_table, SUPERVISOR);
+		} else {
+			page_table = (uint32_t*)(kernel_page_dir[dir_index] & ~PAGE_MASK);
+		}
+
+		vmem_map(page_table, current, current, SUPERVISOR);
+	}
+
+	dbgprintf("[mmap] Driver region 0x%x mapped (%d pages)\n", aligned_addr, total_pages);
 }
 
 int vmem_total_usage()

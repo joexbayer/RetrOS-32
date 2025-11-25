@@ -34,6 +34,8 @@ struct sk_buff {
     uint8_t* end;
 
     int retries;
+    uint32_t retry_at;
+    uint32_t wait_forever_until;
 
     struct net_interface* interface;
 };
@@ -46,7 +48,7 @@ struct skb_queue_operations {
 	struct sk_buff* (*remove)(struct skb_queue* skb_queue);
 };
 struct skb_queue {
-	mutex_t lock;
+	spinlock_t lock;
 	struct sk_buff* _head;
 	struct sk_buff* _tail;
 
@@ -64,11 +66,11 @@ struct sk_buff* skb_new();
 void skb_free(struct sk_buff* skb);
 
 #define ALLOCATE_SKB(skb)               \
-    (skb)->data = kalloc(0x600);         \
-    memset((skb)->data, 0, 0x600);       \
+    (skb)->data = kalloc(0x800);         \
+    memset((skb)->data, 0, 0x800);       \
     (skb)->head = skb->data;            \
     (skb)->tail = skb->head;            \
-    (skb)->end = skb->head+0x600;       \
+    (skb)->end = skb->head+0x800;       \
     (skb)->len = 0;
 
 #define FREE_SKB(skb)           \
@@ -84,4 +86,3 @@ void skb_free(struct sk_buff* skb);
 #include <net/tcp.h>
 
 #endif // !SKB_H
-

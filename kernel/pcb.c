@@ -20,6 +20,7 @@
 #include <kutils.h>
 #include <libc.h>
 #include <errors.h>
+#include <net/socket.h>
 
 #include <syscalls.h>
 #include <syscall_helper.h>
@@ -338,6 +339,9 @@ int pcb_cleanup_routine(void* arg)
 			pcb_table[i].state = ZOMBIE;
 		}
 	}
+
+	/* Gracefully tear down any sockets owned by this PCB before freeing memory. */
+	net_close_sockets_owned_by(pcb);
 	
 	switch (pcb->is_process){
 	case PCB_PROCESS:

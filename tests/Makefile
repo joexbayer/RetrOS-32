@@ -23,7 +23,7 @@ MOCK = utils/mocks.c utils/test.c
 
 .PHONY: bin
 
-all: ext_test fat16_test pcb_test mem_test run
+all: ext_test fat16_test pcb_test mem_test net_test http_test run
 
 bin:
 	@mkdir -p bin
@@ -40,6 +40,12 @@ mem_test: bin mem_test.c
 pcb_test: bin pcb_test.c
 	@$(CC) pcb_test.c ../bin/bitmap.o ../bin/pcb_queue.o  -D__RetrOS32MOCK $(MOCK) -I ../include/ -I ./include/  -O2 -m32 -Wall --no-builtin -o ./bin/pcb_test.o
 
+net_test: bin net_test.c
+	@$(CC) net_test.c ../bin/rbuffer.o  -D__RetrOS32MOCK $(MOCK) -I ../include/ -I ./include/  -O2 -m32 -Wall --no-builtin -D__KERNEL -o ./bin/net_test.o
+
+http_test: bin http_test.c
+	@$(CC) http_test.c ../lib/http.c -D__RetrOS32MOCK $(MOCK) -I ../include/ -I ./include/  -O2 -m32 -Wall --no-builtin -o ./bin/http_test.o
+
 fat16:
 	make -C ../ compile && make fat16_test && ./bin/fat16_test.o
 
@@ -51,6 +57,8 @@ run:
 	./bin/mem_test.o
 	./bin/fat16_test.o
 	./bin/pcb_test.o
+	./bin/net_test.o
+	./bin/http_test.o
 
 clean:
 	rm -f ./bin/*

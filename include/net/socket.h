@@ -24,6 +24,7 @@ struct sock {
     int domain;
 
     mutex_t lock;
+    volatile int refcount;
 
     int rx;
     int tx;
@@ -47,12 +48,16 @@ struct sock {
 
     /* if tcp socket */
     struct tcp_connection* tcp;
+    
+    /* Track pending connections for listening sockets (TCP_LISTEN state) */
+    struct tcp_pending_list* pending_connections;
 
     /* Should be a queue? Can multiple pcbs read from same socket? */
     volatile struct pcb* waiting;
     struct pcb* owner;
 
     struct sock* accept_sock;
+    volatile int closing;
 };
 
 #include <net/tcp.h>
@@ -77,6 +82,10 @@ error_t net_sock_data_ready(struct sock* sk, unsigned int length);
 error_t net_sock_add_data(struct sock* sock, struct sk_buff* skb);
 
 struct sock* sock_get(socket_t id);
+void sock_ref(struct sock* sock);
+void sock_deref(struct sock* sock);
+void kernel_sock_cleanup(struct sock* socket);
+void net_close_sockets_owned_by(struct pcb* owner);
 
 error_t net_sock_read(struct sock* sock, uint8_t* buffer, unsigned int length);
 

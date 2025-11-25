@@ -150,4 +150,6 @@ int vmem_free_allocations(struct pcb* pcb);
 
 void vmem_free_allocation(struct allocation* allocation);
 int vmem_continious_allocation_map(struct pcb* pcb, struct allocation* allocation, uint32_t* address, int num, int access);
+
+int user_memory_validate(const void* ptr, size_t len, int write);
 #endif

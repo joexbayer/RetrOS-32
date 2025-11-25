@@ -48,6 +48,7 @@ struct ring_buffer* rbuffer_new(int size)
     rbuf->size = size;
     rbuf->start = 0;
     rbuf->end = 0;
+    rbuf->count = 0;
     rbuf->spinlock = 0;
 
     return rbuf;
@@ -84,29 +85,30 @@ void rbuffer_free(struct ring_buffer* rbuf)
  */
 static error_t __ring_buffer_add(struct ring_buffer *buffer, unsigned char *data, int length)
 {
-    /* Calculate the number of bytes that can be added to the buffer */
-    int available = buffer->size - buffer->end + buffer->start;
-    if (available < length) {
+    spin_lock(&buffer->spinlock);
+
+    int free_space = buffer->size - buffer->count;
+    if(length > free_space){
+        spin_unlock(&buffer->spinlock);
         return -ERROR_RBUFFER_FULL;
     }
 
-    SPINLOCK(buffer, {
-        /* Copy the data into the buffer */
-        if (buffer->end + length <= buffer->size) {
-            /* The data doesn't wrap around the buffer */
-            memcpy(buffer->buffer + buffer->end, data, length);
-            buffer->end += length;
-            break;
-        } 
-        /* The data wraps around the buffer */
+    if (buffer->end + length <= buffer->size) {
+        memcpy(buffer->buffer + buffer->end, data, length);
+        buffer->end += length;
+    } else {
         int first_length = buffer->size - buffer->end;
         memcpy(buffer->buffer + buffer->end, data, first_length);
         memcpy(buffer->buffer, data + first_length, length - first_length);
         buffer->end = length - first_length;
-        
-    });
+    }
 
-	return length;
+    buffer->end %= buffer->size;
+    buffer->count += length;
+
+    spin_unlock(&buffer->spinlock);
+
+    return length;
 }
 
 /**
@@ -122,45 +124,29 @@ static error_t __ring_buffer_add(struct ring_buffer *buffer, unsigned char *data
  * @return The actual number of bytes of data read from the buffer.
  */
 static error_t __ring_buffer_read(struct ring_buffer *buffer, unsigned char *data, int length) {
-    /* Check if there is data available in the buffer */
-    int available = buffer->end - buffer->start;
-    int read_length = 0;
-    if (available == 0) {
+    spin_lock(&buffer->spinlock);
+
+    if (buffer->count == 0) {
+        spin_unlock(&buffer->spinlock);
         return -ERROR_RBUFFER_EMPTY;
     }
 
-    SPINLOCK(buffer, {
-        /* Read the data from the buffer into a temporary buffer */
-        char* temp_buffer = kalloc(available);
-        if(temp_buffer == NULL) {
+    int read_length = buffer->count < length ? buffer->count : length;
 
-            spin_unlock(&buffer->spinlock);
-            return -ERROR_OUT_OF_MEMORY;
-        }
-
-        if (buffer->start + available <= buffer->size) {
-            memcpy(temp_buffer, buffer->buffer + buffer->start, available);
-        } else {
-            int first_length = buffer->size - buffer->start;
-            memcpy(temp_buffer, buffer->buffer + buffer->start, first_length);
-            memcpy(temp_buffer + first_length, buffer->buffer, available - first_length);
-        }
-
-        /* Copy the data to the output buffer */
-        read_length = available < length ? available : length;
-        memcpy(data, temp_buffer, read_length);
-
-        /* Update the start index of the buffer */
+    if (buffer->start + read_length <= buffer->size) {
+        memcpy(data, buffer->buffer + buffer->start, read_length);
         buffer->start += read_length;
-        if (buffer->start == buffer->end) {
-            buffer->start = 0;
-            buffer->end = 0;
-        } else if (buffer->start == buffer->size) {
-            buffer->start = 0;
-        }
+    } else {
+        int first_length = buffer->size - buffer->start;
+        memcpy(data, buffer->buffer + buffer->start, first_length);
+        memcpy(data + first_length, buffer->buffer, read_length - first_length);
+        buffer->start = read_length - first_length;
+    }
 
-        kfree(temp_buffer);
-    });
+    buffer->start %= buffer->size;
+    buffer->count -= read_length;
+
+    spin_unlock(&buffer->spinlock);
 
     return read_length;
 }

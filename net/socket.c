@@ -149,7 +149,53 @@ struct sock* sock_get(socket_t id)
     if(id > NET_NUMBER_OF_SOCKETS)
         return NULL;
 
-    return socket_table[id];
+    struct sock* sock = socket_table[id];
+    if(sock != NULL){
+        sock_ref(sock);
+    }
+    return sock;
+}
+
+void sock_ref(struct sock* sock)
+{
+    if(sock == NULL) return;
+    __sync_add_and_fetch(&sock->refcount, 1);
+}
+
+static void sock_destroy(struct sock* socket)
+{
+    if(socket == NULL) return;
+
+    int sock_id = socket->socket;
+    dbgprintf("[SOCK] Destroying socket %d\n", sock_id);
+
+    tcp_free_connection(socket);
+    
+    /* Free pending connections list if it exists */
+    if(socket->pending_connections != NULL){
+        tcp_pending_list_destroy(socket->pending_connections);
+        socket->pending_connections = NULL;
+    }
+
+    while(SKB_QUEUE_READY(socket->skb_queue)){
+        struct sk_buff* skb = socket->skb_queue->ops->remove(socket->skb_queue);
+        skb_free(skb);
+    }
+    skb_free_queue(socket->skb_queue);
+
+    dbgprintf("[SOCK] Freeing recv buffer for socket %d\n", sock_id);
+    rbuffer_free(socket->recv_buffer);
+
+    dbgprintf("[SOCK] Socket %d destroyed\n", sock_id);
+    kfree((void*) socket);
+}
+
+void sock_deref(struct sock* sock)
+{
+    if(sock == NULL) return;
+    if(__sync_sub_and_fetch(&sock->refcount, 1) == 0){
+        sock_destroy(sock);
+    }
 }
 
 static inline error_t net_sock_add_data_segment(struct sock* sock, struct sk_buff* skb)
@@ -164,8 +210,8 @@ static inline error_t net_sock_add_data_segment(struct sock* sock, struct sk_buf
     sock->recvd += skb->data_len;
     sock->data_ready = sock->tcp == NULL ? 1 : skb->hdr.tcp->psh;
 
-    if(sock->waiting->state == BLOCKED){
-        /* need to clear waiting before setting it to run */
+    if(sock->waiting != NULL && sock->waiting->state == BLOCKED){
+        /* Wake the process that is blocked on this socket (accept/recv). */
         volatile struct pcb* pcb = sock->waiting;
         sock->waiting = NULL;
         pcb->state = RUNNING;
@@ -240,8 +286,9 @@ error_t net_sock_awaiting_ack(struct sock* sk)
 
 error_t net_sock_data_ready(struct sock* sk, unsigned int length)
 {
-    assert(sk != NULL);
-	return sk->data_ready == 1 || sk->recvd >= length || sk->data_ready == -1;
+	assert(sk != NULL);
+	/* Unblock as soon as we have any bytes buffered (stream semantics), EOF, or the caller's threshold. */
+	return sk->data_ready == 1 || sk->recvd >= length || sk->recvd > 0 || sk->data_ready == -1;
 }
 
 struct sock* sock_find_listen_tcp(uint16_t d_port)
@@ -263,40 +310,42 @@ struct sock* net_sock_find_tcp(uint16_t s_port, uint16_t d_port, uint32_t ip)
     //dbgprintf("[TCP] Looking for socket destintation %d: source %d\n", htons(d_port), htons(s_port));
     struct sock* _sk = NULL; /* save listen socket incase no established connection is found. */
 
+    /* First pass: Look for exact match (established connection with matching 4-tuple) */
     for (int i = 0; i < NET_NUMBER_OF_SOCKETS; i++){
         if(socket_table[i] == NULL || socket_table[i]->tcp == NULL)
             continue;
 
-    //    dbgprintf("[TCP] %s (%i:%d %i:%d) %s\n",
-    //         socket_table[i]->owner->name,
-    //         ntohl(socket_table[i]->recv_addr.sin_addr.s_addr), htons(socket_table[i]->recv_addr.sin_port),
-    //         htons(socket_table[i]->bound_ip), htons(socket_table[i]->bound_port),
-    //         tcp_state_to_str(socket_table[i]->tcp->state)); 
+        /* Match on destination port, source port, and source IP for established connections */
+        if(socket_table[i]->bound_port == d_port && 
+           socket_table[i]->recv_addr.sin_port == s_port &&
+           ntohl(socket_table[i]->recv_addr.sin_addr.s_addr) == ip &&
+           (socket_table[i]->tcp->state == TCP_ESTABLISHED || 
+            socket_table[i]->tcp->state == TCP_SYN_SENT ||
+            socket_table[i]->tcp->state == TCP_WAIT_ACK ||
+            socket_table[i]->tcp->state == TCP_CLOSE_WAIT ||
+            socket_table[i]->tcp->state == TCP_LAST_ACK ||
+           socket_table[i]->tcp->state == TCP_FIN_WAIT ||
+            socket_table[i]->tcp->state == TCP_FIN_WAIT_2 ||
+            socket_table[i]->tcp->state == TCP_TIME_WAIT)) {
+                //dbgprintf("[TCP] Found established socket %d\n", i);
+                return socket_table[i];
+        }
     }
     
+    /* Second pass: Look for listening socket if no established connection found */
     for (int i = 0; i < NET_NUMBER_OF_SOCKETS; i++){
         if(socket_table[i] == NULL || socket_table[i]->tcp == NULL)
             continue;
-
         
-        if(socket_table[i]->bound_port == d_port && (socket_table[i]->tcp->state == TCP_LISTEN || socket_table[i]->tcp->state == TCP_SYN_RCVD)){
+        if(socket_table[i]->bound_port == d_port && 
+           (socket_table[i]->tcp->state == TCP_LISTEN || socket_table[i]->tcp->state == TCP_SYN_RCVD)){
             _sk = socket_table[i];
+            break; /* Found listening socket, use it */
         }
-
-        if(socket_table[i]->bound_port == d_port && socket_table[i]->recv_addr.sin_port == s_port
-            && socket_table[i]->tcp->state != TCP_LISTEN
-            && socket_table[i]->tcp->state != TCP_SYN_RCVD
-            && socket_table[i]->tcp->state != TCP_PREPARE
-            && ntohl(socket_table[i]->recv_addr.sin_addr.s_addr) == ip
-            //&& (socket_table[i]->tcp->state == TCP_ESTABLISHED || socket_table[i]->tcp->state == TCP_SYN_SENT)
-            ){
-                //dbgprintf("[TCP] Found socket %d\n", i);
-                return socket_table[i];
-            }
     }
 
     if(_sk != NULL){
-        //dbgprintf("[TCP] Found socket %d\n", _sk->socket);
+        //dbgprintf("[TCP] Found listening socket %d\n", _sk->socket);
     }
     return _sk;
 }
@@ -348,37 +397,71 @@ void kernel_sock_cleanup(struct sock* socket)
 {
     if(socket == NULL) return;
 
+    int sock_id = socket->socket;
+
     spin_lock(&__sock_lock);
 
-    dbgprintf("[SOCK] Cleaning up socket %d\n", socket->socket);
-    tcp_free_connection(socket);
-
-    while(SKB_QUEUE_READY(socket->skb_queue)){
-        struct sk_buff* skb = socket->skb_queue->ops->remove(socket->skb_queue);
-        skb_free(skb);
+    if(socket_table[sock_id] == socket){
+        unset_bitmap(socket_map, sock_id);
+        socket_table[sock_id] = NULL;
+        total_sockets--;
     }
-    skb_free_queue(socket->skb_queue);
-
-    dbgprintf("[SOCK] Freeing recv buffer for socket %d\n", socket->socket);
-    rbuffer_free(socket->recv_buffer);
-
-    unset_bitmap(socket_map, (int)socket->socket);
-    
-    socket_table[socket->socket] = NULL;
-    total_sockets--;
-    
-    dbgprintf("[SOCK] Freeing socket %d\n", socket->socket);
-    kfree((void*) socket);
-    dbgprintf("[SOCK] Socket %d cleaned up, total sockets: %d\n", socket->socket, total_sockets);
 
     spin_unlock(&__sock_lock);
+
+    sock_deref(socket);
 }
 
 void kernel_sock_close(struct sock* socket)
 {
     dbgprintf("Closing socket...\n");
+    if(socket->type == SOCK_STREAM && socket->tcp != NULL){
+        /* For a listening socket, there is no peer to FIN. Just mark closed and tear down. */
+        if(socket->tcp->state == TCP_LISTEN){
+            socket->closing = 1;
+            socket->tcp->state = TCP_CLOSED;
+            socket->tcp->time_wait_expire = 0;
+            socket->data_ready = -1;
+            kernel_sock_cleanup(socket);
+            return;
+        }
+
+        socket->closing = 1;
+        kernel_sock_shutdown(socket, 0);
+        return;
+    }
+
     kernel_sock_shutdown(socket, 0);
     kernel_sock_cleanup(socket);
+}
+
+void net_close_sockets_owned_by(struct pcb* owner)
+{
+    if(owner == NULL){
+        return;
+    }
+
+    struct sock* owned[NET_NUMBER_OF_SOCKETS] = {0};
+    int owned_count = 0;
+
+    /* Collect sockets under lock to avoid races with creation/destruction. */
+    spin_lock(&__sock_lock);
+    for(int i = 0; i < NET_NUMBER_OF_SOCKETS && owned_count < NET_NUMBER_OF_SOCKETS; i++){
+        struct sock* sock = socket_table[i];
+        if(sock == NULL || sock->owner != owner){
+            continue;
+        }
+
+        sock_ref(sock);
+        owned[owned_count++] = sock;
+    }
+    spin_unlock(&__sock_lock);
+
+    /* Close sockets outside the lock so shutdown can proceed normally. */
+    for(int i = 0; i < owned_count; i++){
+        kernel_sock_close(owned[i]);
+        sock_deref(owned[i]);
+    }
 }
 
 /**
@@ -415,6 +498,8 @@ struct sock* kernel_socket_create(int domain, int type, int protocol)
     socket_table[current]->tcp = NULL;
     socket_table[current]->rx = 0;
     socket_table[current]->tx = 0;
+    socket_table[current]->refcount = 1;
+    socket_table[current]->closing = 0;
 
     socket_table[current]->recv_buffer = rbuffer_new(NET_MAX_BUFFER_SIZE);
     if(socket_table[current]->recv_buffer == NULL){

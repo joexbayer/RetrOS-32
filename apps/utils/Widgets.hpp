@@ -67,7 +67,7 @@ protected:
  */
 class Button : public Widget {
 public:
-    Button(int width, int height, char* text, Function callback) : callback(callback) {
+    Button(int width, int height, char* text, Function<void()> callback) : callback(callback) {
         this->width = width;
         this->height = height;
         this->text = text;
@@ -95,7 +95,7 @@ public:
 
 private:
     char* text;
-    Function callback;
+    Function<void()> callback;
 };
 
 /* A simple spacing widget */

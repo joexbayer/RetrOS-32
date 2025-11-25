@@ -16,6 +16,7 @@
 #include <assert.h>
 #include <scheduler.h>
 #include <errors.h>
+#include <timer.h>
 
 /**
  * @brief Binds a IP and Port to a socket, mainly used for the server side.
@@ -75,7 +76,7 @@ error_t kernel_recv(struct sock* socket, void *buffer, int length, int flags)
         return -ERROR_INVALID_SOCKET_TYPE;
     }
 
-    dbgprintf(" %d reading from socket ...\n");
+    dbgprintf(" %d reading from socket ...\n", socket->socket);
     read = net_sock_read(socket, buffer, length);
 
     dbgprintf("Socket %d recv %d\n", socket->socket, read);
@@ -85,16 +86,14 @@ error_t kernel_recv(struct sock* socket, void *buffer, int length, int flags)
 
 error_t kernel_recv_timeout(struct sock* socket, void *buffer, int length, int flags, int timeout)
 {
-    int time_start = get_time();
-
+    uint32_t timeout_ticks = timer_get_tick() + (timeout + 3) * 1000;
     int read = -1;
     while(read == -1){
-        if(get_time() - time_start > timeout+3)return 0;
-
+        if((uint32_t)timer_get_tick() > timeout_ticks) return 0;
+        kernel_yield();
     }
 
     return read;
-
 }
 
 error_t kernel_connect(struct sock* socket, const struct sockaddr *address, socklen_t address_len)
@@ -114,13 +113,15 @@ error_t kernel_connect(struct sock* socket, const struct sockaddr *address, sock
 
     socket->tcp->state = TCP_SYN_SENT;
     tcp_connect(socket);
+    /* SYN consumes one sequence number */
+    socket->tcp->sequence += 1;
 
     dbgprintf(" [%d] Connecting...\n", socket);
     /* block or spin */
 
-    int time_start = get_time();
+    uint32_t start_ticks = timer_get_tick();
     while(socket->tcp->state != TCP_ESTABLISHED){
-        if(get_time() - time_start > 2){
+        if((uint32_t)(timer_get_tick() - start_ticks) > 2000){
             dbgprintf(" [%d] Connection timed out\n", socket);
             return -1;
         }
@@ -194,6 +195,13 @@ struct sock* kernel_accept(struct sock* socket, struct sockaddr *address, sockle
     if(socket->tcp == NULL){
         return NULL;
     }
+    /* Block until a pending connection exists or the socket is torn down. */
+    while(socket->backlog.count <= 0){
+        if(socket->closing || socket->tcp->state == TCP_CLOSED){
+            return NULL;
+        }
+        kernel_yield();
+    }
     
     /* Create new TCP socket? */
     struct sock* new_socket = kernel_socket_create(socket->domain, socket->type, socket->protocol);
@@ -204,7 +212,13 @@ struct sock* kernel_accept(struct sock* socket, struct sockaddr *address, sockle
    
 
     /* Wait for a new connection. */
-    net_sock_accept(socket, socket->accept_sock);
+    int ret = net_sock_accept(socket, socket->accept_sock);
+    if(ret < 0){
+        dbgprintf("[NET] accept failed with %d\n", ret);
+        socket->accept_sock = NULL;
+        kernel_sock_cleanup(new_socket);
+        return NULL;
+    }
 
     /* Copy address of sender to address. */
     if(address != NULL){
@@ -228,7 +242,16 @@ error_t kernel_send(struct sock* socket, void *message, int length, int flags)
         return -ERROR_MSS_SIZE;
     }
 
-    if(socket == NULL || (socket->tcp == NULL && socket->tcp->state == TCP_CLOSED)){
+    if(socket == NULL){
+        return -ERROR_INVALID_SOCKET;
+    }
+
+    if(socket->tcp == NULL || socket->tcp->state == TCP_CLOSED){
+        return -ERROR_INVALID_SOCKET;
+    }
+
+    /* Don't allow send on sockets that are not in an open data state. */
+    if(socket->closing || socket->tcp->state != TCP_ESTABLISHED){
         return -ERROR_INVALID_SOCKET;
     }
 
@@ -240,16 +263,11 @@ error_t kernel_send(struct sock* socket, void *message, int length, int flags)
      * 
      * Currently we only accept tiny messages so this is not needed yet...
      */
-    WAIT(!net_sock_is_established(socket));
-    
     /* TODO: if message was bigger than 1400, send 1400 at a time, simple stop and wait. */
     dbgprintf(" [%d] Sending %d bytes\n", socket->socket, length);
     socket->tcp->state = TCP_WAIT_ACK;
     tcp_send_segment(socket, message, length, 1);
 
-    /* Move this into tcp_send_segment */
-    //WAIT(net_sock_awaiting_ack(socket));
-
-    /* Split into smaller "messages" of needed. */
+    /* Split into smaller "messages" if needed. */
     return length;
 }

@@ -1,6 +1,6 @@
 #### ONLY EDIT THIS ####
 OUTPUT = webserv.o
-LIBS = -lcore -lgraphic -lnet
+LIBS = -lcore -lgraphic -lnet -lhttp
 EXTENDED = 
 ########################
 ROOT = ../../

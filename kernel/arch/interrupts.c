@@ -59,6 +59,11 @@ static const char* __exceptions_names[32] = {
 #define USER_SUPERVISOR_BIT 0x4
 
 /* Function to print detailed page fault info */
+static inline int is_user_address(uint32_t addr)
+{
+    return addr >= VMEM_DATA && addr < VMEM_STACK;
+}
+
 void print_page_fault_info(unsigned long cr2) {
     unsigned long page_dir_entry;
     unsigned long page_table_entry;
@@ -95,7 +100,7 @@ void page_fault_interrupt(unsigned long cr2, unsigned long err)
 	print_page_fault_info(cr2);
 
 	pcb_dbg_print($process->current);
-	if($process->current->is_process && $process->current->in_kernel == false){
+	if($process->current->is_process && (!$process->current->in_kernel || is_user_address(cr2))){
 		struct msgbox* box = msgbox_create(MSGBOX_TYPE_WARNING, MSGBOX_BUTTON_OK, "Crash Report", " A program has crashed!", NULL);
 		msgbox_show(box);
 		kernel_exit();
@@ -233,4 +238,3 @@ void init_interrupts()
 
 	dbgprintf("[IQR] Interrupts initialized.");
 }
-

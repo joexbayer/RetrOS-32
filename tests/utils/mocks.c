@@ -40,18 +40,18 @@ struct process __mock_process = {
 };
 struct process* $process = &__mock_process;
 
-int failed = 0;
-int tests = 0;
-void testprintf(int test,  const char* test_str)
-{
-    if(test)
-        fprintf(stderr, "[ " GREEN "OK" RESET " ] %s\n", test_str);
-    else {
-        fprintf(stderr, "[ " RED "FAILED" RESET " ] %s\n", test_str);
-        failed++;
-    }
-    tests++;
-}
+// int failed = 0;
+// int tests = 0;
+// void testprintf(int test,  const char* test_str)
+// {
+//     if(test)
+//         fprintf(stderr, "[ " GREEN "OK" RESET " ] %s\n", test_str);
+//     else {
+//         fprintf(stderr, "[ " RED "FAILED" RESET " ] %s\n", test_str);
+//         failed++;
+//     }
+//     tests++;
+// }
 
 char* error_get_string(int err)
 {
@@ -102,17 +102,18 @@ void spin_unlock(spinlock_t* lock) {
 
 void mutex_init(mutex_t* l)
 {
-
+    l->state = UNLOCKED;
+    l->magic = MUTEX_MAGIC;
 }
 
 void acquire(mutex_t* l)
 {
-
+    l->state = LOCKED;
 }
 
 void release(mutex_t* l)
 {
-
+    l->state = UNLOCKED;
 }
 
 int disk_size()

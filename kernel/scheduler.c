@@ -275,7 +275,7 @@ static error_t sched_round_robin(struct scheduler* sched)
     return ERROR_OK;
 }
 
-/* Default round robin scheduler behavior */
+	/* Default round robin scheduler behavior */
 static error_t sched_default(struct scheduler* sched)
 {
     ERR_ON_NULL(sched);
@@ -284,6 +284,9 @@ static error_t sched_default(struct scheduler* sched)
     /* If no running process, get one from queue */
     if (sched->ctx.running == NULL){
         sched->ctx.running = sched->queue->ops->pop(sched->queue);
+        if(sched->ctx.running == NULL){
+            return -ERROR_PCB_QUEUE_EMPTY;
+        }
         /* Temporary fix */
         $process->current = sched->ctx.running;
     }
@@ -368,7 +371,11 @@ void kernel_sleep(int time)
 
 void kernel_yield()
 {   
-    assert(get_scheduler()->ops->schedule(get_scheduler()) == 0);
+    error_t ret = get_scheduler()->ops->schedule(get_scheduler());
+    if(ret != ERROR_OK){
+        /* Nothing to schedule, CPU will continue running current context */
+        return;
+    }
 }
 
 void kernel_exit()
@@ -388,4 +395,3 @@ void unblock(int pid)
 {
     //pcb_set_running(pid);
 }
-
