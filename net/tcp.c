@@ -811,7 +811,7 @@ int tcp_recv_ack(struct sock* sock, struct tcp_header* tcp)
 	return ERROR_OK;
 }
 
-int tcp_recv_syn(struct sock* sock, struct tcp_header* tcp)
+int tcp_recv_syn(struct sock* sock, struct tcp_header* tcp, uint32_t remote_ip)
 {
 	int ret;
 	struct sk_buff* skb;
@@ -850,7 +850,7 @@ int tcp_recv_syn(struct sock* sock, struct tcp_header* tcp)
 	skb = skb_new();
 	ERR_ON_NULL(skb);
 	
-	ret = __tcp_send(sock, &hdr, skb, NULL, 0, sock->recv_addr.sin_addr.s_addr);
+	ret = __tcp_send(sock, &hdr, skb, NULL, 0, remote_ip);
 	if(ret < 0){
 		dbgprintf("[TCP] Failed to send syn ack\n");
 		return -1;
@@ -858,7 +858,7 @@ int tcp_recv_syn(struct sock* sock, struct tcp_header* tcp)
 	
 	/* Add to pending connections list - the listening socket stays in TCP_LISTEN */
 	ret = tcp_pending_add(sock->pending_connections, 
-	                      sock->recv_addr.sin_addr.s_addr,  /* Already set by caller */
+	                      remote_ip,  /* Already set by caller */
 	                      tcp->source,
 	                      htonl(tcp->seq),
 	                      our_seq);
@@ -1342,16 +1342,8 @@ static int tcp_state_machine(struct sk_buff* skb){
 				goto out;
 			}
 
-			/**
-			 * @brief Store the remote address in recv_addr of
-			 * listening socket. This will be overwritten for each
-			 * new accepted socket.
-			 * This is techinically bad as we access IP in TCP.
-			 */
-			sk->recv_addr.sin_port = hdr->source;
-			sk->recv_addr.sin_addr.s_addr = skb->hdr.ip->saddr;
-
-			if(tcp_recv_syn(sk, hdr) < 0){
+			uint32_t remote_ip = skb->hdr.ip->saddr;
+			if(tcp_recv_syn(sk, hdr, remote_ip) < 0){
 				// NOOP
 			}
 
@@ -1422,10 +1414,6 @@ static int tcp_state_machine(struct sk_buff* skb){
 				
 				/* Connection is validated - add to backlog */
 				if(sk->backlog.count < sk->backlog.size){
-					/* Store remote address info in SKB for accept() to use */
-					sk->recv_addr.sin_port = hdr->source;
-					sk->recv_addr.sin_addr.s_addr = skb->hdr.ip->saddr;
-					
 					sk->backlog.queue->ops->add(sk->backlog.queue, skb);
 					sk->backlog.count++;
 					pending->handshake_complete = 1;
