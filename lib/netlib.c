@@ -21,6 +21,11 @@
 extern "C" {
 #endif
 
+int shutdown(int socket, int how)
+{
+    return invoke_syscall(SYSCALL_NET_SOCK_SHUTDOWN, socket, how, 0);
+}
+
 void close(int socket)
 {
     invoke_syscall(SYSCALL_NET_SOCK_CLOSE, socket, 0, 0);

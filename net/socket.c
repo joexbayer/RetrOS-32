@@ -388,6 +388,19 @@ struct sock* net_socket_find_udp(uint32_t ip, uint16_t port)
 
 void kernel_sock_shutdown(struct sock* socket, int how)
 {
+    if(socket == NULL){
+        return;
+    }
+
+    socket->closing = 1;
+    socket->data_ready = -1;
+
+    /* Wake any process blocked on this socket (recv/accept/backlog waits). */
+    if(socket->waiting != NULL){
+        socket->waiting->state = RUNNING;
+        socket->waiting = NULL;
+    }
+
     if(socket->type == SOCK_STREAM && socket->tcp != NULL && socket->tcp->state != TCP_CLOSED){
         tcp_close_connection(socket);
     }

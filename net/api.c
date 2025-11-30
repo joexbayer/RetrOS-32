@@ -246,6 +246,20 @@ socket_t sys_socket_create(int domain, int type, int protocol)
 }
 EXPORT_SYSCALL(SYSCALL_NET_SOCK_SOCKET, sys_socket_create);
 
+error_t sys_kernel_sock_shutdown(socket_t socket, int how)
+{
+    struct sock* sock = sock_get(socket);
+    if(sock == NULL){
+        warningf("Invalid socket %d shutdown\n", socket);
+        return -ERROR_INVALID_SOCKET;
+    }
+
+    kernel_sock_close(sock);
+    sock_deref(sock);
+    return ERROR_OK;
+}
+EXPORT_SYSCALL(SYSCALL_NET_SOCK_SHUTDOWN, sys_kernel_sock_shutdown);
+
 void sys_kernel_sock_close(socket_t socket)
 {
     struct sock* sock = sock_get(socket);

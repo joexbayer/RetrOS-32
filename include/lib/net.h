@@ -73,6 +73,7 @@ int recv_timeout(int socket, void *buffer, int length, int flags, int timeout);
 int send(int socket, void *message, int length, int flags);
 int sendto(int socket, void *message, int length, int flags, const struct sockaddr *dest_addr, socklen_t dest_len);
 int socket(int domain, int type, int protocol);
+int shutdown(int socket, int how);
 void close(int socket);
 int gethostname(char *name);
 

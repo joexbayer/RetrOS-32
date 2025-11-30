@@ -95,6 +95,7 @@ error_t kernel_recv_timeout(struct sock* socket, void *buffer, int length, int f
 error_t kernel_send(struct sock* socket, void *message, int length, int flags);
 error_t kernel_sendto(struct sock* socket, const void *message, int length, int flags, const struct sockaddr *dest_addr, socklen_t dest_len);
 struct sock* kernel_socket_create(int domain, int type, int protocol);
+void kernel_sock_shutdown(struct sock* socket, int how);
 void kernel_sock_close(struct sock* socket);
 
 #endif /* __NET_H */
