@@ -253,7 +253,7 @@ void gfx_commit()
  * @param color 
  * @return int 0 on success, less than 0 on error.
  */
-int kernel_gfx_draw_text(struct window* w, int x, int y, char* str, unsigned char color)
+int kernel_gfx_draw_text(struct window* w, int x, int y, const char* str, unsigned char color)
 {
 	ERR_ON_NULL(w);
 
@@ -268,7 +268,7 @@ int kernel_gfx_draw_text(struct window* w, int x, int y, char* str, unsigned cha
 	return 0;
 }
 
-int kernel_gfx_set_title(char* title)
+int kernel_gfx_set_title(const char* title)
 {
 	if(strlen(title) > GFX_MAX_WINDOW_NAME_SIZE)
 		return -1;
@@ -417,7 +417,7 @@ int kernel_gfx_draw_section(int x, int y, int width, int height, const char* nam
 }
 
 #define GFX_MAX_FMT 50
-int kernel_gfx_draw_format_text(struct window* w, int x, int y, unsigned char color, char* fmt, ...)
+int kernel_gfx_draw_format_text(struct window* w, int x, int y, unsigned char color, const char* fmt, ...)
 {
 	va_list args;
 

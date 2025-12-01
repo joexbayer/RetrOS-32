@@ -61,7 +61,7 @@ namespace web {
 
             fclose(fd);
 
-            return {buffer, size};
+            return {buffer, static_cast<size_t>(size)};
         }
 
     private:

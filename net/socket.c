@@ -84,6 +84,7 @@ void net_sock_bind(struct sock* socket, unsigned short port, unsigned int ip)
 }
 
 /* Currently deprecated */
+static int __sock_add_skb(struct sock* socket, struct sk_buff* skb) __attribute__((unused));
 static int __sock_add_skb(struct sock* socket, struct sk_buff* skb)
 {
     LOCK(socket, {

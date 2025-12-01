@@ -42,7 +42,7 @@ int gfx_input_event(struct gfx_input_manager* input, struct gfx_event* event)
                         in->buffer[in->buffer_size] = 0;
                     }
                 }else{
-                    if(in->buffer_size < 256){
+                    if((size_t)in->buffer_size + 1 < sizeof(in->buffer)){
                         in->buffer[in->buffer_size] = event->data;
                         in->buffer_size++;
                     }

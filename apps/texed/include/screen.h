@@ -72,7 +72,7 @@ enum vga_color {
 
 int screen_put_char(int x, int y, unsigned char c, unsigned char color);
 int screen_write(int x, int y, const char* str, unsigned char color);
-int screen_printf(int x, int y, unsigned char color, char* fmt, ...);
+int screen_printf(int x, int y, unsigned char color, const char* fmt, ...);
 int screen_get_char();
 int screen_clear(int from , int to, unsigned char color);
 void screen_draw_box(int x, int y, int width, int height, char border_color);

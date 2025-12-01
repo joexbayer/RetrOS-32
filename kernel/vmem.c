@@ -826,8 +826,7 @@ void vmem_init_kernel()
 		dbgprintf("Initiated memory between 0x%x and 0x%x\n", mapped, mapped + chunk);
 		mapped += chunk;
 	}
-	uint32_t mapped_end = (phys_map_end > 0x400000) ? phys_map_end : 0x400000;
-	dbgprintf("Initiated memory between 0x%x and 0x%x\n", 0x400000, mapped_end);
+	dbgprintf("Initiated memory between 0x%x and 0x%x\n", 0x400000, phys_map_end > 0x400000 ? phys_map_end : 0x400000);
 	
 	/* test if 0x80d000 is identity mapped */
 

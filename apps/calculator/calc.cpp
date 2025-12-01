@@ -62,11 +62,13 @@ public:
     }
 
     void handleKeyPress(char key) {
+        if (key >= '0' && key <= '9') {
+            currentValue = currentValue * 10 + (key - '0');
+            updateDisplay();
+            return;
+        }
+
         switch (key) {
-            case '0' ... '9':
-                currentValue = currentValue * 10 + (key - '0');
-                updateDisplay();
-                break;
             case '+':
             case '-':
             case '*':

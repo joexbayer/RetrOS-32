@@ -24,8 +24,8 @@ void gfx_line(int x, int y, int length, int option, int color);
 
 int kernel_gfx_draw_rectangle(struct window* w, int x, int y, int width, int height, color_t color);
 int kernel_gfx_draw_char(struct window* w, int x, int y, unsigned char c, unsigned char color);
-int kernel_gfx_draw_text(struct window* w, int x, int y, char* str, unsigned char color);
-int kernel_gfx_draw_format_text(struct window* w, int x, int y, unsigned char color, char* fmt, ...);
+int kernel_gfx_draw_text(struct window* w, int x, int y, const char* str, unsigned char color);
+int kernel_gfx_draw_format_text(struct window* w, int x, int y, unsigned char color, const char* fmt, ...);
 int kernel_gfx_draw_pixel(struct window* w, int x, int y, color_t color);
 int kernel_gfx_draw_bitmap(struct window* w, int x, int y, int width, int height, uint8_t* bitmap);
 
@@ -35,7 +35,7 @@ void kernel_gfx_draw_line(struct window* w, int x0, int y0, int x1, int y1, unsi
 int gfx_get_window_width();
 int gfx_get_window_height();
 
-int kernel_gfx_set_title(char* title);
+int kernel_gfx_set_title(const char* title);
 int kernel_gfx_set_header(const char* header);
 
 int kernel_gfx_draw_contoured_box(struct window* w, int x, int y, int width, int height, color_t color);

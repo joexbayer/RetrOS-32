@@ -61,7 +61,7 @@ int sys_screen_put(int x, int y, short packet)
 }
 EXPORT_SYSCALL(SYSCALL_SCREEN_PUT, sys_screen_put);
 
-char sys_screen_get()
+int sys_screen_get()
 {
 	return scr_keyboard_get(1);
 }

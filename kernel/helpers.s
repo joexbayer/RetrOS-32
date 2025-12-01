@@ -161,3 +161,5 @@ _start_pcb_skip:
 
 .section .text
 .align 4
+
+.section .note.GNU-stack,"",@progbits

@@ -87,7 +87,7 @@ static void __net_transmit_skb(struct sk_buff* skb)
 {
     if(skb == NULL || skb->interface == NULL) return;
 
-    const char* name = skb->interface->name ? skb->interface->name : "unknown";
+    const char* name = skb->interface->name;
     dbgprintf("[net] TX skb (%d bytes) via %s\n", skb->len, name);
     int ret = skb->interface->ops->send(skb->interface, skb->head, skb->len);
     if(ret < 0){

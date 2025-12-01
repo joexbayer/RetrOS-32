@@ -1,201 +1,128 @@
-CCFLAGS=-m32 -std=gnu11 -O1 -D__KERNEL \
-		-Wall -Wextra -Wpedantic -Wstrict-aliasing \
-		-Wno-pointer-arith -Wno-unused-parameter -nostdlib \
-		-nostdinc -ffreestanding -fno-pie -fno-stack-protector \
-		-Wno-conversion -fno-omit-frame-pointer -I ./include/
-ASFLAGS=
-LDFLAGS= 
-MAKEFLAGS += --no-print-directory
+include make/common.mk
+
+ROOT_DIR := $(CURDIR)
+BUILD_DIR := bin
+INCLUDE_DIR := $(ROOT_DIR)/include
+HOST_CC ?= gcc
+
+CFLAGS := $(FREESTANDING_CFLAGS) -std=gnu11 -O1 -D__KERNEL -I $(INCLUDE_DIR)
+ASFLAGS := $(ARCH_ASFLAGS)
+LDFLAGS := $(ARCH_LDFLAGS)
 
 HOSTFWD_PORT ?= 8080
 QEMU_NETDEV = -netdev user,id=net0,hostfwd=tcp::$(HOSTFWD_PORT)-:80
 QEMU_OPS = -device e1000,netdev=net0 -serial stdio $(QEMU_NETDEV) -object filter-dump,id=net0,netdev=net0,file=dump.dat -m 32m
 
-# ---------------- For counting how many files to compile ----------------
-ifneq ($(words $(MAKECMDGOALS)),1)
-.DEFAULT_GOAL = all
-%:
-	@$(MAKE) $@ --no-print-directory -rRf $(firstword $(MAKEFILE_LIST))
+ifeq ($(UNAME_S),Darwin)
+  GRUB ?= grub-mkrescue /usr/local/lib/grub/i386-pc/ -o myos.iso legacy/multiboot
 else
-ifndef ECHO
-T := $(shell $(MAKE) $(MAKECMDGOALS) --no-print-directory \
-    -nrRf $(firstword $(MAKEFILE_LIST)) \
-    ECHO="COUNTTHIS" | grep -c "COUNTTHIS")
-
-N := x
-C = $(words $N)$(eval N := x $N)
-ECHO = echo -ne "\r[$(words $N)/$T] (`expr $C '*' 100 / $T`%)"
+  GRUB ?= grub-mkrescue /usr/lib/grub/i386-pc/ -o myos.iso legacy/multiboot
 endif
 
-# ---------------- For timing makefile ----------------
-TIME_START := $(shell date +%s)
-define TIME-END
-@time_end=`date +%s` ; time_exec=`awk -v "TS=${TIME_START}" -v "TE=$$time_end" 'BEGIN{TD=TE-TS;printf "%02dd:%02dh:%02dm:%02ds\n",TD/(60*60*24),TD/(60*60)%24,TD/(60)%60,TD%60}'` ; echo "Build time: $${time_exec} for $@"
-endef
+PROGRAMOBJ := $(addprefix $(BUILD_DIR)/,shell.o networking.o dhcpd.o tcpd.o logd.o taskbar.o about.o)
+GFXOBJ := $(addprefix $(BUILD_DIR)/,window.o component.o composition.o gfxlib.o api.o theme.o core.o)
+KERNELOBJ := $(addprefix $(BUILD_DIR)/,kernel.o terminal.o helpers.o pci.o virtualdisk.o windowmanager.o icons.o vga.o \
+	libc.o interrupts.o irs_entry.o timer.o gdt.o smp.o keyboard.o pcb.o pcb_queue.o memory.o vmem.o kmem.o e1000.o display.o env.o conf.o \
+	sync.o kthreads.o ata.o atapi.o bitmap.o rtc.o tss.o kutils.o login.o cmds.o diskdev.o scheduler.o work.o rbuffer.o errors.o kclock.o tar.o color.o loopback.o \
+	serial.o io.o syscalls.o list.o hashmap.o vbe.o ksyms.o windowserver.o encoding.o mouse.o ipc.o sysinf.o font8.o net.o fs.o ext.o fat16.o partition.o \
+	admin.o usermanager.o user.o group.o snake.o msgbox.o kevents.o textmode.o lz.o)
+KERNELOBJ += $(PROGRAMOBJ) $(GFXOBJ)
 
-# ---------------- For cross compilation (MacOS) ----------------
-UNAME := $(shell uname)
-ifeq ($(UNAME),Linux)
-	CC=gcc
-	AS=as
-	LD=ld
+BOOTOBJ := $(BUILD_DIR)/bootloader.o
+LIBOBJ := $(addprefix $(BUILD_DIR)/,printf.o syscall.o graphics.o netlib.o http.o)
+KERNEL_SUPPORT := $(addprefix $(BUILD_DIR)/,kcrt0.o multiboot.o)
 
-	CCFLAGS += -elf_i386
-	ASFLAGS += --32
-	LDFLAGS += -m elf_i386
-	GRUB=grub-mkrescue /usr/lib/grub/i386-pc/ -o myos.iso legacy/multiboot
-# ! Disable MacOS support for now, as it is not able to compile the build tools. !
-else ifeq ($(UNAME),Darwin)
-	GRUB=grub-mkrescue /usr/local/lib/grub/i386-pc/ -o myos.iso legacy/multiboot
-	CC=i386-elf-gcc
-	AS=i386-elf-as
-	LD=i386-elf-ld
-else
-#	$(error This Makefile does not support building on this platform. Please use Linux, WSL or Docker)
-endif
+ALL_OBJS := $(BOOTOBJ) $(KERNELOBJ) $(LIBOBJ) $(KERNEL_SUPPORT)
+DEPS := $(ALL_OBJS:.o=.d)
 
-# ---------------- Objects to compile ----------------
-PROGRAMOBJ = bin/shell.o bin/networking.o bin/dhcpd.o bin/tcpd.o bin/logd.o bin/taskbar.o bin/about.o
+.PHONY: all iso compile kernel multiboot_kernel bootblock symbols apps tools tests build img filesystem create_fs bare re_apps clean test bindir grub grub_fix qemu qemu-headless qemu_kernel docker docker-rebuild reset sync rsync mount run ls git vdi
 
-GFXOBJ = bin/window.o bin/component.o bin/composition.o bin/gfxlib.o bin/api.o bin/theme.o bin/core.o
+all: img
 
-KERNELOBJ = bin/kernel.o bin/terminal.o bin/helpers.o bin/pci.o bin/virtualdisk.o bin/windowmanager.o bin/icons.o bin/vga.o \
-			bin/libc.o bin/interrupts.o bin/irs_entry.o bin/timer.o bin/gdt.o bin/smp.o \
-			bin/keyboard.o bin/pcb.o bin/pcb_queue.o bin/memory.o bin/vmem.o bin/kmem.o bin/e1000.o bin/display.o bin/env.o bin/conf.o \
-			bin/sync.o bin/kthreads.o bin/ata.o bin/atapi.o bin/bitmap.o bin/rtc.o bin/tss.o bin/kutils.o bin/login.o bin/cmds.o \
-			bin/diskdev.o bin/scheduler.o bin/work.o bin/rbuffer.o bin/errors.o bin/kclock.o bin/tar.o bin/color.o bin/loopback.o \
-			bin/serial.o bin/io.o bin/syscalls.o bin/list.o bin/hashmap.o bin/vbe.o bin/ksyms.o bin/windowserver.o bin/encoding.o\
-			bin/mouse.o bin/ipc.o bin/sysinf.o ${PROGRAMOBJ} ${GFXOBJ} bin/font8.o bin/net.o bin/fs.o bin/ext.o bin/fat16.o bin/partition.o\
-			bin/admin.o bin/usermanager.o bin/user.o bin/group.o bin/snake.o bin/msgbox.o bin/kevents.o bin/textmode.o bin/lz.o
-
-BOOTOBJ = bin/bootloader.o
-
-LIBOBJ = bin/printf.o bin/syscall.o bin/graphics.o bin/netlib.o bin/http.o
-
-# ---------------- Makefile rules ----------------
-
-.PHONY: all new image clean boot net kernel grub time tests build apps bin/build symbols git qemu qemu-headless
-all: iso
-	$(TIME-END)
-
-git:
-	git submodule update --init --recursive
-
-ls:
-	find -name '*.[c|h]' | xargs wc -l
-
-bootblock: $(BOOTOBJ)
-	@$(LD) $(LDFLAGS) -o bin/bootblock $^ -Ttext 0x7C00 --oformat=binary
-
-multiboot_kernel: bin/multiboot.o $(KERNELOBJ)
-	@echo "[KERNEL]     Linking kernel..."
-	@$(LD) -o bin/kernelout $^ $(LDFLAGS) -T ./boot/multiboot.ld
-	@echo "[KERNEL]     Finished compiling kernel."
-
-# Idea taken from SerenityOS
-symbols: bin/multiboot.o $(KERNELOBJ)
-	@echo "[KERNEL]     Creating symbols..."
-	@$(LD) -o bin/symbols $^ $(LDFLAGS) -T ./kernel/linkersym.ld
-	@nm -C -n bin/symbols | grep ' [Tt] ' | sed 's/ [Tt] / /' > rootfs/sysutil/symbols.map
-
-kernel: bin/kcrt0.o $(KERNELOBJ)
-	@echo "[KERNEL]     Linking kernel..."
-	@$(LD) -o bin/kernelout $^ $(LDFLAGS) -T ./kernel/linker.ld
-
-.depend: **/*.[cSh]	
-	@echo [KERNEL] Creating dependencies...
-	@$(CC) $(CCFLAGS) -MM -MG **/*.[cS] > $@
-	
--include .depend
-
-# For assembling and compiling all .c and .s files.
-bin/%.o: */%.c
-	@$(ECHO) [KERNEL]     Compiling $<
-	@$(CC) -o $@ -c $< $(CCFLAGS)
-
-bin/%.o: kernel/*/%.c
-	@$(ECHO) [PROGRAM]    Compiling $<
-	@$(CC) -o $@ -c $< $(CCFLAGS)
-
-bin/%.o: */%.s
-	@$(ECHO) [KERNEL]     Compiling $<
-	@$(AS) -o $@ -c $< $(ASFLAGS)
-
-bin/build: tools/build.c bin/fat16.o bin/bitmap.o ./tests/utils/mocks.c
-	@gcc tools/build.c bin/bitmap.o ./tests/utils/mocks.c bin/fat16.o -I ./include/  -O2 -m32 -Wall -D__FS_TEST -D__KERNEL -o 	./bin/build
-	@echo [BUILD]      Compiling $<
-
-tools: bin/build
-
-tests: compile
-	@make -C ./tests/
-
-bin/net.o: ./net/*.c
-	@make -C ./net/
-
-bin/ext.o: ./fs/*.c
-	@make -C ./fs/
-
-bin/fat16.o: ./fs/*.c
-	@make -C ./fs/
-
-apps:
-	@make -C ./apps/
-
-iso: compile tests apps tools build img
-	$(TIME-END)
-
-filesystem:
-	@dd if=/dev/zero of=filesystem.image bs=512 count=390
-
-compile_kernel: kernel
-	@echo "[KERNEL]     Finished compiling kernel."
+iso: compile tests apps tools img
+	@echo "Finished building ISO image."
 
 compile: bindir $(LIBOBJ) bootblock kernel
-	@echo "[Compile] Finished."
-	$(TIME-END)
+	@echo "[compile] done."
 
-create_fs:
-	@dd if=/dev/zero of=filesystem.image bs=512 count=390
-	@./bin/build
+bootblock: $(BOOTOBJ)
+	$(QUIET)$(LD) $(LDFLAGS) -o $(BUILD_DIR)/bootblock $^ -Ttext 0x7C00 --oformat=binary
 
-bare: compile create_fs
+multiboot_kernel: $(BUILD_DIR)/multiboot.o $(KERNELOBJ)
+	@echo "[kernel] linking multiboot kernel..."
+	$(QUIET)$(LD) -o $(BUILD_DIR)/kernelout $^ $(LDFLAGS) -T ./boot/multiboot.ld
+
+symbols: $(BUILD_DIR)/multiboot.o $(KERNELOBJ)
+	@echo "[kernel] generating symbols..."
+	$(QUIET)$(LD) -o $(BUILD_DIR)/symbols $^ $(LDFLAGS) -T ./kernel/linkersym.ld
+	$(QUIET)nm -C -n $(BUILD_DIR)/symbols | grep ' [Tt] ' | sed 's/ [Tt] / /' > rootfs/sysutil/symbols.map
+
+kernel: $(BUILD_DIR)/kcrt0.o $(KERNELOBJ)
+	@echo "[kernel] linking kernel..."
+	$(QUIET)$(LD) -o $(BUILD_DIR)/kernelout $^ $(LDFLAGS) -T ./kernel/linker.ld
+
+build: bin/build
+
+bin/build: tools/build.c $(BUILD_DIR)/fat16.o $(BUILD_DIR)/bitmap.o tests/utils/mocks.c
+	$(call make_dir,$(BUILD_DIR))
+	$(QUIET)$(HOST_CC) tools/build.c $(BUILD_DIR)/bitmap.o tests/utils/mocks.c $(BUILD_DIR)/fat16.o -I $(INCLUDE_DIR) -O2 -m32 -Wall -D__FS_TEST -D__KERNEL -no-pie -o $(BUILD_DIR)/build
+	@echo "[host] built $(BUILD_DIR)/build"
+
+tools: bin/build
+	$(MAKE) -C tools
+
+tests: compile
+	$(MAKE) -C tests
+
+$(BUILD_DIR)/net.o:
+	$(MAKE) -C net
+
+$(BUILD_DIR)/ext.o $(BUILD_DIR)/fat16.o $(BUILD_DIR)/fs.o:
+	$(MAKE) -C fs
+
+apps:
+	$(MAKE) -C apps
 
 img: tools compile apps symbols create_fs sync
 	@echo "Finished creating the image."
-	$(TIME-END)
+
+filesystem:
+	dd if=/dev/zero of=filesystem.image bs=512 count=390
+
+create_fs: bin/build
+	dd if=/dev/zero of=filesystem.image bs=512 count=390
+	$(BUILD_DIR)/build
+
+bare: compile create_fs
 
 re_apps: apps create_fs sync
 
 clean:
-	make -C ./net clean
-	make -C ./fs clean
-	make -C ./apps clean
-	make -C ./tests clean
-	rm -f ./bin/*.o
-	rm -f ./bin/bootblock
-	rm -f ./bin/kernelout
-	rm -f .depend
-	rm -f filesystem.image
-	rm -f filesystem.test
+	$(MAKE) -C net clean
+	$(MAKE) -C fs clean
+	$(MAKE) -C apps clean
+	$(MAKE) -C tests clean
+	$(QUIET)$(RM_F) $(BUILD_DIR)/*.o $(BUILD_DIR)/*.d $(BUILD_DIR)/bootblock $(BUILD_DIR)/kernelout $(BUILD_DIR)/symbols $(BUILD_DIR)/build
+	$(QUIET)$(RM_F) .depend filesystem.image filesystem.test
+	@echo "Cleaned kernel outputs."
 
 test: clean compile tests
 
 bindir:
-	@mkdir -p rootfs/bin
-	@mkdir -p bin
+	$(call make_dir,rootfs/bin)
+	$(call make_dir,$(BUILD_DIR))
 
-# Kernel.o must be recompiled with the multiboot flag.
 grub_fix:
-	@rm -f bin/kernel.o
-grub: CCFLAGS += -DGRUB_MULTIBOOT
+	$(QUIET)$(RM_F) $(BUILD_DIR)/kernel.o
+
+grub: CFLAGS += -DGRUB_MULTIBOOT
 grub: grub_fix apps multiboot_kernel
-	cp bin/kernelout legacy/multiboot/boot/myos.bin
+	cp $(BUILD_DIR)/kernelout legacy/multiboot/boot/myos.bin
 	$(GRUB)
 
-qemu_kernel: CCFLAGS += -DGRUB_MULTIBOOT
-qemu_kernel: grub_fix grub_fix multiboot_kernel
-	qemu-system-i386 $(QEMU_OPS) -kernel bin/kernelout
+qemu_kernel: CFLAGS += -DGRUB_MULTIBOOT
+qemu_kernel: grub_fix multiboot_kernel
+	qemu-system-i386 $(QEMU_OPS) -kernel $(BUILD_DIR)/kernelout
 
 docker-rebuild:
 	docker-compose build --no-cache
@@ -205,7 +132,7 @@ reset: clean img
 docker:
 	docker-compose up
 
-vdi: cleanvid docker
+vdi: clean docker
 	qemu-img convert -f raw -O vdi boot.img boot.vdi
 
 ifeq ($(OS),Windows_NT)
@@ -234,10 +161,33 @@ rsync:
 	sudo mount -o shortname=winnt RetrOS-32-debug.img ./mnt
 	sudo rsync -av --update ./rootfs/ ./mnt/
 	sudo umount ./mnt
-	@echo "Finisheds rsyncing."
+	@echo "Finished rsyncing."
 
 mount:
 	sudo mount -o shortname=winnt RetrOS-32-debug.img ./mnt
 
 run: img qemu
-endif
+
+ls:
+	find -name '*.[ch]' | xargs wc -l
+
+git:
+	git submodule update --init --recursive
+
+# Build rules
+-include $(DEPS)
+
+$(BUILD_DIR)/%.o: */%.c
+	$(call make_dir,$(BUILD_DIR))
+	$(QUIET)$(CC) $(CFLAGS) $(DEPFLAGS) -c $< -o $@
+	$(QUIET)echo "[CC ] $<"
+
+$(BUILD_DIR)/%.o: kernel/*/%.c
+	$(call make_dir,$(BUILD_DIR))
+	$(QUIET)$(CC) $(CFLAGS) $(DEPFLAGS) -c $< -o $@
+	$(QUIET)echo "[CC ] $<"
+
+$(BUILD_DIR)/%.o: */%.s
+	$(call make_dir,$(BUILD_DIR))
+	$(QUIET)$(AS) $(ASFLAGS) -c $< -o $@
+	$(QUIET)echo "[AS ] $<"

@@ -113,7 +113,7 @@ static struct textbuffer *textbuffer_create(void) {
 	return buffer;
 }
 
-static int textbuffer_find(struct textbuffer *buffer, char *str) {
+static int __attribute__((unused)) textbuffer_find(struct textbuffer *buffer, char *str) {
 	int ret;
 	/* find str in lines and goto line */
 	for (size_t i = 0; i < buffer->line_count; i++) {
@@ -167,7 +167,7 @@ static int textbuffer_new_line(struct textbuffer *buffer) {
 	return 0;
 }
 
-static int textbuffer_remove_last_line(struct textbuffer *buffer) {
+static int __attribute__((unused)) textbuffer_remove_last_line(struct textbuffer *buffer) {
 	if (buffer->line_count == 0) {
 		return -1;
 	}
@@ -314,7 +314,7 @@ static enum vga_color get_keyword_color(const struct textbuffer *buffer, const c
     return VGA_COLOR_WHITE;
 }
 
-static int textbuffer_print_line(struct textbuffer *buffer, int x, int y, size_t line) {
+static int textbuffer_print_line(const struct textbuffer *buffer, int x, int y, size_t line) {
     if (line >= buffer->line_count) {
         return -1;
     }

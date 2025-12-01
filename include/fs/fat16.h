@@ -57,6 +57,8 @@ struct fat_boot_table {
     uint16_t boot_signature;            /* 2 bytes - Boot signature */
 }__attribute__((packed));
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
 struct fat16_directory_entry {
     union {
         struct {
@@ -72,6 +74,7 @@ struct fat16_directory_entry {
     uint16_t first_cluster;             /* 2 bytes - First cluster in the file's FAT chain */
     uint32_t file_size;                 /* 4 bytes - File size in bytes */
 } __attribute__((packed));
+#pragma GCC diagnostic pop
 
 struct fat16_file_identifier {
     int16_t directory;

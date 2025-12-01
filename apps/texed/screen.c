@@ -122,6 +122,7 @@ int screen_clear_line(int y, unsigned char color)
     for (int x = 1; x < SCREEN_WIDTH-1; x++){
         screen_put_char(x, y, ' ', color);
     }
+    return 0;
 }
 
 int screen_clear(int from , int to, unsigned char color)
@@ -131,6 +132,7 @@ int screen_clear(int from , int to, unsigned char color)
 			screen_put_char(x, y, ' ', color);
 		}
 	}
+    return 0;
 }
 
 void screen_draw_box(int x, int y, int width, int height, char border_color) {
@@ -169,7 +171,7 @@ void screen_draw_box(int x, int y, int width, int height, char border_color) {
  * @param ... variable parameters
  * @return number of bytes written
  */
-int screen_printf(int x, int y, unsigned char color, char* fmt, ...)
+int screen_printf(int x, int y, unsigned char color, const char* fmt, ...)
 {
 	va_list args;
 

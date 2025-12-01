@@ -1,98 +1,60 @@
-CCFLAGS=-m32 -std=gnu11 -O2 \
-		-Wall -Wextra -Wpedantic -Wstrict-aliasing \
-		-Wno-pointer-arith -Wno-unused-parameter -nostdlib \
-		-nostdinc -ffreestanding -fno-pie -fno-stack-protector \
-		-fno-builtin-function -fno-builtin -I ./../include/
-ASFLAGS=
-LDFLAGS=
-MAKEFLAGS += --no-print-directory
+include ../make/common.mk
 
-UNAME := $(shell uname)
-ifeq ($(UNAME),Linux)
-	CC=gcc
-	CPP=g++
-	AS=as
-	LD=ld
-	AR=ar
+ROOT_DIR := $(abspath ..)
+BUILD_DIR := bin
+INCLUDE_DIR := $(ROOT_DIR)/include
 
-	CCFLAGS += -elf_i386
-	ASFLAGS += --32
-	LDFLAGS += -m elf_i386
-else
-	CC=i386-elf-gcc
-	CPP=i386-elf-g++
-	AS=i386-elf-as
-	LD=i386-elf-ld
-	AR=i386-elf-ar
-endif
+CFLAGS := $(FREESTANDING_CFLAGS) -std=gnu11 -O2 -I $(INCLUDE_DIR)
+CXXFLAGS := $(FREESTANDING_CFLAGS) $(CPP_NO_RTTI) -O2 -I $(INCLUDE_DIR)
+ASFLAGS := $(ARCH_ASFLAGS)
+LDFLAGS += $(ARCH_LDFLAGS)
 
-OUTPUTDIR = ./bin/
+UTILS := $(addprefix $(BUILD_DIR)/,cppUtils.o crt0.o)
+UTIL_DEPS := $(UTILS:.o=.d)
 
-UTILS = bin/cppUtils.o bin/crt0.o
+APPS := editor wolfstein colors finder calculator graphs cube users texed webserver
 
-USROBJS =
+LIB_CORE_OBJS := ../bin/syscall.o ../bin/libc.o ../bin/printf.o $(BUILD_DIR)/cppUtils.o
+LIB_GRAPHICS_OBJS := ../bin/graphics.o ../bin/libc.o
+LIB_NET_OBJS := ../bin/netlib.o
+LIB_ZLIB_OBJS := ../bin/lz.o ../bin/libc.o
+LIB_HTTP_OBJS := ../bin/http.o ../bin/libc.o ../bin/printf.o ../bin/syscall.o
 
-COMMON = ../bin/syscall.o ../bin/libc.o ../bin/printf.o ../bin/graphics.o ../bin/netlib.o bin/cppUtils.o
-LIB_COMMON_OBJS = ../bin/syscall.o ../bin/libc.o ../bin/printf.o bin/cppUtils.o
-LIB_GRAPHICS_OBJS = ../bin/graphics.o ../bin/libc.o
-LIB_NET_OBJS = ../bin/netlib.o
-LIB_ZLIB_OBJS = ../bin/lz.o ../bin/libc.o
-LIB_HTTP_OBJS = ../bin/http.o ../bin/libc.o ../bin/printf.o ../bin/syscall.o
+.PHONY: all programs staticlibs clean $(APPS) bindir
+all: bindir $(UTILS) staticlibs programs
 
-.PHONY: all new programs
-all: new
+programs: $(UTILS)
+	@for dir in $(APPS); do \
+		$(MAKE) -C $$dir; \
+	done
+	$(MAKE) -f Makefile.retros -C C-Compiler
+	@echo "[apps] built all user programs."
 
-new: bindir  ${UTILS} programs
+staticlibs: $(UTILS)
+	$(QUIET)$(AR) rcs libcore.a $(LIB_CORE_OBJS)
+	$(QUIET)$(AR) rcs libnet.a $(LIB_NET_OBJS)
+	$(QUIET)$(AR) rcs libgraphic.a $(LIB_GRAPHICS_OBJS)
+	$(QUIET)$(AR) rcs libzlib.a $(LIB_ZLIB_OBJS)
+	$(QUIET)$(AR) rcs libhttp.a $(LIB_HTTP_OBJS)
+	@echo "[apps] refreshed static libraries."
 
-staticlibs:
-	$(AR) rcs libcore.a $(LIB_COMMON_OBJS)
-	$(AR) rcs libnet.a $(LIB_NET_OBJS)
-	$(AR) rcs libgraphic.a $(LIB_GRAPHICS_OBJS)
-	$(AR) rcs libzlib.a $(LIB_ZLIB_OBJS)
-	$(AR) rcs libhttp.a $(LIB_HTTP_OBJS)
+-include $(UTIL_DEPS)
 
+$(BUILD_DIR)/%.o: utils/%.cpp | bindir
+	$(QUIET)$(CXX) $(CXXFLAGS) $(DEPFLAGS) -c $< -o $@
+	$(QUIET)echo "[apps] c++ $(<F)"
 
-programs: staticlibs bin/crt0.o ${USROBJS}
-	@make -C editor/
-	@make -C wolfstein/
-	@make -C colors/
-	@make -C finder/
-	@make -C calculator/
-	@make -C graphs/
-	@make -C cube/
-	@make -C users/
-	@make -C texed/
-	@make -C webserver/
-	@make -f Makefile.retros -C C-Compiler/
-	@echo [USR] All user programs created and linked!
-
-bin/%.o: utils/%.cpp
-	@$(CPP) -o $@ -c $< $(CCFLAGS) -fno-exceptions -fno-rtti -I ./../include/
-	@echo [USR] Compiling C++ $(basename $@)
-
-bin/%.o: utils/crt/%.s
-	@echo [USR] Compiling dependency $<
-	@$(AS) -o $@ -c $< $(ASFLAGS)
-
-.depend: **/*.[cSh]
-	@$(CC) $(CCFLAGS) -MM -MG **/*.[cS] > $@
-
--include .depend
+$(BUILD_DIR)/%.o: utils/crt/%.s | bindir
+	$(QUIET)$(AS) $(ASFLAGS) -c $< -o $@
+	$(QUIET)echo "[apps] as $(<F)"
 
 bindir:
-	@mkdir -p bin
+	$(call make_dir,$(BUILD_DIR))
 
 clean:
-	rm -f ./bin/*
-	@make -C editor/ clean
-	@make -C wolfstein/ clean
-	@make -C colors/ clean
-	@make -C finder/ clean
-	@make -C calculator/ clean
-	@make -C graphs/ clean
-	@make -C cube/ clean
-	@make -C users/ clean
-	@make -C texed/ clean
-	@make -C webserver/ clean
-	@echo [USR] All user programs cleaned!
-	rm -f .depend
+	@for dir in $(APPS); do \
+		$(MAKE) -C $$dir clean; \
+	done
+	$(MAKE) -f Makefile.retros -C C-Compiler clean
+	$(QUIET)$(RM_RF) $(BUILD_DIR)
+	$(QUIET)$(RM_F) libcore.a libnet.a libgraphic.a libzlib.a libhttp.a

@@ -87,3 +87,5 @@ gdt_end:
 stack_begin:
     .fill 0x4000
 stack:
+
+.section .note.GNU-stack,"",@progbits

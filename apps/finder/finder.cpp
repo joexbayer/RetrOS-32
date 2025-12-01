@@ -136,7 +136,7 @@ public:
         delete m_cache;
     }
 
-    void loadIcon(char* path, int index){
+    void loadIcon(const char* path, int index){
         int fd = open(path, FS_FLAG_READ);
         read(fd, (void*)icon[index], ICON_SIZE*ICON_SIZE);
         fclose(fd);
@@ -151,6 +151,7 @@ public:
 
     int changeDirectory(const char* strpath){
 
+        return 0;
     }
 
     int loadFiles(){

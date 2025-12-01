@@ -1,75 +1,47 @@
-CCFLAGS=-m32 -std=gnu11 -O1 \
-		-Wall -Wextra -Wpedantic -Wstrict-aliasing -D__KERNEL \
-		-Wno-pointer-arith -Wno-unused-parameter -nostdlib \
-		-nostdinc -ffreestanding -fno-pie -fno-stack-protector \
-		-fno-builtin-function -fno-omit-frame-pointer -fno-builtin -I ./../include/
-ASFLAGS=
-LDFLAGS=
-MAKEFLAGS += --no-print-directory
+include ../make/common.mk
 
-ifneq ($(words $(MAKECMDGOALS)),1)
-.DEFAULT_GOAL = all
-%:
-	@$(MAKE) $@ --no-print-directory -rRf $(firstword $(MAKEFILE_LIST))
-else
-ifndef ECHO
-T := $(shell $(MAKE) $(MAKECMDGOALS) --no-print-directory \
-    -nrRf $(firstword $(MAKEFILE_LIST)) \
-    ECHO="COUNTTHIS" | grep -c "COUNTTHIS")
+BUILD_DIR := bin
+OUTPUTDIR := ../bin
+INCLUDE_DIR := ../include
 
-N := x
-C = $(words $N)$(eval N := x $N)
-ECHO = echo -ne "\r[$(words $N)/$T] (`expr $C '*' 100 / $T`%)"
-endif
+CFLAGS := $(FREESTANDING_CFLAGS) -std=gnu11 -O1 -D__KERNEL -I $(INCLUDE_DIR)
+ASFLAGS := $(ARCH_ASFLAGS)
+LDFLAGS := $(ARCH_LDFLAGS)
 
-UNAME := $(shell uname)
-ifeq ($(UNAME),Linux)
-	CC=gcc
-	AS=as
-	LD=ld
+EXTOBJS := $(addprefix $(BUILD_DIR)/,path.o ext.o inode.o vfs.o)
+FAT16OBJS := $(addprefix $(BUILD_DIR)/,fat16_read.o fat16_write.o fat16.o)
+FSCORE := $(addprefix $(BUILD_DIR)/,fs.o fat16_iface.o)
+FSOBJS := $(EXTOBJS) $(FAT16OBJS) $(FSCORE)
+DEPS := $(FSOBJS:.o=.d)
 
-	CCFLAGS += -elf_i386
-	ASFLAGS += --32
-	LDFLAGS += -m elf_i386
-else
-	CC=i386-elf-gcc
-	AS=i386-elf-as
-	LD=i386-elf-ld
-endif
+.PHONY: all ext fat16 fs clean bindir
+all: ext fat16 fs
 
-OUTPUTDIR = ../bin/
+ext: $(OUTPUTDIR)/ext.o
+fat16: $(OUTPUTDIR)/fat16.o
+fs: $(OUTPUTDIR)/fs.o
 
-EXTOBJS = path.o ext.o inode.o vfs.o
-FAT16OBJS = fat16_read.o fat16_write.o fat16.o
+$(OUTPUTDIR)/ext.o: $(EXTOBJS) | bindir
+	$(QUIET)$(LD) -o $@ $(addprefix ./,$(EXTOBJS)) $(LDFLAGS) -r
+	@echo "[fs  ] linked $@"
 
-.PHONY: all new ext fat16 clean bindir fs
-all: new
+$(OUTPUTDIR)/fat16.o: $(FAT16OBJS) | bindir
+	$(QUIET)$(LD) -o $@ $(addprefix ./,$(FAT16OBJS)) $(LDFLAGS) -r
+	@echo "[fs  ] linked $@"
 
-new: bindir ext fat16 fs
+$(OUTPUTDIR)/fs.o: $(FSCORE) | bindir
+	$(QUIET)$(LD) -o $@ $(addprefix ./,$(FSCORE)) $(LDFLAGS) -r
+	@echo "[fs  ] linked $@"
 
-ext: ${EXTOBJS}
-	@$(LD) -o ${OUTPUTDIR}ext.o $(addprefix ./bin/,$^) $(LDFLAGS) -r
+-include $(DEPS)
 
-fat16: ${FAT16OBJS}
-	@$(LD) -o ${OUTPUTDIR}fat16.o $(addprefix ./bin/,$^) $(LDFLAGS) -r
-
-fs: fs.o fat16_iface.o
-	@$(LD) -o ${OUTPUTDIR}fs.o $(addprefix ./bin/,$^) $(LDFLAGS) -r
-
-.depend: **/*.[cSh]
-	@$(CC) $(CCFLAGS) -MM -MG **/*.[cS] > $@
-
--include .depend
+$(BUILD_DIR)/%.o: %.c | bindir
+	$(QUIET)$(CC) $(CFLAGS) $(DEPFLAGS) -c $< -o $@
+	@echo "[fs  ] cc $(<F)"
 
 bindir:
-	@mkdir -p bin
-
-# For assembling and compiling all .c and .s files.
-%.o: %.c
-	@$(ECHO) [FS] Compiling bin/$@
-	@$(CC) -o bin/$@ -c $< $(CCFLAGS)
+	$(call make_dir,$(BUILD_DIR))
 
 clean:
-	rm -f ./bin/*.o
-	rm -f .depend
-endif
+	$(QUIET)$(RM_F) $(BUILD_DIR)/*.o $(BUILD_DIR)/*.d
+	$(QUIET)$(RM_F) $(OUTPUTDIR)/ext.o $(OUTPUTDIR)/fat16.o $(OUTPUTDIR)/fs.o

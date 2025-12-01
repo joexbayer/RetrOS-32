@@ -50,8 +50,8 @@ struct window_ops {
 struct window_draw_ops {
     void (*draw)(uint8_t*, struct window*);
     int (*rect)(struct window*, int x, int y, int width, int height, color_t color);
-    int (*textf)(struct window*, int x, int y, color_t color, char* fmt, ...);
-    int (*text)(struct window*, int x, int y, char* text, color_t color);
+    int (*textf)(struct window*, int x, int y, color_t color, const char* fmt, ...);
+    int (*text)(struct window*, int x, int y, const char* text, color_t color);
     void (*line)(struct window*, int x1, int y1, int x2, int y2, color_t color);
     void (*circle)(struct window*, int x, int y, int radius, color_t color, bool_t fill);
     int (*box)(struct window*, int x, int y, int width, int height, color_t color);

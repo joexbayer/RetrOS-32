@@ -506,17 +506,17 @@ EXPORT_KSYMBOL(file);
  * @param argv Contains socket as int
  * @return int 
  */
-static int __kthread_entry __tcp_reader(int argc, char **argv)
+static void __kthread_entry __tcp_reader(int argc, char **argv)
 {
     if(argc != 1){
         dbgprintf("Invalid arguments\n");
-        return 1;
+        return;
     }
 
     struct sock* socket = sock_get(atoi(argv[0]));
     if(socket == NULL) {
         dbgprintf("Invalid socket\n");
-        return 1;
+        return;
     }
 
     dbgprintf("TCP reader started\n");
@@ -537,7 +537,7 @@ static int __kthread_entry __tcp_reader(int argc, char **argv)
     }
 
     sock_deref(socket);
-    return 0;
+    return;
 }
 
 static int tcp(int argc, char *argv[])
@@ -576,7 +576,7 @@ static int tcp(int argc, char *argv[])
     char socket_str[10] = {0};
     itoa(socket->socket, socket_str);
 
-    pid_t reader = pcb_create_kthread((void (*)())__tcp_reader, "tcp_reader", 1, (char**)&socket_str);
+    pid_t reader = pcb_create_kthread(__tcp_reader, "tcp_reader", 1, (char**)&socket_str);
     
     int ret;
     char* buffer = kalloc(1024);

@@ -82,7 +82,7 @@ private:
 
     volatile char mRunning = 1;
 
-    volatile char isRunning() {
+    bool isRunning() const {
         return mRunning == 1;
     }
 };

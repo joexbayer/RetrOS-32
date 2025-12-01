@@ -1,11 +1,17 @@
+include ../make/common.mk
 
+BUILD_DIR := bin
+# build.c is compiled by the root Makefile into a host tool; skip it here.
+SOURCES := $(filter-out build.c,$(wildcard *.c))
+OBJECTS := $(SOURCES:%.c=$(BUILD_DIR)/%.o)
 
-SRC_FILES = $(wildcard *.c)
-OBJ_FILES = $(SRC_FILES:%.c=$(OUTPUTDIR)%.o)
-OUTPUTDIR = ./bin/
+.PHONY: all clean
+all: $(OBJECTS)
 
-all: $(OBJ_FILES)
+$(BUILD_DIR)/%.o: %.c
+	$(call make_dir,$(BUILD_DIR))
+	$(QUIET)$(CC) -c $< -o $@
+	@echo "[tool] cc $(<F)"
 
-$(OUTPUTDIR)%.o: %.c
-	@mkdir -p $(OUTPUTDIR)
-	gcc -c $< -o $@
+clean:
+	$(QUIET)$(RM_RF) $(BUILD_DIR)

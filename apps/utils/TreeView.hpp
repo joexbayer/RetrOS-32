@@ -90,8 +90,7 @@ public:
         window->drawContouredBox(8, 12, width - 16, height-20, COLOR_WHITE);
 
         window->drawFormatText(2, 2, COLOR_BLACK, "Tree View");
-
-        int entries = drawTreeRecursive(&root, 1, 1);
+        drawTreeRecursive(&root, 1, 1);
     }
 
     const char* click(int x, int y) {

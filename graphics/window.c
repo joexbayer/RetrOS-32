@@ -68,7 +68,6 @@ void gfx_draw_window(uint8_t* buffer, struct window* window)
     int padding = HAS_FLAG(window->flags, GFX_HIDE_HEADER) ? 0 : 8;
     int background_color = window->in_focus ? window->color.border == 0 ? theme->window.border : window->color.border : theme->window.border;
 
-    color_t border = window->color.border == 0 ? theme->window.border : window->color.border;
     color_t border_light = window->color.border == 0 ? theme->window.border_accent_light : window->color.border;
     color_t border_dark = window->color.border == 0 ? theme->window.border_accent_dark : window->color.border;
 

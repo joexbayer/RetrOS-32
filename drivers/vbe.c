@@ -56,7 +56,7 @@ void reset_vga_palette() {
     int i;
     
     // Initialize VGA adapter
-    outportb(VGA_INDEX_REGISTER, 0x03C0);
+    outportb(VGA_INDEX_REGISTER, (uint8_t)0x03C0);
     
     // Write original VGA palette values
     for (i = 0; i < PALETTE_SIZE; i++) {
@@ -67,7 +67,7 @@ void reset_vga_palette() {
 void vga_set_palette()
 {
     int i;
-    outportb(VGA_INDEX_REGISTER, 0x03C0);
+    outportb(VGA_INDEX_REGISTER, (uint8_t)0x03C0);
     for (i = 0; i < PALETTE_SIZE; i++) {
         originalPalette[i] = inportb(VGA_DATA_REGISTER);
     }

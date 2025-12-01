@@ -184,7 +184,7 @@ void kernel_panic(const char* reason);
 void system_reboot();
 void system_shutdown();
 
-unsigned int advanced_hash(char *input);
+unsigned int advanced_hash(const char *input);
 
 void disassemble(uint8_t *code_buffer, int size, uint32_t* base_address);
 int kregisters(struct registers_dump* regs);

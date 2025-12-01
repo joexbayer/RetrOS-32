@@ -185,3 +185,5 @@ _page_fault_entry:
     popal
 
     iret
+
+.section .note.GNU-stack,"",@progbits

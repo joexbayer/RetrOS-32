@@ -451,22 +451,22 @@ static void __callback taskbar_clock()
     start("kclock", 0, NULL);
 }
 
-static void __callback taskbar_bg_default()
+static void __attribute__((unused)) __callback taskbar_bg_default()
 {
     gfx_raw_background("/imgs/snow.bin");
 }
 
-static void __callback taskbar_bg_lotr()
+static void __attribute__((unused)) __callback taskbar_bg_lotr()
 {
     gfx_decode_background_image("/imgs/lotr2.img");
 }
 
-static void __callback taskbar_bg_lotr2()
+static void __attribute__((unused)) __callback taskbar_bg_lotr2()
 {
     gfx_decode_background_image("/imgs/lotr3.img");
 }
 
-static void __callback taskbar_bg_retro()
+static void __attribute__((unused)) __callback taskbar_bg_retro()
 {
     if(vbe_info->height == 480)
         gfx_raw_background("/imgs/output.bin");
@@ -481,12 +481,12 @@ static void __callback taskbar_users()
         dbgprintf("%s does not exist\n", "users.o");
 }
 
-static void __callback taskbar_bg_default_color()
+static void __attribute__((unused)) __callback taskbar_bg_default_color()
 {
     gfx_set_background_color(3);
 }
 
-static void __callback taskbar_bg_default_color_gray()
+static void __attribute__((unused)) __callback taskbar_bg_default_color_gray()
 {
     gfx_set_background_color(0x17);
 }

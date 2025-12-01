@@ -392,9 +392,9 @@ void Editor::highlightSyntax(unsigned char* start)
 void Editor::putChar(unsigned char c)
 {
 	
-	//gfx_draw_rectangle(TEXT_WIDTH_OFFSET + m_x*8, m_y*8, 8, 8, COLOR_BG);
-	int line_start;
-	int line_end;
+    //gfx_draw_rectangle(TEXT_WIDTH_OFFSET + m_x*8, m_y*8, 8, 8, COLOR_BG);
+    int line_start = 0;
+    int line_end = 0;
 	switch (c){
 	case '\b':
 		if(m_bufferEdit == 0) return;
@@ -469,12 +469,9 @@ void Editor::putChar(unsigned char c)
 				return;
 			}
 
-			int prev = prevNewline(&m_textBuffer[m_bufferEdit], m_textBuffer);
 			int moveto = nextNewline(&m_textBuffer[m_bufferEdit-1]);
 			m_bufferEdit += moveto;
 
-			line_end = nextNewline(&m_textBuffer[m_bufferEdit]);
-			//reDraw(prev, m_bufferEdit+line_end);
 			reDraw(0, m_bufferSize);
 		}
 		return;
@@ -484,8 +481,6 @@ void Editor::putChar(unsigned char c)
 			int moveto = prevNewline(&m_textBuffer[m_bufferEdit-1], m_textBuffer);
 			m_bufferEdit -= moveto+1;
 
-			line_end = prevNewline(&m_textBuffer[m_bufferEdit], m_textBuffer);
-			//reDraw(m_bufferEdit-line_end+1, m_bufferEdit+moveto+3);
 			reDraw(0, m_bufferSize);
 		}
 		return;
@@ -529,6 +524,8 @@ void Editor::putChar(unsigned char c)
 		//reDraw(m_bufferEdit-(line_start+2), m_bufferEdit+line_end);
 		reDraw(0, m_bufferSize);
 	}
+    (void)line_start;
+    (void)line_end;
 }
 
 extern "C" int main(int argc, char* argv[])

@@ -14,6 +14,7 @@
 #include <scheduler.h>
 #include <pcb.h>
 #include <serial.h>
+#include <ksyms.h>
 #include <assert.h>
 
 #ifndef KDEBUG_SYNC

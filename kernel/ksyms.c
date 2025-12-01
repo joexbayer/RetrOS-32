@@ -35,7 +35,7 @@ static struct kernel_symbols {
     .num_symbols = 0
 };
 
-static struct symbols {
+struct symbols {
     struct entry {
         char name[50];
         uintptr_t addr;

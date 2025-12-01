@@ -63,6 +63,7 @@ static int textbuffer_parse_replace(struct textbuffer *buffer, char *command) {
     replace[k] = '\0';
 
     textbuffer_replace(buffer, search, replace);
+    return 0;
 }
 
 static int textbuffer_command(struct textbuffer* buffer, char* command) {
