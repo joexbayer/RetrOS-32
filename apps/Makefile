@@ -12,7 +12,7 @@ LDFLAGS += $(ARCH_LDFLAGS)
 UTILS := $(addprefix $(BUILD_DIR)/,cppUtils.o crt0.o)
 UTIL_DEPS := $(UTILS:.o=.d)
 
-APPS := editor wolfstein colors finder calculator graphs cube users texed webserver
+APPS := editor wolfstein colors finder calculator graphs cube users texed webserver browser
 
 LIB_CORE_OBJS := ../bin/syscall.o ../bin/libc.o ../bin/printf.o $(BUILD_DIR)/cppUtils.o
 LIB_GRAPHICS_OBJS := ../bin/graphics.o ../bin/libc.o

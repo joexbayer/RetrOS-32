@@ -1,5 +1,5 @@
 APP_NAME := browser
-APP_OUTPUT := edit.o
-APP_LIBS := -lcore -lgraphic -lnet -lhttp
+APP_OUTPUT := browser.o
+APP_LIBS := -lcore -lgraphic -lhttp -lnet
 
 include ../app.mk

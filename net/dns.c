@@ -136,7 +136,7 @@ int gethostname(char* hostname)
         uint32_t result;
         switch (ntohs(answer->data_len)){
         case 4:
-            result = *((uint32_t*) &buf[question_size+12+next]);
+            result = ntohl(*((uint32_t*) &buf[question_size+12+next]));
             break;
         
         default:

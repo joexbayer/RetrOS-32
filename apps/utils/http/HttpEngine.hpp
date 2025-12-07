@@ -36,6 +36,64 @@ public:
         destroy();
     }
 
+    void setMethod(http_method_t method) {
+        req_.method = method;
+    }
+
+    bool setPath(const char* path) {
+        if (req_.path) {
+            free(req_.path);
+            req_.path = nullptr;
+        }
+        req_.path = dup_cstr(path);
+        return req_.path != nullptr;
+    }
+
+    void setBody(const char* body, int length = -1) {
+        if (req_.body) {
+            free(req_.body);
+            req_.body = nullptr;
+        }
+        if (!body) {
+            req_.content_length = 0;
+            return;
+        }
+
+        size_t len = (length >= 0) ? (size_t)length : strlen(body);
+        req_.body = (char*)malloc(len + 1);
+        if (!req_.body) {
+            req_.content_length = 0;
+            return;
+        }
+        memcpy(req_.body, body, len);
+        req_.body[len] = '\0';
+        req_.content_length = (int)len;
+    }
+
+    void addHeader(const char* key, const char* value) {
+        if (!req_.headers) {
+            req_.headers = http_kv_create(8);
+        }
+        if (!req_.headers) {
+            return;
+        }
+        char* vdup = dup_cstr(value);
+        if (!vdup) {
+            return;
+        }
+        if (http_kv_insert(req_.headers, key, vdup) != 0) {
+            free(vdup);
+        }
+    }
+
+    int build(char* buffer, size_t buffer_size) {
+        return http_build_request(&req_, buffer, buffer_size);
+    }
+
+    void clear() {
+        destroy();
+    }
+
     bool parse(const char* raw) {
         destroy();
         int ret = http_parse(raw, &req_);
@@ -75,6 +133,8 @@ public:
 private:
     void reset() {
         memset(&req_, 0, sizeof(req_));
+        req_.version = HTTP_VERSION_1_1;
+        req_.method = HTTP_GET;
         parsed_ = false;
     }
 
@@ -223,8 +283,27 @@ public:
         return http_build_response(&res_, buffer, buffer_size);
     }
 
+    bool parse(const char* raw) {
+        destroy();
+        int ret = http_parse_response(raw, &res_);
+        if (ret == 0 && res_.body) {
+            res_body_ = res_.body;
+        }
+        return ret == 0;
+    }
+
     const http_response& raw() const { return res_; }
     http_response& raw() { return res_; }
+
+    void clear() {
+        destroy();
+    }
+
+    void adoptBodyFromRaw() {
+        if (res_.body) {
+            res_body_ = res_.body;
+        }
+    }
 
 private:
     void reset() {
@@ -273,6 +352,23 @@ public:
 
     static int BuildResponse(const Response& res, char* buffer, size_t buffer_size) {
         return res.build(buffer, buffer_size);
+    }
+
+    static int BuildRequest(Request& req, char* buffer, size_t buffer_size) {
+        return req.build(buffer, buffer_size);
+    }
+
+    static bool ParseResponse(const char* raw, Response& out) {
+        return out.parse(raw);
+    }
+
+    static bool Send(const char* host, uint16_t port, Request& req, Response& res) {
+        res.clear();
+        int ret = http_send_request(host, port, &req.raw(), &res.raw());
+        if (ret == 0) {
+            res.adoptBodyFromRaw();
+        }
+        return ret == 0;
     }
 };
 

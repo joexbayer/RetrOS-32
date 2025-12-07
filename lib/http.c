@@ -14,6 +14,7 @@
 #include <lib/http.h>
 #include <lib/printf.h>
 #include <lib/syscall.h>
+#include <lib/net.h>
 #include <libc.h>
 
 static char* http_strstr(const char *str, const char *substr) {
@@ -73,6 +74,12 @@ static char* http_strdup(const char *str) {
     strcpy(dup, str);
     return dup;
 }
+
+#ifndef __RetrOS32MOCK
+static unsigned short http_htons(unsigned short data) {
+    return (unsigned short)(((data & 0x00ff) << 8) | ((data & 0xff00) >> 8));
+}
+#endif
 
 struct http_kv_store *http_kv_create(size_t initial_capacity) {
     if (initial_capacity == 0) {
@@ -191,7 +198,7 @@ static void http_parse_method(const char *method, struct http_request *req) {
 }
 
 /* Parses HTTP headers and puts them into headers map */
-static void http_parse_headers(const char *headers, struct http_request *req) {
+static void http_parse_headers(const char *headers, struct http_kv_store *store) {
     const char *line_start = headers;
 
     while (*line_start != '\0') {
@@ -226,7 +233,7 @@ static void http_parse_headers(const char *headers, struct http_request *req) {
                 return;
             }
 
-            if (http_kv_insert(req->headers, key, k_value) != 0) {
+            if (http_kv_insert(store, key, k_value) != 0) {
                 /* kv store keeps ownership only on success */
                 free(k_value);
             }
@@ -396,7 +403,7 @@ static void http_parse_request(const char *request, struct http_request *req) {
 
         strncpy(headers, cursor, headers_length);
         headers[headers_length] = '\0';
-        http_parse_headers(headers, req);
+        http_parse_headers(headers, req->headers);
         free(headers);
 
         cursor = headers_end + 4; /* Move past "\r\n\r\n" */
@@ -546,6 +553,71 @@ int http_build_response(const struct http_response *res, char *buffer, size_t bu
 
     if (res->body && body_length > 0) {
         if (http_append(buffer, buffer_size, &used, res->body, (size_t)body_length) != 0) return -1;
+    }
+
+    return (int)used;
+}
+
+static const char *http_version_string(http_version_t version) {
+    return (version == HTTP_VERSION_1_0) ? "HTTP/1.0" : HTTP_VERSION;
+}
+
+int http_build_request(const struct http_request *req, char *buffer, size_t buffer_size) {
+    if (!req || !buffer || buffer_size == 0 || !req->path) {
+        return -1;
+    }
+
+    size_t used = 0;
+    size_t methods_count = sizeof(http_methods) / sizeof(http_methods[0]);
+    /* We default to GET, should perhaps fail if not method is set (in the future)*/
+    const char *method_str = (req->method >= 0 && (size_t)req->method < methods_count) ? http_methods[req->method] : http_methods[HTTP_GET];
+    int body_length = req->content_length;
+    if (body_length == 0 && req->body) {
+        body_length = strlen(req->body);
+    }
+
+    if (http_append(buffer, buffer_size, &used, method_str, strlen(method_str)) != 0) return -1;
+    if (http_append(buffer, buffer_size, &used, " ", 1) != 0) return -1;
+    if (http_append(buffer, buffer_size, &used, req->path, strlen(req->path)) != 0) return -1;
+    if (http_append(buffer, buffer_size, &used, " ", 1) != 0) return -1;
+    if (http_append(buffer, buffer_size, &used, http_version_string(req->version), strlen(http_version_string(req->version))) != 0) return -1;
+    if (http_append(buffer, buffer_size, &used, "\r\n", 2) != 0) return -1;
+
+    int has_content_length = 0;
+    if (req->headers) {
+        for (size_t i = 0; i < req->headers->size; ++i) {
+            char *key = req->headers->entries[i].key;
+            char *value = req->headers->entries[i].value;
+            if (!key || !value) {
+                continue;
+            }
+            if (strcmp(key, "Content-Length") == 0) {
+                has_content_length = 1;
+            }
+
+            if (http_append(buffer, buffer_size, &used, key, strlen(key)) != 0) return -1;
+            if (http_append(buffer, buffer_size, &used, ": ", 2) != 0) return -1;
+            if (http_append(buffer, buffer_size, &used, value, strlen(value)) != 0) return -1;
+            if (http_append(buffer, buffer_size, &used, "\r\n", 2) != 0) return -1;
+        }
+    }
+
+    if (body_length > 0 && !has_content_length) {
+        char len_buf[32];
+        int written = sprintf(len_buf, "%d", body_length);
+        if (written < 0) {
+            return -1;
+        }
+
+        if (http_append(buffer, buffer_size, &used, "Content-Length: ", 16) != 0) return -1;
+        if (http_append(buffer, buffer_size, &used, len_buf, (size_t)written) != 0) return -1;
+        if (http_append(buffer, buffer_size, &used, "\r\n", 2) != 0) return -1;
+    }
+
+    if (http_append(buffer, buffer_size, &used, "\r\n", 2) != 0) return -1;
+
+    if (req->body && body_length > 0) {
+        if (http_append(buffer, buffer_size, &used, req->body, (size_t)body_length) != 0) return -1;
     }
 
     return (int)used;
@@ -711,3 +783,181 @@ int http_parse(const char *request, struct http_request *req) {
 
     return 0;
 }
+
+static http_error_t http_status_from_code(int code) {
+    switch (code) {
+        case 101: return HTTP_101_SWITCHING_PROTOCOLS;
+        case 200: return HTTP_200_OK;
+        case 302: return HTTP_302_FOUND;
+        case 400: return HTTP_400_BAD_REQUEST;
+        case 401: return HTTP_401_UNAUTHORIZED;
+        case 403: return HTTP_403_FORBIDDEN;
+        case 404: return HTTP_404_NOT_FOUND;
+        case 405: return HTTP_405_METHOD_NOT_ALLOWED;
+        case 414: return HTTP_414_URI_TOO_LONG;
+        case 500: return HTTP_500_INTERNAL_SERVER_ERROR;
+        default: return HTTP_000_UNKNOWN;
+    }
+}
+
+int http_parse_response(const char *response, struct http_response *res) {
+    if (!response || !res) {
+        return -1;
+    }
+
+    const char *status_line_end = http_strstr(response, "\r\n");
+    if (!status_line_end) {
+        return -1;
+    }
+
+    const char *code_start = http_strchr(response, ' ');
+    if (!code_start || code_start >= status_line_end) {
+        return -1;
+    }
+    int status_code = atoi((char *)(code_start + 1));
+    res->status = http_status_from_code(status_code);
+
+    const char *headers_start = status_line_end + 2;
+    const char *headers_end = http_strstr(headers_start, "\r\n\r\n");
+    if (!headers_end) {
+        return -1;
+    }
+
+    res->headers = http_kv_create(16);
+    if (!res->headers) {
+        return -1;
+    }
+
+    size_t headers_len = (size_t)(headers_end - headers_start);
+    char *headers_buf = malloc(headers_len + 1);
+    if (!headers_buf) {
+        http_kv_destroy(res->headers, 0);
+        res->headers = NULL;
+        return -1;
+    }
+
+    strncpy(headers_buf, headers_start, headers_len);
+    headers_buf[headers_len] = '\0';
+    http_parse_headers(headers_buf, res->headers);
+    free(headers_buf);
+
+    const char *body_start = headers_end + 4;
+    int content_length = 0;
+    char *content_length_str = http_kv_get(res->headers, "Content-Length");
+    if (content_length_str) {
+        content_length = atoi(content_length_str);
+    } else if (body_start && *body_start) {
+        content_length = strlen(body_start);
+    }
+
+    res->content_length = content_length;
+    if (content_length > 0) {
+        res->body = malloc((size_t)content_length + 1);
+        if (!res->body) {
+            http_kv_destroy(res->headers, 1);
+            res->headers = NULL;
+            return -1;
+        }
+        memcpy(res->body, body_start, (size_t)content_length);
+        res->body[content_length] = '\0';
+    } else {
+        res->body = NULL;
+    }
+
+    return 0;
+}
+
+#ifndef __RetrOS32MOCK
+int http_send_request(const char *host, uint16_t port, struct http_request *req, struct http_response *res) {
+    if (!host || !req || !res) {
+        return -1;
+    }
+
+    if (!req->headers) {
+        req->headers = http_kv_create(8);
+    }
+    if (req->headers && !http_kv_get(req->headers, "Host")) {
+        char *host_value = http_strdup(host);
+        if (host_value) {
+            if (http_kv_insert(req->headers, "Host", host_value) != 0) {
+                free(host_value);
+            }
+        }
+    }
+
+    /* 4KB + 8KB on the user stack was overflowing the 8KB userspace stack.
+     * Allocate the temporary HTTP buffers on the heap instead. */
+    char *request_buf = malloc(HTTP_REQUEST_SIZE);
+    char *response_buf = malloc(HTTP_RESPONSE_SIZE);
+    if (!request_buf || !response_buf) {
+        free(request_buf);
+        free(response_buf);
+        return -1;
+    }
+
+    int req_len = http_build_request(req, request_buf, HTTP_REQUEST_SIZE);
+    if (req_len < 0) {
+        free(request_buf);
+        free(response_buf);
+        return -1;
+    }
+
+    int sd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sd < 0) {
+        free(request_buf);
+        free(response_buf);
+        return -1;
+    }
+
+    int host_ip = gethostname((char*)host);
+    if (host_ip == -1) {
+        close(sd);
+        free(request_buf);
+        free(response_buf);
+        return -1;
+    }
+
+    struct sockaddr_in dest_addr;
+    memset(&dest_addr, 0, sizeof(dest_addr));
+    dest_addr.sin_addr.s_addr = (unsigned long)host_ip;
+    dest_addr.sin_port = http_htons(port);
+    dest_addr.sin_family = AF_INET;
+
+    if (connect(sd, (struct sockaddr *)&dest_addr, sizeof(struct sockaddr_in)) != 0) {
+        close(sd);
+        free(request_buf);
+        free(response_buf);
+        return -1;
+    }
+
+    if (send(sd, request_buf, req_len, 0) < 0) {
+        close(sd);
+        free(request_buf);
+        free(response_buf);
+        return -1;
+    }
+
+    int recv_len = recv(sd, response_buf, HTTP_RESPONSE_SIZE - 1, 0);
+    close(sd);
+    if (recv_len <= 0) {
+        free(request_buf);
+        free(response_buf);
+        return -1;
+    }
+
+    response_buf[recv_len] = '\0';
+    int parse_result = http_parse_response(response_buf, res);
+    free(request_buf);
+    free(response_buf);
+
+    return parse_result;
+}
+#else
+int http_send_request(const char *host, uint16_t port, struct http_request *req, struct http_response *res) {
+    (void)host;
+    (void)port;
+    (void)req;
+    (void)res;
+    return -1;
+}
+#endif

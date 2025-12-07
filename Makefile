@@ -177,17 +177,18 @@ git:
 # Build rules
 -include $(DEPS)
 
-$(BUILD_DIR)/%.o: */%.c
-	$(call make_dir,$(BUILD_DIR))
-	$(QUIET)$(CC) $(CFLAGS) $(DEPFLAGS) -c $< -o $@
-	$(QUIET)echo "[CC ] $<"
+SRC_ROOTS := boot drivers fs graphics kernel lib apps net admin
+SRC_DIRS  := $(foreach dir,$(SRC_ROOTS),$(shell find $(dir) -type d 2>/dev/null))
+vpath %.c $(SRC_DIRS)
+vpath %.s $(SRC_DIRS)
 
-$(BUILD_DIR)/%.o: kernel/*/%.c
-	$(call make_dir,$(BUILD_DIR))
-	$(QUIET)$(CC) $(CFLAGS) $(DEPFLAGS) -c $< -o $@
-	$(QUIET)echo "[CC ] $<"
-
-$(BUILD_DIR)/%.o: */%.s
+$(BUILD_DIR)/%.o: %.s
 	$(call make_dir,$(BUILD_DIR))
 	$(QUIET)$(AS) $(ASFLAGS) -c $< -o $@
 	$(QUIET)echo "[AS ] $<"
+
+# Prefer assembly sources when both .s and .c share a basename (e.g. helpers).
+$(BUILD_DIR)/%.o: %.c
+	$(call make_dir,$(BUILD_DIR))
+	$(QUIET)$(CC) $(CFLAGS) $(DEPFLAGS) -c $< -o $@
+	$(QUIET)echo "[CC ] $<"

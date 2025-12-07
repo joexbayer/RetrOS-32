@@ -28,6 +28,7 @@ size_t http_kv_size(const struct http_kv_store *store);
 
 #define HTTP_VERSION "HTTP/1.1"
 #define HTTP_RESPONSE_SIZE 8*1024 /* 8KB */
+#define HTTP_REQUEST_SIZE 4*1024 /* 4KB */
 
 typedef enum http_version {
     HTTP_VERSION_1_0,
@@ -93,6 +94,9 @@ int http_parse(const char *request, struct http_request *req);
 int http_parse_data(struct http_request *req);  
 int http_is_websocket_upgrade(struct http_request *req);
 int http_build_response(const struct http_response *res, char *buffer, size_t buffer_size);
+int http_build_request(const struct http_request *req, char *buffer, size_t buffer_size);
+int http_parse_response(const char *response, struct http_response *res);
+int http_send_request(const char *host, uint16_t port, struct http_request *req, struct http_response *res);
 
 #ifdef __cplusplus
 }
