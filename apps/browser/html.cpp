@@ -1,10 +1,12 @@
-#include <iostream>
-#include <cstring>
+#include <libc.h>
+#include <lib/printf.h>
+#include <lib/syscall.h>
 
-#define MAX_TAG_NAME_LENGTH 10
-#define MAX_ATTR_NAME_LENGTH 15
-#define MAX_ATTR_VALUE_LENGTH 50
-#define MAX_ATTRIBUTES 5
+static const size_t MAX_TAG_NAME_LENGTH = 10;
+static const size_t MAX_ATTR_NAME_LENGTH = 15;
+static const size_t MAX_ATTR_VALUE_LENGTH = 50;
+static const size_t MAX_ATTRIBUTES = 5;
+static const size_t MAX_NODE_DATA_LENGTH = 100;
 
 /* Enumeration for HTML tags */
 enum HTMLTag {
@@ -17,45 +19,62 @@ enum HTMLTag {
     Button,
     Label,
     Layout,
-    Spacing
+    Spacing,
+    A, Div, H1, H2, H3, H4, H5, H6
 };
 
+struct TagMapping {
+    HTMLTag tag;
+    const char* name;
+};
+
+constexpr TagMapping kTagMappings[] = {
+    {Html, "html"}, {Body, "body"}, {P, "p"}, {Input, "input"},
+    {Checkbox, "checkbox"}, {Button, "button"},
+    {Label, "label"}, {Layout, "layout"}, {Spacing, "spacing"},
+    {A, "a"}, {Div, "div"}, {H1, "h1"}, {H2, "h2"},
+    {H3, "h3"}, {H4, "h4"}, {H5, "h5"}, {H6, "h6"},
+};
+
+bool stringsEqual(const char* a, const char* b) {
+    if (a == NULL || b == NULL) {
+        return false;
+    }
+    const size_t lenA = (size_t)strlen(a);
+    const size_t lenB = (size_t)strlen(b);
+    if (lenA != lenB) {
+        return false;
+    }
+    return memcmp(a, b, (uint32_t)lenA) == 0;
+}
+
+bool copyToBuffer(const char* source, size_t length, char* destination, size_t destinationSize) {
+    if (destinationSize == 0 || destination == nullptr || source == nullptr) {
+        return false;
+    }
+
+    const int copyLength = (int)(length < destinationSize - 1 ? length : destinationSize - 1);
+    memcpy(destination, source, copyLength);
+    destination[copyLength] = '\0';
+    return (size_t)copyLength == length;
+}
+
 HTMLTag stringToHTMLTag(const char* str) {
-    if (strncmp(str, "html", 4) == 0) return Html;
-    if (strncmp(str, "body", 4) == 0) return Body;
-    if (strncmp(str, "p", 1) == 0) return P;
-    if (strncmp(str, "input", 5) == 0) return Input;
-    if (strncmp(str, "checkbox", 8) == 0) return Checkbox;
-    if (strncmp(str, "button", 6) == 0) return Button;
-    if (strncmp(str, "label", 5) == 0) return Label;
-    if (strncmp(str, "layout", 6) == 0) return Layout;
-    if (strncmp(str, "spacing", 7) == 0) return Spacing;
+    for (const auto& mapping : kTagMappings) {
+        if (stringsEqual(str, mapping.name)) {
+            return mapping.tag;
+        }
+    }
     return Unknown;
 }
 
 const char* htmlTagToString(HTMLTag tag) {
-    switch (tag) {
-    case Html:
-        return "html";
-    case Body:
-        return "body";
-    case P:
-        return "p";
-    case Input:
-        return "input";
-    case Checkbox:
-        return "checkbox";
-    case Button:
-        return "button";
-    case Label:
-        return "label";
-    case Layout:
-        return "layout";
-    case Spacing:
-        return "spacing";
-    default:
-        return "unknown";
+    for (const auto& mapping : kTagMappings) {
+        if (mapping.tag == tag) {
+            return mapping.name;
+        }
     }
+    return "unknown";
 }
 
 /* Structure for HTML attributes */
@@ -71,18 +90,16 @@ struct Node {
     HTMLAttribute attributes[MAX_ATTRIBUTES];
     int attr_count;
 
-    char data[100];
-    
+    char data[MAX_NODE_DATA_LENGTH];
+
     bool isTag;
-    
+
     Node* parent;
     Node* firstChild;
     Node* nextSibling;
 
-    Node(HTMLTag tag, const char* data, bool isTagNode, Node* parentNode)
-        : tag(tag), attr_count(0), isTag(isTagNode), parent(parentNode), firstChild(nullptr), nextSibling(nullptr) {
-        strncpy(this->data, data, 99);
-        this->data[99] = '\0';
+    Node(HTMLTag tag, const char* data, bool isTagNode, Node* parentNode) : tag(tag), attr_count(0), isTag(isTagNode), parent(parentNode), firstChild(nullptr), nextSibling(nullptr) {
+        copyToBuffer(data, (size_t)strlen(data), this->data, MAX_NODE_DATA_LENGTH);
     }
 
     ~Node() {
@@ -90,17 +107,24 @@ struct Node {
         delete nextSibling;
     }
 
-    void addAttribute(const char* name, const char* value) {
-        if (attr_count < MAX_ATTRIBUTES) {
-
-            strncpy(attributes[attr_count].name, name, MAX_ATTR_NAME_LENGTH - 1);
-            attributes[attr_count].name[MAX_ATTR_NAME_LENGTH - 1] = '\0';
-
-            strncpy(attributes[attr_count].value, value, MAX_ATTR_VALUE_LENGTH - 1);
-            attributes[attr_count].value[MAX_ATTR_VALUE_LENGTH - 1] = '\0';
-
-            attr_count++;
+    bool addAttribute(const char* name, const char* value) {
+        if (attr_count >= static_cast<int>(MAX_ATTRIBUTES)) {
+            printf("Too many attributes on node\n");
+            return false;
         }
+
+        if (!copyToBuffer(name, (size_t)strlen(name), attributes[attr_count].name, MAX_ATTR_NAME_LENGTH)) {
+            printf("Attribute name too long\n");
+            return false;
+        }
+
+        if (!copyToBuffer(value, (size_t)strlen(value), attributes[attr_count].value, MAX_ATTR_VALUE_LENGTH)) {
+            printf("Attribute value too long\n");
+            return false;
+        }
+
+        attr_count++;
+        return true;
     }
 };
 
@@ -124,10 +148,17 @@ public:
                     /* Start of a new tag */
                     const char* tagStart = pos + 1;
                     pos = findTagEnd(pos);
-                    if (*pos == '\0') return -1; /* Error: Malformed HTML */
-
+                    if (*pos == '\0') {
+                        printf("Malformed HTML: Tag not closed\n");
+                        return -1; /* Error: Malformed HTML */
+                    }
+                        
                     char tagStr[MAX_TAG_NAME_LENGTH] = {0};
-                    const char* tagEnd = extractTagName(tagStart, tagStr);
+                    bool tagNameValid = true;
+                    const char* tagEnd = extractTagName(tagStart, tagStr, tagNameValid);
+                    if (!tagNameValid) {
+                        return -1;
+                    }
                     HTMLTag tag = stringToHTMLTag(tagStr);
 
                     Node* child = new Node(tag, "", true, current);
@@ -152,8 +183,8 @@ public:
                 }
 
                 if (pos > contentStart) {
-                    char content[100] = {0};
-                    strncpy(content, contentStart, pos - contentStart < 99 ? pos - contentStart : 99);
+                    char content[MAX_NODE_DATA_LENGTH] = {0};
+                    copyToBuffer(contentStart, (size_t)(pos - contentStart), content, MAX_NODE_DATA_LENGTH);
                     Node* child = new Node(Unknown, content, false, current);
                     addChild(child);
                 }
@@ -214,17 +245,16 @@ private:
 
     void printTreeRecursive(const Node* node, int depth) const {
         for (int i = 0; i < depth; ++i) {
-            std::cout << "  ";
+            printf("  ");
         }
         if (node->isTag) {
-            std::cout << "Tag: " << htmlTagToString(node->tag);
-            /* Print attributes if any */
+            printf("Tag: %s", htmlTagToString(node->tag));
             for (int i = 0; i < node->attr_count; ++i) {
-                std::cout << " [" << node->attributes[i].name << "=\"" << node->attributes[i].value << "\"]";
+                printf(" [%s=\"%s\"]", node->attributes[i].name, node->attributes[i].value);
             }
-            std::cout << std::endl;
+            printf("\n");
         } else {
-            std::cout << "Content: " << node->data << std::endl;
+            printf("Content: %s\n", node->data);
         }
         if (node->firstChild) {
             printTreeRecursive(node->firstChild, depth + 1);
@@ -236,12 +266,16 @@ private:
 
 
     /* Utility function to extract the tag name from a given position */
-    const char* extractTagName(const char* start, char* buffer) {
+    const char* extractTagName(const char* start, char* buffer, bool& copiedFully) {
         const char* ptr = start;
         while (*ptr != ' ' && *ptr != '>' && *ptr != '\0') {
-            *buffer++ = *ptr++;
+            ptr++;
         }
-        *buffer = '\0'; /* Null-terminate the string */
+        const size_t length = (size_t)(ptr - start);
+        copiedFully = copyToBuffer(start, length, buffer, MAX_TAG_NAME_LENGTH);
+        if (!copiedFully) {
+            printf("Tag name too long\n");
+        }
         return ptr; /* Return the position after the tag name */
     }
 
@@ -250,36 +284,52 @@ private:
         const char* ptr = start;
         while (ptr < end && *ptr != '>') {
             /* Skip any leading whitespace */
-            while (isspace(*ptr)) ptr++;
+            while (ptr < end && isspace(*ptr)) {
+                ptr++;
+            }
+
+            if (ptr >= end || *ptr == '>') {
+                break;
+            }
 
             /* Extract attribute name */
             const char* attrNameStart = ptr;
-            while (*ptr != '=' && !isspace(*ptr) && *ptr != '\0' && ptr < end) {
+            while (ptr < end && *ptr != '=' && !isspace(*ptr) && *ptr != '\0') {
                 ptr++;
             }
             char attrName[MAX_ATTR_NAME_LENGTH] = {0};
-            strncpy(attrName, attrNameStart, ptr - attrNameStart);
+            const size_t attrNameLength = (size_t)(ptr - attrNameStart);
+            if (!copyToBuffer(attrNameStart, attrNameLength, attrName, MAX_ATTR_NAME_LENGTH)) {
+                printf("Attribute name too long\n");
+                return -1;
+            }
 
             /* Check for '=' after attribute name */
-            if (*ptr != '=' || *ptr == '\0') return -1;
+            if (ptr >= end || *ptr != '=' || *ptr == '\0') return -1;
             ptr++; /* Skip '=' */
 
             /* Check for opening quote of attribute value */
-            if (*ptr != '\"') return -1;
+            if (ptr >= end || *ptr != '\"') return -1;
             ptr++; /* Skip opening quote */
 
             /* Extract attribute value */
             const char* attrValueStart = ptr;
-            while (*ptr != '\"' && *ptr != '\0' && ptr < end) {
+            while (ptr < end && *ptr != '\"' && *ptr != '\0') {
                 ptr++;
             }
-            if (*ptr != '\"') return -1; /* Missing closing quote */
+            if (ptr >= end || *ptr != '\"') return -1; /* Missing closing quote */
             char attrValue[MAX_ATTR_VALUE_LENGTH] = {0};
-            strncpy(attrValue, attrValueStart, ptr - attrValueStart);
+            const size_t attrValueLength = (size_t)(ptr - attrValueStart);
+            if (!copyToBuffer(attrValueStart, attrValueLength, attrValue, MAX_ATTR_VALUE_LENGTH)) {
+                printf("Attribute value too long\n");
+                return -1;
+            }
             ptr++; /* Skip closing quote */
 
             /* Add attribute to node */
-            node->addAttribute(attrName, attrValue);
+            if (!node->addAttribute(attrName, attrValue)) {
+                return -1;
+            }
         }
         return 0;
     }
@@ -302,7 +352,7 @@ int main() {
     HTMLParser parser(htmlContent);
     ret = parser.parse();
     if (ret != 0) {
-        std::cout << "Error: " << HTMLParser::getHtmlError(ret) << std::endl;
+        printf("Error: %s\n", HTMLParser::getHtmlError(ret));
     }
     parser.printTree();
 

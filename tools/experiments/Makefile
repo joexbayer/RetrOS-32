@@ -1,16 +1,18 @@
-include ../../make/common.mk
+CXX ?= g++
+CC ?= gcc
+CXXFLAGS := -std=c++11 -I../../apps/utils -I../../include -Wno-builtin-declaration-mismatch
+CFLAGS := -I../../include
+CLIB_SRCS := ../../lib/libc.c ../../lib/printf.c ../../lib/syscall.c
+CLIB_OBJS := $(CLIB_SRCS:.c=.o)
 
-TARGET := http
-CXXFLAGS := -std=c++11 -I../../apps/utils -I../../include
+.PHONY: http clean
 
-.PHONY: all run clean
-all: run
+http: http.cpp $(CLIB_OBJS)
+	$(CXX) $(CXXFLAGS) $< $(CLIB_OBJS) -o $@
+	@./$@
 
-run: $(TARGET)
-	./$(TARGET)
-
-$(TARGET): http.cpp
-	$(QUIET)$(CXX) $(CXXFLAGS) $< -o $@
+.c.o:
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	$(QUIET)$(RM_F) $(TARGET)
+	rm -f http a.out $(CLIB_OBJS)
