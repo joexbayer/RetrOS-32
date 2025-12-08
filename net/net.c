@@ -51,7 +51,27 @@ error_t kernel_bind(struct sock* socket, const struct sockaddr *address, socklen
  */ 
 error_t kernel_recvfrom(struct sock* socket, void *buffer, int length, int flags, struct sockaddr *address, socklen_t *address_len)
 {
-    return 0;
+    if(socket == NULL){
+        return -ERROR_INVALID_SOCKET;
+    }
+
+    int ret = kernel_recv(socket, buffer, length, flags);
+    if(ret <= 0){
+        return ret;
+    }
+
+    if(address != NULL){
+        struct sockaddr_in* addr = (struct sockaddr_in*)address;
+        addr->sin_family = AF_INET;
+        addr->sin_port = socket->recv_addr.sin_port;
+        addr->sin_addr.s_addr = socket->recv_addr.sin_addr.s_addr;
+
+        if(address_len != NULL){
+            *address_len = sizeof(struct sockaddr_in);
+        }
+    }
+
+    return ret;
 }
 
 /**
@@ -86,14 +106,25 @@ error_t kernel_recv(struct sock* socket, void *buffer, int length, int flags)
 
 error_t kernel_recv_timeout(struct sock* socket, void *buffer, int length, int flags, int timeout)
 {
+    if(socket == NULL){
+        return -ERROR_INVALID_SOCKET;
+    }
+
     uint32_t timeout_ticks = timer_get_tick() + (timeout + 3) * 1000;
-    int read = -1;
-    while(read == -1){
-        if((uint32_t)timer_get_tick() > timeout_ticks) return 0;
+
+    /* Wait until data is ready or timeout expires. */
+    while(!net_sock_data_ready(socket, length)){
+        if((uint32_t)timer_get_tick() > timeout_ticks){
+            return 0;
+        }
+
+        socket->waiting = $process->current;
+        $process->current->state = BLOCKED;
         kernel_yield();
     }
 
-    return read;
+    /* net_sock_read will consume ready data without blocking because data_ready is set. */
+    return net_sock_read(socket, buffer, length);
 }
 
 error_t kernel_connect(struct sock* socket, const struct sockaddr *address, socklen_t address_len)

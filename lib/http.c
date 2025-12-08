@@ -938,10 +938,10 @@ int http_send_request(const char *host, uint16_t port, struct http_request *req,
     }
 
     int recv_len = recv(sd, response_buf, HTTP_RESPONSE_SIZE - 1, 0);
-    close(sd);
     if (recv_len <= 0) {
         free(request_buf);
         free(response_buf);
+        close(sd);
         return -1;
     }
 
@@ -949,6 +949,7 @@ int http_send_request(const char *host, uint16_t port, struct http_request *req,
     int parse_result = http_parse_response(response_buf, res);
     free(request_buf);
     free(response_buf);
+    close(sd);
 
     return parse_result;
 }

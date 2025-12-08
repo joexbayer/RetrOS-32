@@ -57,6 +57,9 @@ int net_udp_parse(struct sk_buff* skb){
 	struct udp_header* hdr = (struct udp_header* ) skb->data;
 	skb->hdr.udp = hdr;
 
+    /* Preserve source port before host conversion. */
+    uint16_t src_port_n = hdr->srcport;
+
 	uint16_t udp_checksum = transport_checksum(skb->hdr.ip->saddr, skb->hdr.ip->daddr, UDP, (uint8_t*)skb->data, skb->hdr.udp->udp_length);
 	if( udp_checksum != 0){
 		dbgprintf("checksum failed %x - %x.\n", hdr->checksum, udp_checksum);
@@ -74,6 +77,11 @@ int net_udp_parse(struct sk_buff* skb){
 		dbgprintf("Unable to find UDP socket\n");
 		return -1;
 	}
+
+    /* Track sender for recvfrom callers. */
+    sk->recv_addr.sin_family = AF_INET;
+    sk->recv_addr.sin_port = src_port_n;
+    sk->recv_addr.sin_addr.s_addr = skb->hdr.ip->saddr;
 
 	sock_ref(sk);
 

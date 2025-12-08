@@ -74,7 +74,8 @@ const char* socket_protocol_to_str(int protocol){
 
 inline static unsigned short __get_free_port()
 {
-    return ntohs(get_free_bitmap(port_map, NET_NUMBER_OF_DYMANIC_PORTS) + NET_DYNAMIC_PORT_START);
+    /* Store bound ports in network order internally. */
+    return htons(get_free_bitmap(port_map, NET_NUMBER_OF_DYMANIC_PORTS) + NET_DYNAMIC_PORT_START);
 }
 
 void net_sock_bind(struct sock* socket, unsigned short port, unsigned int ip)
@@ -115,11 +116,12 @@ error_t net_sock_read(struct sock* sock, uint8_t* buffer, unsigned int length)
         $process->current->state = BLOCKED;
 	    kernel_yield();
     }
-    
-    if(sock->data_ready == -1){
+
+    /* If the peer closed the connection but we still have buffered data, return it
+     * before reporting EOF. */
+    if(sock->data_ready == -1 && sock->recvd == 0){
         dbgprintf(" [SOCK] Socket closed!\n");
-        return -1;
-    
+        return 0;
     }
 
 	//WAIT(!net_sock_data_ready(sock, length));
@@ -136,7 +138,7 @@ error_t net_sock_read(struct sock* sock, uint8_t* buffer, unsigned int length)
         }
         sock->recvd -= to_read;
         
-        if(sock->recvd == 0)
+        if(sock->recvd == 0 && sock->data_ready != -1)
             sock->data_ready = 0;
 
         dbgprintf("[SOCK] Received %d from socket %d\n", to_read, sock);
@@ -147,7 +149,7 @@ error_t net_sock_read(struct sock* sock, uint8_t* buffer, unsigned int length)
 
 struct sock* sock_get(socket_t id)
 {
-    if(id > NET_NUMBER_OF_SOCKETS)
+    if(id >= NET_NUMBER_OF_SOCKETS)
         return NULL;
 
     struct sock* sock = socket_table[id];
