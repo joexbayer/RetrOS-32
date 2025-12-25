@@ -23,19 +23,22 @@ static int isAlpha(unsigned char c) {
     return ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'));
 }
 
-static int nextNewline(unsigned char* str)
+static int nextNewline(const unsigned char* str, const unsigned char* limit)
 {
-	unsigned char* begin = str;
-	while (*begin != '\n' && *begin != 0)
+	const unsigned char* begin = str;
+	while (begin < limit && *begin != '\n' && *begin != 0)
 		begin++;
-	
-	begin++;
-	return begin - str;	
+
+	if (begin < limit && *begin == '\n') {
+		begin++;
+	}
+
+	return begin - str;
 }
 
-static int prevNewline(unsigned char* str, unsigned char* limit)
+static int prevNewline(const unsigned char* str, const unsigned char* limit)
 {
-	unsigned char* begin = str;
+	const unsigned char* begin = str;
 	while (*begin != '\n' && begin != limit)
 		begin--;
 	
@@ -61,6 +64,11 @@ void Editor::scroll(int lines) {
 	// Ensure that the scroll position stays within valid range
 	if (scrollY < 0) scrollY = 0;
 
+	int totalLines = countLines();
+	int maxScroll = totalLines - (c_height/8);
+	if (maxScroll < 0) maxScroll = 0;
+	if (scrollY > maxScroll) scrollY = maxScroll;
+
 	gfx_draw_rectangle(TREE_VIEW_WIDTH, 0, 17, this->c_height, COLOR_BG);
 	gfx_draw_line(TREE_VIEW_WIDTH+17, 0, TREE_VIEW_WIDTH+17, this->c_height, COLOR_VGA_MEDIUM_GRAY);
 	for (int i = scrollY; i < (this->c_height/8) + scrollY; i++)gfx_draw_format_text(TEXT_SIDE_NUMBERS, HEADER_OFFSET+ (i-scrollY)*8, COLOR_VGA_MEDIUM_GRAY, "%s%d ", i < 10 ? " " : "", i);
@@ -71,6 +79,8 @@ void Editor::Reset()
 	for (int i = 0; i < this->m_bufferSize; i++) this->m_textBuffer[i] = 0;
 	this->m_textBuffer[1] = '\n';
 	this->m_bufferHead = 2;
+	this->m_bufferEdit = 0;
+	this->scrollY = 0;
 	reDrawHeader();
 
 }
@@ -78,7 +88,7 @@ void Editor::Reset()
 void Editor::reDraw(int from, int to) {
     /* Clamp from and to values */
     from = from < 0 ? 0 : from;
-    to = to > m_bufferSize ? m_bufferSize : to;
+    to = to > m_bufferHead ? m_bufferHead : to;
 
 	m_x = 0;
 	m_y = 0;
@@ -86,7 +96,7 @@ void Editor::reDraw(int from, int to) {
     /* Calculate the number of characters scrolled */
     int linesScrolled = scrollY;
     int charsScrolled = 0;
-    for (int i = 0; linesScrolled > 0; i++) {
+    for (int i = 0; linesScrolled > 0 && i < m_bufferHead; i++) {
         if (m_textBuffer[i] == '\n') {
             linesScrolled--;
         } 
@@ -97,12 +107,16 @@ void Editor::reDraw(int from, int to) {
 		to = to + (charsScrolled-from)+1;
 		from = charsScrolled;
 	}
-
-	printf("from: %d, to: %d\n", from, to);	
+	if(to > m_bufferHead){
+		to = m_bufferHead;
+	}
+	if(from > to){
+		from = to;
+	}
 
     /* Draw text in the range from 'from' to 'to' */
     int line = 0, col = 0;
-    for (int i = from; i < to; i++) {
+    for (int i = from; i < to && i < m_bufferHead; i++) {
         if (i > 0 && (!isAlpha(m_textBuffer[i - 1]) || m_textBuffer[i - 1] == ' ')) {
             highlightSyntax(&m_textBuffer[i]);
         }
@@ -122,6 +136,17 @@ void Editor::reDraw(int from, int to) {
 
 void Editor::Lex()
 {
+}
+
+int Editor::countLines()
+{
+	int lines = 1;
+	for (int i = 0; i < m_bufferHead; i++){
+		if(m_textBuffer[i] == '\n'){
+			lines++;
+		}
+	}
+	return lines;
 }
 
 void Editor::SaveMsg()
@@ -146,7 +171,7 @@ void Editor::Quit()
 
 void Editor::Open(char* path)
 {
-	if(m_fd > 0){
+	if(m_fd >= 0){
 		SaveMsg();
 		fclose(m_fd);
 	}
@@ -158,6 +183,10 @@ void Editor::Open(char* path)
 	
 	
 	setTitle(path);
+
+	memset(m_textBuffer, 0, m_bufferSize);
+	m_bufferEdit = 0;
+	scrollY = 0;
 
 	m_bufferHead = read(m_fd, m_textBuffer, m_bufferSize);
 	if(m_bufferHead < 0){
@@ -178,6 +207,7 @@ void Editor::Save()
 	}
 
 	write(m_fd, m_textBuffer, m_bufferHead);
+	m_fileSize = m_bufferHead;
 	gfx_draw_rectangle(TEXT_WIDTH_OFFSET, c_height-8, c_width-TEXT_WIDTH_OFFSET, 8, COLOR_BG);
 	gfx_draw_format_text(TEXT_WIDTH_OFFSET, c_height-8, COLOR_VGA_MEDIUM_DARK_GRAY, "Saved.");
 }
@@ -186,8 +216,9 @@ void Editor::FileChooser()
 {
 	char filename[127];
 	int i = 0;
+	filename[0] = 0;
 
-	if(m_fd > 0){
+	if(m_fd >= 0){
 		/* TODO: Check for unsaved changes */
 		fclose(m_fd);
 
@@ -211,13 +242,15 @@ void Editor::FileChooser()
 					}
 					break;
 				case '\b':
-					gfx_draw_rectangle(TEXT_WIDTH_OFFSET + (11*8) + (i*8), c_height/2-4, 8, 8, COLOR_BG);
-					filename[i--] = 0;
+					if(i > 0){
+						gfx_draw_rectangle(TEXT_WIDTH_OFFSET + (11*8) + (i*8), c_height/2-4, 8, 8, COLOR_BG);
+						filename[--i] = 0;
+					}
 					break;
 				default:
-					if(i == 127) return;
+					if(i >= 126) break;
 					filename[i++] = event.data;
-					gfx_draw_char(TEXT_WIDTH_OFFSET + (11*8) + (i*8), c_height/2-4, event.data, COLOR_TEXT);
+					gfx_draw_char(TEXT_WIDTH_OFFSET + (11*8) + ((i-1)*8), c_height/2-4, event.data, COLOR_TEXT);
 					break;
 				}
 			}
@@ -281,8 +314,7 @@ void Editor::Help()
 			c_width = event.data-TEXT_WIDTH_OFFSET-48;
 			c_height = event.data2 % 8 == 0 ? event.data2 : event.data2 - (event.data2 % 8);
 		
-			delete treeView;
-			treeView = new TreeView(0, 0, TREE_VIEW_WIDTH, c_height);
+			treeView->resize(TREE_VIEW_WIDTH, c_height);
 			treeView->drawTree(this);
 
 			reDrawHeader();
@@ -326,8 +358,7 @@ void Editor::EditorLoop()
 			c_width = event.data-TEXT_WIDTH_OFFSET-48;
 			c_height = event.data2 % 8 == 0 ? event.data2 : event.data2 - (event.data2 % 8);
 
-			delete treeView;
-			treeView = new TreeView(0, 0, TREE_VIEW_WIDTH, c_height);
+			treeView->resize(TREE_VIEW_WIDTH, c_height);
 			treeView->drawTree(this);
 
 			reDrawHeader();
@@ -405,12 +436,12 @@ void Editor::putChar(unsigned char c)
 			int newline = m_textBuffer[m_bufferEdit-1] == '\n' ? 1 : 0;
 
 			/* move all lines down */
-			memcpy(&m_textBuffer[m_bufferEdit-1], &m_textBuffer[m_bufferEdit], diff+1);
+			memmove(&m_textBuffer[m_bufferEdit-1], &m_textBuffer[m_bufferEdit], diff+1);
 			m_bufferHead--;
 			m_bufferEdit--;
 
 			line_start = prevNewline(&m_textBuffer[m_bufferEdit], m_textBuffer);
-			line_end = nextNewline(&m_textBuffer[m_bufferEdit]);
+			line_end = nextNewline(&m_textBuffer[m_bufferEdit], &m_textBuffer[m_bufferHead]);
 
 			if(newline){
 				//reDraw(m_bufferEdit-line_start+1, m_bufferSize);
@@ -428,7 +459,7 @@ void Editor::putChar(unsigned char c)
 		m_bufferEdit--;
 
 		line_start = prevNewline(&m_textBuffer[m_bufferEdit], m_textBuffer);
-		line_end = nextNewline(&m_textBuffer[m_bufferEdit]);
+		line_end = nextNewline(&m_textBuffer[m_bufferEdit], &m_textBuffer[m_bufferHead]);
 		m_textBuffer[m_bufferEdit] = 0;
 
 		//reDraw(m_bufferEdit-(line_start+1), m_bufferEdit+line_end+1);
@@ -444,7 +475,7 @@ void Editor::putChar(unsigned char c)
 		m_bufferEdit--;
 
 		line_start = prevNewline(&m_textBuffer[m_bufferEdit], m_textBuffer);
-		line_end = nextNewline(&m_textBuffer[m_bufferEdit]);
+		line_end = nextNewline(&m_textBuffer[m_bufferEdit], &m_textBuffer[m_bufferHead]);
 		//reDraw(m_bufferEdit-(line_start+2), m_bufferEdit+line_end+2);
 		reDraw(0, m_bufferSize);
 		return;
@@ -458,18 +489,18 @@ void Editor::putChar(unsigned char c)
 		m_bufferEdit++;
 
 		line_start = prevNewline(&m_textBuffer[m_bufferEdit], m_textBuffer);
-		line_end = nextNewline(&m_textBuffer[m_bufferEdit]);
+		line_end = nextNewline(&m_textBuffer[m_bufferEdit], &m_textBuffer[m_bufferHead]);
 		//reDraw(m_bufferEdit-(line_start+2), m_bufferEdit+line_end+2);
 		reDraw(0, m_bufferSize);
 		return;
-	case KEY_DOWN:{
+		case KEY_DOWN:{
 			if(m_bufferEdit == m_bufferHead) break;
 			if(m_bufferEdit > m_bufferHead) {
 				m_bufferEdit = m_bufferHead;
 				return;
 			}
 
-			int moveto = nextNewline(&m_textBuffer[m_bufferEdit-1]);
+			int moveto = nextNewline(&m_textBuffer[m_bufferEdit], &m_textBuffer[m_bufferHead]);
 			m_bufferEdit += moveto;
 
 			reDraw(0, m_bufferSize);
@@ -503,6 +534,10 @@ void Editor::putChar(unsigned char c)
 	default: /* Default add character to buffer and draw it */
 		if(c == 0) break;
 
+		if(m_bufferHead >= m_bufferSize - 1){
+			return;
+		}
+
 		if(m_bufferEdit < m_bufferHead){
 			int diff = m_bufferHead-m_bufferEdit+1;
 			/* move all characters in m_textBuffer forward */
@@ -520,7 +555,7 @@ void Editor::putChar(unsigned char c)
 		}
 
 		line_start = prevNewline(&m_textBuffer[m_bufferEdit-1], m_textBuffer);
-		line_end = nextNewline(&m_textBuffer[m_bufferEdit]);
+		line_end = nextNewline(&m_textBuffer[m_bufferEdit], &m_textBuffer[m_bufferHead]);
 		//reDraw(m_bufferEdit-(line_start+2), m_bufferEdit+line_end);
 		reDraw(0, m_bufferSize);
 	}

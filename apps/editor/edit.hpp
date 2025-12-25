@@ -39,7 +39,7 @@ public:
 		m_bufferSize = 10*1024;
 		for (int i = 0; i < m_bufferSize; i++) m_textBuffer[i] = 0;
 		m_textBuffer[1] = '\n';
-		m_bufferHead = 1;
+		m_bufferHead = 2;
 
 		gfx_draw_rectangle(0, 0, 288+TREE_VIEW_WIDTH, c_height, COLOR_BG);
 

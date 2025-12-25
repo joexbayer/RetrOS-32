@@ -93,6 +93,11 @@ public:
         drawTreeRecursive(&root, 1, 1);
     }
 
+    void resize(int newWidth, int newHeight) {
+        width = newWidth;
+        height = newHeight;
+    }
+
     const char* click(int x, int y) {
         /* Check if a node was clicked */
         for (int i = 0; i < root.childrenCount; i++) {
