@@ -10,6 +10,11 @@
 
 #include <utils/cppUtils.hpp>
 #include <utils/MsgBox.hpp>
+#include <utils/Thread.hpp>
+#include <utils/Widgets.hpp>
+#include <syscall_helper.h>
+
+extern "C" int invoke_syscall(int i, int arg1, int arg2, int arg3);
 
 /* Helper functions */
 static int isAlpha(unsigned char c)
@@ -74,6 +79,258 @@ static int open_editor_file(const char* path)
     }
 
     return fd;
+}
+
+enum {
+    EDITOR_NEW_FILE_POPUP_ACTION_NONE = 0,
+    EDITOR_NEW_FILE_POPUP_ACTION_CREATE = 1,
+    EDITOR_NEW_FILE_POPUP_ACTION_CANCEL = 2
+};
+
+enum {
+    EDITOR_NEW_FILE_POPUP_RESULT_CANCEL = 0,
+    EDITOR_NEW_FILE_POPUP_RESULT_CREATE = 1
+};
+
+struct EditorNewFilePopupShared {
+    volatile int running;
+    volatile int result;
+    char path[256];
+};
+
+static int trim_copy_path(const char* src, char* dst, int dst_size)
+{
+    if (src == nullptr || dst == nullptr || dst_size <= 1) {
+        return 0;
+    }
+
+    int begin = 0;
+    while (src[begin] == ' ' || src[begin] == '\t') {
+        begin++;
+    }
+
+    int end = strlen(src);
+    while (end > begin && (src[end - 1] == ' ' || src[end - 1] == '\t')) {
+        end--;
+    }
+
+    int len = end - begin;
+    if (len <= 0) {
+        dst[0] = 0;
+        return 0;
+    }
+
+    if (len >= dst_size) {
+        len = dst_size - 1;
+    }
+
+    memcpy(dst, &src[begin], len);
+    dst[len] = 0;
+    return len;
+}
+
+static void __editor_new_file_popup_thread(void* arg)
+{
+    EditorNewFilePopupShared* shared = (EditorNewFilePopupShared*) arg;
+    printf("[editor] popup thread start arg=%x\n", (uint32_t)shared);
+    if (shared == nullptr) {
+        printf("[editor] popup thread: null shared\n");
+        return;
+    }
+
+    shared->result = EDITOR_NEW_FILE_POPUP_RESULT_CANCEL;
+    shared->path[0] = 0;
+
+    Window popup(268, 112, "New File", 1);
+
+    volatile int action = EDITOR_NEW_FILE_POPUP_ACTION_NONE;
+    WidgetManager* widgets = nullptr;
+    Input* path_input = nullptr;
+
+    char status[96];
+    memset(status, 0, sizeof(status));
+
+    char input_placeholder[] = "/path/to/file.c";
+    char input_tag[] = "new_path";
+    char create_label[] = "Create";
+    char cancel_label[] = "Cancel";
+
+    auto freeWidgets = [&]() {
+        if (widgets != nullptr) {
+            delete widgets;
+            widgets = nullptr;
+            path_input = nullptr;
+        }
+    };
+
+    auto buildWidgets = [&]() -> int {
+        freeWidgets();
+        action = EDITOR_NEW_FILE_POPUP_ACTION_NONE;
+
+        widgets = new WidgetManager();
+        if (widgets == nullptr) {
+            return -1;
+        }
+
+        Layout* input_row = new Layout(10, 32, 248, 18, HORIZONTAL, LAYOUT_FLAG_NONE);
+        if (input_row == nullptr) {
+            freeWidgets();
+            return -1;
+        }
+
+        path_input = new Input(244, 14, input_placeholder, input_tag);
+        if (path_input == nullptr) {
+            delete input_row;
+            freeWidgets();
+            return -1;
+        }
+
+        if (input_row->addWidget(path_input, LEFT) < 0) {
+            delete input_row;
+            freeWidgets();
+            return -1;
+        }
+
+        if (widgets->addLayout(input_row) < 0) {
+            delete input_row;
+            freeWidgets();
+            return -1;
+        }
+
+        Layout* buttons = new Layout(48, 76, 172, 18, HORIZONTAL, LAYOUT_FLAG_NONE);
+        if (buttons == nullptr) {
+            freeWidgets();
+            return -1;
+        }
+
+        Button* create_button = new Button(80, 14, create_label, Function<void()>([&action]() {
+            action = EDITOR_NEW_FILE_POPUP_ACTION_CREATE;
+        }));
+        Button* cancel_button = new Button(80, 14, cancel_label, Function<void()>([&action]() {
+            action = EDITOR_NEW_FILE_POPUP_ACTION_CANCEL;
+        }));
+        if (create_button == nullptr || cancel_button == nullptr) {
+            if (create_button != nullptr) {
+                delete create_button;
+            }
+            if (cancel_button != nullptr) {
+                delete cancel_button;
+            }
+            delete buttons;
+            freeWidgets();
+            return -1;
+        }
+
+        if (buttons->addWidget(create_button, LEFT) < 0 ||
+            buttons->addWidget(cancel_button, LEFT) < 0) {
+            delete buttons;
+            freeWidgets();
+            return -1;
+        }
+
+        if (widgets->addLayout(buttons) < 0) {
+            delete buttons;
+            freeWidgets();
+            return -1;
+        }
+
+        return 0;
+    };
+
+    if (buildWidgets() < 0) {
+        printf("[editor] popup thread: widget build failed\n");
+        shared->running = 0;
+        return;
+    }
+
+    while (1) {
+        popup.drawRect(0, 0, 268, 112, COLOR_BG);
+        popup.drawContouredRect(0, 0, 268, 112);
+        popup.drawText(10, 8, "Create New File", COLOR_BLACK);
+        popup.drawText(10, 20, "Path:", COLOR_BLACK);
+        popup.drawText(10, 56, "Enter=Create  Esc/F4=Cancel", COLOR_VGA_MEDIUM_DARK_GRAY);
+
+        if (status[0] != 0) {
+            popup.drawText(10, 66, status, COLOR_VGA_RED);
+        }
+
+        if (widgets != nullptr) {
+            widgets->draw(&popup);
+        }
+
+        struct gfx_event event;
+        int ret = gfx_get_event(&event, GFX_EVENT_BLOCKING);
+        if (ret < 0) {
+            continue;
+        }
+
+        switch (event.event) {
+        case GFX_EVENT_KEYBOARD:
+            if (event.data == '\n' || event.data == '\r') {
+                action = EDITOR_NEW_FILE_POPUP_ACTION_CREATE;
+                break;
+            }
+
+            if (event.data == 27 || event.data == KEY_F4) {
+                action = EDITOR_NEW_FILE_POPUP_ACTION_CANCEL;
+                break;
+            }
+
+            if (path_input != nullptr) {
+                unsigned char key = (unsigned char) event.data;
+                if (key == 127) {
+                    key = '\b';
+                }
+                path_input->Keyboard(key);
+            }
+            break;
+
+        case GFX_EVENT_MOUSE:
+            if (widgets != nullptr) {
+                widgets->Mouse(event.data, event.data2);
+            }
+            break;
+
+        case GFX_EVENT_EXIT:
+            action = EDITOR_NEW_FILE_POPUP_ACTION_CANCEL;
+            break;
+
+        case GFX_EVENT_RESOLUTION:
+            break;
+
+        default:
+            break;
+        }
+
+        if (action == EDITOR_NEW_FILE_POPUP_ACTION_CREATE) {
+            action = EDITOR_NEW_FILE_POPUP_ACTION_NONE;
+            memset(status, 0, sizeof(status));
+
+            char trimmed[256];
+            memset(trimmed, 0, sizeof(trimmed));
+            if (path_input == nullptr || trim_copy_path(path_input->getData(), trimmed, sizeof(trimmed)) <= 0) {
+                strncpy(status, "Path is empty.", (uint32_t)(sizeof(status) - 1));
+                printf("[editor] popup create: empty path\n");
+                continue;
+            }
+
+            strncpy(shared->path, trimmed, (uint32_t)(sizeof(shared->path) - 1));
+            shared->path[sizeof(shared->path) - 1] = 0;
+            shared->result = EDITOR_NEW_FILE_POPUP_RESULT_CREATE;
+            shared->running = 0;
+            printf("[editor] popup create: path=%s\n", shared->path);
+            freeWidgets();
+            return;
+        }
+
+        if (action == EDITOR_NEW_FILE_POPUP_ACTION_CANCEL) {
+            shared->result = EDITOR_NEW_FILE_POPUP_RESULT_CANCEL;
+            shared->running = 0;
+            printf("[editor] popup canceled\n");
+            freeWidgets();
+            return;
+        }
+    }
 }
 
 Editor::Editor()
@@ -1237,25 +1494,28 @@ bool Editor::Quit()
     return true;
 }
 
-void Editor::Open(char* path)
+bool Editor::Open(char* path)
 {
     if (path == nullptr || path[0] == 0) {
-        return;
+        printf("[editor] Open: empty path\n");
+        return false;
     }
+    printf("[editor] Open: requested %s\n", path);
 
     int old_fd = m_fd;
 
     if (m_fd >= 0) {
         if (!SaveMsg()) {
             reDraw(0, m_bufferHead);
-            return;
+            return false;
         }
     }
 
     int new_fd = open_editor_file(path);
     if (new_fd < 0) {
-        drawStatusLine(COLOR_VGA_RED, "Unable to open %s", path);
-        return;
+        printf("[editor] Open: failed %s\n", path);
+        drawStatusLine(COLOR_VGA_RED, "Unable to open/create %s", path);
+        return false;
     }
 
     if (old_fd >= 0) {
@@ -1299,7 +1559,7 @@ void Editor::Open(char* path)
         drawStatusLine(COLOR_VGA_RED, "Out of memory while loading file.");
         reDrawHeader();
         reDraw(0, m_bufferHead);
-        return;
+        return false;
     }
 
     m_bufferEdit = 0;
@@ -1311,6 +1571,8 @@ void Editor::Open(char* path)
 
     reDrawHeader();
     reDraw(0, m_bufferHead);
+    printf("[editor] Open: success %s (bytes=%d)\n", path, m_bufferHead);
+    return true;
 }
 
 void Editor::setFd(int fd)
@@ -1376,66 +1638,296 @@ void Editor::applyResolution(int window_width, int window_height)
     ensureCursorVisible(cols, rows);
 }
 
+bool Editor::showNewFileDialog(char* out_path, int out_path_size)
+{
+    if (out_path == nullptr || out_path_size <= 1) {
+        return false;
+    }
+
+    out_path[0] = 0;
+
+    /* Must live on heap: user threads have separate stacks in this kernel. */
+    EditorNewFilePopupShared* shared = (EditorNewFilePopupShared*) malloc(sizeof(EditorNewFilePopupShared));
+    if (shared == nullptr) {
+        printf("[editor] showNewFileDialog: alloc failed\n");
+        drawStatusLine(COLOR_VGA_RED, "New File: out of memory.");
+        return false;
+    }
+
+    memset(shared, 0, sizeof(EditorNewFilePopupShared));
+    shared->running = 1;
+    shared->result = EDITOR_NEW_FILE_POPUP_RESULT_CANCEL;
+    shared->path[0] = 0;
+
+    Thread popup_thread(__editor_new_file_popup_thread, 0);
+    int thread_id = popup_thread.start((void*)shared);
+    if (thread_id < 0) {
+        printf("[editor] showNewFileDialog: thread start failed\n");
+        drawStatusLine(COLOR_VGA_RED, "Failed to open New File window.");
+        free(shared);
+        return false;
+    }
+    printf("[editor] showNewFileDialog: thread id=%d\n", thread_id);
+
+    int await_ret = invoke_syscall(SYSCALL_AWAIT_PROCESS, thread_id, 0, 0);
+    if (await_ret < 0) {
+        printf("[editor] showNewFileDialog: await failed ret=%d\n", await_ret);
+        drawStatusLine(COLOR_VGA_RED, "Failed waiting for New File window.");
+        free(shared);
+        return false;
+    }
+    printf("[editor] showNewFileDialog: done result=%d path=%s\n", shared->result, shared->path);
+
+    if (shared->result != EDITOR_NEW_FILE_POPUP_RESULT_CREATE || shared->path[0] == 0) {
+        printf("[editor] showNewFileDialog: canceled/invalid\n");
+        free(shared);
+        return false;
+    }
+
+    strncpy(out_path, shared->path, (uint32_t)(out_path_size - 1));
+    out_path[out_path_size - 1] = 0;
+    free(shared);
+    return true;
+}
+
 void Editor::FileChooser()
 {
-    char filename[127];
-    int i = 0;
-    memset(filename, 0, sizeof(filename));
+    char selected_file[256];
+    memset(selected_file, 0, sizeof(selected_file));
+
+    enum {
+        CHOOSER_ACTION_NONE = 0,
+        CHOOSER_ACTION_OPEN = 1,
+        CHOOSER_ACTION_NEW = 2,
+        CHOOSER_ACTION_CANCEL = 3
+    };
+
+    volatile int chooser_action = CHOOSER_ACTION_NONE;
+    WidgetManager* chooser_widgets = nullptr;
+    Button* open_button = nullptr;
+
+    char open_label[] = "Open";
+    char new_label[] = "New File";
+    char cancel_label[] = "Cancel";
+
+    int cached_panel_x = -1;
+    int cached_panel_y = -1;
+    int cached_panel_w = -1;
+    int cached_panel_h = -1;
+
+    auto freeChooserWidgets = [&]() {
+        if (chooser_widgets != nullptr) {
+            delete chooser_widgets;
+            chooser_widgets = nullptr;
+            open_button = nullptr;
+        }
+    };
+
+    auto rebuildChooserWidgets = [&](int panel_x, int panel_y, int panel_w, int panel_h) {
+        freeChooserWidgets();
+        chooser_action = CHOOSER_ACTION_NONE;
+
+        chooser_widgets = new WidgetManager();
+        if (chooser_widgets == nullptr) {
+            return;
+        }
+
+        int button_h = 14;
+        int button_w = 82;
+        int button_gap = 6;
+
+        if (panel_w >= 170) {
+            if ((button_w * 3) + (button_gap * 2) > panel_w - 8) {
+                button_w = (panel_w - 8 - (button_gap * 2)) / 3;
+                if (button_w < 44) {
+                    button_w = 44;
+                }
+            }
+
+            int content_w = (button_w * 3) + (button_gap * 2);
+            int layout_x = panel_x + (panel_w - content_w) / 2;
+            if (layout_x < panel_x + 2) {
+                layout_x = panel_x + 2;
+            }
+
+            int layout_y = panel_y + panel_h - button_h - 8;
+            if (layout_y < panel_y + 18) {
+                layout_y = panel_y + 18;
+            }
+
+            Layout* actions = new Layout(layout_x, layout_y, content_w + 4, button_h + 4, HORIZONTAL, LAYOUT_FLAG_NONE);
+            if (actions == nullptr) {
+                return;
+            }
+
+            open_button = new Button(button_w, button_h, open_label, Function<void()>([&chooser_action]() {
+                chooser_action = CHOOSER_ACTION_OPEN;
+            }));
+            Button* new_button = new Button(button_w, button_h, new_label, Function<void()>([&chooser_action]() {
+                chooser_action = CHOOSER_ACTION_NEW;
+            }));
+            Button* cancel_button = new Button(button_w, button_h, cancel_label, Function<void()>([&chooser_action]() {
+                chooser_action = CHOOSER_ACTION_CANCEL;
+            }));
+            if (open_button == nullptr || new_button == nullptr || cancel_button == nullptr) {
+                if (open_button != nullptr) {
+                    delete open_button;
+                }
+                if (new_button != nullptr) {
+                    delete new_button;
+                }
+                if (cancel_button != nullptr) {
+                    delete cancel_button;
+                }
+                delete actions;
+                open_button = nullptr;
+                return;
+            }
+
+            actions->addWidget(open_button, LEFT);
+            actions->addWidget(new_button, LEFT);
+            actions->addWidget(cancel_button, LEFT);
+            chooser_widgets->addLayout(actions);
+        } else {
+            button_w = panel_w - 6;
+            if (button_w < 24) {
+                button_w = 24;
+            }
+
+            int content_h = (button_h * 3) + 8;
+            int layout_y = panel_y + panel_h - content_h - 6;
+            if (layout_y < panel_y + 18) {
+                layout_y = panel_y + 18;
+            }
+
+            Layout* actions = new Layout(panel_x + 2, layout_y, button_w + 4, content_h, VERTICAL, LAYOUT_FLAG_NONE);
+            if (actions == nullptr) {
+                return;
+            }
+
+            open_button = new Button(button_w, button_h, open_label, Function<void()>([&chooser_action]() {
+                chooser_action = CHOOSER_ACTION_OPEN;
+            }));
+            Button* new_button = new Button(button_w, button_h, new_label, Function<void()>([&chooser_action]() {
+                chooser_action = CHOOSER_ACTION_NEW;
+            }));
+            Button* cancel_button = new Button(button_w, button_h, cancel_label, Function<void()>([&chooser_action]() {
+                chooser_action = CHOOSER_ACTION_CANCEL;
+            }));
+            if (open_button == nullptr || new_button == nullptr || cancel_button == nullptr) {
+                if (open_button != nullptr) {
+                    delete open_button;
+                }
+                if (new_button != nullptr) {
+                    delete new_button;
+                }
+                if (cancel_button != nullptr) {
+                    delete cancel_button;
+                }
+                delete actions;
+                open_button = nullptr;
+                return;
+            }
+
+            actions->addWidget(open_button, LEFT);
+            actions->addWidget(new_button, LEFT);
+            actions->addWidget(cancel_button, LEFT);
+            chooser_widgets->addLayout(actions);
+        }
+    };
+
+    auto drawChooserPanel = [&](int panel_x, int panel_y, int panel_w, int panel_h) {
+        gfx_draw_rectangle(panel_x, panel_y, panel_w, panel_h, COLOR_BG);
+        gfx_draw_format_text(panel_x + 4, panel_y + 4, COLOR_TEXT, "File Browser");
+        gfx_draw_format_text(panel_x + 4, panel_y + 14, COLOR_TEXT, "Pick file from tree, then Open. New File creates one.");
+
+        char selected_label[160];
+        memset(selected_label, 0, sizeof(selected_label));
+        if (selected_file[0] == 0) {
+            strncpy(selected_label, "(none)", (uint32_t)(sizeof(selected_label) - 1));
+        } else {
+            int max_chars = (panel_w - 12) / 8;
+            if (max_chars < 1) {
+                max_chars = 1;
+            }
+
+            int name_len = strlen(selected_file);
+            if (name_len <= max_chars) {
+                strncpy(selected_label, selected_file, (uint32_t)(sizeof(selected_label) - 1));
+            } else if (max_chars > 3) {
+                int keep = max_chars - 3;
+                if (keep > (int)sizeof(selected_label) - 4) {
+                    keep = (int)sizeof(selected_label) - 4;
+                }
+
+                strncpy(selected_label, selected_file, (uint32_t)keep);
+                selected_label[keep] = '.';
+                selected_label[keep + 1] = '.';
+                selected_label[keep + 2] = '.';
+                selected_label[keep + 3] = 0;
+            } else {
+                strncpy(selected_label, "...", (uint32_t)(sizeof(selected_label) - 1));
+            }
+        }
+
+        gfx_draw_format_text(panel_x + 4, panel_y + 26, COLOR_VGA_MEDIUM_DARK_GRAY, "Selected: %s", selected_label);
+    };
 
     reDrawHeader();
     treeView->drawTree(this);
     reDraw(0, m_bufferHead);
 
-    int promptY = (c_height / 2) - 12;
-    if (promptY < HEADER_HEIGHT + 8) {
-        promptY = HEADER_HEIGHT + 8;
-    }
-
-    int promptX = textStartX();
-    int promptW = textClipWidth();
-    if (promptW < 8) {
-        promptW = 8;
-    }
-
-    gfx_draw_rectangle(promptX, promptY, promptW, 24, COLOR_BG);
-    gfx_draw_format_text(promptX, promptY, COLOR_BLACK, "Open file (Enter=open, Esc/F4=cancel)");
-    gfx_draw_format_text(promptX, promptY + 12, COLOR_BLACK, "> %s", filename);
-
     while (1) {
+        int panel_x = textStartX();
+        int panel_y = HEADER_HEIGHT;
+        int panel_w = textClipWidth();
+        int panel_h = c_height - HEADER_HEIGHT - STATUS_HEIGHT;
+        if (panel_h < 28) {
+            panel_h = 28;
+        }
+
+        if (chooser_widgets == nullptr ||
+            panel_x != cached_panel_x || panel_y != cached_panel_y ||
+            panel_w != cached_panel_w || panel_h != cached_panel_h) {
+            rebuildChooserWidgets(panel_x, panel_y, panel_w, panel_h);
+            cached_panel_x = panel_x;
+            cached_panel_y = panel_y;
+            cached_panel_w = panel_w;
+            cached_panel_h = panel_h;
+        }
+
+        if (open_button != nullptr) {
+            if (selected_file[0] != 0) {
+                open_button->enable();
+            } else {
+                open_button->disable();
+            }
+        }
+
+        drawChooserPanel(panel_x, panel_y, panel_w, panel_h);
+        if (chooser_widgets != nullptr) {
+            chooser_widgets->draw(this);
+        }
+
         struct gfx_event event;
         gfx_get_event(&event, GFX_EVENT_BLOCKING);
 
         switch (event.event) {
         case GFX_EVENT_KEYBOARD:
             if (event.data == KEY_F4 || event.data == 27) {
+                freeChooserWidgets();
                 reDrawHeader();
                 reDraw(0, m_bufferHead);
                 return;
             }
 
-            if (event.data == '\n') {
-                filename[i] = 0;
-                if (i > 0) {
-                    Open(filename);
-                }
-                reDrawHeader();
-                reDraw(0, m_bufferHead);
-                return;
+            if (event.data == '\n' || event.data == 'o' || event.data == 'O') {
+                chooser_action = CHOOSER_ACTION_OPEN;
             }
 
-            if (event.data == '\b') {
-                if (i > 0) {
-                    filename[--i] = 0;
-                }
-            } else if (event.data >= 32 && event.data <= 126) {
-                if (i < (int)sizeof(filename) - 1) {
-                    filename[i++] = (char)event.data;
-                    filename[i] = 0;
-                }
+            if (event.data == 'n' || event.data == 'N') {
+                chooser_action = CHOOSER_ACTION_NEW;
             }
-
-            gfx_draw_rectangle(promptX, promptY + 12, promptW, 8, COLOR_BG);
-            gfx_draw_format_text(promptX, promptY + 12, COLOR_BLACK, "> %s", filename);
             break;
 
         case GFX_EVENT_RESOLUTION:
@@ -1443,20 +1935,10 @@ void Editor::FileChooser()
             reDrawHeader();
             treeView->drawTree(this);
             reDraw(0, m_bufferHead);
-
-            promptY = (c_height / 2) - 12;
-            if (promptY < HEADER_HEIGHT + 8) {
-                promptY = HEADER_HEIGHT + 8;
-            }
-            promptX = textStartX();
-            promptW = textClipWidth();
-            if (promptW < 8) {
-                promptW = 8;
-            }
-
-            gfx_draw_rectangle(promptX, promptY, promptW, 24, COLOR_BG);
-            gfx_draw_format_text(promptX, promptY, COLOR_BLACK, "Open file (Enter=open, Esc/F4=cancel)");
-            gfx_draw_format_text(promptX, promptY + 12, COLOR_BLACK, "> %s", filename);
+            cached_panel_x = -1;
+            cached_panel_y = -1;
+            cached_panel_w = -1;
+            cached_panel_h = -1;
             break;
 
         case GFX_EVENT_MOUSE:
@@ -1464,22 +1946,84 @@ void Editor::FileChooser()
                 const char* file = treeView->click(event.data, event.data2);
                 treeView->drawTree(this);
                 if (file != nullptr) {
-                    Open((char*)file);
-                    reDrawHeader();
-                    reDraw(0, m_bufferHead);
-                    return;
+                    strncpy(selected_file, file, (uint32_t)(sizeof(selected_file) - 1));
+                    selected_file[sizeof(selected_file) - 1] = 0;
+                    drawStatusLine(COLOR_VGA_MEDIUM_DARK_GRAY, "Selected %s", selected_file);
+                }
+            } else {
+                if (chooser_widgets != nullptr) {
+                    chooser_widgets->Mouse(event.data, event.data2);
                 }
             }
             break;
 
         case GFX_EVENT_EXIT:
             if (Quit()) {
+                freeChooserWidgets();
                 return;
             }
             break;
 
         default:
             break;
+        }
+
+        if (chooser_action == CHOOSER_ACTION_OPEN) {
+            chooser_action = CHOOSER_ACTION_NONE;
+            if (selected_file[0] == 0) {
+                drawStatusLine(COLOR_VGA_RED, "Select a file from tree first.");
+                continue;
+            }
+
+            if (!Open(selected_file)) {
+                reDrawHeader();
+                treeView->drawTree(this);
+                reDraw(0, m_bufferHead);
+                continue;
+            }
+
+            freeChooserWidgets();
+            reDrawHeader();
+            reDraw(0, m_bufferHead);
+            return;
+        }
+
+        if (chooser_action == CHOOSER_ACTION_NEW) {
+            chooser_action = CHOOSER_ACTION_NONE;
+
+            char new_file[256];
+            memset(new_file, 0, sizeof(new_file));
+            if (showNewFileDialog(new_file, sizeof(new_file)) && new_file[0] != 0) {
+                printf("[editor] chooser new: trying open %s\n", new_file);
+                if (!Open(new_file)) {
+                    reDrawHeader();
+                    treeView->drawTree(this);
+                    reDraw(0, m_bufferHead);
+                    drawStatusLine(COLOR_VGA_RED, "Create failed: %s", new_file);
+                    printf("[editor] chooser new: open failed %s\n", new_file);
+                    continue;
+                }
+
+                freeChooserWidgets();
+                reDrawHeader();
+                if (treeView != nullptr) {
+                    treeView->refresh();
+                    treeView->drawTree(this);
+                }
+                reDraw(0, m_bufferHead);
+                return;
+            }
+
+            drawStatusLine(COLOR_VGA_MEDIUM_DARK_GRAY, "New file creation canceled.");
+            continue;
+        }
+
+        if (chooser_action == CHOOSER_ACTION_CANCEL) {
+            chooser_action = CHOOSER_ACTION_NONE;
+            freeChooserWidgets();
+            reDrawHeader();
+            reDraw(0, m_bufferHead);
+            return;
         }
     }
 }

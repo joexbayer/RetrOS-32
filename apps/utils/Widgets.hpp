@@ -75,17 +75,27 @@ public:
 
     /* Draws the button */
     void draw(Window* window) {
-        window->drawContouredBox(x, y, width, height, focused ? COLOR_VGA_LIGHT_GRAY : 30);
+        color_t bg = focused ? COLOR_VGA_LIGHT_GRAY : 30;
+        color_t fg = COLOR_BLACK;
+        if (disabled) {
+            bg = COLOR_VGA_LIGHT_GRAY;
+            fg = COLOR_VGA_MEDIUM_DARK_GRAY;
+        }
+
+        window->drawContouredBox(x, y, width, height, bg);
         /* draw text in center */
         int textWidth = strlen(text) * 8;
         int textHeight = 8;
-        window->drawText(x + width / 2 - textWidth / 2, y + height / 2 - textHeight / 2, text, COLOR_BLACK);
+        window->drawText(x + width / 2 - textWidth / 2, y + height / 2 - textHeight / 2, text, fg);
     }
 
     /* Ignores keyboard events */
     void Keyboard(char c) {}
 
     void Mouse() {
+        if (disabled) {
+            return;
+        }
         callback();
     }
 
@@ -151,6 +161,12 @@ public:
                 data[size] = 0;
             }
         } else {
+            if (c < 32 || c > 126) {
+                return;
+            }
+            if (size >= (int)sizeof(data) - 1) {
+                return;
+            }
             data[size] = c;
             size++;
             data[size] = '\0';
@@ -336,6 +352,13 @@ public:
     }
 
     int addWidget(Widget* widget, LayoutPosition position) {
+        if (widget == nullptr) {
+            return -1;
+        }
+        if (widgetCount >= MAX_WIDGETS) {
+            return -1;
+        }
+
         widgets[widgetCount] = widget;
         widgetCount++;
 
@@ -424,6 +447,13 @@ public:
     }
 
     int addLayout(Layout* layout) {
+        if (layout == nullptr) {
+            return -1;
+        }
+        if (layoutCount >= MAX_LAYOUTS) {
+            return -1;
+        }
+
         layouts[layoutCount] = layout;
         layoutCount++;
 

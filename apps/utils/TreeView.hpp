@@ -73,14 +73,26 @@ public:
         : x(x), y(y), width(width), height(height) {
         /* Initialize any other required attributes */
         path = new String("/");
-        root = {path, 0, 0, 0, 0, 1, 1, 0, nullptr};
-        root.children = new TreeNode[16];
-
-        loadTree(&root, 0, path, 0);
+        memset(&root, 0, sizeof(root));
+        root.name = path;
+        root.isDirectory = 1;
+        root.isExpanded = 1;
+        root.childrenCount = 0;
+        root.childrenCapacity = 16;
+        root.children = new TreeNode[root.childrenCapacity];
+        if (root.children != nullptr) {
+            memset(root.children, 0, root.childrenCapacity * sizeof(TreeNode));
+            loadTree(&root, 0, path, 0);
+        }
     }
 
     ~TreeView() {
-        /* Free any allocated memory */
+        clearChildren(&root);
+        if (root.children != nullptr) {
+            delete[] root.children;
+            root.children = nullptr;
+        }
+        root.childrenCapacity = 0;
         delete path;
     }
 
@@ -98,6 +110,21 @@ public:
     void resize(int newWidth, int newHeight) {
         width = newWidth;
         height = newHeight;
+    }
+
+    void refresh() {
+        clearChildren(&root);
+        if (root.children == nullptr) {
+            root.childrenCapacity = 16;
+            root.children = new TreeNode[root.childrenCapacity];
+            if (root.children == nullptr) {
+                root.childrenCapacity = 0;
+                return;
+            }
+        }
+        memset(root.children, 0, root.childrenCapacity * sizeof(TreeNode));
+        root.childrenCount = 0;
+        loadTree(&root, 0, path, 0);
     }
 
     const char* click(int x, int y) {
@@ -134,6 +161,7 @@ public:
     void update(const char* newPath) {
         /* Update the tree view with the new path */
         path->concat(newPath);
+        refresh();
     }
 
 private:
@@ -144,6 +172,7 @@ private:
         int isDirectory;
         int isExpanded;
         int childrenCount;
+        int childrenCapacity;
         struct TreeNode* children;
     } root;
     int x, y, width, height;
@@ -235,6 +264,83 @@ private:
         }
     }
 
+    void clearNodeRecursive(struct TreeNode* node)
+    {
+        if (node == nullptr) {
+            return;
+        }
+
+        clearChildren(node);
+
+        if (node->children != nullptr) {
+            delete[] node->children;
+            node->children = nullptr;
+        }
+        node->childrenCapacity = 0;
+        node->childrenCount = 0;
+
+        if (node->name != nullptr) {
+            delete node->name;
+            node->name = nullptr;
+        }
+    }
+
+    void clearChildren(struct TreeNode* node)
+    {
+        if (node == nullptr || node->children == nullptr) {
+            if (node != nullptr) {
+                node->childrenCount = 0;
+            }
+            return;
+        }
+
+        for (int i = 0; i < node->childrenCount; i++) {
+            clearNodeRecursive(&node->children[i]);
+        }
+
+        memset(node->children, 0, node->childrenCapacity * sizeof(TreeNode));
+        node->childrenCount = 0;
+    }
+
+    bool ensureChildCapacity(struct TreeNode* parent)
+    {
+        if (parent == nullptr) {
+            return false;
+        }
+
+        if (parent->children == nullptr) {
+            parent->childrenCapacity = 16;
+            parent->children = new TreeNode[parent->childrenCapacity];
+            if (parent->children == nullptr) {
+                parent->childrenCapacity = 0;
+                return false;
+            }
+            memset(parent->children, 0, parent->childrenCapacity * sizeof(TreeNode));
+        }
+
+        if (parent->childrenCount < parent->childrenCapacity) {
+            return true;
+        }
+
+        int new_capacity = parent->childrenCapacity * 2;
+        if (new_capacity < 16) {
+            new_capacity = 16;
+        }
+
+        TreeNode* resized = new TreeNode[new_capacity];
+        if (resized == nullptr) {
+            return false;
+        }
+
+        memset(resized, 0, new_capacity * sizeof(TreeNode));
+        memcpy(resized, parent->children, parent->childrenCount * sizeof(TreeNode));
+        delete[] parent->children;
+
+        parent->children = resized;
+        parent->childrenCapacity = new_capacity;
+        return true;
+    }
+
     int pathlen(char* path) {
         int len = 0;
         while (path[len] != 0 && path[len] != ' ' && len < 8) len++;
@@ -242,16 +348,40 @@ private:
     }
 
     struct TreeNode* insertNode(struct TreeNode* parent, const char* name, int x, int y, int isDirectory) {
-        parent->children[parent->childrenCount].name = new String(name);
-        parent->children[parent->childrenCount].x = x;
-        parent->children[parent->childrenCount].y = y;
-        parent->children[parent->childrenCount].isDirectory = isDirectory;
-        if(isDirectory) {
-            parent->children[parent->childrenCount].childrenCount = 0;
-            parent->children[parent->childrenCount].children = new TreeNode[16];
-
+        if (!ensureChildCapacity(parent)) {
+            return nullptr;
         }
-        return &parent->children[ parent->childrenCount++];
+
+        struct TreeNode* node = &parent->children[parent->childrenCount];
+        memset(node, 0, sizeof(TreeNode));
+
+        node->name = new String(name);
+        if (node->name == nullptr) {
+            return nullptr;
+        }
+
+        node->x = x;
+        node->y = y;
+        node->isDirectory = isDirectory;
+        node->isExpanded = 0;
+        node->childrenCount = 0;
+        node->childrenCapacity = 0;
+        node->children = nullptr;
+
+        if (isDirectory) {
+            node->childrenCapacity = 16;
+            node->children = new TreeNode[node->childrenCapacity];
+            if (node->children == nullptr) {
+                delete node->name;
+                node->name = nullptr;
+                node->childrenCapacity = 0;
+                return nullptr;
+            }
+            memset(node->children, 0, node->childrenCapacity * sizeof(TreeNode));
+        }
+
+        parent->childrenCount++;
+        return node;
     }
 
 
@@ -293,6 +423,9 @@ private:
             String fullPath = path->getData();
             fullPath.concat(name);
             struct TreeNode* newRoot = insertNode(root, fullPath.getData(), (depth * 12), 0, entry.attributes & FAT16_FLAG_SUBDIRECTORY);
+            if (newRoot == nullptr) {
+                continue;
+            }
 
             if (entry.attributes & FAT16_FLAG_SUBDIRECTORY) {
                 String* path2 = new String(path->getData());

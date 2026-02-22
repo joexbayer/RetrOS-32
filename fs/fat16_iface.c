@@ -205,14 +205,9 @@ static struct file* fat16_open(struct filesystem* fs, const char* path, int flag
         
         /* check if the file should be created */
         if(flags & FS_FILE_FLAG_CREATE){
-
-            /* extract name and ext (if there) */
-            if(path[0] == '/'){
-                /* TODO: implement full path creation of files. */
+            if(fat16_create_empty_file(path, 0) != 0){
                 return NULL;
             }
-
-            fat16_create_empty_file(path, 0);
 
             /* get the file identifier */
             id = fat16_get_directory_entry((char*)path, &entry);

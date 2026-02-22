@@ -294,8 +294,11 @@ struct pcb* pcb_get_by_name(char* name)
 
 int pcb_await(int pid)
 {
-	if(pid < 0 || pid > MAX_NUM_OF_PCBS) return -1;
-	while(pcb_table[pid].state != STOPPED){
+	if(pid < 0 || pid >= MAX_NUM_OF_PCBS) return -1;
+	while(
+		pcb_table[pid].state != STOPPED &&
+		pcb_table[pid].state != ZOMBIE
+	){
 		kernel_yield();
 	}
 	return 0;

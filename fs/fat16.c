@@ -248,33 +248,98 @@ int fat16_create_empty_file(const char* path, int directory)
     int i = 0, j = 0;
     char name[8];
     char ext[3];
+    char path_copy[256];
+    const char* filename = path;
+    uint16_t target_dir = current_dir_block;
 
     memset(name, ' ', 8);
     memset(ext, ' ', 3);
 
-    /* extract name and ext (if there) */
-    if(path[0] == '/'){
-        /* TODO: implement full path creation of files. */
+    if(path == NULL || path[0] == '\0'){
         return -1;
     }
 
-    /* at this point I assume that path is a file name */
-    while(path[0] != '.' && path[0] != '\0'){
-        name[i++] = TO_UPPER(path[0]);
-        path++;
+    /* optional explicit target directory block */
+    if(directory > 0){
+        target_dir = directory;
+    } else {
+        memset(path_copy, 0, sizeof(path_copy));
+        strncpy(path_copy, path, sizeof(path_copy)-1);
+        path_copy[sizeof(path_copy)-1] = '\0';
+
+        int len = strlen(path_copy);
+        int last_sep = -1;
+        for (int k = 0; k < len; k++) {
+            if(path_copy[k] == '/'){
+                last_sep = k;
+            }
+        }
+
+        if(last_sep >= 0){
+            if(last_sep == len - 1){
+                return -1;
+            }
+
+            filename = &path_copy[last_sep + 1];
+
+            if(last_sep == 0){
+                target_dir = get_root_directory_start_block();
+            } else {
+                path_copy[last_sep] = '\0';
+
+                struct fat16_directory_entry dir_entry = {0};
+                struct fat16_file_identifier dir_id = fat16_get_directory_entry(path_copy, &dir_entry);
+                if(dir_id.directory < 0 || !(dir_entry.attributes & FAT16_FLAG_SUBDIRECTORY)){
+                    return -1;
+                }
+
+                target_dir = dir_entry.first_cluster == 0 ?
+                    get_root_directory_start_block() :
+                    get_data_start_block() + dir_entry.first_cluster;
+            }
+        } else {
+            filename = path_copy;
+        }
     }
 
-    if(path[0] == '.'){
-        path++;
+    /* parse 8.3 file name */
+    while(filename[0] != '.' && filename[0] != '\0'){
+        if(filename[0] == '/'){
+            return -1;
+        }
+        if(i >= 8){
+            return -1;
+        }
+        name[i++] = TO_UPPER(filename[0]);
+        filename++;
     }
 
-    while(path[0] != '\0'){
-        ext[j++] = TO_UPPER(path[0]);
-        path++;
+    if(filename[0] == '.'){
+        filename++;
     }
 
-    /* create the file */
-    if(fat16_create_file((char*)name, ext, NULL, 0) != 0){
+    while(filename[0] != '\0'){
+        if(filename[0] == '/'){
+            return -1;
+        }
+        if(j >= 3){
+            return -1;
+        }
+        ext[j++] = TO_UPPER(filename[0]);
+        filename++;
+    }
+
+    if(i <= 0){
+        return -1;
+    }
+
+    /* create file in target directory; restore current directory afterwards */
+    uint16_t old_dir = current_dir_block;
+    current_dir_block = target_dir;
+    int create_ret = fat16_create_file((char*)name, ext, NULL, 0);
+    current_dir_block = old_dir;
+
+    if(create_ret != 0){
         return -2;
     }
 

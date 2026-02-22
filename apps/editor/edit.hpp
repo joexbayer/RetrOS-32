@@ -46,7 +46,7 @@ public:
 
     bool Save();
     void Help();
-    void Open(char* path);
+    bool Open(char* path);
     void putChar(unsigned char c);
     void Lex();
     bool Quit();
@@ -101,6 +101,7 @@ private:
     void drawLineNumbers(const int* row_lines, int row_count);
     void drawStatusLine(color_t color, const char* fmt, ...);
     void applyResolution(int window_width, int window_height);
+    bool showNewFileDialog(char* out_path, int out_path_size);
 
     void ropeClear();
     bool ropeLoadFromBuffer(const unsigned char* data, int len);
