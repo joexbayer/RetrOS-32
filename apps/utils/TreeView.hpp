@@ -90,7 +90,9 @@ public:
         window->drawContouredBox(8, 12, width - 16, height-20, COLOR_WHITE);
 
         window->drawFormatText(2, 2, COLOR_BLACK, "Tree View");
-        drawTreeRecursive(&root, 1, 1);
+        int row = 0;
+        int max_rows = visibleRows();
+        drawTreeRecursive(&root, 1, &row, -1, max_rows);
     }
 
     void resize(int newWidth, int newHeight) {
@@ -99,32 +101,34 @@ public:
     }
 
     const char* click(int x, int y) {
-        /* Check if a node was clicked */
-        for (int i = 0; i < root.childrenCount; i++) {
-            int y2 = (1+i) * 16;
+        (void)x;
 
-            if (y >= y2 && y < y2 + 16) {
-                if (root.children[i].isDirectory) {
-                    root.children[i].isExpanded = !root.children[i].isExpanded;
-                    gfx_draw_rectangle(9, 13, width - 15, height-19, COLOR_WHITE);
-                    drawTreeRecursive(&root, 1, 1);
-                    return nullptr;
-                } else {
-                    return root.children[i].name->getData();
-                }
-            }
-            
-            if(root.children[i].isDirectory) {
-                if (root.children[i].isExpanded) {
-                    const char* ret = __click(&root.children[i], x, y, 1+i);
-                    if (ret != nullptr) return ret;
-                    y2 += (root.children[i].childrenCount) * 16;
-                }
-            }
-
+        int max_rows = visibleRows();
+        if (max_rows <= 0) {
+            return nullptr;
         }
 
-        return nullptr;
+        if (y < 16 || y >= (height - 8)) {
+            return nullptr;
+        }
+
+        int target_row = (y / 16) - 1;
+        if (target_row < 0 || target_row >= max_rows) {
+            return nullptr;
+        }
+
+        int row = 0;
+        struct TreeNode* hit = findNodeByRow(&root, &row, target_row);
+        if (hit == nullptr) {
+            return nullptr;
+        }
+
+        if (hit->isDirectory) {
+            hit->isExpanded = !hit->isExpanded;
+            return nullptr;
+        }
+
+        return hit->name->getData();
     }
 
     void update(const char* newPath) {
@@ -142,27 +146,86 @@ private:
         int childrenCount;
         struct TreeNode* children;
     } root;
-    int nodeCount = 0;
-
     int x, y, width, height;
     String* path;
 
-    const char* __click(struct TreeNode* root, int x, int y, int entries){
-        for (int i = 0; i < root->childrenCount; i++) {
-            int y2 = (1+i+entries) * 16;
+    struct TreeNode* findNodeByRow(struct TreeNode* node, int* row, int target_row)
+    {
+        for (int i = 0; i < node->childrenCount; i++) {
+            if (*row == target_row) {
+                return &node->children[i];
+            }
 
-            if (y >= y2 && y < y2 + 16) {
-                if (root->children[i].isDirectory) {
-                    root->children[i].isExpanded = !root->children[i].isExpanded;
-
-                    return nullptr;
-                } else {
-                    return root->children[i].name->getData();
+            (*row)++;
+            if (node->children[i].isDirectory && node->children[i].isExpanded) {
+                struct TreeNode* found = findNodeByRow(&node->children[i], row, target_row);
+                if (found != nullptr) {
+                    return found;
                 }
             }
         }
-
         return nullptr;
+    }
+
+    int visibleRows() const
+    {
+        int usable_height = height - 24;
+        if (usable_height < 16) {
+            return 0;
+        }
+
+        int rows = usable_height / 16;
+        if (rows < 1) {
+            rows = 1;
+        }
+
+        return rows;
+    }
+
+    void drawClippedText(int x, int y, const char* text)
+    {
+        if (text == nullptr) {
+            return;
+        }
+
+        int right_limit = width - 12;
+        int pixels = right_limit - x;
+        if (pixels < 8) {
+            return;
+        }
+
+        int max_chars = pixels / 8;
+        if (max_chars <= 0) {
+            return;
+        }
+
+        int len = strlen(text);
+        if (len <= max_chars) {
+            gfx_draw_format_text(x, y, COLOR_BLACK, "%s", text);
+            return;
+        }
+
+        char clipped[64];
+        int keep = max_chars;
+        if (keep > 63) {
+            keep = 63;
+        }
+
+        if (keep >= 4) {
+            keep -= 3;
+            memcpy(clipped, text, keep);
+            clipped[keep + 0] = '.';
+            clipped[keep + 1] = '.';
+            clipped[keep + 2] = '.';
+            clipped[keep + 3] = 0;
+        } else {
+            for (int i = 0; i < keep; i++) {
+                clipped[i] = '.';
+            }
+            clipped[keep] = 0;
+        }
+
+        gfx_draw_format_text(x, y, COLOR_BLACK, "%s", clipped);
     }
 
     void drawIcon(int x, int y, const unsigned char* icon) {
@@ -248,16 +311,29 @@ private:
     }
 
 
-    int drawTreeRecursive(struct TreeNode* root, int depth, int entries) {
-        for (int i = 0; i < root->childrenCount; i++) {
-
-            if (root->children[i].isDirectory) {
-                drawIcon(depth * 16, (entries + i) * 16, __folder_icon);
-            } else {
-                drawIcon(depth * 16, (entries + i) * 16, __file_icon);
+    void drawTreeRecursive(struct TreeNode* node, int depth, int* row, int parent_row, int max_rows)
+    {
+        for (int i = 0; i < node->childrenCount; i++) {
+            if (*row >= max_rows) {
+                return;
             }
 
-            const char* name = root->children[i].name->getData();
+            struct TreeNode* child = &node->children[i];
+            int current_row = *row;
+            int current_y = (current_row + 1) * 16;
+            int current_x = depth * 16;
+
+            if (current_y + 15 >= height - 8) {
+                return;
+            }
+
+            if (child->isDirectory && current_x + 16 < width - 8) {
+                drawIcon(current_x, current_y, __folder_icon);
+            } else if (current_x + 16 < width - 8) {
+                drawIcon(current_x, current_y, __file_icon);
+            }
+
+            const char* name = child->name->getData();
             /* Only use name from last / */
             for (int j = 0; j < strlen(name)-1; j++) {
                 if (name[j] == '/') {
@@ -266,38 +342,43 @@ private:
             }
 
             /* draw line from parent to current */
-            if (depth > 1) {
-                int current_x = depth * 16;
-
-                int current_y = (entries + i) * 16;
-                int parent_y = (entries-1) * 16 + 8;
+            if (depth > 1 && parent_row >= 0) {
+                int parent_y = (parent_row + 1) * 16 + 8;
+                int branch_x = (depth - 1) * 16 + 8;
+                if (branch_x >= width - 8) {
+                    branch_x = width - 9;
+                }
+                int line_to_x = current_x;
+                if (line_to_x >= width - 8) {
+                    line_to_x = width - 9;
+                }
 
                 /* Draw vertical line */
                 gfx_draw_line(
-                    (depth - 1) * 16 + 8, // parent x + 8
-                    parent_y + 8, // parent y + 8
-                    (depth - 1) * 16 + 8,
+                    branch_x, // parent x + 8
+                    parent_y,
+                    branch_x,
                     current_y + 8,
                     COLOR_BLACK
                 );
 
                 /* Draw horizontal line */
                 gfx_draw_line(
-                    (depth - 1) * 16 + 8,
+                    branch_x,
                     current_y + 8,
-                    current_x,
+                    line_to_x,
                     current_y + 8,
                     COLOR_BLACK
                 );
             }
 
-            gfx_draw_format_text(depth * 16 + 18, (entries + i) * 16 + 5, COLOR_BLACK, name);
-            if(root->children[i].isExpanded && root->children[i].isDirectory) {
-                entries += drawTreeRecursive(&root->children[i], depth + 1, entries + i + 1);
+            drawClippedText(depth * 16 + 18, current_y + 5, name);
+
+            (*row)++;
+            if (child->isExpanded && child->isDirectory) {
+                drawTreeRecursive(child, depth + 1, row, current_row, max_rows);
             }
         }
-
-        return root->childrenCount;
     }
 };
 

@@ -32,12 +32,12 @@ void __cxa_pure_virtual(void)
 }
 }
 
-void *operator new(size_t size)
+void *operator new(cpp_size_t size)
 {
     return malloc(size);
 }
  
-void *operator new[](size_t size)
+void *operator new[](cpp_size_t size)
 {
     return malloc(size);
 }
@@ -52,12 +52,12 @@ void operator delete[](void *p)
     free(p);
 }
 
-void operator delete(void* p, size_t)
+void operator delete(void* p, cpp_size_t)
 {
     free(p);
 }
 
-void operator delete[](void* p, size_t)
+void operator delete[](void* p, cpp_size_t)
 {
     free(p);
 }
