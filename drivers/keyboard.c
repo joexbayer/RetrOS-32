@@ -30,7 +30,7 @@ static unsigned char kb_buffer[KB_BUFFER_SIZE];
 static volatile int kb_buffer_head = 0;
 static volatile int kb_buffer_tail = 0;
 
-static unsigned char kbdus[128] = {
+static const unsigned char kbdus[128] = {
     0,          27,          '1', '2', '3',  '4', '5', '6', '7',  '8', /* 9 */
     '9',        '0',         '-', '=', '\b', /* Backspace */
     '\t',                                    /* Tab */
@@ -63,11 +63,45 @@ static unsigned char kbdus[128] = {
     0,                               /* F12 Key */
     0,                               /* All other keys are undefined */
 };
+static const unsigned char kbdus_shift[128] = {
+    0,          27,          '!', '@', '#',  '$', '%', '^', '&',  '*', /* 9 */
+    '(',        ')',         '_', '+', '\b', /* Backspace */
+    '\t',                                    /* Tab */
+    'Q',        'W',         'E', 'R',       /* 19 */
+    'T',        'Y',         'U', 'I', 'O',  'P', '{', '}', '\n', /* Enter key
+                                                                   */
+    0, /* 29   - Control */
+    'A',        'S',         'D', 'F', 'G',  'H', 'J', 'K', 'L',  ':', /* 39 */
+    '"',        '~',         0,                        /* Left shift */
+    '|',        'Z',         'X', 'C', 'V',  'B', 'N', /* 49 */
+    'M',        '<',         '>', '?', 0,              /* Right shift */
+    '*',        0,                                     /* Alt */
+    ' ',                                               /* Space bar */
+    0,                                                 /* Caps lock */
+    F1,                                                /* 59 - F1 key ... > */
+    F2,         F3,          F4,  F5,  F6,   F7,  F8,  F9,  F10, /* < ... F10 */
+    0,                               /* 69 - Num lock*/
+    0,                               /* Scroll Lock */
+    0,                               /* Home key */
+    ARROW_UP,                        /* Up Arrow */
+    0,                               /* Page Up */
+    '-',        ARROW_LEFT,          /* Left Arrow */
+    0,          ARROW_RIGHT,         /* Right Arrow */
+    '+',        0,                   /* 79 - End key*/
+    ARROW_DOWN,                      /* Down Arrow */
+    0,                               /* Page Down */
+    0,                               /* Insert Key */
+    0,                               /* Delete Key */
+    0,          0,           0,   0, /* F11 Key */
+    0,                               /* F12 Key */
+    0,                               /* All other keys are undefined */
+};
 static int __keyboard_presses = 0;
 static uint8_t __shift_pressed = 0;
-static uint8_t __alt_pressed = 0;
 static uint8_t __ctrl_pressed = 0;
 static uint8_t __super_pressed = 0;
+static uint8_t __caps_lock_enabled = 0;
+static uint8_t __extended_scancode = 0;
 
 unsigned char kb_get_char(int spin) {
   acquire(&kb_lock);
@@ -97,38 +131,75 @@ unsigned char kb_get_char(int spin) {
 }
 
 void kb_add_char(unsigned char c) {
+  int next_head = (kb_buffer_head + 1) % KB_BUFFER_SIZE;
+  if (next_head == kb_buffer_tail) {
+    kb_buffer_tail = (kb_buffer_tail + 1) % KB_BUFFER_SIZE;
+  }
+
   kb_buffer[kb_buffer_head] = c;
-  kb_buffer_head = (kb_buffer_head + 1) % KB_BUFFER_SIZE;
+  kb_buffer_head = next_head;
 }
 
 static void __int_handler kb_callback() {
   uint8_t scancode =
       inportb(0x60); /* Recieve scancode, also ACK's interrupt? */
 
+  if (scancode == 0xe0) {
+    __extended_scancode = 1;
+    return;
+  }
+
+  if (__extended_scancode) {
+    __extended_scancode = 0;
+    switch (scancode) {
+    case 0x1d: /* right ctrl down */
+      __ctrl_pressed = 1;
+      return;
+    case 0x9d: /* right ctrl up */
+      __ctrl_pressed = 0;
+      return;
+    case 0x38: /* right alt down */
+      return;
+    case 0xb8: /* right alt up */
+      return;
+    case 0x5b: /* windows key down */
+      __super_pressed = 1;
+      return;
+    case 0xdb: /* windows key up */
+      __super_pressed = 0;
+      return;
+    default:
+      break;
+    }
+  }
+
   switch (scancode) {
-  case 0x2a: /* shift down */
+  case 0x2a: /* left shift down */
+  case 0x36: /* right shift down */
     __shift_pressed = 1;
     return;
-  case 0xaa: /* shift up */
+  case 0xaa: /* left shift up */
+  case 0xb6: /* right shift up */
     __shift_pressed = 0;
     return;
-  case 224: /* shift down */
-    __alt_pressed = 1;
+  case 0x38: /* left alt down */
     return;
-  case 184: /* shift up */
-    __alt_pressed = 0;
+  case 0xb8: /* left alt up */
     return;
-  case 29: /* ctrl down */
+  case 0x1d: /* left ctrl down */
     __ctrl_pressed = 1;
     return;
-  case 157: /* ctrl up */
+  case 0x9d: /* left ctrl up */
     __ctrl_pressed = 0;
     return;
-  case 91: /* windows key */
+  case 0x5b: /* windows key down */
     __super_pressed = 1;
     return;
-  case 219: /* windows key up */
+  case 0xdb: /* windows key up */
     __super_pressed = 0;
+    return;
+  case 0x3a: /* caps lock */
+    __caps_lock_enabled = !__caps_lock_enabled;
     return;
   default:
     break;
@@ -137,38 +208,25 @@ static void __int_handler kb_callback() {
   if (scancode & 0x80)
     return;
 
-  /* CTRL: down 29 up 157 */
+  if (scancode >= 128)
+    return;
 
   unsigned char c = kbdus[scancode];
-  if (c == '7' && __shift_pressed) {
-    kb_add_char('/');
-  } else if (c == '8' && __shift_pressed) {
-    kb_add_char('(');
-  } else if (c == '9' && __shift_pressed) {
-    kb_add_char(')');
-  } else if (c == ',' && __shift_pressed) {
-    kb_add_char(';');
-  } else if (c == '0' && __shift_pressed) {
-    kb_add_char('=');
-  } else if (c == '7' && __shift_pressed) {
-    kb_add_char('/');
-  } else if (c == '8' && __alt_pressed) {
-    kb_add_char('[');
-  } else if (c == '9' && __alt_pressed) {
-    kb_add_char(']');
-  } else if (c == '7' && __alt_pressed) {
-    kb_add_char('{');
-  } else if (c == '0' && __alt_pressed) {
-    kb_add_char('}');
-  } else if (c == '2' && __shift_pressed) {
-    kb_add_char('"');
-  } else if (c == 92 && __shift_pressed) {
-    kb_add_char('*');
-  } else if (__ctrl_pressed) {
+  if (c == 0)
+    return;
+
+  if (__ctrl_pressed && c < 128) {
     kb_add_char(128 + c);
+  } else if (c >= 'a' && c <= 'z') {
+    unsigned char is_uppercase = (__shift_pressed ^ __caps_lock_enabled);
+    kb_add_char(is_uppercase ? (unsigned char)(c + ('A' - 'a')) : c);
+  } else if (__shift_pressed) {
+    unsigned char shifted = kbdus_shift[scancode];
+    kb_add_char(shifted ? shifted : c);
   } else {
-    kb_add_char(__shift_pressed ? c + ('A' - 'a') : c);
+    kb_add_char(c);
   }
+
   __keyboard_presses++;
 }
 
