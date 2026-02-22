@@ -28,7 +28,10 @@
  */
 error_t kernel_bind(struct sock* socket, const struct sockaddr *address, socklen_t address_len)
 {
-    if(socket->socket > NET_NUMBER_OF_SOCKETS)
+    if(socket == NULL || address == NULL)
+        return -ERROR_INVALID_ARGUMENTS;
+
+    if(socket->socket >= NET_NUMBER_OF_SOCKETS)
         return -ERROR_INVALID_SOCKET;
     
     /*Cast sockaddr back to sockaddr_in. Cast originally to comply with linux implementation.*/
@@ -147,7 +150,11 @@ error_t kernel_connect(struct sock* socket, const struct sockaddr *address, sock
 error_t kernel_sendto(struct sock* socket, const void *message, int length, int flags, const struct sockaddr *dest_addr, socklen_t dest_len)
 {
     /* Flags are ignored... for now. */
-    if(socket->socket > NET_NUMBER_OF_SOCKETS){
+    if(socket == NULL || message == NULL || dest_addr == NULL){
+        return -ERROR_INVALID_ARGUMENTS;
+    }
+
+    if(socket->socket >= NET_NUMBER_OF_SOCKETS){
         return -ERROR_INVALID_SOCKET;
     }
 

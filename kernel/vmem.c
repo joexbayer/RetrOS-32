@@ -97,9 +97,15 @@ static uint32_t* vmem_alloc(struct virtual_memory_allocator* vmem)
 	uint32_t* paddr = NULL;
 	
 	LOCK(vmem, {
+		if(vmem->pages == NULL){
+			break;
+		}
 
 		int bit = get_free_bitmap(vmem->pages, vmem->total_pages);
-		assert(bit != -1);
+		if(bit < 0){
+			warningf("[VMEM] Out of pages in allocator 0x%x\n", (uint32_t)vmem);
+			break;
+		}
 
 		paddr = (uint32_t*) (vmem->start + (bit * PAGE_SIZE));
 		vmem->used_pages++;
@@ -117,16 +123,38 @@ static uint32_t* vmem_alloc(struct virtual_memory_allocator* vmem)
 static void vmem_free(struct virtual_memory_allocator* vmem, void* addr)
 {
 	LOCK(vmem, {
-
-		if((uint32_t)addr > vmem->end  ||  (uint32_t)addr < vmem->start)
+		if(addr == NULL){
 			break;
-
-		int bit = (((uint32_t) addr) - vmem->start) / PAGE_SIZE;
-		if(bit < 0 || bit > (vmem->total_pages))
+		}
+		if(vmem->pages == NULL){
 			break;
+		}
+
+		uint32_t address = (uint32_t)addr;
+		if(address >= vmem->end  ||  address < vmem->start){
+			break;
+		}
+
+		if(((address - vmem->start) % PAGE_SIZE) != 0){
+			warningf("[VMEM] Ignoring unaligned free at 0x%x\n", address);
+			break;
+		}
+
+		int bit = (address - vmem->start) / PAGE_SIZE;
+		if(bit < 0 || bit >= vmem->total_pages){
+			break;
+		}
+
+		int page_state = get_bitmap(vmem->pages, bit);
+		if(page_state <= 0){
+			warningf("[VMEM] Double free or invalid free for page %d\n", bit);
+			break;
+		}
 		
 		unset_bitmap(vmem->pages, bit);
-		vmem->used_pages--;
+		if(vmem->used_pages > 0){
+			vmem->used_pages--;
+		}
 		dbgprintf("VMEM MANAGER] Free page %d at 0x%x\n", bit, addr);
 
 	});
@@ -150,6 +178,10 @@ static int vmem_page_align_size(int size)
 
 static struct vmem_page_region* vmem_create_page_region(struct pcb* pcb, void* base, int num, int access)
 {
+	if(num <= 0){
+		return NULL;
+	}
+
 	struct vmem_page_region* allocation = create(struct vmem_page_region);
 	if(allocation == NULL){
 		return NULL;
@@ -167,6 +199,11 @@ static struct vmem_page_region* vmem_create_page_region(struct pcb* pcb, void* b
 	allocation->basevaddr = base;
 
 	uint32_t* heap_table = vmem_get_page_table(pcb, VMEM_HEAP);
+	if(heap_table == NULL){
+		kfree(allocation->bits);
+		kfree(allocation);
+		return NULL;
+	}
 	for (int i = 0; i < num; i++){
 		/*
 		 * 1. Allocate a page
@@ -175,10 +212,12 @@ static struct vmem_page_region* vmem_create_page_region(struct pcb* pcb, void* b
 		 */
 		uint32_t paddr = (uint32_t)vmem_default->ops->alloc(vmem_default);
 		if(paddr == 0){
-			kfree(allocation->bits);
 			for (int j = 0; j < i; j++){
 				vmem_default->ops->free(vmem_default, (void*) (VMEM_START_ADDRESS + (allocation->bits[j] * PAGE_SIZE)));
+				vmem_unmap(heap_table, (uint32_t)allocation->basevaddr + (j * PAGE_SIZE));
 			}
+			kfree(allocation->bits);
+			kfree(allocation);
 			return NULL;
 		}
 		int bit = (paddr - VMEM_START_ADDRESS)/PAGE_SIZE;
@@ -205,7 +244,11 @@ static int vmem_free_page_region(struct pcb* pcb, struct vmem_page_region* regio
 	ERR_ON_NULL(region);
 	if(region->refs > 1){
 		region->refs--;
-		region->used -= size;
+		if(region->used > size){
+			region->used -= size;
+		} else {
+			region->used = 0;
+		}
 		return 0;
 	}
 
@@ -214,19 +257,24 @@ static int vmem_free_page_region(struct pcb* pcb, struct vmem_page_region* regio
 	int num_pages = region->size / PAGE_SIZE;
 	dbgprintf("Freeing %d pages\n", num_pages);
 	for (int i = 0; i < num_pages; i++){
-		if(region->bits[i] == 0) continue;
+		int bit = region->bits[i];
+		if(bit < 0 || bit >= vmem_default->total_pages){
+			warningf("[VMEM] Invalid physical page bit %d while freeing region\n", bit);
+			continue;
+		}
 		
 		/* Free the physical page */
-		void* paddr = (void*) (vmem_default->start + (region->bits[i] * PAGE_SIZE));
+		void* paddr = (void*) (vmem_default->start + (bit * PAGE_SIZE));
 		vmem_default->ops->free(vmem_default, (void*) paddr);
 
 		/* Unmap the virtual page */
 		void* vaddr = (void*) (region->basevaddr + (i * PAGE_SIZE));
 		dbgprintf("Unmapping 0x%x\n", vaddr);
 		uint32_t* heap_table = vmem_get_page_table(pcb, (uint32_t)vaddr);
-		dbgprintf("Table: 0x%x\n", heap_table);
-
-		vmem_unmap(heap_table, (uint32_t)vaddr);
+		if(heap_table != NULL){
+			dbgprintf("Table: 0x%x\n", heap_table);
+			vmem_unmap(heap_table, (uint32_t)vaddr);
+		}
 	}
 	kfree(region->bits);
 	kfree(region);
@@ -308,6 +356,10 @@ void __deprecated vmem_free_allocation(struct allocation* allocation)
  */
 void vmem_stack_free(struct pcb* pcb, void* ptr)
 {
+	if(pcb == NULL || pcb->allocations == NULL || ptr == NULL){
+		return;
+	}
+
 	/* Check if allocation is first in list */
 
 	if(pcb->allocations->head == NULL){
@@ -321,6 +373,7 @@ void vmem_stack_free(struct pcb* pcb, void* ptr)
 		pcb->used_memory -= old->size;
 
 		vmem_free_page_region(pcb, old->region, old->size);
+		kfree(old);
 		
 		dbgprintf("[1] Free %d bytes of data from 0x%x\n", old->size, old->address);
 		return;
@@ -336,12 +389,15 @@ void vmem_stack_free(struct pcb* pcb, void* ptr)
 			pcb->used_memory -= save->size;
 
 			vmem_free_page_region(pcb, save->region, save->size);
+			kfree(save);
 			
 			dbgprintf("[2] Free %d bytes of data from 0x%x\n", save->size, save->address);
 			return;
 		}
 		iter = iter->next;
 	}
+
+	warningf("[VMEM] Could not find allocation at 0x%x for free.\n", (uint32_t)ptr);
 }
 
 /**
@@ -364,6 +420,10 @@ void vmem_stack_free(struct pcb* pcb, void* ptr)
  */
 void* vmem_stack_alloc(struct pcb* pcb, int _size)
 {
+	if(pcb == NULL || pcb->allocations == NULL || _size <= 0){
+		return NULL;
+	}
+
 	int size = vmem_page_align_size(_size);
 	int num_pages = size / PAGE_SIZE;
 
@@ -407,7 +467,8 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 	/**
 	 * @brief Part 1.5: If first allocation is freed, allocate from start of heap.
 	 */
-	if(pcb->allocations->head->address > (uint32_t*) VMEM_HEAP && pcb->allocations->head->address <= (uint32_t*) VMEM_HEAP+size){
+	if((uint32_t)pcb->allocations->head->address > (uint32_t)VMEM_HEAP &&
+	   (uint32_t)pcb->allocations->head->address <= ((uint32_t)VMEM_HEAP + size)){
 
 		/* TODO: Clean this up, redudent code */
 		struct vmem_page_region* physical = vmem_create_page_region(pcb, (void*)VMEM_HEAP, num_pages, USER);
@@ -422,7 +483,10 @@ void* vmem_stack_alloc(struct pcb* pcb, int _size)
 
 		allocation->address = (uint32_t*) VMEM_HEAP;
 		allocation->size = _size;
-		allocation->next = NULL;
+		allocation->next = pcb->allocations->head;
+
+		pcb->allocations->head = allocation;
+		pcb->used_memory += size;
 
 		dbgprintf("[1.5] Allocated %d bytes of data to 0x%x\n", _size, allocation->address);
 		return (void*) allocation->address;
@@ -839,12 +903,19 @@ void vmem_init_kernel()
 
 int vmem_allocator_create(struct virtual_memory_allocator* allocator, int from, int to)
 {
+	if(allocator == NULL || to <= from){
+		return -1;
+	}
+
 	allocator->start = from;
 	allocator->end = to;
 	allocator->total_pages = (to-from)/PAGE_SIZE;
 	allocator->ops = &vmem_default_ops;
 	allocator->used_pages = 0;
 	allocator->pages = create_bitmap(allocator->total_pages);
+	if(allocator->pages == NULL){
+		return -1;
+	}
 	mutex_init(&allocator->lock);
 	dbgprintf("Created new allocator\n");
 	return 0;
@@ -909,10 +980,14 @@ void vmem_init()
 	VMEM_START_ADDRESS 	= memory_map_get()->virtual_memory.from + MB(1);
 	VMEM_END_ADDRESS 	= memory_map_get()->virtual_memory.to;
 
-	vmem_allocator_create(vmem_default, VMEM_START_ADDRESS, VMEM_END_ADDRESS);
+	if(vmem_allocator_create(vmem_default, VMEM_START_ADDRESS, VMEM_END_ADDRESS) < 0){
+		kernel_panic("[VIRTUAL MEMORY] Failed to initialize default allocator");
+	}
 	dbgprintf("Manager start: 0x%x - 0x%x (%d)\n", VMEM_MANAGER_START, VMEM_MANAGER_END, VMEM_MANAGER_PAGES);
 
-	vmem_allocator_create(vmem_manager, VMEM_MANAGER_START, VMEM_MANAGER_END);
+	if(vmem_allocator_create(vmem_manager, VMEM_MANAGER_START, VMEM_MANAGER_END) < 0){
+		kernel_panic("[VIRTUAL MEMORY] Failed to initialize manager allocator");
+	}
 	dbgprintf("Default: 0x%x - 0x%x (%d)\n", VMEM_START_ADDRESS, VMEM_END_ADDRESS, VMEM_TOTAL_PAGES);
 
 	dbgprintf("[VIRTUAL MEMORY] %d free pagable pages.\n", VMEM_TOTAL_PAGES);

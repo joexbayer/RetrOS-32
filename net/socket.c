@@ -35,7 +35,14 @@ static const char* socket_type_str[] = {
     "SOCK_TCP",
     "SOCK_RAW"
 };
+
+static const int socket_type_count = sizeof(socket_type_str) / sizeof(socket_type_str[0]);
+
 const char* socket_type_to_str(int type){
+    if(type < 0 || type >= socket_type_count){
+        return "SOCK_UNKNOWN";
+    }
+
     return socket_type_str[type];
 }
 
@@ -44,7 +51,14 @@ static const char* socket_domain_str[] = {
     "AF_INET6",
     "AF_UNIX"
 };
+
+static const int socket_domain_count = sizeof(socket_domain_str) / sizeof(socket_domain_str[0]);
+
 const char* socket_domain_to_str(int domain){
+    if(domain < 0 || domain >= socket_domain_count){
+        return "AF_UNKNOWN";
+    }
+
     return socket_domain_str[domain];
 }
 
@@ -53,7 +67,14 @@ static const char* socket_protocol_str[] = {
     "IPPROTO_UDP",
     "IPPROTO_ICMP"
 };
+
+static const int socket_protocol_count = sizeof(socket_protocol_str) / sizeof(socket_protocol_str[0]);
+
 const char* socket_protocol_to_str(int protocol){
+    if(protocol < 0 || protocol >= socket_protocol_count){
+        return "IPPROTO_UNKNOWN";
+    }
+
     return socket_protocol_str[protocol];
 }
 
@@ -74,13 +95,33 @@ const char* socket_protocol_to_str(int protocol){
 
 inline static unsigned short __get_free_port()
 {
-    return ntohs(get_free_bitmap(port_map, NET_NUMBER_OF_DYMANIC_PORTS) + NET_DYNAMIC_PORT_START);
+    int bit = get_free_bitmap(port_map, NET_NUMBER_OF_DYMANIC_PORTS);
+    if(bit < 0){
+        return 0;
+    }
+
+    return htons((uint16_t)(bit + NET_DYNAMIC_PORT_START));
 }
 
 void net_sock_bind(struct sock* socket, unsigned short port, unsigned int ip)
 {
+    if(socket == NULL){
+        return;
+    }
+
     socket->bound_ip = ip;
-    socket->bound_port = port == 0 ? __get_free_port() : port;
+
+    if(port == 0){
+        unsigned short dynamic = __get_free_port();
+        if(dynamic == 0){
+            warningf("[SOCK] Unable to allocate dynamic port\n");
+            return;
+        }
+        socket->bound_port = dynamic;
+        return;
+    }
+
+    socket->bound_port = port;
 }
 
 /* Currently deprecated */
@@ -147,7 +188,7 @@ error_t net_sock_read(struct sock* sock, uint8_t* buffer, unsigned int length)
 
 struct sock* sock_get(socket_t id)
 {
-    if(id > NET_NUMBER_OF_SOCKETS)
+    if(socket_table == NULL || id >= NET_NUMBER_OF_SOCKETS)
         return NULL;
 
     struct sock* sock = socket_table[id];
@@ -488,6 +529,11 @@ void net_close_sockets_owned_by(struct pcb* owner)
  */
 struct sock* kernel_socket_create(int domain, int type, int protocol)
 {
+    if(socket_table == NULL || socket_map == NULL){
+        warningf("Socket system not initialized\n");
+        return NULL;
+    }
+
     /* Should be a lock? */
     spin_lock(&__sock_lock);
 
@@ -501,6 +547,12 @@ struct sock* kernel_socket_create(int domain, int type, int protocol)
 
 
     socket_table[current] = create(struct sock); /* Allocate space for a socket. Needs to be freed. */
+    if(socket_table[current] == NULL){
+        warningf("Unable to allocate socket!\n");
+        unset_bitmap(socket_map, current);
+        spin_unlock(&__sock_lock);
+        return NULL;
+    }
     memset(socket_table[current], 0, sizeof(struct sock));
 
     socket_table[current]->domain = domain;
@@ -562,5 +614,10 @@ void net_init_sockets()
     socket_table = (struct sock**) kalloc(NET_NUMBER_OF_SOCKETS * sizeof(void*));
     port_map = create_bitmap(NET_NUMBER_OF_DYMANIC_PORTS);
     socket_map = create_bitmap(NET_NUMBER_OF_SOCKETS);
+    if(socket_table == NULL || port_map == NULL || socket_map == NULL){
+        kernel_panic("Unable to initialize sockets");
+    }
+
+    memset(socket_table, 0, NET_NUMBER_OF_SOCKETS * sizeof(void*));
     total_sockets = 0;
 }

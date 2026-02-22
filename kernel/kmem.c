@@ -110,7 +110,9 @@ void* kalloc(int size)
 
     __kmemory_used += num_blocks * KMEM_BLOCK_SIZE;
     
-    $process->current->kallocs++;
+    if($process != NULL && $process->current != NULL){
+        $process->current->kallocs++;
+    }
 
     /* sanity check */
     if(__kmemory_used > KERNEL_MEMORY_END-KERNEL_MEMORY_START){
@@ -150,13 +152,46 @@ void kfree(void* ptr)
 	
 	spin_lock(&__kmemory_lock);
 
+	uint32_t ptr_addr = (uint32_t)ptr;
+	if(ptr_addr < (KERNEL_MEMORY_START + sizeof(int)) || ptr_addr >= KERNEL_MEMORY_END){
+		warningf("[MEMORY] Ignoring out-of-range free at 0x%x\n", ptr_addr);
+		spin_unlock(&__kmemory_lock);
+		return;
+	}
+
+	uint32_t meta_addr = ptr_addr - sizeof(int);
+	if(((meta_addr - KERNEL_MEMORY_START) % KMEM_BLOCK_SIZE) != 0){
+		warningf("[MEMORY] Ignoring unaligned free at 0x%x\n", ptr_addr);
+		spin_unlock(&__kmemory_lock);
+		return;
+	}
+
 	/* Calculate the index of the block in the memory region */
-	int block_index = (((uint32_t)ptr) - KERNEL_MEMORY_START) / KMEM_BLOCK_SIZE;
+	int block_index = (meta_addr - KERNEL_MEMORY_START) / KMEM_BLOCK_SIZE;
+	int total_blocks = (KERNEL_MEMORY_END - KERNEL_MEMORY_START) / KMEM_BLOCK_SIZE;
 
 	/* Read the size of the allocated block from the metadata block */
-	int* metadata = (int*) (KERNEL_MEMORY_START + block_index * KMEM_BLOCK_SIZE);
+	int* metadata = (int*)meta_addr;
 	int num_blocks = *metadata;
-	dbgprintf("[MEMORY] %s freeing %d blocks of data\n", $process->current->name, num_blocks);
+	if(num_blocks <= 0 || block_index + num_blocks > total_blocks){
+		warningf("[MEMORY] Ignoring corrupted free at 0x%x (blocks=%d)\n", ptr_addr, num_blocks);
+		spin_unlock(&__kmemory_lock);
+		return;
+	}
+
+	if($process != NULL && $process->current != NULL){
+		dbgprintf("[MEMORY] %s freeing %d blocks of data\n", $process->current->name, num_blocks);
+	}
+
+	for (int i = 0; i < num_blocks; i++) {
+		uint32_t index = KMEM_BITMAP_INDEX(KERNEL_MEMORY_START + (block_index + i) * KMEM_BLOCK_SIZE);
+		uint32_t offset = KMEM_BITMAP_OFFSET(KERNEL_MEMORY_START + (block_index + i) * KMEM_BLOCK_SIZE);
+		if((__kmemory_bitmap[index] & (1 << offset)) == 0){
+			warningf("[MEMORY] Ignoring double free at 0x%x\n", ptr_addr);
+			spin_unlock(&__kmemory_lock);
+			return;
+		}
+	}
 
 	/* Mark the blocks as free in the bitmap */
 	for (int i = 0; i < num_blocks; i++) {
@@ -165,7 +200,12 @@ void kfree(void* ptr)
 		__kmemory_bitmap[index] &= ~(1 << offset);
 	}
 
-    __kmemory_used -= num_blocks * KMEM_BLOCK_SIZE;
+    uint32_t freed_bytes = num_blocks * KMEM_BLOCK_SIZE;
+    if(__kmemory_used >= freed_bytes){
+        __kmemory_used -= freed_bytes;
+    } else {
+        __kmemory_used = 0;
+    }
 	spin_unlock(&__kmemory_lock);
 }
 
